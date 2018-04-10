@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -36,7 +36,7 @@ options:
         description:
             - The type of entity you want to work on (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
         required: true
         default: null
     id:
@@ -59,7 +59,7 @@ options:
         description:
             - The type of parent the ID is specified for (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
             - If specified, I(parent_id) also needs to be specified.
         required: false
         default: null
@@ -185,7 +185,7 @@ EXAMPLES = '''
     state: present
     properties:
       name: "{{ enterprise_new_name }}-basic"
-  when: nuage_check_enterprise | failed
+  when: nuage_check_enterprise is failed
 
 # Creating a User in an Enterprise
 - name: Create admin user

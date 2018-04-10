@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -40,13 +40,10 @@ options:
   network_domain:
     description:
       - Network domain for networks in the domain.
-    required: false
-    default: null
   clean_up:
     description:
       - Clean up all domain resources like child domains and accounts.
       - Considered on C(state=absent).
-    required: false
     default: false
   state:
     description:
@@ -57,29 +54,28 @@ options:
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
     default: true
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a domain
-local_action:
-  module: cs_domain
-  path: ROOT/customers
-  network_domain: customers.example.com
+- name: Create a domain
+  local_action:
+    module: cs_domain
+    path: ROOT/customers
+    network_domain: customers.example.com
 
-# Create another subdomain
-local_action:
-  module: cs_domain
-  path: ROOT/customers/xy
-  network_domain: xy.customers.example.com
+- name: Create another subdomain
+  local_action:
+    module: cs_domain
+    path: ROOT/customers/xy
+    network_domain: xy.customers.example.com
 
-# Remove a domain
-local_action:
-  module: cs_domain
-  path: ROOT/customers/xy
-  state: absent
+- name: Remove a domain
+  local_action:
+    module: cs_domain
+    path: ROOT/customers/xy
+    state: absent
 '''
 
 RETURN = '''

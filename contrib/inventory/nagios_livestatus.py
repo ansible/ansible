@@ -34,6 +34,8 @@ Livestatus API: http://www.naemon.org/documentation/usersguide/livestatus.html
 import os
 import re
 import argparse
+import sys
+
 try:
     import configparser
 except ImportError:
@@ -44,8 +46,7 @@ import json
 try:
     from mk_livestatus import Socket
 except ImportError:
-    print("Error: mk_livestatus is needed. Try something like: pip install python-mk-livestatus")
-    exit(1)
+    sys.exit("Error: mk_livestatus is needed. Try something like: pip install python-mk-livestatus")
 
 
 class NagiosLivestatusInventory(object):
@@ -160,8 +161,7 @@ class NagiosLivestatusInventory(object):
             self.json_indent = 2
 
         if len(self.backends) == 0:
-            print("Error: Livestatus configuration is missing. See nagios_livestatus.ini.")
-            exit(1)
+            sys.exit("Error: Livestatus configuration is missing. See nagios_livestatus.ini.")
 
         for backend in self.backends:
             self.query_backend(backend, self.options.host)
@@ -171,7 +171,6 @@ class NagiosLivestatusInventory(object):
         elif self.options.list:
             print(json.dumps(self.result, indent=self.json_indent))
         else:
-            print("usage: --list or --host HOSTNAME [--pretty]")
-            exit(1)
+            sys.exit("usage: --list or --host HOSTNAME [--pretty]")
 
 NagiosLivestatusInventory()

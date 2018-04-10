@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exists in Gitlab, it will be created.
+   - When the group does not exist in Gitlab, it will be created.
    - When the group does exists and state=absent, the group will be deleted.
    - When changes are made to the group, the group will be updated.
 version_added: "2.1"
@@ -308,7 +308,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+            module.exit_json(changed=False, result="Group deleted or does not exist")
         else:
             if group.createOrUpdateGroup(arguments):
                 module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)

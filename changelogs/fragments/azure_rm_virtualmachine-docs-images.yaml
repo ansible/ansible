@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_virtualmachine - removed docs note that says on marketplace images can be used, custom images were added in 2.5

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -145,47 +145,47 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a network ACL rule, allow port 80 ingress
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: allow
-  port: 80
-  cidr: 0.0.0.0/0
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: allow
+    port: 80
+    cidr: 0.0.0.0/0
 
 # create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: deny
-  start_port: 8000
-  end_port: 8000
-  cidr: 10.20.0.0/16
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: deny
+    start_port: 8000
+    end_port: 8000
+    cidr: 10.20.0.0/16
 
 # create a network ACL rule
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: deny
-  start_port: 8000
-  end_port: 8000
-  cidr: 10.20.0.0/16
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: deny
+    start_port: 8000
+    end_port: 8000
+    cidr: 10.20.0.0/16
 
 # remove a network ACL rule
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  state: absent
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    state: absent
 '''
 
 RETURN = '''

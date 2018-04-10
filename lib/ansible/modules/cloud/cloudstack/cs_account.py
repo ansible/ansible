@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -104,43 +104,43 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create an account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  username: customer_xy
-  password: S3Cur3
-  last_name: Doe
-  first_name: John
-  email: john.doe@example.com
-  domain: CUSTOMERS
+- local_action:
+    module: cs_account
+    name: customer_xy
+    username: customer_xy
+    password: S3Cur3
+    last_name: Doe
+    first_name: John
+    email: john.doe@example.com
+    domain: CUSTOMERS
 
 # Lock an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: locked
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: locked
 
 # Disable an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: disabled
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: disabled
 
 # Enable an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: enabled
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: enabled
 
 # Remove an account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: absent
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: absent
 '''
 
 RETURN = '''

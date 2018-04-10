@@ -1,0 +1,2 @@
+bugfixes:
+    - openssl_certificate - Handle dump() in check_mode https://github.com/ansible/ansible/pull/38386

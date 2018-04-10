@@ -1,0 +1,25 @@
+minor_changes:
+- aci_* modules - added signature based authentication
+- aci_* modules - included dedicated ACI documentation
+- aci_* modules - improved ACI return values
+bugfixes:
+- fix for ansible-vault always requesting passwords (https://github.com/ansible/ansible/issues/33027)
+- ios CLI - fixed prompt detection (https://github.com/ansible/ansible/issues/35662)
+- nxos_user - fixed structured output issue (https://github.com/ansible/ansible/pull/36193)
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36340)
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36374)
+- nxos_install_os - kickstart_image_file is no longer required (https://github.com/ansible/ansible/pull/36319)
+- script/patch - fixed tempfile ownership issues (https://github.com/ansible/ansible/issues/36398)
+- nxos_bgp_neighbor - fixed various module arg issues (https://github.com/ansible/ansible/pull/36318)
+- vyos_l3_interface - fixed issues with multiple addresses on an interface (https://github.com/ansible/ansible/pull/36377)
+- nxos_banner - fixed issues with unstructured output (https://github.com/ansible/ansible/pull/36411)
+- nxos_bgp_neighbor_af - fixed various issues (https://github.com/ansible/ansible/pull/36472)
+- vyos_config - fixed IndexError in sanitize_config (https://github.com/ansible/ansible/pull/36375)
+- cs_user - fixed user_api_secret return for ACS 4.10+ (https://github.com/ansible/ansible/pull/36447)
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36514)
+- fix cases where INVENTORY_UNPARSED_IS_FAILED didn't fail (https://github.com/ansible/ansible/issues/36034)
+- aws_ses_identity - fixed failure on missing identity info (https://github.com/ansible/ansible/issues/36065)
+- ec2_vpc_net_facts - fixed traceback for regions other than us-east-1 (https://github.com/ansible/ansible/pull/35302)
+- aws_waf_* - fixed traceback on WAFStaleDataException (https://github.com/ansible/ansible/pull/36405)
+- ec2_group - fixed check_mode when using tags (https://github.com/ansible/ansible/pull/36503)
+- loop item labels will now update if templated (https://github.com/ansible/ansible/pull/36430)

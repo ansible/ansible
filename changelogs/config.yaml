@@ -1,0 +1,18 @@
+---
+release_tag_re: '(v(?:[\d.ab\-]|rc)+)'
+pre_release_tag_re: '(?P<pre_release>(?:[ab]|rc)+\d*)$'
+notesdir: fragments
+prelude_section_name: release_summary
+sections:
+- ['major_changes', 'Major Changes']
+- ['minor_changes', 'Minor Changes']
+- ['deprecated_features', 'Deprecated Features']
+- ['removed_features', 'Removed Features (previously deprecated)']
+- ['new_lookup_plugins', 'New Lookup Plugins']
+- ['new_callback_plugins', 'New Callback Plugins']
+- ['new_connection_plugins', 'New Connection Plugins']
+- ['new_test_plugins', 'New Test Plugins']
+- ['new_filter_plugins', 'New Filter Plugins']
+- ['new_modules', 'New Modules']
+- ['bugfixes', 'Bugfixes']
+- ['known_issues', 'Known Issues']

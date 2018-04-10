@@ -1,0 +1,2 @@
+bugfixes:
+- lineinfile - fixed insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)

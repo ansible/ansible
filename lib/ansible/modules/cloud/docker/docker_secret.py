@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -255,7 +255,7 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
-        data=dict(type='str'),
+        data=dict(type='str', no_log=True),
         labels=dict(type='dict'),
         force=dict(type='bool', default=False)
     )

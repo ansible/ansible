@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -79,6 +79,14 @@ options:
     default: "yes"
     choices: ["yes", "no"]
     version_added: "2.1"
+  comment:
+    description:
+      - Change the comment on the public key. Rewriting the comment is useful in
+        cases such as fetching it from GitHub or GitLab.
+      - If no comment is specified, the existing comment will be kept.
+    required: false
+    default: None
+    version_added: "2.4"
 author: "Ansible Core Team"
 '''
 
@@ -159,7 +167,7 @@ key_option:
   type: string
   sample: null
 keyfile:
-  description: Path for authorzied key file.
+  description: Path for authorized key file.
   returned: success
   type: string
   sample: /home/user/.ssh/authorized_keys
@@ -217,8 +225,8 @@ from operator import itemgetter
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
+
 
 class keydict(dict):
 
@@ -247,8 +255,8 @@ class keydict(dict):
     # http://stackoverflow.com/questions/2328235/pythonextend-the-dict-class
 
     def __init__(self, *args, **kw):
-        super(keydict,self).__init__(*args, **kw)
-        self.itemlist = list(super(keydict,self).keys())
+        super(keydict, self).__init__(*args, **kw)
+        self.itemlist = list(super(keydict, self).keys())
 
     def __setitem__(self, key, value):
         self.itemlist.append(key)
@@ -303,18 +311,17 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     try:
         user_entry = pwd.getpwnam(user)
-    except KeyError:
-        e = get_exception()
+    except KeyError as e:
         if module.check_mode and path is None:
             module.fail_json(msg="Either user must exist or you must provide full path to key file in check mode")
-        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, to_native(e)))
     if path is None:
-        homedir    = user_entry.pw_dir
-        sshdir     = os.path.join(homedir, ".ssh")
-        keysfile   = os.path.join(sshdir, "authorized_keys")
+        homedir = user_entry.pw_dir
+        sshdir = os.path.join(homedir, ".ssh")
+        keysfile = os.path.join(sshdir, "authorized_keys")
     else:
-        sshdir     = os.path.dirname(path)
-        keysfile   = path
+        sshdir = os.path.dirname(path)
+        keysfile = path
 
     if not write:
         return keysfile
@@ -335,7 +342,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         if not os.path.exists(basedir):
             os.makedirs(basedir)
         try:
-            f = open(keysfile, "w") #touches file so we can set ownership and perms
+            f = open(keysfile, "w")  # touches file so we can set ownership and perms
         finally:
             f.close()
         if module.selinux_enabled():
@@ -349,12 +356,13 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     return keysfile
 
+
 def parseoptions(module, options):
     '''
     reads a string containing ssh-key options
     and returns a dictionary of those options
     '''
-    options_dict = keydict() #ordered dict
+    options_dict = keydict()  # ordered dict
     if options:
         # the following regex will split on commas while
         # ignoring those commas that fall within quotes
@@ -368,6 +376,7 @@ def parseoptions(module, options):
                 options_dict[part] = None
 
     return options_dict
+
 
 def parsekey(module, raw_key, rank=None):
     '''
@@ -387,18 +396,18 @@ def parsekey(module, raw_key, rank=None):
         'ssh-rsa',
     ]
 
-    options    = None   # connection options
-    key        = None   # encrypted key string
-    key_type   = None   # type of ssh key
+    options = None   # connection options
+    key = None   # encrypted key string
+    key_type = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
     # remove comment yaml escapes
-    raw_key = raw_key.replace('\#', '#')
+    raw_key = raw_key.replace(r'\#', '#')
 
     # split key safely
     lex = shlex.shlex(raw_key)
     lex.quotes = []
-    lex.commenters = '' #keep comment hashes
+    lex.commenters = ''  # keep comment hashes
     lex.whitespace_split = True
     key_parts = list(lex)
 
@@ -430,6 +439,7 @@ def parsekey(module, raw_key, rank=None):
 
     return (key, key_type, options, comment, rank)
 
+
 def readfile(filename):
 
     if not os.path.isfile(filename):
@@ -440,6 +450,7 @@ def readfile(filename):
         return f.read()
     finally:
         f.close()
+
 
 def parsekeys(module, lines):
     keys = {}
@@ -454,18 +465,19 @@ def parsekeys(module, lines):
             keys[line] = (line, 'skipped', None, None, rank_index)
     return keys
 
+
 def writefile(module, filename, content):
 
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
-    f = open(tmp_path,"w")
+    f = open(tmp_path, "w")
 
     try:
         f.write(content)
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+    except IOError as e:
+        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
+
 
 def serialize(keys):
     lines = []
@@ -496,24 +508,26 @@ def serialize(keys):
                 key_line = key[0]
             else:
                 key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
-        except:
+        except Exception:
             key_line = key
         lines.append(key_line)
     return ''.join(lines)
+
 
 def enforce_state(module, params):
     """
     Add or remove key.
     """
 
-    user        = params["user"]
-    key         = params["key"]
-    path        = params.get("path", None)
-    manage_dir  = params.get("manage_dir", True)
-    state       = params.get("state", "present")
+    user = params["user"]
+    key = params["key"]
+    path = params.get("path", None)
+    manage_dir = params.get("manage_dir", True)
+    state = params.get("state", "present")
     key_options = params.get("key_options", None)
-    exclusive   = params.get("exclusive", False)
-    error_msg   = "Error getting key from: %s"
+    exclusive = params.get("exclusive", False)
+    comment = params.get("comment", None)
+    error_msg = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
     if key.startswith("http"):
@@ -559,6 +573,9 @@ def enforce_state(module, params):
             # rank here is the rank in the provided new keys, which may be unrelated to rank in existing_keys
             parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3], parsed_new_key[4])
 
+        if comment is not None:
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], comment, parsed_new_key[4])
+
         matched = False
         non_matching_keys = []
 
@@ -574,7 +591,7 @@ def enforce_state(module, params):
                 matched = True
 
         # handle idempotent state=present
-        if state=="present":
+        if state == "present":
             keys_to_exist.append(parsed_new_key[0])
             if len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
@@ -590,7 +607,7 @@ def enforce_state(module, params):
                 existing_keys[parsed_new_key[0]] = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], parsed_new_key[3], total_rank)
                 do_write = True
 
-        elif state=="absent":
+        elif state == "absent":
             if not matched:
                 continue
             del existing_keys[parsed_new_key[0]]
@@ -607,41 +624,48 @@ def enforce_state(module, params):
     if do_write:
         filename = keyfile(module, user, do_write, path, manage_dir)
         new_content = serialize(existing_keys)
-        diff = {
-            'before_header': params['keyfile'],
-            'after_header': filename,
-            'before': existing_content,
-            'after': new_content,
-        }
+
+        diff = None
+        if module._diff:
+            diff = {
+                'before_header': params['keyfile'],
+                'after_header': filename,
+                'before': existing_content,
+                'after': new_content,
+            }
+            params['diff'] = diff
+
         if module.check_mode:
             module.exit_json(changed=True, diff=diff)
         writefile(module, filename, new_content)
         params['changed'] = True
-        params['diff'] = diff
     else:
         if module.check_mode:
             module.exit_json(changed=False)
 
     return params
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            user        = dict(required=True, type='str'),
-            key         = dict(required=True, type='str'),
-            path        = dict(required=False, type='str'),
-            manage_dir  = dict(required=False, type='bool', default=True),
-            state       = dict(default='present', choices=['absent','present']),
-            key_options = dict(required=False, type='str'),
-            unique      = dict(default=False, type='bool'),
-            exclusive   = dict(default=False, type='bool'),
-            validate_certs = dict(default=True, type='bool'),
+        argument_spec=dict(
+            user=dict(required=True, type='str'),
+            key=dict(required=True, type='str'),
+            path=dict(required=False, type='str'),
+            manage_dir=dict(required=False, type='bool', default=True),
+            state=dict(default='present', choices=['absent', 'present']),
+            key_options=dict(required=False, type='str'),
+            unique=dict(default=False, type='bool'),
+            exclusive=dict(default=False, type='bool'),
+            comment=dict(required=False, default=None, type='str'),
+            validate_certs=dict(default=True, type='bool'),
         ),
         supports_check_mode=True
     )
 
     results = enforce_state(module, module.params)
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

@@ -23,6 +23,7 @@ import abc
 import argparse
 import ast
 import json
+import errno
 import os
 import re
 import subprocess
@@ -37,16 +38,18 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.plugins.loader import fragment_loader
+from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from module_args import get_argument_spec
+from module_args import AnsibleModuleImportError, get_argument_spec
 
-from schema import doc_schema, metadata_schema, return_schema
+from schema import doc_schema, metadata_1_1_schema, return_schema
 
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -69,7 +72,7 @@ BLACKLIST_IMPORTS = {
                     'ansible.module_utils.urls instead')
         }
     },
-    'boto(?:\.|$)': {
+    r'boto(?:\.|$)': {
         'new_only': True,
         'error': {
             'code': 204,
@@ -246,7 +249,7 @@ class ModuleValidator(Validator):
         self.length = len(self.text.splitlines())
         try:
             self.ast = ast.parse(self.text)
-        except:
+        except Exception:
             self.ast = None
 
         if base_branch:
@@ -263,7 +266,7 @@ class ModuleValidator(Validator):
 
         try:
             os.remove(self.base_module)
-        except:
+        except Exception:
             pass
 
     @property
@@ -374,14 +377,24 @@ class ModuleValidator(Validator):
                 msg='sys.exit() call found. Should be exit_json/fail_json'
             )
 
-    def _check_for_gpl3_header(self):
-        if ('GNU General Public License' not in self.text and
-                'version 3' not in self.text):
+    def _check_gpl3_header(self):
+        header = '\n'.join(self.text.split('\n')[:20])
+        if ('GNU General Public License' not in header or
+                ('version 3' not in header and 'v3.0' not in header)):
             self.reporter.error(
                 path=self.object_path,
                 code=105,
-                msg='GPLv3 license header not found'
+                msg='GPLv3 license header not found in the first 20 lines of the module'
             )
+        elif self._is_new_module():
+            if len([line for line in header
+                    if 'GNU General Public License' in line]) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=108,
+                    msg='Found old style GPLv3 license header: '
+                        'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
+                )
 
     def _check_for_tabs(self):
         for line_no, line in enumerate(self.text.splitlines()):
@@ -492,7 +505,14 @@ class ModuleValidator(Validator):
 
         return min(linenos)
 
-    def _find_main_call(self):
+    def _find_main_call(self, look_for="main"):
+        """ Ensure that the module ends with:
+            if __name__ == '__main__':
+                main()
+        OR, in the case of modules that are in the docs-only deprecation phase
+            if __name__ == '__main__':
+                removed_module()
+        """
         lineno = False
         if_bodies = []
         for child in self.ast.body:
@@ -507,16 +527,40 @@ class ModuleValidator(Validator):
         bodies.extend(if_bodies)
 
         for child in bodies:
+
+            # validate that the next to last line is 'if __name__ == "__main__"'
+            if child.lineno == (self.length - 1):
+
+                mainchecked = False
+                try:
+                    if isinstance(child, ast.If) and \
+                            child.test.left.id == '__name__' and \
+                            len(child.test.ops) == 1 and \
+                            isinstance(child.test.ops[0], ast.Eq) and \
+                            child.test.comparators[0].s == '__main__':
+                        mainchecked = True
+                except Exception:
+                    pass
+
+                if not mainchecked:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=109,
+                        msg='Next to last line should be: if __name__ == "__main__":',
+                        line=child.lineno
+                    )
+
+            # validate that the final line is a call to main()
             if isinstance(child, ast.Expr):
                 if isinstance(child.value, ast.Call):
                     if (isinstance(child.value.func, ast.Name) and
-                            child.value.func.id == 'main'):
+                            child.value.func.id == look_for):
                         lineno = child.lineno
                         if lineno < self.length - 1:
                             self.reporter.error(
                                 path=self.object_path,
                                 code=104,
-                                msg='Call to main() not the last line',
+                                msg=('Call to %s() not the last line' % look_for),
                                 line=lineno
                             )
 
@@ -524,7 +568,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=103,
-                msg='Did not find a call to main'
+                msg=('Did not find a call to %s()' % look_for)
             )
 
         return lineno or 0
@@ -549,7 +593,7 @@ class ModuleValidator(Validator):
                 self.reporter.warning(
                     path=self.object_path,
                     code=291,
-                    msg='Found Try/Except block without HAS_ assginment'
+                    msg='Found Try/Except block without HAS_ assignment'
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
@@ -635,19 +679,41 @@ class ModuleValidator(Validator):
                         line=import_line
                     )
 
-    def _find_ps_replacers(self):
-        if 'WANT_JSON' not in self.text:
-            self.reporter.error(
-                path=self.object_path,
-                code=206,
-                msg='WANT_JSON not found in module'
-            )
+    def _validate_ps_replacers(self):
+        # loop all (for/else + error)
+        # get module list for each
+        # check "shape" of each module name
 
-        if REPLACER_WINDOWS not in self.text:
+        module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        found_requires = False
+
+        for req_stmt in re.finditer(module_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.psm1'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #Requires should not end in .psm1: "%s"' % module_name
+                )
+
+        # also accept the legacy #POWERSHELL_COMMON replacer signal
+        if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='"%s" not found in module' % REPLACER_WINDOWS
+                msg='No Ansible.ModuleUtils module requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -687,6 +753,9 @@ class ModuleValidator(Validator):
         for child in self.ast.body:
             if isinstance(child, ast.Assign):
                 for grandchild in child.targets:
+                    if not isinstance(grandchild, ast.Name):
+                        continue
+
                     if grandchild.id == 'DOCUMENTATION':
                         docs['DOCUMENTATION']['value'] = child.value.s
                         docs['DOCUMENTATION']['lineno'] = child.lineno
@@ -746,6 +815,7 @@ class ModuleValidator(Validator):
     def _validate_docs(self):
         doc_info = self._get_docs()
         deprecated = False
+        doc = None
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -772,7 +842,7 @@ class ModuleValidator(Validator):
             if not errors and not traces:
                 with CaptureStd():
                     try:
-                        get_docstring(self.path, verbose=True)
+                        get_docstring(self.path, fragment_loader, verbose=True)
                     except AssertionError:
                         fragment = doc['extends_documentation_fragment']
                         self.reporter.error(
@@ -780,7 +850,7 @@ class ModuleValidator(Validator):
                             code=303,
                             msg='DOCUMENTATION fragment missing: %s' % fragment
                         )
-                    except Exception:
+                    except Exception as e:
                         self.reporter.trace(
                             path=self.object_path,
                             tracebk=traceback.format_exc()
@@ -788,15 +858,14 @@ class ModuleValidator(Validator):
                         self.reporter.error(
                             path=self.object_path,
                             code=304,
-                            msg='Unknown DOCUMENTATION error, see TRACE'
+                            msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                         )
 
-                if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
+                if 'options' in doc and doc['options'] is None:
                     self.reporter.error(
                         path=self.object_path,
-                        code=304,
-                        msg=('DOCUMENTATION.options must be a dictionary/hash when used '
-                             'with DOCUMENTATION.extends_documentation_fragment')
+                        code=320,
+                        msg='DOCUMENTATION.options must be a dictionary/hash when used',
                     )
 
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
@@ -808,7 +877,14 @@ class ModuleValidator(Validator):
                             msg='Module deprecated, but DOCUMENTATION.deprecated is missing'
                         )
 
-                self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
+                if os.path.islink(self.object_path):
+                    # This module has an alias, which we can tell as it's a symlink
+                    # Rather than checking for `module: $filename` we need to check against the true filename
+                    self._validate_docs_schema(doc, doc_schema(os.readlink(self.object_path).split('.')[0]), 'DOCUMENTATION', 305)
+                else:
+                    # This is the normal case
+                    self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
+
                 self._check_version_added(doc)
                 self._check_for_new_args(doc)
 
@@ -880,35 +956,45 @@ class ModuleValidator(Validator):
                     doc_info['ANSIBLE_METADATA']['value']
                 )
             else:
-                metadata, errors, traces = parse_yaml(
-                    doc_info['ANSIBLE_METADATA']['value'].s,
-                    doc_info['ANSIBLE_METADATA']['lineno'],
-                    self.name, 'ANSIBLE_METADATA'
+                # ANSIBLE_METADATA doesn't properly support YAML
+                # we should consider removing it from the spec
+                # Below code kept, incase we change our minds
+
+                # metadata, errors, traces = parse_yaml(
+                #     doc_info['ANSIBLE_METADATA']['value'].s,
+                #     doc_info['ANSIBLE_METADATA']['lineno'],
+                #     self.name, 'ANSIBLE_METADATA'
+                # )
+                # for error in errors:
+                #     self.reporter.error(
+                #         path=self.object_path,
+                #         code=315,
+                #         **error
+                #     )
+                # for trace in traces:
+                #     self.reporter.trace(
+                #         path=self.object_path,
+                #         tracebk=trace
+                #     )
+
+                self.reporter.error(
+                    path=self.object_path,
+                    code=315,
+                    msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
                 )
-                for error in errors:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code=315,
-                        **error
-                    )
-                for trace in traces:
-                    self.reporter.trace(
-                        path=self.object_path,
-                        tracebk=trace
-                    )
 
             if metadata:
-                self._validate_docs_schema(metadata, metadata_schema(deprecated),
+                self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
-        return doc_info
+        return doc_info, doc
 
     def _check_version_added(self, doc):
         if not self._is_new_module():
             return
 
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '0.0')))
+            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             self.reporter.error(
@@ -929,11 +1015,40 @@ class ModuleValidator(Validator):
                 msg='version_added should be %s. Currently %s' % (should_be, version_added)
             )
 
-    def _validate_argument_spec(self):
+    def _validate_argument_spec(self, docs):
         if not self.analyze_arg_spec:
             return
-        spec = get_argument_spec(self.path)
+
+        try:
+            spec, args, kwargs = get_argument_spec(self.path)
+        except AnsibleModuleImportError as e:
+            self.reporter.error(
+                path=self.object_path,
+                code=321,
+                msg="Exception attempting to import module for argument_spec introspection, '%s'" % e
+            )
+            self.reporter.trace(
+                path=self.object_path,
+                tracebk=traceback.format_exc()
+            )
+            return
+
+        provider_args = set()
+        args_from_argspec = set()
+        deprecated_args_from_argspec = set()
         for arg, data in spec.items():
+            if not data.get('removed_in_version', None):
+                args_from_argspec.add(arg)
+                args_from_argspec.update(data.get('aliases', []))
+            else:
+                deprecated_args_from_argspec.add(arg)
+                deprecated_args_from_argspec.update(data.get('aliases', []))
+            if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
+                # Record provider options from network modules, for later comparison
+                for provider_arg, provider_data in data.get('options', {}).items():
+                    provider_args.add(provider_arg)
+                    provider_args.update(provider_data.get('aliases', []))
+
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
                     path=self.object_path,
@@ -943,14 +1058,58 @@ class ModuleValidator(Validator):
                          'should not be marked as required' % arg)
                 )
 
+        if docs:
+            try:
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+            except Exception:
+                # Cannot merge fragments
+                return
+
+            file_common_arguments = set()
+            for arg, data in FILE_COMMON_ARGUMENTS.items():
+                file_common_arguments.add(arg)
+                file_common_arguments.update(data.get('aliases', []))
+
+            args_from_docs = set()
+            for arg, data in docs.get('options', {}).items():
+                args_from_docs.add(arg)
+                args_from_docs.update(data.get('aliases', []))
+
+            args_missing_from_docs = args_from_argspec.difference(args_from_docs)
+            docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
+            for arg in args_missing_from_docs:
+                # args_from_argspec contains undocumented argument
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                if arg in provider_args:
+                    # Provider args are being removed from network module top level
+                    # So they are likely not documented on purpose
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=322,
+                    msg='"%s" is listed in the argument_spec, but not documented in the module' % arg
+                )
+            for arg in docs_missing_from_args:
+                # args_from_docs contains argument not in the argument_spec
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=323,
+                    msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
+                )
+
     def _check_for_new_args(self, doc):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
-                existing_options = existing_doc.get('options', {})
+                existing_doc = get_docstring(self.base_module, fragment_loader, verbose=True)[0]
+                existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(
@@ -980,13 +1139,17 @@ class ModuleValidator(Validator):
         except ValueError:
             mod_version_added = StrictVersion('0.0')
 
-        options = doc.get('options', {})
+        options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
         strict_ansible_version = StrictVersion(should_be)
 
         for option, details in options.items():
-            names = [option] + details.get('aliases', [])
+            try:
+                names = [option] + details.get('aliases', [])
+            except (TypeError, AttributeError):
+                # Reporting of this syntax error will be handled by schema validation.
+                continue
 
             if any(name in existing_options for name in names):
                 continue
@@ -1005,7 +1168,7 @@ class ModuleValidator(Validator):
                          (option, version_added))
                 )
                 continue
-            except:
+            except Exception:
                 # If there is any other exception it should have been caught
                 # in schema validation, so we won't duplicate errors by
                 # listing it again
@@ -1067,11 +1230,19 @@ class ModuleValidator(Validator):
                 )
             return
 
+        end_of_deprecation_should_be_docs_only = False
         if self._python_module():
-            doc_info = self._validate_docs()
+            doc_info, docs = self._validate_docs()
 
-        if self._python_module() and not self._just_docs():
-            self._validate_argument_spec()
+            # See if current version => deprecated.removed_in, ie, should be docs only
+            if docs and 'deprecated' in docs and docs['deprecated'] is not None:
+                removed_in = docs.get('deprecated')['removed_in']
+                strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in
+                # FIXME if +2 then file should be empty? - maybe add this only in the future
+
+        if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_docs_only:
+            self._validate_argument_spec(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()
@@ -1082,15 +1253,18 @@ class ModuleValidator(Validator):
             self._ensure_imports_below_docs(doc_info, first_callable)
 
         if self._powershell_module():
-            self._find_ps_replacers()
+            self._validate_ps_replacers()
             self._find_ps_docs_py_file()
 
-        self._check_for_gpl3_header()
-        if not self._just_docs():
+        self._check_gpl3_header()
+        if not self._just_docs() and not end_of_deprecation_should_be_docs_only:
             self._check_interpreter(powershell=self._powershell_module())
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
+        if end_of_deprecation_should_be_docs_only:
+            # Ensure that `if __name__ == '__main__':` calls `removed_module()` which ensure that the module has no code in
+            main = self._find_main_call('removed_module')
 
 
 class PythonPackageValidator(Validator):
@@ -1220,7 +1394,20 @@ class GitCache(object):
         else:
             self.base_tree = []
 
-        self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        try:
+            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        except GitError as ex:
+            if ex.status == 128:
+                # fallback when there is no .git directory
+                self.head_tree = self._get_module_files()
+            else:
+                raise
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                # fallback when git is not installed
+                self.head_tree = self._get_module_files()
+            else:
+                raise
 
         self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
 
@@ -1236,11 +1423,30 @@ class GitCache(object):
                     self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
 
     @staticmethod
+    def _get_module_files():
+        module_files = []
+
+        for (dir_path, dir_names, file_names) in os.walk('lib/ansible/modules/'):
+            for file_name in file_names:
+                module_files.append(os.path.join(dir_path, file_name))
+
+        return module_files
+
+    @staticmethod
     def _git(args):
         cmd = ['git'] + args
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise GitError(stderr, p.returncode)
         return stdout.decode('utf-8').splitlines()
+
+
+class GitError(Exception):
+    def __init__(self, message, status):
+        super(GitError, self).__init__(message)
+
+        self.status = status
 
 
 if __name__ == '__main__':

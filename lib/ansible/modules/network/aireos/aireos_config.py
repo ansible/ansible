@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -167,11 +167,11 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/aireos_config.2016-07-16@22:28:34
 """
-from ansible.module_utils.aireos import run_commands, get_config, load_config, sanitize
-from ansible.module_utils.aireos import aireos_argument_spec
-from ansible.module_utils.aireos import check_args as aireos_check_args
+from ansible.module_utils.network.aireos.aireos import run_commands, get_config, load_config
+from ansible.module_utils.network.aireos.aireos import aireos_argument_spec
+from ansible.module_utils.network.aireos.aireos import check_args as aireos_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def get_running_config(module, config=None):
@@ -281,7 +281,7 @@ def main():
 
     if module._diff:
         output = run_commands(module, 'show run-config commands')
-        contents = sanitize(output[0])
+        contents = output[0]
 
         # recreate the object in order to process diff_ignore_lines
         running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_domain_name.yaml"
+- debug: msg="START cli/set_domain_name.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -33,4 +33,4 @@
     match: none
     provider: "{{ cli }}"
 
-- debug: msg="END cli/set_domain_name.yaml"
+- debug: msg="END cli/set_domain_name.yaml on connection={{ ansible_connection }}"

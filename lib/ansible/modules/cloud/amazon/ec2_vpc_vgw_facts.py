@@ -1,19 +1,12 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -100,25 +93,24 @@ changed:
     type: bool
     sample: "false"
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+import traceback
 
 try:
     import botocore
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
-import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
+                                      camel_dict_to_snake_dict, ansible_dict_to_boto3_filter_list, HAS_BOTO3)
+
 
 def get_virtual_gateway_info(virtual_gateway):
     virtual_gateway_info = {'VpnGatewayId': virtual_gateway['VpnGatewayId'],
-                             'State': virtual_gateway['State'],
-                             'Type': virtual_gateway['Type'],
-                             'VpcAttachments': virtual_gateway['VpcAttachments'],
-                             'Tags': virtual_gateway['Tags']}
+                            'State': virtual_gateway['State'],
+                            'Type': virtual_gateway['Type'],
+                            'VpcAttachments': virtual_gateway['VpcAttachments'],
+                            'Tags': virtual_gateway.get('Tags', [])}
     return virtual_gateway_info
 
 
@@ -134,10 +126,10 @@ def list_virtual_gateways(client, module):
     try:
         all_virtual_gateways = client.describe_vpn_gateways(**params)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e),exception=traceback.format_exc())
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
-                                for vgw in all_virtual_gateways['VpnGateways']]
+                   for vgw in all_virtual_gateways['VpnGateways']]
 
     module.exit_json(virtual_gateways=snaked_vgws)
 
@@ -146,8 +138,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(type='dict', default=dict()),
-            vpn_gateway_ids = dict(type='list', default=None)
+            filters=dict(type='dict', default=dict()),
+            vpn_gateway_ids=dict(type='list', default=None)
         )
     )
 
@@ -161,7 +153,7 @@ def main():
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+        module.fail_json(msg="Can't authorize connection - " + str(e))
 
     # call your function here
     results = list_virtual_gateways(connection, module)

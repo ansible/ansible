@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -243,7 +243,7 @@ def main():
     config_file = module.params['config_file']
 
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
     else:
         warnings.filterwarnings('error', category=MySQLdb.Warning)
 
@@ -359,7 +359,8 @@ def main():
         else:
             module.exit_json(msg="Slave already reset", changed=False)
 
+    warnings.simplefilter("ignore")
+
 
 if __name__ == '__main__':
     main()
-    warnings.simplefilter("ignore")

@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,7 +36,7 @@ options:
         description:
             - Identifies a network flow by the local IP address.
         required: false
-    remove_ip:
+    remote_ip:
         description:
             - Identifies a network flow by the remote IP address.
         required: false

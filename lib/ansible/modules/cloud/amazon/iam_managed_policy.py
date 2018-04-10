@@ -1,21 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -52,6 +45,9 @@ options:
     default: null
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements:
     - boto3
     - botocore
@@ -114,9 +110,6 @@ policy:
   }'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
-from ansible.module_utils.ec2 import sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3
 import json
 import traceback
 
@@ -124,6 +117,11 @@ try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry,
+                                      camel_dict_to_snake_dict, HAS_BOTO3, compare_policies)
+from ansible.module_utils._text import to_native
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -179,8 +177,8 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
             module.fail_json(msg="Couldn't get policy version %s: %s" % (v['VersionId'], str(e)),
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
-        if sort_json_policy_dict(document) == sort_json_policy_dict(
-                json.loads(policy_document)):
+        # If the current policy matches the existing one
+        if not compare_policies(document, json.loads(to_native(policy_document))):
             return v, False
 
     # No existing version so create one
@@ -193,7 +191,7 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
         version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
         return version, True
     except botocore.exceptions.ClientError as e:
-        if e['Error']['Code'] == 'LimitExceeded':
+        if e.response['Error']['Code'] == 'LimitExceeded':
             delete_oldest_non_default_version(module, iam, policy)
             try:
                 version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
@@ -318,8 +316,8 @@ def main():
             try:
                 rvalue = iam.create_policy(PolicyName=name, Path='/',
                                            PolicyDocument=policy, Description=description)
-            except:
-                module.fail_json(msg="Couldn't create policy %s: %s" % (name, str(e)),
+            except Exception as e:
+                module.fail_json(msg="Couldn't create policy %s: %s" % (name, to_native(e)),
                                  exception=traceback.format_exc(),
                                  **camel_dict_to_snake_dict(e.response))
 
@@ -332,8 +330,8 @@ def main():
             if changed:
                 try:
                     p = iam.get_policy(PolicyArn=p['Arn'])['Policy']
-                except:
-                    module.fail_json(msg="Couldn't get policy: %s" % str(e),
+                except Exception as e:
+                    module.fail_json(msg="Couldn't get policy: %s" % to_native(e),
                                      exception=traceback.format_exc(),
                                      **camel_dict_to_snake_dict(e.response))
 
@@ -347,7 +345,7 @@ def main():
             try:
                 versions = iam.list_policy_versions(PolicyArn=p['Arn'])['Versions']
             except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Couldn't list policy versions: %s" % str(e),
+                module.fail_json(msg="Couldn't list policy versions: %s" % to_native(e),
                                  exception=traceback.format_exc(),
                                  **camel_dict_to_snake_dict(e.response))
             for v in versions:
@@ -355,14 +353,15 @@ def main():
                     try:
                         iam.delete_policy_version(PolicyArn=p['Arn'], VersionId=v['VersionId'])
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Couldn't delete policy version %s: %s" % (v['VersionId'], str(e)),
+                        module.fail_json(msg="Couldn't delete policy version %s: %s" %
+                                         (v['VersionId'], to_native(e)),
                                          exception=traceback.format_exc(),
                                          **camel_dict_to_snake_dict(e.response))
             # Delete policy
             try:
                 iam.delete_policy(PolicyArn=p['Arn'])
-            except:
-                module.fail_json(msg="Couldn't delete policy %s: %s" % (p['PolicyName'], str(e)),
+            except Exception as e:
+                module.fail_json(msg="Couldn't delete policy %s: %s" % (p['PolicyName'], to_native(e)),
                                  exception=traceback.format_exc(),
                                  **camel_dict_to_snake_dict(e.response))
             # This is the one case where we will return the old policy
@@ -372,6 +371,5 @@ def main():
 # end main
 
 
-# import module snippets
 if __name__ == '__main__':
     main()

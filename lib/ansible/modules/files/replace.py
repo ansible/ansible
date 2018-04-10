@@ -1,24 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Evan Kaufman <evan@digitalflophouse.com
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2013, Evan Kaufman <evan@digitalflophouse.com
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -39,71 +29,63 @@ description:
 version_added: "1.6"
 options:
   path:
-    required: true
-    aliases: [ dest, destfile, name ]
     description:
       - The file to modify.
       - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
-  regexp:
+    aliases: [ dest, destfile, name ]
     required: true
+  regexp:
     description:
       - The regular expression to look for in the contents of the file.
         Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-        Uses multiline mode, which means C(^) and C($) match the beginning
-        and end respectively of I(each line) of the file.
+        Uses MULTILINE mode, which means C(^) and C($) match the beginning
+        and end of the file, as well as the beginning and end respectively
+        of I(each line) of the file.
+      - Does not use DOTALL, which means the C(.) special character matches
+        any character I(except newlines). A common mistake is to assume that
+        a negated character set like C([^#]) will also not match newlines.
+        In order to exclude newlines, they must be added to the set like C([^#\\n]).
       - Note that, as of ansible 2, short form tasks should have any escape
         sequences backslash-escaped in order to prevent them being parsed
         as string literal escapes. See the examples.
-
+    required: true
   replace:
-    required: false
     description:
       - The string to replace regexp matches. May contain backreferences
         that will get expanded with the regexp capture groups if the regexp
         matches. If not set, matches are removed entirely.
   after:
-    required: false
-    version_added: "2.4"
     description:
       - If specified, the line after the replace/remove will start. Can be used
         in combination with C(before).
         Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-  before:
-    required: false
     version_added: "2.4"
+  before:
     description:
       - If specified, the line before the replace/remove will occur. Can be used
         in combination with C(after).
         Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
+    version_added: "2.4"
   backup:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: 'no'
   others:
     description:
       - All arguments accepted by the M(file) module also work here.
-    required: false
-  follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.9"
-    description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
   encoding:
-    required: false
-    default: "utf-8"
-    version_added: "2.4"
     description:
       - "The character encoding for reading and writing the file."
+    default: "utf-8"
+    version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 """
 
 EXAMPLES = r"""
@@ -172,8 +154,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 def write_changes(module, contents, path):
 
-    tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd,'wb')
+    tmpfd, tmpfile = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
+    f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()
 
@@ -186,7 +168,7 @@ def write_changes(module, contents, path):
         valid = rc == 0
         if rc != 0:
             module.fail_json(msg='failed to validate: '
-                                 'rc:%s error:%s' % (rc,err))
+                                 'rc:%s error:%s' % (rc, err))
     if valid:
         module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
@@ -282,8 +264,8 @@ def main():
     if changed and not module.check_mode:
         if params['backup'] and os.path.exists(path):
             res_args['backup_file'] = module.backup_local(path)
-        if params['follow'] and os.path.islink(path):
-            path = os.path.realpath(path)
+        # We should always follow symlinks so that we change the real file
+        path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)

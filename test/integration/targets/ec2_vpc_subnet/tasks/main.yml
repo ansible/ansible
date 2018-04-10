@@ -1,0 +1,368 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_vpc_subnet
+
+- block:
+
+    # ============================================================
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    - name: create subnet (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_create
+
+    - name: assert creation happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_create'
+           - 'vpc_subnet_create.subnet.id.startswith("subnet-")'
+           - '"Name" in vpc_subnet_create.subnet.tags and vpc_subnet_create.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_create.subnet.tags and vpc_subnet_create.subnet.tags["Description"] == ec2_vpc_subnet_description'
+
+    - name: recreate subnet (expected changed=false)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_recreate
+
+    - name: assert recreation changed nothing (expected changed=false)
+      assert:
+        that:
+           - 'not vpc_subnet_recreate.changed'
+           - 'vpc_subnet_recreate.subnet == vpc_subnet_create.subnet'
+
+    - name: add invalid ipv6 block to subnet (expected failed)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: 2001:db8::/64
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_ipv6_failed
+      ignore_errors: yes
+
+    - name: assert failure happened (expected failed)
+      assert:
+        that:
+           - 'vpc_subnet_ipv6_failed.failed'
+           - "'Couldn\\'t associate ipv6 cidr' in vpc_subnet_ipv6_failed.msg"
+
+    - name: add a tag (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+          AnotherTag: SomeValue
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_add_a_tag
+
+    - name: assert tag addition happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_add_a_tag.changed'
+           - '"Name" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["Description"] == ec2_vpc_subnet_description'
+           - '"AnotherTag" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["AnotherTag"] == "SomeValue"'
+
+    - name: remove tags with default purge_tags=true (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          AnotherTag: SomeValue
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_remove_tags
+
+    - name: assert tag removal happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_remove_tags.changed'
+           - '"Name" not in vpc_subnet_remove_tags.subnet.tags'
+           - '"Description" not in vpc_subnet_remove_tags.subnet.tags'
+           - '"AnotherTag" in vpc_subnet_remove_tags.subnet.tags and vpc_subnet_remove_tags.subnet.tags["AnotherTag"] == "SomeValue"'
+
+    - name: change tags with purge_tags=false (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+        purge_tags: false
+      register: vpc_subnet_change_tags
+
+    - name: assert tag addition happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_change_tags.changed'
+           - '"Name" in vpc_subnet_change_tags.subnet.tags and vpc_subnet_change_tags.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_change_tags.subnet.tags and vpc_subnet_change_tags.subnet.tags["Description"] == ec2_vpc_subnet_description'
+           - '"AnotherTag" in vpc_subnet_change_tags.subnet.tags and vpc_subnet_change_tags.subnet.tags["AnotherTag"] == "SomeValue"'
+
+    - name: test state=absent (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+
+    - name: create subnet without AZ
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: present
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: subnet_without_az
+
+    - name: check that subnet without AZ works fine
+      assert:
+        that:
+           - 'subnet_without_az.changed'
+
+    - name: remove subnet without AZ
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+
+    # FIXME - Replace by creating IPv6 enabled VPC once ec2_vpc_net module supports it.
+    - name: install aws cli - FIXME temporary this should go for a lighterweight solution
+      command: pip install awscli
+
+    - name: Assign an Amazon provided IPv6 CIDR block to the VPC
+      command: aws ec2 associate-vpc-cidr-block --amazon-provided-ipv6-cidr-block --vpc-id '{{ vpc_result.vpc.id }}'
+      environment:
+          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
+          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_DEFAULT_REGION: '{{ec2_region}}'
+
+    - name: Get the assigned IPv6 CIDR
+      command: aws ec2 describe-vpcs --vpc-ids '{{ vpc_result.vpc.id }}'
+      environment:
+          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
+          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_DEFAULT_REGION: '{{ec2_region}}'
+      register: vpc_ipv6
+
+    - set_fact:
+        vpc_ipv6_cidr: "{{ vpc_ipv6.stdout | from_json | json_query('Vpcs[0].Ipv6CidrBlockAssociationSet[0].Ipv6CidrBlock') }}"
+
+    - name: create subnet with IPv6 (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        assign_instances_ipv6: true
+        state: present
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+      register: vpc_subnet_ipv6_create
+
+    - name: assert creation with IPv6 happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_ipv6_create'
+           - 'vpc_subnet_ipv6_create.subnet.id.startswith("subnet-")'
+           - "vpc_subnet_ipv6_create.subnet.ipv6_cidr_block == '{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}'"
+           - '"Name" in vpc_subnet_ipv6_create.subnet.tags and vpc_subnet_ipv6_create.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_ipv6_create.subnet.tags and vpc_subnet_ipv6_create.subnet.tags["Description"] == ec2_vpc_subnet_description'
+           - 'vpc_subnet_ipv6_create.subnet.assign_ipv6_address_on_creation'
+
+    - name: recreate subnet (expected changed=false)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        assign_instances_ipv6: true
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+      register: vpc_subnet_ipv6_recreate
+
+    - name: assert recreation changed nothing (expected changed=false)
+      assert:
+        that:
+           - 'not vpc_subnet_ipv6_recreate.changed'
+           - 'vpc_subnet_ipv6_recreate.subnet == vpc_subnet_ipv6_create.subnet'
+
+    - name: change subnet ipv6 attribute (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        assign_instances_ipv6: false
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+        purge_tags: false
+      register: vpc_change_attribute
+
+    - name: assert assign_instances_ipv6 attribute changed (expected changed=true)
+      assert:
+        that:
+           - 'vpc_change_attribute.changed'
+           - 'not vpc_change_attribute.subnet.assign_ipv6_address_on_creation'
+
+    - name: add second subnet with duplicate ipv6 cidr (expected failure)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.144/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+        purge_tags: false
+      register: vpc_add_duplicate_ipv6
+      ignore_errors: true
+
+    - name: assert graceful failure (expected failed)
+      assert:
+        that:
+           - 'vpc_add_duplicate_ipv6.failed'
+           - "'The IPv6 CIDR \\'{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}\\' conflicts with another subnet' in vpc_add_duplicate_ipv6.msg"
+
+    - name: remove subnet ipv6 cidr (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+        purge_tags: false
+      register: vpc_remove_ipv6_cidr
+
+    - name: assert subnet ipv6 cidr removed (expected changed=true)
+      assert:
+        that:
+           - 'vpc_remove_ipv6_cidr.changed'
+           - "vpc_remove_ipv6_cidr.subnet.ipv6_cidr_block == ''"
+           - 'not vpc_remove_ipv6_cidr.subnet.assign_ipv6_address_on_creation'
+
+  always:
+
+    ################################################
+    # TEARDOWN STARTS HERE
+    ################################################
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'

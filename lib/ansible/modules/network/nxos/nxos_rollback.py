@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -35,6 +35,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Sometimes C(transport=nxapi) may cause a timeout error.
 options:
     checkpoint_file:
@@ -78,7 +79,7 @@ status:
 '''
 
 
-from ansible.module_utils.nxos import nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, run_commands
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -103,10 +104,7 @@ def rollback(filename, module):
 def main():
     argument_spec = dict(
         checkpoint_file=dict(required=False),
-        rollback_to=dict(required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        rollback_to=dict(required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

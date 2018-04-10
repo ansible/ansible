@@ -1,0 +1,2 @@
+bugfixes:
+- include_role - improved performance and recursion depth (https://github.com/ansible/ansible/pull/36470)

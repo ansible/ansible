@@ -1,0 +1,137 @@
+---
+- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}"
+
+- name: Run vyos lsmod command
+  vyos_command:
+    commands:
+      - lsmod
+  register: lsmod_out
+
+- name: Setup (interface is up)
+  vyos_interface:
+    name: eth1
+    enabled: True
+    state: present
+  register: result
+
+- name: Check intent arguments
+  vyos_interface:
+    name: eth1
+    state: up
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check lldp neighbors intent arguments
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: eth0
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
+- name: Check intent arguments (failed condition)
+  vyos_interface:
+    name: eth1
+    state: down
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Check lldp neighbors intent arguments (failed)
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: dummy_port
+      host: dummy_host
+  ignore_errors: yes
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'host dummy_host' in result.failed_conditions"
+      - "'port dummy_port' in result.failed_conditions"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Config + intent (fail)
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: up
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(up)' in result.failed_conditions"
+
+- name: Aggregate config + intent (pass)
+  vyos_interface:
+    aggregate:
+    - name: eth1
+      enabled: True
+      state: up
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check lldp neighbors intent aggregate arguments
+  vyos_interface:
+    aggregate:
+    - name: eth0
+      neighbors:
+      - port: eth0
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
+- name: Check lldp neighbors intent aggregate arguments (failed)
+  vyos_interface:
+    aggregate:
+    - name: eth0
+      neighbors:
+      - port: eth0
+      - port: dummy_port
+        host: dummy_host
+  ignore_errors: yes
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'host dummy_host' in result.failed_conditions"
+      - "'port dummy_port' in result.failed_conditions"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"

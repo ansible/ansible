@@ -7,11 +7,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -138,10 +136,10 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
-from ansible.module_utils.sros import run_commands, sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import run_commands, sros_argument_spec, check_args
 
 
 def to_lines(stdout):
@@ -149,6 +147,7 @@ def to_lines(stdout):
         if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
+
 
 def parse_commands(module, warnings):
     command = ComplexList(dict(
@@ -169,6 +168,7 @@ def parse_commands(module, warnings):
                     'commands.  Please use sros_config instead'
             )
     return commands
+
 
 def main():
     """main entry point for module execution
@@ -220,9 +220,8 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result = {
         'changed': False,

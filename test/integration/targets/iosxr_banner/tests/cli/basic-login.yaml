@@ -2,8 +2,8 @@
 - name: setup - remove login
   iosxr_banner:
     banner: login
-    state: absent
     provider: "{{ cli }}"
+    state: absent
 
 - name: Set login
   iosxr_banner:
@@ -12,8 +12,8 @@
       this is my login banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - debug:
@@ -32,8 +32,8 @@
       this is my login banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - assert:

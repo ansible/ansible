@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -51,6 +51,7 @@ options:
   msg:
     description:
       - The text of the message to be displayed.
+      - The message must be less than 256 characters.
     default: Hello world!
 author:
 - Jon Hawkesworth (@jhawkesworth)

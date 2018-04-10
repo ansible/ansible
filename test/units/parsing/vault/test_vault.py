@@ -30,6 +30,7 @@ from binascii import hexlify
 import pytest
 
 from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
@@ -38,6 +39,62 @@ from ansible.parsing import vault
 
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
+
+
+class TestUnhexlify(unittest.TestCase):
+    def test(self):
+        b_plain_data = b'some text to hexlify'
+        b_data = hexlify(b_plain_data)
+        res = vault._unhexlify(b_data)
+        self.assertEquals(res, b_plain_data)
+
+    def test_odd_length(self):
+        b_data = b'123456789abcdefghijklmnopqrstuvwxyz'
+
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*',
+                                vault._unhexlify,
+                                b_data)
+
+    def test_nonhex(self):
+        b_data = b'6z36316566653264333665333637623064303639353237620a636366633565663263336335656532'
+
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
+                                vault._unhexlify,
+                                b_data)
+
+
+class TestParseVaulttext(unittest.TestCase):
+    def test(self):
+        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+33363965326261303234626463623963633531343539616138316433353830356566396130353436
+3562643163366231316662386565383735653432386435610a306664636137376132643732393835
+63383038383730306639353234326630666539346233376330303938323639306661313032396437
+6233623062366136310a633866373936313238333730653739323461656662303864663666653563
+3138'''
+
+        b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
+        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
+        res = vault.parse_vaulttext(b_vaulttext)
+        self.assertIsInstance(res[0], bytes)
+        self.assertIsInstance(res[1], bytes)
+        self.assertIsInstance(res[2], bytes)
+
+    def test_non_hex(self):
+        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+3336396J326261303234626463623963633531343539616138316433353830356566396130353436
+3562643163366231316662386565383735653432386435610a306664636137376132643732393835
+63383038383730306639353234326630666539346233376330303938323639306661313032396437
+6233623062366136310a633866373936313238333730653739323461656662303864663666653563
+3138'''
+
+        b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
+        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
+                                vault.parse_vaulttext,
+                                b_vaulttext_envelope)
 
 
 class TestVaultSecret(unittest.TestCase):
@@ -60,8 +117,42 @@ class TestPromptVaultSecret(unittest.TestCase):
         secret.load()
         self.assertIsNone(secret._bytes)
 
+    @patch('ansible.parsing.vault.display.prompt', return_value='the_password')
+    def test_prompt_formats_none(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id')
+        secret.load()
+        self.assertEqual(secret._bytes, b'the_password')
+
+    @patch('ansible.parsing.vault.display.prompt', return_value='the_password')
+    def test_custom_prompt(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id',
+                                         prompt_formats=['The cow flies at midnight: '])
+        secret.load()
+        self.assertEqual(secret._bytes, b'the_password')
+
+    @patch('ansible.parsing.vault.display.prompt', side_effect=EOFError)
+    def test_prompt_eoferror(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id')
+        self.assertRaisesRegexp(vault.AnsibleVaultError,
+                                'EOFError.*test_id',
+                                secret.load)
+
+    @patch('ansible.parsing.vault.display.prompt', side_effect=['first_password', 'second_password'])
+    def test_prompt_passwords_dont_match(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id',
+                                         prompt_formats=['Vault password: ',
+                                                         'Confirm Vault password: '])
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'Passwords do not match',
+                                secret.load)
+
 
 class TestFileVaultSecret(unittest.TestCase):
+    def setUp(self):
+        self.vault_password = "test-vault-password"
+        text_secret = TextVaultSecret(self.vault_password)
+        self.vault_secrets = [('foo', text_secret)]
+
     def test(self):
         secret = vault.FileVaultSecret()
         self.assertIsNone(secret._bytes)
@@ -100,6 +191,51 @@ class TestFileVaultSecret(unittest.TestCase):
 
         self.assertEqual(secret.bytes, to_bytes(password))
 
+    def test_file_empty(self):
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file.write(to_bytes(''))
+        tmp_file.close()
+
+        fake_loader = DictDataLoader({tmp_file.name: ''})
+
+        secret = vault.FileVaultSecret(loader=fake_loader, filename=tmp_file.name)
+        self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                'Invalid vault password was provided from file.*%s' % tmp_file.name,
+                                secret.load)
+
+        os.unlink(tmp_file.name)
+
+    def test_file_encrypted(self):
+        vault_password = "test-vault-password"
+        text_secret = TextVaultSecret(vault_password)
+        vault_secrets = [('foo', text_secret)]
+
+        password = 'some password'
+        # 'some password' encrypted with 'test-ansible-password'
+
+        password_file_content = '''$ANSIBLE_VAULT;1.1;AES256
+61393863643638653437313566313632306462383837303132346434616433313438353634613762
+3334363431623364386164616163326537366333353663650a663634306232363432626162353665
+39623061353266373631636331643761306665343731376633623439313138396330346237653930
+6432643864346136640a653364386634666461306231353765636662316335613235383565306437
+3737
+'''
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file.write(to_bytes(password_file_content))
+        tmp_file.close()
+
+        fake_loader = DictDataLoader({tmp_file.name: 'sdfadf'})
+        fake_loader._vault.secrets = vault_secrets
+
+        secret = vault.FileVaultSecret(loader=fake_loader, filename=tmp_file.name)
+        secret.load()
+
+        os.unlink(tmp_file.name)
+
+        self.assertEqual(secret.bytes, to_bytes(password))
+
     def test_file_not_a_directory(self):
         filename = '/dev/null/foobar'
         fake_loader = DictDataLoader({filename: 'sdfadf'})
@@ -127,6 +263,102 @@ class TestScriptVaultSecret(unittest.TestCase):
         secret = vault.ScriptVaultSecret()
         self.assertIsNone(secret._bytes)
         self.assertIsNone(secret._text)
+
+    def _mock_popen(self, mock_popen, return_code=0, stdout=b'', stderr=b''):
+        def communicate():
+            return stdout, stderr
+        mock_popen.return_value = MagicMock(returncode=return_code)
+        mock_popen_instance = mock_popen.return_value
+        mock_popen_instance.communicate = communicate
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file(self, mock_popen):
+        self._mock_popen(mock_popen, stdout=b'some_password')
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            secret.load()
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_empty(self, mock_popen):
+        self._mock_popen(mock_popen, stdout=b'')
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                    'Invalid vault password was provided from script',
+                                    secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_os_error(self, mock_popen):
+        self._mock_popen(mock_popen)
+        mock_popen.side_effect = OSError('That is not an executable')
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(errors.AnsibleError,
+                                    'Problem running vault password script.*',
+                                    secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_not_executable(self, mock_popen):
+        self._mock_popen(mock_popen)
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=False)
+            self.assertRaisesRegexp(vault.AnsibleVaultError,
+                                    'The vault password script .* was not executable',
+                                    secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_non_zero_return_code(self, mock_popen):
+        stderr = b'That did not work for a random reason'
+        rc = 37
+
+        self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+        secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(errors.AnsibleError,
+                                    r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
+                                    secret.load)
+
+
+class TestScriptIsClient(unittest.TestCase):
+    def test_randomname(self):
+        filename = 'randomname'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
+
+    def test_something_dash_client(self):
+        filename = 'something-client'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_something_dash_client_somethingelse(self):
+        filename = 'something-client-somethingelse'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
+
+    def test_something_dash_client_py(self):
+        filename = 'something-client.py'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client_py(self):
+        filename = '/foo/bar/something-client.py'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client(self):
+        filename = '/foo/bar/something-client'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client_in_dir(self):
+        filename = '/foo/bar/something-client/but/not/filename'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
 
 
 class TestGetFileVaultSecret(unittest.TestCase):
@@ -476,11 +708,6 @@ class TestVaultLib(unittest.TestCase):
                                 v.encrypt,
                                 plaintext)
 
-    def test_is_encrypted(self):
-        self.assertFalse(self.v.is_encrypted(b"foobar"), msg="encryption check on plaintext yielded false positive")
-        b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
-        self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
-
     def test_format_vaulttext_envelope(self):
         cipher_name = "TEST"
         b_ciphertext = b"ansible"
@@ -510,6 +737,14 @@ class TestVaultLib(unittest.TestCase):
 
     def test_parse_vaulttext_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
+        b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
+        b_lines = b_ciphertext.split(b'\n')
+        self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
+        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
+
+    def test_parse_vaulttext_envelope_crlf(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\r\nansible"
         b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
@@ -652,6 +887,26 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
 
         # assert we throw an error
         self.v.decrypt(b_invalid_ciphertext)
+
+    def test_decrypt_and_get_vault_id(self):
+        b_expected_plaintext = to_bytes('foo bar\n')
+        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+65616435333934613466373335363332373764363365633035303466643439313864663837393234
+3330656363343637313962633731333237313636633534630a386264363438363362326132363239
+39363166646664346264383934393935653933316263333838386362633534326664646166663736
+6462303664383765650a356637643633366663643566353036303162386237336233393065393164
+6264'''
+
+        vault_secrets = self._vault_secrets_from_password('ansible_devel', 'ansible')
+        v = vault.VaultLib(vault_secrets)
+
+        b_vaulttext = to_bytes(vaulttext)
+
+        b_plaintext, vault_id_used, vault_secret_used = v.decrypt_and_get_vault_id(b_vaulttext)
+
+        self.assertEqual(b_expected_plaintext, b_plaintext)
+        self.assertEqual(vault_id_used, 'ansible_devel')
+        self.assertEqual(vault_secret_used.text, 'ansible')
 
     def test_decrypt_non_default_1_2(self):
         b_expected_plaintext = to_bytes('foo bar\n')

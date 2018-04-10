@@ -1,0 +1,3 @@
+bugfixes:
+- windows - display UTF-8 characters correctly in Windows return json
+  https://github.com/ansible/ansible/pull/37229

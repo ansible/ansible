@@ -1,20 +1,11 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -34,26 +25,32 @@ options:
   follow:
     description:
       - Whether to follow symlinks.
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'no'
   get_md5:
     description:
       - Whether to return the md5 sum of the file.
       - Will return None if not a regular file or if we're
         unable to use md5 (Common for FIPS-140 compliant systems).
-    choices: [ 'no', 'yes' ]
-    default: 'yes'
+      - The default of this option changed from C(yes) to C(no) in Ansible 2.5
+        and will be removed altogether in Ansible 2.9.
+      - Use C(get_checksum=true) with C(checksum_algorithm=md5) to return an
+        md5 hash under the C(checksum) return value.
+    type: bool
+    default: 'no'
   get_checksum:
     description:
       - Whether to return a checksum of the file (default sha1).
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'yes'
     version_added: "1.8"
   checksum_algorithm:
     description:
       - Algorithm to determine checksum of file. Will throw an error if the
         host is unable to use specified algorithm.
-    choices: [ sha1, sha224, sha256, sha384, sha512 ]
+      - The remote host has to support the hashing method specified, C(md5)
+        can be unavailable if the host is FIPS-140 compliant.
+    choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
     default: sha1
     aliases: [ checksum, checksum_algo ]
     version_added: "2.0"
@@ -63,14 +60,14 @@ options:
         the 'file' utility found on most Linux/Unix systems.
       - This will add both `mime_type` and 'charset' fields to the return, if possible.
       - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'yes'
     version_added: "2.1"
     aliases: [ mime, mime_type, mime-type ]
   get_attributes:
     description:
       - Get file attributes using lsattr tool if present.
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'yes'
     version_added: "2.3"
     aliases: [ attr, attributes ]
@@ -303,7 +300,8 @@ stat:
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
         md5:
-            description: md5 hash of the path
+            description: md5 hash of the path; this will be removed in Ansible 2.9 in
+                favor of the checksum return value
             returned: success, path exists and user can read stats and path
                 supports hashing and md5 is supported
             type: string
@@ -372,7 +370,6 @@ import stat
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
 
 
@@ -443,12 +440,12 @@ def main():
         argument_spec=dict(
             path=dict(required=True, type='path'),
             follow=dict(type='bool', default='no'),
-            get_md5=dict(type='bool', default='yes'),
+            get_md5=dict(type='bool'),
             get_checksum=dict(type='bool', default='yes'),
             get_mime=dict(type='bool', default='yes', aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default='yes', aliases=['attr', 'attributes']),
             checksum_algorithm=dict(type='str', default='sha1',
-                                    choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
+                                    choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum', 'checksum_algo']),
         ),
         supports_check_mode=True,
@@ -460,6 +457,14 @@ def main():
     get_mime = module.params.get('get_mime')
     get_attr = module.params.get('get_attributes')
     get_md5 = module.params.get('get_md5')
+
+    # get_md5 will be an undocumented option in 2.9 to be removed at a later
+    # date if possible (3.0+)
+    if get_md5:
+        module.deprecate("get_md5 has been deprecated along with the md5 return value, use "
+                         "get_checksum=True and checksum_algorithm=md5 instead", 2.9)
+    else:
+        get_md5 = False
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
 
@@ -469,8 +474,7 @@ def main():
             st = os.stat(b_path)
         else:
             st = os.lstat(b_path)
-    except OSError:
-        e = get_exception()
+    except OSError as e:
         if e.errno == errno.ENOENT:
             output = {'exists': False}
             module.exit_json(changed=False, stat=output)

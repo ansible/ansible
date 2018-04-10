@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -62,12 +51,8 @@ options:
   description:
     description:
       - Description of Interface.
-  collection:
+  aggregate:
     description: List of link aggregation definitions.
-  purge:
-    description:
-      - Purge link aggregation groups not defined in the collections parameter.
-    default: no
   state:
     description:
       - State of the link aggregation group.
@@ -82,7 +67,9 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -171,10 +158,13 @@ diff:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, get_configuration
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, get_configuration
 
 try:
     from lxml.etree import tostring
@@ -182,7 +172,6 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
-DEFAULT_COMMENT = 'configured by junos_linkagg'
 
 
 def validate_device_count(value, module):
@@ -195,15 +184,15 @@ def validate_min_links(value, module):
         module.fail_json(msg='min_links must be between 1 and 8')
 
 
-def validate_param_values(module, obj):
+def validate_param_values(module, obj, item):
     for key in obj:
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
-            validator(module.params.get(key), module)
+            validator(item.get(key), module)
 
 
-def configure_lag_params(module, warnings):
+def configure_lag_params(module, requests, item):
     top = 'interfaces/interface'
     param_lag_to_xpath_map = collections.OrderedDict()
     param_lag_to_xpath_map.update([
@@ -211,32 +200,29 @@ def configure_lag_params(module, warnings):
         ('description', 'description'),
         ('min_links', {'xpath': 'minimum-links', 'top': 'aggregated-ether-options'}),
         ('disable', {'xpath': 'disable', 'tag_only': True}),
-        ('mode', {'xpath': module.params['mode'], 'tag_only': True, 'top': 'aggregated-ether-options/lacp'}),
+        ('mode', {'xpath': item['mode'], 'tag_only': True, 'top': 'aggregated-ether-options/lacp'}),
     ])
 
-    validate_param_values(module, param_lag_to_xpath_map)
+    validate_param_values(module, param_lag_to_xpath_map, item)
 
-    want = map_params_to_obj(module, param_lag_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    want = map_params_to_obj(module, param_lag_to_xpath_map, param=item)
+    ele = map_obj_to_ele(module, want, top, param=item)
+    requests.append(ele)
 
-    diff = load_config(module, tostring(ele), warnings, action='replace')
-    if module.params['device_count']:
+    if item['device_count']:
         top = 'chassis/aggregated-devices/ethernet'
         device_count_to_xpath_map = {'device_count': {'xpath': 'device-count', 'leaf_only': True}}
 
-        validate_param_values(module, device_count_to_xpath_map)
+        validate_param_values(module, device_count_to_xpath_map, item)
 
-        want = map_params_to_obj(module, device_count_to_xpath_map)
-        ele = map_obj_to_ele(module, want, top)
-
-        diff = load_config(module, tostring(ele), warnings, action='replace')
-
-    return diff
+        want = map_params_to_obj(module, device_count_to_xpath_map, param=item)
+        ele = map_obj_to_ele(module, want, top, param=item)
+        requests.append(ele)
 
 
-def configure_member_params(module, warnings, diff=None):
+def configure_member_params(module, requests, item):
     top = 'interfaces/interface'
-    members = module.params['members']
+    members = item['members']
 
     if members:
         member_to_xpath_map = collections.OrderedDict()
@@ -246,81 +232,101 @@ def configure_member_params(module, warnings, diff=None):
         ])
 
         # link aggregation bundle assigned to member
-        module.params['bundle'] = module.params['name']
+        item['bundle'] = item['name']
 
         for member in members:
 
-            if module.params['state'] == 'absent':
+            if item['state'] == 'absent':
                 # if link aggregate bundle is not assigned to member, trying to
                 # delete it results in rpc-reply error, hence if is not assigned
                 # skip deleting it and continue to next member.
                 resp = get_configuration(module)
                 bundle = resp.xpath("configuration/interfaces/interface[name='%s']/ether-options/"
-                                    "ieee-802.3ad[bundle='%s']" % (member, module.params['bundle']))
+                                    "ieee-802.3ad[bundle='%s']" % (member, item['bundle']))
                 if not bundle:
                     continue
             # Name of member to be assigned to link aggregation bundle
-            module.params['name'] = member
+            item['name'] = member
 
-            validate_param_values(module, member_to_xpath_map)
+            validate_param_values(module, member_to_xpath_map, item)
 
-            want = map_params_to_obj(module, member_to_xpath_map)
-            ele = map_obj_to_ele(module, want, top)
-            diff = load_config(module, tostring(ele), warnings)
-
-    return diff
+            want = map_params_to_obj(module, member_to_xpath_map, param=item)
+            ele = map_obj_to_ele(module, want, top, param=item)
+            requests.append(ele)
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
-        mode=dict(default='on', type='str', choices=['on', 'off', 'active', 'passive']),
+    element_spec = dict(
+        name=dict(),
+        mode=dict(default='on', choices=['on', 'off', 'active', 'passive']),
         members=dict(type='list'),
         min_links=dict(type='int'),
         device_count=dict(type='int'),
-        description=dict(default=DEFAULT_COMMENT),
-        collection=dict(type='list'),
-        purge=dict(type='bool'),
+        description=dict(),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
-    required_one_of = [['name', 'collection']]
-    mutually_exclusive = [['name', 'collection']]
+
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
                            required_one_of=required_one_of,
-                           mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
+                           mutually_exclusive=mutually_exclusive)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
         result['warnings'] = warnings
 
-    state = module.params.get('state')
-    module.params['disable'] = True if state == 'down' else False
+    params = to_param_list(module)
+    requests = list()
+    for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
 
-    if state in ('present', 'up', 'down'):
-        module.params['state'] = 'present'
+        item = param.copy()
+        state = item.get('state')
+        item['disable'] = True if state == 'down' else False
 
-    else:
-        module.params['disable'] = True
+        if state in ('present', 'up', 'down'):
+            item['state'] = 'present'
 
-    if module.params.get('mode') == 'off':
-        module.params['mode'] = ''
-    elif module.params.get('mode') == 'on':
-        module.params['mode'] = 'passive'
+        else:
+            item['disable'] = True
 
+        mode = item.get('mode')
+        if mode == 'off':
+            item['mode'] = ''
+        elif mode == 'on':
+            item['mode'] = 'passive'
+
+        configure_lag_params(module, requests, item)
+        configure_member_params(module, requests, item)
+
+    diff = None
     with locked_config(module):
-        diff = configure_lag_params(module, warnings)
-        diff = configure_member_params(module, warnings, diff)
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

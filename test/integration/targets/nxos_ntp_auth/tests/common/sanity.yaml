@@ -1,0 +1,89 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp_auth sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Configure text ntp authentication
+  nxos_ntp_auth: &setup
+    key_id: 32
+    md5string: hello
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure text ntp authentication
+    nxos_ntp_auth: &configure_text
+      key_id: 32
+      md5string: hello
+      auth_type: text
+      trusted_key: true
+      authentication: on
+      state: present
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure text ntp authentication"
+    nxos_ntp_auth: *configure_text
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove text ntp authentication
+    nxos_ntp_auth: &remove_text
+      key_id: 32
+      md5string: hello
+      auth_type: text
+      trusted_key: true
+      authentication: on
+      state: absent
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: *true
+
+  - name: Configure encrypt ntp authentication
+    nxos_ntp_auth: &configure_encrypt
+      key_id: 32
+      md5string: hello
+      auth_type: encrypt
+      trusted_key: true
+      authentication: on
+      state: present
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure encrypt ntp authentication"
+    nxos_ntp_auth: *configure_encrypt
+    register: result
+
+  - assert: *false
+
+  - name: Remove encrypt ntp authentication
+    nxos_ntp_auth: &remove_encrypt
+      key_id: 32
+      md5string: hello
+      auth_type: encrypt
+      trusted_key: true
+      authentication: on
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  always:
+  - name: Cleanup ntp auth config
+    nxos_ntp_auth: *setup
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp_auth sanity test"

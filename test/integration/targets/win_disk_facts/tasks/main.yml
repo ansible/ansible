@@ -1,0 +1,13 @@
+# NOTE: The win_disk_facts module only works on Win2012R2+
+
+- name: check whether storage module is available (windows 2008 r2 or later)
+  raw: PowerShell -Command Import-Module Storage
+  register: win_feature_has_storage_module
+  ignore_errors: true
+
+- name: Only run tests when Windows is capable
+  when: ( win_feature_has_storage_module is successful) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 3)
+  block:
+
+  - name: Test in normal mode
+    include: tests.yml

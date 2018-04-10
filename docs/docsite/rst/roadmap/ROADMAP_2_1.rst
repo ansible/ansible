@@ -1,6 +1,6 @@
-================
-Ansible Core 2.1
-================
+===========
+Ansible 2.1
+===========
 **Target: April**
 
 .. contents:: Topics
@@ -95,11 +95,11 @@ Expand module diff support (already in progress in devel)
 
 Other
 -----
-Things being kicking down the road that we said we’d do
+Things being kicking down the road that we said we'd do
 
 - NOT remerging core with ansible/ansible this release cycle
 
 Community
 ---------
-- Define the process/ETA for reviewing PR’s from community
+- Define the process/ETA for reviewing PR's from community
 - Publish better docs and how-tos for submitting code/features/fixes

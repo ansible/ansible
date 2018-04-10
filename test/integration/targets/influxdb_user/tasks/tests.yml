@@ -1,0 +1,140 @@
+---
+
+- name: Install influxdb python module
+  pip: name=influxdb
+
+- name: Test add admin user in check mode
+  block:
+    - name: Add admin user
+      influxdb_user: user_name=admin user_password=admin admin=yes
+      check_mode: true
+      register: add_admin_user
+
+    - name: Check that admin user adding succeeds with a change
+      assert:
+        that:
+          - add_admin_user.changed == true
+
+- name: Test add admin user
+  block:
+    - name: Add admin user
+      influxdb_user: user_name=admin user_password=admin admin=yes
+      register: add_admin_user
+
+    - name: Check that admin user adding succeeds with a change
+      assert:
+        that:
+          - add_admin_user.changed == true
+
+- name: Test add admin user idempotence
+  block:
+    - name: Add admin user
+      influxdb_user: user_name=admin user_password=admin admin=yes
+      register: add_admin_user
+
+    - name: Check that admin user adding succeeds without a change
+      assert:
+        that:
+          - add_admin_user.changed == false
+
+- name: Enable authentication and restart service
+  block:
+    - name: Enable authentication
+      lineinfile:
+        path: /etc/influxdb/influxdb.conf
+        regexp: 'auth-enabled ='
+        line: '  auth-enabled = true'
+
+    - name: Restart InfluxDB service
+      service: name=influxdb state=restarted
+
+- name: Test add user in check mode when authentication enabled
+  block:
+    - name: Add user
+      influxdb_user: user_name=user user_password=user login_username=admin login_password=admin
+      check_mode: true
+      register: add_user_with_auth_enabled
+
+    - name: Check that adding user with enabled authentication succeeds with a change
+      assert:
+        that:
+          - add_user_with_auth_enabled.changed == true
+
+- name: Test add user when authentication enabled
+  block:
+    - name: Add user
+      influxdb_user: user_name=user user_password=user login_username=admin login_password=admin
+      register: add_user_with_auth_enabled
+
+    - name: Check that adding user with enabled authentication succeeds with a change
+      assert:
+        that:
+          - add_user_with_auth_enabled.changed == true
+
+- name: Test add user when authentication enabled idempotence
+  block:
+    - name: Add the same user
+      influxdb_user: user_name=user user_password=user login_username=admin login_password=admin
+      register: same_user
+
+    - name: Check that adding same user succeeds without a change
+      assert:
+        that:
+          - same_user.changed == false
+
+- name: Test change user password in check mode
+  block:
+    - name: Change user password
+      influxdb_user: user_name=user user_password=user2 login_username=admin login_password=admin
+      check_mode: true
+      register: change_password
+
+    - name: Check that password changing succeeds with a change
+      assert:
+        that:
+          - change_password.changed == true
+
+- name: Test change user password
+  block:
+    - name: Change user password
+      influxdb_user: user_name=user user_password=user2 login_username=admin login_password=admin
+      register: change_password
+
+    - name: Check that password changing succeeds with a change
+      assert:
+        that:
+          - change_password.changed == true
+
+- name: Test remove user in check mode
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      check_mode: true
+      register: remove_user
+
+    - name: Check that removing user succeeds with a change
+      assert:
+        that:
+          - remove_user.changed == true
+
+- name: Test remove user
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      register: remove_user
+
+    - name: Check that removing user succeeds with a change
+      assert:
+        that:
+          - remove_user.changed == true
+
+- name: Test remove user idempotence
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      register: remove_user
+
+    - name: Check that removing user succeeds without a change
+      assert:
+        that:
+          - remove_user.changed == false

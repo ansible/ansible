@@ -1,21 +1,13 @@
 #!/usr/bin/python
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Author: Davide Guerri <davide.guerri@hp.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -136,15 +128,8 @@ EXAMPLES = '''
      server: cattle001
 '''
 
-try:
-    import shade
-    from shade import meta
-
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule, remove_values
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _get_floating_ip(cloud, floating_ip_address):
@@ -174,13 +159,10 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['nat_destination'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-        module.fail_json(msg="To utilize nat_destination, the installed version of"
-                             "the shade library MUST be >= 1.8.0")
+    if module.params['nat_destination']:
+        min_version = '1.8.0'
+    else:
+        min_version = None
 
     server_name_or_id = module.params['server']
     state = module.params['state']
@@ -193,7 +175,7 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    cloud = shade.openstack_cloud(**module.params)
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
 
     try:
         server = cloud.get_server(server_name_or_id)
@@ -211,14 +193,27 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
-                        (nat_destination and f_ip.internal_network == fixed_address),
+                # check if we have floting ip on given nat_destination network
+                if nat_destination:
+                    nat_floating_addrs = [addr for addr in server.addresses.get(
+                        cloud.get_network(nat_destination)['name'], [])
+                        if addr.addr == public_ip and
+                        addr['OS-EXT-IPS:type'] == 'floating']
+
+                    if len(nat_floating_addrs) == 0:
+                        module.fail_json(msg="server {server} already has a "
+                                             "floating-ip on a different "
+                                             "nat-destination than '{nat_destination}'"
+                                         .format(server=server_name_or_id,
+                                                 nat_destination=nat_destination))
+
+                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "
                                          "floating-ip on requested "
                                          "interface but it doesn't match "
-                                         "requested network {network: {fip}"
+                                         "requested network {network}: {fip}"
                                      .format(server=server_name_or_id,
                                              network=network,
                                              fip=remove_values(f_ip,
@@ -265,11 +260,6 @@ def main():
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
-
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 
 if __name__ == '__main__':

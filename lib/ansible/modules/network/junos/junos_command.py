@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -108,7 +100,8 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -178,10 +171,12 @@ import re
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args, get_configuration
-from ansible.module_utils.netcli import Conditional, FailedConditionalError
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils._text import to_text
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
+from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
 from ansible.module_utils.six import string_types, iteritems
+
 
 try:
     from lxml.etree import Element, SubElement, tostring
@@ -209,7 +204,6 @@ def to_lines(stdout):
 def rpc(module, items):
 
     responses = list()
-
     for item in items:
         name = item['name']
         xattrs = item['xattrs']
@@ -247,7 +241,7 @@ def rpc(module, items):
         if fetch_config:
             reply = get_configuration(module, format=xattrs['format'])
         else:
-            reply = send_request(module, element, ignore_warning=False)
+            reply = exec_rpc(module, to_text(tostring(element), errors='surrogate_then_replace'), ignore_warning=False)
 
         if xattrs['format'] == 'text':
             if fetch_config:
@@ -321,6 +315,7 @@ def parse_commands(module, warnings):
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % command
             )
+            continue
 
         parts = command.split('|')
         text = parts[0]
@@ -370,7 +365,27 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    conn = get_connection(module)
+    capabilities = get_capabilities(module)
+
+    if capabilities.get('network_api') == 'cliconf':
+        if any((module.params['wait_for'], module.params['match'], module.params['rpcs'])):
+            module.warn('arguments wait_for, match, rpcs are not supported when using transport=cli')
+        commands = module.params['commands']
+
+        output = list()
+        display = module.params['display']
+        for cmd in commands:
+            # if display format is not mentioned in command, add the display format
+            # from the modules params
+            if ('display json' not in cmd) and ('display xml' not in cmd):
+                if display and display != 'text':
+                    cmd += ' | display {0}'.format(display)
+            output.append(conn.get(command=cmd))
+
+        lines = [out.split('\n') for out in output]
+        result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
+        module.exit_json(**result)
 
     items = list()
     items.extend(parse_commands(module, warnings))
@@ -420,7 +435,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {

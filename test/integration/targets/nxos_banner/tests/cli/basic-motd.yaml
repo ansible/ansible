@@ -1,12 +1,14 @@
 ---
+- debug: msg="START cli/nxos_banner motd test"
+
 - name: setup - remove motd
-  nxos_banner:
+  nxos_banner: &remove
     banner: motd
     state: absent
     provider: "{{ cli }}"
 
 - name: Set motd
-  nxos_banner:
+  nxos_banner: &motd
     banner: motd
     text: |
       this is my motd banner
@@ -15,9 +17,6 @@
     state: present
     provider: "{{ cli }}"
   register: result
-
-- debug:
-    msg: "{{ result }}"
 
 - assert:
     that:
@@ -25,22 +24,14 @@
       - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
 
 - name: Set motd again (idempotent)
-  nxos_banner:
-    banner: motd
-    text: |
-      this is my motd banner
-      that has a multiline
-      string
-    state: present
-    provider: "{{ cli }}"
+  nxos_banner: *motd
   register: result
 
 - assert:
     that:
       - "result.changed == false"
-      - "result.commands | length == 0"
 
+- name: teardown - remove motd
+  nxos_banner: *remove
 
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
+- debug: msg="END cli/nxos_banner motd test"

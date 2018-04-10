@@ -3,10 +3,17 @@
 set -o pipefail
 
 declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
+IFS='/:' read -ra args <<< "$1"
 
-image="ansible/ansible:${args[1]}"
-target="posix/ci/group${args[2]}/"
+image="${args[1]}"
+
+if [ "${#args[@]}" -gt 2 ]; then
+    target="posix/ci/group${args[2]}/"
+else
+    target="posix/ci/"
+fi
 
 # shellcheck disable=SC2086
-ansible-test integration --color -v --retry-on-error "${target}" --docker "${image}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+    --exclude "posix/ci/cloud/" \
+    --docker "${image}"

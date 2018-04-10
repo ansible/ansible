@@ -22,7 +22,8 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch
-from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule, load_fixture
 from ansible.modules.network.iosxr import iosxr_facts
 
 
@@ -31,12 +32,16 @@ class TestIosxrFacts(TestIosxrModule):
     module = iosxr_facts
 
     def setUp(self):
-        self.mock_run_commands = patch(
-            'ansible.modules.network.iosxr.iosxr_facts.run_commands')
-        self.run_commands = self.mock_run_commands.start()
+        super(TestIosxrFacts, self).setUp()
+
+        self.mock_run_command = patch(
+            'ansible.modules.network.iosxr.iosxr_facts.run_command')
+        self.run_command = self.mock_run_command.start()
 
     def tearDown(self):
-        self.mock_run_commands.stop()
+        super(TestIosxrFacts, self).tearDown()
+
+        self.mock_run_command.stop()
 
     def load_fixtures(self, commands=None):
 
@@ -55,7 +60,7 @@ class TestIosxrFacts(TestIosxrModule):
                 output.append(load_fixture(filename))
             return output
 
-        self.run_commands.side_effect = load_from_file
+        self.run_command.side_effect = load_from_file
 
     def test_iosxr_facts_gather_subset_default(self):
         set_module_args(dict())

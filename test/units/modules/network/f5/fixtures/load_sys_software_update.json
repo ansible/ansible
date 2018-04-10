@@ -1,0 +1,9 @@
+{
+    "kind": "tm:sys:software:update:updatestate",
+    "selfLink": "https://localhost/mgmt/tm/sys/software/update?ver=13.0.0",
+    "autoCheck": "enabled",
+    "autoPhonehome": "enabled",
+    "checkStatus": "none",
+    "errors": 0,
+    "frequency": "weekly"
+}

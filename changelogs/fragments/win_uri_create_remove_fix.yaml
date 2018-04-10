@@ -1,0 +1,2 @@
+bugfixes:
+- win_uri - fixed issues with the creates and removes options (https://github.com/ansible/ansible/pull/36016)

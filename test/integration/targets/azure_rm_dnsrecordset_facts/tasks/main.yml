@@ -1,0 +1,62 @@
+- name: Create random domain name
+  set_fact:
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+
+- name: Create a DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: present
+    tags:
+      tag1: tag1
+  register: results
+
+- name: Assert DNS Zone was created
+  assert:
+    that: results.changed
+
+- name: create new "A" record set with multiple records
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    records:
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
+  register: results
+
+- name: Retrieve DNS Record Set Facts for single Record Set
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+    relative_name: www
+    record_type: A
+  register: results
+
+- name: Assert that facts module returned result for single Record Set
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnsrecordset[0].name == 'www'
+
+- name: Retrieve DNS Record Set Facts for all Record Sets
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+  register: results
+
+- name: Assert that facts module returned result for all Record Sets
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnsrecordset[0].name == '@'
+      - results.ansible_facts.azure_dnsrecordset[1].name == '@'
+      - results.ansible_facts.azure_dnsrecordset[2].name == 'www'
+
+- name: Delete DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: absent

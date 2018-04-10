@@ -54,7 +54,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll retry
   async_test:
@@ -90,7 +90,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll timeout
   async_test:
@@ -106,7 +106,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == false
-    - asyncresult | failed == true
+    - asyncresult is failed == true
     - asyncresult.msg is search('timed out')
 
 - name: async poll graceful module failure
@@ -123,7 +123,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == true
-    - asyncresult | failed == true
+    - asyncresult is failed == true
     - asyncresult.msg == 'failed gracefully'
 
 - name: async poll exception module failure
@@ -140,10 +140,24 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == false
-    - asyncresult | failed == true
+    - asyncresult is failed == true
 # TODO: re-enable after catastrophic failure behavior is cleaned up
 #    - asyncresult.msg is search('failing via exception')
 
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  async: 10
+  poll: 1
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success

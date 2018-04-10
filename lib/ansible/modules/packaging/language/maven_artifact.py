@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -23,12 +23,11 @@ module: maven_artifact
 short_description: Downloads an Artifact from a Maven Repository
 version_added: "2.0"
 description:
-    - Downloads an artifact from a maven repository given the maven coordinates provided to the module. Can retrieve
-    - snapshots or release versions of the artifact and will resolve the latest available version if one is not
-    - available.
+    - Downloads an artifact from a maven repository given the maven coordinates provided to the module.
+    - Can retrieve snapshots or release versions of the artifact and will resolve the latest available
+      version if one is not available.
 author: "Chris Schmidt (@chrisisbeef)"
 requirements:
-    - "python >= 2.6"
     - lxml
     - boto if using a S3 repository (s3://...)
 options:
@@ -76,6 +75,7 @@ options:
     dest:
         description:
             - The path where the artifact should be written to
+            - If file mode or ownerships are specified and destination path already exists, they affect the downloaded file
         required: true
         default: false
     state:
@@ -97,6 +97,16 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: "1.9.3"
+    keep_name:
+        description:
+            - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
+            - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
+        required: false
+        default: 'no'
+        choices: ['yes', 'no']
+        version_added: "2.4"
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''
@@ -129,6 +139,14 @@ EXAMPLES = '''
     extension: war
     repository_url: 'https://repo.company.com/maven'
     dest: /var/lib/tomcat7/webapps/web-app.war
+
+# Keep a downloaded artifact's name, i.e. retain the version
+- maven_artifact:
+    version: latest
+    artifact_id: spring-core
+    group_id: org.springframework
+    dest: /tmp/
+    keep_name: yes
 '''
 
 import hashlib
@@ -136,7 +154,11 @@ import os
 import posixpath
 import sys
 
-from lxml import etree
+try:
+    from lxml import etree
+    HAS_LXML_ETREE = True
+except ImportError:
+    HAS_LXML_ETREE = False
 
 try:
     import boto3
@@ -145,12 +167,41 @@ except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib import parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
+
+
+def split_pre_existing_dir(dirname):
+    '''
+    Return the first pre-existing directory and a list of the new directories that will be created.
+    '''
+
+    head, tail = os.path.split(dirname)
+    b_head = to_bytes(head, errors='surrogate_or_strict')
+    if not os.path.exists(b_head):
+        (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
+    else:
+        return head, [tail]
+    new_directory_list.append(tail)
+    return pre_existing_dir, new_directory_list
+
+
+def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed):
+    '''
+    Walk the new directories list and make sure that permissions are as we would expect
+    '''
+
+    if new_directory_list:
+        working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
+        directory_args['path'] = working_dir
+        changed = module.set_fs_attributes_if_different(directory_args, changed)
+        changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
+    return changed
 
 
 class Artifact(object):
-    def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
+    def __init__(self, group_id, artifact_id, version, classifier='', extension='jar'):
         if not group_id:
             raise ValueError("group_id must be set")
         if not artifact_id:
@@ -172,15 +223,14 @@ class Artifact(object):
     def path(self, with_version=True):
         base = posixpath.join(self.group_id.replace(".", "/"), self.artifact_id)
         if with_version and self.version:
-            return posixpath.join(base, self.version)
-        else:
-            return base
+            base = posixpath.join(base, self.version)
+        return base
 
     def _generate_filename(self):
+        filename = self.artifact_id + "-" + self.classifier + "." + self.extension
         if not self.classifier:
-            return self.artifact_id + "." + self.extension
-        else:
-            return self.artifact_id + "-" + self.classifier + "." + self.extension
+            filename = self.artifact_id + "." + self.extension
+        return filename
 
     def get_filename(self, filename=None):
         if not filename:
@@ -190,12 +240,12 @@ class Artifact(object):
         return filename
 
     def __str__(self):
+        result = "%s:%s:%s" % (self.group_id, self.artifact_id, self.version)
         if self.classifier:
-            return "%s:%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.classifier, self.version)
+            result = "%s:%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.classifier, self.version)
         elif self.extension != "jar":
-            return "%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.version)
-        else:
-            return "%s:%s:%s" % (self.group_id, self.artifact_id, self.version)
+            result = "%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.version)
+        return result
 
     @staticmethod
     def parse(input):
@@ -223,28 +273,33 @@ class MavenDownloader:
             base = base.rstrip("/")
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
+        self.latest_version_found = None
 
-    def _find_latest_version_available(self, artifact):
+    def find_latest_version_available(self, artifact):
+        if self.latest_version_found:
+            return self.latest_version_found
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
-        xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
+        xml = self._request(self.base + path, "Failed to download maven-metadata.xml", etree.parse)
         v = xml.xpath("/metadata/versioning/versions/version[last()]/text()")
         if v:
+            self.latest_version_found = v[0]
             return v[0]
 
     def find_uri_for_artifact(self, artifact):
         if artifact.version == "latest":
-            artifact.version = self._find_latest_version_available(artifact)
+            artifact.version = self.find_latest_version_available(artifact)
 
         if artifact.is_snapshot():
             path = "/%s/maven-metadata.xml" % (artifact.path())
-            xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
+            xml = self._request(self.base + path, "Failed to download maven-metadata.xml", etree.parse)
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                if (len(snapshotArtifact.xpath("classifier/text()")) > 0 and
-                        snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and
-                        len(snapshotArtifact.xpath("extension/text()")) > 0 and
-                        snapshotArtifact.xpath("extension/text()")[0] == artifact.extension):
+                classifier = snapshotArtifact.xpath("classifier/text()")
+                artifact_classifier = classifier[0] if classifier else ''
+                extension = snapshotArtifact.xpath("extension/text()")
+                artifact_extension = extension[0] if extension else ''
+                if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
@@ -263,12 +318,12 @@ class MavenDownloader:
     def _request(self, url, failmsg, f):
         url_to_use = url
         parsed_url = urlparse(url)
-        if parsed_url.scheme=='s3':
+        if parsed_url.scheme == 's3':
             parsed_url = urlparse(url)
             bucket_name = parsed_url.netloc
             key_name = parsed_url.path[1:]
-            client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
-            url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
+            client = boto3.client('s3', aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
+            url_to_use = client.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': key_name}, ExpiresIn=10)
 
         req_timeout = self.module.params.get('timeout')
 
@@ -283,26 +338,23 @@ class MavenDownloader:
         else:
             return f(response)
 
-
     def download(self, artifact, filename=None):
         filename = artifact.get_filename(filename)
         if not artifact.version or artifact.version == "latest":
-            artifact = Artifact(artifact.group_id, artifact.artifact_id, self._find_latest_version_available(artifact),
+            artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
 
         url = self.find_uri_for_artifact(artifact)
+        result = True
         if not self.verify_md5(filename, url + ".md5"):
             response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
             if response:
-                f = open(filename, 'w')
-                # f.write(response.read())
+                f = open(filename, 'wb')
                 self._write_chunks(response, f, report_hook=self.chunk_report)
                 f.close()
-                return True
             else:
-                return False
-        else:
-            return True
+                result = False
+        return result
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
         percent = float(bytes_so_far) / total_size
@@ -313,31 +365,31 @@ class MavenDownloader:
         if bytes_so_far >= total_size:
             sys.stdout.write('\n')
 
-    def _write_chunks(self, response, file, chunk_size=8192, report_hook=None):
-        total_size = response.info().getheader('Content-Length').strip()
+    def _write_chunks(self, response, filehandle, chunk_size=8192, report_hook=None):
+        total_size = response.info().get('Content-Length').strip()
         total_size = int(total_size)
         bytes_so_far = 0
 
-        while 1:
+        while True:
             chunk = response.read(chunk_size)
             bytes_so_far += len(chunk)
 
             if not chunk:
                 break
 
-            file.write(chunk)
+            filehandle.write(chunk)
             if report_hook:
                 report_hook(bytes_so_far, chunk_size, total_size)
 
         return bytes_so_far
 
     def verify_md5(self, file, remote_md5):
-        if not os.path.exists(file):
-            return False
-        else:
+        result = False
+        if os.path.exists(file):
             local_md5 = self._local_md5(file)
             remote = self._request(remote_md5, "Failed to download MD5", lambda r: r.read())
-            return local_md5 == remote
+            result = local_md5 == remote
+        return result
 
     def _local_md5(self, file):
         md5 = hashlib.md5()
@@ -349,22 +401,28 @@ class MavenDownloader:
 
 
 def main():
+
     module = AnsibleModule(
-        argument_spec = dict(
-            group_id = dict(default=None),
-            artifact_id = dict(default=None),
-            version = dict(default="latest"),
-            classifier = dict(default=None),
-            extension = dict(default='jar'),
-            repository_url = dict(default=None),
-            username = dict(default=None,aliases=['aws_secret_key']),
-            password = dict(default=None, no_log=True,aliases=['aws_secret_access_key']),
-            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
-            timeout = dict(default=10, type='int'),
-            dest = dict(type="path", default=None),
-            validate_certs = dict(required=False, default=True, type='bool'),
-        )
+        argument_spec=dict(
+            group_id=dict(default=None),
+            artifact_id=dict(default=None),
+            version=dict(default="latest"),
+            classifier=dict(default=''),
+            extension=dict(default='jar'),
+            repository_url=dict(default=None),
+            username=dict(default=None, aliases=['aws_secret_key']),
+            password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
+            state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
+            timeout=dict(default=10, type='int'),
+            dest=dict(type="path", default=None),
+            validate_certs=dict(required=False, default=True, type='bool'),
+            keep_name=dict(required=False, default=False, type='bool'),
+        ),
+        add_file_common_args=True
     )
+
+    if not HAS_LXML_ETREE:
+        module.fail_json(msg='module requires the lxml python library installed on the managed machine')
 
     repository_url = module.params["repository_url"]
     if not repository_url:
@@ -375,7 +433,7 @@ def main():
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
-    if parsed_url.scheme=='s3' and not HAS_BOTO:
+    if parsed_url.scheme == 's3' and not HAS_BOTO:
         module.fail_json(msg='boto3 required for this module, when using s3:// repository URLs')
 
     group_id = module.params["group_id"]
@@ -385,8 +443,10 @@ def main():
     extension = module.params["extension"]
     state = module.params["state"]
     dest = module.params["dest"]
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    keep_name = module.params["keep_name"]
 
-    #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
+    # downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
 
     try:
@@ -394,27 +454,53 @@ def main():
     except ValueError as e:
         module.fail_json(msg=e.args[0])
 
+    changed = False
     prev_state = "absent"
-    if os.path.isdir(dest):
-        dest = posixpath.join(dest, artifact_id + "-" + version + "." + extension)
-    if os.path.lexists(dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
-        prev_state = "present"
-    else:
-        path = os.path.dirname(dest)
-        if not os.path.exists(path):
-            os.makedirs(path)
 
-    if prev_state == "present":
-        module.exit_json(dest=dest, state=state, changed=False)
+    if dest.endswith(os.sep):
+        b_dest = to_bytes(dest, errors='surrogate_or_strict')
+        if not os.path.exists(b_dest):
+            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dest)
+            os.makedirs(b_dest)
+            directory_args = module.load_file_common_arguments(module.params)
+            directory_mode = module.params["directory_mode"]
+            if directory_mode is not None:
+                directory_args['mode'] = directory_mode
+            else:
+                directory_args['mode'] = None
+            changed = adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
-    try:
-        if downloader.download(artifact, dest):
-            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
-                             extension=extension, repository_url=repository_url, changed=True)
+    if os.path.isdir(b_dest):
+        version_part = version
+        if keep_name and version == 'latest':
+            version_part = downloader.find_latest_version_available(artifact)
+
+        if classifier:
+            dest = posixpath.join(dest, "%s-%s-%s.%s" % (artifact_id, version_part, classifier, extension))
         else:
-            module.fail_json(msg="Unable to download the artifact")
-    except ValueError as e:
-        module.fail_json(msg=e.args[0])
+            dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
+        b_dest = to_bytes(dest, errors='surrogate_or_strict')
+
+    if os.path.lexists(b_dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
+        prev_state = "present"
+
+    if prev_state == "absent":
+        try:
+            if downloader.download(artifact, b_dest):
+                changed = True
+            else:
+                module.fail_json(msg="Unable to download the artifact")
+        except ValueError as e:
+            module.fail_json(msg=e.args[0])
+
+    module.params['dest'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
+    if changed:
+        module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
+                         extension=extension, repository_url=repository_url, changed=changed)
+    else:
+        module.exit_json(state=state, dest=dest, changed=changed)
 
 
 if __name__ == '__main__':

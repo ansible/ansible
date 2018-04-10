@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -45,6 +45,7 @@ options:
     required: true
     choices:
       - network -- Request network boot
+      - floppy -- Boot from floppy
       - hd -- Boot from hard drive
       - safe -- Boot from hard drive, requesting 'safe mode'
       - optical -- boot from CD/DVD/BD drive
@@ -129,7 +130,7 @@ def main():
             user=dict(required=True, no_log=True),
             password=dict(required=True, no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
-            bootdev=dict(required=True, choices=['network', 'hd', 'safe', 'optical', 'setup', 'default']),
+            bootdev=dict(required=True, choices=['network', 'hd', 'floppy', 'safe', 'optical', 'setup', 'default']),
             persistent=dict(default=False, type='bool'),
             uefiboot=dict(default=False, type='bool')
         ),

@@ -1,0 +1,2 @@
+bugfixes:
+- eos_vrf and eos_eapi - fixed vrf parsing (https://github.com/ansible/ansible/pull/35791)

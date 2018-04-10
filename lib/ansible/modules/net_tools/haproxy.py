@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,7 +27,7 @@ notes:
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
-    - Depends on netcat (nc) being available; you need to install the appriate
+    - Depends on netcat (nc) being available; you need to install the appropriate
       package for your operating system before this module can be used.
 options:
   backend:
@@ -35,6 +35,14 @@ options:
       - Name of the HAProxy backend pool.
     required: false
     default: auto-detected
+  drain:
+    description:
+      - Wait until the server has no active connections or until the timeout
+        determined by wait_interval and wait_retries is reached.  Continue only
+        after the status changes to 'MAINT'.  This overrides the
+        shutdown_sessions option.
+    default: false
+    version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
@@ -44,7 +52,8 @@ options:
     description:
       - When disabling a server, immediately terminate all the sessions attached
         to the specified server. This can be used to terminate long-running
-        sessions after a server is put into maintenance mode.
+        sessions after a server is put into maintenance mode. Overridden by the
+        drain option.
     required: false
     default: false
   socket:
@@ -122,6 +131,19 @@ EXAMPLES = '''
     backend: www
     wait: yes
 
+# Place server in drain mode, providing a socket file.  Then check the server's
+# status every minute to see if it changes to maintenance mode, continuing if it
+# does in an hour and failing otherwise.
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
+    wait: yes
+    drain: yes
+    wait_interval: 1
+    wait_retries: 60
+
 # disable backend server in 'www' backend pool and drop open sessions to it
 - haproxy:
     state: disabled
@@ -180,6 +202,7 @@ import time
 from string import Template
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_text
 
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
@@ -219,6 +242,7 @@ class HAProxy(object):
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
+        self.drain = self.module.params['drain']
         self.command_results = {}
 
     def execute(self, cmd, timeout=200, capture_output=True):
@@ -228,13 +252,16 @@ class HAProxy(object):
         """
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
-        self.client.sendall('%s\n' % cmd)
-        result = ''
-        buf = ''
+        self.client.sendall(to_bytes('%s\n' % cmd))
+
+        result = b''
+        buf = b''
         buf = self.client.recv(RECV_SIZE)
         while buf:
             result += buf
             buf = self.client.recv(RECV_SIZE)
+        result = to_text(result, errors='surrogate_or_strict')
+
         if capture_output:
             self.capture_command_output(cmd, result.strip())
         self.client.close()
@@ -291,12 +318,13 @@ class HAProxy(object):
         for backend in backends:
             # Fail when backends were not found
             state = self.get_state_for(backend, svname)
-            if (self.fail_on_not_found or self.wait) and state is None:
+            if (self.fail_on_not_found) and state is None:
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
-            self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
-            if self.wait:
-                self.wait_until_status(backend, svname, wait_for_status)
+            if state is not None:
+                self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
+                if self.wait:
+                    self.wait_until_status(backend, svname, wait_for_status)
 
     def get_state_for(self, pxname, svname):
         """
@@ -307,7 +335,7 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         state = tuple(
             map(
-                lambda d: {'status': d['status'], 'weight': d['weight']},
+                lambda d: {'status': d['status'], 'weight': d['weight'], 'scur': d['scur']},
                 filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
             )
         )
@@ -325,7 +353,8 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                return True
+                if not self.drain or (state[0]['scur'] == '0' and state == 'MAINT'):
+                    return True
             else:
                 time.sleep(self.wait_interval)
 
@@ -353,7 +382,7 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
-    def drain(self, host, backend):
+    def drain(self, host, backend, status='DRAIN'):
         """
         Drain action, sets the server to DRAIN mode.
         In this mode mode, the server will not accept any new connections
@@ -364,7 +393,7 @@ class HAProxy(object):
         # check if haproxy version suppots DRAIN state (starting with 1.5)
         if haproxy_version and (1, 5) <= haproxy_version:
             cmd = "set server $pxname/$svname state drain"
-            self.execute_for_backends(cmd, backend, host, 'DRAIN')
+            self.execute_for_backends(cmd, backend, host, status)
 
     def act(self):
         """
@@ -377,6 +406,8 @@ class HAProxy(object):
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
+        elif self.state == 'disabled' and self.drain:
+            self.drain(self.host, self.backend, status='MAINT')
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
         elif self.state == 'drain':
@@ -412,6 +443,7 @@ def main():
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
             wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
+            drain=dict(default=False, type='bool'),
         ),
     )
 

@@ -2,25 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 # (C) Seth Edwards, 2014
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -64,11 +52,11 @@ options:
         required: false
     start_time:
         description:
-            - The unix timestamp indicating the the time at which the event referenced by this annotation started
+            - The unix timestamp indicating the time at which the event referenced by this annotation started
         required: false
     end_time:
         description:
-            - The unix timestamp indicating the the time at which the event referenced by this annotation ended
+            - The unix timestamp indicating the time at which the event referenced by this annotation ended
             - For events that have a duration, this is a useful way to annotate the duration of the event
         required: false
     links:
@@ -147,21 +135,22 @@ def post_annotation(module):
     response = response.read()
     module.exit_json(changed=True, annotation=response)
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            user         = dict(required=True),
-            api_key      = dict(required=True),
-            name         = dict(required=False),
-            title        = dict(required=True),
-            source       = dict(required=False),
-            description  = dict(required=False),
-            start_time   = dict(required=False, default=None, type='int'),
-            end_time     = dict(require=False, default=None, type='int'),
-            links        = dict(type='list')
-            )
+        argument_spec=dict(
+            user=dict(required=True),
+            api_key=dict(required=True),
+            name=dict(required=False),
+            title=dict(required=True),
+            source=dict(required=False),
+            description=dict(required=False),
+            start_time=dict(required=False, default=None, type='int'),
+            end_time=dict(require=False, default=None, type='int'),
+            links=dict(type='list')
         )
+    )
 
     post_annotation(module)
 

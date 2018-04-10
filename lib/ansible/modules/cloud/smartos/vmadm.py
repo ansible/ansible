@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,6 +78,11 @@ options:
     required: false
     description:
       - Domain value for C(/etc/hosts).
+  docker:
+    required: false
+    description:
+      - Docker images need this flag enabled along with the I(brand) set to C(lx).
+    version_added: "2.5"
   filesystems:
       required: false
       description:
@@ -366,7 +371,7 @@ def get_vm_prop(module, uuid, prop):
         stdout_json = json.loads(stdout)
     except Exception as e:
         module.fail_json(
-            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(uuid),
+            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(prop),
             details=to_native(e), exception=traceback.format_exc())
 
     if len(stdout_json) > 0 and prop in stdout_json[0]:
@@ -524,14 +529,14 @@ def create_payload(module, uuid):
         # drop the mkstemp call and rely on ANSIBLE_KEEP_REMOTE_FILES to retain
         # the payload (thus removing the `save_payload` option).
         fname = tempfile.mkstemp()[1]
-        fh = open(fname, 'w')
         os.chmod(fname, 0o400)
-        fh.write(vmdef_json)
-        fh.close()
+        with open(fname, 'w') as fh:
+            fh.write(vmdef_json)
     except Exception as e:
         module.fail_json(msg='Could not save JSON payload: %s' % to_native(e), exception=traceback.format_exc())
 
     return fname
+
 
 def vm_state_transition(module, uuid, vm_state):
     ret = set_vm_state(module, uuid, vm_state)
@@ -607,7 +612,7 @@ def main():
         ],
         'bool': [
             'archive_on_delete', 'autoboot', 'debug', 'delegate_dataset',
-            'firewall_enabled', 'force', 'indestructible_delegated',
+            'docker', 'firewall_enabled', 'force', 'indestructible_delegated',
             'indestructible_zoneroot', 'maintain_resolvers', 'nowait'
         ],
         'int': [
@@ -641,7 +646,7 @@ def main():
         cpu_type=dict(
             default='qemu64',
             type='str',
-            choices=['host','qemu64']
+            choices=['host', 'qemu64']
         ),
         # Regular strings, however these require additional options.
         spice_password=dict(type='str', no_log=True),

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -70,6 +70,11 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent', 'started', 'stopped', 'restarted' ]
+  poll_async:
+    description:
+      - Poll async jobs until job has finished.
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 

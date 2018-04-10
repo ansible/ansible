@@ -1,0 +1,106 @@
+- name: Warn user
+  win_toast:
+    expire: 10
+    msg: Keep calm and carry on.
+  register: msg_result
+  ignore_errors: True
+
+- name: Test msg_result when can_toast is true (normal mode, users)
+  assert:
+    that:
+    - msg_result is not failed
+    - msg_result.time_taken > 10
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int > 0
+
+- name: Test msg_result when can_toast is true (normal mode, no users)
+  assert:
+    that:
+    - msg_result is not failed
+    - msg_result.time_taken > 0.1
+    - msg_result.toast_sent == False
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int == 0
+
+- name: Test msg_result when can_toast is true (check mode, users)
+  assert:
+    that:
+    - msg_result is not failed
+    - msg_result.time_taken > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == True
+
+- name: Test msg_result when can_toast is true (check mode, no users)
+  assert:
+    that:
+    - msg_result is not failed
+    - msg_result.time_taken > 0.1
+    - msg_result.toast_sent == False
+  when: 
+    - can_toast == True
+    - in_check_mode == True
+    - user_count.stdout|int == 0
+
+- name: Test msg_result when can_toast is false
+  assert:
+    that:
+    - msg_result is failed
+  when: can_toast == False
+
+- name: Warn user again
+  win_toast:
+    expire: 10
+    msg: Keep calm and carry on.
+  register: msg_result2
+  ignore_errors: True
+
+- name: Test msg_result2 when can_toast is true (normal mode, users)
+  assert:
+    that:
+    - msg_result2 is not failed
+    - msg_result2.time_taken > 10
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int > 0
+
+- name: Test msg_result2 when can_toast is true (normal mode, no users)
+  assert:
+    that:
+    - msg_result2 is not failed
+    - msg_result2.time_taken > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int == 0
+
+- name: Test msg_result2 when can_toast is true (check mode, users)
+  assert:
+    that:
+    - msg_result2 is not failed
+    - msg_result2.time_taken > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int > 0
+
+- name: Test msg_result2 when can_toast is true (check mode, no users)
+  assert:
+    that:
+    - msg_result2 is not failed
+    - msg_result2.time_taken > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+    - user_count.stdout|int == 0
+
+- name: Test msg_result2 when can_toast is false
+  assert:
+    that:
+    - msg_result2 is failed
+  when: can_toast == False

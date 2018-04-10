@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_igmp_interface - fixed response handling for different nxos versions (https://github.com/ansible/ansible/pull/35959)

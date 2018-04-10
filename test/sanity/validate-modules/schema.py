@@ -25,7 +25,7 @@ suboption_schema = Schema(
         Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(list, *string_types),
+        'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
@@ -43,7 +43,7 @@ option_schema = Schema(
         Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(list, *string_types),
+        'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
@@ -61,7 +61,7 @@ list_dict_option_schema = [{str_type: option_schema} for str_type in string_type
 def return_schema(data):
 
     return_schema_dict = {
-        Required('description'): Any(list, *string_types),
+        Required('description'): Any(list_string_types, *string_types),
         Required('returned'): Any(*string_types),
         Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
         'version_added': Any(float, *string_types),
@@ -83,28 +83,56 @@ def return_schema(data):
     )
 
 
-def doc_schema(module_name):
-    if module_name.startswith('_'):
-        module_name = module_name[1:]
+def deprecation_schema():
+
+    deprecation_schema_dict = {
+        # Only list branches that are deprecated or may have docs stubs in
+        # Deprecation cycle changed at 2.4 (though not retroactively)
+        # 2.3 -> removed_in: "2.5" + n for docs stub
+        # 2.4 -> removed_in: "2.8" + n for docs stub
+        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.8", "2.9"),
+        Required('why'): Any(*string_types),
+        Required('alternative'): Any(*string_types),
+        'removed': Any(True),
+    }
     return Schema(
-        {
-            Required('module'): module_name,
-            'deprecated': Any(*string_types),
-            Required('short_description'): Any(*string_types),
-            Required('description'): Any(list_string_types, *string_types),
-            Required('version_added'): Any(float, *string_types),
-            Required('author'): Any(None, list_string_types, *string_types),
-            'notes': Any(None, list_string_types),
-            'requirements': list_string_types,
-            'todo': Any(None, list_string_types, *string_types),
-            'options': Any(None, *list_dict_option_schema),
-            'extends_documentation_fragment': Any(list_string_types, *string_types)
-        },
+        deprecation_schema_dict,
         extra=PREVENT_EXTRA
     )
 
 
-def metadata_schema(deprecated):
+def doc_schema(module_name):
+    deprecated_module = False
+
+    if module_name.startswith('_'):
+        module_name = module_name[1:]
+        deprecated_module = True
+    doc_schema_dict = {
+        Required('module'): module_name,
+        Required('short_description'): Any(*string_types),
+        Required('description'): Any(list_string_types, *string_types),
+        Required('version_added'): Any(float, *string_types),
+        Required('author'): Any(None, list_string_types, *string_types),
+        'notes': Any(None, list_string_types),
+        'requirements': list_string_types,
+        'todo': Any(None, list_string_types, *string_types),
+        'options': Any(None, *list_dict_option_schema),
+        'extends_documentation_fragment': Any(list_string_types, *string_types)
+    }
+
+    if deprecated_module:
+        deprecation_required_scheme = {
+            Required('deprecated'): Any(deprecation_schema()),
+        }
+
+        doc_schema_dict.update(deprecation_required_scheme)
+    return Schema(
+        doc_schema_dict,
+        extra=PREVENT_EXTRA
+    )
+
+
+def metadata_1_0_schema(deprecated):
     valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
     if deprecated:
         valid_status = Any('deprecated')
@@ -114,6 +142,20 @@ def metadata_schema(deprecated):
             Required('status'): [valid_status],
             Required('metadata_version'): '1.0',
             Required('supported_by'): Any('core', 'community', 'curated')
+        }
+    )
+
+
+def metadata_1_1_schema(deprecated):
+    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
+    if deprecated:
+        valid_status = Any('deprecated')
+
+    return Schema(
+        {
+            Required('status'): [valid_status],
+            Required('metadata_version'): '1.1',
+            Required('supported_by'): Any('core', 'community', 'certified', 'network')
         }
     )
 

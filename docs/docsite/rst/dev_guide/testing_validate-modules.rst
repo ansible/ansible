@@ -63,12 +63,14 @@ Errors
   **1xx**   **Locations**
   101       Interpreter line is not ``#!/usr/bin/python``
   102       Interpreter line is not ``#!powershell``
-  103       Did not find a call to ``main()``
-  104       Call to ``main()`` not the last line
+  103       Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
+  104       Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   105       GPLv3 license header not found
   106       Import found before documentation variables. All imports must appear below
             ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   107       Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  108       GPLv3 license header should be the :ref:`short form <copyright>` for new modules
+  109       Next to last line is not ``if __name__ == "__main__":``
   ..
 ---------   -------------------
   **2xx**   **Imports**
@@ -98,12 +100,16 @@ Errors
   312       No ``RETURN`` documentation provided
   313       ``RETURN`` is not valid YAML
   314       No ``ANSIBLE_METADATA`` provided
-  315       ``ANSIBLE_METADATA`` is not valid YAML
+  315       ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported
   316       Invalid ``ANSIBLE_METADATA`` schema
   317       option is marked as required but specifies a default.
             Arguments with a default should not be marked as required
   318       Module deprecated, but DOCUMENTATION.deprecated is missing
   319       ``RETURN`` fragments missing  or invalid
+  320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
+  321       ``Exception`` attempting to import module for ``argument_spec`` introspection
+  322       argument is listed in the argument_spec, but not documented in the module
+  323       argument is listed in DOCUMENTATION.options, but not accepted by the module
   ..
 ---------   -------------------
   **4xx**   **Syntax**

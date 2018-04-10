@@ -81,17 +81,17 @@ EXAMPLES = '''
     panorama_secondary: "1.1.1.4"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -112,11 +112,11 @@ def set_dns_server(xapi, new_dns_server, primary=True):
         tag = "primary"
     else:
         tag = "secondary"
-    xpath = _XPATH_DNS_SERVERS+"/"+tag
+    xpath = _XPATH_DNS_SERVERS + "/" + tag
 
     # check the current element value
     xapi.get(xpath)
-    val = xapi.element_root.find(".//"+tag)
+    val = xapi.element_root.find(".//" + tag)
     if val is not None:
         # element exists
         val = val.text
@@ -135,11 +135,11 @@ def set_panorama_server(xapi, new_panorama_server, primary=True):
         tag = "panorama-server"
     else:
         tag = "panorama-server-2"
-    xpath = _XPATH_PANORAMA_SERVERS+"/"+tag
+    xpath = _XPATH_PANORAMA_SERVERS + "/" + tag
 
     # check the current element value
     xapi.get(xpath)
-    val = xapi.element_root.find(".//"+tag)
+    val = xapi.element_root.find(".//" + tag)
     if val is not None:
         # element exists
         val = val.text
@@ -196,11 +196,11 @@ def main():
 
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

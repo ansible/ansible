@@ -1,0 +1,2 @@
+bugfixes:
+- interface_file - now accepts interfaces without address family or method (https://github.com/ansible/ansible/pull/34200)

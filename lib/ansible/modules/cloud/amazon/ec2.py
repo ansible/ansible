@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -25,7 +25,6 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
-    - C(state=restarted) was added in 2.2
 version_added: "0.9"
 options:
   key_name:
@@ -227,14 +226,16 @@ options:
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
     description:
-    - Set whether AWS will Stop or Terminate an instance on shutdown
+    - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store
+      images (which require termination on shutdown).
     required: false
     default: 'stop'
     choices: [ "stop", "terminate" ]
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create, terminate, start, stop or restart instances.
+        The state 'restarted' was added in 2.2
     required: false
     default: 'present'
     aliases: []
@@ -595,19 +596,23 @@ EXAMPLES = '''
 #
 
     # instances with tag foo
+- ec2:
     count_tag:
         foo:
 
     # instances with tag foo=bar
+- ec2:
     count_tag:
         foo: bar
 
     # instances with tags foo=bar & baz
+- ec2:
     count_tag:
         foo: bar
         baz:
 
     # instances with tags foo & bar & baz=bang
+- ec2:
     count_tag:
         - foo
         - bar
@@ -615,15 +620,15 @@ EXAMPLES = '''
 
 '''
 
-import traceback
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code, string_types
-from ansible.module_utils._text import to_text
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
-from distutils.version import LooseVersion
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import boto.ec2
@@ -636,15 +641,20 @@ except ImportError:
     HAS_BOTO = False
 
 
-def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
+def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
 
-    # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
+    # get reservations for instances that match tag(s) and are in the desired state
+    state = module.params.get('state')
+    if state not in ['running', 'stopped']:
+        state = None
+    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state=state, zone=zone)
 
     instances = []
     for res in reservations:
         if hasattr(res, 'instances'):
             for inst in res.instances:
+                if inst.state == 'terminated':
+                    continue
                 instances.append(inst)
 
     return reservations, instances
@@ -660,10 +670,19 @@ def _set_none_to_blank(dictionary):
     return result
 
 
-def get_reservations(module, ec2, tags=None, state=None, zone=None):
-
+def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
     # TODO: filters do not work with tags that have underscores
     filters = dict()
+
+    vpc_subnet_id = module.params.get('vpc_subnet_id')
+    vpc_id = None
+    if vpc_subnet_id:
+        filters.update({"subnet-id": vpc_subnet_id})
+        if vpc:
+            vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+
+    if vpc_id:
+        filters.update({"vpc-id": vpc_id})
 
     if tags is not None:
 
@@ -672,6 +691,10 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
                 tags = literal_eval(tags)
             except:
                 pass
+
+        # if not a string type, convert and make sure it's a text string
+        if isinstance(tags, int):
+            tags = to_text(tags)
 
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
@@ -691,12 +714,19 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             tags = _set_none_to_blank(tags)
             filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
 
+        # lets check to see if the filters dict is empty, if so then stop
+        if not filters:
+            module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
+
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
         filters.update({'instance-state-name': state})
 
     if zone:
         filters.update({'availability-zone': zone})
+
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
 
     results = ec2.get_all_instances(filters=filters)
 
@@ -815,6 +845,9 @@ def create_block_device(module, ec2, volume):
     # we add handling for either/or but not both
     if all(key in volume for key in ['device_type', 'volume_type']):
         module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if 'device_type' in volume:
+        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                         version=2.9)
 
     # get whichever one is set, or NoneType if neither are set
     volume_type = volume.get('device_type') or volume.get('volume_type')
@@ -933,7 +966,7 @@ def enforce_count(module, ec2, vpc):
     if exact_count and count_tag is None:
         module.fail_json(msg="you must use the 'count_tag' option with exact_count")
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
+    reservations, instances = find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone)
 
     changed = None
     checkmode = False
@@ -971,7 +1004,9 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
+
         if not isinstance(inst, dict):
+            warn_if_public_ip_assignment_changed(module, inst)
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
@@ -1086,7 +1121,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'user_data': user_data}
+                      'user_data': to_bytes(user_data, errors='surrogate_or_strict')}
 
             if ebs_optimized:
                 params['ebs_optimized'] = ebs_optimized
@@ -1181,7 +1216,16 @@ def create_instances(module, ec2, vpc, override_count=None):
                 # (the default) or 'terminate' here.
                 params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior or 'stop'
 
-                res = ec2.run_instances(**params)
+                try:
+                    res = ec2.run_instances(**params)
+                except boto.exception.EC2ResponseError as e:
+                    if (params['instance_initiated_shutdown_behavior'] != 'terminate' and
+                            "InvalidParameterCombination" == e.error_code):
+                        params['instance_initiated_shutdown_behavior'] = 'terminate'
+                        res = ec2.run_instances(**params)
+                    else:
+                        raise
+
                 instids = [i.id for i in res.instances]
                 while True:
                     try:
@@ -1414,12 +1458,16 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
 
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
     # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     existing_instances_array = []
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
+
+            warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
             try:
@@ -1539,12 +1587,16 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     if instance_tags:
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
 
     # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
+
+            warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
             try:
@@ -1579,6 +1631,17 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 changed = True
 
     return (changed, instance_dict_array, instance_ids)
+
+
+def warn_if_public_ip_assignment_changed(module, instance):
+    # This is a non-modifiable attribute.
+    assign_public_ip = module.params.get('assign_public_ip')
+
+    # Check that public ip assignment is the same and warn if not
+    public_dns_name = getattr(instance, 'public_dns_name', None)
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+        module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
+                    "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
 
 def main():
@@ -1691,6 +1754,14 @@ def main():
             (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2, vpc)
         else:
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
+
+    # Always return instances in the same order
+    if new_instance_ids:
+        new_instance_ids.sort()
+    if instance_dict_array:
+        instance_dict_array.sort(key=lambda x: x['id'])
+    if tagged_instances:
+        tagged_instances.sort(key=lambda x: x['id'])
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 

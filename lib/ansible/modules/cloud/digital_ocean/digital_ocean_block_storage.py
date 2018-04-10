@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +37,7 @@ options:
     required: true
   block_size:
     description:
-    - The size of the Block Storage volume in gigabytes. Required when command=create and state=present.
+    - The size of the Block Storage volume in gigabytes. Required when command=create and state=present. If snapshot_id is included, this will be ignored.
   volume_name:
     description:
     - The name of the Block Storage volume.
@@ -47,8 +47,12 @@ options:
     - Description of the Block Storage volume.
   region:
     description:
-    - The slug of the region where your Block Storage volume should be located in.
+    - The slug of the region where your Block Storage volume should be located in. If snapshot_id is included, this will be ignored.
     required: true
+  snapshot_id:
+    version_added: "2.5"
+    description:
+    - The snapshot id you would like the Block Storage volume created with. If included, region and block_size will be ignored and changed to null.
   droplet_id:
     description:
     - The droplet id you want to operate on. Required when command=attach.
@@ -60,6 +64,7 @@ options:
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
     They both refer to the v2 token.
+  - If snapshot_id is used, region and block_size will be ignored and changed to null.
 
 author:
     - "Harnek Sidhu (github: @harneksidhu)"
@@ -107,82 +112,21 @@ id:
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 
-import json
-import os
 import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
 
 class DOBlockStorageException(Exception):
     pass
 
 
-class Response(object):
-
-    def __init__(self, resp, info):
-        self.body = None
-        if resp:
-            self.body = resp.read()
-        self.info = info
-
-    @property
-    def json(self):
-        if self.body:
-            return json.loads(self.body)
-        elif "body" in self.info:
-            return json.loads(self.info["body"])
-        else:
-            return None
-
-    @property
-    def status_code(self):
-        return self.info["status"]
-
-
-class Rest(object):
-
-    def __init__(self, module, headers):
-        self.module = module
-        self.headers = headers
-        self.baseurl = 'https://api.digitalocean.com/v2'
-
-    def _url_builder(self, path):
-        if path[0] == '/':
-            path = path[1:]
-        return '%s/%s' % (self.baseurl, path)
-
-    def send(self, method, path, data=None, headers=None):
-        url = self._url_builder(path)
-        data = self.module.jsonify(data)
-
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
-
-        return Response(resp, info)
-
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
-
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
-
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
-
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
-
-
 class DOBlockStorage(object):
-
     def __init__(self, module):
-        api_token = module.params['api_token'] or \
-            os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
         self.module = module
-        self.rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
-                                  'Content-type': 'application/json'})
+        self.rest = DigitalOceanHelper(module)
 
     def get_key_or_fail(self, k):
         v = self.module.params[k]
@@ -240,15 +184,23 @@ class DOBlockStorage(object):
             raise DOBlockStorageException(json['message'])
 
     def create_block_storage(self):
-        block_size = self.get_key_or_fail('block_size')
         volume_name = self.get_key_or_fail('volume_name')
-        region = self.get_key_or_fail('region')
+        snapshot_id = self.module.params['snapshot_id']
+        if snapshot_id:
+            self.module.params['block_size'] = None
+            self.module.params['region'] = None
+            block_size = None
+            region = None
+        else:
+            block_size = self.get_key_or_fail('block_size')
+            region = self.get_key_or_fail('region')
         description = self.module.params['description']
         data = {
             'size_gigabytes': block_size,
             'name': volume_name,
             'description': description,
-            'region': region
+            'region': region,
+            'snapshot_id': snapshot_id,
         }
         response = self.rest.post("volumes", data=data)
         status = response.status_code
@@ -320,10 +272,11 @@ def main():
             state=dict(choices=['present', 'absent'], required=True),
             command=dict(choices=['create', 'attach'], required=True),
             api_token=dict(aliases=['API_TOKEN'], no_log=True),
-            block_size=dict(type='int'),
+            block_size=dict(type='int', required=False),
             volume_name=dict(type='str', required=True),
             description=dict(type='str'),
-            region=dict(type='str', required=True),
+            region=dict(type='str', required=False),
+            snapshot_id=dict(type='str', required=False),
             droplet_id=dict(type='int'),
             timeout=dict(type='int', default=10),
         ),
@@ -334,7 +287,6 @@ def main():
         module.fail_json(msg=e.message, exception=traceback.format_exc())
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
-
 
 if __name__ == '__main__':
     main()

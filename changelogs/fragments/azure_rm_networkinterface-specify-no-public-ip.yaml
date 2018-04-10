@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_networkinterface - fixed examples in module documentation and added fix to allow an IP configuration with no public IP (https://github.com/ansible/ansible/pull/36824)

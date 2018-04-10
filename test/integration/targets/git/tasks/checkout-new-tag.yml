@@ -1,5 +1,3 @@
----
-
 # test for  https://github.com/ansible/ansible-modules-core/issues/527
 # clone a repo, add a tag to the same commit and try to checkout the new commit
 
@@ -7,12 +5,12 @@
 - name: clear checkout_dir
   file:
     state: absent
-    path: '{{ checkout_dir }}'
+    path: "{{ checkout_dir }}"
 
 - name: checkout example repo
   git:
-    repo: '{{ repo_dir }}/format1'
-    dest: '{{ checkout_dir }}'
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
 
 - name: get tags of head
   command: git tag --contains
@@ -32,8 +30,8 @@
 
 - name: update copy with new tag
   git:
-    repo: '{{ repo_dir }}/format1'
-    dest: '{{checkout_dir}}'
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{checkout_dir}}"
     version: newtag
   register: update_new_tag
 
@@ -46,11 +44,11 @@
 - name: check new head
   assert:
     that:
-      - not update_new_tag|changed
+      - update_new_tag is not changed
       - "'newtag' in listoftags.stdout_lines"
 
 
 - name: clear checkout_dir
   file:
     state: absent
-    path: '{{ checkout_dir }}'
+    path: "{{ checkout_dir }}"

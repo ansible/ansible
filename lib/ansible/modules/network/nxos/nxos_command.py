@@ -1,24 +1,14 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -36,11 +26,10 @@ description:
 options:
   commands:
     description:
-      - The commands to send to the remote NXOS device over the
-        configured provider.  The resulting output from the command
-        is returned.  If the I(wait_for) argument is provided, the
-        module is not returned until the condition is satisfied or
-        the number of retires as expired.
+      - The commands to send to the remote NXOS device.  The resulting
+        output from the command is returned.  If the I(wait_for)
+        argument is provided, the module is not returned until the
+        condition is satisfied or the number of retires as expired.
       - The I(commands) argument also accepts an alternative form
         that allows for complex values that specify the command
         to run and the output format to return.   This can be done
@@ -89,34 +78,21 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
 ---
 - name: run show version on remote devices
   nxos_command:
     commands: show version
-    provider: "{{ cli }}"
 
 - name: run show version and check to see if output contains Cisco
   nxos_command:
     commands: show version
     wait_for: result[0] contains Cisco
-    provider: "{{ cli }}"
 
 - name: run multiple commands on remote nodes
   nxos_command:
     commands:
       - show version
       - show interfaces
-    provider: "{{ cli }}"
 
 - name: run multiple commands and evaluate the output
   nxos_command:
@@ -126,14 +102,12 @@ vars:
     wait_for:
       - result[0] contains Cisco
       - result[1] contains loopback0
-    provider: "{{ cli }}"
 
 - name: run commands and specify the output format
   nxos_command:
     commands:
       - command: show version
         output: json
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -155,13 +129,13 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.nxos.nxos import check_args, nxos_argument_spec, run_commands
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional, FailedConditionalError
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils._text import to_native
+
 
 def to_lines(stdout):
     lines = list()
@@ -170,6 +144,7 @@ def to_lines(stdout):
             item = str(item).split('\n')
         lines.append(item)
     return lines
+
 
 def parse_commands(module, warnings):
     transform = ComplexList(dict(
@@ -181,20 +156,24 @@ def parse_commands(module, warnings):
 
     commands = transform(module.params['commands'])
 
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
-            )
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check_mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
     return commands
+
 
 def to_cli(obj):
     cmd = obj['command']
     if obj.get('output') == 'json':
         cmd += ' | json'
     return cmd
+
 
 def main():
     """entry point for module execution
@@ -215,7 +194,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-
     result = {'changed': False}
 
     warnings = list()
@@ -227,9 +205,8 @@ def main():
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -245,9 +222,8 @@ def main():
                         conditionals = list()
                         break
                     conditionals.remove(item)
-            except FailedConditionalError:
-                exc = get_exception()
-                module.fail_json(msg=str(exc))
+            except FailedConditionalError as exc:
+                module.fail_json(msg=to_native(exc))
 
         if not conditionals:
             break
@@ -257,7 +233,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

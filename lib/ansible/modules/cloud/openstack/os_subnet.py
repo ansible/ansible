@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -165,20 +157,13 @@ EXAMPLES = '''
     ipv6_address_mode: dhcpv6-stateless
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _can_update(subnet, module, cloud):
     """Check for differences in non-updatable values"""
     network_name = module.params['network_name']
-    cidr = module.params['cidr']
     ip_version = int(module.params['ip_version'])
     ipv6_ra_mode = module.params['ipv6_ra_mode']
     ipv6_a_mode = module.params['ipv6_address_mode']
@@ -199,6 +184,7 @@ def _can_update(subnet, module, cloud):
     if ipv6_a_mode and subnet.get('ipv6_address_mode', None) != ipv6_a_mode:
         module.fail_json(msg='Cannot update ipv6_address_mode in existing \
                               subnet')
+
 
 def _needs_update(subnet, module, cloud):
     """Check for differences in the updatable values."""
@@ -276,9 +262,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     network_name = module.params['network_name']
     cidr = module.params['cidr']
@@ -296,10 +279,9 @@ def main():
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
 
-    if (use_default_subnetpool and
-            StrictVersion(shade.__version__) < StrictVersion('1.16.0')):
-        module.fail_json(msg="To utilize use_default_subnetpool, the installed"
-                             " version of the shade library MUST be >=1.16.0")
+    min_version = None
+    if use_default_subnetpool:
+        min_version = '1.16.0'
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -319,8 +301,8 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
@@ -384,8 +366,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

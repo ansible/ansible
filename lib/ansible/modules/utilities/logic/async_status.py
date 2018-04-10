@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -28,8 +28,7 @@ options:
     required: true
   mode:
     description:
-      - if C(status), obtain the status; if C(cleanup), clean up the async job cache
-        located in C(~/.ansible_async/) for the specified job I(jid).
+      - if C(status), obtain the status; if C(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job I(jid).
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
@@ -51,14 +50,16 @@ def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
-        mode=dict(default='status', choices=['status','cleanup']),
+        mode=dict(default='status', choices=['status', 'cleanup']),
     ))
 
     mode = module.params['mode']
-    jid  = module.params['jid']
+    jid = module.params['jid']
+
+    async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
 
     # setup logging directory
-    logdir = os.path.expanduser("~/.ansible_async")
+    logdir = os.path.expanduser(async_dir)
     log_path = os.path.join(logdir, jid)
 
     if not os.path.exists(log_path):
@@ -82,9 +83,9 @@ def main():
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
-                msg="Could not parse job output: %s" % data, started=1, finished=1)
+                             msg="Could not parse job output: %s" % data, started=1, finished=1)
 
-    if not 'started' in data:
+    if 'started' not in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
     elif 'finished' not in data:

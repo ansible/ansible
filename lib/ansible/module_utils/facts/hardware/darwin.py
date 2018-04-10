@@ -79,6 +79,7 @@ class DarwinHardware(Hardware):
             system_profile = self.get_system_profile()
             cpu_facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
             cpu_facts['processor_cores'] = self.sysctl['hw.physicalcpu']
+        cpu_facts['processor_vcpus'] = self.sysctl.get('hw.logicalcpu') or self.sysctl.get('hw.ncpu') or ''
 
         return cpu_facts
 

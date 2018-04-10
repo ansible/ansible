@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -144,8 +144,7 @@ EXAMPLES = '''
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError, ResourceInUseError
+    from libcloud.common.google import GoogleBaseError, QuotaExceededError, ResourceExistsError, ResourceNotFoundError, ResourceInUseError
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -157,22 +156,24 @@ from ansible.module_utils.gce import gce_connect, unexpected_error_msg
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            delete_on_termination = dict(type='bool'),
-            detach_only = dict(type='bool'),
-            instance_name = dict(),
-            mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
-            name = dict(required=True),
-            size_gb = dict(default=10),
-            disk_type = dict(default='pd-standard'),
-            image = dict(),
-            snapshot = dict(),
-            state = dict(default='present'),
-            zone = dict(default='us-central1-b'),
-            service_account_email = dict(),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
+        argument_spec=dict(
+            delete_on_termination=dict(type='bool'),
+            detach_only=dict(type='bool'),
+            instance_name=dict(),
+            mode=dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
+            name=dict(required=True),
+            size_gb=dict(default=10),
+            disk_type=dict(default='pd-standard'),
+            image=dict(),
+            image_family=dict(),
+            external_projects=dict(type='list'),
+            snapshot=dict(),
+            state=dict(default='present'),
+            zone=dict(default='us-central1-b'),
+            service_account_email=dict(),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
         )
     )
     if not HAS_LIBCLOUD:
@@ -188,6 +189,8 @@ def main():
     size_gb = module.params.get('size_gb')
     disk_type = module.params.get('disk_type')
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
@@ -205,7 +208,7 @@ def main():
     disk = inst = None
     changed = is_attached = False
 
-    json_output = { 'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type  }
+    json_output = {'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type}
     if detach_only:
         json_output['detach_only'] = True
         json_output['detached_from_instance'] = instance_name
@@ -244,7 +247,7 @@ def main():
                 raise Exception
         except:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
-                    changed=False)
+                             changed=False)
 
         if instance_name and inst is None:
             module.fail_json(msg='Instance %s does not exist in zone %s' % (
@@ -257,8 +260,10 @@ def main():
                         image, snapshot), changed=False)
             lc_image = None
             lc_snapshot = None
-            if image is not None:
-                lc_image = gce.ex_get_image(image)
+            if image_family is not None:
+                lc_image = gce.ex_get_image_from_family(image_family, ex_project_list=external_projects)
+            elif image is not None:
+                lc_image = gce.ex_get_image(image, ex_project_list=external_projects)
             elif snapshot is not None:
                 lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:
@@ -269,7 +274,7 @@ def main():
                 pass
             except QuotaExceededError:
                 module.fail_json(msg='Requested disk size exceeds quota',
-                        changed=False)
+                                 changed=False)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb

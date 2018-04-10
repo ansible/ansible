@@ -20,6 +20,7 @@ RUN yum clean all && \
     openssh-server \
     openssl-devel \
     python-argparse \
+    pass \
     python-devel \
     python-httplib2 \
     python-jinja2 \

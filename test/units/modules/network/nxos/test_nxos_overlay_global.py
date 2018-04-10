@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_overlay_global
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,7 @@ class TestNxosOverlayGlobalModule(TestNxosModule):
     module = nxos_overlay_global
 
     def setUp(self):
+        super(TestNxosOverlayGlobalModule, self).setUp()
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_overlay_global.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,13 +37,15 @@ class TestNxosOverlayGlobalModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosOverlayGlobalModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('', 'nxos_overlay_global_config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_overlay_global_up(self):
-        set_module_args(dict(anycast_gateway_mac="b.b.b"))
+        set_module_args(dict(anycast_gateway_mac="a.a.a"))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['fabric forwarding anycast-gateway-mac 000B.000B.000B'])
+        self.assertEqual(result['commands'], ['fabric forwarding anycast-gateway-mac 000A.000A.000A'])

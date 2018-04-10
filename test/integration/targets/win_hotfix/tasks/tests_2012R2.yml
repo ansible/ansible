@@ -1,0 +1,253 @@
+---
+- name: create test staging folder
+  win_file:
+    path: '{{test_win_hotfix_path}}'
+    state: directory
+
+- name: download hotfix
+  win_get_url:
+    url: '{{test_win_hotfix_good_url}}'
+    dest: '{{test_win_hotfix_path}}\good.msu'
+
+- name: download reboot hotfix
+  win_get_url:
+    url: '{{test_win_hotfix_reboot_url}}'
+    dest: '{{test_win_hotfix_path}}\reboot.msu'
+
+- name: download bad hotfix
+  win_get_url:
+    url: '{{test_win_hotfix_bad_url}}'
+    dest: '{{test_win_hotfix_path}}\bad.msu'
+
+- name: fail install install hotfix where kb doesn't match
+  win_hotfix:
+    hotfix_kb: KB0000000
+    source: '{{test_win_hotfix_path}}\good.msu'
+    state: present
+  register: fail_install_invalid_kb
+  failed_when: fail_install_invalid_kb.msg != 'the hotfix KB KB0000000 does not match with the source msu KB ' + test_win_hotfix_kb + ', please omit or specify the correct KB to continue'
+
+- name: fail install install hotfix where identifier doesn't match
+  win_hotfix:
+    hotfix_identifier: invalid
+    source: '{{test_win_hotfix_path}}\good.msu'
+    state: present
+  register: fail_install_invalid_identifier
+  failed_when: fail_install_invalid_identifier.msg != 'the hotfix identifier invalid does not match with the source msu identifier ' + test_win_hotfix_identifier + ', please omit or specify the correct identifier to continue'
+
+- name: fail install not applicable hotfix
+  win_hotfix:
+    source: '{{test_win_hotfix_path}}\bad.msu'
+    state: present
+  register: fail_install_not_applicable
+  failed_when: fail_install_not_applicable.msg != 'hotfix package is not applicable for this server'
+
+- name: install hotfix check
+  win_hotfix:
+    source: '{{test_win_hotfix_path}}\good.msu'
+    state: present
+  register: install_hotfix_check
+  check_mode: yes
+
+- name: get result of install hotfix check
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
+  register: install_hotfix_actual_check
+  ignore_errors: True
+
+- name: assert install hotfix check
+  assert:
+    that:
+    - install_hotfix_check is changed
+    - install_hotfix_check.kb == test_win_hotfix_kb
+    - install_hotfix_check.identifier == test_win_hotfix_identifier
+    - install_hotfix_actual_check.rc != 0
+
+- name: install hotfix
+  win_hotfix:
+    source: '{{test_win_hotfix_path}}\good.msu'
+    state: present
+  register: install_hotfix
+
+- name: get result of install hotfix
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
+  register: install_hotfix_actual
+
+- name: assert install hotfix
+  assert:
+    that:
+    - install_hotfix is changed
+    - install_hotfix.kb == test_win_hotfix_kb
+    - install_hotfix.identifier == test_win_hotfix_identifier
+    - install_hotfix.reboot_required == False
+    - install_hotfix_actual.rc == 0
+
+- name: install hotfix again
+  win_hotfix:
+    source: '{{test_win_hotfix_path}}\good.msu'
+    state: present
+  register: install_hotfix_again
+
+- name: assert install hotfix again
+  assert:
+    that:
+    - install_hotfix_again is not changed
+    - install_hotfix_again.kb == test_win_hotfix_kb
+    - install_hotfix_again.identifier == test_win_hotfix_identifier
+    - install_hotfix_again.reboot_required == False
+
+- name: uninstall hotfix check
+  win_hotfix:
+    hotfix_identifier: '{{test_win_hotfix_identifier}}'
+    state: absent
+  register: uninstall_hotfix_check
+  check_mode: yes
+
+- name: get result of uninstall hotfix check
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
+  register: uninstall_hotfix_actual_check
+
+- name: assert uninstall hotfix check
+  assert:
+    that:
+    - uninstall_hotfix_check is changed
+    - uninstall_hotfix_check.kb == test_win_hotfix_kb
+    - uninstall_hotfix_check.identifier == test_win_hotfix_identifier
+    - uninstall_hotfix_actual_check.rc == 0
+
+- name: uninstall hotfix
+  win_hotfix:
+    hotfix_identifier: '{{test_win_hotfix_identifier}}'
+    state: absent
+  register: uninstall_hotfix
+
+- name: get result of uninstall hotfix
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
+  register: uninstall_hotfix_actual
+  ignore_errors: True
+
+- name: assert uninstall hotfix
+  assert:
+    that:
+    - uninstall_hotfix is changed
+    - uninstall_hotfix.kb == test_win_hotfix_kb
+    - uninstall_hotfix.identifier == test_win_hotfix_identifier
+    - uninstall_hotfix.reboot_required == False
+    - uninstall_hotfix_actual.rc != 0
+
+- name: uninstall hotfix again
+  win_hotfix:
+    hotfix_identifier: '{{test_win_hotfix_identifier}}'
+    state: absent
+  register: uninstall_hotfix_again
+
+- name: assert uninstall hotfix again
+  assert:
+    that:
+    - uninstall_hotfix_again is not changed
+    - uninstall_hotfix_again.reboot_required == False
+
+- name: install reboot hotfix
+  win_hotfix:
+    hotfix_kb: '{{test_win_hotfix_reboot_kb}}'
+    source: '{{test_win_hotfix_path}}\reboot.msu'
+    state: present
+  register: install_reboot_hotfix
+
+- name: get result of install reboot hotfix
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_reboot_kb}}
+  register: install_hotfix_reboot_actual
+
+- name: assert install reboot hotfix
+  assert:
+    that:
+    - install_reboot_hotfix is changed
+    - install_reboot_hotfix.kb == test_win_hotfix_reboot_kb
+    - install_reboot_hotfix.identifier == test_win_hotfix_reboot_identifier
+    - install_reboot_hotfix.reboot_required == True
+    - install_hotfix_reboot_actual.rc == 0
+
+- name: run install reboot again before rebooting
+  win_hotfix:
+    source: '{{test_win_hotfix_path}}\reboot.msu'
+    state: present
+  register: install_before_rebooting
+
+- name: assert install reboot again before rebooting
+  assert:
+    that:
+    - install_before_rebooting is not changed
+    - install_before_rebooting.reboot_required == True
+
+- win_reboot:
+
+- name: install reboot hotfix again
+  win_hotfix:
+    hotfix_identifier: '{{test_win_hotfix_reboot_identifier}}'
+    source: '{{test_win_hotfix_path}}\reboot.msu'
+    state: present
+  register: install_reboot_hotfix_again
+
+- name: assert install reboot hotfix again
+  assert:
+    that:
+    - install_reboot_hotfix_again is not changed
+    - install_reboot_hotfix_again.reboot_required == False
+
+- name: uninstall hotfix with kb check
+  win_hotfix:
+    hotfix_kb: '{{test_win_hotfix_reboot_kb}}'
+    state: absent
+  register: uninstall_hotfix_kb_check
+  check_mode: yes
+
+- name: get result of uninstall hotfix with kb check
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_reboot_kb}}
+  register: uninstall_hotfix_kb_actual_check
+
+- name: assert uninstall hotfix with kb check
+  assert:
+    that:
+    - uninstall_hotfix_kb_check is changed
+    - uninstall_hotfix_kb_check.kb == test_win_hotfix_reboot_kb
+    - uninstall_hotfix_kb_check.identifier == test_win_hotfix_reboot_identifier
+    - uninstall_hotfix_kb_check.reboot_required == False
+    - uninstall_hotfix_kb_actual_check.rc == 0
+
+- name: uninstall hotfix with kb
+  win_hotfix:
+    hotfix_kb: '{{test_win_hotfix_reboot_kb}}'
+    state: absent
+  register: uninstall_hotfix_kb
+
+- name: get result of uninstall hotfix with kb
+  win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
+  register: uninstall_hotfix_kb_actual
+  ignore_errors: True
+
+- name: assert uninstall hotfix with kb
+  assert:
+    that:
+    - uninstall_hotfix_kb is changed
+    - uninstall_hotfix_kb.kb == test_win_hotfix_reboot_kb
+    - uninstall_hotfix_kb.identifier == test_win_hotfix_reboot_identifier
+    - uninstall_hotfix_kb.reboot_required == True
+    - uninstall_hotfix_kb_actual.rc != 0
+
+- win_reboot:
+
+- name: uninstall hotfix with kb again
+  win_hotfix:
+    hotfix_kb: '{{test_win_hotfix_reboot_kb}}'
+    state: absent
+  register: uninstall_hotfix_kb_again
+
+- name: assert uninstall hotfix with kb again
+  assert:
+    that:
+    - uninstall_hotfix_kb_again is not changed
+    - uninstall_hotfix_kb_again.reboot_required == False
+
+- name: remove test staging folder
+  win_file:
+    path: '{{test_win_hotfix_path}}'
+    state: absent

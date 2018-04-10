@@ -2,16 +2,17 @@
   dnf:
     name: "{{ item }}"
     state: present
-  items:
+  loop:
     - dnf-plugins-core 
 
 - name: Add repository
   command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
 
 - name: Update cache
-  command: dnf makecache fast 
+  command: dnf makecache
 
 - name: Install docker
   dnf:
     name: docker-ce
     state: present
+    enablerepo: docker-ce-test

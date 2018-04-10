@@ -43,13 +43,19 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
+    BASE = ('name', 'role')  # directly assigned
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
+    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
+    VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
+
+    _inheritable = False
+
     # =================================================================================
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
-    _static = FieldAttribute(isa='bool', default=None)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -100,23 +106,27 @@ class IncludeRole(TaskInclude):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        # Process options
+        # Validate options
+        my_arg_names = frozenset(ir.args.keys())
+
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for include_role.")
 
-        # build options for role includes
-        for key in ['tasks', 'vars', 'defaults']:
-            from_key = '%s_from' % key
-            if ir.args.get(from_key):
-                ir._from_files[key] = basename(ir.args.get(from_key))
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
+        if bad_opts:
+            raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
 
-        # FIXME: find a way to make this list come from object ( attributes does not work as per below)
+        # build options for role includes
+        for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
+            from_key = key.replace('_from', '')
+            ir._from_files[from_key] = basename(ir.args.get(key))
+
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in ['private', 'allow_duplicates']:
-            if option in ir.args:
-                setattr(ir, option, ir.args.get(option))
+        for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):
+            setattr(ir, option, ir.args.get(option))
 
         return ir
 
@@ -127,6 +137,7 @@ class IncludeRole(TaskInclude):
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
         new_me._role_name = self._role_name
+        new_me._role_path = self._role_path
 
         return new_me
 

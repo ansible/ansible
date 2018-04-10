@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -120,16 +120,16 @@ import xml.etree.ElementTree as ET
 
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import sort_json_policy_dict
+from ansible.module_utils.ec2 import sort_json_policy_dict, compare_policies
 
 try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location, S3Connection
     from boto.s3.tagging import Tags, TagSet
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3CreateError, S3ResponseError, BotoClientError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -156,57 +156,6 @@ def create_tags_container(tags):
     return tags_obj
 
 
-def hashable_policy(policy, policy_list):
-    """
-        Takes a policy and returns a list, the contents of which are all hashable and sorted.
-        Example input policy:
-        {'Version': '2012-10-17',
-         'Statement': [{'Action': 's3:PutObjectAcl',
-                        'Sid': 'AddCannedAcl2',
-                        'Resource': 'arn:aws:s3:::test_policy/*',
-                        'Effect': 'Allow',
-                        'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
-                       }]}
-        Returned value:
-        [('Statement',  ((('Action', (u's3:PutObjectAcl',)),
-                          ('Effect', (u'Allow',)),
-                          ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
-                          ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',)))),
-         ('Version', (u'2012-10-17',)))]
-
-    """
-    if isinstance(policy, list):
-        for each in policy:
-            tupleified = hashable_policy(each, [])
-            if isinstance(tupleified, list):
-                tupleified = tuple(tupleified)
-            policy_list.append(tupleified)
-    elif isinstance(policy, string_types):
-        return [(to_text(policy))]
-    elif isinstance(policy, dict):
-        sorted_keys = list(policy.keys())
-        sorted_keys.sort()
-        for key in sorted_keys:
-            tupleified = hashable_policy(policy[key], [])
-            if isinstance(tupleified, list):
-                tupleified = tuple(tupleified)
-            policy_list.append((key, tupleified))
-
-    # ensure we aren't returning deeply nested structures of length 1
-    if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
-        policy_list = policy_list[0]
-    if isinstance(policy_list, list):
-        policy_list.sort()
-    return policy_list
-
-
-def compare_policies(current_policy, new_policy):
-    """ Compares the existing policy and the updated policy
-        Returns True if there is a difference between policies.
-    """
-    return set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, []))
-
-
 def _create_or_update_bucket(connection, module, location):
 
     policy = module.params.get("policy")
@@ -222,7 +171,7 @@ def _create_or_update_bucket(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     # Versioning
@@ -256,7 +205,7 @@ def _create_or_update_bucket(connection, module, location):
 
     # Policy
     try:
-        current_policy = json.loads(bucket.get_policy())
+        current_policy = json.loads(to_native(bucket.get_policy()))
     except S3ResponseError as e:
         if e.error_code == "NoSuchBucketPolicy":
             current_policy = {}
@@ -271,13 +220,11 @@ def _create_or_update_bucket(connection, module, location):
             # only show changed if there was already a policy
             changed = bool(current_policy)
 
-        elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
-            # doesn't necessarily mean the policy has changed; syntax could differ
-            changed = compare_policies(sort_json_policy_dict(current_policy), sort_json_policy_dict(policy))
+        elif compare_policies(current_policy, policy):
+            changed = True
             try:
-                if changed:
-                    bucket.set_policy(json.dumps(policy))
-                current_policy = json.loads(bucket.get_policy())
+                bucket.set_policy(json.dumps(policy))
+                current_policy = json.loads(to_native(bucket.get_policy()))
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
 
@@ -357,7 +304,7 @@ def _create_or_update_bucket_ceph(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     if bucket:

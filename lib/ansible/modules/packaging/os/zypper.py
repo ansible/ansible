@@ -11,22 +11,13 @@
 #         (c) 2012, Red Hat, Inc
 #         Written by Seth Vidal <skvidal at fedoraproject.org>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -47,7 +38,7 @@ description:
 options:
     name:
         description:
-        - Package name C(name) or package specifier.
+        - Package name C(name) or package specifier or a list of either.
         - Can include a version like C(name=1.0), C(name>3.4) or C(name<=2.7). If a version is given, C(oldpackage) is implied and zypper is allowed to
           update the package within the version range given.
         - You can also pass a url or a local path to a rpm file.
@@ -116,7 +107,9 @@ options:
         description:
           - Add additional options to C(zypper) command.
           - Options should be supplied in a single line as if given in the command line.
-
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 # informational: requirements for nodes
 requirements:
     - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
@@ -209,7 +202,6 @@ class Package:
 
     def __str__(self):
         return self.prefix + self.name + self.version
-
 
 
 def split_name_version(name):
@@ -308,7 +300,7 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
             return parse_zypper_xml(m, cmd, fail_not_found=fail_not_found, packages=packages)
 
         return packages, rc, stdout, stderr
-    m.fail_json(msg='Zypper run command failed with return code %s.'%rc, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
+    m.fail_json(msg='Zypper run command failed with return code %s.' % rc, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
 
 
 def get_cmd(m, subcommand):
@@ -320,6 +312,9 @@ def get_cmd(m, subcommand):
     # add global options before zypper command
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
+
+    if subcommand == 'search':
+        cmd.append('--disable-repositories')
 
     cmd.append(subcommand)
     if subcommand not in ['patch', 'dist-upgrade'] and not is_refresh:
@@ -462,20 +457,21 @@ def repo_refresh(m):
 # ===========================================
 # Main control flow
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, aliases=['pkg'], type='list'),
-            state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
-            type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
-            disable_gpg_check = dict(required=False, default='no', type='bool'),
-            disable_recommends = dict(required=False, default='yes', type='bool'),
-            force = dict(required=False, default='no', type='bool'),
-            update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
-            oldpackage = dict(required=False, default='no', type='bool'),
-            extra_args = dict(required=False, default=None),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg'], type='list'),
+            state=dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
+            type=dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
+            disable_gpg_check=dict(required=False, default='no', type='bool'),
+            disable_recommends=dict(required=False, default='yes', type='bool'),
+            force=dict(required=False, default='no', type='bool'),
+            update_cache=dict(required=False, aliases=['refresh'], default='no', type='bool'),
+            oldpackage=dict(required=False, default='no', type='bool'),
+            extra_args=dict(required=False, default=None),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     name = module.params['name']

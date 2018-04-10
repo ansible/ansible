@@ -1,23 +1,38 @@
 # Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
 # (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Maykel Moya <mmoya@speedyrails.com>
+    connection: chroot
+    short_description: Interact with local chroot
+    description:
+        - Run commands or put/fetch files to an existing chroot on the Ansible controller.
+    version_added: "1.1"
+    options:
+      remote_addr:
+        description:
+            - The path of the chroot you want to access.
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+      executable:
+        description:
+            - User specified executable shell
+        ini:
+          - section: defaults
+            key: executable
+        env:
+          - name: ANSIBLE_EXECUTABLE
+        vars:
+          - name: ansible_executable
+"""
 
 import distutils.spawn
 import os

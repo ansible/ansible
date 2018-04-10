@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -49,7 +49,7 @@ options:
     - disabled
 requirements:
   - This module requires Windows Management Framework 5 or later.
-author: Michael Eaton (@MichaelEaton83)
+author: Michael Eaton (@if-meaton)
 '''
 
 EXAMPLES = r'''

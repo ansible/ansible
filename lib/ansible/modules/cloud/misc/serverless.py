@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -58,7 +58,7 @@ options:
     default: true
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
-requirements: [ "serverless" ]
+requirements: [ "serverless", "yaml" ]
 author: "Ryan Scott Brown @ryansb"
 '''
 
@@ -100,7 +100,7 @@ EXAMPLES = """
 RETURN = """
 service_name:
   type: string
-  description: Most
+  description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:
@@ -116,7 +116,12 @@ command:
 
 import os
 import traceback
-import yaml
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -149,15 +154,18 @@ def get_service_name(module, stage):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path = dict(required=True, type='path'),
-            state        = dict(default='present', choices=['present', 'absent'], required=False),
-            functions    = dict(type='list', required=False),
-            region       = dict(default='', required=False),
-            stage        = dict(default='', required=False),
-            deploy       = dict(default=True, type='bool', required=False),
-            serverless_bin_path = dict(required=False, type='path')
+            service_path=dict(required=True, type='path'),
+            state=dict(default='present', choices=['present', 'absent'], required=False),
+            functions=dict(type='list', required=False),
+            region=dict(default='', required=False),
+            stage=dict(default='', required=False),
+            deploy=dict(default=True, type='bool', required=False),
+            serverless_bin_path=dict(required=False, type='path')
         ),
     )
+
+    if not HAS_YAML:
+        module.fail_json(msg='yaml is required for this module')
 
     service_path = module.params.get('service_path')
     state = module.params.get('state')
@@ -190,13 +198,13 @@ def main():
     if rc != 0:
         if state == 'absent' and "-{}' does not exist".format(stage) in out:
             module.exit_json(changed=False, state='absent', command=command,
-                    out=out, service_name=get_service_name(module, stage))
+                             out=out, service_name=get_service_name(module, stage))
 
         module.fail_json(msg="Failure when executing Serverless command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
 
     # gather some facts about the deployment
     module.exit_json(changed=True, state='present', out=out, command=command,
-            service_name=get_service_name(module, stage))
+                     service_name=get_service_name(module, stage))
 
 
 if __name__ == '__main__':

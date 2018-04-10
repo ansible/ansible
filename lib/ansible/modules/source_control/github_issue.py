@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,7 +103,7 @@ def main():
     result = dict()
 
     gh_obj = github3.issue(organization, repo, issue)
-    if isinstance(gh_obj, github3.null.NullObject):
+    if gh_obj is None:
         module.fail_json(msg="Failed to get details about issue specified. "
                              "Please check organization, repo and issue "
                              "details and try again.")

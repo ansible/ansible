@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -24,7 +24,7 @@ options:
     purge_rules:
       description:
         - If set to true, it will delete all rules in the gateway that are not given as parameter to this module.
-      required: false
+      type: bool
       default: false
     nat_rules:
       description:
@@ -112,20 +112,22 @@ def nat_rules_to_dict(nat_rules):
         )
     return result
 
+
 def rule_to_string(rule):
     strings = list()
     for key, value in rule.items():
         strings.append('%s=%s' % (key, value))
     return ', '.join(strings)
 
+
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            nat_rules = dict(type='list', default=[]),
-            gateway_name = dict(default='gateway'),
-            purge_rules = dict(default=False, type='bool'),
-            state = dict(default='present', choices=['present', 'absent'])
+            nat_rules=dict(type='list', default=[]),
+            gateway_name=dict(default='gateway'),
+            purge_rules=dict(default=False, type='bool'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 

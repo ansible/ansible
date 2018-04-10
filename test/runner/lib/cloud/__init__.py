@@ -3,6 +3,9 @@ from __future__ import absolute_import, print_function
 
 import abc
 import atexit
+import datetime
+import json
+import time
 import os
 import platform
 import random
@@ -15,6 +18,7 @@ from lib.util import (
     is_shippable,
     import_plugins,
     load_plugins,
+    ABC,
 )
 
 from lib.target import (
@@ -127,12 +131,33 @@ def cloud_init(args, targets):
 
     args.metadata.cloud_config = {}
 
+    results = {}
+
     for provider in get_cloud_providers(args, targets):
         args.metadata.cloud_config[provider.platform] = {}
+
+        start_time = time.time()
         provider.setup()
+        end_time = time.time()
+
+        results[provider.platform] = dict(
+            platform=provider.platform,
+            setup_seconds=int(end_time - start_time),
+            targets=[t.name for t in targets],
+        )
+
+    if not args.explain and results:
+        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+        data = dict(
+            clouds=results,
+        )
+
+        with open(results_path, 'w') as results_fd:
+            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
 
-class CloudBase(object):
+class CloudBase(ABC):
     """Base class for cloud plugins."""
     __metaclass__ = abc.ABCMeta
 
@@ -206,8 +231,6 @@ class CloudBase(object):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    __metaclass__ = abc.ABCMeta
-
     TEST_DIR = 'test/integration'
 
     def __init__(self, args, config_extension='.yml'):
@@ -334,8 +357,6 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def configure_environment(self, env, cmd):
         """
@@ -346,7 +367,7 @@ class CloudEnvironment(CloudBase):
 
     def on_failure(self, target, tries):
         """
-        :type target: TestTarget
+        :type target: IntegrationTarget
         :type tries: int
         """
         pass

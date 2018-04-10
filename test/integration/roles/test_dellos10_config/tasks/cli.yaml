@@ -1,0 +1,13 @@
+---
+- name: collect all cli test cases
+  find:
+    paths: "{{ role_path }}/tests/cli"
+    patterns: "{{ testcase }}.yaml"
+  register: test_cases
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: run test case
+  include: "{{ item }}"
+  with_items: "{{ test_items }}"

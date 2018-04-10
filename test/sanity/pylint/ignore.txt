@@ -1,0 +1,117 @@
+lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/aws_kms.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/ec2_eip.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/ec2_group.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/ecs_ecr.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/amazon/sns.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_acs.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_availabilityset_facts.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_functionapp.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_loadbalancer_facts.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_managed_disk_facts.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/azure/azure_rm_virtualmachine_scaleset_facts.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/digital_ocean/digital_ocean_block_storage.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/google/gce_instance_template.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/lxd/lxd_container.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/lxd/lxd_profile.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/misc/proxmox_kvm.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/misc/serverless.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/ovirt/ovirt_users.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/ovirt/ovirt_vms.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/univention/udm_dns_record.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/univention/udm_dns_zone.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/univention/udm_group.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/univention/udm_share.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/univention/udm_user.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/vmware/vmware_cfg_backup.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/webfaction/webfaction_app.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/webfaction/webfaction_db.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/webfaction/webfaction_domain.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py ansible-format-automatic-specification
+lib/ansible/modules/cloud/webfaction/webfaction_site.py ansible-format-automatic-specification
+lib/ansible/modules/clustering/consul.py ansible-format-automatic-specification
+lib/ansible/modules/monitoring/grafana_plugin.py ansible-format-automatic-specification
+lib/ansible/modules/net_tools/dnsmadeeasy.py ansible-format-automatic-specification
+lib/ansible/modules/net_tools/ipinfoio_facts.py ansible-format-automatic-specification
+lib/ansible/modules/network/a10/a10_server_axapi3.py ansible-format-automatic-specification
+lib/ansible/modules/network/avi/avi_api_version.py ansible-format-automatic-specification
+lib/ansible/modules/network/bigswitch/bcf_switch.py ansible-format-automatic-specification
+lib/ansible/modules/network/bigswitch/bigmon_chain.py ansible-format-automatic-specification
+lib/ansible/modules/network/bigswitch/bigmon_policy.py ansible-format-automatic-specification
+lib/ansible/modules/network/cloudengine/ce_file_copy.py ansible-format-automatic-specification
+lib/ansible/modules/network/eos/eos_interface.py ansible-format-automatic-specification
+lib/ansible/modules/network/eos/eos_l3_interface.py ansible-format-automatic-specification
+lib/ansible/modules/network/eos/eos_linkagg.py ansible-format-automatic-specification
+lib/ansible/modules/network/eos/eos_logging.py ansible-format-automatic-specification
+lib/ansible/modules/network/eos/eos_static_route.py ansible-format-automatic-specification
+lib/ansible/modules/network/ios/ios_l3_interface.py ansible-format-automatic-specification
+lib/ansible/modules/network/ios/ios_vlan.py ansible-format-automatic-specification
+lib/ansible/modules/network/iosxr/iosxr_banner.py ansible-format-automatic-specification
+lib/ansible/modules/network/iosxr/iosxr_interface.py ansible-format-automatic-specification
+lib/ansible/modules/network/nxos/nxos_logging.py ansible-format-automatic-specification
+lib/ansible/modules/network/nxos/nxos_snapshot.py ansible-format-automatic-specification
+lib/ansible/modules/network/vyos/vyos_vlan.py ansible-format-automatic-specification
+lib/ansible/modules/notification/cisco_spark.py ansible-format-automatic-specification
+lib/ansible/modules/notification/logentries_msg.py ansible-format-automatic-specification
+lib/ansible/modules/remote_management/foreman/foreman.py ansible-format-automatic-specification
+lib/ansible/modules/remote_management/foreman/katello.py ansible-format-automatic-specification
+lib/ansible/modules/source_control/github_deploy_key.py ansible-format-automatic-specification
+lib/ansible/modules/source_control/github_key.py ansible-format-automatic-specification
+lib/ansible/modules/storage/infinidat/infini_export.py ansible-format-automatic-specification
+lib/ansible/modules/storage/infinidat/infini_export_client.py ansible-format-automatic-specification
+lib/ansible/modules/storage/infinidat/infini_fs.py ansible-format-automatic-specification
+lib/ansible/modules/storage/infinidat/infini_host.py ansible-format-automatic-specification
+lib/ansible/modules/storage/infinidat/infini_vol.py ansible-format-automatic-specification
+lib/ansible/modules/storage/purestorage/purefa_host.py ansible-format-automatic-specification
+lib/ansible/modules/storage/purestorage/purefa_pg.py ansible-format-automatic-specification
+lib/ansible/modules/system/firewalld.py ansible-format-automatic-specification
+lib/ansible/plugins/cliconf/junos.py ansible-no-format-on-bytestring 3
+lib/ansible/plugins/cliconf/nxos.py ansible-format-automatic-specification
+test/runner/injector/importer.py missing-docstring 3.7
+test/runner/injector/injector.py missing-docstring 3.7
+test/runner/lib/ansible_util.py missing-docstring 3.7
+test/runner/lib/changes.py missing-docstring 3.7
+test/runner/lib/classification.py missing-docstring 3.7
+test/runner/lib/cloud/__init__.py missing-docstring 3.7
+test/runner/lib/cloud/aws.py missing-docstring 3.7
+test/runner/lib/cloud/azure.py missing-docstring 3.7
+test/runner/lib/cloud/cs.py missing-docstring 3.7
+test/runner/lib/cloud/vcenter.py missing-docstring 3.7
+test/runner/lib/config.py missing-docstring 3.7
+test/runner/lib/core_ci.py missing-docstring 3.7
+test/runner/lib/cover.py missing-docstring 3.7
+test/runner/lib/delegation.py missing-docstring 3.7
+test/runner/lib/delegation.py redefined-variable-type 2.7
+test/runner/lib/diff.py missing-docstring 3.7
+test/runner/lib/docker_util.py missing-docstring 3.7
+test/runner/lib/executor.py missing-docstring 3.7
+test/runner/lib/git.py missing-docstring 3.7
+test/runner/lib/http.py missing-docstring 3.7
+test/runner/lib/import_analysis.py missing-docstring 3.7
+test/runner/lib/manage_ci.py missing-docstring 3.7
+test/runner/lib/metadata.py missing-docstring 3.7
+test/runner/lib/powershell_import_analysis.py missing-docstring 3.7
+test/runner/lib/pytar.py missing-docstring 3.7
+test/runner/lib/sanity/__init__.py missing-docstring 3.7
+test/runner/lib/sanity/ansible_doc.py missing-docstring 3.7
+test/runner/lib/sanity/compile.py missing-docstring 3.7
+test/runner/lib/sanity/import.py missing-docstring 3.7
+test/runner/lib/sanity/pep8.py missing-docstring 3.7
+test/runner/lib/sanity/pslint.py missing-docstring 3.7
+test/runner/lib/sanity/pylint.py missing-docstring 3.7
+test/runner/lib/sanity/rstcheck.py missing-docstring 3.7
+test/runner/lib/sanity/sanity_docs.py missing-docstring 3.7
+test/runner/lib/sanity/shellcheck.py missing-docstring 3.7
+test/runner/lib/sanity/validate_modules.py missing-docstring 3.7
+test/runner/lib/sanity/yamllint.py missing-docstring 3.7
+test/runner/lib/target.py missing-docstring 3.7
+test/runner/lib/test.py missing-docstring 3.7
+test/runner/lib/thread.py missing-docstring 3.7
+test/runner/lib/util.py missing-docstring 3.7
+test/runner/retry.py missing-docstring 3.7
+test/runner/shippable.py missing-docstring 3.7
+test/runner/test.py missing-docstring 3.7
+test/runner/units/test_diff.py missing-docstring 3.7
+test/sanity/import/importer.py missing-docstring 3.7

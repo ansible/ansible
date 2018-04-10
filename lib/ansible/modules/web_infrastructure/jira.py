@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,7 +31,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition ]
+    choices: [ create, comment, edit, fetch, transition , link ]
     description:
       - The operation to perform.
 
@@ -46,7 +46,6 @@ options:
       - The password to log-in with.
 
   project:
-    aliases: [ prj ]
     required: false
     description:
       - The project for this operation. Required for issue creation.
@@ -117,6 +116,13 @@ options:
     description:
       - Set timeout, in seconds, on requests to JIRA API.
     default: 10
+
+  validate_certs:
+    required: false
+    version_added: 2.5
+    description:
+      - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
+    default: true
 
 notes:
   - "Currently this only works with basic-auth."
@@ -201,13 +207,15 @@ EXAMPLES = """
     name: '{{ issue.meta.fields.creator.name }}'
     comment: '{{ issue.meta.fields.creator.displayName }}'
 
+# You can get list of valid linktypes at /rest/api/2/issueLinkType
+# url of your jira installation.
 - name: Create link from HSP-1 to MKY-1
   jira:
     uri: '{{ server }}'
     username: '{{ user }}'
     password: '{{ pass }}'
     operation: link
-    linktype: Relate
+    linktype: Relates
     inwardissue: HSP-1
     outwardissue: MKY-1
 
@@ -225,6 +233,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
+from ansible.module_utils._text import to_text, to_bytes
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -241,7 +250,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # resulting in unexpected results. To work around this we manually
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd), errors='surrogate_or_strict')))
+
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
                                headers={'Content-Type': 'application/json',
                                         'Authorization': "Basic %s" % auth})
@@ -389,6 +399,7 @@ def main():
             inwardissue=dict(),
             outwardissue=dict(),
             timeout=dict(type='float', default=10),
+            validate_certs=dict(default=True, type='bool'),
         ),
         supports_check_mode=False
     )

@@ -2,20 +2,11 @@
 
 # LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
 # Copyright (C) 2015  LogicMonitor
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 RETURN = '''
 ---
@@ -28,7 +19,7 @@ success:
 '''
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -558,7 +549,6 @@ except ImportError:
         HAS_LIB_JSON = False
 
 
-
 class LogicMonitor(object):
 
     def __init__(self, module, **params):
@@ -676,7 +666,7 @@ class LogicMonitor(object):
 
                 for host in hosts:
                     if (host["hostName"] == hostname and
-                       host["agentId"] == collector["id"]):
+                            host["agentId"] == collector["id"]):
 
                         self.module.debug("Host match found")
                         return host
@@ -697,7 +687,7 @@ class LogicMonitor(object):
         self.module.debug("Looking for displayname " + displayname)
         self.module.debug("Making RPC call to 'getHost'")
         host_json = (json.loads(self.rpc("getHost",
-                                {"displayName": displayname})))
+                                         {"displayName": displayname})))
 
         if host_json["status"] == 200:
             self.module.debug("RPC call succeeded")
@@ -1037,18 +1027,18 @@ class Collector(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"agentId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1196,7 +1186,7 @@ class Host(LogicMonitor):
             # Used the host information to grab the collector description
             # if not provided
             if (not hasattr(self.params, "collector") and
-               "agentDescription" in info):
+                    "agentDescription" in info):
                 self.module.debug("Setting collector from host response. " +
                                   "Collector " + info["agentDescription"])
                 self.params["collector"] = info["agentDescription"]
@@ -1247,8 +1237,8 @@ class Host(LogicMonitor):
         if self.info:
             self.module.debug("Making RPC call to 'getHostProperties'")
             properties_json = (json.loads(self.rpc("getHostProperties",
-                                          {'hostId': self.info["id"],
-                                           "filterSystemProperties": True})))
+                                                   {'hostId': self.info["id"],
+                                                    "filterSystemProperties": True})))
 
             if properties_json["status"] == 200:
                 self.module.debug("RPC call succeeded")
@@ -1420,8 +1410,8 @@ class Host(LogicMonitor):
                 return True
 
             if (self.collector and
-               hasattr(self.collector, "id") and
-               hostresp["agentId"] != self.collector["id"]):
+                hasattr(self.collector, "id") and
+                    hostresp["agentId"] != self.collector["id"]):
                 return True
 
             self.module.debug("Comparing groups.")
@@ -1478,7 +1468,7 @@ class Host(LogicMonitor):
                     self.fail(
                         msg="Error: Unable to retrieve timezone offset")
 
-            offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+            offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
             h = {"hostId": self.info["id"],
                  "type": 1,
@@ -1608,7 +1598,7 @@ class Host(LogicMonitor):
                 hgresp = json.loads(self.rpc("getHostGroup", h))
 
                 if (hgresp["status"] == 200 and
-                   hgresp["data"]["appliesTo"] == ""):
+                        hgresp["data"]["appliesTo"] == ""):
 
                     g.append(path[-1])
 
@@ -1641,7 +1631,7 @@ class Host(LogicMonitor):
         for prop in propresp:
             if prop["name"] not in ignore:
                 if ("*******" in prop["value"] and
-                   self._verify_property(prop["name"])):
+                        self._verify_property(prop["name"])):
                     p[prop["name"]] = self.properties[prop["name"]]
                 else:
                     p[prop["name"]] = prop["value"]
@@ -1650,7 +1640,7 @@ class Host(LogicMonitor):
         # Iterate provided properties and compare to received properties
         for prop in self.properties:
             if (prop not in p or
-               p[prop] != self.properties[prop]):
+                    p[prop] != self.properties[prop]):
                 self.module.debug("Properties mismatch")
                 return True
         self.module.debug("Properties match")
@@ -1712,18 +1702,18 @@ class Datasource(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostDataSourceId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1914,7 +1904,7 @@ class Hostgroup(LogicMonitor):
         if properties is not None and group is not None:
             self.module.debug("Comparing simple group properties")
             if (group["alertEnable"] != self.alertenable or
-               group["description"] != self.description):
+                    group["description"] != self.description):
 
                 return True
 
@@ -1924,7 +1914,7 @@ class Hostgroup(LogicMonitor):
             for prop in properties:
                 if prop["name"] not in ignore:
                     if ("*******" in prop["value"] and
-                       self._verify_property(prop["name"])):
+                            self._verify_property(prop["name"])):
 
                         p[prop["name"]] = (
                             self.properties[prop["name"]])
@@ -1974,17 +1964,17 @@ class Hostgroup(LogicMonitor):
                 self.fail(
                     msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostGroupId": self.info["id"],
              "type": 1,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -2095,8 +2085,8 @@ def selector(module):
     elif module.params["target"] == "host":
         # Make sure required parameter collector is specified
         if ((module.params["action"] == "add" or
-            module.params["displayname"] is None) and
-           module.params["collector"] is None):
+             module.params["displayname"] is None) and
+                module.params["collector"] is None):
             module.fail_json(
                 msg="Parameter 'collector' required.")
 

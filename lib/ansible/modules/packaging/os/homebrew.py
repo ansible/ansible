@@ -7,20 +7,13 @@
 #
 # Based on macports (Jimmy Tang <jcftang@gmail.com>)
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -41,16 +34,15 @@ version_added: "1.1"
 options:
     name:
         description:
-            - name of package to install/remove
+            - list of names of packages to install/remove
         required: false
         default: None
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - >
-              ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed
-              relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an
-              alternative location in the system.
+            - "A ':' separated list of paths to search for 'brew' executable.
+              Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
+              providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
         required: false
         default: '/usr/local/bin'
     state:
@@ -80,7 +72,9 @@ options:
         default: null
         aliases: ['options']
         version_added: "1.4"
-notes:  []
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
@@ -187,9 +181,9 @@ class Homebrew(object):
         @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{

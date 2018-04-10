@@ -1,3 +1,4 @@
+import errno
 import os
 import time
 import mock
@@ -64,7 +65,7 @@ def placeboify(request, monkeypatch):
         # make sure the directory for placebo test recordings is available
         os.makedirs(recordings_path)
     except OSError as e:
-        if e.errno != os.errno.EEXIST:
+        if e.errno != errno.EEXIST:
             raise
 
     pill = placebo.attach(session, data_path=recordings_path)

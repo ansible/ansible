@@ -1,0 +1,3 @@
+bugfixes:
+- vyos_l3_interface - added support for localhost (https://github.com/ansible/ansible/pull/36141)
+  

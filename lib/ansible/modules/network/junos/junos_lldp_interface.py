@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -37,12 +26,6 @@ options:
   name:
     description:
       - Name of the interface LLDP should be configured on.
-  aggregate:
-    description: List of interfaces LLDP should be configured on.
-  purge:
-    description:
-      - Purge interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - Value of C(present) ensures given LLDP configured on given I(interfaces)
@@ -60,7 +43,9 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -109,9 +94,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -126,8 +111,6 @@ def main():
     """
     argument_spec = dict(
         name=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         active=dict(default=True, type='bool')
     )
@@ -138,8 +121,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -153,17 +134,18 @@ def main():
         ('disable', {'xpath': 'disable', 'tag_only': True})
     ])
 
-    state = module.params.get('state')
-    module.params['disable'] = True if state in ('disabled', 'absent') else False
+    item = module.params.copy()
+    state = item.get('state')
+    item['disable'] = True if state in ('disabled', 'absent') else False
 
     if state in ('enabled', 'disabled'):
-        module.params['state'] = 'present'
+        item['state'] = 'present'
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    want = map_params_to_obj(module, param_to_xpath_map, param=item)
+    ele = map_obj_to_ele(module, want, top, param=item)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

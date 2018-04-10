@@ -4,20 +4,13 @@
 # (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
 # (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -49,7 +42,7 @@ options:
     state:
         description:
             - state of the cask
-        choices: [ 'present', 'absent' ]
+        choices: [ 'present', 'absent', 'upgraded' ]
         required: false
         default: present
     update_homebrew:
@@ -68,6 +61,24 @@ options:
         default: null
         aliases: ['options']
         version_added: "2.2"
+    accept_external_apps:
+        description:
+            - allow external apps
+        required: false
+        default: False
+        version_added: "2.5.0"
+    upgrade_all:
+        description:
+            - upgrade all casks (mutually exclusive with `upgrade`)
+        required: False
+        default: False
+        version_added: "2.5.0"
+    upgrade:
+        description:
+            - upgrade all casks (mutually exclusive with `upgrade_all`)
+        required: False
+        default: False
+        version_added: "2.5.0"
 '''
 EXAMPLES = '''
 - homebrew_cask:
@@ -90,8 +101,22 @@ EXAMPLES = '''
 
 - homebrew_cask:
     name: alfred
+    state: present
+    allow_external_apps: True
+
+- homebrew_cask:
+    name: alfred
     state: absent
     install_options: force
+
+- homebrew_cask:
+    upgrade_all: true
+
+- homebrew_cask:
+    name: alfred
+    state: upgraded
+    install_options: force
+
 '''
 
 import os.path
@@ -144,9 +169,9 @@ class HomebrewCask(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_CASK_REGEX        = _create_regex_group(VALID_CASK_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_CASK_REGEX = _create_regex_group(VALID_CASK_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -232,7 +257,6 @@ class HomebrewCask(object):
         '''A valid module is an instance of AnsibleModule.'''
 
         return isinstance(module, AnsibleModule)
-
     # /class validations ------------------------------------------- }}}
 
     # class properties --------------------------------------------- {{{
@@ -315,13 +339,16 @@ class HomebrewCask(object):
     # /class properties -------------------------------------------- }}}
 
     def __init__(self, module, path=path, casks=None, state=None,
-                 update_homebrew=False, install_options=None):
+                 update_homebrew=False, install_options=None,
+                 accept_external_apps=False, upgrade_all=False):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, casks=casks,
                                   state=state, update_homebrew=update_homebrew,
-                                  install_options=install_options,)
+                                  install_options=install_options,
+                                  accept_external_apps=accept_external_apps,
+                                  upgrade_all=upgrade_all, )
 
         self._prep()
 
@@ -380,6 +407,19 @@ class HomebrewCask(object):
         return (failed, changed, message)
 
     # checks ------------------------------------------------------- {{{
+    def _current_cask_is_outdated(self):
+        if not self.valid_cask(self.current_cask):
+            return False
+
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'cask',
+            'outdated',
+            self.current_cask,
+        ])
+
+        return out != ""
+
     def _current_cask_is_installed(self):
         if not self.valid_cask(self.current_cask):
             self.failed = True
@@ -389,33 +429,33 @@ class HomebrewCask(object):
         cmd = [
             "{brew_path}".format(brew_path=self.brew_path),
             "cask",
-            "list"
+            "list",
+            self.current_cask
         ]
         rc, out, err = self.module.run_command(cmd)
 
-        if 'nothing to list' in err:
+        if re.search(r'Error: Cask .* is not installed.', err):
             return False
-        elif rc == 0:
-            casks = [cask_.strip() for cask_ in out.split('\n') if cask_.strip()]
-            return self.current_cask in casks
         else:
-            self.failed = True
-            self.message = err.strip()
-            raise HomebrewCaskException(self.message)
+            return True
     # /checks ------------------------------------------------------ }}}
 
     # commands ----------------------------------------------------- {{{
     def _run(self):
-        if self.update_homebrew:
-            self._update_homebrew()
+        if self.upgrade_all:
+            return self._upgrade_all()
 
-        if self.state == 'installed':
-            return self._install_casks()
-        elif self.state == 'absent':
-            return self._uninstall_casks()
+        if self.casks:
+            if self.state == 'installed':
+                return self._install_casks()
+            elif self.state == 'upgraded':
+                return self._upgrade_casks()
+            elif self.state == 'absent':
+                return self._uninstall_casks()
 
-        if self.command:
-            return self._command()
+        self.failed = True
+        self.message = "You must select a cask to install."
+        raise HomebrewCaskException(self.message)
 
     # updated -------------------------------- {{{
     def _update_homebrew(self):
@@ -442,6 +482,33 @@ class HomebrewCask(object):
             self.message = err.strip()
             raise HomebrewCaskException(self.message)
     # /updated ------------------------------- }}}
+
+    # _upgrade_all --------------------------- {{{
+    def _upgrade_all(self):
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Casks would be upgraded.'
+            raise HomebrewCaskException(self.message)
+
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'cask',
+            'upgrade',
+        ])
+        if rc == 0:
+            if re.search(r'==> No Casks to upgrade', out.strip(), re.IGNORECASE):
+                self.message = 'Homebrew casks already upgraded.'
+
+            else:
+                self.changed = True
+                self.message = 'Homebrew casks upgraded.'
+
+            return True
+        else:
+            self.failed = True
+            self.message = err.strip()
+            raise HomebrewCaskException(self.message)
+    # /_upgrade_all -------------------------- }}}
 
     # installed ------------------------------ {{{
     def _install_current_cask(self):
@@ -477,6 +544,12 @@ class HomebrewCask(object):
             self.changed = True
             self.message = 'Cask installed: {0}'.format(self.current_cask)
             return True
+        elif self.accept_external_apps and re.search(r"Error: It seems there is already an App at", err):
+            self.unchanged_count += 1
+            self.message = 'Cask already installed: {0}'.format(
+                self.current_cask,
+            )
+            return True
         else:
             self.failed = True
             self.message = err.strip()
@@ -489,6 +562,58 @@ class HomebrewCask(object):
 
         return True
     # /installed ----------------------------- }}}
+
+    # upgraded ------------------------------- {{{
+    def _upgrade_current_cask(self):
+        command = 'upgrade'
+
+        if not self.valid_cask(self.current_cask):
+            self.failed = True
+            self.message = 'Invalid cask: {0}.'.format(self.current_cask)
+            raise HomebrewCaskException(self.message)
+
+        if not self._current_cask_is_installed():
+            command = 'install'
+
+        if self._current_cask_is_installed() and not self._current_cask_is_outdated():
+            self.message = 'Cask is already upgraded: {0}'.format(
+                self.current_cask,
+            )
+            self.unchanged_count += 1
+            return True
+
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Cask would be upgraded: {0}'.format(
+                self.current_cask
+            )
+            raise HomebrewCaskException(self.message)
+
+        opts = (
+            [self.brew_path, 'cask', command]
+            + self.install_options
+            + [self.current_cask]
+        )
+        cmd = [opt for opt in opts if opt]
+        rc, out, err = self.module.run_command(cmd)
+
+        if self._current_cask_is_installed() and not self._current_cask_is_outdated():
+            self.changed_count += 1
+            self.changed = True
+            self.message = 'Cask upgraded: {0}'.format(self.current_cask)
+            return True
+        else:
+            self.failed = True
+            self.message = err.strip()
+            raise HomebrewCaskException(self.message)
+
+    def _upgrade_casks(self):
+        for cask in self.casks:
+            self.current_cask = cask
+            self._upgrade_current_cask()
+
+        return True
+    # /upgraded ------------------------------ }}}
 
     # uninstalled ---------------------------- {{{
     def _uninstall_current_cask(self):
@@ -533,7 +658,7 @@ class HomebrewCask(object):
             self._uninstall_current_cask()
 
         return True
-    # /uninstalled ----------------------------- }}}
+    # /uninstalled --------------------------- }}}
     # /commands ---------------------------------------------------- }}}
 
 
@@ -554,6 +679,7 @@ def main():
                 default="present",
                 choices=[
                     "present", "installed",
+                    "latest", "upgraded",
                     "absent", "removed", "uninstalled",
                 ],
             ),
@@ -566,7 +692,16 @@ def main():
                 default=None,
                 aliases=['options'],
                 type='list',
-            )
+            ),
+            accept_external_apps=dict(
+                default=False,
+                type='bool',
+            ),
+            upgrade_all=dict(
+                default=False,
+                aliases=["upgrade"],
+                type='bool',
+            ),
         ),
         supports_check_mode=True,
     )
@@ -587,17 +722,25 @@ def main():
     state = p['state']
     if state in ('present', 'installed'):
         state = 'installed'
+    if state in ('latest', 'upgraded'):
+        state = 'upgraded'
     if state in ('absent', 'removed', 'uninstalled'):
         state = 'absent'
 
     update_homebrew = p['update_homebrew']
+    upgrade_all = p['upgrade_all']
     p['install_options'] = p['install_options'] or []
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
+    accept_external_apps = p['accept_external_apps']
+
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state,  update_homebrew=update_homebrew,
-                             install_options=install_options)
+                             state=state, update_homebrew=update_homebrew,
+                             install_options=install_options,
+                             accept_external_apps=accept_external_apps,
+                             upgrade_all=upgrade_all,
+                             )
     (failed, changed, message) = brew_cask.run()
     if failed:
         module.fail_json(msg=message)

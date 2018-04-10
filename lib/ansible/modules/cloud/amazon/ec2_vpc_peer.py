@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -35,6 +27,11 @@ options:
     description:
       - Peering connection id.
     required: false
+  peer_region:
+    description:
+      - Region of the accepting VPC.
+    required: false
+    version_added: '2.5'
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
@@ -54,7 +51,9 @@ options:
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
 author: Mike Mochan(@mmochan)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3, json ]
 '''
 
@@ -118,6 +117,27 @@ EXAMPLES = '''
     region: ap-southeast-2
     peering_id: "{{ vpc_peer.peering_id }}"
     profile: bot03_profile_for_cross_account
+    state: accept
+  register: vpc_peer
+
+# Complete example to create and accept an intra-region peering connection.
+- name: Create intra-region VPC peering Connection
+  ec2_vpc_peer:
+    region: us-east-1
+    vpc_id: vpc-12345678
+    peer_vpc_id: vpc-87654321
+    peer_vpc_region: us-west-2
+    state: present
+    tags:
+      Name: Peering connection for us-east-1 VPC to us-west-2 VPC
+      CostCode: CC1234
+      Project: phoenix
+  register: vpc_peer
+
+- name: Accept peering connection from peer region
+  ec2_vpc_peer:
+    region: us-west-2
+    peering_id: "{{ vpc_peer.peering_id }}"
     state: accept
   register: vpc_peer
 
@@ -194,14 +214,15 @@ task:
   type: dictionary
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec
-from ansible.module_utils.ec2 import get_aws_connection_info, HAS_BOTO3
-
 try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+import distutils.version
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3
 
 
 def tags_changed(pcx_id, client, module):
@@ -256,9 +277,12 @@ def create_peer_connection(client, module):
     params = dict()
     params['VpcId'] = module.params.get('vpc_id')
     params['PeerVpcId'] = module.params.get('peer_vpc_id')
+    if module.params.get('peer_region'):
+        if distutils.version.StrictVersion(botocore.__version__) < distutils.version.StrictVersion('1.8.6'):
+            module.fail_json(msg="specifying peer_region parameter requires botocore >= 1.8.6")
+        params['PeerRegion'] = module.params.get('peer_region')
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
-    params['DryRun'] = module.check_mode
     peering_conns = describe_peering_connections(params, client)
     for peering_conn in peering_conns['VpcPeeringConnections']:
         pcx_id = peering_conn['VpcPeeringConnectionId']
@@ -281,19 +305,21 @@ def create_peer_connection(client, module):
 
 def remove_peer_connection(client, module):
     pcx_id = module.params.get('peering_id')
-    params = dict()
     if not pcx_id:
+        params = dict()
         params['VpcId'] = module.params.get('vpc_id')
         params['PeerVpcId'] = module.params.get('peer_vpc_id')
+        params['PeerRegion'] = module.params.get('peer_region')
         if module.params.get('peer_owner_id'):
             params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
-        params['DryRun'] = module.check_mode
         peering_conns = describe_peering_connections(params, client)
         if not peering_conns:
             module.exit_json(changed=False)
         else:
             pcx_id = peering_conns['VpcPeeringConnections'][0]['VpcPeeringConnectionId']
+
     try:
+        params = dict()
         params['VpcPeeringConnectionId'] = pcx_id
         client.delete_vpc_peering_connection(**params)
         module.exit_json(changed=True)
@@ -312,7 +338,6 @@ def accept_reject(state, client, module):
     changed = False
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
-    params['DryRun'] = module.check_mode
     if peer_status(client, module) != 'active':
         try:
             if state == 'accept':
@@ -365,6 +390,7 @@ def main():
         dict(
             vpc_id=dict(),
             peer_vpc_id=dict(),
+            peer_region=dict(),
             peering_id=dict(),
             peer_owner_id=dict(),
             tags=dict(required=False, type='dict'),
@@ -382,7 +408,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='ec2',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+        module.fail_json(msg="Can't authorize connection - " + str(e))
 
     if state == 'present':
         (changed, results) = create_peer_connection(client, module)

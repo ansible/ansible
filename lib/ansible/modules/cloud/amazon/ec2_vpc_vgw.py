@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -67,7 +59,6 @@ options:
     aliases: [ "resource_tags" ]
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
-  - aws
   - ec2
 '''
 
@@ -155,9 +146,10 @@ def get_vgw_info(vgws):
 
         return vgw_info
 
+
 def wait_for_status(client, module, vpn_gateway_id, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = (module.params.get('wait_timeout') // polling_increment_secs)
     status_achieved = False
 
     for x in range(0, max_retries):
@@ -235,7 +227,7 @@ def delete_vgw(client, module, vpn_gateway_id):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    #return the deleted VpnGatewayId as this is not included in the above response
+    # return the deleted VpnGatewayId as this is not included in the above response
     result = vpn_gateway_id
     return result
 
@@ -244,7 +236,7 @@ def create_tags(client, module, vpn_gateway_id):
     params = dict()
 
     try:
-        response = client.create_tags(Resources=[vpn_gateway_id],Tags=load_tags(module))
+        response = client.create_tags(Resources=[vpn_gateway_id], Tags=load_tags(module))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -288,7 +280,7 @@ def find_tags(client, module, resource_id=None):
         try:
             response = client.describe_tags(Filters=[
                 {'Name': 'resource-id', 'Values': [resource_id]}
-                ])
+            ])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -303,7 +295,7 @@ def check_tags(client, module, existing_vgw, vpn_gateway_id):
     changed = False
     tags_list = {}
 
-    #format tags for comparison
+    # format tags for comparison
     for tags in existing_vgw[0]['Tags']:
         if tags['Key'] != 'Name':
             tags_list[tags['Key']] = tags['Value']
@@ -315,7 +307,7 @@ def check_tags(client, module, existing_vgw, vpn_gateway_id):
         vgw = find_vgw(client, module)
         changed = True
 
-    #if no tag args are supplied, delete any existing tags with the exception of the name tag
+    # if no tag args are supplied, delete any existing tags with the exception of the name tag
     if params['Tags'] is None and tags_list != {}:
         tags_to_delete = []
         for tags in existing_vgw[0]['Tags']:
@@ -354,7 +346,7 @@ def find_vgw(client, module, vpn_gateway_id=None):
             response = client.describe_vpn_gateways(Filters=[
                 {'Name': 'type', 'Values': [params['Type']]},
                 {'Name': 'tag:Name', 'Values': [params['Name']]}
-                ])
+            ])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -370,7 +362,7 @@ def find_vgw(client, module, vpn_gateway_id=None):
                 response = client.describe_vpn_gateways(Filters=[
                     {'Name': 'type', 'Values': [params['Type']]},
                     {'Name': 'tag:Name', 'Values': [params['Name']]}
-                    ])
+                ])
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -510,7 +502,7 @@ def ensure_vgw_absent(client, module):
             deleted_vgw = "Nothing to do"
 
     else:
-        #Check that a name and type argument has been supplied if no vgw-id
+        # Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
             module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
 
@@ -526,7 +518,7 @@ def ensure_vgw_absent(client, module):
                         # detach the vpc from the vgw
                         detach_vgw(client, module, vpn_gateway_id, params['VpcId'])
 
-                        #now that the vpc has been detached, delete the vgw
+                        # now that the vpc has been detached, delete the vgw
                         deleted_vgw = delete_vgw(client, module, vpn_gateway_id)
                         changed = True
 
@@ -536,7 +528,7 @@ def ensure_vgw_absent(client, module):
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     changed = True
 
-                    #now that the vpc has been detached, delete the vgw
+                    # now that the vpc has been detached, delete the vgw
                     deleted_vgw = delete_vgw(client, module, vpn_gateway_id)
 
             else:
@@ -563,7 +555,7 @@ def main():
         wait_timeout=dict(type='int', default=320),
         type=dict(default='ipsec.1', choices=['ipsec.1']),
         tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

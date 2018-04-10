@@ -143,7 +143,7 @@ class Host:
         results['inventory_hostname_short'] = self.name.split('.')[0]
         results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
 
-        return combine_vars(self.vars, results)
+        return results
 
     def get_vars(self):
         return combine_vars(self.vars, self.get_magic_vars())

@@ -1,4 +1,7 @@
-#  2016 Red Hat Inc.
+#
+# (c) 2016 Red Hat Inc.
+#
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #
@@ -36,19 +39,24 @@ class TerminalModule(TerminalBase):
     terminal_stderr_re = [
         re.compile(br"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
         re.compile(br"% ?Bad secret"),
-        re.compile(br"invalid input", re.I),
+        re.compile(br"(\bInterface is part of a port-channel\b)|(\bAn invalid interface has been used for this function\b)"),
+        re.compile(br"(\bThe maximum number of users have already been created\b)|(\bVLAN ID is out of range\b)|(\bUse '-' for range\b)"),
+        re.compile(br"(\binvalid input\b)|(\bVLAN ID not found\b)"),
+        re.compile(br"(\bInvalid access level. Access level can be either 0, 1 or 15\b)|(\bValue is out of range\b)"),
+        re.compile(br"Cannot add(.+)\s(\S+)"),
+        re.compile(br"Error:(.+)\s(\S+)"),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith('#'):
             return
 
         cmd = {u'command': u'enable'}
         if passwd:
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'prompt'] = to_text(r"[\r\n]?password:$", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
@@ -60,7 +68,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt

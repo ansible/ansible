@@ -23,6 +23,10 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.powershell_import_analysis import (
+    get_powershell_module_utils_imports,
+)
+
 from lib.config import (
     TestConfig,
     IntegrationConfig,
@@ -40,7 +44,6 @@ def categorize_changes(args, paths, verbose_command=None):
 
     commands = {
         'sanity': set(),
-        'compile': set(),
         'units': set(),
         'integration': set(),
         'windows-integration': set(),
@@ -98,6 +101,8 @@ def categorize_changes(args, paths, verbose_command=None):
             commands[command].add(target)
 
     for command in commands:
+        commands[command].discard('none')
+
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 
@@ -120,8 +125,8 @@ class PathMapper(object):
         self.compile_targets = list(walk_compile_targets())
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
+        self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
 
-        self.compile_paths = set(t.path for t in self.compile_targets)
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(a for t in self.units_targets for a in t.aliases)
         self.sanity_paths = set(t.path for t in self.sanity_targets)
@@ -141,6 +146,7 @@ class PathMapper(object):
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
     def get_dependent_paths(self, path):
         """
@@ -152,6 +158,9 @@ class PathMapper(object):
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
                 return self.get_python_module_utils_usage(path)
+
+            if ext == '.psm1':
+                return self.get_powershell_module_utils_usage(path)
 
         if path.startswith('test/integration/targets/'):
             return self.get_integration_target_usage(path)
@@ -180,6 +189,22 @@ class PathMapper(object):
 
         return sorted(self.python_module_utils_imports[name])
 
+    def get_powershell_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if not self.powershell_module_utils_imports:
+            display.info('Analyzing powershell module_utils imports...')
+            before = time.time()
+            self.powershell_module_utils_imports = get_powershell_module_utils_imports(self.powershell_targets)
+            after = time.time()
+            display.info('Processed %d powershell module_utils in %d second(s).' % (len(self.powershell_module_utils_imports), after - before))
+
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        return sorted(self.powershell_module_utils_imports[name])
+
     def get_integration_target_usage(self, path):
         """
         :type path: str
@@ -201,10 +226,6 @@ class PathMapper(object):
         if result is None:
             return None
 
-        # compile path if eligible
-        if path in self.compile_paths:
-            result['compile'] = path
-
         # run sanity on path unless result specified otherwise
         if path in self.sanity_paths and 'sanity' not in result:
             result['sanity'] = path
@@ -216,6 +237,7 @@ class PathMapper(object):
         :type path: str
         :rtype: dict[str, str] | None
         """
+        dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
@@ -247,23 +269,21 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/modules/'):
-            module = self.module_names_by_path.get(path)
+            module_name = self.module_names_by_path.get(path)
 
-            if module:
+            if module_name:
                 return {
-                    'units': module if module in self.units_modules else None,
-                    'integration': self.posix_integration_by_module.get(module) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module) if ext == '.ps1' else None,
-                    'network-integration': self.network_integration_by_module.get(module),
+                    'units': module_name if module_name in self.units_modules else None,
+                    'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'network-integration': self.network_integration_by_module.get(module_name),
                 }
 
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
-            if ext == '.ps1':
-                return {
-                    'windows-integration': self.integration_all_target,
-                }
+            if ext == '.psm1':
+                return minimal  # already expanded using get_dependent_paths
 
             if ext == '.py':
                 return minimal  # already expanded using get_dependent_paths
@@ -346,14 +366,31 @@ class PathMapper(object):
             return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('packaging/'):
+            if path.startswith('packaging/requirements/'):
+                if name.startswith('requirements-') and ext == '.txt':
+                    component = name.split('-', 1)[1]
+
+                    candidates = (
+                        'cloud/%s/' % component,
+                    )
+
+                    for candidate in candidates:
+                        if candidate in self.integration_targets_by_alias:
+                            return {
+                                'integration': candidate,
+                            }
+
+                return all_tests(self.args)  # broad impact, run all tests
+
             return minimal
 
-        if path.startswith('test/compile/'):
-            return {
-                'compile': 'all',
-            }
+        if path.startswith('test/cache/'):
+            return minimal
 
         if path.startswith('test/results/'):
+            return minimal
+
+        if path.startswith('test/legacy/'):
             return minimal
 
         if path.startswith('test/integration/roles/'):
@@ -382,11 +419,33 @@ class PathMapper(object):
             }
 
         if path.startswith('test/integration/'):
-            if self.prefixes.get(name) == 'network' and ext == '.yaml':
-                return minimal  # network integration test playbooks are not used by ansible-test
+            if dirname == 'test/integration':
+                if self.prefixes.get(name) == 'network' and ext == '.yaml':
+                    return minimal  # network integration test playbooks are not used by ansible-test
 
-            if filename == 'platform_agnostic.yaml':
-                return minimal  # network integration test playbook not used by ansible-test
+                if filename == 'network-all.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
+
+                if filename == 'platform_agnostic.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
+
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
+
+                if name.startswith('cloud-config-'):
+                    cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+
+                    if cloud_target in self.integration_targets_by_alias:
+                        return {
+                            'integration': cloud_target,
+                        }
 
             return {
                 'integration': self.integration_all_target,
@@ -417,6 +476,13 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/completion/'):
+            if path == 'test/runner/completion/docker.txt':
+                return all_tests(self.args, force=True)  # force all tests due to risk of breaking changes in new test environment
+
+        if path.startswith('test/runner/docker/'):
+            return minimal  # not used by tests, only used to build the default container
+
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
@@ -427,10 +493,72 @@ class PathMapper(object):
 
             return all_tests(self.args)  # test infrastructure, run all tests
 
+        if path.startswith('test/runner/lib/sanity/'):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
+        if path.startswith('test/runner/requirements/'):
+            if name in (
+                    'integration',
+                    'network-integration',
+                    'windows-integration',
+            ):
+                return {
+                    name: self.integration_all_target,
+                }
+
+            if name in (
+                    'sanity',
+                    'units',
+            ):
+                return {
+                    name: 'all',
+                }
+
+            if name.startswith('integration.cloud.'):
+                cloud_target = 'cloud/%s/' % name.split('.')[2]
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
+
         if path.startswith('test/runner/'):
+            if dirname == 'test/runner' and name in (
+                    'Dockerfile',
+                    '.dockerignore',
+            ):
+                return minimal  # not used by tests, only used to build the default container
+
             return all_tests(self.args)  # test infrastructure, run all tests
 
+        if path.startswith('test/utils/shippable/tools/'):
+            return minimal  # not used by tests
+
         if path.startswith('test/utils/shippable/'):
+            if dirname == 'test/utils/shippable':
+                test_map = {
+                    'cloud.sh': 'integration:cloud/',
+                    'freebsd.sh': 'integration:all',
+                    'linux.sh': 'integration:all',
+                    'network.sh': 'network-integration:all',
+                    'osx.sh': 'integration:all',
+                    'rhel.sh': 'integration:all',
+                    'sanity.sh': 'sanity:all',
+                    'units.sh': 'units:all',
+                    'windows.sh': 'windows-integration:all',
+                }
+
+                test_match = test_map.get(filename)
+
+                if test_match:
+                    test_command, test_target = test_match.split(':')
+
+                    return {
+                        test_command: test_target,
+                    }
+
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/'):
@@ -440,6 +568,10 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('ticket_stubs/'):
+            return minimal
+
+        # FUTURE: add reno lint sanity test and run that along with yamllint
+        if path.startswith('changelogs/'):
             return minimal
 
         if '/' not in path:
@@ -452,7 +584,6 @@ class PathMapper(object):
                     'COPYING',
                     'VERSION',
                     'Makefile',
-                    'setup.py',
             ):
                 return minimal
 
@@ -461,6 +592,9 @@ class PathMapper(object):
                     '.coveragerc',
             ):
                 return all_tests(self.args)  # test infrastructure, run all tests
+
+            if path == 'setup.py':
+                return all_tests(self.args)  # broad impact, run all tests
 
             if path == '.yamllint':
                 return {
@@ -473,16 +607,19 @@ class PathMapper(object):
         return None  # unknown, will result in fall-back to run all tests
 
 
-def all_tests(args):
+def all_tests(args, force=False):
     """
     :type args: TestConfig
+    :type force: bool
     :rtype: dict[str, str]
     """
-    integration_all_target = get_integration_all_target(args)
+    if force:
+        integration_all_target = 'all'
+    else:
+        integration_all_target = get_integration_all_target(args)
 
     return {
         'sanity': 'all',
-        'compile': 'all',
         'units': 'all',
         'integration': integration_all_target,
         'windows-integration': integration_all_target,

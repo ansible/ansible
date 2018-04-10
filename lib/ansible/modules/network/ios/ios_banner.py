@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -32,14 +32,16 @@ description:
     running Cisco IOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   banner:
     description:
-      - Specifies which banner that should be
-        configured on the remote device.
+      - Specifies which banner should be configured on the remote device.
+        In Ansible 2.4 and earlier only I(login) and I(motd) were supported.
     required: true
     default: null
-    choices: ['login', 'motd']
+    choices: ['login', 'motd', 'exec', 'incoming', 'slip-ppp']
   text:
     description:
       - The banner text that should be
@@ -90,9 +92,10 @@ commands:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import load_config, run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 import re
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -112,6 +115,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     rc, out, err = exec_command(module, 'show banner %s' % module.params['banner'])
     if rc == 0:
@@ -121,7 +125,7 @@ def map_config_to_obj(module):
                                     'show running-config | begin banner %s'
                                     % module.params['banner'])
         if out:
-            output = re.search('\^C(.*)\^C', out, re.S).group(1).strip()
+            output = re.search(r'\^C(.*)\^C', out, re.S).group(1).strip()
         else:
             output = None
     obj = {'banner': module.params['banner'], 'state': 'absent'}
@@ -129,6 +133,7 @@ def map_config_to_obj(module):
         obj['text'] = output
         obj['state'] = 'present'
     return obj
+
 
 def map_params_to_obj(module):
     text = module.params['text']
@@ -141,11 +146,12 @@ def map_params_to_obj(module):
         'state': module.params['state']
     }
 
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        banner=dict(required=True, choices=['login', 'motd']),
+        banner=dict(required=True, choices=['login', 'motd', 'exec', 'incoming', 'slip-ppp']),
         text=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )

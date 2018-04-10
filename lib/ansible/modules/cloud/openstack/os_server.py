@@ -4,21 +4,13 @@
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
 # Copyright (c) 2013, John Dewey <john@dewey.ws>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -207,7 +199,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         auth_url: https://identity.example.com
          username: admin
          password: admin
          project_name: admin
@@ -232,7 +224,7 @@ EXAMPLES = '''
       os_server:
         state: present
         auth:
-          auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+          auth_url: https://identity.example.com
           username: username
           password: Equality7-2521
           project_name: username-project1
@@ -299,7 +291,7 @@ EXAMPLES = '''
     - name: launch an instance with a string
       os_server:
         auth:
-           auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+           auth_url: https://identity.example.com
            username: admin
            password: admin
            project_name: admin
@@ -314,7 +306,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         auth_url: https://identity.example.com
          username: admin
          password: admin
          project_name: admin
@@ -332,7 +324,7 @@ EXAMPLES = '''
   os_server:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -415,16 +407,14 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import (
+    openstack_find_nova_addresses, openstack_cloud_from_module,
+    openstack_full_argument_spec, openstack_module_kwargs)
 
 
 def _exit_hostvars(module, cloud, server, changed=True):
-    hostvars = meta.get_hostvars_from_server(cloud, server)
+    hostvars = cloud.get_openstack_vars(server)
     module.exit_json(
         changed=changed, server=server, id=server.id, openstack=hostvars)
 
@@ -436,6 +426,7 @@ def _parse_nics(nics):
                 yield dict((nic.split('='),))
         else:
             yield net
+
 
 def _network_args(module, cloud):
     args = []
@@ -672,8 +663,7 @@ def _get_server_state(module, cloud):
     if server and state == 'present':
         if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
             module.fail_json(
-                msg="The instance is available but not Active state: "
-                    + server.status)
+                msg="The instance is available but not Active state: " + server.status)
         (ip_changed, server) = _check_ips(module, cloud, server)
         (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
@@ -689,31 +679,31 @@ def _get_server_state(module, cloud):
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name                            = dict(required=True),
-        image                           = dict(default=None),
-        image_exclude                   = dict(default='(deprecated)'),
-        flavor                          = dict(default=None),
-        flavor_ram                      = dict(default=None, type='int'),
-        flavor_include                  = dict(default=None),
-        key_name                        = dict(default=None),
-        security_groups                 = dict(default=['default'], type='list'),
-        network                         = dict(default=None),
-        nics                            = dict(default=[], type='list'),
-        meta                            = dict(default=None, type='raw'),
-        userdata                        = dict(default=None, aliases=['user_data']),
-        config_drive                    = dict(default=False, type='bool'),
-        auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
-        floating_ips                    = dict(default=None, type='list'),
-        floating_ip_pools               = dict(default=None, type='list'),
-        volume_size                     = dict(default=False, type='int'),
-        boot_from_volume                = dict(default=False, type='bool'),
-        boot_volume                     = dict(default=None, aliases=['root_volume']),
-        terminate_volume                = dict(default=False, type='bool'),
-        volumes                         = dict(default=[], type='list'),
-        scheduler_hints                 = dict(default=None, type='dict'),
-        state                           = dict(default='present', choices=['absent', 'present']),
-        delete_fip                      = dict(default=False, type='bool'),
-        reuse_ips                       = dict(default=True, type='bool'),
+        name=dict(required=True),
+        image=dict(default=None),
+        image_exclude=dict(default='(deprecated)'),
+        flavor=dict(default=None),
+        flavor_ram=dict(default=None, type='int'),
+        flavor_include=dict(default=None),
+        key_name=dict(default=None),
+        security_groups=dict(default=['default'], type='list'),
+        network=dict(default=None),
+        nics=dict(default=[], type='list'),
+        meta=dict(default=None, type='raw'),
+        userdata=dict(default=None, aliases=['user_data']),
+        config_drive=dict(default=False, type='bool'),
+        auto_ip=dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
+        floating_ips=dict(default=None, type='list'),
+        floating_ip_pools=dict(default=None, type='list'),
+        volume_size=dict(default=False, type='int'),
+        boot_from_volume=dict(default=False, type='bool'),
+        boot_volume=dict(default=None, aliases=['root_volume']),
+        terminate_volume=dict(default=False, type='bool'),
+        volumes=dict(default=[], type='list'),
+        scheduler_hints=dict(default=None, type='dict'),
+        state=dict(default='present', choices=['absent', 'present']),
+        delete_fip=dict(default=False, type='bool'),
+        reuse_ips=dict(default=True, type='bool'),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
@@ -730,9 +720,6 @@ def main():
         ],
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
-
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
 
     state = module.params['state']
     image = module.params['image']
@@ -752,11 +739,8 @@ def main():
                     "if state == 'present'"
             )
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud_params = dict(module.params)
-        cloud_params.pop('userdata', None)
-        cloud = shade.openstack_cloud(**cloud_params)
-
         if state == 'present':
             _get_server_state(module, cloud)
             _create_server(module, cloud)
@@ -766,8 +750,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

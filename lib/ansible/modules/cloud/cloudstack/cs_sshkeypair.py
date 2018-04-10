@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -169,7 +169,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                     # We need to make another lookup if there is a key with identical name.
                     self.ssh_key = None
                     ssh_key = self.get_ssh_key()
-                    if ssh_key['fingerprint'] != fingerprint:
+                    if ssh_key and ssh_key['fingerprint'] != fingerprint:
                         args['name'] = name
                         self.query_api('deleteSSHKeyPair', **args)
 

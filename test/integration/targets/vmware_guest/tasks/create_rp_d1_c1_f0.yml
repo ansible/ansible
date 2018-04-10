@@ -1,0 +1,259 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=2&pool=2&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- name: get a list of clusters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusts
+
+- name: get a list of resource pools from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=RP
+  register: res_pools
+
+- name: get a list of hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: hosts
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+- debug: var=res_pools
+- debug: var=clusts
+- debug: var=hosts
+
+# Create one with the defaults
+- name: create new VM with default resource pool
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rp_d1_c1_f0
+
+- debug: var=clone_rp_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "clone_rp_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rp_d1_c1_f0_delete
+
+- debug: var=clone_rp_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_rp_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+# now create with just a cluster
+- name: create new VM with default resource pool in cluster
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    cluster: "{{ clusts['json'][0]|basename }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rpc_d1_c1_f0
+
+- debug: var=clone_rpc_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "clone_rpc_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    cluster: "{{ clusts['json'][0]|basename }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rpc_d1_c1_f0_delete
+
+- debug: var=clone_rpc_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_rpc_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+# now create with a specific resource pool
+- name: create new VM with specific resource pool in cluster
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    cluster: "{{ clusts['json'][0]|basename }}"
+    resource_pool: "{{ res_pools['json'][2]|basename }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rpcp_d1_c1_f0
+
+- debug: var=clone_rpcp_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "clone_rpcp_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    cluster: "{{ clusts['json'][0]|basename }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rpcp_d1_c1_f0_delete
+
+- debug: var=clone_rpcp_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_rpcp_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+# now create with a specific host
+- name: create new VM with specific host
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    esxi_hostname: "{{ hosts['json'][0]|basename }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rph_d1_c1_f0
+
+- debug: var=clone_rph_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "clone_rph_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'][0] }}"
+  register: clone_rph_d1_c1_f0_delete
+
+- debug: var=clone_rph_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_rph_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"

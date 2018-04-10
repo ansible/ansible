@@ -233,7 +233,7 @@ class GalaxyCLI(CLI):
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
-            dirs[:] = [d for d in dirs if not any(r.match(os.path.join(rel_root, d)) for r in skeleton_ignore_re)]
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)
@@ -311,9 +311,6 @@ class GalaxyCLI(CLI):
         if len(self.args) == 0 and role_file is None:
             # the user needs to specify one of either --role-file or specify a single user/role name
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
-        elif len(self.args) == 1 and role_file is not None:
-            # using a role file is mutually exclusive of specifying the role name on the command line
-            raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
         no_deps = self.options.no_deps
         force = self.options.force
@@ -368,11 +365,17 @@ class GalaxyCLI(CLI):
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
         for role in roles_left:
-            display.vvv('Installing role %s ' % role.name)
+            # only process roles in roles files when names matches if given
+            if role_file and self.args and role.name not in self.args:
+                display.vvv('Skipping role %s' % role.name)
+                continue
+
+            display.vvv('Processing role %s ' % role.name)
+
             # query the galaxy API for the role data
 
             if role.install_info is not None:
-                if role.install_info['version'] != role.version:
+                if role.install_info['version'] != role.version or force:
                     if force:
                         display.display('- changing role %s from %s to %s' %
                                         (role.name, role.install_info['version'], role.version or "unspecified"))
@@ -395,28 +398,31 @@ class GalaxyCLI(CLI):
 
             # install dependencies, if we want them
             if not no_deps and installed:
-                role_dependencies = role.metadata.get('dependencies') or []
-                for dep in role_dependencies:
-                    display.debug('Installing dep %s' % dep)
-                    dep_req = RoleRequirement()
-                    dep_info = dep_req.role_yaml_parse(dep)
-                    dep_role = GalaxyRole(self.galaxy, **dep_info)
-                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
-                        # we know we can skip this, as it's not going to
-                        # be found on galaxy.ansible.com
-                        continue
-                    if dep_role.install_info is None:
-                        if dep_role not in roles_left:
-                            display.display('- adding dependency: %s' % str(dep_role))
-                            roles_left.append(dep_role)
+                if not role.metadata:
+                    display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
+                else:
+                    role_dependencies = role.metadata.get('dependencies') or []
+                    for dep in role_dependencies:
+                        display.debug('Installing dep %s' % dep)
+                        dep_req = RoleRequirement()
+                        dep_info = dep_req.role_yaml_parse(dep)
+                        dep_role = GalaxyRole(self.galaxy, **dep_info)
+                        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                            # we know we can skip this, as it's not going to
+                            # be found on galaxy.ansible.com
+                            continue
+                        if dep_role.install_info is None:
+                            if dep_role not in roles_left:
+                                display.display('- adding dependency: %s' % str(dep_role))
+                                roles_left.append(dep_role)
+                            else:
+                                display.display('- dependency %s already pending installation.' % dep_role.name)
                         else:
-                            display.display('- dependency %s already pending installation.' % dep_role.name)
-                    else:
-                        if dep_role.install_info['version'] != dep_role.version:
-                            display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
-                                            (str(dep_role), role.name, dep_role.install_info['version']))
-                        else:
-                            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                            if dep_role.install_info['version'] != dep_role.version:
+                                display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                                (str(dep_role), role.name, dep_role.install_info['version']))
+                            else:
+                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
                 display.warning("- %s was NOT installed successfully." % role.name)
@@ -539,14 +545,17 @@ class GalaxyCLI(CLI):
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
-            login = GalaxyLogin(self.galaxy)
-            github_token = login.create_github_token()
+            if C.GALAXY_TOKEN:
+                github_token = C.GALAXY_TOKEN
+            else:
+                login = GalaxyLogin(self.galaxy)
+                github_token = login.create_github_token()
         else:
             github_token = self.options.token
 
         galaxy_response = self.api.authenticate(github_token)
 
-        if self.options.token is None:
+        if self.options.token is None and C.GALAXY_TOKEN is None:
             # Remove the token we created
             login.remove_github_token()
 
@@ -638,7 +647,6 @@ class GalaxyCLI(CLI):
 
         if len(self.args) < 4:
             raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
-            return 0
 
         secret = self.args.pop()
         github_repo = self.args.pop()

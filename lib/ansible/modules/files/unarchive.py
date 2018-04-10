@@ -1,27 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-# (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
+# Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -57,7 +46,7 @@ options:
     default: 'yes'
   creates:
     description:
-      - A filename, when it already exists, this step will B(not) be run.
+      - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
     version_added: "1.6"
   list_files:
     description:
@@ -95,7 +84,7 @@ options:
     type: 'bool'
     default: 'yes'
     version_added: "2.2"
-author: Dag Wieers (@dagwieers)
+author: Michael DeHaan
 todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
@@ -124,7 +113,7 @@ EXAMPLES = r'''
     remote_src: yes
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
-- unarchive:
+  unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
@@ -135,14 +124,15 @@ import codecs
 import datetime
 import grp
 import os
+import platform
 import pwd
 import re
 import stat
 import time
+import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -191,6 +181,7 @@ class ZipArchive(object):
         self.excludes = module.params['exclude']
         self.includes = []
         self.cmd_path = self.module.get_bin_path('unzip')
+        self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
         self._infodict = dict()
 
@@ -227,8 +218,7 @@ class ZipArchive(object):
 
         try:
             archive = ZipFile(self.src)
-        except BadZipfile:
-            e = get_exception()
+        except BadZipfile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -253,8 +243,7 @@ class ZipArchive(object):
         self._files_in_archive = []
         try:
             archive = ZipFile(self.src)
-        except BadZipfile:
-            e = get_exception()
+        except BadZipfile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -274,7 +263,8 @@ class ZipArchive(object):
         return self._files_in_archive
 
     def is_unarchived(self):
-        cmd = [self.cmd_path, '-ZT', '-s', self.src]
+        # BSD unzip doesn't support zipinfo listings with timestamp.
+        cmd = [self.zipinfocmd_path, '-T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
         rc, out, err = self.module.run_command(cmd)
@@ -290,6 +280,7 @@ class ZipArchive(object):
         # Get some information related to user/group ownership
         umask = os.umask(0)
         os.umask(umask)
+        systemtype = platform.system()
 
         # Get current user and group information
         groups = os.getgroups()
@@ -389,6 +380,12 @@ class ZipArchive(object):
                 ftype = 'f'
 
             # Some files may be storing FAT permissions, not Unix permissions
+            # For FAT permissions, we will use a base permissions set of 777 if the item is a directory or has the execute bit set.  Otherwise, 666.
+            #     This permission will then be modified by the system UMask.
+            # BSD always applies the Umask, even to Unix permissions.
+            # For Unix style permissions on Linux or Mac, we want to use them directly.
+            #     So we set the UMask for this file to zero.  That permission set will then be unchanged when calling _permstr_to_octal
+
             if len(permstr) == 6:
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
@@ -396,6 +393,11 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
+                file_umask = umask
+            elif 'bsd' in systemtype.lower():
+                file_umask = umask
+            else:
+                file_umask = 0
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
@@ -491,14 +493,16 @@ class ZipArchive(object):
                     else:
                         try:
                             mode = int(self.file_args['mode'], 8)
-                        except Exception:
-                            e = get_exception()
-                            self.module.fail_json(path=path, msg="mode %(mode)s must be in octal form" % self.file_args, details=str(e))
+                        except Exception as e:
+                            try:
+                                mode = AnsibleModule._symbolic_mode_to_octal(st, self.file_args['mode'])
+                            except ValueError as e:
+                                self.module.fail_json(path=path, msg="%s" % to_native(e), exception=traceback.format_exc())
                 # Only special files require no umask-handling
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
                 else:
-                    mode = self._permstr_to_octal(permstr, umask)
+                    mode = self._permstr_to_octal(permstr, file_umask)
 
                 if mode != stat.S_IMODE(st.st_mode):
                     change = True
@@ -637,9 +641,17 @@ class TgzArchive(object):
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
             # filename = filename.decode('string_escape')
-            filename = codecs.escape_decode(filename)[0]
+            filename = to_native(codecs.escape_decode(filename)[0])
+
             if filename and filename not in self.excludes:
-                self._files_in_archive.append(to_native(filename))
+                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+                if filename.startswith('/'):
+                    filename = filename[1:]
+
+                self._files_in_archive.append(filename)
+
         return self._files_in_archive
 
     def is_unarchived(self):
@@ -812,9 +824,8 @@ def main():
                     f.write(data)
                 f.close()
                 src = package
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failure downloading %s, %s" % (src, e))
+            except Exception as e:
+                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
@@ -824,9 +835,8 @@ def main():
     try:
         if os.path.getsize(src) == 0:
             module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Source '%s' not readable" % src)
+    except Exception as e:
+        module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
 
     # is dest OK to receive tar file?
     if not os.path.isdir(dest):
@@ -866,11 +876,11 @@ def main():
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
+
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-            except (IOError, OSError):
-                e = get_exception()
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % e, **res_args)
+            except (IOError, OSError) as e:
+                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive

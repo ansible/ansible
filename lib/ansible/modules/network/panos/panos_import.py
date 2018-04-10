@@ -73,17 +73,17 @@ EXAMPLES = '''
     category: software
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 import os.path
 import xml.etree
@@ -118,7 +118,7 @@ def import_file(xapi, module, ip_address, file_, category):
     )
 
     r = requests.post(
-        'https://'+ip_address+'/api/',
+        'https://' + ip_address + '/api/',
         verify=False,
         params=params,
         headers={'Content-Type': mef.content_type},
@@ -183,15 +183,15 @@ def main():
 
     try:
         changed, filename = import_file(xapi, module, ip_address, file_, category)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc))
 
     # cleanup and delete file if local
     if url is not None:
         delete_file(file_)
 
     module.exit_json(changed=changed, filename=filename, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

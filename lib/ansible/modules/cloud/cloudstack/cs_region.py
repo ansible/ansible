@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -60,17 +60,17 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a region
-local_action:
-  module: cs_region
-  id: 2
-  name: geneva
-  endpoint: https://cloud.gva.example.com
+- local_action:
+    module: cs_region
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
 
 # remove a region with ID 2
-local_action:
-  module: cs_region
-  id: 2
-  state: absent
+- local_action:
+    module: cs_region
+    id: 2
+    state: absent
 '''
 
 RETURN = '''

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -76,19 +76,19 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # Update a resource limit for instances of a domain
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 10
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 10
+    domain: customers
 
 # Update a resource limit for instances of an account
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 12
-  account: moserre
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 12
+    account: moserre
+    domain: customers
 '''
 
 RETURN = '''

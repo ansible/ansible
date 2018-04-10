@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-inventory - now supports a ``--export`` option to preserve group_var data (https://github.com/ansible/ansible/pull/36188)

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/defaults.yaml"
+- debug: msg="START cli/defaults.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -10,12 +10,14 @@
       - interface Ethernet2
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: configure device with defaults included
   eos_config:
     src: defaults/config.j2
     defaults: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - debug: var=result
@@ -30,6 +32,7 @@
     src: defaults/config.j2
     defaults: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - debug: var=result
@@ -39,4 +42,4 @@
       - "result.changed == false"
       - "result.updates is not defined"
 
-- debug: msg="END cli/defaults.yaml"
+- debug: msg="END cli/defaults.yaml on connection={{ ansible_connection }}"

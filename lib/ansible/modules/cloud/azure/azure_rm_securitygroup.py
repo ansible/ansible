@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -87,11 +87,17 @@ options:
                 default: "*"
             source_address_prefix:
                 description:
-                  - IP address or CIDR from which traffic originates.
+                  - The CIDR or source IP range.
+                  - Asterix C(*) can also be used to match all source IPs.
+                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                  - If this is an ingress rule, specifies where network traffic originates from.
                 default: "*"
             destination_address_prefix:
                 description:
-                  - IP address or CIDR to which traffic is headed.
+                  - The destination address prefix.
+                  - CIDR or destination IP range.
+                  - Asterix C(*) can also be used to match all source IPs.
+                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                 default: "*"
             access:
                 description:
@@ -328,11 +334,7 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureHttpError
-    from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models.network_management_client_enums import (SecurityRuleAccess,
-                                                                           SecurityRuleDirection,
-                                                                           SecurityRuleProtocol)
+    from azure.mgmt.network import NetworkManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -341,7 +343,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
 
 
-def validate_rule(rule, rule_type=None):
+def validate_rule(self, rule, rule_type=None):
     '''
     Apply defaults to a rule dictionary and check that all values are valid.
 
@@ -368,7 +370,7 @@ def validate_rule(rule, rule_type=None):
     if not rule.get('access'):
         rule['access'] = 'Allow'
 
-    access_names = [member.value for member in SecurityRuleAccess]
+    access_names = [member.value for member in self.nsg_models.SecurityRuleAccess]
     if rule['access'] not in access_names:
         raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
 
@@ -381,14 +383,14 @@ def validate_rule(rule, rule_type=None):
     if not rule.get('protocol'):
         rule['protocol'] = '*'
 
-    protocol_names = [member.value for member in SecurityRuleProtocol]
+    protocol_names = [member.value for member in self.nsg_models.SecurityRuleProtocol]
     if rule['protocol'] not in protocol_names:
         raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
 
     if not rule.get('direction'):
         rule['direction'] = 'Inbound'
 
-    direction_names = [member.value for member in SecurityRuleDirection]
+    direction_names = [member.value for member in self.nsg_models.SecurityRuleDirection]
     if rule['direction'] not in direction_names:
         raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
 
@@ -425,22 +427,25 @@ def compare_rules(r, rule):
         if rule['direction'] != r['direction']:
             changed = True
             r['direction'] = rule['direction']
+        if rule['source_address_prefix'] != str(r['source_address_prefix']):
+            changed = True
+            r['source_address_prefix'] = rule['source_address_prefix']
     return matched, changed
 
 
-def create_rule_instance(rule):
+def create_rule_instance(self, rule):
     '''
     Create an instance of SecurityRule from a dict.
 
     :param rule: dict
     :return: SecurityRule
     '''
-    return SecurityRule(
-        rule['protocol'],
-        rule['source_address_prefix'],
-        rule['destination_address_prefix'],
-        rule['access'],
-        rule['direction'],
+    return self.nsg_models.SecurityRule(
+        protocol=rule['protocol'],
+        source_address_prefix=rule['source_address_prefix'],
+        destination_address_prefix=rule['destination_address_prefix'],
+        access=rule['access'],
+        direction=rule['direction'],
         id=rule.get('id', None),
         description=rule.get('description', None),
         source_port_range=rule.get('source_port_range', None),
@@ -531,6 +536,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
+        self.client = None  # type: azure.mgmt.network.NetworkManagementClient
+        self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
             changed=False,
@@ -541,6 +548,11 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
+        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
+        # tighten up poll interval for security groups; default 30s is an eternity
+        # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
+        self.client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -556,19 +568,19 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         if self.rules:
             for rule in self.rules:
                 try:
-                    validate_rule(rule)
+                    validate_rule(self, rule)
                 except Exception as exc:
                     self.fail("Error validating rule {0} - {1}".format(rule, str(exc)))
 
         if self.default_rules:
             for rule in self.default_rules:
                 try:
-                    validate_rule(rule, 'default')
+                    validate_rule(self, rule, 'default')
                 except Exception as exc:
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.client.network_security_groups.get(self.resource_group, self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -578,7 +590,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 self.log("CHANGED: security group found but state is 'absent'")
                 changed = True
-        except CloudError:
+        except CloudError:  # TODO: actually check for ResourceMissingError
             if self.state == 'present':
                 self.log("CHANGED: security group not found and state is 'present'")
                 changed = True
@@ -636,7 +648,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
             self.results['changed'] = changed
             self.results['state'] = results
-            if not self.check_mode:
+            if not self.check_mode and changed:
                 self.results['state'] = self.create_or_update(results)
 
         elif self.state == 'present' and changed:
@@ -677,32 +689,32 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = NetworkSecurityGroup()
+        parameters = self.nsg_models.NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):
-                parameters.security_rules.append(create_rule_instance(rule))
+                parameters.security_rules.append(create_rule_instance(self, rule))
         if results.get('default_rules'):
             parameters.default_security_rules = []
             for rule in results.get('default_rules'):
-                parameters.default_security_rules.append(create_rule_instance(rule))
+                parameters.default_security_rules.append(create_rule_instance(self, rule))
         parameters.tags = results.get('tags')
         parameters.location = results.get('location')
 
         try:
-            poller = self.network_client.network_security_groups.create_or_update(self.resource_group,
-                                                                                  self.name,
-                                                                                  parameters)
+            poller = self.client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                          network_security_group_name=self.name,
+                                                                          parameters=parameters)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
         return create_network_security_group_dict(result)
 
     def delete(self):
         try:
-            poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
+            poller = self.client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
         return result
 

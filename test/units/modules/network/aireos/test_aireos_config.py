@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.aireos import aireos_config
-from .aireos_module import TestCiscoWlcModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .aireos_module import TestCiscoWlcModule, load_fixture
 
 
 class TestCiscoWlcConfigModule(TestCiscoWlcModule):
@@ -32,6 +31,8 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
     module = aireos_config
 
     def setUp(self):
+        super(TestCiscoWlcConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.aireos.aireos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -42,6 +43,7 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestCiscoWlcConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()

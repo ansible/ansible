@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm modules - updated with internal changes to use API profiles and kwargs for future Azure Stack support and better stability between SDK updates. (https://github.com/ansible/ansible/pull/35538)

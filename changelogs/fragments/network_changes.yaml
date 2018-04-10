@@ -1,0 +1,11 @@
+major_changes:
+  - |
+    Ansible Network improvements
+
+    * Created new connection plugins ``network_cli`` and ``netconf`` to replace ``connection=local``. ``connection=local`` will continue to work for a number of Ansible releases.
+    * No more ``unable to open shell``. A clear and descriptive message will be displayed in normal ansible-playbook output without needing to enable debug mode
+    * Loads of documentation, see `Ansible for Network Automation Documentation <http://docs.ansible.com/ansible/2.5/network/>`_.
+    * Refactor common network shared code into package under ``module_utils/network/``
+    * Filters: Add a filter to convert XML response from a network device to JSON object.
+    * Loads of bug fixes.
+    * Plus lots more.

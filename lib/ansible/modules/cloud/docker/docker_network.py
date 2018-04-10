@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -151,11 +151,11 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
@@ -184,6 +184,7 @@ class TaskParameters(DockerBaseClass):
 def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -208,12 +209,14 @@ class DockerNetworkManager(object):
             self.absent()
 
     def get_existing_network(self):
-        networks = self.client.networks()
-        network = None
-        for n in networks:
-            if n['Name'] == self.parameters.network_name:
-                network = n
-        return network
+        networks = self.client.networks(names=[self.parameters.network_name])
+        # check if a user is trying to find network by its Id
+        if not networks:
+            networks = self.client.networks(ids=[self.parameters.network_name])
+        if not networks:
+            return None
+        else:
+            return networks[0]
 
     def has_different_config(self, net):
         '''
@@ -266,12 +269,12 @@ class DockerNetworkManager(object):
         if not self.existing_network:
             ipam_pools = []
             if self.parameters.ipam_options:
-                if HAS_DOCKER_PY_2:
+                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                     ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
                 else:
                     ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
 
-            if HAS_DOCKER_PY_2:
+            if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
                                          pool_configs=ipam_pools)
             else:
@@ -308,6 +311,8 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
+        if not self.existing_network:
+            return
         containers = self.existing_network['Containers']
         if not containers:
             return
@@ -358,16 +363,16 @@ class DockerNetworkManager(object):
 
 def main():
     argument_spec = dict(
-        network_name       = dict(type='str', required=True, aliases=['name']),
-        connected          = dict(type='list', default=[], aliases=['containers']),
-        state              = dict(type='str', default='present', choices=['present', 'absent']),
-        driver             = dict(type='str', default='bridge'),
-        driver_options     = dict(type='dict', default={}),
-        force              = dict(type='bool', default=False),
-        appends            = dict(type='bool', default=False, aliases=['incremental']),
-        ipam_driver        = dict(type='str', default=None),
-        ipam_options       = dict(type='dict', default={}),
-        debug              = dict(type='bool', default=False)
+        network_name=dict(type='str', required=True, aliases=['name']),
+        connected=dict(type='list', default=[], aliases=['containers']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        driver=dict(type='str', default='bridge'),
+        driver_options=dict(type='dict', default={}),
+        force=dict(type='bool', default=False),
+        appends=dict(type='bool', default=False, aliases=['incremental']),
+        ipam_driver=dict(type='str', default=None),
+        ipam_options=dict(type='dict', default={}),
+        debug=dict(type='bool', default=False)
     )
 
     client = AnsibleDockerClient(

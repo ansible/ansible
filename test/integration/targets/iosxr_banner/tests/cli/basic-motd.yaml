@@ -12,8 +12,8 @@
       this is my motd banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - debug:
@@ -32,8 +32,8 @@
       this is my motd banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - assert:

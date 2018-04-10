@@ -1,23 +1,21 @@
 # (c) 2016, Matt Martz <matt@sivel.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: json
+    short_description: Ansible screen output as JSON
+    version_added: "2.2"
+    description:
+        - This callback converts all events into JSON output to stdout
+    type: stdout
+    requirements:
+      - Set as stdout in config
+'''
 
 import json
 
@@ -55,6 +53,9 @@ class CallbackModule(CallbackBase):
         self.results.append(self._new_play(play))
 
     def v2_playbook_on_task_start(self, task, is_conditional):
+        self.results[-1]['tasks'].append(self._new_task(task))
+
+    def v2_playbook_on_handler_task_start(self, task):
         self.results[-1]['tasks'].append(self._new_task(task))
 
     def v2_runner_on_ok(self, result, **kwargs):

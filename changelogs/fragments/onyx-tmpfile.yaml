@@ -1,0 +1,2 @@
+bugfixes:
+- Fix onyx_linkagg module writing debugging information to a tempfile on the remote machine (https://github.com/ansible/ansible/pull/37308)

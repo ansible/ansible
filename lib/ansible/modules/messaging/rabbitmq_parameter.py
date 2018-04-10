@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -65,7 +65,6 @@ EXAMPLES = """
     state: present
 """
 import json
-
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -114,6 +113,7 @@ class RabbitMqParameter(object):
     def has_modifications(self):
         return self.value != self._value
 
+
 def main():
     arg_spec = dict(
         component=dict(required=True),
@@ -137,23 +137,26 @@ def main():
     state = module.params['state']
     node = module.params['node']
 
+    result = dict(changed=False)
     rabbitmq_parameter = RabbitMqParameter(module, component, name, value, vhost, node)
 
-    changed = False
     if rabbitmq_parameter.get():
         if state == 'absent':
             rabbitmq_parameter.delete()
-            changed = True
+            result['changed'] = True
         else:
             if rabbitmq_parameter.has_modifications():
                 rabbitmq_parameter.set()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_parameter.set()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, component=component, name=name, vhost=vhost, state=state)
-
+    result['component'] = component
+    result['name'] = name
+    result['vhost'] = vhost
+    result['state'] = state
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

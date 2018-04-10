@@ -1,0 +1,2 @@
+bugfixes:
+- docker_container, docker_image, docker_network modules - Update to work with Docker SDK 3.1

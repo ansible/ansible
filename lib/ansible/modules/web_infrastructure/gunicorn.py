@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,7 +50,7 @@ options:
   worker:
     choices: ['sync', 'eventlet', 'gevent', 'tornado ', 'gthread', 'gaiohttp']
     description:
-      - 'The type of workers to use. The default class (sync) should handle most “normal” types of workloads.'
+      - 'The type of workers to use. The default class (sync) should handle most "normal" types of workloads.'
   user:
     description:
       -  'Switch worker processes to run as this user.'

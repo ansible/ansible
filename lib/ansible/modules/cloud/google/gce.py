@@ -3,13 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -28,6 +27,20 @@ options:
         stable debian image)
     required: false
     default: "debian-8"
+  image_family:
+    description:
+      - image family from which to select the image.  The most recent
+        non-deprecated image in the family will be used.
+    required: false
+    default: null
+    version_added: "2.4"
+  external_projects:
+    description:
+      - A list of other projects (accessible with the provisioning credentials)
+        to be searched for the image.
+    required: false
+    default: null
+    version_added: "2.4"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -186,7 +199,7 @@ EXAMPLES = '''
 # Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
-    gce:
+  - gce:
       instance_names: my-test-instance1
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -197,10 +210,26 @@ EXAMPLES = '''
       project_id: "your-project-name"
       disk_size: 32
 
+# Create a single instance of an image from the "my-base-image" image family
+# in the us-central1-a Zone of the n1-standard-1 machine type.
+# This image family is in the "my-other-project" GCP project.
+  - gce:
+      instance_names: my-test-instance1
+      zone: us-central1-a
+      machine_type: n1-standard-1
+      image_family: my-base-image
+      external_projects:
+        - my-other-project
+      state: present
+      service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+      credentials_file: "/path/to/your-key.json"
+      project_id: "your-project-name"
+      disk_size: 32
+
 # Create a single Debian 8 instance in the us-central1-a Zone
 # Use existing disks, custom network/subnetwork, set service account permissions
 # add tags and metadata.
-    gce:
+  - gce:
       instance_names: my-test-instance
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -291,9 +320,11 @@ EXAMPLES = '''
 '''
 
 import socket
+import logging
 
 try:
     from ast import literal_eval
+
     HAS_PYTHON26 = True
 except ImportError:
     HAS_PYTHON26 = False
@@ -305,6 +336,7 @@ try:
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceInUseError, ResourceNotFoundError
     from libcloud.compute.drivers.gce import GCEAddress
+
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -347,7 +379,7 @@ def get_instance_info(inst):
     else:
         public_ip = inst.public_ips[0]
 
-    return({
+    return ({
         'image': inst.image is not None and inst.image.split('/')[-1] or None,
         'disks': disk_names,
         'machine_type': inst.size,
@@ -379,6 +411,8 @@ def create_instances(module, gce, instance_names, number, lc_zone):
 
     """
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     machine_type = module.params.get('machine_type')
     metadata = module.params.get('metadata')
     network = module.params.get('network')
@@ -452,7 +486,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
         else:
             metadata = md
 
-    lc_image = LazyDiskImage(module, gce, image, lc_disks)
+    lc_image = LazyDiskImage(module, gce, image, lc_disks, family=image_family, projects=external_projects)
     ex_sa_perms = []
     bad_perms = []
     if service_account_permissions:
@@ -520,7 +554,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
                 changed = True
             except GoogleBaseError as e:
                 module.fail_json(msg='Unexpected error attempting to create ' +
-                                 'instance %s, error: %s' % (instance, e.value))
+                                     'instance %s, error: %s' % (instance, e.value))
             if inst:
                 new_instances.append(inst)
 
@@ -543,7 +577,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
             # Work around libcloud bug: attached volumes don't get added
             # to the instance metadata. get_instance_info() only cares about
             # source and index.
-            if len(inst.extra['disks']) != i+1:
+            if len(inst.extra['disks']) != i + 1:
                 inst.extra['disks'].append(
                     {'source': lc_disk.extra['selfLink'], 'index': i})
 
@@ -555,6 +589,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
         instance_json_data.append(d)
 
     return (changed, instance_json_data, instance_names)
+
 
 def change_instance_state(module, gce, instance_names, number, zone, state):
     """Changes the state of a list of instances. For example,
@@ -600,45 +635,46 @@ def change_instance_state(module, gce, instance_names, number, zone, state):
             if state in ['absent', 'deleted']:
                 gce.destroy_node(node)
                 changed = True
-            elif state == 'started' and \
-                      node.state == libcloud.compute.types.NodeState.STOPPED:
+            elif state == 'started' and node.state == libcloud.compute.types.NodeState.STOPPED:
                 gce.ex_start_node(node)
                 changed = True
-            elif state in ['stopped', 'terminated'] and \
-                      node.state == libcloud.compute.types.NodeState.RUNNING:
+            elif state in ['stopped', 'terminated'] and node.state == libcloud.compute.types.NodeState.RUNNING:
                 gce.ex_stop_node(node)
                 changed = True
 
     return (changed, state_instance_names)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            image = dict(default='debian-8'),
-            instance_names = dict(),
-            machine_type = dict(default='n1-standard-1'),
-            metadata = dict(),
-            name = dict(aliases=['base_name']),
-            num_instances = dict(type='int'),
-            network = dict(default='default'),
-            subnetwork = dict(),
-            persistent_boot_disk = dict(type='bool', default=False),
-            disks = dict(type='list'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted',
-                                  'started', 'stopped', 'terminated'],
-                         default='present'),
-            tags = dict(type='list'),
-            zone = dict(default='us-central1-a'),
-            service_account_email = dict(),
-            service_account_permissions = dict(type='list'),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
-            ip_forward = dict(type='bool', default=False),
+        argument_spec=dict(
+            image=dict(default='debian-8'),
+            image_family=dict(),
+            external_projects=dict(type='list'),
+            instance_names=dict(),
+            machine_type=dict(default='n1-standard-1'),
+            metadata=dict(),
+            name=dict(aliases=['base_name']),
+            num_instances=dict(type='int'),
+            network=dict(default='default'),
+            subnetwork=dict(),
+            persistent_boot_disk=dict(type='bool', default=False),
+            disks=dict(type='list'),
+            state=dict(choices=['active', 'present', 'absent', 'deleted',
+                                'started', 'stopped', 'terminated'],
+                       default='present'),
+            tags=dict(type='list'),
+            zone=dict(default='us-central1-a'),
+            service_account_email=dict(),
+            service_account_permissions=dict(type='list'),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
+            ip_forward=dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
-            disk_auto_delete = dict(type='bool', default=True),
-            disk_size = dict(type='int', default=10),
-            preemptible = dict(type='bool', default=None),
+            disk_auto_delete=dict(type='bool', default=True),
+            disk_size=dict(type='int', default=10),
+            preemptible=dict(type='bool', default=None),
         ),
         mutually_exclusive=[('instance_names', 'name')]
     )
@@ -650,6 +686,9 @@ def main():
 
     gce = gce_connect(module)
 
+    image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     instance_names = module.params.get('instance_names')
     name = module.params.get('name')
     number = module.params.get('num_instances')
@@ -713,19 +752,25 @@ class LazyDiskImage:
     Object for lazy instantiation of disk image
     gce.ex_get_image is a very expensive call, so we want to avoid calling it as much as possible.
     """
-    def __init__(self, module, gce, name, has_pd):
+
+    def __init__(self, module, gce, name, has_pd, family=None, projects=None):
         self.image = None
         self.was_called = False
         self.gce = gce
         self.name = name
         self.has_pd = has_pd
         self.module = module
+        self.family = family
+        self.projects = projects
 
     def __call__(self):
         if not self.was_called:
             self.was_called = True
             if not self.has_pd:
-                self.image = self.gce.ex_get_image(self.name)
+                if self.family:
+                    self.image = self.gce.ex_get_image_from_family(self.family, ex_project_list=self.projects)
+                else:
+                    self.image = self.gce.ex_get_image(self.name, ex_project_list=self.projects)
                 if not self.image:
                     self.module.fail_json(msg='image or disks missing for create instance', changed=False)
         return self.image

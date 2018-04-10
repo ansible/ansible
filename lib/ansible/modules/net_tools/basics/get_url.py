@@ -9,7 +9,7 @@ __metaclass__ = type
 
 # see examples/playbooks/get_url.yml
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -49,7 +49,8 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - Defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
+      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+      - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
     version_added: '2.1'
   force:
@@ -338,18 +339,17 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
                 module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
-
-        fd, tempname = tempfile.mkstemp(dir=tmp_dest)
     else:
-        fd, tempname = tempfile.mkstemp()
+        tmp_dest = getattr(module, 'tmpdir', None)
+
+    fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
-                         exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
@@ -413,7 +413,7 @@ def main():
     if module.params['headers']:
         try:
             headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
-        except:
+        except Exception:
             module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
     else:
         headers = None
@@ -502,7 +502,7 @@ def main():
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source %s not readable" % (tmpsrc))
+        module.fail_json(msg="Source %s is not readable" % (tmpsrc))
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -510,15 +510,18 @@ def main():
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (dest))
+            module.fail_json(msg="Destination %s is not writable" % (dest))
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not readable" % (dest))
+            module.fail_json(msg="Destination %s is not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
+        if not os.path.exists(os.path.dirname(dest)):
+            os.remove(tmpsrc)
+            module.fail_json(msg="Destination %s does not exist" % (os.path.dirname(dest)))
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+            module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)))
 
     backup_file = None
     if checksum_src != checksum_dest:
@@ -526,14 +529,17 @@ def main():
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            shutil.copyfile(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest)
         except Exception as e:
-            os.remove(tmpsrc)
+            if os.path.exists(tmpsrc):
+                os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
                              exception=traceback.format_exc())
         changed = True
     else:
         changed = False
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
 
     if checksum != '':
         destination_checksum = module.digest_from_file(dest, algorithm)
@@ -541,8 +547,6 @@ def main():
         if checksum != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum))
-
-    os.remove(tmpsrc)
 
     # allow file attribute changes
     module.params['path'] = dest

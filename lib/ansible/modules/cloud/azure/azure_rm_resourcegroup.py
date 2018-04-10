@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -96,7 +96,6 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.resource.resources.models import ResourceGroup
 except ImportError:
     pass
 
@@ -193,13 +192,13 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=self.location,
                         tags=self.tags
                     )
                 else:
                     # Update resource group
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=results['location'],
                         tags=results['tags']
                     )
@@ -233,9 +232,12 @@ class AzureRMResourceGroup(AzureRMModuleBase):
     def resources_exist(self):
         found = False
         try:
+            response = self.rm_client.resources.list_by_resource_group(self.name)
+        except AttributeError:
             response = self.rm_client.resource_groups.list_resources(self.name)
         except Exception as exc:
             self.fail("Error checking for resource existence in {0} - {1}".format(self.name, str(exc)))
+
         for item in response:
             found = True
             break

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,8 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - When C(state=absent), it unconfigures existing settings C(msg_time) and set it
-      to its default value of 15.  It is cleaner to always use C(state=present).
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Module will fail if the udld feature has not been previously enabled.
 options:
     aggressive:
@@ -45,18 +44,20 @@ options:
         choices: ['enabled','disabled']
     msg_time:
         description:
-            - Message time in seconds for UDLD packets.
+            - Message time in seconds for UDLD packets or keyword 'default'.
         required: false
         default: null
     reset:
         description:
-            - Ability to reset UDLD down interfaces.
+            - Ability to reset all ports shut down by UDLD. 'state' parameter
+              cannot be 'absent' when this is present.
         required: false
         default: null
-        choices: ['true','false']
+        choices: ['true']
     state:
         description:
-            - Manage the state of the resource.
+            - Manage the state of the resource. When set to 'absent',
+              aggressive and msg_time are set to their default values.
         required: false
         default: present
         choices: ['present','absent']
@@ -109,23 +110,28 @@ changed:
     sample: true
 '''
 
+import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
+PARAM_TO_DEFAULT_KEYMAP = {
+    'msg_time': '15',
+}
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -155,43 +161,32 @@ def apply_key_map(key_map, table):
     return new_dict
 
 
-
-def get_commands_config_udld_global(delta, reset):
-    config_args = {
-        'enabled': 'udld aggressive',
-        'disabled': 'no udld aggressive',
-        'msg_time': 'udld message-time {msg_time}'
-    }
+def get_commands_config_udld_global(delta, reset, existing):
     commands = []
     for param, value in delta.items():
         if param == 'aggressive':
-            if value == 'enabled':
-                command = 'udld aggressive'
-            elif value == 'disabled':
-                command = 'no udld aggressive'
-        else:
-            command = config_args.get(param, 'DNE').format(**delta)
-        if command and command != 'DNE':
+            command = 'udld aggressive' if value == 'enabled' else 'no udld aggressive'
             commands.append(command)
-        command = None
-
+        elif param == 'msg_time':
+            if value == 'default':
+                if existing.get('msg_time') != PARAM_TO_DEFAULT_KEYMAP.get('msg_time'):
+                    commands.append('no udld message-time')
+            else:
+                commands.append('udld message-time ' + value)
     if reset:
         command = 'udld reset'
         commands.append(command)
     return commands
 
 
-def get_commands_remove_udld_global(delta):
-    config_args = {
-        'aggressive': 'no udld aggressive',
-        'msg_time': 'no udld message-time {msg_time}',
-    }
+def get_commands_remove_udld_global(existing):
     commands = []
-    for param, value in delta.items():
-        command = config_args.get(param, 'DNE').format(**delta)
-        if command and command != 'DNE':
-            commands.append(command)
-        command = None
+    if existing.get('aggressive') == 'enabled':
+        command = 'no udld aggressive'
+        commands.append(command)
+    if existing.get('msg_time') != PARAM_TO_DEFAULT_KEYMAP.get('msg_time'):
+        command = 'no udld message-time'
+        commands.append(command)
     return commands
 
 
@@ -222,32 +217,17 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['aggressive', 'msg_time', 'reset']],
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']
     reset = module.params['reset']
     state = module.params['state']
 
-    if (aggressive or reset) and state == 'absent':
-        module.fail_json(msg="It's better to use state=present when "
-                             "configuring or unconfiguring aggressive mode "
-                             "or using reset flag. state=absent is just for "
-                             "when using msg_time param.")
-
-    if msg_time:
-        try:
-            msg_time_int = int(msg_time)
-            if msg_time_int < 7 or msg_time_int > 90:
-                raise ValueError
-        except ValueError:
-            module.fail_json(msg='msg_time must be an integer'
-                                 'between 7 and 90')
+    if reset and state == 'absent':
+        module.fail_json(msg="state must be present when using reset flag.")
 
     args = dict(aggressive=aggressive, msg_time=msg_time, reset=reset)
     proposed = dict((k, v) for k, v in args.items() if v is not None)
@@ -261,13 +241,12 @@ def main():
     commands = []
     if state == 'present':
         if delta:
-            command = get_commands_config_udld_global(dict(delta), reset)
+            command = get_commands_config_udld_global(dict(delta), reset, existing)
             commands.append(command)
 
     elif state == 'absent':
-        common = set(proposed.items()).intersection(existing.items())
-        if common:
-            command = get_commands_remove_udld_global(dict(common))
+        command = get_commands_remove_udld_global(existing)
+        if command:
             commands.append(command)
 
     cmds = flatten_list(commands)
@@ -294,4 +273,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

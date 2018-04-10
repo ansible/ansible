@@ -7,11 +7,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -33,13 +31,14 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser.
+        device config parser.  The I(lines) argument only supports current
+        context lines.  See EXAMPLES
     required: false
     default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
@@ -51,7 +50,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
     version_added: "2.2"
@@ -189,6 +188,23 @@ vars:
       src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
+
+- name: invalid use of lines
+  sros_config:
+    lines:
+      - service
+      -     vpls 1000 customer foo 1 create
+      -         description "invalid lines example"
+    provider: "{{ cli }}"
+
+- name: valid use of lines
+  sros_config:
+    lines:
+      - description "invalid lines example"
+    parents:
+      - service
+      - vpls 1000 customer foo 1 create
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -209,19 +225,9 @@ backup_path:
   sample: /playbooks/ansible/backup/sros_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.sros import sros_argument_spec, check_args, load_config, run_commands, get_config
-
-
-def sanitize_config(lines):
-    commands = list()
-    for line in lines:
-        for index, entry in enumerate(commands):
-            if line.startswith(entry):
-                del commands[index]
-                break
-        commands.append(line)
-    return commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.sros.sros import sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import load_config, run_commands, get_config
 
 
 def get_active_config(module):
@@ -258,7 +264,7 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands')
-        commands = sanitize_config(commands.split('\n'))
+        commands = commands.split('\n')
 
         result['commands'] = commands
         result['updates'] = commands
@@ -268,6 +274,7 @@ def run(module, result):
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -289,7 +296,8 @@ def main():
 
     argument_spec.update(sros_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,

@@ -8,63 +8,65 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_cluster
-short_description: Create VMware vSphere Cluster
+short_description: Manage VMware vSphere clusters
 description:
-    - Create VMware vSphere Cluster
-version_added: 2.0
+    - Add or remove VMware vSphere clusters.
+version_added: '2.0'
 author: Joseph Callen (@jcpowermac)
-notes:
 requirements:
     - Tested on ESXi 5.5
     - PyVmomi installed
 options:
+    cluster_name:
+        description:
+            - The name of the cluster that will be created.
+        required: yes
     datacenter_name:
         description:
             - The name of the datacenter the cluster will be created in.
-        required: True
-    cluster_name:
-        description:
-            - The name of the cluster that will be created
-        required: True
-    enable_ha:
-        description:
-            - If set to True will enable HA when the cluster is created.
-        required: False
-        default: False
+        required: yes
     enable_drs:
         description:
-            - If set to True will enable DRS when the cluster is created.
-        required: False
-        default: False
+            - If set to C(yes) will enable DRS when the cluster is created.
+        type: bool
+        default: 'no'
+    enable_ha:
+        description:
+            - If set to C(yes) will enable HA when the cluster is created.
+        type: bool
+        default: 'no'
     enable_vsan:
         description:
-            - If set to True will enable vSAN when the cluster is created.
-        required: False
-        default: False
+            - If set to C(yes) will enable vSAN when the cluster is created.
+        type: bool
+        default: 'no'
+    state:
+        description:
+            - Create (C(present)) or remove (C(absent)) a VMware vSphere cluster.
+        choices: [absent, present]
+        default: present
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
-# Example vmware_cluster command from Ansible Playbooks
+EXAMPLES = r'''
 - name: Create Cluster
   local_action:
     module: vmware_cluster
-    hostname: "{{ ansible_ssh_host }}"
+    hostname: '{{ ansible_ssh_host }}'
     username: root
     password: vmware
-    datacenter_name: "datacenter"
-    cluster_name: "cluster"
-    enable_ha: True
-    enable_drs: True
-    enable_vsan: True
+    datacenter_name: datacenter
+    cluster_name: cluster
+    enable_ha: yes
+    enable_drs: yes
+    enable_vsan: yes
 '''
 
 try:
@@ -81,21 +83,21 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI,
                                          find_datacenter_by_name,
                                          vmware_argument_spec,
                                          wait_for_task
-                                        )
+                                         )
 
 
 class VMwareCluster(object):
     def __init__(self, module):
         self.module = module
-        self.enable_ha = module.params['enable_ha']
-        self.enable_drs = module.params['enable_drs']
-        self.enable_vsan = module.params['enable_vsan']
         self.cluster_name = module.params['cluster_name']
+        self.datacenter_name = module.params['datacenter_name']
+        self.enable_drs = module.params['enable_drs']
+        self.enable_ha = module.params['enable_ha']
+        self.enable_vsan = module.params['enable_vsan']
         self.desired_state = module.params['state']
         self.datacenter = None
         self.cluster = None
         self.content = connect_to_api(module)
-        self.datacenter_name = module.params['datacenter_name']
 
     def process_state(self):
         cluster_states = {
@@ -208,8 +210,8 @@ class VMwareCluster(object):
             self.datacenter = find_datacenter_by_name(self.content, self.datacenter_name)
             if self.datacenter is None:
                 self.module.fail_json(msg="Datacenter %s does not exist, "
-                                     "please create first with Ansible Module vmware_datacenter or manually."
-                                     % self.datacenter_name)
+                                          "please create first with Ansible Module vmware_datacenter or manually."
+                                          % self.datacenter_name)
             self.cluster = find_cluster_by_name_datacenter(self.datacenter, self.cluster_name)
 
             if self.cluster is None:
@@ -236,14 +238,19 @@ class VMwareCluster(object):
 def main():
 
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
-                         cluster_name=dict(required=True, type='str'),
-                         enable_ha=dict(default=False, required=False, type='bool'),
-                         enable_drs=dict(default=False, required=False, type='bool'),
-                         enable_vsan=dict(default=False, required=False, type='bool'),
-                         state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(dict(
+        cluster_name=dict(type='str', required=True),
+        datacenter_name=dict(type='str', required=True),
+        enable_drs=dict(type='bool', default=False),
+        enable_ha=dict(type='bool', default=False),
+        enable_vsan=dict(type='bool', default=False),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+    ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')

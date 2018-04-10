@@ -8,21 +8,13 @@
 # that was based on pacman module written by Afterburn <http://github.com/afterburn>
 # that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,7 +35,7 @@ options:
 
     state:
         description:
-            - state of the package, you can use "installed" as an alias for C(present) and removed as one for c(absent).
+            - state of the package, you can use "installed" as an alias for C(present) and removed as one for C(absent).
         choices: [ 'present', 'absent', 'latest' ]
         required: false
         default: present
@@ -76,6 +68,8 @@ EXAMPLES = '''
     state: latest
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def query_package(module, slackpkg_path, name):
 
@@ -104,7 +98,7 @@ def remove_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               remove %s" % (slackpkg_path,
-                                              package))
+                                                            package))
 
         if not module.check_mode and query_package(module, slackpkg_path,
                                                    package):
@@ -130,7 +124,7 @@ def install_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               install %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):
@@ -153,7 +147,7 @@ def upgrade_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               upgrade %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):
@@ -203,8 +197,6 @@ def main():
     elif p["state"] in ['removed', 'absent']:
         remove_packages(module, slackpkg_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

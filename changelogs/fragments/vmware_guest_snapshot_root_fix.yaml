@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_guest_snapshot - updated to always check for root snapshot (https://github.com/ansible/ansible/pull/36001)

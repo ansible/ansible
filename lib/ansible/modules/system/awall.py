@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -74,7 +74,7 @@ def activate(module):
 def is_policy_enabled(module, name):
     cmd = "%s list" % (AWALL_PATH)
     rc, stdout, stderr = module.run_command(cmd)
-    if re.search("^%s\s+enabled" % name, stdout, re.MULTILINE):
+    if re.search(r"^%s\s+enabled" % name, stdout, re.MULTILINE):
         return True
     return False
 

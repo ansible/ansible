@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -107,7 +99,9 @@ notes:
 author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -160,28 +154,45 @@ task:
           Service: lambda.amazonaws.com
 
 '''
+RETURN = '''
+role_result:
+    description: the IAM.role dict returned by Boto
+    type: string
+    returned: if iam_type=role and state=present
+    sample: {
+                "arn": "arn:aws:iam::A1B2C3D4E5F6:role/my-new-role",
+                "assume_role_policy_document": "...truncated...",
+                "create_date": "2017-09-02T14:32:23Z",
+                "path": "/",
+                "role_id": "AROAA1B2C3D4E5F6G7H8I",
+                "role_name": "my-new-role"
+            }
+roles:
+    description: a list containing the name of the currently defined roles
+    type: list
+    returned: if iam_type=role and state=present
+    sample: [
+        "my-new-role",
+        "my-existing-role-1",
+        "my-existing-role-2",
+        "my-existing-role-3",
+        "my-existing-role-...",
+    ]
+'''
 
 import json
-import itertools
-import sys
+import traceback
+
 try:
-    import boto
+    import boto.exception
     import boto.iam
-    import boto.ec2
-    HAS_BOTO = True
+    import boto.iam.connection
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO, boto_exception, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 def _paginate(func, attr):
@@ -231,8 +242,8 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
             if key_count:
                 while key_count > key_qty:
                     keys.append(iam.create_access_key(
-                        user_name=name).create_access_key_response.\
-                        create_access_key_result.\
+                        user_name=name).create_access_key_response.
+                        create_access_key_result.
                         access_key)
                     key_qty += 1
         else:
@@ -244,42 +255,60 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
         return (user_info, changed)
 
 
-def delete_user(module, iam, name):
+def delete_dependencies_first(module, iam, name):
     changed = False
+    # try to delete any keys
     try:
         current_keys = [ck['access_key_id'] for ck in
-            iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
+                        iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         for key in current_keys:
             iam.delete_access_key(key, name)
-        try:
-            login_profile = iam.get_login_profiles(name).get_login_profile_response
-        except boto.exception.BotoServerError as err:
-            error_msg = boto_exception(err)
-            if ('Cannot find Login Profile') in error_msg:
-                iam.delete_user(name)
-        else:
-            iam.delete_login_profile(name)
-            iam.delete_user(name)
-    except Exception as ex:
-        module.fail_json(changed=False, msg="delete failed %s" %ex)
-        if ('must detach all policies first') in error_msg:
-            for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
-                iam.delete_user_policy(name, policy)
-            try:
-                iam.delete_user(name)
-            except boto.exception.BotoServerError as err:
-                error_msg = boto_exception(err)
-                if ('must detach all policies first') in error_msg:
-                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                          "that %s has Managed Polices. This is not "
-                                                          "currently supported by boto. Please detach the polices "
-                                                          "through the console and try again." % name)
-                else:
-                    module.fail_json(changed=changed, msg=str(error_msg))
-            else:
-                changed = True
-        else:
-            module.fail_json(changed=changed, msg=str(error_msg))
+        changed = True
+    except boto.exception.BotoServerError as err:
+        module.fail_json(changed=changed, msg="Failed to delete keys: %s" % err, exception=traceback.format_exc())
+
+    # try to delete login profiles
+    try:
+        login_profile = iam.get_login_profiles(name).get_login_profile_response
+        iam.delete_login_profile(name)
+        changed = True
+    except boto.exception.BotoServerError as err:
+        error_msg = boto_exception(err)
+        if 'Cannot find Login Profile' not in error_msg:
+            module.fail_json(changed=changed, msg="Failed to delete login profile: %s" % err, exception=traceback.format_exc())
+
+    # try to detach policies
+    try:
+        for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
+            iam.delete_user_policy(name, policy)
+        changed = True
+    except boto.exception.BotoServerError as err:
+        error_msg = boto_exception(err)
+        if 'must detach all policies first' in error_msg:
+            module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                  "that %s has Managed Polices. This is not "
+                                                  "currently supported by boto. Please detach the polices "
+                                                  "through the console and try again." % name)
+        module.fail_json(changed=changed, msg="Failed to delete policies: %s" % err, exception=traceback.format_exc())
+
+    # try to deactivate associated MFA devices
+    try:
+        mfa_devices = iam.get_all_mfa_devices(name).get('list_mfa_devices_response', {}).get('list_mfa_devices_result', {}).get('mfa_devices', [])
+        for device in mfa_devices:
+            iam.deactivate_mfa_device(name, device['serial_number'])
+        changed = True
+    except boto.exception.BotoServerError as err:
+        module.fail_json(changed=changed, msg="Failed to deactivate associated MFA devices: %s" % err, exception=traceback.format_exc())
+
+    return changed
+
+
+def delete_user(module, iam, name):
+    changed = delete_dependencies_first(module, iam, name)
+    try:
+        iam.delete_user(name)
+    except boto.exception.BotoServerError as ex:
+        module.fail_json(changed=changed, msg="Failed to delete user %s: %s" % (name, ex), exception=traceback.format_exc())
     else:
         changed = True
     return name, changed
@@ -420,7 +449,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
 
 
 def set_users_groups(module, iam, name, groups, updated=None,
-new_name=None):
+                     new_name=None):
     """ Sets groups for a user, will purge groups not explicitly passed, while
         retaining pre-existing groups that also are in the new list.
     """
@@ -452,7 +481,6 @@ new_name=None):
                     error_msg = boto_exception(err)
                     if ('The group with name %s cannot be found.' % group) in error_msg:
                         module.fail_json(changed=False, msg="Group %s doesn't exist" % group)
-
 
     if len(remove_groups) > 0 or len(new_groups) > 0:
         changed = True
@@ -500,6 +528,7 @@ def delete_group(module=None, iam=None, name=None):
         changed = True
     return changed, name
 
+
 def update_group(module=None, iam=None, name=None, new_name=None, new_path=None):
     changed = False
     try:
@@ -528,12 +557,12 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
         if name not in role_list:
             changed = True
             iam_role_result = iam.create_role(name,
-                assume_role_policy_document=trust_policy_doc,
-                path=path).create_role_response.create_role_result.role.role_name
+                                              assume_role_policy_document=trust_policy_doc,
+                                              path=path).create_role_response.create_role_result.role
 
             if name not in prof_list:
-                instance_profile_result = iam.create_instance_profile(name,
-                    path=path).create_instance_profile_response.create_instance_profile_result.instance_profile
+                instance_profile_result = iam.create_instance_profile(name, path=path) \
+                    .create_instance_profile_response.create_instance_profile_result.instance_profile
                 iam.add_role_to_instance_profile(name, name)
         else:
             instance_profile_result = iam.get_instance_profile(name).get_instance_profile_response.get_instance_profile_result.instance_profile
@@ -541,6 +570,7 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = list_all_roles(iam)
+        iam_role_result = iam.get_role(name).get_role_response.get_role_result.role
     return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
@@ -658,7 +688,7 @@ def main():
 
     if iam_type == 'role' and state == 'update':
         module.fail_json(changed=False, msg="iam_type: role, cannot currently be updated, "
-                             "please specify present or absent")
+                         "please specify present or absent")
 
     # check if trust_policy is present -- it can be inline JSON or a file path to a JSON file
     if trust_policy_filepath:
@@ -838,10 +868,8 @@ def main():
             module.fail_json(
                 changed=False, msg='Role update not currently supported by boto.')
         module.exit_json(changed=changed, roles=role_list, role_result=role_result,
-            instance_profile_result=instance_profile_result)
+                         instance_profile_result=instance_profile_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -43,17 +43,22 @@ class EnvironmentConfig(CommonConfig):
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+        self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
         self.remote_stage = args.remote_stage  # type: str
+        self.remote_provider = args.remote_provider  # type: str
         self.remote_aws_region = args.remote_aws_region  # type: str
         self.remote_terminate = args.remote_terminate  # type: str
+
+        if self.remote_provider == 'default':
+            self.remote_provider = None
 
         self.requirements = args.requirements  # type: bool
 
         if self.python == 'default':
-            self.python = '.'.join(str(i) for i in sys.version_info[:2])
+            self.python = None
 
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 
@@ -188,6 +193,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
         self.platform = args.platform  # type: list [str]
         self.inventory = args.inventory  # type: str
+        self.testcase = args.testcase  # type: str
 
 
 class UnitsConfig(TestConfig):
@@ -199,15 +205,6 @@ class UnitsConfig(TestConfig):
         super(UnitsConfig, self).__init__(args, 'units')
 
         self.collect_only = args.collect_only  # type: bool
-
-
-class CompileConfig(TestConfig):
-    """Configuration for the compile command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CompileConfig, self).__init__(args, 'compile')
 
 
 class CoverageConfig(EnvironmentConfig):

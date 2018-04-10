@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -51,11 +51,11 @@ options:
 '''
 
 EXAMPLES = '''
-name: Create 'vlan42' VLAN over 'bnx0' link
-dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
+- name: Create 'vlan42' VLAN over 'bnx0' link
+  dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
 
-name: Remove 'vlan1337' VLAN interface
-dladm_vlan: name=vlan1337 state=absent
+- name: Remove 'vlan1337' VLAN interface
+  dladm_vlan: name=vlan1337 state=absent
 '''
 
 RETURN = '''

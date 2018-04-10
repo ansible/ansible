@@ -1,10 +1,11 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: create static route
   vyos_static_route:
     prefix: 172.24.0.0/24
     next_hop: 192.168.42.64
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,7 +19,6 @@
     mask: 24
     next_hop: 192.168.42.64
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,7 +31,6 @@
     next_hop: 192.168.42.64
     admin_distance: 1
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -46,7 +45,6 @@
     next_hop: 192.168.42.64
     admin_distance: 1
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -59,7 +57,6 @@
     next_hop: 192.168.42.64
     admin_distance: 1
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -73,7 +70,6 @@
     next_hop: 192.168.42.64
     admin_distance: 1
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -86,7 +82,6 @@
       - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
       - { prefix: 172.24.2.0, mask: 24, next_hop: 192.168.42.64 }
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -102,7 +97,6 @@
       - { prefix: 172.24.2.0/24, next_hop: 192.168.42.64, state: absent }
       - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -117,7 +111,6 @@
       - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
       - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

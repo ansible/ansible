@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -796,7 +796,7 @@ class ClcLoadBalancer:
         for node in nodes_to_add:
             if not node.get('status'):
                 node['status'] = 'enabled'
-            if not node in nodes:
+            if node not in nodes:
                 changed = True
                 nodes.append(node)
         if changed is True and not self.module.check_mode:

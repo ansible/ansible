@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -129,7 +129,7 @@ class NetAppCDOTQTree(object):
         qtree_list_iter = netapp_utils.zapi.NaElement('qtree-list-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-info', **{'vserver': self.vserver,
-                             'volume':self.flexvol_name,
+                             'volume': self.flexvol_name,
                              'qtree': self.name})
 
         query = netapp_utils.zapi.NaElement('query')

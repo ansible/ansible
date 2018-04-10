@@ -19,6 +19,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     mariadb \
     mercurial \
     openssh \
+    password-store \
     postgresql-server \
     python-cryptography \
     python-devel \

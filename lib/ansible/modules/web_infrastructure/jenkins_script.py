@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -116,6 +116,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 
 def is_csrf_protection_enabled(module):
@@ -123,9 +124,9 @@ def is_csrf_protection_enabled(module):
                            module.params['url'] + '/api/json',
                            method='GET')
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content).get('useCrumbs', False)
 
 
@@ -134,9 +135,9 @@ def get_crumb(module):
                            module.params['url'] + '/crumbIssuer/api/json',
                            method='GET')
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content)
 
 
@@ -147,7 +148,7 @@ def main():
             script=dict(required=True, type="str"),
             url=dict(required=False, type="str", default="http://localhost:8080"),
             validate_certs=dict(required=False, type="bool", default=True),
-            user=dict(required=False, no_log=True, type="str", default=None),
+            user=dict(required=False, type="str", default=None),
             password=dict(required=False, no_log=True, type="str", default=None),
             timeout=dict(required=False, type="int", default=10),
             args=dict(required=False, type="dict", default=None)
@@ -156,14 +157,17 @@ def main():
 
     if module.params['user'] is not None:
         if module.params['password'] is None:
-            module.fail_json(msg="password required when user provided")
+            module.fail_json(msg="password required when user provided", output='')
         module.params['url_username'] = module.params['user']
         module.params['url_password'] = module.params['password']
         module.params['force_basic_auth'] = True
 
     if module.params['args'] is not None:
         from string import Template
-        script_contents = Template(module.params['script']).substitute(module.params['args'])
+        try:
+            script_contents = Template(module.params['script']).substitute(module.params['args'])
+        except KeyError as err:
+            module.fail_json(msg="Error with templating variable: %s" % err, output='')
     else:
         script_contents = module.params['script']
 
@@ -180,12 +184,12 @@ def main():
                            timeout=module.params['timeout'])
 
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
-    result = resp.read()
+    result = to_native(resp.read())
 
     if 'Exception:' in result and 'at java.lang.Thread' in result:
-        module.fail_json(msg="script failed with stacktrace:\n " + result)
+        module.fail_json(msg="script failed with stacktrace:\n " + result, output='')
 
     module.exit_json(
         output=result,

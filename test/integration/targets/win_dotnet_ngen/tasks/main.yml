@@ -1,0 +1,20 @@
+# this only tests check mode as the full run can take several minutes to
+# complete, this way we at least verify the script is parsable
+---
+- name: run in check mode
+  win_dotnet_ngen:
+  register: result_check
+  check_mode: yes
+
+- name: assert run in check mode
+  assert:
+    that:
+    - result_check is changed
+    - result_check.dotnet_ngen_update_exit_code == 0
+    - result_check.dotnet_ngen_update_output == "check mode output for C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\ngen.exe update /force"
+    - result_check.dotnet_ngen_eqi_exit_code == 0
+    - result_check.dotnet_ngen_eqi_output == "check mode output for C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\ngen.exe executeQueuedItems"
+    - result_check.dotnet_ngen64_update_exit_code == 0
+    - result_check.dotnet_ngen64_update_output == "check mode output for C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\ngen.exe update /force"
+    - result_check.dotnet_ngen64_eqi_exit_code == 0
+    - result_check.dotnet_ngen64_eqi_output == "check mode output for C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\ngen.exe executeQueuedItems"

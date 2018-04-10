@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -32,10 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes) interface is configured in up state,
-        for I(no) interface is configured in down state.
-    default: yes
+      - Configure interface link status.
   speed:
     description:
       - Interface link speed.
@@ -49,22 +46,33 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
   aggregate:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the aggregates parameter.
+      - Purge Interfaces not defined in the aggregate parameter.
         This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface configuration.
+      - State of the Interface configuration, C(up) indicates present and
+        operationally up and C(down) indicates present and operationally C(down)
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'up', 'down']
 """
 
 EXAMPLES = """
@@ -82,15 +90,42 @@ EXAMPLES = """
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
     enabled: True
 
 - name: make interface down
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
     enabled: False
+
+- name: Create interface using aggregate
+  net_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1 }
+      - { name: ge-0/0/2, description: test-interface-2 }
+    speed: 1g
+    duplex: full
+    mtu: 512
+
+- name: Delete interface using aggregate
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1 }
+      - { name: ge-0/0/2 }
+    state: absent
+
+- name: Check intent arguments
+  net_interface:
+    name: fxp0
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Config + intent
+  net_interface:
+    name: fxp0
+    enabled: False
+    state: down
 """
 
 RETURN = """

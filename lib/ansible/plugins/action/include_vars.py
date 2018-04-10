@@ -80,6 +80,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
+        del tmp  # tmp no longer has any effect
+
         if task_vars is None:
             task_vars = dict()
 
@@ -109,15 +111,18 @@ class ActionModule(ActionBase):
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
-            if path.exists(self.source_dir):
+            if not path.exists(self.source_dir):
+                failed = True
+                err_msg = ('{0} directory does not exist'.format(self.source_dir))
+            elif not path.isdir(self.source_dir):
+                failed = True
+                err_msg = ('{0} is not a directory'.format(self.source_dir))
+            else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
                     if failed:
                         break
                     results.update(updated_results)
-            else:
-                failed = True
-                err_msg = ('{0} directory does not exist'.format(self.source_dir))
         else:
             try:
                 self.source_file = self._find_needle('vars', self.source_file)
@@ -136,7 +141,7 @@ class ActionModule(ActionBase):
             scope[self.return_results_as_name] = results
             results = scope
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         if failed:
             result['failed'] = failed
@@ -210,7 +215,6 @@ class ActionModule(ActionBase):
             Bool
         """
         file_ext = path.splitext(source_file)
-        print(file_ext[-1][2:])
         return bool(len(file_ext) > 1 and file_ext[-1][1:] in self.valid_extensions)
 
     def _load_files(self, filename, validate_extensions=False):
@@ -232,7 +236,7 @@ class ActionModule(ActionBase):
             data = to_text(b_data, errors='surrogate_or_strict')
 
             self.show_content = show_content
-            data = self._loader.load(data, show_content)
+            data = self._loader.load(data, file_name=filename, show_content=show_content)
             if not data:
                 data = dict()
             if not isinstance(data, dict):

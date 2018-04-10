@@ -1,0 +1,2 @@
+bugfixes:
+- Fix csvfile lookup plugin when used on Python3 https://github.com/ansible/ansible/pull/37625

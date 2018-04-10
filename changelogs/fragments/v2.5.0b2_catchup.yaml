@@ -1,0 +1,6 @@
+bugfixes:
+- fixed templating issues in loop_control (https://github.com/ansible/ansible/pull/36124)
+- ansible-config - fixed traceback when no config file is present (https://github.com/ansible/ansible/issues/35965)
+- added various fixes to Linux virtualization facts (https://github.com/ansible/ansible/issues/36038)
+- fixed failure when remote_tmp is a subdir of a system tempdir (https://github.com/ansible/ansible/pull/36143)
+- ios_ping - updated to allow for count > 70 (https://github.com/ansible/ansible/pull/36142)

@@ -31,7 +31,7 @@ options:
         - The vca password, if not set the environment variable C(VCA_PASS) is checked for the password.
       required: false
       default: None
-      aliases: ['pass', 'pwd']
+      aliases: ['pass', 'passwd']
     org:
       description:
         - The org to login to for creating vapp. This option is required when the C(service_type) is I(vdc).
@@ -67,7 +67,7 @@ options:
     verify_certs:
       description:
         - If the certificates of the authentication is to be verified.
-      required: false
+      type: bool
       default: True
     vdc_name:
       description:

@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -158,10 +158,10 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            name        = dict(required=True),
-            state       = dict(default='present', choices=['present', 'absent']),
-            filesystem  = dict(required=True),
-            client_list = dict(type='list')
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            filesystem=dict(required=True),
+            client_list=dict(type='list')
         )
     )
 
@@ -172,10 +172,10 @@ def main():
     if not HAS_MUNCH:
         module.fail_json(msg='the python munch library is required for this module')
 
-    state      = module.params['state']
-    system     = get_system(module)
+    state = module.params['state']
+    system = get_system(module)
     filesystem = get_filesystem(module, system)
-    export     = get_export(module, filesystem, system)
+    export = get_export(module, filesystem, system)
 
     if filesystem is None:
         module.fail_json(msg='Filesystem {} not found'.format(module.params['filesystem']))

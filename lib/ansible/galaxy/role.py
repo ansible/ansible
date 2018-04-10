@@ -22,6 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import datetime
 import os
 import tarfile
@@ -70,17 +71,11 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
-            for role_path_dir in galaxy.roles_paths:
-                role_path = os.path.join(role_path_dir, self.name)
-                if os.path.exists(role_path):
-                    self.path = role_path
-                    break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
-                # create list of possible paths
-                self.paths = [x for x in galaxy.roles_paths]
-                self.paths = [os.path.join(x, self.name) for x in self.paths]
+            # use the first path by default
+            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            # create list of possible paths
+            self.paths = [x for x in galaxy.roles_paths]
+            self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __repr__(self):
         """
@@ -220,14 +215,9 @@ class GalaxyRole(object):
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
-                if role_data.get('role_type') == 'CON' and not os.environ.get('ANSIBLE_CONTAINER'):
-                    # Container Enabled, running outside of a container
-                    display.warning("%s is a Container Enabled role and should only be installed using "
-                                    "Ansible Container" % self.name)
-
                 if role_data.get('role_type') == 'APP':
                     # Container Role
-                    display.warning("%s is a Container App role and should only be installed using Ansible "
+                    display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
                 role_versions = api.fetch_role_related('versions', role_data['id'])
@@ -238,7 +228,14 @@ class GalaxyRole(object):
                     # of the master branch
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
-                        loose_versions.sort()
+                        try:
+                            loose_versions.sort()
+                        except TypeError:
+                            raise AnsibleError(
+                                'Unable to compare role versions (%s) to determine the most recent version due to incompatible version formats. '
+                                'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
+                                'install.' % ', '.join([v.vstring for v in loose_versions])
+                            )
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
@@ -330,11 +327,10 @@ class GalaxyRole(object):
                         installed = True
                     except OSError as e:
                         error = True
-                        if e[0] == 13 and len(self.paths) > 1:
+                        if e.errno == errno.EACCES and len(self.paths) > 1:
                             current = self.paths.index(self.path)
-                            nextidx = current + 1
-                            if len(self.paths) >= current:
-                                self.path = self.paths[nextidx]
+                            if len(self.paths) > current:
+                                self.path = self.paths[current + 1]
                                 error = False
                         if error:
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))

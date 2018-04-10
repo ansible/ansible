@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -41,7 +41,7 @@ options:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the aggregates parameter.
+      - Purge logging not defined in the I(aggregate) parameter.
     default: no
   state:
     description:
@@ -68,6 +68,28 @@ EXAMPLES = """
     name: 1.1.1.1
     facility: kernel
     level: critical
+
+- name: Configure file logging using aggregate
+  net_logging:
+    dest: file
+    aggregate:
+    - name: test-1
+      facility: pfe
+      level: critical
+    - name: test-2
+      facility: kernel
+      level: emergency
+- name: Delete file logging using aggregate
+  net_logging:
+    dest: file
+    aggregate:
+    - name: test-1
+      facility: pfe
+      level: critical
+    - name: test-2
+      facility: kernel
+      level: emergency
+    state: absent
 """
 
 RETURN = """

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -161,7 +161,7 @@ changed:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_INTFS = """
@@ -809,15 +809,15 @@ class Interface(object):
                     # delete interface
                     self.delete_interface(self.interface)
                 else:
-                    # interface does not exists
+                    # interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
 
             else:       # default
                 if not self.intf_info:
-                    # error, interface does not exists
+                    # error, interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
                 else:
                     self.default_interface(self.interface)
 

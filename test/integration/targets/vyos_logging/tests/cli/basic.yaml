@@ -1,11 +1,12 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: set-up logging
   vyos_logging:
     dest: console
     facility: all
     level: info
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -19,7 +20,6 @@
     facility: all
     level: info
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +33,6 @@
     facility: all
     level: notice
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -48,7 +47,6 @@
     facility: all
     level: notice
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -62,7 +60,6 @@
     facility: all
     level: notice
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -77,7 +74,6 @@
     facility: all
     level: notice
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -90,7 +86,6 @@
       - { dest: file, name: test1, facility: all, level: info }
       - { dest: file, name: test2, facility: news, level: debug }
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -106,7 +101,6 @@
       - { dest: file, name: test1, facility: all, level: info, state: absent }
       - { dest: console, facility: daemon, level: warning }
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -122,7 +116,6 @@
       - { dest: console, facility: daemon, level: warning }
       - { dest: file, name: test2, facility: news, level: debug }
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

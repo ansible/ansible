@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # Copyright (c) 2016 IBM
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -94,13 +86,8 @@ RETURN = '''
 #
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, assignment):
@@ -142,20 +129,17 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
+    role = module.params.get('role')
+    user = module.params.get('user')
+    group = module.params.get('group')
+    project = module.params.get('project')
+    domain = module.params.get('domain')
+    state = module.params.get('state')
+
     # role grant/revoke API introduced in 1.5.0
-    if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.5.0')):
-        module.fail_json(msg='shade 1.5.0 or higher is required for this module')
-
-    role = module.params.pop('role')
-    user = module.params.pop('user')
-    group = module.params.pop('group')
-    project = module.params.pop('project')
-    domain = module.params.pop('domain')
-    state = module.params.pop('state')
-
+    shade, cloud = openstack_cloud_from_module(
+        module, min_version='1.5.0')
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         filters = {}
 
         r = cloud.get_role(role)
@@ -205,16 +189,13 @@ def main():
             if assignment:
                 kwargs = _build_kwargs(user, group, project, domain)
                 cloud.revoke_role(role, **kwargs)
-                changed=True
+                changed = True
 
         module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

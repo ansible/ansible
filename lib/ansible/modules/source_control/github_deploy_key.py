@@ -7,11 +7,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'supported_by': 'community',
-    'status': ['preview']
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -84,6 +82,7 @@ options:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
     required: false
     default: null
+    aliases: ['2fa_token']
 requirements:
    - python-requests
 notes:

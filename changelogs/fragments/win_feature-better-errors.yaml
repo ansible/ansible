@@ -1,0 +1,2 @@
+bugfixes:
+- win_feature - will display a more helpful error when it fails during execution (https://github.com/ansible/ansible/pull/36491)

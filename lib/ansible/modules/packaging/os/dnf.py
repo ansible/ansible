@@ -4,23 +4,13 @@
 # Copyright 2015 Cristian van Ee <cristian at cvee.org>
 # Copyright 2015 Igor Gnatenko <i.gnatenko.brain@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -35,9 +25,9 @@ description:
 options:
   name:
     description:
-      - >
-        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file.
+      - "A list of package names, or package specifier with version, like C(name-1.0)
+        When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file."
     required: true
     default: null
     aliases: []
@@ -105,12 +95,12 @@ options:
     required: false
     choices: [ "yes", "no" ]
     version_added: "2.4"
-
-notes: ["autoremove requires dnf >= 2.0.1"]
-# informational: requirements for nodes
+notes:
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
   - "python >= 2.6"
   - python-dnf
+  - for the autoremove option you need dnf >= 2.0.1"
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
@@ -178,6 +168,7 @@ except ImportError:
     HAS_DNF = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
@@ -359,7 +350,7 @@ def ensure(module, base, state, names, autoremove):
         for group_spec in (g.strip() for g in group_specs):
             group = base.comps.group_by_pattern(group_spec)
             if group:
-                groups.append(group)
+                groups.append(group.id)
             else:
                 environment = base.comps.environment_by_pattern(group_spec)
                 if environment:
@@ -375,18 +366,18 @@ def ensure(module, base, state, names, autoremove):
             # Install groups.
             for group in groups:
                 try:
-                    base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
+                    base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
                     # In dnf 2.0 if all the mandatory packages in a group do
                     # not install, an error is raised.  We want to capture
                     # this but still install as much as possible.
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
                     base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             # Install packages.
             for pkg_spec in pkg_specs:
@@ -399,12 +390,12 @@ def ensure(module, base, state, names, autoremove):
             for group in groups:
                 try:
                     try:
-                        base.group_upgrade(group.id)
+                        base.group_upgrade(group)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
@@ -412,9 +403,9 @@ def ensure(module, base, state, names, autoremove):
                         base.environment_upgrade(environment)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.environment_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             for pkg_spec in pkg_specs:
                 # best effort causes to install the latest package
@@ -433,7 +424,7 @@ def ensure(module, base, state, names, autoremove):
 
             for group in groups:
                 try:
-                    base.group_remove(group.id)
+                    base.group_remove(group)
                 except dnf.exceptions.CompsError:
                     # Group is already uninstalled.
                     pass

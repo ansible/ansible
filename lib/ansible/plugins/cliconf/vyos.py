@@ -25,8 +25,8 @@ import json
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
-from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.module_utils.network.common.utils import to_list
+from ansible.plugins.cliconf import CliconfBase
 
 
 class Cliconf(CliconfBase):
@@ -51,25 +51,25 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self):
-        return self.send_command(b'show configuration all')
+    def get_config(self, source='running', format='text'):
+        return self.send_command(b'show configuration commands')
 
     def edit_config(self, command):
-        for cmd in chain([b'configure'], to_list(command)):
-            self.send_command(cmd)
+        for cmd in chain(['configure'], to_list(command)):
+            self.send_command(to_bytes(cmd))
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment {0}'.format(comment)
+            command = 'commit comment "{0}"'.format(comment)
         else:
-            command = b'commit'
-        self.send_command(command)
+            command = 'commit'
+        self.send_command(to_bytes(command))
 
     def discard_changes(self, *args, **kwargs):
-        self.send_command(b'discard')
+        self.send_command(b'exit discard')
 
     def get_capabilities(self):
         result = {}

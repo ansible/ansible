@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,122 +103,123 @@ EXAMPLES = '''
 '''
 
 import json
-import requests
-import urllib
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent'], type='str'),
-            name = dict(required=True, aliases=[ "src", "source" ], type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            vhost = dict(default='/', type='str'),
-            destination = dict(required=True, aliases=[ "dst", "dest"], type='str'),
-            destination_type = dict(required=True, aliases=[ "type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
-            routing_key = dict(default='#', type='str'),
-            arguments = dict(default=dict(), type='dict')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, aliases=["src", "source"], type='str'),
+            login_user=dict(default='guest', type='str'),
+            login_password=dict(default='guest', type='str', no_log=True),
+            login_host=dict(default='localhost', type='str'),
+            login_port=dict(default='15672', type='str'),
+            vhost=dict(default='/', type='str'),
+            destination=dict(required=True, aliases=["dst", "dest"], type='str'),
+            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"], type='str'),
+            routing_key=dict(default='#', type='str'),
+            arguments=dict(default=dict(), type='dict')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
+    result = dict(changed=False, name=module.params['name'])
+
     if module.params['destination_type'] == "queue":
-        dest_type="q"
+        dest_type = "q"
     else:
-        dest_type="e"
+        dest_type = "e"
 
     if module.params['routing_key'] == "":
         props = "~"
     else:
-        props = urllib.quote(module.params['routing_key'],'')
+        props = urllib_parse.quote(module.params['routing_key'], '')
 
-    url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
-        module.params['login_host'],
-        module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
-        urllib.quote(module.params['name'],''),
-        dest_type,
-        urllib.quote(module.params['destination'],''),
-        props
-    )
+    base_url = "http://%s:%s/api/bindings" % (module.params['login_host'], module.params['login_port'])
+
+    url = "%s/%s/e/%s/%s/%s/%s" % (base_url,
+                                   urllib_parse.quote(module.params['vhost'], ''),
+                                   urllib_parse.quote(module.params['name'], ''),
+                                   dest_type,
+                                   urllib_parse.quote(module.params['destination'], ''),
+                                   props
+                                   )
 
     # Check if exchange already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
 
-    if r.status_code==200:
+    if r.status_code == 200:
         binding_exists = True
         response = r.json()
-    elif r.status_code==404:
+    elif r.status_code == 404:
         binding_exists = False
         response = r.text
     else:
         module.fail_json(
-            msg = "Invalid response from RESTAPI when trying to check if exchange exists",
-            details = r.text
+            msg="Invalid response from RESTAPI when trying to check if exchange exists",
+            details=r.text
         )
 
-    if module.params['state']=='present':
+    if module.params['state'] == 'present':
         change_required = not binding_exists
     else:
         change_required = binding_exists
 
     # Exit if check_mode
     if module.check_mode:
-        module.exit_json(
-            changed= change_required,
-            name = module.params['name'],
-            details = response,
-            arguments = module.params['arguments']
-        )
+        result['changed'] = change_required
+        result['details'] = response
+        result['arguments'] = module.params['arguments']
+        module.exit_json(**result)
 
     # Do changes
     if change_required:
         if module.params['state'] == 'present':
-            url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s" % (
-                module.params['login_host'],
-                module.params['login_port'],
-                urllib.quote(module.params['vhost'],''),
-                urllib.quote(module.params['name'],''),
+            url = "%s/%s/e/%s/%s/%s" % (
+                base_url,
+                urllib_parse.quote(module.params['vhost'], ''),
+                urllib_parse.quote(module.params['name'], ''),
                 dest_type,
-                urllib.quote(module.params['destination'],'')
+                urllib_parse.quote(module.params['destination'], '')
             )
 
             r = requests.post(
                 url,
-                auth = (module.params['login_user'],module.params['login_password']),
-                headers = { "content-type": "application/json"},
-                data = json.dumps({
+                auth=(module.params['login_user'], module.params['login_password']),
+                headers={"content-type": "application/json"},
+                data=json.dumps({
                     "routing_key": module.params['routing_key'],
                     "arguments": module.params['arguments']
-                    })
+                })
             )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']))
 
         if r.status_code == 204 or r.status_code == 201:
-            module.exit_json(
-                changed = True,
-                name = module.params['name'],
-                destination = module.params['destination']
-            )
+            result['changed'] = True
+            result['destination'] = module.params['destination']
+            module.exit_json(**result)
         else:
             module.fail_json(
-                msg = "Error creating exchange",
-                status = r.status_code,
-                details = r.text
+                msg="Error creating exchange",
+                status=r.status_code,
+                details=r.text
             )
 
     else:
-        module.exit_json(
-            changed = False,
-            name = module.params['name']
-        )
-
+        result['changed'] = False
+        module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

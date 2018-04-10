@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -59,11 +59,6 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Create a file
-  win_file:
-    path: C:\Temp\foo.conf
-    state: file
-
 - name: Touch a file (creates if not present, updates modification time if present)
   win_file:
     path: C:\Temp\foo.conf

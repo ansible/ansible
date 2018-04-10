@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -246,7 +246,7 @@ class NetAppCDOTVolume(object):
         else:
             volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy', **{'name': self.name, 'unmount-and-offline':
-                    'true'})
+                                     'true'})
 
         try:
             self.server.invoke_successfully(volume_delete,

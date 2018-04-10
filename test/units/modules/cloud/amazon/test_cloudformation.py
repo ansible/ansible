@@ -18,7 +18,7 @@
 import pytest
 from mock import patch
 
-from . placebo_fixtures import placeboify, maybe_sleep
+from .placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import cloudformation as cfn_module
 
 basic_yaml_tpl = """
@@ -73,11 +73,28 @@ def test_invalid_template_json(placeboify):
     assert "ValidationError" in m.exit_kwargs['msg']
 
 
+def test_client_request_token_s3_stack(maybe_sleep, placeboify):
+    connection = placeboify.client('cloudformation')
+    params = {
+        'StackName': 'ansible-test-client-request-token-yaml',
+        'TemplateBody': basic_yaml_tpl,
+        'ClientRequestToken': '3faf3fb5-b289-41fc-b940-44151828f6cf',
+    }
+    m = FakeModule(disable_rollback=False)
+    result = cfn_module.create_stack(m, params, connection)
+    assert result['changed']
+    assert len(result['events']) > 1
+    # require that the final recorded stack state was CREATE_COMPLETE
+    # events are retrieved newest-first, so 0 is the latest
+    assert 'CREATE_COMPLETE' in result['events'][0]
+    connection.delete_stack(StackName='ansible-test-client-request-token-yaml')
+
+
 def test_basic_s3_stack(maybe_sleep, placeboify):
     connection = placeboify.client('cloudformation')
     params = {
         'StackName': 'ansible-test-basic-yaml',
-        'TemplateBody': basic_yaml_tpl,
+        'TemplateBody': basic_yaml_tpl
     }
     m = FakeModule(disable_rollback=False)
     result = cfn_module.create_stack(m, params, connection)
@@ -111,4 +128,4 @@ def test_missing_template_body(placeboify):
         )
     assert exc_info.match('FAIL')
     assert not m.exit_args
-    assert "Either 'template' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
+    assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']

@@ -124,10 +124,10 @@ def create_connection():
     # Create parser and add ovirt section if it doesn't exist:
     config = configparser.SafeConfigParser(
         defaults={
-            'ovirt_url': None,
-            'ovirt_username': None,
-            'ovirt_password': None,
-            'ovirt_ca_file': None,
+            'ovirt_url': os.environ.get('OVIRT_URL'),
+            'ovirt_username': os.environ.get('OVIRT_USERNAME'),
+            'ovirt_password': os.environ.get('OVIRT_PASSWORD'),
+            'ovirt_ca_file': os.environ.get('OVIRT_CAFILE'),
         }
     )
     if not config.has_section('ovirt'):

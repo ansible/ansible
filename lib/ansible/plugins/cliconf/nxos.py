@@ -23,7 +23,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
 
@@ -33,26 +33,42 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'nxos'
-        reply = self.get(b'show version | json')
+        reply = self.get('show version | json')
         data = json.loads(reply)
+        platform_reply = self.get('show inventory | json')
+        platform_info = json.loads(platform_reply)
 
-        device_info['network_os_version'] = data['sys_ver_str']
+        device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
         device_info['network_os_model'] = data['chassis_id']
         device_info['network_os_hostname'] = data['host_name']
-        device_info['network_os_image'] = data['isan_file_name']
+        device_info['network_os_image'] = data.get('isan_file_name') or data.get('kick_file_name')
+
+        inventory_table = platform_info['TABLE_inv']['ROW_inv']
+        for info in inventory_table:
+            if 'Chassis' in info['name']:
+                device_info['network_os_platform'] = info['productid']
 
         return device_info
 
-    def get_config(self, source='running'):
+    def get_config(self, source='running', format='text', flags=None):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
-        return self.send_command(b'show %s' % lookup[source])
+
+        cmd = 'show {} '.format(lookup[source])
+        if flags:
+            cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        return self.send_command(cmd)
 
     def edit_config(self, command):
-        for cmd in chain([b'configure'], to_list(command), [b'end']):
-            self.send_command(cmd)
+        responses = []
+        for cmd in chain(['configure'], to_list(command), ['end']):
+            responses.append(self.send_command(cmd))
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+        return json.dumps(responses)
+
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}

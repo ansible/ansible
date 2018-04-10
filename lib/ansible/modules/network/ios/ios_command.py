@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -35,6 +35,10 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
@@ -110,6 +114,12 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+  - name: run command that requires answering a prompt
+    ios_command:
+      commands:
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: 'Clear "show interface" counters on this interface [confirm]'
+          answer: c
 """
 
 RETURN = """
@@ -129,20 +139,23 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import re
 import time
 
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
+
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
+
 
 def parse_commands(module, warnings):
     command = ComplexList(dict(
@@ -151,18 +164,22 @@ def parse_commands(module, warnings):
         answer=dict()
     ), module)
     commands = command(module.params['commands'])
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'only show commands are supported when using check mode, not '
-                'executing `%s`' % item['command']
-            )
-        elif item['command'].startswith('conf'):
-            module.fail_json(
-                msg='ios_command does not support running config mode '
-                    'commands.  Please use ios_config instead'
-            )
+    for item in list(commands):
+        configure_type = re.match(r'conf(?:\w*)(?:\s+(\w+))?', item['command'])
+        if module.check_mode:
+            if configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
+                module.fail_json(
+                    msg='ios_command does not support running config mode '
+                        'commands.  Please use ios_config instead'
+                )
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'only show commands are supported when using check mode, not '
+                    'executing `%s`' % item['command']
+                )
+                commands.remove(item)
     return commands
+
 
 def main():
     """main entry point for module execution
@@ -214,9 +231,8 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result.update({
         'changed': False,

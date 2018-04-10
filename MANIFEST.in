@@ -11,11 +11,11 @@ recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
+recursive-include licenses *
 recursive-include packaging *
 recursive-include test *
 include Makefile
-include VERSION
 include MANIFEST.in
-include CHANGELOG.md
+include changelogs/*.rst
 include contrib/README.md
 recursive-include contrib/inventory *

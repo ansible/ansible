@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_evpn_vni - fixed a number of issues (https://github.com/ansible/ansible/pull/35930)

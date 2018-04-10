@@ -1,0 +1,21 @@
+- name: setup monitor
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: "{{ state }}"
+
+    monitorname: monitor-1
+    type: HTTP
+
+- name: setup monitor
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: "{{ state }}"
+
+    monitorname: monitor-2
+    type: HTTP

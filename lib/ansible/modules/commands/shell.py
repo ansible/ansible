@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -60,15 +60,23 @@ options:
     required: false
     default: True
     version_added: "1.8"
+  stdin:
+    version_added: "2.4"
+    description:
+      - Set the stdin of the command directly to the specified value.
+    required: false
+    default: null
 notes:
-   -  If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless the C(shell)
-      module is explicitly required. When running ad-hoc commands, use your best
-      judgement.
-   -  To sanitize any variables passed to the shell module, you should use
-      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
+  -  If you want to execute a command securely and predictably, it may be
+     better to use the M(command) module instead. Best practices when writing
+     playbooks will follow the trend of using M(command) unless the C(shell)
+     module is explicitly required. When running ad-hoc commands, use your best
+     judgement.
+  -  To sanitize any variables passed to the shell module, you should use
+     "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - For Windows targets, use the M(win_shell) module instead.
+  - Rather than using here documents to create multi-line scripts inside playbooks,
+    use the M(script) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team

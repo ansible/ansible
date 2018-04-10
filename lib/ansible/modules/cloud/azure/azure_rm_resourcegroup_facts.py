@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -52,7 +52,7 @@ EXAMPLES = '''
         name: Testing
 
     - name: Get facts for all resource groups
-      azure_rm_securitygroup_facts:
+      azure_rm_resourcegroup_facts:
 
     - name: Get facts by tags
       azure_rm_resourcegroup_facts:
@@ -81,7 +81,6 @@ azure_resourcegroups:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except:
     # This is handled in azure_rm_common
     pass
@@ -144,8 +143,8 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         self.log('List all items')
         try:
             response = self.rm_client.resource_groups.list()
-        except AzureHttpError as exc:
-            self.fail("Failed to list all items - {1}".format(str(exc)))
+        except CloudError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
 
         results = []
         for item in response:

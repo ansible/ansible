@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -44,6 +36,7 @@ options:
     version_added: "2.4"
     required: False
     default: null
+    aliases: ['users', 'collection']
   name:
     description:
       - The C(name) argument defines the username of the user to be created
@@ -65,7 +58,6 @@ options:
         remote system.  User accounts can have more than one role
         configured.
     required: false
-    default: read-only
     choices: ['operator', 'read-only', 'super-user', 'unauthorized']
   sshkey:
     description:
@@ -79,7 +71,7 @@ options:
       - The C(purge) argument instructs the module to consider the
         users definition absolute.  It will remove any previously configured
         users on the device with the exception of the current defined
-        set of users.
+        set of aggregate.
     required: false
     default: false
   state:
@@ -102,7 +94,8 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -120,8 +113,21 @@ EXAMPLES = """
 
 - name: remove all user accounts except ansible
   junos_user:
-    name: ansible
+    aggregate:
+    - name: ansible
     purge: yes
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: present}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: present}
+
+- name: Delete list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: absent}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: absent}
 """
 
 RETURN = """
@@ -138,10 +144,13 @@ diff.prepared:
 """
 from functools import partial
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import commit_configuration, discard_changes
-from ansible.module_utils.junos import load_config, locked_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
+from ansible.module_utils.network.junos.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
@@ -153,27 +162,48 @@ ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
 
 
-def map_obj_to_ele(want):
+def handle_purge(module, want):
+    want_users = [item['name'] for item in want]
     element = Element('system')
-    login = SubElement(element, 'login', {'replace': 'replace'})
+    login = SubElement(element, 'login')
+
+    conn = get_connection(module)
+    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    users = reply.xpath('configuration/system/login/user/name')
+    if users:
+        for item in users:
+            name = item.text
+            if name not in want_users and name != 'root':
+                user = SubElement(login, 'user', {'operation': 'delete'})
+                SubElement(user, 'name').text = name
+    if element.xpath('/system/login/user/name'):
+        return element
+
+
+def map_obj_to_ele(module, want):
+    element = Element('system')
+    login = SubElement(element, 'login')
 
     for item in want:
         if item['state'] != 'present':
+            if item['name'] == 'root':
+                module.fail_json(msg="cannot delete the 'root' account.")
             operation = 'delete'
         else:
-            operation = 'replace'
+            operation = 'merge'
 
         user = SubElement(login, 'user', {'operation': operation})
 
         SubElement(user, 'name').text = item['name']
 
-        if operation == 'replace':
+        if operation == 'merge':
             if item['active']:
                 user.set('active', 'active')
             else:
                 user.set('inactive', 'inactive')
 
-            SubElement(user, 'class').text = item['role']
+            if item['role']:
+                SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
                 SubElement(user, 'full-name').text = item['full_name']
@@ -251,42 +281,49 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', aliases=['collection', 'users']),
+    element_spec = dict(
         name=dict(),
-
         full_name=dict(),
-        role=dict(choices=ROLES, default='unauthorized'),
+        role=dict(choices=ROLES),
         sshkey=dict(),
-
-        purge=dict(type='bool'),
-
         state=dict(choices=['present', 'absent'], default='present'),
-        active=dict(default=True, type='bool')
+        active=dict(type='bool', default=True)
     )
 
-    mutually_exclusive = [('aggregate', 'name')]
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
+
+    mutually_exclusive = [['aggregate', 'name']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
-    ele = map_obj_to_ele(want)
+    ele = map_obj_to_ele(module, want)
 
-    kwargs = {}
+    purge_request = None
     if module.params['purge']:
-        kwargs['action'] = 'replace'
+        purge_request = handle_purge(module, want)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, **kwargs)
+        if purge_request:
+            load_config(module, tostring(purge_request), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

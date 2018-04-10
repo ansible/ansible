@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -47,6 +47,12 @@ options:
     description:
       - Name of the customer gateway.
     required: true
+  routing:
+    description:
+      - The type of routing.
+    choices: ['static', 'dynamic']
+    default: dynamic
+    version_added: '2.4'
   state:
     description:
       - Create or terminate the Customer Gateway.
@@ -129,7 +135,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
-        ec2_argument_spec, get_aws_connection_info)
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 class Ec2CustomerGatewayManager:
@@ -153,6 +159,8 @@ class Ec2CustomerGatewayManager:
         return response
 
     def ensure_cgw_present(self, bgp_asn, ip_address):
+        if not bgp_asn:
+            bgp_asn = 65000
         response = self.ec2.create_customer_gateway(
             DryRun=False,
             Type='ipsec.1',
@@ -204,6 +212,7 @@ def main():
             bgp_asn=dict(required=False, type='int'),
             ip_address=dict(required=True),
             name=dict(required=True),
+            routing=dict(default='dynamic', choices=['dynamic', 'static']),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
@@ -211,7 +220,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            required_if=[
-                               ('state', 'present', ['bgp_asn'])
+                               ('routing', 'dynamic', ['bgp_asn'])
                            ]
                            )
 

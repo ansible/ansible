@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -82,10 +82,13 @@ EXAMPLES = '''
     tags:
       ha-mode: all
 '''
+
+import json
 from ansible.module_utils.basic import AnsibleModule
 
 
 class RabbitMqPolicy(object):
+
     def __init__(self, module, name):
         self._module = module
         self._name = name
@@ -110,20 +113,21 @@ class RabbitMqPolicy(object):
         policies = self._exec(['list_policies'], True)
 
         for policy in policies:
+            if not policy:
+                continue
             policy_name = policy.split('\t')[1]
             if policy_name == self._name:
                 return True
         return False
 
     def set(self):
-        import json
         args = ['set_policy']
         args.append(self._name)
         args.append(self._pattern)
         args.append(json.dumps(self._tags))
         args.append('--priority')
         args.append(self._priority)
-        if (self._apply_to != 'all'):
+        if self._apply_to != 'all':
             args.append('--apply-to')
             args.append(self._apply_to)
         return self._exec(args)
@@ -153,19 +157,18 @@ def main():
     state = module.params['state']
     rabbitmq_policy = RabbitMqPolicy(module, name)
 
-    changed = False
+    result = dict(changed=False, name=name, state=state)
     if rabbitmq_policy.list():
         if state == 'absent':
             rabbitmq_policy.clear()
-            changed = True
+            result['changed'] = True
         else:
-            changed = False
+            result['changed'] = False
     elif state == 'present':
         rabbitmq_policy.set()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, name=name, state=state)
-
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

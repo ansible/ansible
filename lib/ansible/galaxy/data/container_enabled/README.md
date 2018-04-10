@@ -23,7 +23,7 @@ $ ansible-container install <USERNAME.ROLE_NAME>
     $ cd myproject
 
     # Initialize the project
-    $ ansible-contiainer init
+    $ ansible-container init
     ```
 
 - Continue listing any prerequisites here...

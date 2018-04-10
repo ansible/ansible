@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -86,8 +86,11 @@ options:
     default: 1
 
 notes:
+  - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 """
 
 EXAMPLES = """
@@ -107,6 +110,13 @@ tasks:
         - show hardware cpu
       wait_for:
         - "result[0] contains 'VyOS 1.1.7'"
+
+  - name: run command that requires answering a prompt
+    vyos_command:
+      commands:
+        - command: 'rollback 1'
+          prompt: 'Proceed with reboot? [confirm][y]'
+          answer: y
 """
 
 RETURN = """
@@ -134,12 +144,13 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils._text import to_native
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
-from ansible.module_utils.vyos import run_commands
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.network.vyos.vyos import run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
+
 
 def to_lines(stdout):
     for item in stdout:
@@ -155,14 +166,16 @@ def parse_commands(module, warnings):
         answer=dict(),
     ), module)
     commands = command(module.params['commands'])
+    items = []
 
-    for index, cmd in enumerate(commands):
-        if module.check_mode and not cmd['command'].startswith('show'):
+    for item in commands:
+        if module.check_mode and not item['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        commands[index] = module.jsonify(cmd)
+                            'check mode, not executing `%s`' % item['command'])
+        else:
+            items.append(module.jsonify(item))
 
-    return commands
+    return items
 
 
 def main():
@@ -181,16 +194,14 @@ def main():
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']

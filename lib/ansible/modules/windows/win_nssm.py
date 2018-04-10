@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -87,17 +87,21 @@ options:
       - Password to be used for service startup
   start_mode:
     description:
-      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it.
-        C(disabled) means that the service will stay off, regardless if it is needed or not.
+      - If C(auto) is selected, the service will start at bootup.
+      - C(delayed) causes a delayed but automatic start after boot (added in version 2.5).
+      - C(manual) means that the service will start only when another service needs it.
+      - C(disabled) means that the service will stay off, regardless if it is needed or not.
     default: auto
     choices:
       - auto
+      - delayed
       - manual
       - disabled
 author:
   - "Adam Keech (@smadam813)"
   - "George Frank (@georgefrank)"
   - "Hans-Joachim Kliemeck (@h0nIg)"
+  - "Michael Wild (@themiwi)"
 '''
 
 EXAMPLES = r'''

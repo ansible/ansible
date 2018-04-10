@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = '''
 ---
@@ -57,8 +47,8 @@ options:
          to ProxySQL (thus a "frontend" user), transactions started within a
          hostgroup will remain within that hostgroup regardless of any other
          rules.
-         If omitted the proxysql database default for I(transaction_persistent) is
-         C(False).
+         If omitted the proxysql database default for I(transaction_persistent)
+         is C(False).
   fast_forward:
     description:
       - If I(fast_forward) is set to C(True), I(fast_forward) will bypass the
@@ -85,36 +75,9 @@ options:
       - When C(present) - adds the user, when C(absent) - removes the user.
     choices: [ "present", "absent" ]
     default: present
-  save_to_disk:
-    description:
-      - Save mysql host config to sqlite db on disk to persist the
-        configuration.
-    default: True
-  load_to_runtime:
-    description:
-      - Dynamically load mysql host config to runtime memory.
-    default: True
-  login_user:
-    description:
-      - The username used to authenticate to ProxySQL admin interface.
-    default: None
-  login_password:
-    description:
-      - The password used to authenticate to ProxySQL admin interface.
-    default: None
-  login_host:
-    description:
-      - The host used to connect to ProxySQL admin interface.
-    default: '127.0.0.1'
-  login_port:
-    description:
-      - The port used to connect to ProxySQL admin interface.
-    default: 6032
-  config_file:
-    description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
-    default: ''
+extends_documentation_fragment:
+  - proxysql.managing_config
+  - proxysql.connectivity
 '''
 
 EXAMPLES = '''
@@ -168,15 +131,15 @@ stdout:
         username: guest_ro
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 try:
     import MySQLdb
@@ -462,10 +425,9 @@ def main():
                                login_password,
                                config_file,
                                cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error:
-        e = get_exception()
+    except MySQLdb.Error as e:
         module.fail_json(
-            msg="unable to connect to ProxySQL Admin Module.. %s" % e
+            msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
 
     proxysql_user = ProxySQLUser(module)
@@ -492,10 +454,9 @@ def main():
                                  " and doesn't need to be updated.")
                 result['user'] = \
                     proxysql_user.get_user_config(cursor)
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to modify user.. %s" % e
+                msg="unable to modify user.. %s" % to_native(e)
             )
 
     elif proxysql_user.state == "absent":
@@ -508,10 +469,9 @@ def main():
                 result['changed'] = False
                 result['msg'] = ("The user is already absent from the" +
                                  " mysql_users memory configuration")
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to remove user.. %s" % e
+                msg="unable to remove user.. %s" % to_native(e)
             )
 
     module.exit_json(**result)

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -34,7 +34,6 @@ from ansible.template import Templar
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    _name = FieldAttribute(isa='string')
     _import_playbook = FieldAttribute(isa='string')
     _vars = FieldAttribute(isa='dict', default=dict())
 
@@ -105,7 +104,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
         up with what we expect the proper attributes to be
         '''
 
-        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(ds))
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure

@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -331,7 +331,7 @@ class NetAppCDOTLUN(object):
                 property_changed = True
 
             elif self.state == 'present':
-                if not current_size == self.size:
+                if not int(current_size) == self.size:
                     size_changed = True
                     property_changed = True
 

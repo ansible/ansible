@@ -48,7 +48,9 @@ class FakeModule(object):
             else:
                 return alt
 
-    def __init__(self, data={}):
+    def __init__(self, data=None):
+        data = {} if data is None else data
+
         self.params = FakeModule.Params()
         self.params.data = data
 

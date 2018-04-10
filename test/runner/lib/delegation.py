@@ -102,10 +102,10 @@ def delegate_tox(args, exclude, require):
     :type require: list[str]
     """
     if args.python:
-        versions = args.python,
+        versions = args.python_version,
 
-        if args.python not in SUPPORTED_PYTHON_VERSIONS:
-            raise ApplicationError('tox does not support Python version %s' % args.python)
+        if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
+            raise ApplicationError('tox does not support Python version %s' % args.python_version)
     else:
         versions = SUPPORTED_PYTHON_VERSIONS
 
@@ -189,7 +189,12 @@ def delegate_docker(args, exclude, require):
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
             if not args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+                if args.docker_keep_git:
+                    tar_filter = lib.pytar.AllowGitTarFilter()
+                else:
+                    tar_filter = lib.pytar.DefaultTarFilter()
+
+                lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
 
             if util_image:
                 util_options = [
@@ -275,7 +280,7 @@ def delegate_remote(args, exclude, require):
     platform = parts[0]
     version = parts[1]
 
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     success = False
 
     try:

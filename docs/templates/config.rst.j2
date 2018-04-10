@@ -1,0 +1,109 @@
+{% set name = 'Ansible Configuration Settings' -%}
+{% set name_slug = 'config' -%}
+
+{% set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
+
+Ansible supports a few ways of providing configuration variables, mainly through environment variables, command line switches and an ini file named ``ansible.cfg``.
+
+Starting at Ansible 2.4 the ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
+where their current value comes from. See :doc:ansible-config for more information.
+
+
+The configuration file
+======================
+
+Changes can be made and used in a configuration file which will be searched for in the following order:
+
+ * ``ANSIBLE_CONFIG`` (environment variable if set)
+ * ``ansible.cfg`` (in the current directory)
+ * ``~/.ansible.cfg`` (in the home directory)
+ * ``/etc/ansible/ansible.cfg``
+
+Ansible will process the above list and use the first file found, all others are ignored.
+
+.. note::
+
+   The configuration file is one variant of an INI format.
+   Both the hash sign (``#``) and semicolon (``;``) are allowed as
+   comment markers when the comment starts the line.
+   However, if the comment is inline with regular values,
+   only the semicolon is allowed to introduce the comment.
+   For instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
+
+Common Options
+==============
+
+This is a copy of the options available from our release, your local install might have extra options due to additional plugins,
+you can use the command line utility mentioned above (`ansible-config`) to browse through those.
+
+{% if config_options %}
+
+
+{% for config_option in config_options|sort %}
+{% set config_len = config_option|length -%}
+{% set config = config_options[config_option] %}
+.. _{{config_option}}:
+
+{{config_option}}
+{{ '-' * config_len }}
+
+{% if config['description'] and config['description'] != [''] %}
+{% if config['description'] != ['TODO: write it'] %}
+:Description: {{' '.join(config['description'])}}
+{% endif %}
+{% endif %}
+{% if config['type'] %}
+:Type: {{config['type']}}
+{% endif %}
+:Default: {{config['default']}}
+{% if config['version_added'] %}
+:Version Added: {{config['version_added']}}
+{% endif %}
+{% for ini_map in config['ini']|sort(attribute='section') %}
+:Ini Section: {{ini_map['section']}}
+:Ini Key: {{ini_map['key']}}
+{% endfor %}
+{% for env_var_map in config['env']|sort(attribute='name') %}
+:Environment: :envvar:`{{env_var_map['name']}}`
+{% endfor %}
+{% if config['deprecated'] %}
+:Deprecated in: {{config['deprecated']['version']}}
+:Deprecated detail: {{config['deprecated']['why']}}
+:Deprecated alternatives: {{config['deprecated']['alternatives']}}
+{% endif %}
+
+{% endfor %}
+
+Environment Variables
+=====================
+
+.. envvar:: ANSIBLE_CONFIG
+
+
+    Override the default ansible config file
+
+
+{% for config_option in config_options %}
+{% for env_var_map in config_options[config_option]['env'] %}
+.. envvar:: {{env_var_map['name']}}
+
+{% if config_options[config_option]['description']  and config_options[config_option]['description'] != [''] %}
+{% if config_options[config_option]['description'] != ['TODO: write it'] %}
+    {{ ''.join(config_options[config_option]['description']) }}
+{% endif %}
+{% endif %}
+
+    See also :ref:`{{config_option}} <{{config_option}}>`
+
+{% endfor %}
+
+{% endfor %}
+
+{% endif %}

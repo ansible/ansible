@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -55,17 +55,17 @@ options:
 '''
 
 EXAMPLES = '''
-name: Allow forwarding of IPv4 packets on network interface e1000g0
-ipadm_ifprop: protocol=ipv4 property=forwarding value=on interface=e1000g0
+- name: Allow forwarding of IPv4 packets on network interface e1000g0
+  ipadm_ifprop: protocol=ipv4 property=forwarding value=on interface=e1000g0
 
-name: Temporarily reset IPv4 forwarding property on network interface e1000g0
-ipadm_ifprop: protocol=ipv4 interface=e1000g0  temporary=true property=forwarding state=reset
+- name: Temporarily reset IPv4 forwarding property on network interface e1000g0
+  ipadm_ifprop: protocol=ipv4 interface=e1000g0  temporary=true property=forwarding state=reset
 
-name: Configure IPv6 metric on network interface e1000g0
-ipadm_ifprop: protocol=ipv6 nic=e1000g0 name=metric value=100
+- name: Configure IPv6 metric on network interface e1000g0
+  ipadm_ifprop: protocol=ipv6 nic=e1000g0 name=metric value=100
 
-name: Set IPv6 MTU on network interface bge0
-ipadm_ifprop: interface=bge0 name=mtu value=1280 protocol=ipv6
+- name: Set IPv6 MTU on network interface bge0
+  ipadm_ifprop: interface=bge0 name=mtu value=1280 protocol=ipv6
 '''
 
 RETURN = '''

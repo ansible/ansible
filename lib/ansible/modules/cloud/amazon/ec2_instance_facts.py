@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -28,6 +20,7 @@ version_added: "2.4"
 author:
   - Michael Schuett, @michaeljs1990
   - Rob White, @wimnat
+requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
     description:
@@ -473,17 +466,18 @@ instances:
 '''
 
 import traceback
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
                                       boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
 
 
 def list_ec2_instances(connection, module):
@@ -507,8 +501,7 @@ def list_ec2_instances(connection, module):
 
     # Turn the boto3 result in to ansible friendly tag dictionary
     for instance in snaked_instances:
-        if 'tags' in instance:
-            instance['tags'] = boto3_tag_list_to_ansible_dict(instance['tags'])
+        instance['tags'] = boto3_tag_list_to_ansible_dict(instance.get('tags', []), 'key', 'value')
 
     module.exit_json(instances=snaked_instances)
 

@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -36,7 +36,7 @@ options:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the aggregates parameter.
+      - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

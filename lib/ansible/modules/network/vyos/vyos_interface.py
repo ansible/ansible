@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ short_description: Manage Interface on VyOS network devices
 description:
   - This module provides declarative management of Interfaces
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
@@ -55,25 +57,33 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
-  tx_rate:
+  delay:
     description:
-      - Transmit rate.
-  rx_rate:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down) and I(neighbors).
+    default: 10
+  neighbors:
     description:
-      - Receiver rate.
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
+    version_added: 2.5
   aggregate:
     description: List of Interfaces definitions.
-  purge:
-    description:
-      - Purge Interfaces not defined in the aggregate parameter.
-        This applies only for logical interface.
-    default: no
   state:
     description:
       - State of the Interface configuration, C(up) means present and
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -90,12 +100,12 @@ EXAMPLES = """
 - name: make interface down
   vyos_interface:
     name: eth0
-    state: down
+    enabled: False
 
 - name: make interface up
   vyos_interface:
     name: eth0
-    state: up
+    enabled: True
 
 - name: Configure interface speed, mtu, duplex
   vyos_interface:
@@ -104,6 +114,39 @@ EXAMPLES = """
     speed: 100
     mtu: 256
     duplex: full
+
+- name: Set interface using aggregate
+  vyos_interface:
+    aggregate:
+      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
+      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
+
+- name: Disable interface on aggregate
+  net_interface:
+    aggregate:
+      - name: eth1
+      - name: eth2
+    enabled: False
+
+- name: Delete interface using aggregate
+  net_interface:
+    aggregate:
+      - name: eth1
+      - name: eth2
+    state: absent
+
+- name: Check lldp neighbors intent arguments
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: eth0
+      host: netdev
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down
 """
 
 RETURN = """
@@ -119,11 +162,15 @@ commands:
 """
 import re
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vyos import load_config, get_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from copy import deepcopy
+from time import sleep
 
-DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.vyos.vyos import load_config, get_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -194,7 +241,6 @@ def map_config_to_obj(module):
 
                 match = re.search(r'%s (\S+)' % name, line, re.M)
                 if match:
-
                     param = match.group(1)
                     if param == 'description':
                         match = re.search(r'description (\S+)', line, re.M)
@@ -220,31 +266,18 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    params = ['speed', 'description', 'duplex', 'mtu']
     aggregate = module.params.get('aggregate')
-
     if aggregate:
-        for c in aggregate:
-            d = c.copy()
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            for item in params:
-                if item not in d:
-                    d[item] = None
-
-            d['description'] = DEFAULT_DESCRIPTION
-            if not d.get('state'):
-                d['state'] = module.params['state']
-
-            if d['state'] in ('present', 'up'):
+            d = item.copy()
+            if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
-
-            if d.get('speed'):
-                d['speed'] = str(d['speed'])
 
             obj.append(d)
     else:
@@ -254,11 +287,12 @@ def map_params_to_obj(module):
             'speed': module.params['speed'],
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
-            'state': module.params['state']
+            'delay': module.params['delay'],
+            'state': module.params['state'],
+            'neighbors': module.params['neighbors']
         }
 
-        state = module.params['state']
-        if state == 'present' or state == 'up':
+        if module.params['enabled']:
             params.update({'disable': False})
         else:
             params.update({'disable': True})
@@ -267,23 +301,93 @@ def map_params_to_obj(module):
     return obj
 
 
+def check_declarative_intent_params(module, want, result):
+    failed_conditions = []
+    have_neighbors = None
+    for w in want:
+        want_state = w.get('state')
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_neighbors:
+            continue
+
+        if result['changed']:
+            sleep(w['delay'])
+
+        command = 'show interfaces ethernet %s' % w['name']
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+        if want_state in ('up', 'down'):
+            match = re.search(r'%s (\w+)' % 'state', out, re.M)
+            have_state = None
+            if match:
+                have_state = match.group(1)
+            if have_state is None or not conditional(want_state, have_state.strip().lower()):
+                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+
+        if want_neighbors:
+            have_host = []
+            have_port = []
+            if have_neighbors is None:
+                rc, have_neighbors, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors:
+                lines = have_neighbors.strip().split('Interface: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].split(',')[0].strip() == w['name']:
+                        for item in field:
+                            if item.strip().startswith('SysName:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.strip().startswith('PortDescr:'):
+                                have_port.append(item.split(':')[1].strip())
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
+
+    return failed_conditions
+
+
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
+    element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
-        tx_rate=dict(),
-        rx_rate=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
+        enabled=dict(default=True, type='bool'),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
+        delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
@@ -297,7 +401,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 
@@ -318,6 +421,11 @@ def main():
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
+    failed_conditions = check_declarative_intent_params(module, want, result)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
     module.exit_json(**result)
 
 if __name__ == '__main__':

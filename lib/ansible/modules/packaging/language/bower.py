@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -217,12 +217,12 @@ def main():
     changed = False
     if state == 'present':
         installed, missing, outdated = bower.list()
-        if len(missing):
+        if missing:
             changed = True
             bower.install()
     elif state == 'latest':
         installed, missing, outdated = bower.list()
-        if len(missing) or len(outdated):
+        if missing or outdated:
             changed = True
             bower.update()
     else:  # Absent

@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -123,24 +123,22 @@ def main():
     tracing = module.params['tracing']
     state = module.params['state']
     node = module.params['node']
-
+    result = dict(changed=False, name=name, state=state)
     rabbitmq_vhost = RabbitMqVhost(module, name, tracing, node)
 
-    changed = False
     if rabbitmq_vhost.get():
         if state == 'absent':
             rabbitmq_vhost.delete()
-            changed = True
+            result['changed'] = True
         else:
             if rabbitmq_vhost.set_tracing():
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_vhost.add()
         rabbitmq_vhost.set_tracing()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, name=name, state=state)
-
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

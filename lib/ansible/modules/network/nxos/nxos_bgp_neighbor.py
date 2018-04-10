@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
   - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP neighbor configuration.
   - Default, where supported, restores params default value.
 options:
@@ -108,7 +107,8 @@ options:
     description:
       - Specify Maximum number of peers for this neighbor prefix
         Valid values are between 1 and 1000, or 'default', which does
-        not impose the limit.
+        not impose the limit. Note that this parameter is accepted
+        only on neighbors with address/prefix.
     required: false
     default: null
   pwd:
@@ -119,9 +119,9 @@ options:
   pwd_type:
     description:
       - Specify the encryption type the password will use. Valid values
-        are '3des' or 'cisco_type_7' encryption.
+        are '3des' or 'cisco_type_7' encryption or keyword 'default'.
     required: false
-    choices: ['3des', 'cisco_type_7']
+    choices: ['3des', 'cisco_type_7', 'default']
     default: null
   remote_as:
     description:
@@ -171,8 +171,6 @@ options:
         Valid values are 'true', 'false', and 'default', which defaults
         to 'false'. This property can only be configured when the
         neighbor is in 'ip' address format without prefix length.
-        This property and the transport_passive_mode property are
-        mutually exclusive.
     required: false
     choices: ['true','false']
     default: null
@@ -198,7 +196,6 @@ EXAMPLES = '''
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
-    shutdown: default
     state: present
 '''
 
@@ -214,10 +211,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -227,7 +224,7 @@ BOOL_PARAMS = [
     'dynamic_capability',
     'low_memory_exempt',
     'suppress_4_byte_as',
-    'transport_passive_only'
+    'transport_passive_only',
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -263,36 +260,36 @@ PARAM_TO_DEFAULT_KEYMAP = {
 
 def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
-    has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}$'.format(command), config, re.M)
+    has_command_val = re.search(r'(?:\s+{0}\s*)(?P<value>.*)$'.format(command), config, re.M)
 
-    if arg in BOOL_PARAMS:
-        value = False
-        try:
-            if has_command:
-                value = True
-        except TypeError:
+    if arg == 'dynamic_capability':
+        has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
+        value = True
+        if has_no_command:
             value = False
+    elif arg in BOOL_PARAMS:
+        value = False
+        if has_command:
+            value = True
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
-            if has_command_value:
-                value = 'disable'
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = 'disable'
 
     elif arg == 'remove_private_as':
         value = 'disable'
         if has_command:
-            if has_command_value:
-                value = has_command_value.group('value')
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = has_command_val.group('value')
     else:
         value = ''
 
-        if has_command_value:
-            value = has_command_value.group('value')
+        if has_command_val:
+            value = has_command_val.group('value')
 
             if command in ['timers', 'password']:
                 split_value = value.split()
@@ -310,7 +307,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -389,12 +386,14 @@ def state_present(module, existing, proposed, candidate):
                 else:
                     command = '{0} {1}'.format(key, value)
                     commands.append(command)
-            elif key.startswith('timers'):
-                command = 'timers {0} {1}'.format(
-                    proposed_commands['timers-keepalive'],
-                    proposed_commands['timers-holdtime'])
-                if command not in commands:
-                    commands.append(command)
+            elif key == 'timers':
+                if (proposed['timers_keepalive'] != PARAM_TO_DEFAULT_KEYMAP.get('timers_keepalive') or
+                        proposed['timers_holdtime'] != PARAM_TO_DEFAULT_KEYMAP.get('timers_holdtime')):
+                    command = 'timers {0} {1}'.format(
+                        proposed['timers_keepalive'],
+                        proposed['timers_holdtime'])
+                    if command not in commands:
+                        commands.append(command)
             else:
                 command = '{0} {1}'.format(key, value)
                 commands.append(command)
@@ -439,23 +438,22 @@ def main():
         low_memory_exempt=dict(required=False, type='bool'),
         maximum_peers=dict(required=False, type='str'),
         pwd=dict(required=False, type='str'),
-        pwd_type=dict(required=False, type='str', choices=['cleartext', '3des', 'cisco_type_7', 'default']),
+        pwd_type=dict(required=False, type='str', choices=['3des', 'cisco_type_7', 'default']),
         remote_as=dict(required=False, type='str'),
         remove_private_as=dict(required=False, type='str', choices=['enable', 'disable', 'all', 'replace-as']),
-        shutdown=dict(required=False, type='str'),
+        shutdown=dict(required=False, type='bool'),
         suppress_4_byte_as=dict(required=False, type='bool'),
         timers_keepalive=dict(required=False, type='str'),
         timers_holdtime=dict(required=False, type='str'),
         transport_passive_only=dict(required=False, type='bool'),
         update_source=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=[['timers_holdtime', 'timers_keepalive']],
+        required_together=[['timers_holdtime', 'timers_keepalive'], ['pwd', 'pwd_type']],
         supports_check_mode=True,
     )
 

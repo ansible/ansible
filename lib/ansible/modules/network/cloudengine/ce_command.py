@@ -17,7 +17,7 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -97,8 +97,6 @@ EXAMPLES = """
       transport: cli
 
   tasks:
-
-  tasks:
   - name: "Run display version on remote devices"
     ce_command:
       commands: display version
@@ -153,10 +151,10 @@ import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, check_args
-from ansible.module_utils.ce import run_commands
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, check_args
+from ansible.module_utils.network.cloudengine.ce import run_commands
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -250,7 +248,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

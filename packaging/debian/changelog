@@ -4,6 +4,145 @@ ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
  -- Ansible, Inc. <info@ansible.com>  %DATE%
 
+
+ansible (2.5.0-1) unstable; urgency=low
+
+  * 2.5.0-1
+
+ -- Ansible, Inc. <info@ansible.com>  Thu, 22 Mar 2018 17:20:50 -0700
+
+
+ansible (2.4.3.0) unstable; urgency=low
+
+  * 2.4.3.0
+
+ -- Ansible, Inc. <info@ansible.com>  Wed, 31 Jan 2018 13:28:06 -0800
+
+
+ansible (2.4.2.0) unstable; urgency=low
+
+  * 2.4.2.0
+
+ -- Ansible, Inc. <info@ansible.com>  Wed, 29 Nov 2017 12:18:55 -0800
+
+
+ansible (2.4.1.0) unstable; urgency=low
+
+  * 2.4.1.0
+
+ -- Ansible, Inc. <info@ansible.com>  Wed, 25 Oct 2017 13:33:17 -0700
+
+
+ansible (2.4.0.0) unstable; urgency=low
+
+  * 2.4.0.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 18 Sep 2017 18:22:15 -0700
+
+
+ansible (2.3.3.0) unstable; urgency=low
+
+  * 2.3.3.0
+
+ -- Ansible, Inc. <info@ansible.com>  Wed, 20 Dec 2017 11:49:40 -0600
+
+
+ansible (2.3.2.0) unstable; urgency=low
+
+  * 2.3.2.0
+
+ -- Ansible, Inc. <info@ansible.com>  Fri, 04 Aug 2017 15:24:07 -0500
+
+
+ansible (2.3.1.0) unstable; urgency=low
+
+  * 2.3.1.0
+
+ -- Ansible, Inc. <info@ansible.com>  Thu, 01 Jun 2017 10:57:36 -0500
+
+
+ansible (2.3.0.0) unstable; urgency=low
+
+  * 2.3.0.0
+
+ -- Ansible, Inc. <info@ansible.com>  Wed, 12 Apr 2017 08:56:32 -0500
+
+ansible (2.2.3.0) unstable; urgency=low
+
+  * 2.2.3.0
+
+ -- Ansible, Inc. <info@ansible.com>  Tue, 09 May 2017 09:50:18 -0500
+
+
+ansible (2.2.2.0) unstable; urgency=low
+
+  * 2.2.2.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 27 Mar 2017 14:04:32 -0500
+
+
+ansible (2.2.1.0) unstable; urgency=low
+
+  * 2.2.1.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 16 Jan 2017 10:13:29 -0600
+
+
+ansible (2.2.0.0) unstable; urgency=low
+
+  * 2.2.0.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 31 Oct 2016 22:20:37 -0500
+
+ansible (2.1.6.0) unstable; urgency=low
+
+  * 2.1.6.0
+
+ -- Ansible, Inc. <info@ansible.com>  Thu, 01 Jun 2017 13:24:21 -0500
+
+
+ansible (2.1.5.0) unstable; urgency=low
+
+  * 2.1.5.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 27 Mar 2017 13:46:02 -0500
+
+
+ansible (2.1.4.0) unstable; urgency=low
+
+  * 2.1.4.0
+
+ -- Ansible, Inc. <info@ansible.com>  Mon, 16 Jan 2017 10:19:57 -0600
+
+
+ansible (2.1.3.0) unstable; urgency=low
+
+  * 2.1.3.0
+
+ -- Ansible, Inc. <info@ansible.com>  Fri, 04 Nov 2016 11:51:43 -0500
+
+
+ansible (2.1.2.0) unstable; urgency=low
+
+  * 2.1.2.0
+
+ -- Ansible, Inc. <support@ansible.com>  Thu, 29 Sep 2016 10:01:34 -0500
+
+
+ansible (2.1.1.0) unstable; urgency=low
+
+  * 2.1.1.0
+
+ -- Ansible, Inc. <support@ansible.com>  Thu, 28 Jul 2016 10:32:32 -0700
+
+
+ansible (2.0.2.0) unstable; urgency=low
+
+  * 2.0.2.0
+
+ -- Ansible, Inc. <support@ansible.com>  Tue, 19 Apr 2016 17:24:22 -0400
+
+
 ansible (2.0.1.0) unstable; urgency=low
 
   * 2.0.1.0

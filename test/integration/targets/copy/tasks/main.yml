@@ -1,7 +1,7 @@
 - block:
 
     - name: Create a local temporary directory
-      shell: mktemp -d "${TMPDIR:-/tmp}/ansible_test.XXXXXXXXX"
+      shell: mktemp -d /tmp/ansible_test.XXXXXXXXX
       register: tempfile_result
       connection: local
 
@@ -10,7 +10,16 @@
         # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
 
-    - name: create remote unprivileged remote user
+    - file: path={{local_temp_dir}} state=directory
+      name: ensure temp dir exists
+
+    # file cannot do this properly, use command instead
+    - name: Create ciruclar symbolic link
+      command: ln -s ../ circles
+      args:
+        chdir: '{{role_path}}/files/subdir/subdir1'
+
+    - name: Create remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
       register: user
@@ -21,7 +30,7 @@
         state: directory
         mode: 0700
 
-    - name: 'duplicate authorized_keys'
+    - name: Duplicate authorized_keys
       copy:
         src: $HOME/.ssh/authorized_keys
         dest: '{{ user.home }}/.ssh/authorized_keys'
@@ -46,7 +55,13 @@
         state: absent
       connection: local
 
-    - name: remote unprivileged remote user
+    - name: Remove circular symbolic link
+      file:
+        path: subdir/subdir1/circles
+        state: absent
+      connection: local
+
+    - name: Remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
         state: absent

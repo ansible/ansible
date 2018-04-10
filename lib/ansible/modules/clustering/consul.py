@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -228,6 +228,16 @@ EXAMPLES = '''
 try:
     import consul
     from requests.exceptions import ConnectionError
+
+    class PatchedConsulAgentService(consul.Consul.Agent.Service):
+        def deregister(self, service_id, token=None):
+            params = {}
+            if token:
+                params['token'] = token
+            return self.agent.http.put(consul.base.CB.bool(),
+                                       '/v1/agent/service/deregister/%s' % service_id,
+                                       params=params)
+
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
@@ -306,7 +316,7 @@ def remove_check(module, check_id):
 
 
 def add_service(module, service):
-    ''' registers a service with the the current agent '''
+    ''' registers a service with the current agent '''
     result = service
     changed = False
 
@@ -337,18 +347,20 @@ def remove_service(module, service_id):
     consul_api = get_consul_api(module)
     service = get_service_by_id_or_name(consul_api, service_id)
     if service:
-        consul_api.agent.service.deregister(service_id)
+        consul_api.agent.service.deregister(service_id, token=module.params.get('token'))
         module.exit_json(changed=True, id=service_id)
 
     module.exit_json(changed=False, id=service_id)
 
 
 def get_consul_api(module, token=None):
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=module.params.get('token'))
+    consulClient = consul.Consul(host=module.params.get('host'),
+                                 port=module.params.get('port'),
+                                 scheme=module.params.get('scheme'),
+                                 verify=module.params.get('validate_certs'),
+                                 token=module.params.get('token'))
+    consulClient.agent.service = PatchedConsulAgentService(consulClient)
+    return consulClient
 
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
@@ -359,9 +371,9 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
@@ -389,8 +401,8 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_port') and not module.params.get('service_name'):
-        module.fail_json(msg="service_port supplied but no service_name, a name is required to configure a service.")
+    elif not module.params.get('service_name'):
+        module.fail_json(msg="service_name is required to configure a service.")
 
 
 class ConsulService():

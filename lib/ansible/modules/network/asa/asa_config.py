@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +37,7 @@ options:
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
@@ -49,7 +49,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
   before:
@@ -58,7 +58,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
@@ -93,28 +93,6 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-  commit:
-    description:
-      - This argument specifies the update method to use when applying the
-        configuration changes to the remote node.  If the value is set to
-        I(merge) the configuration updates are merged with the running-
-        config.  If the value is set to I(check), no changes are made to
-        the remote host.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -172,7 +150,6 @@ vars:
     password: cisco
     authorize: yes
     auth_pass: cisco
-    transport: cli
 
 ---
 - asa_config:
@@ -216,30 +193,13 @@ backup_path:
   returned: when backup is yes
   type: string
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
 """
-import traceback
-
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
 
-
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        if module.params['defaults']:
-            include = 'defaults'
-        elif module.params['passwords']:
-            include = 'passwords'
-        else:
-            include = None
-        contents = module.config.get_config(include=include)
-    return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -250,17 +210,21 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
     path = module.params['parents']
 
     candidate = get_candidate(module)
-
     if match != 'none':
-        config = get_config(module)
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
+        contents = module.params['config']
+        if not contents:
+            contents = get_config(module)
+            config = NetworkConfig(indent=1, contents=contents)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
+
     else:
         configobjs = candidate.items
 
@@ -279,13 +243,14 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config.load_config(commands)
+            load_config(module, commands)
         result['changed'] = True
 
     if module.params['save']:
         if not module.check_mode:
-            module.config.save_config()
+            run_commands(module, 'write mem')
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -310,27 +275,31 @@ def main():
         save=dict(type='bool', default=False),
     )
 
-    mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
+    argument_spec.update(asa_argument_spec)
+
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src'),
+                          ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    result = {'changed': False}
+
+    check_args(module)
+
+    config = None
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
-    try:
-        run(module, result)
-    except NetworkError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **e.kwargs)
+    run(module, result)
 
     module.exit_json(**result)
 

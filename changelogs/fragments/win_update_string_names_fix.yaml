@@ -1,0 +1,2 @@
+bugfixes:
+- win_updates - fixed regression with string category names (https://github.com/ansible/ansible/pull/36015)

@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -57,7 +49,7 @@ options:
     description:
       - The type of DNS record to create
     required: true
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA' ]
   alias:
     description:
       - Indicates if this is an alias record.
@@ -165,6 +157,83 @@ author:
 extends_documentation_fragment: aws
 '''
 
+RETURN = '''
+nameservers:
+  description: nameservers associated with the zone
+  returned: when state is 'get'
+  type: list
+  sample:
+  - ns-1036.awsdns-00.org.
+  - ns-516.awsdns-00.net.
+  - ns-1504.awsdns-00.co.uk.
+  - ns-1.awsdns-00.com.
+set:
+  description: info specific to the resource record
+  returned: when state is 'get'
+  type: complex
+  contains:
+    alias:
+      description: whether this is an alias
+      returned: always
+      type: bool
+      sample: false
+    failover:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    health_check:
+      description: health_check associated with this record
+      returned: always
+      type: NoneType
+      sample: null
+    identifier:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    record:
+      description: domain name for the record set
+      returned: always
+      type: string
+      sample: new.foo.com.
+    region:
+      description: ""
+      returned: always
+      type:
+      sample:
+    ttl:
+      description: resource record cache TTL
+      returned: always
+      type: string
+      sample: '3600'
+    type:
+      description: record set type
+      returned: always
+      type: string
+      sample: A
+    value:
+      description: value
+      returned: always
+      type: string
+      sample: 52.43.18.27
+    values:
+      description: values
+      returned: always
+      type: list
+      sample:
+      - 52.43.18.27
+    weight:
+      description: weight of the record
+      returned: always
+      type: string
+      sample: '3'
+    zone:
+      description: zone this record set belongs to
+      returned: always
+      type: string
+      sample: foo.bar.com.
+'''
 
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
@@ -300,18 +369,21 @@ EXAMPLES = '''
       weight: 100
       health_check: "d994b780-3150-49fd-9205-356abdd42e75"
 
+# Add a CAA record (RFC 6844):
+- route53:
+      state: present
+      zone: example.com
+      record: example.com
+      type: CAA
+      value:
+        - 0 issue "ca.example.net"
+        - 0 issuewild ";"
+        - 0 iodef "mailto:security@example.com"
+
 '''
-
-MINIMUM_BOTO_VERSION = '2.28.0'
-WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
-
 
 import time
 import distutils.version
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 try:
     import boto
@@ -323,6 +395,13 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+
+
+MINIMUM_BOTO_VERSION = '2.28.0'
+WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
 
 class TimeoutError(Exception):
@@ -407,11 +486,11 @@ def main():
         hosted_zone_id=dict(required=False, default=None),
         record=dict(required=True),
         ttl=dict(required=False, type='int', default=3600),
-        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA'], required=True),
+        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA'], required=True),
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list', default=[]),
+        value=dict(required=False, type='list'),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
@@ -456,7 +535,7 @@ def main():
     ttl_in = module.params.get('ttl')
     record_in = module.params.get('record').lower()
     type_in = module.params.get('type')
-    value_in = module.params.get('value')
+    value_in = module.params.get('value') or []
     alias_in = module.params.get('alias')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
@@ -612,6 +691,7 @@ def main():
         module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
+
 
 if __name__ == '__main__':
     main()

@@ -1,23 +1,15 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2016, Mathieu Bultel <mbultel@redhat.com>
 # (c) 2016, Steve Baker <sbaker@redhat.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -42,6 +34,12 @@ options:
       description:
         - Name of the stack that should be created, name could be char and digit, no space
       required: true
+    tag:
+      description:
+        - Tag for the stack that should be created, name could be char and digit, no space
+      required: false
+      default: None
+      version_added: "2.5"
     template:
       description:
         - Path of the template file to use for the stack creation
@@ -82,6 +80,7 @@ EXAMPLES = '''
   register: stack_create
   os_stack:
     name: "{{ stack_name }}"
+    tag: "{{ tag_name }}"
     state: present
     template: "/path/to/my_stack.yaml"
     environment:
@@ -159,24 +158,20 @@ stack:
                         'updated_time': null}"
 '''
 
-from time import sleep
-from distutils.version import StrictVersion
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
-def _create_stack(module, stack, cloud):
+def _create_stack(module, stack, cloud, shade):
     try:
         stack = cloud.create_stack(module.params['name'],
-                                       template_file=module.params['template'],
-                                       environment_files=module.params['environment'],
-                                       timeout=module.params['timeout'],
-                                       wait=True,
-                                       rollback=module.params['rollback'],
-                                       **module.params['parameters'])
+                                   tags=module.params['tag'],
+                                   template_file=module.params['template'],
+                                   environment_files=module.params['environment'],
+                                   timeout=module.params['timeout'],
+                                   wait=True,
+                                   rollback=module.params['rollback'],
+                                   **module.params['parameters'])
 
         stack = cloud.get_stack(stack.id, None)
         if stack.stack_status == 'CREATE_COMPLETE':
@@ -186,7 +181,8 @@ def _create_stack(module, stack, cloud):
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-def _update_stack(module, stack, cloud):
+
+def _update_stack(module, stack, cloud, shade):
     try:
         stack = cloud.update_stack(
             module.params['name'],
@@ -200,10 +196,11 @@ def _update_stack(module, stack, cloud):
         if stack['stack_status'] == 'UPDATE_COMPLETE':
             return stack
         else:
-            module.fail_json(msg = "Failure in updating stack: %s" %
+            module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
+
 
 def _system_state_change(module, stack, cloud):
     state = module.params['state']
@@ -214,10 +211,12 @@ def _system_state_change(module, stack, cloud):
         return True
     return False
 
+
 def main():
 
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
+        tag=dict(required=False, default=None),
         template=dict(default=None),
         environment=dict(default=None, type='list'),
         parameters=dict(default={}, type='dict'),
@@ -232,8 +231,11 @@ def main():
                            **module_kwargs)
 
     # stack API introduced in 1.8.0
-    if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-        module.fail_json(msg='shade 1.8.0 or higher is required for this module')
+    min_version = '1.8.0'
+    tag = module.params['tag']
+    if tag is not None:
+        # stack tag API was introduced in 1.26.0
+        min_version = '1.26.0'
 
     state = module.params['state']
     name = module.params['name']
@@ -243,8 +245,8 @@ def main():
             if not module.params[p]:
                 module.fail_json(msg='%s required with present state' % p)
 
+    shade, cloud = openstack_cloud_from_module(module, min_version='1.26.0')
     try:
-        cloud = shade.openstack_cloud(**module.params)
         stack = cloud.get_stack(name)
 
         if module.check_mode:
@@ -253,9 +255,9 @@ def main():
 
         if state == 'present':
             if not stack:
-                stack = _create_stack(module, stack, cloud)
+                stack = _create_stack(module, stack, cloud, shade)
             else:
-                stack = _update_stack(module, stack, cloud)
+                stack = _update_stack(module, stack, cloud, shade)
             changed = True
             module.exit_json(changed=changed,
                              stack=stack,
@@ -271,7 +273,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

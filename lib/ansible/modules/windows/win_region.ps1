@@ -102,7 +102,7 @@ Function Set-CultureLegacy($culture) {
 
     $lookup = New-Object Ansible.LocaleHelper($culture)
     # hex values are from http://www.pinvoke.net/default.aspx/kernel32/GetLocaleInfoEx.html
-    $wanted_values = New-Object PSObject @{
+    $wanted_values = @{
         Locale = '{0:x8}' -f ([System.Globalization.CultureInfo]$culture).LCID
         LocaleName = $culture
         s1159 = $lookup.GetValueFromType(0x00000028)

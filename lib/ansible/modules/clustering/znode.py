@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -111,6 +111,7 @@ except ImportError:
     KAZOO_INSTALLED = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def main():
@@ -232,13 +233,13 @@ class KazooCommandProxy():
         if self.exists(path):
             (current_value, zstat) = self.zk.get(path)
             if value != current_value:
-                self.zk.set(path, value)
+                self.zk.set(path, to_bytes(value))
                 return True, {'changed': True, 'msg': 'Updated the znode value.', 'znode': path,
                               'value': value}
             else:
                 return True, {'changed': False, 'msg': 'No changes were necessary.', 'znode': path, 'value': value}
         else:
-            self.zk.create(path, value, makepath=True)
+            self.zk.create(path, to_bytes(value), makepath=True)
             return True, {'changed': True, 'msg': 'Created a new znode.', 'znode': path, 'value': value}
 
     def _wait(self, path, timeout, interval=5):

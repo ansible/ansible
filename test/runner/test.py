@@ -12,6 +12,8 @@ from lib.util import (
     ApplicationError,
     display,
     raw_command,
+    find_pip,
+    get_docker_completion,
 )
 
 from lib.delegation import (
@@ -23,10 +25,8 @@ from lib.executor import (
     command_network_integration,
     command_windows_integration,
     command_units,
-    command_compile,
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
-    COMPILE_PYTHON_VERSIONS,
     ApplicationWarning,
     Delegate,
     generate_pip_install,
@@ -40,7 +40,6 @@ from lib.config import (
     NetworkIntegrationConfig,
     SanityConfig,
     UnitsConfig,
-    CompileConfig,
     ShellConfig,
 )
 
@@ -56,7 +55,6 @@ from lib.target import (
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
-    walk_compile_targets,
     walk_sanity_targets,
 )
 
@@ -112,7 +110,7 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install('ansible-test'))
+        raw_command(generate_pip_install(find_pip(), 'ansible-test'))
         import argparse
 
     try:
@@ -255,6 +253,8 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    add_extra_docker_options(network_integration, integration=False)
+
     network_integration.add_argument('--platform',
                                      metavar='PLATFORM',
                                      action='append',
@@ -264,6 +264,10 @@ def parse_args():
                                      metavar='PATH',
                                      help='path to inventory used for tests')
 
+    network_integration.add_argument('--testcase',
+                                     metavar='TESTCASE',
+                                     help='limit a test to a specified testcase').completer = complete_network_testcase
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -271,6 +275,8 @@ def parse_args():
     windows_integration.set_defaults(func=command_windows_integration,
                                      targets=walk_windows_integration_targets,
                                      config=WindowsIntegrationConfig)
+
+    add_extra_docker_options(windows_integration, integration=False)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -295,22 +301,6 @@ def parse_args():
                        help='collect tests but do not execute them')
 
     add_extra_docker_options(units, integration=False)
-
-    compiler = subparsers.add_parser('compile',
-                                     parents=[test],
-                                     help='compile tests')
-
-    compiler.set_defaults(func=command_compile,
-                          targets=walk_compile_targets,
-                          config=CompileConfig)
-
-    compiler.add_argument('--python',
-                          metavar='VERSION',
-                          choices=COMPILE_PYTHON_VERSIONS + ('default',),
-                          help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
-
-    add_lint(compiler)
-    add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
                                    parents=[test],
@@ -508,6 +498,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             docker=None,
             remote=None,
             remote_stage=None,
+            remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
         )
@@ -518,7 +509,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               metavar='IMAGE',
                               nargs='?',
                               default=None,
-                              const='ubuntu1604',
+                              const='default',
                               help='run from a docker container').completer = complete_docker
 
     environments.add_argument('--remote',
@@ -533,6 +524,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote stage to use: %(choices)s',
                         choices=['prod', 'dev'],
                         default='prod')
+
+    remote.add_argument('--remote-provider',
+                        metavar='PROVIDER',
+                        help='remote provider to use: %(choices)s',
+                        choices=['default', 'aws', 'azure', 'parallels'],
+                        default='default')
 
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',
@@ -578,12 +575,16 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
+    docker.add_argument('--docker-keep-git',
+                        action='store_true',
+                        help='transfer git related files into the docker container')
+
     if not integration:
         return
 
     docker.add_argument('--docker-util',
                         metavar='IMAGE',
-                        default='httptester',
+                        default='ansible/ansible@sha256:00f26e1d1909315ab1038751fc9397dd3cf7655604ba3b68fccda754c8630e50',  # httptester
                         help='docker utility image to provide test services')
 
     docker.add_argument('--docker-privileged',
@@ -622,8 +623,7 @@ def complete_docker(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = sorted(get_docker_completion().keys())
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -650,6 +650,31 @@ def complete_network_platform(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_network_testcase(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    testcases = []
+
+    # since testcases are module specific, don't autocomplete if more than one
+    # module is specidied
+    if len(parsed_args.include) != 1:
+        return []
+
+    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    connections = os.listdir(test_dir)
+
+    for conn in connections:
+        if os.path.isdir(os.path.join(test_dir, conn)):
+            for testcase in os.listdir(os.path.join(test_dir, conn)):
+                if testcase.startswith(prefix):
+                    testcases.append(testcase.split('.')[0])
+
+    return testcases
 
 
 def complete_sanity_test(prefix, parsed_args, **_):

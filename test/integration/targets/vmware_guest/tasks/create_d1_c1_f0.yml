@@ -1,0 +1,198 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: create new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
+        memory_mb: 512
+        hotadd_memory: true
+        hotadd_cpu: false
+        # vcsim does not support these settings, so commenting
+        # till the time.
+        # memory_reservation: 512
+        # memory_reservation_lock: False
+        # nested_virt: True
+        # hotremove_cpu: True
+        # mem_limit: 8096
+        # mem_reservation: 4096
+        # cpu_limit: 8096
+        # cpu_reservation: 4096
+        max_connections: 10
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0
+
+- debug: var=clone_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: create new VMs again
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_recreate
+
+- debug: var=clone_d1_c1_f0_recreate
+
+- name: assert that no changes were made after re-creating
+  assert:
+    that:
+        - "clone_d1_c1_f0_recreate.results|map(attribute='changed')|unique|list == [false]"
+
+- name: modify the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 2
+        memory_mb: 1024
+    state: present
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_modify
+
+- debug: var=clone_d1_c1_f0_modify
+
+- name: assert that changes were made with modification
+  assert:
+    that:
+        - "clone_d1_c1_f0_modify.results|map(attribute='changed')|unique|list == [true]"
+
+- name: re-modify the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 2
+        memory_mb: 1024
+    state: present
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_remodify
+
+- debug: var=clone_d1_c1_f0_remodify
+
+- name: assert that no changes were made when re-modified
+  assert:
+    that:
+        - "clone_d1_c1_f0_remodify.results|map(attribute='changed')|unique|list == [false]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_delete
+
+- debug: var=clone_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+- name: re-delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_redelete
+
+- debug: var=clone_d1_c1_f0_redelete
+
+- name: assert that no changes were made with redeletion
+  assert:
+    that:
+        - "clone_d1_c1_f0_redelete.results|map(attribute='changed')|unique|list == [false]"

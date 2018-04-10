@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -165,7 +165,7 @@ class RabbitMqUser(object):
             user, tags = user_tag.split('\t')
 
             if user == self.username:
-                for c in ['[',']',' ']:
+                for c in ['[', ']', ' ']:
                     tags = tags.replace(c, '')
 
                 if tags != '':
@@ -229,6 +229,7 @@ class RabbitMqUser(object):
     def has_permissions_modifications(self):
         return sorted(self._permissions) != sorted(self.permissions)
 
+
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
@@ -261,7 +262,7 @@ def main():
     node = module.params['node']
 
     bulk_permissions = True
-    if permissions == []:
+    if not permissions:
         perm = {
             'vhost': vhost,
             'configure_priv': configure_priv,
@@ -274,33 +275,33 @@ def main():
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
                                  node, bulk_permissions=bulk_permissions)
 
-    changed = False
+    result = dict(changed=False, user=username, state=state)
+
     if rabbitmq_user.get():
         if state == 'absent':
             rabbitmq_user.delete()
-            changed = True
+            result['changed'] = True
         else:
             if force:
                 rabbitmq_user.delete()
                 rabbitmq_user.add()
                 rabbitmq_user.get()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_permissions_modifications():
                 rabbitmq_user.set_permissions()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_user.add()
         rabbitmq_user.set_tags()
         rabbitmq_user.set_permissions()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, user=username, state=state)
-
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

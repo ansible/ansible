@@ -1,23 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -71,7 +63,9 @@ options:
         Blame Amazon."
     required: False
     default: True
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ "boto" ]
 """
 
@@ -129,9 +123,9 @@ sns_topic:
       attributes_set: []
 '''
 
-import time
 import json
 import re
+import time
 
 try:
     import boto.sns
@@ -184,7 +178,7 @@ class SnsTopicManager(object):
     def _get_boto_connection(self):
         try:
             return connect_to_aws(boto.sns, self.region,
-                **self.aws_connect_params)
+                                  **self.aws_connect_params)
         except BotoServerError as err:
             self.module.fail_json(msg=err.message)
 
@@ -202,7 +196,6 @@ class SnsTopicManager(object):
                 break
         return [t['TopicArn'] for t in topics]
 
-
     def _arn_topic_lookup(self):
         # topic names cannot have colons, so this captures the full topic name
         all_topics = self._get_all_topics()
@@ -210,7 +203,6 @@ class SnsTopicManager(object):
         for topic in all_topics:
             if topic.endswith(lookup_topic):
                 return topic
-
 
     def _create_topic(self):
         self.changed = True
@@ -222,57 +214,51 @@ class SnsTopicManager(object):
                 time.sleep(3)
                 self.arn_topic = self._arn_topic_lookup()
 
-
     def _set_topic_attrs(self):
-        topic_attributes = self.connection.get_topic_attributes(self.arn_topic) \
-            ['GetTopicAttributesResponse'] ['GetTopicAttributesResult'] \
-            ['Attributes']
+        topic_attributes = self.connection.get_topic_attributes(self.arn_topic)['GetTopicAttributesResponse']['GetTopicAttributesResult']['Attributes']
 
         if self.display_name and self.display_name != topic_attributes['DisplayName']:
             self.changed = True
             self.attributes_set.append('display_name')
             if not self.check_mode:
                 self.connection.set_topic_attributes(self.arn_topic, 'DisplayName',
-                    self.display_name)
+                                                     self.display_name)
 
         if self.policy and self.policy != json.loads(topic_attributes['Policy']):
             self.changed = True
             self.attributes_set.append('policy')
             if not self.check_mode:
                 self.connection.set_topic_attributes(self.arn_topic, 'Policy',
-                    json.dumps(self.policy))
+                                                     json.dumps(self.policy))
 
-        if self.delivery_policy and ('DeliveryPolicy' not in topic_attributes or \
-           self.delivery_policy != json.loads(topic_attributes['DeliveryPolicy'])):
+        if self.delivery_policy and ('DeliveryPolicy' not in topic_attributes or
+                                     self.delivery_policy != json.loads(topic_attributes['DeliveryPolicy'])):
             self.changed = True
             self.attributes_set.append('delivery_policy')
             if not self.check_mode:
                 self.connection.set_topic_attributes(self.arn_topic, 'DeliveryPolicy',
-                    json.dumps(self.delivery_policy))
-
+                                                     json.dumps(self.delivery_policy))
 
     def _canonicalize_endpoint(self, protocol, endpoint):
         if protocol == 'sms':
             return re.sub('[^0-9]*', '', endpoint)
         return endpoint
 
-
     def _get_topic_subs(self):
         next_token = None
         while True:
             response = self.connection.get_all_subscriptions_by_topic(self.arn_topic, next_token)
-            self.subscriptions_existing.extend(response['ListSubscriptionsByTopicResponse'] \
-                ['ListSubscriptionsByTopicResult']['Subscriptions'])
-            next_token = response['ListSubscriptionsByTopicResponse'] \
-                ['ListSubscriptionsByTopicResult']['NextToken']
+            self.subscriptions_existing.extend(response['ListSubscriptionsByTopicResponse']
+                                               ['ListSubscriptionsByTopicResult']['Subscriptions'])
+            next_token = response['ListSubscriptionsByTopicResponse']['ListSubscriptionsByTopicResult']['NextToken']
             if not next_token:
                 break
 
     def _set_topic_subs(self):
         subscriptions_existing_list = []
         desired_subscriptions = [(sub['protocol'],
-            self._canonicalize_endpoint(sub['protocol'], sub['endpoint'])) for sub in
-            self.subscriptions]
+                                  self._canonicalize_endpoint(sub['protocol'], sub['endpoint'])) for sub in
+                                 self.subscriptions]
 
         if self.subscriptions_existing:
             for sub in self.subscriptions_existing:
@@ -288,10 +274,9 @@ class SnsTopicManager(object):
         for (protocol, endpoint) in desired_subscriptions:
             if (protocol, endpoint) not in subscriptions_existing_list:
                 self.changed = True
-                self.subscriptions_added.append(sub)
+                self.subscriptions_added.append((protocol, endpoint))
                 if not self.check_mode:
                     self.connection.subscribe(self.arn_topic, protocol, endpoint)
-
 
     def _delete_subscriptions(self):
         # NOTE: subscriptions in 'PendingConfirmation' timeout in 3 days
@@ -303,13 +288,11 @@ class SnsTopicManager(object):
                 if not self.check_mode:
                     self.connection.unsubscribe(sub['SubscriptionArn'])
 
-
     def _delete_topic(self):
         self.topic_deleted = True
         self.changed = True
         if not self.check_mode:
             self.connection.delete_topic(self.arn_topic)
-
 
     def ensure_ok(self):
         self.arn_topic = self._arn_topic_lookup()
@@ -326,7 +309,6 @@ class SnsTopicManager(object):
             if self.subscriptions_existing:
                 self._delete_subscriptions()
             self._delete_topic()
-
 
     def get_info(self):
         info = {
@@ -349,14 +331,13 @@ class SnsTopicManager(object):
         return info
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present',
-                'absent']),
+                                                               'absent']),
             display_name=dict(type='str', required=False),
             policy=dict(type='dict', required=False),
             delivery_policy=dict(type='dict', required=False),

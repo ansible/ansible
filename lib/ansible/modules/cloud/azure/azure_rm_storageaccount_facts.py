@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -36,6 +36,8 @@ options:
             - Limit results to a resource group. Required when filtering by name.
         required: false
         default: null
+        aliases:
+            - resource_group_name
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -97,7 +99,6 @@ azure_storageaccounts:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except:
     # This is handled in azure_rm_common
     pass
@@ -113,7 +114,7 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             name=dict(type='str'),
-            resource_group=dict(type='str'),
+            resource_group=dict(type='str', aliases=['resource_group_name']),
             tags=dict(type='list'),
         )
 

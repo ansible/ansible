@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -17,17 +17,15 @@ DOCUMENTATION = r'''
 module: wait_for
 short_description: Waits for a condition before continuing
 description:
-     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
-     - Waiting for a port to become available is useful for when services
-       are not immediately available after their init scripts return
-       which is true of certain Java application servers. It is also
-       useful when starting guests with the M(virt) module and
+     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified or just C(timeout) is specified.
+       This does not produce an error.
+     - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
+       which is true of certain Java application servers. It is also useful when starting guests with the M(virt) module and
        needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
      - In 1.6 and later, this module can also be used to wait for a file to be available or
        absent on the filesystem.
-     - In 1.8 and later, this module can also be used to wait for active
-       connections to be closed before continuing, useful if a node
+     - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
      - This module is also supported for Windows targets.
 version_added: "0.7"
@@ -38,7 +36,8 @@ options:
     default: "127.0.0.1"
   timeout:
     description:
-      - Maximum number of seconds to wait for.
+      - Maximum number of seconds to wait for, when used with another condition it will force an error.
+      - When used without other conditions it is equivalent of just sleeping.
     default: 300
   connect_timeout:
     description:
@@ -90,6 +89,12 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
+  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
+  - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
+    can't be modified or created by the remote user either.
+  - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
+    so operations on the path using other modules may not work exactly as expected.
   - This module is also supported for Windows targets.
   - See also M(wait_for_connection)
 author:
@@ -99,6 +104,10 @@ author:
 '''
 
 EXAMPLES = r'''
+- name: sleep for 300 seconds and continue with play
+  wait_for: timeout=300
+  delegate_to: localhost
+
 - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
@@ -165,6 +174,7 @@ EXAMPLES = r'''
 
 import binascii
 import datetime
+import errno
 import math
 import os
 import re
@@ -478,8 +488,8 @@ def main():
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
-                    f = open(path)
-                    f.close()
+                    if not os.access(path, os.F_OK):
+                        break
                 except IOError:
                     break
             elif port:
@@ -555,15 +565,27 @@ def main():
                                 break
 
                         # Shutdown the client socket
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         if matched:
                             # Found our string, success!
                             break
                     else:
                         # Connection established, success!
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         break
 
             # Conditions not yet met, wait and try again

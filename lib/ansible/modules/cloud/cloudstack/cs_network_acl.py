@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -82,18 +82,18 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  description: a more detailed description of the ACL
-  vpc: customers
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    description: a more detailed description of the ACL
+    vpc: customers
 
 # remove a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  vpc: customers
-  state: absent
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    vpc: customers
+    state: absent
 '''
 
 RETURN = '''

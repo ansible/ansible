@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -92,7 +92,6 @@ azure_virtualnetworks:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except:
     # This is handled in azure_rm_common
     pass
@@ -157,7 +156,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.log('List items for resource group')
         try:
             response = self.network_client.virtual_networks.list(self.resource_group)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Failed to list for resource group {0} - {1}".format(self.resource_group, str(exc)))
 
         results = []
@@ -170,7 +169,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.log('List all for items')
         try:
             response = self.network_client.virtual_networks.list_all()
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Failed to list all items - {0}".format(str(exc)))
 
         results = []
@@ -178,6 +177,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             if self.has_tags(item.tags, self.tags):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
+
 
 def main():
     AzureRMNetworkInterfaceFacts()

@@ -2,6 +2,7 @@
 import json
 import os
 import os.path
+import re
 import sys
 from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
@@ -58,7 +59,8 @@ def _maintain_symlinks(symlink_type, base_path):
         # only time we know that we're going to cache correctly
         with open(SYMLINK_CACHE, 'r') as f:
             symlink_data = json.loads(f.read())
-    except IOError as e:
+    except (IOError, OSError) as e:
+        # IOError on py2, OSError on py3.  Both have errno
         if e.errno == 2:
             # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
             # cache now.  Will work if we're running directly from a git
@@ -147,6 +149,15 @@ if crypto_backend:
     install_requirements = [r for r in install_requirements if not (r.lower().startswith('pycrypto') or r.lower().startswith('cryptography'))]
     install_requirements.append(crypto_backend)
 
+# specify any extra requirements for installation
+extra_requirements = dict()
+extra_requirements_dir = 'packaging/requirements'
+for extra_requirements_filename in os.listdir(extra_requirements_dir):
+    filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
+    if filename_match:
+        with open(os.path.join(extra_requirements_dir, extra_requirements_filename)) as extra_requirements_file:
+            extra_requirements[filename_match.group(1)] = extra_requirements_file.read().splitlines()
+
 
 setup(
     # Use the distutils SDist so that symlinks are not expanded
@@ -180,8 +191,7 @@ setup(
             'galaxy/data/*/*/.*',
             'galaxy/data/*/*/*.*',
             'galaxy/data/*/tests/inventory',
-            'config/data/*.yaml',
-            'config/data/*.yml',
+            'config/base.yml',
         ],
     },
     classifiers=[
@@ -208,6 +218,11 @@ setup(
         'bin/ansible-console',
         'bin/ansible-connection',
         'bin/ansible-vault',
+        'bin/ansible-config',
+        'bin/ansible-inventory',
     ],
     data_files=[],
+    extras_require=extra_requirements,
+    # Installing as zip files would break due to references to __file__
+    zip_safe=False
 )

@@ -1,20 +1,20 @@
 %define name ansible
-%define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
-%define __python /usr/bin/python26
+%define __python2 /usr/bin/python26
 %endif
 
 Name:      %{name}
-Version:   %{ansible_version}
-Release:   1%{?dist}
+Version:   %{rpmversion}
+Release:   %{rpmrelease}%{?dist}%{?repotag}
 Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
-License:   GPLv3
+License:   GPLv3+
 Group:     Development/Libraries
-Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
+Source:    http://releases.ansible.com/ansible/%{name}-%{upstream_version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?__python2: %global __python2 /usr/bin/python2.6}
+%{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
 
@@ -33,7 +33,12 @@ Requires: python26-six
 
 # RHEL == 6
 %if 0%{?rhel} == 6
-Requires: python-crypto2.6
+Requires: python-crypto
+%endif
+
+# RHEL >=7
+%if 0%{?rhel} >= 7
+Requires: python2-cryptography
 %endif
 
 # RHEL > 5
@@ -43,8 +48,6 @@ BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
-Requires: python-httplib2
 Requires: python-setuptools
 Requires: python-six
 %endif
@@ -63,7 +66,7 @@ Requires: python-six
 %endif
 
 # SuSE/openSuSE
-%if 0%{?suse_version} 
+%if 0%{?suse_version}
 BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
@@ -86,13 +89,19 @@ on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{upstream_version}
 
 %build
-%{__python} setup.py build
+%{__python2} setup.py build
 
 %install
-%{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+%{__python2} setup.py install --root=%{buildroot}
+
+for i in %{buildroot}/%{_bindir}/{ansible,ansible-console,ansible-doc,ansible-galaxy,ansible-playbook,ansible-pull,ansible-vault}; do
+    mv $i $i-%{python2_version}
+    ln -s %{_bindir}/$(basename $i)-%{python2_version} $i
+    ln -s %{_bindir}/$(basename $i)-%{python2_version} $i-2
+done
 
 # Amazon Linux doesn't install to dist-packages but python_sitelib expands to
 # that location and the python interpreter expects things to be there.
@@ -105,6 +114,7 @@ if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
 fi
 
 mkdir -p %{buildroot}/etc/ansible/
+mkdir -p %{buildroot}/etc/ansible/roles/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
@@ -120,10 +130,70 @@ rm -rf %{buildroot}
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING
+%doc README.md PKG-INFO COPYING changelogs/CHANGELOG.rst
 %doc %{_mandir}/man1/ansible*
 
 %changelog
+
+* Thu Mar 22 2018 Ansible, Inc. <info@ansible.com> - 2.5.0-1
+- Release 2.5.0-1
+
+* Wed Jan 31 2018 Ansible, Inc. <info@ansible.com> - 2.4.3.0-1
+- Release 2.4.3.0-1
+
+* Wed Dec 20 2017 Ansible, Inc. <info@ansible.com> - 2.3.3.0-1
+- Release 2.3.3.0-1
+
+* Wed Nov 29 2017 Ansible, Inc. <info@ansible.com> - 2.4.2.0-1
+- Release 2.4.2.0-1
+
+* Wed Oct 25 2017 Ansible, Inc. <info@ansible.com> - 2.4.1.0-1
+- Release 2.4.1.0-1
+
+* Mon Sep 18 2017 Ansible, Inc. <info@ansible.com> - 2.4.0.0-1
+- Release 2.4.0.0-1
+
+* Fri Aug 04 2017 Ansible, Inc. <info@ansible.com> - 2.3.2.0-1
+- Release 2.3.2.0-1
+
+* Thu Jun 01 2017 Ansible, Inc. <info@ansible.com> - 2.3.1.0-1
+- Release 2.3.1.0-1
+
+* Thu Jun 01 2017 Ansible, Inc. <info@ansible.com> - 2.1.6.0-1
+- Release 2.1.6.0-1
+
+* Tue May 09 2017 Ansible, Inc. <info@ansible.com> - 2.2.3.0-1
+- Release 2.2.3.0-1
+
+* Wed Apr 12 2017 Ansible, Inc. <info@ansible.com> - 2.3.0.0-1
+- Release 2.3.0.0-1
+
+* Mon Mar 27 2017 Ansible, Inc. <info@ansible.com> - 2.2.2.0-1
+- Release 2.2.2.0-1
+
+* Mon Mar 27 2017 Ansible, Inc. <info@ansible.com> - 2.1.5.0-1
+- Release 2.1.5.0-1
+
+* Mon Jan 16 2017 Ansible, Inc. <info@ansible.com> - 2.2.1.0-1
+- Release 2.2.1.0-1
+
+* Mon Jan 16 2017 Ansible, Inc. <info@ansible.com> - 2.1.4.0-1
+- Release 2.1.4.0-1
+
+* Fri Nov 04 2016 Ansible, Inc. <info@ansible.com> - 2.1.3.0-1
+- Release 2.1.3.0-1
+
+* Mon Oct 31 2016 Ansible, Inc. <info@ansible.com> - 2.2.0.0-1
+- Release 2.2.0.0-1
+
+* Thu Sep 29 2016 Ansible, Inc. <info@ansible.com> - 2.1.2.0-1
+- Release 2.1.2.0-1
+
+* Thu Jul 28 2016 Ansible, Inc. <info@ansible.com> - 2.1.1.0-1
+- Release 2.1.1.0-1
+
+* Tue Apr 19 2016 Ansible, Inc. <support@ansible.com> - 2.0.2.0-1
+- Release 2.0.2.0-1
 
 * Wed Feb 24 2016 Ansible, Inc. <info@ansible.com> - 2.0.1.0-1
 - Release 2.0.1.0-1

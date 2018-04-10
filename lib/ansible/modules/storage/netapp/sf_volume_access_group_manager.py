@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -225,7 +225,7 @@ class SolidFireVolumeAccessGroup(object):
                     update_group = True
                     changed = True
                 elif self.virtual_network_id is not None or self.virtual_network_tags is not None or \
-                                self.attributes is not None:
+                        self.attributes is not None:
                     update_group = True
                     changed = True
 

@@ -134,6 +134,28 @@ def fq_list_names(partition, list_names):
     return map(lambda x: fq_name(partition, x), list_names)
 
 
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
+    return responses
+
+
 # New style
 
 from abc import ABCMeta, abstractproperty
@@ -154,6 +176,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems, with_metaclass
+from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils._text import to_text
 
 
 F5_COMMON_ARGS = dict(
@@ -201,7 +226,7 @@ class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
                  required_if=None, required_one_of=None, add_file_common_args=False,
-                 f5_product_name='bigip'):
+                 f5_product_name='bigip', sans_state=False, sans_partition=False):
 
         self.f5_product_name = f5_product_name
 
@@ -209,7 +234,11 @@ class AnsibleF5Client(object):
         merged_arg_spec.update(F5_COMMON_ARGS)
         if argument_spec:
             merged_arg_spec.update(argument_spec)
-            self.arg_spec = merged_arg_spec
+        if sans_state:
+            del merged_arg_spec['state']
+        if sans_partition:
+            del merged_arg_spec['partition']
+        self.arg_spec = merged_arg_spec
 
         mutually_exclusive_params = []
         if mutually_exclusive:
@@ -232,12 +261,13 @@ class AnsibleF5Client(object):
         self.check_mode = self.module.check_mode
         self._connect_params = self._get_connect_params()
 
-        try:
-            self.api = self._get_mgmt_root(
-                f5_product_name, **self._connect_params
-            )
-        except iControlUnexpectedHTTPError as exc:
-            self.fail(str(exc))
+        if 'transport' not in self.module.params or self.module.params['transport'] != 'cli':
+            try:
+                self.api = self._get_mgmt_root(
+                    f5_product_name, **self._connect_params
+                )
+            except iControlUnexpectedHTTPError as exc:
+                self.fail(str(exc))
 
     def fail(self, msg):
         self.module.fail_json(msg=msg)
@@ -275,7 +305,7 @@ class AnsibleF5Client(object):
                 kwargs['user'],
                 kwargs['password'],
                 port=kwargs['server_port'],
-                token='local'
+                auth_provider='local'
             )
 
     def reconnect(self):
@@ -301,6 +331,11 @@ class AnsibleF5Client(object):
 class AnsibleF5Parameters(object):
     def __init__(self, params=None):
         self._values = defaultdict(lambda: None)
+        self._values['__warnings'] = []
+        if params:
+            self.update(params=params)
+
+    def update(self, params=None):
         if params:
             for k, v in iteritems(params):
                 if self.api_map is not None and k in self.api_map:

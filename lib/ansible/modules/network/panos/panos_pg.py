@@ -101,17 +101,17 @@ EXAMPLES = '''
     vulnerability: "default"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 
 try:
@@ -214,9 +214,8 @@ def main():
 
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=changed, msg="okey dokey")
 

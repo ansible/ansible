@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_user
 short_description: Creates/updates/deletes Gitlab Users
 description:
-   - When the user does not exists in Gitlab, it will be created.
+   - When the user does not exist in Gitlab, it will be created.
    - When the user does exists and state=absent, the user will be deleted.
    - When changes are made to user, the user will be updated.
 version_added: "2.1"
@@ -62,6 +62,7 @@ options:
     password:
         description:
             - The password of the user.
+            - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
         required: true
     email:
         description:
@@ -302,6 +303,9 @@ def main():
     state = module.params['state']
     confirm = module.params['confirm']
 
+    if len(user_password) < 8:
+        module.fail_json(msg="New user's 'password' should contain more than 8 characters.")
+
     # We need both login_user and login_password or login_token, otherwise we fail.
     if login_user is not None and login_password is not None:
         use_credentials = True
@@ -348,7 +352,7 @@ def main():
 
     # Check if user exists, if not exists and state = absent, we exit nicely.
     if not user.existsUser(user_username) and state == "absent":
-        module.exit_json(changed=False, result="User already deleted or does not exists")
+        module.exit_json(changed=False, result="User already deleted or does not exist")
     else:
         # User exists,
         if state == "absent":

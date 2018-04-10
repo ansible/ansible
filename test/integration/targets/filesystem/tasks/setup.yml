@@ -1,0 +1,61 @@
+- name: install filesystem tools
+  package:
+    name: '{{ item }}'
+    state: present
+  when: ansible_system == 'Linux' or item != 'dosfstools'
+  with_items:
+    - e2fsprogs
+    - xfsprogs
+    - dosfstools
+
+- block:
+  - name: install btrfs progs
+    package:
+      name: btrfs-progs
+      state: present
+    when: ansible_os_family != 'Suse' and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+
+  - name: install btrfs progs (Ubuntu <= 16.04)
+    package:
+      name: btrfs-tools
+      state: present
+    when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<=')
+
+  - name: install btrfs progs (OpenSuse)
+    package:
+      name: '{{ item }}'
+      state: present
+    when: ansible_os_family == 'Suse'
+    with_items:
+      - python-xml
+      - btrfsprogs
+  when: ansible_system == 'Linux'
+
+- block:
+  - name: install fatresize
+    package:
+      name: fatresize
+      state: present
+  - command: fatresize --help
+    register: fatresize
+  - set_fact:
+      fatresize_version: '{{ fatresize.stdout_lines[0] | regex_search("[0-9]+\.[0-9]+\.[0-9]+")  }}'
+  when:
+    - ansible_system == 'Linux'
+    - ansible_os_family != 'Suse'
+    - ansible_os_family != 'RedHat' or (ansible_distribution == 'CentOS' and ansible_distribution_version is version('7.0', '>='))
+
+- command: mke2fs -V
+  register: mke2fs
+
+- set_fact:
+    # mke2fs 1.43.6 (29-Aug-2017)
+    e2fsprogs_version: '{{ mke2fs.stderr_lines[0] | regex_search("[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]{1,2})?") }}'
+
+- set_fact:
+    # http://e2fsprogs.sourceforge.net/e2fsprogs-release.html#1.43
+    # Mke2fs no longer complains if the user tries to create a file system
+    # using the entire block device.
+    force_creation: "{{ e2fsprogs_version is version('1.43', '<') }}"
+    # Earlier versions have a segfault bug
+    resize_vfat: "{{ fatresize_version|default('0.0') is version('1.0.4', '>=') }}"

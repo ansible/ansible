@@ -25,7 +25,7 @@ options:
     required: false
     default: null
     description:
-      - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like 0644).
+      - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like C(0644) or C(01777)).
         Leaving off the leading zero will likely have unexpected results.
         As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
@@ -69,6 +69,7 @@ options:
          they cannot be updated atomically and can only be done in an unsafe manner.
       -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
          not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
+    type: bool
     required: false
     default: false
     version_added: "2.2"

@@ -17,9 +17,9 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -34,6 +34,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - VRRP feature needs to be enabled first on the system.
     - SVIs must exist before using this module.
     - Interface must be a L3 port before using this module.
@@ -53,6 +54,10 @@ options:
             - VRRP priority.
         required: false
         default: null
+    preempt:
+        description:
+            - Enable/Disable preempt.
+        choices: ['True', 'False']
     vip:
         description:
             - VRRP virtual IP address.
@@ -69,7 +74,6 @@ options:
         required: false
         choices: ['shutdown', 'no shutdown']
         default: no shutdown
-        version_added: "2.2"
     state:
         description:
             - Specify desired state of the resource.
@@ -84,7 +88,6 @@ EXAMPLES = '''
     interface: vlan10
     group: 100
     vip: 10.1.100.1
-    host: 68.170.147.165
 
 - name: Ensure removal of the vrrp group config
   # vip is required to ensure the user knows what they are removing
@@ -93,7 +96,6 @@ EXAMPLES = '''
     group: 100
     vip: 10.1.100.1
     state: absent
-    host: 68.170.147.165
 
 - name: Re-config with more params
   nxos_vrrp:
@@ -103,43 +105,19 @@ EXAMPLES = '''
     preempt: false
     priority: 130
     authentication: AUTHKEY
-    host: 68.170.147.165
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"authentication": "testing", "group": "150", "vip": "10.1.15.1",
-            "admin_state": "no shutdown"}
-existing:
-    description: k/v pairs of existing vrrp info on the interface
-    returned: always
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of vrrp after module execution
-    returned: always
-    type: dict
-    sample: {"authentication": "testing", "group": "150", "interval": "1",
-            "preempt": true, "priority": "100", "vip": "10.1.15.1",
-            "admin_state": "no shutdown"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface vlan10", "vrrp 150", "address 10.1.15.1",
             "authentication text testing", "no shutdown"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -148,12 +126,12 @@ def execute_show_command(command, module):
         output = 'json'
     else:
         output = 'text'
-    cmds = [{
+
+    commands = [{
         'command': command,
         'output': output,
     }]
-    body = run_commands(module, cmds)
-    return body
+    return run_commands(module, commands)[0]
 
 
 def apply_key_map(key_map, table):
@@ -161,12 +139,12 @@ def apply_key_map(key_map, table):
     for key, value in table.items():
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
             if value:
                 new_dict[new_key] = str(value)
             else:
                 new_dict[new_key] = value
     return new_dict
+
 
 def get_interface_type(interface):
     if interface.upper().startswith('ET'):
@@ -189,7 +167,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = execute_show_command(command, module)
         if 'invalid' in body.lower():
             return 'DNE'
         else:
@@ -206,7 +184,7 @@ def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
     mode = 'unknown'
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module)
     interface_table = body['TABLE_interface']['ROW_interface']
     name = interface_table.get('interface')
 
@@ -223,7 +201,7 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_vrr_status(group, module, interface):
     command = 'show run all | section interface.{0}$'.format(interface)
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module)
     vrf_index = None
     admin_state = 'shutdown'
 
@@ -257,7 +235,7 @@ def get_existing_vrrp(interface, group, module, name):
     }
 
     try:
-        vrrp_table = body[0]['TABLE_vrrp_group']
+        vrrp_table = body['TABLE_vrrp_group']
     except (AttributeError, IndexError, TypeError):
         return {}
 
@@ -355,23 +333,17 @@ def main():
         preempt=dict(required=False, type='bool'),
         vip=dict(required=False, type='str'),
         admin_state=dict(required=False, type='str',
-                                choices=['shutdown', 'no shutdown'],
-                                default='no shutdown'),
+                         choices=['shutdown', 'no shutdown'],
+                         default='no shutdown'),
         authentication=dict(required=False, type='str'),
-        state=dict(choices=['absent', 'present'],
-                       required=False, default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
-
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
     interface = module.params['interface'].lower()
@@ -382,13 +354,14 @@ def main():
     authentication = module.params['authentication']
     admin_state = module.params['admin_state']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -418,32 +391,19 @@ def main():
         if delta:
             command = get_commands_config_vrrp(delta, group)
             commands.append(command)
-
     elif state == 'absent':
         if existing:
             commands.append(['no vrrp {0}'.format(group)])
 
     if commands:
         commands.insert(0, ['interface {0}'.format(interface)])
-
-    cmds = flatten_list(commands)
-    if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            load_config(module, cmds)
-            changed = True
-            end_state = get_existing_vrrp(interface, group, module, name)
-            if 'configure' in cmds:
-                cmds.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+        commands = flatten_list(commands)
+        results['commands'] = commands
+        results['changed'] = True
+        if not module.check_mode:
+            load_config(module, commands)
+            if 'configure' in commands:
+                commands.pop(0)
 
     module.exit_json(**results)
 

@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -35,6 +26,8 @@ description:
       The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
+extends_documentation_fragment:
+    - url
 '''
 
 EXAMPLES = '''
@@ -424,13 +417,14 @@ ansible_facts:
             sample: "#!/bin/bash"
 '''
 
-import socket
-import re
 import json
+import re
+import socket
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+
 
 socket.setdefaulttimeout(5)
 
@@ -458,7 +452,9 @@ class Ec2Metadata(object):
             data = None
         return to_text(data)
 
-    def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
+    def _mangle_fields(self, fields, uri, filter_patterns=None):
+        filter_patterns = ['public-keys-0'] if filter_patterns is None else filter_patterns
+
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
