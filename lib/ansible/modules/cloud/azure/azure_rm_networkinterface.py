@@ -535,7 +535,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         name=ip_config.get('name'),
                         subnet=subnet,
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
-                        load_balancer_backend_address_pools=[self.backend_addr_pool_id(bap_id) for bap_id in ip_config.load_balancer_backend_address_pools],
+                        load_balancer_backend_address_pools=[self.backend_addr_pool_id(bap_id) for bap_id in ip_config.get('load_balancer_backend_address_pools')],
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
