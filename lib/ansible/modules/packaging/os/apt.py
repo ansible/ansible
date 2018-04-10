@@ -740,7 +740,8 @@ def cleanup(m, purge=False, force=False, operation=None,
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False,
+            ):
 
     if autoremove:
         autoremove = '--auto-remove'
