@@ -77,4 +77,8 @@ def warn_if_reserved(myvars):
         display.warning('Found variable using reserved name: %s' % varname)
 
 
+def is_reserved_name(name):
+    return name in _RESERVED_NAMES
+
+
 _RESERVED_NAMES = frozenset(get_reserved_names())
