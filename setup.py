@@ -170,7 +170,8 @@ except (IOError, OSError):
                 'Read the documentation and more at https://ansible.com/'
                 )
 
-setup(
+
+setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
     cmdclass={
@@ -248,3 +249,12 @@ setup(
     # Installing as zip files would break due to references to __file__
     zip_safe=False
 )
+
+
+def main():
+    """Invoke installation process using setuptools."""
+    setup(**setup_params)
+
+
+if __name__ == '__main__':
+    main()
