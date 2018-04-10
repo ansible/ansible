@@ -232,7 +232,7 @@ class PluginLoader:
                 self._paths = None
                 display.debug('Added %s to loader search path' % (directory))
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+    def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
         global _PLUGIN_FILTERS
@@ -321,6 +321,20 @@ class PluginLoader:
                 return pull_cache[alias_name]
 
         return None
+
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+        ''' Find a plugin named name '''
+
+        # Import here to avoid circular import
+        from ansible.vars.reserved import is_reserved_name
+
+        plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases)
+        if plugin and self.package == 'ansible.modules' and is_reserved_name(name):
+            raise AnsibleError(
+                'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
+            )
+
+        return plugin
 
     def has_plugin(self, name):
         ''' Checks if a plugin named name exists '''
