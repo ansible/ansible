@@ -114,7 +114,9 @@ options:
     version_added: '1.8'
   headers:
     description:
-        - Add custom HTTP headers to a request in hash/dict format. The C("key:value,key:value") string format is deprecated and will be removed in version 2.9.
+        - Add custom HTTP headers to a request in hash/dict format. The hash/dict format was added in 2.6.
+          Previous versions used a C("key:value,key:value") string format. The C("key:value,key:value") string
+          format is deprecated and will be removed in version 2.10.
     version_added: '2.0'
   url_username:
     description:
@@ -415,7 +417,7 @@ def main():
     elif module.params['headers']:
         try:
             headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
-            module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.9')
+            module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.10')
         except Exception:
             module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.")
     else:
