@@ -230,10 +230,45 @@
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
-  get_url: 
+  get_url:
     url: https://{{ httpbin_host }}
     dest: "{{ output_dir }}"
 
+- name: Test headers string
+  get_url:
+    url: https://{{ httpbin_host }}/headers
+    headers: Foo:bar,Baz:qux
+    dest: "{{ output_dir }}/headers_string.json"
+
+- name: Test headers string
+  assert:
+    that:
+      - (lookup('file', output_dir ~ '/headers_string.json')|from_json).headers.get('Foo') == 'bar'
+      - (lookup('file', output_dir ~ '/headers_string.json')|from_json).headers.get('Baz') == 'qux'
+
+- name: Test headers string invalid format
+  get_url:
+    url: https://{{ httpbin_host }}/headers
+    headers: Foo
+    dest: "{{ output_dir }}/headers_string_invalid.json"
+  register: invalid_string_headers
+  failed_when:
+    - invalid_string_headers is successful
+    - invalid_string_headers.msg != "The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed."
+
+- name: Test headers dict
+  get_url:
+    url: https://{{ httpbin_host }}/headers
+    headers:
+      Foo: bar
+      Baz: qux
+    dest: "{{ output_dir }}/headers_dict.json"
+
+- name: Test headers dict
+  assert:
+    that:
+      - (lookup('file', output_dir ~ '/headers_dict.json')|from_json).headers.get('Foo') == 'bar'
+      - (lookup('file', output_dir ~ '/headers_dict.json')|from_json).headers.get('Baz') == 'qux'
 
 - name: Test client cert auth, with certs
   get_url:
