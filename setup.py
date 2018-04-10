@@ -187,6 +187,12 @@ setup(
     author=__author__,
     author_email='info@ansible.com',
     url='https://ansible.com/',
+    project_urls={
+        'Bug Tracker': 'https://github.com/ansible/ansible/issues',
+        'CI: Shippable': 'https://app.shippable.com/github/ansible/ansible',
+        'Documentation': 'https://docs.ansible.com/ansible/',
+        'Source Code': 'https://github.com/ansible/ansible',
+    },
     license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
