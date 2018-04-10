@@ -90,6 +90,15 @@ options:
             - Possible values are 0, 10 and 20.
         required: false
         default: 0
+    visibility:
+        description:
+            - Private. Project access must be granted explicitly for each user.
+            - Internal. The project can be cloned by any logged in user.
+            - Public. The project can be cloned without any authentication.
+            - Possible values are private, internal and public.
+        required: false
+        choices: ['private', 'internal', 'public']
+        default: private
     state:
         description:
             - create or delete group.
@@ -119,7 +128,7 @@ EXAMPLES = '''
     path: my_first_group
     parent_name: my_parent_group
     lfs_enabled: True
-    request_access_enabled: False
+    request_access_enabled:  gather_facts: False False
     state: present
   delegate_to: localhost
 '''
@@ -154,17 +163,19 @@ class GitLabGroup(object):
         else:
             group = self.groupObject
 
-        group_dict = group.as_dict()
         for arg_key, arg_value in arguments.items():
-            group_data_value = group_dict.get(arg_key)
-            if isinstance(group_data_value, bool):
-                to_bool = self.to_bool(group_data_value)
-                if to_bool != self.to_bool(arg_value):
-                    changed = True
-                    continue
-            else:
-                if group_data_value != arg_value:
-                    changed = True
+            try:
+                group_data_value = group.__getattr__(arg_key)
+                if isinstance(group_data_value, bool):
+                    to_bool = self.to_bool(group_data_value)
+                    if to_bool != self.to_bool(arg_value):
+                        changed = True
+                        continue
+                else:
+                    if group_data_value != arg_value:
+                        changed = True
+            except AttributeError:
+                pass
 
         if changed:
             if self._module.check_mode:
@@ -195,13 +206,13 @@ class GitLabGroup(object):
 
     def existsGroup(self, name):
         """When group/user exists, object will be stored in self.groupObject."""
-        groups = self._gitlab.groups.search(name)
+        groups = self._gitlab.groups.list(search=name)
         if len(groups) == 1:
             self.groupObject = groups[0]
             return True
 
     def getGroupId(self, group_name):
-        groups = self._gitlab.groups.search(group_name)
+        groups = self._gitlab.groups.list(search=group_name)
         if len(groups) == 1:
             return groups[0].id
 
@@ -227,6 +238,7 @@ def main():
             lfs_enabled=dict(default=True, type='bool'),
             request_access_enabled=dict(default=False, type='bool'),
             visibility_level=dict(default="0", choices=["0", "10", "20"]),
+            visibility=dict(default="private", choices=["private", "internal", "public"]),
             state=dict(default="present", choices=["present", "absent"]),
         ),
         supports_check_mode=True
@@ -248,6 +260,7 @@ def main():
     lfs_enabled = module.params['lfs_enabled']
     request_access_enabled = module.params['request_access_enabled']
     visibility_level = module.params['visibility_level']
+    visibility = module.params['visibility']
     state = module.params['state']
     use_credentials = None
 
@@ -301,6 +314,7 @@ def main():
                  "parent_id": parent_id,
                  "lfs_enabled": group.to_bool(lfs_enabled),
                  "request_access_enabled": group.to_bool(request_access_enabled),
+                 "visibility": visibility,
                  "visibility_level": int(visibility_level)}
 
     if group_exists and state == "absent":

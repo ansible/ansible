@@ -207,20 +207,24 @@ class GitLabProject(object):
         else:
             project = self.projectObject
 
-        project_dict = project.as_dict()
         for arg_key, arg_value in arguments.items():
-            if arg_key == 'namespace_id':
-                project_data_value = project_dict.get('namespace').id
-            else:
-                project_data_value = project_dict.get(arg_key)
-            if isinstance(project_data_value, bool):
-                to_bool = self.to_bool(project_data_value)
-                if to_bool != self.to_bool(arg_value):
-                    changed = True
-                    continue
-            else:
-                if project_data_value != arg_value:
-                    changed = True
+            try:
+                if arg_key == 'namespace_id':
+                    # project_data_value = project_dict.get('namespace').id
+                    project_data_value = project.namespace['id']
+                else:
+                    # project_data_value = project_dict.get(arg_key)
+                    project_data_value = project.__getattr__(arg_key)
+                if isinstance(project_data_value, bool):
+                    to_bool = self.to_bool(project_data_value)
+                    if to_bool != self.to_bool(arg_value):
+                        changed = True
+                        continue
+                else:
+                    if project_data_value != arg_value:
+                        changed = True
+            except AttributeError:
+                pass
 
         if changed:
             if self._module.check_mode:
@@ -250,9 +254,9 @@ class GitLabProject(object):
             if state == "present":
                 self._module.fail_json(msg="The group " + group_name + " doesnt exists in Gitlab. Please create it first.")
 
-        projects = self._gitlab.projects.search(project_name)
+        projects = self._gitlab.projects.list(search=project_name)
         for project in projects:
-            if project.namespace.name == group_name and project_name == project.name:
+            if project.namespace['name'] == group_name and project_name == project.name:
                 self.projectObject = project
                 return True
 
@@ -260,7 +264,7 @@ class GitLabProject(object):
 
     def existsGroup(self, name):
         """When group/user exists, object will be stored in self.groupObject."""
-        groups = self._gitlab.groups.search(name)
+        groups = self._gitlab.groups.list(search=name)
         if len(groups) == 1:
             self.groupObject = groups[0]
             return True
