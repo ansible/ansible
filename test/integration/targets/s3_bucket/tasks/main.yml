@@ -272,7 +272,60 @@
     - assert:
         that:
           - not output.changed
+    # ============================================================
+    - name: Create bucket with AES256 encryption
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        state: present
+        encryption: "AES256"
+        <<: *aws_connection_info
+      register: output
 
+    - assert:
+        that:
+          - output.changed
+          - output.name == '{{ resource_prefix }}.testbucket.encrypt.ansible'
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'AES256'
+
+    - name: Update bucket with same encryption config
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        state: present
+        encryption: "AES256"
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'AES256'
+
+    - name: Disable encryption from bucket
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        state: present
+        encryption: "none"
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - not output.encryption
+
+    # ============================================================
+    - name: Delete s3_bucket
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
   # ============================================================
   always:
     - name: Ensure all buckets are deleted
@@ -285,3 +338,4 @@
         - "{{ resource_prefix }}-testbucket-ansible"
         - "{{ resource_prefix }}-testbucket-ansible-complex"
         - "{{ resource_prefix }}.testbucket.ansible"
+        - "{{ resource_prefix }}.testbucket.encrypt.ansible"

@@ -72,6 +72,14 @@ options:
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
     type: bool
+  encryption:
+    description:
+      - Describes the default server-side encryption to apply to new objects in the bucket. If none is specified, the default encryption will be applied.
+    choices: [ 'none', 'AES256', 'aws:kms' ]
+    version_added: "2.6"
+  encryption_key_id:
+    description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms.
+    version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -142,6 +150,8 @@ def create_or_update_bucket(s3_client, module, location):
     requester_pays = module.params.get("requester_pays")
     tags = module.params.get("tags")
     versioning = module.params.get("versioning")
+    encryption = module.params.get("encryption")
+    encryption_key_id = module.params.get("encryption_key_id")
     changed = False
     result = {}
 
@@ -279,8 +289,35 @@ def create_or_update_bucket(s3_client, module, location):
 
         result['tags'] = current_tags_dict
 
-    module.exit_json(changed=changed, name=name, **result)
 
+    # Encryption
+    try:
+        current_encryption = get_bucket_encryption(s3_client, name)
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get bucket encryption")
+
+    if encryption is not None:
+        current_encryption_algorithm = current_encryption.get('SSEAlgorithm') if current_encryption else None
+        current_encryption_key = current_encryption.get('KMSMasterKeyID') if current_encryption else None
+        if encryption == 'none' and current_encryption_algorithm is not None:
+            try:
+                delete_bucket_encryption(s3_client, name)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Failed to delete bucket encryption")
+            current_encryption = wait_encryption_is_applied(module, s3_client, name, None)
+            changed = True
+        elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
+            expected_encryption = {'SSEAlgorithm': encryption}
+            if encryption == 'aws:kms':
+                expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
+            try:
+                put_bucket_encryption(s3_client, name, expected_encryption)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Failed to set bucket encryption")
+            current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption)
+            changed = True
+
+    module.exit_json(changed=changed, name=name, **result)
 
 def bucket_exists(s3_client, bucket_name):
     # head_bucket appeared to be really inconsistent, so we use list_buckets instead,
@@ -358,8 +395,31 @@ def put_bucket_versioning(s3_client, bucket_name, required_versioning):
 
 
 @AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def get_bucket_encryption(s3_client, bucket_name):
+    try:
+        result = s3_client.get_bucket_encryption(Bucket=bucket_name)
+        return result.get('ServerSideEncryptionConfiguration').get('Rules')[0].get('ApplyServerSideEncryptionByDefault')
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFoundError':
+            return None
+        else:
+            raise e
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def put_bucket_encryption(s3_client, bucket_name, encryption):
+    server_side_encryption_configuration = {'Rules': [{'ApplyServerSideEncryptionByDefault': encryption}]}
+    s3_client.put_bucket_encryption(Bucket=bucket_name, ServerSideEncryptionConfiguration=server_side_encryption_configuration)
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
 def delete_bucket_tagging(s3_client, bucket_name):
     s3_client.delete_bucket_tagging(Bucket=bucket_name)
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def delete_bucket_encryption(s3_client, bucket_name):
+    s3_client.delete_bucket_encryption(Bucket=bucket_name)
 
 
 @AWSRetry.exponential_backoff(max_delay=120)
@@ -406,6 +466,19 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         module.fail_json(msg="Bucket request payment failed to apply in the expected time")
     else:
         return None
+
+
+def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption):
+    for dummy in range(0, 12):
+        try:
+            encryption = get_bucket_encryption(s3_client, bucket_name)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to get updated encryption for bucket")
+        if encryption != expected_encryption:
+            time.sleep(5)
+        else:
+            return encryption
+    module.fail_json(msg="Bucket encryption failed to apply in the excepted time")
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
@@ -555,11 +628,13 @@ def main():
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),
             versioning=dict(default=None, type='bool'),
-            ceph=dict(default='no', type='bool')
+            ceph=dict(default='no', type='bool'),
+            encryption=dict(type='str', default=None, choices=['none', 'AES256', 'aws:kms']),
+            encryption_key_id=dict(type='str')
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec, required_if=[['encryption', 'aws:kms', ['encryption_key_id']]])
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
