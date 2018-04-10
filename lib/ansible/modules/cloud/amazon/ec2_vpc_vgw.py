@@ -41,6 +41,9 @@ options:
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
+  asn:
+    description:
+        - the BGP ASN of the amazon side
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
