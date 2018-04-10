@@ -228,6 +228,17 @@ def acl_contains(lines, entry):
             return True
     return False
 
+def expand_permission_shorthand(path_isdir, perms):
+    perms = perms.replace("R", "rntcy")
+    perms = perms.replace("X", "xtcy")
+
+    if path_isdir:
+        perms = perms.replace("W", "watTNcCyD")
+    else:
+        perms = perms.replace("W", "watTNcCy")
+
+    return perms
+
 def entry_equal(t1, t2):
     fields = zip(t1.split(':'), t2.split(':'))
 
@@ -240,16 +251,25 @@ def entry_equal(t1, t2):
     if type[0] != type[1]:
         return False
 
-    if sorted(flags[0]) != sorted(flags[1]):  # flag order doesn't matter
+    # flag order doesn't matter
+    if set(flags[0]) != set(flags[1]):
         return False
 
     if entity[0] != entity[1]:
         return false
 
-    if sorted(permissions[0]) != sorted(permissions[1]):  # flag order doesn't matter
+    # Permissions:
+    # Expand RWX shorthand. Try for both the directory and regular file expansion.
+    # Permission order doesn't matter.
+    p0_file = expand_permission_shorthand(False, permissions[0])
+    p0_dir = expand_permission_shorthand(True, permissions[0])
+    p1_file = expand_permission_shorthand(False, permissions[1])
+    p1_dir = expand_permission_shorthand(True, permissions[1])
+
+    if set(p0_file) != set(p1_file) and set(p0_dir) != set(p1_dir):
         return False
 
-    return True
+    return True  # no diversions found
 
 
 def main():
