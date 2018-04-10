@@ -374,7 +374,6 @@ class TestSSHConnectionRun(object):
         self.mock_popen_res.stderr.read.side_effect = [b"my_stderr"]
         self.mock_selector.select.side_effect = [
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-        self.conn._build_command.return_value = 'sftp'
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []]
