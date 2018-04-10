@@ -181,7 +181,7 @@ To see what information is available, try the following::
 
 This will return a large amount of variable data, which may look like this, as taken from Ansible 1.4 running on a Ubuntu 12.04 system
 
-.. code-block: json
+.. code-block:: json
 
     {
         "ansible_all_ipv4_addresses": [
