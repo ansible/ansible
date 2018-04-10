@@ -44,6 +44,7 @@ options:
   asn:
     description:
         - the BGP ASN of the amazon side
+    version_added: "2.6"
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
