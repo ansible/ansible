@@ -49,7 +49,7 @@
     apt:
       upgrade: dist
       autoremove: yes
-      force: yes  # workaround for --allow-unauthenticated used along with upgrade
+      allow_unauthenticated: yes
 
   - name: Check foo with dpkg
     shell: dpkg-query -l foo
