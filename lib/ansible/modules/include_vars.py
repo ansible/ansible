@@ -70,6 +70,11 @@ options:
     type: bool
     default: no
     version_added: "2.7"
+  overwrite:
+    version_added: "2.6"
+    description:
+      - Defines whether existing variables should be overwritten.
+    default: yes (default) / no
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.
