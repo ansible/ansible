@@ -29,7 +29,7 @@ def get_file_content(path, default=None, strip=True):
                     data = default
             finally:
                 datafile.close()
-        except:
+        except Exception:
             # ignore errors as some jails/containers might have readable permissions but not allow reads to proc
             # done in 2 blocks for 2.4 compat
             pass
