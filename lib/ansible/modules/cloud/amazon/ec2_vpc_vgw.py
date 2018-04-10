@@ -41,6 +41,10 @@ options:
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
+  asn:
+    description:
+        - the BGP ASN of the amazon side
+    version_added: "2.6"
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
@@ -202,9 +206,10 @@ def detach_vgw(client, module, vpn_gateway_id, vpc_id=None):
 def create_vgw(client, module):
     params = dict()
     params['Type'] = module.params.get('type')
+    params['AmazonSideAsn'] = module.params.get('asn')
 
     try:
-        response = client.create_vpn_gateway(Type=params['Type'])
+        response = client.create_vpn_gateway(Type=params['Type'], AmazonSideAsn=params['AmazonSideAsn'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -544,6 +549,7 @@ def main():
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),
+        asn=dict(type='int'),
         wait_timeout=dict(type='int', default=320),
         type=dict(default='ipsec.1', choices=['ipsec.1']),
         tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
