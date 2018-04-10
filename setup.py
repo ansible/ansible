@@ -6,6 +6,8 @@ import os
 import os.path
 import re
 import sys
+import warnings
+
 from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
@@ -291,7 +293,17 @@ static_setup_params = dict(
 def main():
     """Invoke installation process using setuptools."""
     setup_params = dict(static_setup_params, **get_dynamic_setup_params())
+    ignore_warning_regex = (
+        r"Unknown distribution option: '(project_urls|python_requires)'"
+    )
+    warnings.filterwarnings(
+        'ignore',
+        message=ignore_warning_regex,
+        category=UserWarning,
+        module='distutils.dist',
+    )
     setup(**setup_params)
+    warnings.resetwarnings()
 
 
 if __name__ == '__main__':
