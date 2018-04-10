@@ -347,18 +347,6 @@ def nic_to_dict(nic):
     )
 
 
-def construct_ip_configuration_set(raw):
-    configurations = [str(dict(
-        private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
-        public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
-                                if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
-        primary=item.get('primary'),
-        load_balancer_backend_address_pools = (set(item.get('load_balancer_backend_address_pools'))
-                                               if item.get('load_balancer_backend_address_pools') else None),
-        name=to_native(item.get('name'))
-    )) for item in raw]
-    return set(configurations)
-
 ip_configuration_spec = dict(
     name=dict(type='str', required=True),
     private_ip_address=dict(type='str'),
@@ -630,6 +618,18 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                    child_type_1='backendAddressPools',
                                    child_name_1=name)
         return val
+
+    def construct_ip_configuration_set(self, raw):
+        configurations = [str(dict(
+            private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
+            public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
+                                    if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
+            primary=item.get('primary'),
+            load_balancer_backend_address_pools = (set([self.backend_addr_pool_id(id) for id in item.get('load_balancer_backend_address_pools')])
+                                                   if item.get('load_balancer_backend_address_pools') else None),
+            name=to_native(item.get('name'))
+        )) for item in raw]
+        return set(configurations)
 
 
 def main():
