@@ -882,8 +882,9 @@ class TaskExecutor:
         python = sys.executable
 
         def find_file_in_path(filename):
-            # Check $PATH first, followed by same directory as sys.argv[0]
-            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
+            # Check $PATH for coverage dirs, followed by same directory as sys.argv[0]
+            coverage_paths = [path for path in os.environ['PATH'].split(os.pathsep) if 'ansible-test-coverage-' in path]
+            paths = coverage_paths + [os.path.dirname(sys.argv[0])]
             for dirname in paths:
                 fullpath = os.path.join(dirname, filename)
                 if os.path.isfile(fullpath):
