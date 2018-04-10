@@ -1,0 +1,2 @@
+bugfixes:
+- win_uri - convert status code values to an int before validating them in server response (https://github.com/ansible/ansible/pull/38080)
