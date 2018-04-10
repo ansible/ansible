@@ -179,8 +179,8 @@ options:
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type,
-        iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
     description:
