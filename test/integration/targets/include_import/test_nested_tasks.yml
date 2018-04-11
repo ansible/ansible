@@ -3,4 +3,4 @@
     include+meta doesnt mess included files mecanisms
   hosts: testhost
   tasks:
-  - include_tasks: ./tasks/nested/nested.yml
+    - include_tasks: ./tasks/nested/nested.yml
