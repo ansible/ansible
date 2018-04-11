@@ -24,7 +24,7 @@ from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ism
 from ansible import constants as C
 
 
-def expand_path_wrap(func, *args):
+def expand_path_wrap(func):
     def wrapper(*args):
         expanded_args = [expanduser(expandvars(a)) for a in args]
         return func(*expanded_args)
