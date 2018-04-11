@@ -32,6 +32,8 @@ options:
         lines to push into the remote device.  Each line must start with
         either C(set) or C(delete).  This argument is mutually exclusive
         with the I(src) argument.
+      - Abbreviated commands in lines are NOT idempotent, see 
+        L(Network FAQ,../network/user_guide/faq.html).
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -155,6 +157,15 @@ EXAMPLES = """
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
+
+- name: for idempotency, use full-form commands
+  junos_config:
+	lines:
+	  # - shut
+	  - shutdown
+	# parents: int eth1/1
+	parents: interface Ethernet1/1
+
 """
 
 RETURN = """

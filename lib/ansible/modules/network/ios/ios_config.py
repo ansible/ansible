@@ -43,6 +43,8 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
+      - Abbreviated commands in lines are NOT idempotent, see 
+        L(Network FAQ,../network/user_guide/faq.html).
     aliases: ['commands']
   parents:
     description:
@@ -261,6 +263,15 @@ EXAMPLES = """
 - name: save running to startup when modified
   ios_config:
     save_when: modified
+
+- name: for idempotency, use full-form commands
+  ios_config:
+	lines:
+	  # - shut
+	  - shutdown
+	# parents: int gig1/0/11
+	parents: interface GigabitEthernet1/0/11
+
 """
 
 RETURN = """

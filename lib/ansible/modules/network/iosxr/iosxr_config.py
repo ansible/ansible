@@ -37,6 +37,8 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
+      - Abbreviated commands in lines are NOT idempotent, see 
+        L(Network FAQ,../network/user_guide/faq.html).
     aliases: ['commands']
   parents:
     description:
@@ -151,6 +153,15 @@ EXAMPLES = """
     src: config.cfg
     replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+	lines:
+	  # - shut
+	  - shutdown
+	# parents: int g0/0/0/0
+	parents: interface GigabitEthernet0/0/0/0
+
 """
 
 RETURN = """

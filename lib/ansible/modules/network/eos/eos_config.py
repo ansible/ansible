@@ -44,6 +44,8 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
+      - Abbreviated commands in lines are NOT idempotent, see 
+        L(Network FAQ,../network/user_guide/faq.html).
     aliases: ['commands']
   parents:
     description:
@@ -234,6 +236,15 @@ EXAMPLES = """
   eos_config:
     diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+- name: for idempotency, use full-form commands
+  eos_config:
+	lines:
+	  # - shut
+	  - shutdown
+	# parents: int eth1/1
+	parents: interface Ethernet1/1
+
 """
 
 RETURN = """

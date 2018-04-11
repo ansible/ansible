@@ -42,6 +42,8 @@ options:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
+      - Abbreviated commands in lines are NOT idempotent, see 
+        L(Network FAQ,../network/user_guide/faq.html).
   src:
     description:
       - The C(src) argument specifies the path to the source config
@@ -100,6 +102,15 @@ EXAMPLES = """
   vyos_config:
     src: vyos.cfg
     backup: yes
+
+- name: for idempotency, use full-form commands
+  nxos_config:
+	lines:
+	  # - shut
+	  - shutdown
+	# parents: int eth1/1
+	parents: interface Ethernet1/1
+
 """
 
 RETURN = """
