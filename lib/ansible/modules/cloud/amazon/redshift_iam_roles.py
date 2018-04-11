@@ -65,7 +65,7 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-from ansible.module_utils.basic import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, camel_dict_to_snake_dict, HAS_BOTO3
 import traceback
 
@@ -108,7 +108,7 @@ def main():
     cluster_roles = conn.describe_clusters(ClusterIdentifier=target_cluster)['Clusters'][0]['IamRoles']
     current_roles = [x['IamRoleArn'] for x in cluster_roles]
 
-    if purge_roles == True:
+    if module.params.get('purge_roles') is True:
         if desired_state or target_roles:
             module.fail_json_aws(msg="Unable to modify IAM role(s)")
         if not current_roles:
