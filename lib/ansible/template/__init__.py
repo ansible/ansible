@@ -627,7 +627,8 @@ class Templar:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
                 if self._fail_on_lookup_errors:
-                    msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % (name, type(e), to_text(e))
+                    msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
+                          (name, type(e), to_text(e))
                     if errors == 'warn':
                         display.warning(msg)
                     elif errors == 'ignore':
