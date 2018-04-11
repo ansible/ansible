@@ -366,6 +366,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
+            has_security_group=dict(type='bool', default=True),
             security_group_name=dict(type='str', aliases=['security_group']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
@@ -388,6 +389,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
+        self.has_security_group = None
         self.security_group_name = None
         self.private_ip_address = None
         self.private_ip_allocation_method = None
@@ -435,6 +437,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if virtual_network_resource_group is None:
             virtual_network_resource_group = self.resource_group
+        
+        # if not set the security group name, use nic name for default
+        self.security_group_name = self.security_group_name or self.name
 
         # if not set the security group name, use nic name for default
         self.security_group_name = self.security_group_name or self.name
@@ -470,10 +475,15 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                nsg = self.get_security_group(self.security_group_name)
-                if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
-                    self.log("CHANGED: network interface {0} network security group".format(self.name))
+                if self.has_security_group != bool(results.get('network_security_group')):
+                    self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
+                
+                if not changed:
+                    nsg = self.get_security_group(self.security_group_name)
+                    if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
+                        self.log("CHANGED: network interface {0} network security group".format(self.name))
+                        changed = True
 
                 if results['ip_configurations'][0]['subnet']['virtual_network_name'] != virtual_network_name:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
@@ -534,11 +544,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
-                nsg = nsg or self.create_default_securitygroup(self.resource_group,
-                                                               self.location,
-                                                               self.security_group_name or self.name,
-                                                               self.os_type,
-                                                               self.open_ports)
+                nsg = self.create_default_securitygroup(self.resource_group,
+                                                        self.location,
+                                                        self.security_group_name,
+                                                        self.os_type,
+                                                        self.open_ports) if self.has_security_group else None
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
