@@ -567,8 +567,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
 
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
+        if expand_path == '~':
+            if sudoable and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+            else:
+                # use remote user instead, if none set default to current user
+                expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
