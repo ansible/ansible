@@ -22,9 +22,11 @@ import shutil
 import tempfile
 
 from ansible import constants as C
+from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleAction, AnsibleActionFail
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
 
@@ -76,6 +78,21 @@ class ActionModule(ActionBase):
             newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
 
         try:
+            for s_type in ('source', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
+                           'block_end_string'):
+                value = locals()[s_type]
+                value = ensure_type(value, 'string')
+                if value is not None and not isinstance(value, string_types):
+                    raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
+                locals()[s_type] = value
+
+            for b_type in ('force', 'follow', 'trim_blocks'):
+                value = locals()[b_type]
+                value = ensure_type(value, 'string')
+                if value is not None and not isinstance(value, bool):
+                    raise AnsibleActionFail("%s is expected to be a boolean, but got %s instead" % (b_type, type(value)))
+                locals()[b_type] = value
+
             if state is not None:
                 raise AnsibleActionFail("'state' cannot be specified on a template")
             elif source is None or dest is None:
