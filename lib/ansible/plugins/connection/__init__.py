@@ -60,6 +60,8 @@ class ConnectionBase(AnsiblePlugin):
     supports_persistence = False
     force_persistence = False
 
+    default_user = None
+
     def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
