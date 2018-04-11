@@ -163,6 +163,8 @@ class IntegrationConfig(TestConfig):
         self.allow_destructive = args.allow_destructive  # type: bool
         self.allow_root = args.allow_root  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
+        self.allow_unstable = args.allow_unstable  # type: bool
+        self.allow_unstable_changed = args.allow_unstable_changed  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
         self.continue_on_error = args.continue_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool

@@ -233,6 +233,14 @@ def parse_args():
                              action='store_true',
                              help='allow tests which have been marked as disabled')
 
+    integration.add_argument('--allow-unstable',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable')
+
+    integration.add_argument('--allow-unstable-changed',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable when focused changes are detected')
+
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')

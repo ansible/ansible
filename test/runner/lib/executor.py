@@ -1197,6 +1197,20 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-disabled or prefixing with "disabled/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    override_unstable = set(target for target in args.include if target.startswith('unstable/'))
+
+    if args.allow_unstable_changed:
+        override_unstable |= set(args.metadata.change_description.focused_targets or [])
+
+    if not args.allow_unstable:
+        skip = 'unstable/'
+        override = [target.name for target in targets if override_unstable & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
+        if skipped:
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
 
 def get_integration_local_filter(args, targets):
     """
