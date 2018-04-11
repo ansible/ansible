@@ -677,7 +677,6 @@ def main():
         argument_spec=argument_spec,
         required_if=[
             ['state', 'absent', ['image_id']],
-            ['state', 'present', ['name']],
         ]
     )
 
