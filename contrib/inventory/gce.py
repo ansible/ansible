@@ -517,13 +517,15 @@ class GceInventory(object):
                 else:
                     groups[tag] = [name]
 
+            # Skip grouping node by labels if node doesn't have any labels
             labels = node.extra['labels']
-            for lab_key, lab_value in labels.items():
-                label = 'label_%s_%s' % (lab_key, lab_value)
-                if label in groups:
-                    groups[label].append(name)
-                else:
-                    groups[label] = [name]
+            if labels is not None:
+                for lab_key, lab_value in labels.items():
+                    label = 'label_%s_%s' % (lab_key, lab_value)
+                    if label in groups:
+                        groups[label].append(name)
+                    else:
+                        groups[label] = [name]
 
             net = node.extra['networkInterfaces'][0]['network'].split('/')[-1]
             net = 'network_%s' % net
