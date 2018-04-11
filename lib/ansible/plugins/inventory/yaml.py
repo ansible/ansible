@@ -91,7 +91,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         try:
-            data = self.loader.load_from_file(path)
+            data = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(e)
 
