@@ -96,7 +96,7 @@ class CallbackModule(CallbackBase):
 
         self.FOREMAN_URL = self._plugin_options['url']
         self.FOREMAN_SSL_CERT = (self._plugin_options['ssl_cert'], self._plugin_options['ssl_key'])
-        self.FOREMAN_SSL_VERIFY = self._plugin_options['verify_certs']
+        self.FOREMAN_SSL_VERIFY = str(self._plugin_options['verify_certs'])
 
         self.ssl_verify = self._ssl_verify()
 
