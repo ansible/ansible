@@ -23,12 +23,6 @@ run directly from the development branch - while significant efforts are made to
 ``devel`` is reasonably stable, you're more likely to encounter breaking changes when running
 Ansible this way.
 
-If you want to download a tarball of a release, go to
-`releases.ansible.com <https://releases.ansible.com/ansible>`_, though
-most users use ``yum`` (using the EPEL instructions linked above),
-``apt`` (using the PPA instructions linked above), or
-``pip install ansible``.
-
 Design Principles
 =================
 
@@ -58,7 +52,7 @@ Get Involved
    ``git rebase`` vs ``git merge`` for this reason. If submitting a
    large code change (other than modules), it's probably a good idea to
    join ansible-devel and talk about what you would like to do or add
-   first and to avoid duplicate efforts. This not only helps everyone
+   first to avoid duplicate efforts. This not only helps everyone
    know what's going on, it also helps save time and effort if we decide
    some changes are needed.
 *  Users list:
@@ -91,7 +85,7 @@ Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
 
 Ansible is sponsored by `Ansible, Inc <https://ansible.com>`_
 
-Licence
+License
 =======
 
 GNU General Public License v3.0
