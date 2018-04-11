@@ -54,7 +54,7 @@ class ActionModule(_ActionModule):
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
-        for key in result.keys():
+        for key in list(result.keys()):
             if PRIVATE_KEYS_RE.match(key):
                 del result[key]
 
