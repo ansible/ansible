@@ -20,7 +20,7 @@ Lookups and loops
 
 *lookup plugins* are a way to query external data sources, such as shell commands or even key value stores.
 
-Before Ansible 2.5, lookups were mostly used indirectly in ``with_<lookup`` constructs for looping. Starting with Ansible version 2.5, lookups are used more explicitly as part of Jinja2 expressions fed into the ``loop`` keyword.
+Before Ansible 2.5, lookups were mostly used indirectly in ``with_<lookup>`` constructs for looping. Starting with Ansible version 2.5, lookups are used more explicitly as part of Jinja2 expressions fed into the ``loop`` keyword.
 
 
 .. _lookups_and_variables:
