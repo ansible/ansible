@@ -17,3 +17,4 @@ bugfixes:
 - nxos_acl_interface test - Fix nxos_acl_interface test (https://github.com/ansible/ansible/pull/38230)
 - nxos_igmp - Fix nxos_igmp (https://github.com/ansible/ansible/pull/38496)
 - nxos_hsrp - Fix nxos_hsrp (https://github.com/ansible/ansible/pull/38410)
+- nxos_igmp_snooping - Fix nxos_igmp_snooping (https://github.com/ansible/ansible/pull/38566)
