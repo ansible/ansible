@@ -104,8 +104,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         self._filename = path
 
         try:
-            # Read in the hosts, groups, and variables defined in the
-            # inventory file.
+            # Read in the hosts, groups, and variables defined in the inventory file.
             if self.loader:
                 (b_data, private) = self.loader._get_file_contents(path)
             else:
