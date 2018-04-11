@@ -5,4 +5,18 @@
     - debug:
         msg: "Testing with Python version {{ ansible_python_version }} from {{ ansible_python.executable }}"
 
-    - include_tasks: tasks/tasks_multiple_include_role.yml
+
+    # Dynamic tasks
+    - name: dynamic tasks --> dynamic role --> {{ tasks_file_name }} tasks
+      include_tasks: tasks/tasks_multiple_include_role.yml
+
+    - name: dynamic tasks --> static role --> {{ tasks_file_name }} tasks
+      include_tasks: tasks/tasks_multiple_import_role_{{ tasks_file_name }}_tasks.yml
+
+
+    # Static tasks
+    - name: static tasks --> dynamic role --> {{ tasks_file_name }} tasks
+      import_tasks: tasks/tasks_multiple_include_role.yml
+
+    - name: static tasks --> static role --> {{ tasks_file_name }} tasks
+      import_tasks: tasks/tasks_multiple_import_role_{{ tasks_file_name }}_tasks.yml

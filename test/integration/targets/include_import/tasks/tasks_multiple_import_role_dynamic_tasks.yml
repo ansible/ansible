@@ -1,0 +1,79 @@
+- name: Include 1
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 2
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 3
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 4
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 5
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 6
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 7
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 8
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 9
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 10
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 11
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 12
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 13
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 14
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 15
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
+
+- name: Include 16
+  import_role:
+    name: role1
+    tasks_from: tasks_dynamic.yml
