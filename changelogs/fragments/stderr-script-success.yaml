@@ -1,0 +1,5 @@
+bugfixes:
+  - restore stderr ouput even if script module run is successful (https://github.com/ansible/ansible/pull/38177)
+
+minor_features:
+  - add option to script module to toggle stderr display on module success (https://github.com/ansible/ansible/pull/38177)
