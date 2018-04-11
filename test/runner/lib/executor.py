@@ -88,6 +88,10 @@ from lib.config import (
     WindowsIntegrationConfig,
 )
 
+from lib.metadata import (
+    ChangeDescription,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -1029,23 +1033,24 @@ def get_changes_filter(args):
     """
     paths = detect_changes(args)
 
+    if not args.metadata.change_description:
+        if paths:
+            changes = categorize_changes(args, paths, args.command)
+        else:
+            changes = ChangeDescription()
+
+        args.metadata.change_description = changes
+
     if paths is None:
         return []  # change detection not enabled, do not filter targets
 
     if not paths:
         raise NoChangesDetected()
 
-    commands = categorize_changes(args, paths, args.command)
-
-    targets = commands.get(args.command)
-
-    if targets is None:
+    if args.metadata.change_description.targets is None:
         raise NoTestsForChanges()
 
-    if targets == ['all']:
-        return []  # changes require testing all targets, do not filter targets
-
-    return targets
+    return args.metadata.change_description.targets
 
 
 def detect_changes(args):
