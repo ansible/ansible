@@ -144,7 +144,6 @@ options:
         C(show running-config all).
     type: bool
     default: 'no'
-    version_added: "2.2"
   save:
     description:
       - The C(save) argument instructs the module to save the running-
@@ -154,7 +153,6 @@ options:
         in Ansible 2.8, use C(save_when) instead.
     type: bool
     default: 'no'
-    version_added: "2.2"
   save_when:
     description:
       - When changes are made to the device running-configuration, the
