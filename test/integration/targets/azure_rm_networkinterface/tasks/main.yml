@@ -89,7 +89,7 @@
       security_group: testnic001
   register: output
 
-- assert: Create NIC idempotent
+- assert:
   that:
    - not output.changed
 
