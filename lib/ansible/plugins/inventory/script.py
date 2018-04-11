@@ -21,7 +21,7 @@ DOCUMENTATION = '''
            - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
       always_show_stderr:
         description: Toggle display of stderr even when script was successful
-        version_added: "2.6"
+        version_added: "2.5.1"
         default: True
         type: boolean
         ini:
