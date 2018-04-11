@@ -81,7 +81,7 @@ To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module 
 .. code-block:: yaml
 
    - name: Enable NETCONF
-     ansible_connection: network_cli
+     connection: network_cli
      junos_netconf:
      when: ansible_network_os == 'junos'
 
