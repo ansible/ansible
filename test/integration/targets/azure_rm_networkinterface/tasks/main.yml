@@ -90,8 +90,8 @@
   register: output
 
 - assert:
-  that:
-   - not output.changed
+    that:
+      - not output.changed
 
 - name: Delete NIC
   azure_rm_networkinterface:
