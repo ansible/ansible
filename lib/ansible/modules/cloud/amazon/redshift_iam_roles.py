@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, Aaron Smith <ajsmith10381@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -30,17 +19,23 @@ description:
 options:
     cluster:
         description:
-            - "This is the cluster you'd like to modify"
+            - "This is the cluster you'd like to modify."
         required: true
     state:
         description:
-            - "Desired state of the list of IAM roles on the give Redshift cluster"
-        required: true
+            - "Desired state of the list of IAM roles on the given Redshift cluster."
+        required: false
         choices: ['present', 'absent']
     roles:
         description:
-            - "This is a list of IAM roles (Full ARN) to add to the Redshift cluster. Roles attached to the cluster that are not on the list will be removed."
-        required: true
+            - "This is a list of IAM roles (Full ARN) to add/remove to or from the Redshift cluster."
+        required: false
+    purge_roles:
+        description:
+            - "Purges all roles from a given Redshift cluster."
+        required: false
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - ec2
     - aws
@@ -55,15 +50,22 @@ EXAMPLES = '''
         - "arn:aws:iam::123456789012:role/superuser"
         - "arn:aws:iam::123456789012:role/new_hotness"
 
-- name: remove all IAM roles from a redshift cluster
+- name: remove specific roles from a redshift cluster
   redshift_iam_roles:
     cluster: "staging"
     state: absent
+    roles:
+        - "arn:aws:iam::123456789012:role/remove_this"
+
+- name: remove all IAM roles from a redshift cluster
+  redshift_iam_roles:
+    cluster: "staging"
+    purge_roles: True
 '''
 
 RETURN = ''' # '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, camel_dict_to_snake_dict, HAS_BOTO3
 import traceback
 
@@ -78,12 +80,13 @@ def main():
     argument_spec.update(
         dict(
             cluster=dict(type='str', required=True),
-            state=dict(type='str', required=True, choices=['present', 'absent']),
-            roles=dict(type='list', required=True)
+            state=dict(type='str', required=False, choices=['present', 'absent']),
+            roles=dict(type='list', required=False),
+            purge_roles=dict(type='bool', required=False, default=False)
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
@@ -105,23 +108,9 @@ def main():
     cluster_roles = conn.describe_clusters(ClusterIdentifier=target_cluster)['Clusters'][0]['IamRoles']
     current_roles = [x['IamRoleArn'] for x in cluster_roles]
 
-    if desired_state == 'present':
-        roles_to_add = list(set(target_roles) - set(current_roles))
-        roles_to_remove = list(set(current_roles) - set(target_roles))
-        if not roles_to_add:
-            module.exit_json(**result)
-        try:
-            response = conn.modify_cluster_iam_roles(
-                ClusterIdentifier=target_cluster,
-                AddIamRoles=roles_to_add,
-                RemoveIamRoles=roles_to_remove
-            )
-            result['changed'] = True
-        except Exception as e:
-            module.fail_json(msg="Unable to modify IAM role(s): {0}".format(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-    if desired_state == 'absent':
+    if purge_roles == True:
+        if desired_state or target_roles:
+            module.fail_json_aws(msg="Unable to modify IAM role(s)")
         if not current_roles:
             module.exit_json(**result)
         try:
@@ -130,9 +119,32 @@ def main():
                 RemoveIamRoles=current_roles
             )
             result['changed'] = True
-        except Exception as e:
-            module.fail_json(msg="Unable to modify IAM role(s): {0}".format(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(msg="Unable to modify IAM role(s): {0}".format(e))
+
+    if desired_state == 'present':
+        if not target_roles:
+            module.exit_json(**result)
+        try:
+            response = conn.modify_cluster_iam_roles(
+                ClusterIdentifier=target_cluster,
+                AddIamRoles=target_roles
+            )
+            result['changed'] = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(msg="Unable to modify IAM role(s): {0}".format(e))
+
+    if desired_state == 'absent':
+        if not target_roles:
+            module.exit_json(**result)
+        try:
+            response = conn.modify_cluster_iam_roles(
+                ClusterIdentifier=target_cluster,
+                RemoveIamRoles=target_roles
+            )
+            result['changed'] = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(msg="Unable to modify IAM role(s): {0}".format(e))
 
     module.exit_json(**result)
 
