@@ -28,7 +28,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION = '2.4'
+VERSION = '2.5'
 AUTHOR = 'Ansible, Inc'
 
 
