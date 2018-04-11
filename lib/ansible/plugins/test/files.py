@@ -19,15 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from functools import partial
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount, expanduser, expandvars
 
 from ansible import constants as C
 
 
 def expand_path_wrap(func, *args):
-    expanded_args = [expanduser(expandvars(a)) for a in args]
-    return func(*expanded_args)
+    def wrapper(*args):
+        expanded_args = [expanduser(expandvars(a)) for a in args]
+        return func(*expanded_args)
+    return wrapper
 
 
 class TestModule(object):
@@ -55,6 +56,6 @@ class TestModule(object):
         }
 
         if C.EXPAND_PATH_FILE_TESTS:
-            return dict((k, partial(expand_path_wrap, v)) for k, v in tests.items())
+            return dict((k, expand_path_wrap(v)) for k, v in tests.items())
 
         return tests

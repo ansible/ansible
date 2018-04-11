@@ -7,7 +7,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from functools import partial
 import os
 import os.path
 
@@ -28,9 +27,9 @@ class TestExpandPathWrap(unittest.TestCase):
         os.rmdir(os.path.expanduser(cls.dirname))
 
     def test_expand_path_wrap_isdir_one_arg(self):
-        func = partial(expand_path_wrap, os.path.isdir)
+        func = expand_path_wrap(os.path.isdir)
         self.assertTrue(func(self.dirname))
 
     def test_expand_path_wrap_is_same_file_two_args(self):
-        func = partial(expand_path_wrap, os.path.samefile)
+        func = expand_path_wrap(os.path.samefile)
         self.assertTrue(func(self.dirname, self.dirname))
