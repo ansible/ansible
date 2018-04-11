@@ -122,7 +122,8 @@ class Connection(object):
             response = json.loads(out)
 
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket. Please check %s' % troubleshoot, err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket. Please check %s' % troubleshoot, err=to_text(e, errors='surrogate_then_replace'),
+                                  exception=traceback.format_exc())
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
