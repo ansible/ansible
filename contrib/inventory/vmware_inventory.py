@@ -287,11 +287,23 @@ class VMWareInventory(object):
         self.debugl('lower keys is %s' % self.lowerkeys)
         self.skip_keys = list(config.get('vmware', 'skip_keys').split(','))
         self.debugl('skip keys is %s' % self.skip_keys)
-        self.host_filters = list(config.get('vmware', 'host_filters').split(','))
+        temp_host_filters = list(config.get('vmware', 'host_filters').split('}},'))
+        for host_filter in temp_host_filters:
+            host_filter = host_filter.rstrip()
+            if host_filter != "":
+                if not host_filter.endswith("}}"):
+                    host_filter += "}}"
+                self.host_filters.append(host_filter)
         self.debugl('host filters are %s' % self.host_filters)
-        self.groupby_patterns = list(config.get('vmware', 'groupby_patterns').split(','))
-        self.debugl('groupby patterns are %s' % self.groupby_patterns)
 
+        temp_groupby_patterns = list(config.get('vmware', 'groupby_patterns').split('}},'))
+        for groupby_pattern in temp_groupby_patterns:
+            groupby_pattern = groupby_pattern.rstrip()
+            if groupby_pattern != "":
+                if not groupby_pattern.endswith("}}"):
+                    groupby_pattern += "}}"
+                self.groupby_patterns.append(groupby_pattern)
+        self.debugl('groupby patterns are %s' % self.groupby_patterns)
         # Special feature to disable the brute force serialization of the
         # virtulmachine objects. The key name for these properties does not
         # matter because the values are just items for a larger list.
