@@ -314,7 +314,8 @@ def nic_to_dict(nic):
             private_ip_allocation_method=config.private_ip_allocation_method,
             subnet=subnet_to_dict(config.subnet),
             primary=config.primary,
-            load_balancer_backend_address_pools=[item.id for item in config.load_balancer_backend_address_pools],
+            load_balancer_backend_address_pools=[item.id for item in config.load_balancer_backend_address_pools] \
+                                                 if config.load_balancer_backend_address_pools else None,
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
