@@ -1,0 +1,2 @@
+bugfixes:
+- junos_netconf - Report error is wrong connection type is used for junos_netconf (https://github.com/ansible/ansible/pull/38527)
