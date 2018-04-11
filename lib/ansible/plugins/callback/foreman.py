@@ -160,8 +160,10 @@ class CallbackModule(CallbackBase):
             source, msg = entry
             if 'failed' in msg:
                 level = 'err'
+            elif 'changed' in msg and msg['changed']:
+                level = 'notice'
             else:
-                level = 'notice' if 'changed' in msg and msg['changed'] else 'info'
+                level = 'info'
             logs.append({
                 "log": {
                     'sources': {
