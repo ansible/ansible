@@ -452,7 +452,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     private_ip_allocation_method=self.private_ip_allocation_method,
                     public_ip_address_name=self.public_ip_address_name if self.public_ip else None,
                     public_ip_allocation_method=self.public_ip_allocation_method,
-                    name='default'
+                    name='default',
+                    primary=True
                 )
             ]
 
