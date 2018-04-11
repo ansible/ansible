@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos_command - add action plugin to backup config (https://github.com/ansible/ansible/pull/37619)
