@@ -275,7 +275,7 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                     except Exception as e:
                         display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
                     display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
