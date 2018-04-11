@@ -633,7 +633,7 @@ class Templar:
                     elif errors == 'ignore':
                         display.log(msg)
                     else:
-                        raise AnsibleError(msg)
+                        raise AnsibleError(to_native(msg))
                 ran = None
 
             if ran and not allow_unsafe:
