@@ -19,19 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from functools import partial
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount, expanduser, expandvars
+
+from ansible import constants as C
+
+
+def expand_path_wrap(func, *args):
+    expanded_args = [expanduser(expandvars(a)) for a in args]
+    return func(*expanded_args)
 
 
 class TestModule(object):
     ''' Ansible file jinja2 tests '''
 
     def tests(self):
-        def w(func):
-            def wrapper(*args):
-                expanded_args = [expanduser(expandvars(a)) for a in args]
-                return func(*expanded_args)
-            return wrapper
-
         tests = {
             # file testing
             'is_dir': isdir,
@@ -52,4 +54,7 @@ class TestModule(object):
             'mount': ismount,
         }
 
-        return {k: w(v) for k, v in tests.items()}
+        if C.EXPAND_PATH_FILE_TESTS:
+            return dict((k, partial(expand_path_wrap, v)) for k, v in tests.items())
+
+        return tests

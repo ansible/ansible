@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+      - set_fact:
+          test_dir: ~/.testing_dir
+
+      - name: Create a test dir
+        file:
+          name: "{{ test_dir }}"
+          state: directory
+
+      - name: Check if jinja2 file tests expand ~ in a name
+        assert:
+          that:
+            - test_dir is directory
+            - test_dir is same_file(test_dir)
+
+      always:
+        - name: Remove test dir
+          file:
+            name: "{{ test_dir }}"
+            state: absent
