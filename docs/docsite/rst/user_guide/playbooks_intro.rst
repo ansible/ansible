@@ -62,7 +62,7 @@ For starters, here's a playbook that contains just one play::
       remote_user: root
       tasks:
       - name: ensure apache is at the latest version
-        yum: 
+        yum:
           name: httpd
           state: latest
       - name: write the apache config file
@@ -82,8 +82,8 @@ For starters, here's a playbook that contains just one play::
             name: httpd
             state: restarted
 
-When working with tasks that have really long parameters or modules that take 
-many parameters, you can break tasks items over multiple lines to improve the 
+When working with tasks that have really long parameters or modules that take
+many parameters, you can break tasks items over multiple lines to improve the
 structure. Below is another version of the above example but using
 YAML dictionaries to supply the modules with their ``key=value`` arguments.::
 
@@ -199,7 +199,7 @@ You can also use become on a particular task instead of the whole play::
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: 
+        - service:
             name: nginx
             state: started
           become: yes
@@ -299,7 +299,7 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
-running the playbook.   This is human readable output, and so it is 
+running the playbook.   This is human readable output, and so it is
 useful to provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
@@ -376,7 +376,7 @@ Ansible prefers listing modules like this::
         src: templates/foo.j2
         dest: /etc/foo.conf
 
-Early versions of Ansible used the following format, which still works::
+Early versions of Ansible used the following format, which still works (but is not recommended)::
 
     action: template src=templates/foo.j2 dest=/etc/foo.conf
 
@@ -412,7 +412,7 @@ The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name, and are notified 
+tasks, that are referenced by a globally unique name, and are notified
 by notifiers.  If nothing notifies a handler, it will not
 run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.
@@ -539,6 +539,3 @@ can do this::
        Complete end-to-end playbook examples
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
-
-
