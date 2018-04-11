@@ -195,8 +195,8 @@
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
-        - name: ipconfig-add
-          public_ip_name: testnic002
+        - name: ipconfig1
+          public_ip_name: testnic003
         - name: default
           public_ip_name: testnic001
           public_ip_allocation_method: Static
