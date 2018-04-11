@@ -154,12 +154,18 @@ options:
             load_balancer_backend_address_pools:
                 description:
                     - List of an existing load-balancer backend address pool id to associate with the network interface.
+                    - It can be write as a resource id.
+                    - Also can be a dict of I(name) and I(load_balancer).
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
                 type: bool
                 default: 'no'
         version_added: 2.5
+    has_security_group:
+        description:
+            - Whether need the NIC created with a security group
+        default: True
     security_group_name:
         description:
             - Name of an existing security group with which to associate the network interface. If not provided, a
@@ -537,7 +543,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         subnet=subnet,
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
                         load_balancer_backend_address_pools=[self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id)) \
-                                                             for bap_id in ip_config.get('load_balancer_backend_address_pools', [])],
+                                                             for bap_id in ip_config.get('load_balancer_backend_address_pools')] \
+                                                             if ip_config.get('load_balancer_backend_address_pools') else None,
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
