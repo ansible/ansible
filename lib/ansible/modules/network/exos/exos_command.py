@@ -30,12 +30,12 @@ DOCUMENTATION = """
 module: exos_command
 version_added: "2.6"
 author: "Rafael D. Vencioneck (@rdvencioneck)"
-short_description: Run commands on remote devices running EXOS
+short_description: Run commands on remote devices running Extreme EXOS
 description:
-  - Sends arbitrary commands to an EXOS switch and returns the results
-    read from the device. This module includes an
-    argument that will cause the module to wait for a specific condition
-    before returning or timing out if the condition is not met.
+  - Sends arbitrary commands to an Extreme EXOS device and returns the results
+    read from the device. This module includes an argument that will cause the
+    module to wait for a specific condition before returning or timing out if
+    the condition is not met.
   - This module does not support running configuration commands.
     Please use M(exos_config) to configure EXOS devices.
 notes:
@@ -57,9 +57,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -68,7 +66,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -77,7 +74,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -85,7 +81,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
@@ -140,7 +135,6 @@ import re
 import time
 
 from ansible.module_utils.network.exos.exos import run_commands
-from ansible.module_utils.network.exos.exos import check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -185,7 +179,7 @@ def main():
     argument_spec = dict(
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
@@ -198,7 +192,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 

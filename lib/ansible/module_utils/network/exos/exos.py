@@ -59,10 +59,6 @@ def get_capabilities(module):
     return module._exos_capabilities
 
 
-def check_args(module, warnings):
-    pass
-
-
 def get_config(module, flags=None):
     global _DEVICE_CONFIGS
 
