@@ -43,6 +43,9 @@ ANSIBLE_STRATEGY='free' ansible-playbook role/test_include_role.yml -i ../../inv
 # https://github.com/ansible/ansible/issues/23609
 ANSIBLE_STRATEGY='linear' ansible-playbook test_role_recursion.yml -i ../../inventory "$@" --skip-tags never
 
+# https://github.com/ansible/ansible/issues/38357
+ANSIBLE_STRATEGY='linear' ansible-playbook test_inception.yml -i ../../inventory "$@" --skip-tags never
+
 ## Nested tasks
 # https://github.com/ansible/ansible/issues/34782
 ANSIBLE_STRATEGY='linear' ansible-playbook test_nested_tasks.yml  -i ../../inventory "$@" --skip-tags never

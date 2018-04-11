@@ -1,0 +1,8 @@
+- name: Test for spinning top
+  hosts: testhost
+
+  tasks:
+    - debug:
+        msg: "Testing with Python version {{ ansible_python_version }} from {{ ansible_python.executable }}"
+
+    - include_tasks: tasks/tasks_multiple_include_role.yml

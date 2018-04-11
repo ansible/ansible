@@ -1,0 +1,79 @@
+- name: Include 1
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 2
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 3
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 4
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 5
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 6
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 7
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 8
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 9
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 10
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 11
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 12
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 13
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 14
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 15
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
+
+- name: Include 16
+  include_role:
+    name: role1
+    tasks_from: static_tasks.yml
