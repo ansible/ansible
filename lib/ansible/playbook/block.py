@@ -183,11 +183,11 @@ class Block(Base, Become, Conditional, Taggable):
                         cur_obj = cur_obj._parent
 
                     # Ensure that we don't make the new_block the parent of itself
-                    if cur_obj != new_block:
-                        cur_obj._parent = new_block
-                    else:
+                    if cur_obj == new_block:
                         # prev_obj._parent is cur_obj, to allow for mutability we need to use prev_obj
                         prev_obj._parent = new_block
+                    else:
+                        cur_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
