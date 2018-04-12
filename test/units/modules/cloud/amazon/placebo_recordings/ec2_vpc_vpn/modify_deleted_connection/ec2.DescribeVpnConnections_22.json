@@ -1,0 +1,30 @@
+{
+    "status_code": 200,
+    "data": {
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "5f18b0d0-e737-42a6-ad38-cdc5777e7c20",
+            "RetryAttempts": 0,
+            "HTTPHeaders": {
+                "content-length": "705",
+                "date": "Thu, 12 Apr 2018 15:55:19 GMT",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8"
+            }
+        },
+        "VpnConnections": [
+            {
+                "State": "deleted",
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "Routes": [],
+                "Type": "ipsec.1",
+                "Options": {
+                    "StaticRoutesOnly": true
+                },
+                "Category": "VPN",
+                "VpnConnectionId": "vpn-573ade42"
+            }
+        ]
+    }
+}

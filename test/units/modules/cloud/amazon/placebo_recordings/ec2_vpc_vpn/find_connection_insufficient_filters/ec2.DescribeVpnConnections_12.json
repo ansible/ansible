@@ -1,0 +1,66 @@
+{
+    "status_code": 200,
+    "data": {
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "bfa68f98-2199-4066-99a3-92874c353b84",
+            "RetryAttempts": 0,
+            "HTTPHeaders": {
+                "content-length": "6124",
+                "date": "Thu, 12 Apr 2018 15:39:50 GMT",
+                "server": "AmazonEC2",
+                "vary": "Accept-Encoding",
+                "content-type": "text/xml;charset=UTF-8"
+            }
+        },
+        "VpnConnections": [
+            {
+                "CustomerGatewayConfiguration": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<vpn_connection id=\"vpn-2f3ade3a\">\n  <customer_gateway_id>cgw-6113c87f</customer_gateway_id>\n  <vpn_gateway_id>vgw-35d70c2b</vpn_gateway_id>\n  <vpn_connection_type>ipsec.1</vpn_connection_type>\n  <vpn_connection_attributes>NoBGPVPNConnection</vpn_connection_attributes>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>9.8.7.6</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.13.54</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>54.218.200.245</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.13.53</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>n7jmhc_Plftfu8eRqAJLVUCG8i.4kZKt</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>9.8.7.6</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.13.246</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>54.218.205.124</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.13.245</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>ovy2DWIKOH9HfaKPgQFXXABPEu4tiZPW</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n</vpn_connection>",
+                "CustomerGatewayId": "cgw-6113c87f",
+                "State": "pending",
+                "VgwTelemetry": [
+                    {
+                        "LastStatusChange": {
+                            "microsecond": 0,
+                            "__class__": "datetime",
+                            "year": 2018,
+                            "minute": 39,
+                            "month": 4,
+                            "day": 12,
+                            "hour": 15,
+                            "second": 3
+                        },
+                        "StatusMessage": "",
+                        "Status": "DOWN",
+                        "OutsideIpAddress": "54.218.200.245",
+                        "AcceptedRouteCount": 0
+                    },
+                    {
+                        "LastStatusChange": {
+                            "microsecond": 0,
+                            "__class__": "datetime",
+                            "year": 2018,
+                            "minute": 39,
+                            "month": 4,
+                            "day": 12,
+                            "hour": 15,
+                            "second": 3
+                        },
+                        "StatusMessage": "",
+                        "Status": "DOWN",
+                        "OutsideIpAddress": "54.218.205.124",
+                        "AcceptedRouteCount": 0
+                    }
+                ],
+                "Routes": [],
+                "Options": {
+                    "StaticRoutesOnly": true
+                },
+                "VpnConnectionId": "vpn-2f3ade3a",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "Category": "VPN",
+                "Type": "ipsec.1"
+            }
+        ]
+    }
+}

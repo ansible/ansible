@@ -1,0 +1,17 @@
+{
+    "status_code": 200,
+    "data": {
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "d5d67081-ac17-4de3-bda3-644c6ebade33",
+            "RetryAttempts": 0,
+            "HTTPHeaders": {
+                "content-length": "243",
+                "date": "Thu, 12 Apr 2018 15:28:01 GMT",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8"
+            }
+        },
+        "VpnConnections": []
+    }
+}
