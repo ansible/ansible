@@ -166,7 +166,7 @@ options:
     has_security_group:
         description:
             - Whether need the NIC created with a security group
-        version_added: 2.6            
+        version_added: 2.6
         default: True
     security_group_name:
         description:
@@ -280,7 +280,7 @@ state:
                 "name": "publicip001"
             },
             "subnet": {},
-            "load_balancer_backend_address_pools": []            
+            "load_balancer_backend_address_pools": []
         }],
         "location": "eastus2",
         "mac_address": null,
@@ -322,8 +322,8 @@ def nic_to_dict(nic):
             private_ip_allocation_method=config.private_ip_allocation_method,
             subnet=subnet_to_dict(config.subnet),
             primary=config.primary,
-            load_balancer_backend_address_pools=[item.id for item in config.load_balancer_backend_address_pools] \
-                                                 if config.load_balancer_backend_address_pools else None,
+            load_balancer_backend_address_pools=([item.id for item in config.load_balancer_backend_address_pools]
+                                                  if config.load_balancer_backend_address_pools else None),
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
@@ -446,7 +446,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if virtual_network_resource_group is None:
             virtual_network_resource_group = self.resource_group
-        
+
         # if not set the security group name, use nic name for default
         self.security_group_name = self.security_group_name or self.name
 
@@ -484,7 +484,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if self.has_security_group != bool(results.get('network_security_group')):
                     self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
-                
+
                 if not changed:
                     nsg = self.get_security_group(self.security_group_name)
                     if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
@@ -544,9 +544,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         name=ip_config.get('name'),
                         subnet=subnet,
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
-                        load_balancer_backend_address_pools=[self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id)) \
-                                                             for bap_id in ip_config.get('load_balancer_backend_address_pools')] \
-                                                             if ip_config.get('load_balancer_backend_address_pools') else None,
+                        load_balancer_backend_address_pools=([self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id))
+                                                              for bap_id in ip_config.get('load_balancer_backend_address_pools')]
+                                                              if ip_config.get('load_balancer_backend_address_pools') else None),
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
@@ -642,8 +642,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
                                     if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
             primary=item.get('primary'),
-            load_balancer_backend_address_pools = (set([to_native(self.backend_addr_pool_id(id)) \
-                                                   for id in item.get('load_balancer_backend_address_pools')]) \
+            load_balancer_backend_address_pools = (set([to_native(self.backend_addr_pool_id(id))
+                                                   for id in item.get('load_balancer_backend_address_pools')])
                                                    if item.get('load_balancer_backend_address_pools') else None),
             name=to_native(item.get('name'))
         )) for item in raw]
