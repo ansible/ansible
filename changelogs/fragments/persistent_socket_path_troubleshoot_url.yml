@@ -1,0 +1,2 @@
+bugfixes:
+- Add url to troubleshoot persistent socket path related issues https://github.com/ansible/ansible/pull/38542
