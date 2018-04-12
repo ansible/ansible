@@ -944,6 +944,9 @@ files:
   lib/ansible/plugins/callback/grafana_annotations.py:
     support: community
     maintainers: rrey
+  lib/ansible/plugins/callback/sumologic.py:
+    support: community
+    maintainers: ryancurrah
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
