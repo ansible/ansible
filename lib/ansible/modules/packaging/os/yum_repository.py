@@ -200,7 +200,7 @@ options:
     default: 21600
   name:
     description:
-      - Unique repository ID. This option builds the section name of the repository in the .ini repo file.
+      - Unique repository ID. This option builds the section name of the repository in the repo file.
       - This parameter is only required if I(state) is set to C(present) or
         C(absent).
     required: true
