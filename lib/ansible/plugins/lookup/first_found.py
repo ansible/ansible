@@ -40,7 +40,7 @@ EXAMPLES = """
   vars:
     findme:
       - foo
-      - "{{inventory_hostname}}
+      - "{{inventory_hostname}}"
       - bar
 
 - name: same copy but specific paths
@@ -48,7 +48,7 @@ EXAMPLES = """
   vars:
     findme:
       - foo
-      - "{{inventory_hostname}}
+      - "{{inventory_hostname}}"
       - bar
     mypaths:
       - /tmp/production
