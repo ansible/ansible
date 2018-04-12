@@ -1,7 +1,7 @@
 import pytest
 
-from .placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_group as group_module
+
 
 def test_from_permission():
     internal_http = {
@@ -27,7 +27,6 @@ def test_from_permission():
     assert perms[0].description == 'Foo Bar Baz'
     assert perms[1].target == 'fe80::94cc:8aff:fef6:9cc/64'
 
-
     global_egress = {
         'IpProtocol': '-1',
         'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
@@ -39,7 +38,6 @@ def test_from_permission():
     assert len(perms) == 1
     assert perms[0].target == '0.0.0.0/0'
     assert perms[0].port_range == (None, None)
-
 
     internal_prefix_http = {
         u'FromPort': 80,
@@ -53,47 +51,3 @@ def test_from_permission():
     perms = list(group_module.rule_from_group_permission(internal_prefix_http))
     assert len(perms) == 1
     assert perms[0].target == 'p-1234'
-
-def test_from_rule_param():
-    internal_http = {
-        'cidr_ip': '10.0.0.0/8',
-        'to_port': 80,
-        'from_port': '80',
-        'proto': 'tcp',
-        'rule_desc': 'Foo Bar Baz',
-    }
-    perms = list(group_module.rule_from_rule_params([internal_http]))
-    assert len(perms) == 1
-    assert perms[0].target == '10.0.0.0/8'
-    assert perms[0].port_range == (80, 80)
-    internal_https = {
-        'cidr_ip': '10.0.0.0/8',
-        'to_port': 443,
-        'from_port': '443',
-    }
-    perms = list(group_module.rule_from_rule_params([internal_https]))
-    assert len(perms) == 1
-    assert perms[0].target == '10.0.0.0/8'
-    assert perms[0].port_range == (443, 443)
-    v6_rule = {
-        'cidr_ipv6': '64:ff9b::/96',
-        'to_port': 443,
-        'from_port': '443',
-        'proto': 'tcp'
-    }
-    perms = list(group_module.rule_from_rule_params([v6_rule]))
-    assert len(perms) == 1
-    assert perms[0].target == '64:ff9b::/96'
-    assert perms[0].port_range == (443, 443)
-
-    sg_id_rule = {
-        'group_id': 'sg-1234',
-        'to_port': 443,
-        'from_port': '443',
-        'proto': 'tcp'
-    }
-    perms = list(group_module.rule_from_rule_params([sg_id_rule]))
-    assert len(perms) == 1
-    assert perms[0].target == 'sg-1234'
-    assert perms[0].target_type == 'group'
-    assert perms[0].port_range == (443, 443)

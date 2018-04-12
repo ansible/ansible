@@ -306,13 +306,8 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 
-#Rule = namedtuple('Rule', ['rule', 'rule_id', 'ip_permission', 'ipv4', 'ipv6', 'ip_prefix'])
 Rule = namedtuple('Rule', ['port_range', 'protocol', 'target', 'target_type', 'description'])
 valid_targets = set(['ipv4', 'ipv6', 'group', 'ip_prefix'])
-
-Rule((80, 80), 'tcp', '0.0.0.0/0', 'ipv4', 'foo whatever')
-Rule((-1, -1), 'icmp', 'feed:dead::::beef/0', 'ipv6', 'foo whatever')
-Rule((-1, -1), 'udp', 'pl-123456789', 'ip_prefix', 'foo whatever')
 
 
 def rule_cmp(a, b):
@@ -322,8 +317,10 @@ def rule_cmp(a, b):
             return False
     return True
 
+
 def rules_to_permissions(rules):
     return [to_permission(rule) for rule in rules]
+
 
 def to_permission(rule):
     # take a Rule, output the serialized grant
@@ -348,12 +345,12 @@ def to_permission(rule):
             perm['Ipv6Ranges'][0]['Description'] = rule.description
     elif rule.target_type == 'group':
         if isinstance(rule.target, tuple):
-            raise NotImplementedError("Whoopsie, no foreign security group serialization yet. Target {0}".format(rule.target))
             perm['UserIdGroupPairs'] = [{
                 'OwnerId': rule.target[0],
                 'GroupId': rule.target[1],
                 'GroupName': rule.target[2],
             }]
+            raise NotImplementedError("Whoopsie, no foreign security group serialization yet. Target {0}".format(rule.target))
         else:
             perm['UserIdGroupPairs'] = [{
                 'GroupId': rule.target
@@ -380,10 +377,10 @@ def rule_from_group_permission(perm):
     try:
         # outputs a rule tuple
         for target_key, target_subkey, target_type in [
-                ('IpRanges', 'CidrIp', 'ipv4'),
-                ('Ipv6Ranges', 'CidrIpv6', 'ipv6'),
-                ('PrefixListIds', 'PrefixListId', 'ip_prefix'),
-                ]:
+            ('IpRanges', 'CidrIp', 'ipv4'),
+            ('Ipv6Ranges', 'CidrIpv6', 'ipv6'),
+            ('PrefixListIds', 'PrefixListId', 'ip_prefix'),
+        ]:
             if target_key not in perm:
                 continue
             for r in perm[target_key]:
@@ -397,7 +394,7 @@ def rule_from_group_permission(perm):
                 )
         if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
             # security group targets are special, handle separately
-            #TODO this doesn't handle cross-account groups yet
+            # TODO this doesn't handle cross-account groups yet
             for pair in perm['UserIdGroupPairs']:
                 yield Rule(
                     ports_from_permission(perm),
@@ -468,8 +465,8 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     function validate the rule specification and return either a non-None
     group_id or a non-None ip range.
     """
-
-    current_account_id = get_aws_account_id(module) #TODO use this to set owner account on local SG IDs
+    # TODO use this to set owner account on local SG IDs
+    current_account_id = get_aws_account_id(module)
     FOREIGN_SECURITY_GROUP_REGEX = r'^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
@@ -777,6 +774,7 @@ def create_security_group(client, module, name, description, vpc_id):
 def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_ingress, purge_egress):
     group_id = group['GroupId']
     tries = 6
+
     def await_rules(group, desired_rules, purge, rule_key):
         for i in range(tries):
             current_rules = set(sum([list(rule_from_group_permission(p)) for p in group[rule_key]], []))
@@ -788,6 +786,7 @@ def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, pu
             group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
         module.warn(msg="Ran out of time waiting for {0} {1}. Current: {2}, Desired: {3}".format(group_id, rule_key, current_rules, desired_rules))
         return group
+
     group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
     if 'VpcId' in group and module.params.get('rules_egress') is not None:
         group = await_rules(group, desired_egress, purge_egress, 'IpPermissionsEgress')
@@ -958,13 +957,16 @@ def main():
             revoke_ingress = []
         if purge_rules_egress and module.params.get('rules_egress') is not None:
             if module.params.get('rules_egress') is []:
-                revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list) if r != Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)]
+                revoke_egress = [
+                    to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list)
+                    if r != Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)
+                ]
             else:
                 revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list)]
         else:
             revoke_egress = []
 
-        #TODO this could probably be a function that's separate.
+        # TODO this could probably be a function that's separate.
         ingress_needs_desc_update = []
         egress_needs_desc_update = []
         for present_rule in present_egress:

@@ -3,6 +3,13 @@
 
 import traceback
 
+try:
+    import botocore.waiter as core_waiter
+except ImportError:
+    pass  # caught by HAS_BOTO3
+
+from ansible.module_utils._text import to_native
+
 
 def get_aws_account_id(module):
     """ Given AnsibleAWSModule instance, get the active AWS account ID
@@ -28,7 +35,10 @@ def get_aws_account_id(module):
             if account_id is None:
                 module.fail_json_aws(e, msg="Could not get AWS account information")
         except Exception as e:
-            module.fail_json(msg="Failed to get AWS account information, Try allowing sts:GetCallerIdentity or iam:GetUser permissions.", exception=traceback.format_exc())
+            module.fail_json(
+                msg="Failed to get AWS account information, Try allowing sts:GetCallerIdentity or iam:GetUser permissions.",
+                exception=traceback.format_exc()
+            )
     if not account_id:
         module.fail_json(msg="Failed while determining AWS account ID. Try allowing sts:GetCallerIdentity or iam:GetUser permissions.")
     return account_id
