@@ -28,7 +28,7 @@ Inventory has been refactored to be implemented via plugins and now allows for m
 
 One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally.
 This means you can no longer use it early in plays to determine ``hosts:`` or similar keywords.
-This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
+This also changes the behaviour of ``add_hosts`` and the implicit localhost;
 because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
 
 The ``inventory_file`` remains mostly unchanged, as it was always host specific.
@@ -89,7 +89,7 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.8. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.8. Please update your playbooks accordingly.
 
 * :ref:`azure <azure>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine>`, which uses the new Resource Manager SDK.
 * :ref:`win_msi <win_msi>`, use :ref:`win_package <win_package>` instead
