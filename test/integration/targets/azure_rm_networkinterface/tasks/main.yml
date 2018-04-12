@@ -263,11 +263,8 @@
 - name: Delete the NIC (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: "{{ item }}"
+      name: testnic001
       state: absent
-  with_items:
-    - testnic001
-    - testnic001noip
   register: output
 
 - assert:
