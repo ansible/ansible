@@ -41,7 +41,7 @@ options:
   org_id:
     description:
       - The Grafana Organisation ID where the dashboard will be imported / exported.
-      - Not used when I(grafana_api_key) is set, because the grafana_api_key only belong to one organisation..
+      - Not used when I(grafana_api_key) is set, because the grafana_api_key only belongs to one organisation..
     default: 1
   state:
     description:
