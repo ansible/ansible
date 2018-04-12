@@ -445,18 +445,21 @@ class PyVmomiHelper(PyVmomi):
                                 expected = int(expected)
                         except (TypeError, ValueError, NameError):
                             disk_size_parse_failed = True
-
-                        if disk_size_parse_failed:
-                            # Common failure
-                            self.module.fail_json(msg="Failed to parse disk size for disk index [%s],"
-                                                      " please review value provided"
-                                                      " using documentation." % disk_index)
                     else:
                         # Even multiple size_ parameter provided by user,
                         # consider first value only
                         param = [x for x in disk.keys() if x.startswith('size_')][0]
                         unit = param.split('_')[-1]
-                        expected = disk[param]
+                        try:
+                            expected = int(disk[param])
+                        except ValueError:
+                            disk_size_parse_failed = True
+
+                    if disk_size_parse_failed:
+                        # Common failure
+                        self.module.fail_json(msg="Failed to parse disk size for disk index [%s],"
+                                                  " please review value provided"
+                                                  " using documentation." % disk_index)
 
                     disk_units = dict(tb=3, gb=2, mb=1, kb=0)
                     if unit in disk_units:
@@ -474,26 +477,36 @@ class PyVmomiHelper(PyVmomi):
                                               " attribute found into disk index [%s] configuration." % disk_index)
             # Check SCSI controller key
             if 'scsi_controller' in disk:
-                if disk['scsi_controller'] not in range(0, 4):
+                try:
+                    temp_disk_controller = int(disk['scsi_controller'])
+                except ValueError:
+                    self.module.fail_json(msg="Invalid SCSI controller ID '%s' specified"
+                                              " at index [%s]" % (disk['scsi_controller'], disk_index))
+                if temp_disk_controller not in range(0, 4):
                     # Only 4 SCSI controllers are allowed per VM
                     self.module.fail_json(msg="Invalid SCSI controller ID specified [%s],"
-                                              " please specify value between 0 to 3 only." % disk['scsi_controller'])
-                current_disk['scsi_controller'] = disk['scsi_controller']
+                                              " please specify value between 0 to 3 only." % temp_disk_controller)
+                current_disk['scsi_controller'] = temp_disk_controller
             else:
                 self.module.fail_json(msg="Please specify 'scsi_controller' under disk parameter"
                                           " at index [%s], which is required while creating disk." % disk_index)
             # Check for disk unit number
             if 'unit_number' in disk:
-                if disk['unit_number'] not in range(0, 16):
+                try:
+                    temp_disk_unit_number = int(disk['unit_number'])
+                except ValueError:
+                    self.module.fail_json(msg="Invalid Disk unit number ID '%s'"
+                                              " specified at index [%s]" % (disk['unit_number'], disk_index))
+                if temp_disk_unit_number not in range(0, 16):
                     self.module.fail_json(msg="Invalid Disk unit number ID specified for disk [%s] at index [%s],"
                                               " please specify value between 0 to 15"
-                                              " only (excluding 7)." % (disk['unit_number'], disk_index))
+                                              " only (excluding 7)." % (temp_disk_unit_number, disk_index))
 
-                if disk['unit_number'] == 7:
+                if temp_disk_unit_number == 7:
                     self.module.fail_json(msg="Invalid Disk unit number ID specified for disk at index [%s],"
                                               " please specify value other than 7 as it is reserved"
                                               "for SCSI Controller" % disk_index)
-                current_disk['disk_unit_number'] = disk['unit_number']
+                current_disk['disk_unit_number'] = temp_disk_unit_number
 
             else:
                 self.module.fail_json(msg="Please specify 'unit_number' under disk parameter"
