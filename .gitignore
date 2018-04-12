@@ -59,6 +59,7 @@ credentials.yml
 *.out
 .tox
 .cache
+.pytest_cache
 results.xml
 coverage.xml
 /test/units/cover-html
