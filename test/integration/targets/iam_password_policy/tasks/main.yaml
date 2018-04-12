@@ -3,11 +3,13 @@
     aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: true
 
 - name: set iam password policy
   iam_password_policy:
+    <<: *aws_connection_info
     state: present
     min_pw_length: 8
     require_symbols: false
@@ -27,6 +29,7 @@
 
 - name: verify iam password policy has been created
   iam_password_policy:
+    <<: *aws_connection_info
     state: present
     min_pw_length: 8
     require_symbols: false
@@ -46,6 +49,7 @@
 
 - name: update iam password policy
   iam_password_policy:
+    <<: *aws_connection_info
     state: present
     min_pw_length: 15
     require_symbols: true
@@ -65,6 +69,7 @@
 
 - name: remove iam password policy
   iam_password_policy:
+    <<: *aws_connection_info
     state: absent
   register: result
 
@@ -75,6 +80,7 @@
 
 - name: verify password policy has been removed
   iam_password_policy:
+    <<: *aws_connection_info
     state: absent
   register: result
 
