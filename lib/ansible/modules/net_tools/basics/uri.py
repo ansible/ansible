@@ -136,8 +136,6 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server. Cannot be used with I(body).
-        If C(remote_src) is 'no', the module will look for the source file in the
-        I(files) directory and be copied to the target machine before execution.
     version_added: '2.6'
   remote_src:
     description:
