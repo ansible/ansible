@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import collections
 import os
 import re
 import time
@@ -33,13 +34,19 @@ from lib.config import (
     IntegrationConfig,
 )
 
+from lib.metadata import (
+    ChangeDescription,
+)
+
+FOCUSED_TARGET = '__focused__'
+
 
 def categorize_changes(args, paths, verbose_command=None):
     """
     :type args: TestConfig
     :type paths: list[str]
     :type verbose_command: str
-    :rtype paths: dict[str, list[str]]
+    :rtype: ChangeDescription
     """
     mapper = PathMapper(args)
 
@@ -51,11 +58,19 @@ def categorize_changes(args, paths, verbose_command=None):
         'network-integration': set(),
     }
 
+    focused_commands = collections.defaultdict(set)
+
+    deleted_paths = set()
+    original_paths = set()
     additional_paths = set()
+    no_integration_paths = set()
 
     for path in paths:
         if not os.path.exists(path):
+            deleted_paths.add(path)
             continue
+
+        original_paths.add(path)
 
         dependent_paths = mapper.get_dependent_paths(path)
 
@@ -80,11 +95,18 @@ def categorize_changes(args, paths, verbose_command=None):
         tests = mapper.classify(path)
 
         if tests is None:
+            focused_target = False
+
             display.info('%s -> all' % path, verbosity=1)
             tests = all_tests(args)  # not categorized, run all tests
             display.warning('Path not categorized: %s' % path)
         else:
+            focused_target = tests.pop(FOCUSED_TARGET, False) and path in original_paths
+
             tests = dict((key, value) for key, value in tests.items() if value)
+
+            if focused_target and not any('integration' in command for command in tests):
+                no_integration_paths.add(path)  # path triggers no integration tests
 
             if verbose_command:
                 result = '%s: %s' % (verbose_command, tests.get(verbose_command) or 'none')
@@ -92,6 +114,9 @@ def categorize_changes(args, paths, verbose_command=None):
                 # identify targeted integration tests (those which only target a single integration command)
                 if 'integration' in verbose_command and tests.get(verbose_command):
                     if not any('integration' in command for command in tests if command != verbose_command):
+                        if focused_target:
+                            result += ' (focused)'
+
                         result += ' (targeted)'
             else:
                 result = '%s' % tests
@@ -101,6 +126,9 @@ def categorize_changes(args, paths, verbose_command=None):
         for command, target in tests.items():
             commands[command].add(target)
 
+            if focused_target:
+                focused_commands[command].add(target)
+
     for command in commands:
         commands[command].discard('none')
 
@@ -108,8 +136,21 @@ def categorize_changes(args, paths, verbose_command=None):
             commands[command] = set(['all'])
 
     commands = dict((c, sorted(commands[c])) for c in commands if commands[c])
+    focused_commands = dict((c, sorted(focused_commands[c])) for c in focused_commands)
 
-    return commands
+    for command in commands:
+        if commands[command] == ['all']:
+            commands[command] = []  # changes require testing all targets, do not filter targets
+
+    changes = ChangeDescription()
+    changes.command = verbose_command
+    changes.changed_paths = sorted(original_paths)
+    changes.deleted_paths = sorted(deleted_paths)
+    changes.regular_command_targets = commands
+    changes.focused_command_targets = focused_commands
+    changes.no_integration_paths = sorted(no_integration_paths)
+
+    return changes
 
 
 class PathMapper(object):
@@ -278,6 +319,7 @@ class PathMapper(object):
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
                     'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
+                    FOCUSED_TARGET: True,
                 }
 
             return minimal
@@ -459,6 +501,7 @@ class PathMapper(object):
                 'integration': target.name if 'posix/' in target.aliases else None,
                 'windows-integration': target.name if 'windows/' in target.aliases else None,
                 'network-integration': target.name if 'network/' in target.aliases else None,
+                FOCUSED_TARGET: True,
             }
 
         if path.startswith('test/integration/'):
