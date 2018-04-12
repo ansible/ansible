@@ -66,14 +66,14 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRet
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
-def add_emr_steps(cluster_id, steps):
+def add_emr_steps(conn, module, cluster_id, steps):
     try:
-        results = self.connection.add_job_flow_steps(
+        results = conn.add_job_flow_steps(
             JobFlowId=cluster_id,
             Steps=steps
         )
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        self.module.fail_json_aws(e, msg="Couldn't add step(s) to EMR Cluster")
+        module.fail_json_aws(e, msg="Couldn't add step(s) to EMR Cluster")
     return camel_dict_to_snake_dict(results)
 
 
@@ -92,7 +92,7 @@ def main():
     cluster_id = module.params.get('cluster_id')
     steps = module.params.get('steps')
 
-    emr_step_details = connection.add_emr_steps(cluster_id, steps)
+    emr_step_details = add_emr_steps(connection, module, cluster_id, steps)
 
     module.exit_json(changed=True, ansible_facts={'emr': emr_step_details})
 
