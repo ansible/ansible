@@ -156,7 +156,6 @@ class IAMConnection(object):
 def main():
     module = AnsibleAWSModule(
         argument_spec={
-            'cluster_id': dict(type='str', required=True),
             'state': dict(choices=['present', 'absent'], required=True),
             'min_pw_length': dict(type='int', default=6),
             'require_symbols': dict(type='bool', default=False),
