@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright (c) 2016, 2018 Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -47,6 +47,7 @@ options:
             - "Dictionary describing network bond:"
             - "C(name) - Bond name."
             - "C(mode) - Bonding mode."
+            - "C(options) - Bonding options."
             - "C(interfaces) - List of interfaces to create a bond."
     interface:
         description:
@@ -95,6 +96,19 @@ EXAMPLES = '''
         netmask: 255.255.255.0
         gateway: 1.2.3.4
         version: v4
+
+# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
+- name: Bonds
+  ovirt_host_networks:
+    name: myhost
+    bond:
+      name: bond0
+      mode: 1
+      options:
+        miimon: 200
+      interfaces:
+        - eth1
+        - eth2
 
 # Remove bond0 bond from host interfaces:
 - ovirt_host_networks:
@@ -146,6 +160,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils import six
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -160,15 +175,17 @@ from ansible.module_utils.ovirt import (
 )
 
 
-def get_mode_type(mode_number):
-    """
-    Adaptive transmit load balancing (balance-tlb): mode=1 miimon=100
-    Dynamic link aggregation (802.3ad): mode=2 miimon=100
-    Load balance (balance-xor): mode=3 miimon=100
-    Active-Backup: mode=4 miimon=100 xmit_hash_policy=2
-    """
+def get_bond_options(mode, usr_opts):
+    MIIMON_100 = dict(miimon='100')
+    DEFAULT_MODE_OPTS = {
+        '1': MIIMON_100,
+        '2': MIIMON_100,
+        '3': MIIMON_100,
+        '4': dict(xmit_hash_policy='2', **MIIMON_100)
+    }
+
     options = []
-    if mode_number is None:
+    if mode is None:
         return options
 
     def get_type_name(mode_number):
@@ -176,32 +193,36 @@ def get_mode_type(mode_number):
         We need to maintain this type strings, for the __compare_options method,
         for easier comparision.
         """
-        return [
+        modes = [
             'Active-Backup',
             'Load balance (balance-xor)',
             None,
             'Dynamic link aggregation (802.3ad)',
-        ][mode_number]
+        ]
+        if (not 0 < mode_number <= len(modes) - 1):
+            return None
+        return modes[mode_number - 1]
 
     try:
-        mode_number = int(mode_number)
-        if mode_number >= 1 and mode_number <= 4:
-            if mode_number == 4:
-                options.append(otypes.Option(name='xmit_hash_policy', value='2'))
-
-            options.append(otypes.Option(name='miimon', value='100'))
-            options.append(
-                otypes.Option(
-                    name='mode',
-                    type=get_type_name(mode_number - 1),
-                    value=str(mode_number)
-                )
-            )
-        else:
-            options.append(otypes.Option(name='mode', value=str(mode_number)))
+        mode_number = int(mode)
     except ValueError:
-        raise Exception("Bond mode must be a number.")
+        raise Exception('Bond mode must be a number.')
 
+    options.append(
+        otypes.Option(
+            name='mode',
+            type=get_type_name(mode_number),
+            value=str(mode_number)
+        )
+    )
+
+    opts_dict = DEFAULT_MODE_OPTS.get(mode, {})
+    opts_dict.update(**usr_opts)
+
+    options.extend(
+        [otypes.Option(name=opt, value=value)
+         for opt, value in six.iteritems(opts_dict)]
+    )
     return options
 
 
@@ -250,7 +271,7 @@ class HostNetworksModule(BaseModule):
 
         # Check if bond configuration should be updated:
         if bond:
-            update = self.__compare_options(get_mode_type(bond.get('mode')), getattr(nic.bonding, 'options', []))
+            update = self.__compare_options(get_bond_options(bond.get('mode'), bond.get('options')), getattr(nic.bonding, 'options', []))
             update = update or not equal(
                 sorted(bond.get('interfaces')) if bond.get('interfaces') else None,
                 sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
@@ -369,7 +390,7 @@ def main():
                     otypes.HostNic(
                         name=bond.get('name'),
                         bonding=otypes.Bonding(
-                            options=get_mode_type(bond.get('mode')),
+                            options=get_bond_options(bond.get('mode'), bond.get('options')),
                             slaves=[
                                 otypes.HostNic(name=i) for i in bond.get('interfaces', [])
                             ],
