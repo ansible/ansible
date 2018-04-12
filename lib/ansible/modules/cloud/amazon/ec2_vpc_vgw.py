@@ -112,6 +112,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils._text import to_native
@@ -205,6 +206,14 @@ def create_vgw(client, module):
 
     try:
         response = client.create_vpn_gateway(Type=params['Type'])
+        get_waiter(
+            client, 'vpn_gateway_exists'
+        ).wait(
+            VpnGatewayIds=[response['VpnGateway']['VpnGatewayId']]
+        )
+    except botocore.exceptions.WaiterError as e:
+        module.fail_json(msg="Failed to wait for Vpn Gateway {0} to be available".format(response['VpnGateway']['VpnGatewayId']),
+                         exception=traceback.format_exc())
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
