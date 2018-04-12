@@ -118,4 +118,4 @@ class CallbackModule(CallbackBase):
         self._display.display('Execution Maximum: %0.2fMB\n\n' % max_results)
 
         for task, memory in self.task_results:
-            self._display.display('%s: %0.2fMB' % (task.get_name(), memory))
+            self._display.display('%s (%s): %0.2fMB' % (task.get_name(), task._uuid, memory))
