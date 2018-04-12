@@ -24,7 +24,8 @@ python_versions=(
 single_version=2012-R2
 
 # shellcheck disable=SC2086
-ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
+ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} 2>&1 \
+    | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
@@ -84,7 +85,8 @@ for version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+    ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}" \
+        --docker default --python "${version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
