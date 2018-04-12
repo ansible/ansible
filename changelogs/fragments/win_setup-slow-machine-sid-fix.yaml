@@ -1,0 +1,2 @@
+bugfixes:
+- win_setup - fix bug where getting the machine SID would take a long time in large domain environments (https://github.com/ansible/ansible/pull/38646)
