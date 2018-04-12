@@ -232,7 +232,7 @@
 - assert:
     that:
       - output.state.ip_configurations[0].public_ip_address == None
-      - output.state.security_group == None
+      - output.state.network_security_group == None
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:
