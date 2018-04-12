@@ -43,6 +43,7 @@
           Description: "Created by ansible-test"
       register: vpc_result
     - include: ./egress_tests.yml
+    - include: ./data_validation.yml
 
     # ============================================================
     - name: test state=absent (CHECK MODE)
@@ -146,98 +147,7 @@
 
     # ============================================================
     - name: tests IPv6 with the default VPC
-      block:
-
-        # ============================================================
-        - name: test state=present for ipv6 (expected changed=true) (CHECK MODE)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-          check_mode: true
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-
-        # ============================================================
-        - name: test state=present for ipv6 (expected changed=true)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-               - 'result.group_id.startswith("sg-")'
-
-        # ============================================================
-        - name: test rules_egress state=present for ipv6 (expected changed=true) (CHECK MODE)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-            rules_egress:
-            - proto: "tcp"
-              from_port: 8181
-              to_port: 8181
-              cidr_ipv6: "64:ff9b::/96"
-          check_mode: true
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-
-        # ============================================================
-        - name: test rules_egress state=present for ipv6 (expected changed=true)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-            rules_egress:
-            - proto: "tcp"
-              from_port: 8181
-              to_port: 8181
-              cidr_ipv6: "64:ff9b::/96"
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-               - 'result.group_id.startswith("sg-")'
-
+      include: ./ipv6_default_tests.yml
       when: default_vpc
 
     - name: test IPv6 with a specified VPC
@@ -446,7 +356,6 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
         <<: *aws_connection_info
         rules:
         - proto: "tcp"
@@ -466,7 +375,6 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
         <<: *aws_connection_info
         rules:
         - proto: "tcp"
@@ -496,12 +404,8 @@
           to_port: 8182
           cidr_ip: "1.1.1.1/32"
       check_mode: true
-      register: result
+      register: check_result
 
-    - name: assert state=present (expected changed=false)
-      assert:
-        that:
-          - 'not result.changed'
 
     # ============================================================
     - name: add same rule to the existing group  (expected changed=false)
@@ -522,6 +426,11 @@
         that:
           - 'not result.changed'
           - 'result.group_id.startswith("sg-")'
+
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+          - 'not check_result.changed'
 
     # ============================================================
     - name: add a rule that auto creates another security group (CHECK MODE)
@@ -776,12 +685,7 @@
             - 8195
           cidr_ip: 10.0.0.1/8
       check_mode: true
-      register: result
-
-    - name: assert state=present (expected changed=false and a warning)
-      assert:
-        that:
-          - 'not result.changed'
+      register: check_result
 
     # ============================================================
     - name: test adding the same rule with a IPv4 CIDR with host bits set (expected changed=false and a warning)
@@ -798,6 +702,11 @@
             - 8195
           cidr_ip: 10.0.0.1/8
       register: result
+
+    - name: assert state=present (expected changed=false and a warning)
+      assert:
+        that:
+          - 'not check_result.changed'
 
     - name: assert state=present (expected changed=false and a warning)
       assert:

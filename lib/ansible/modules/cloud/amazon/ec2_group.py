@@ -298,6 +298,7 @@ from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dic
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import string_types
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -328,10 +329,9 @@ def to_permission(rule):
     # take a Rule, output the serialized grant
     try:
         perm = {
-            'ToPort': rule.port_range[0],
-            'FromPort': rule.port_range[1],
             'IpProtocol': rule.protocol,
         }
+        perm['FromPort'], perm['ToPort'] = rule.port_range
     except:
         raise Exception("Failed on rule %s" % str(rule))
     if rule.target_type == 'ipv4':
@@ -534,12 +534,12 @@ def ports_expand(ports):
     # takes a list of ports and returns a list of (port_from, port_to)
     ports_expanded = []
     for port in ports:
-        if not isinstance(port, str):
+        if not isinstance(port, string_types):
             ports_expanded.append((port,) * 2)
         elif '-' in port:
-            ports_expanded.append(tuple(p.strip() for p in port.split('-', 1)))
+            ports_expanded.append(tuple(int(p.strip()) for p in port.split('-', 1)))
         else:
-            ports_expanded.append((port.strip(),) * 2)
+            ports_expanded.append((int(port.strip()),) * 2)
 
     return ports_expanded
 
@@ -547,6 +547,10 @@ def ports_expand(ports):
 def rule_expand_ports(rule):
     # takes a rule dict and returns a list of expanded rule dicts
     if 'ports' not in rule:
+        if isinstance(rule.get('from_port'), string_types):
+            rule['from_port'] = int(rule.get('from_port'))
+        if isinstance(rule.get('to_port'), string_types):
+            rule['to_port'] = int(rule.get('to_port'))
         return [rule]
 
     ports = rule['ports'] if isinstance(rule['ports'], list) else [rule['ports']]
@@ -555,7 +559,7 @@ def rule_expand_ports(rule):
     for from_to in ports_expand(ports):
         temp_rule = rule.copy()
         del temp_rule['ports']
-        temp_rule['from_port'], temp_rule['to_port'] = from_to
+        temp_rule['from_port'], temp_rule['to_port'] = sorted(from_to)
         rule_expanded.append(temp_rule)
 
     return rule_expanded
@@ -669,13 +673,12 @@ def fix_port_and_protocol(permission):
     return permission
 
 
-def remove_old_permissions(client, module, revoke_ingress, revoke_egress, group_id, changed):
-    changed |= bool(revoke_ingress or revoke_egress)
+def remove_old_permissions(client, module, revoke_ingress, revoke_egress, group_id):
     if revoke_ingress:
         revoke(client, module, revoke_ingress, group_id, 'in')
     if revoke_egress:
         revoke(client, module, revoke_egress, group_id, 'out')
-    return changed
+    return bool(revoke_ingress or revoke_egress)
 
 
 def revoke(client, module, ip_permissions, group_id, rule_type):
@@ -690,13 +693,12 @@ def revoke(client, module, ip_permissions, group_id, rule_type):
             module.fail_json_aws(e, "Unable to revoke {0}: {1}".format(rules, ip_permissions))
 
 
-def add_new_permissions(client, module, new_ingress, new_egress, group_id, changed):
-    changed |= bool(new_ingress or new_egress)
+def add_new_permissions(client, module, new_ingress, new_egress, group_id):
     if new_ingress:
         authorize(client, module, new_ingress, group_id, 'in')
     if new_egress:
         authorize(client, module, new_egress, group_id, 'out')
-    return changed
+    return bool(new_ingress or new_egress)
 
 
 def authorize(client, module, ip_permissions, group_id, rule_type):
@@ -727,9 +729,8 @@ def validate_ip(module, cidr_ip):
     return cidr_ip
 
 
-def update_tags(client, module, group_id, current_tags, tags, purge_tags, changed):
+def update_tags(client, module, group_id, current_tags, tags, purge_tags):
     tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
-    changed |= bool(tags_need_modify or tags_to_delete)
 
     if not module.check_mode:
         if tags_to_delete:
@@ -745,7 +746,7 @@ def update_tags(client, module, group_id, current_tags, tags, purge_tags, change
             except (BotoCoreError, ClientError) as e:
                 module.fail_json(e, msg="Unable to add tags {0}".format(tags_need_modify))
 
-    return changed
+    return bool(tags_need_modify or tags_to_delete)
 
 
 def create_security_group(client, module, name, description, vpc_id):
@@ -780,17 +781,15 @@ def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, pu
         for i in range(tries):
             current_rules = set(sum([list(rule_from_group_permission(p)) for p in group[rule_key]], []))
             if purge and len(current_rules ^ set(desired_rules)) == 0:
-                module.warn(group_id + " " + rule_key + " set match : {0}. Current: {1}, Desired: {2}".format(current_rules ^ set(desired_rules), current_rules, desired_rules))
                 return group
             elif current_rules.issuperset(desired_rules) and not purge:
-                module.warn(group_id + " " + rule_key + " Current: {0}, issuperset Desired: {1}".format(current_rules, desired_rules))
                 return group
             sleep(10)
             group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
-        module.fail_json(msg="Failed on " + group_id + " " + rule_key + " situation : {0}. Current: {1}, Desired: {2}".format(current_rules ^ set(desired_rules), current_rules, desired_rules))
+        module.warn(msg="Ran out of time waiting for {0} {1}. Current: {2}, Desired: {3}".format(group_id, rule_key, current_rules, desired_rules))
         return group
     group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
-    if 'VpcId' in group:
+    if 'VpcId' in group and module.params.get('rules_egress') is not None:
         group = await_rules(group, desired_egress, purge_egress, 'IpPermissionsEgress')
     return await_rules(group, desired_ingress, purge_ingress, 'IpPermissions')
 
@@ -902,7 +901,7 @@ def main():
 
         if tags is not None and group is not None:
             current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
-            changed |= update_tags(client, module, group['GroupId'], current_tags, tags, purge_tags, changed)
+            changed |= update_tags(client, module, group['GroupId'], current_tags, tags, purge_tags)
 
     if group:
         named_tuple_ingress_list = []
@@ -926,7 +925,7 @@ def main():
 
                 named_tuple_rule_list.append(
                     Rule(
-                        port_range=(rule['to_port'], rule['from_port']),
+                        port_range=(rule['from_port'], rule['to_port']),
                         protocol=rule['proto'],
                         target=target, target_type=target_type,
                         description=rule.get('rule_desc'),
@@ -957,9 +956,9 @@ def main():
             revoke_ingress = [to_permission(r) for r in set(present_ingress) - set(named_tuple_ingress_list)]
         else:
             revoke_ingress = []
-        if purge_rules_egress:
-            if module.params.get('rules_egress') is None:
-                revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list) if r.target != '0.0.0.0/0']
+        if purge_rules_egress and module.params.get('rules_egress') is not None:
+            if module.params.get('rules_egress') is []:
+                revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list) if r != Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)]
             else:
                 revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list)]
         else:
@@ -987,13 +986,14 @@ def main():
             changed |= True
 
         # Revoke old rules
-        changed |= remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'], changed)
+        changed |= remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'])
+        rule_msg = 'Revoking {0}, and egress {1}'.format(revoke_ingress, revoke_egress)
 
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_ingress_permissions = rules_to_permissions(set(named_tuple_ingress_list) - set(current_ingress))
         new_egress_permissions = rules_to_permissions(set(named_tuple_egress_list) - set(current_egress))
         # Authorize new rules
-        changed |= add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'], changed)
+        changed |= add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'])
 
         if group_created_new and module.params.get('rules') is None and module.params.get('rules_egress') is None:
             # A new group with no rules provided is already being awaited.

@@ -13,6 +13,7 @@
     - name: Create a group with only the default rule
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         description: '{{ec2_group_description}}'
         <<: *aws_connection_info
         state: present
@@ -29,6 +30,7 @@
     - name: Create a group with only the default rule
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         description: '{{ec2_group_description}}'
         purge_rules_egress: false
         <<: *aws_connection_info
@@ -47,6 +49,7 @@
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
         description: '{{ec2_group_description}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         rules_egress: []
         <<: *aws_connection_info
@@ -65,6 +68,7 @@
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
         description: '{{ec2_group_description}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: true
         rules_egress: []
         <<: *aws_connection_info
@@ -82,6 +86,7 @@
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
         description: '{{ec2_group_description}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         rules_egress:
         - proto: tcp
           ports:
@@ -101,6 +106,7 @@
         name: '{{ec2_group_name}}-egress-tests'
         description: '{{ec2_group_description}}'
         purge_rules_egress: false
+        vpc_id: '{{ vpc_result.vpc.id }}'
         rules_egress:
         - proto: tcp
           ports:
@@ -119,6 +125,7 @@
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
         description: '{{ec2_group_description}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
         rules_egress:
         - proto: tcp
           ports:
@@ -134,6 +141,19 @@
           - result.ip_permissions_egress|length == 1
           - result.ip_permissions_egress[0].ip_ranges[0].cidr_ip == '1.2.1.2/32'
 
+    - name: add a rule for all TCP ports
+      ec2_group:
+        name: '{{ec2_group_name}}-egress-tests'
+        description: '{{ec2_group_description}}'
+        rules_egress:
+        - proto: tcp
+          ports: 0-65535
+          cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
+        state: present
+        vpc_id: '{{ vpc_result.vpc.id }}'
+      register: result
+
     - name: Re-add the default rule
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
@@ -143,11 +163,13 @@
           cidr_ip: 0.0.0.0/0
         <<: *aws_connection_info
         state: present
+        vpc_id: '{{ vpc_result.vpc.id }}'
       register: result
   always:
     - name: tidy up egress rule test security group
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'
         state: absent
+        vpc_id: '{{ vpc_result.vpc.id }}'
         <<: *aws_connection_info
       ignore_errors: yes
