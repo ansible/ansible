@@ -40,7 +40,7 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.10. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
 
 
 Noteworthy module changes
@@ -62,4 +62,3 @@ Networking
 ==========
 
 No notable changes.
-
