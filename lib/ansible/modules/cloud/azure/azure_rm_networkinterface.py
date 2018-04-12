@@ -166,6 +166,7 @@ options:
     has_security_group:
         description:
             - Whether need the NIC created with a security group
+        type: bool
         version_added: 2.6
         default: True
     security_group_name:
@@ -323,7 +324,7 @@ def nic_to_dict(nic):
             subnet=subnet_to_dict(config.subnet),
             primary=config.primary,
             load_balancer_backend_address_pools=([item.id for item in config.load_balancer_backend_address_pools]
-                                                  if config.load_balancer_backend_address_pools else None),
+                                                 if config.load_balancer_backend_address_pools else None),
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
@@ -549,7 +550,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
                         load_balancer_backend_address_pools=([self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id))
                                                               for bap_id in ip_config.get('load_balancer_backend_address_pools')]
-                                                              if ip_config.get('load_balancer_backend_address_pools') else None),
+                                                             if ip_config.get('load_balancer_backend_address_pools') else None),
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
@@ -626,7 +627,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             return None
 
     def backend_addr_pool_id(self, val):
-        if type(val) is dict:
+        if isinstance(val, dict):
             lb = val.get('load_balancer', None)
             name = val.get('name', None)
             if lb and name:
@@ -645,7 +646,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
                                     if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
             primary=item.get('primary'),
-            load_balancer_backend_address_pools = (set([to_native(self.backend_addr_pool_id(id))
+            load_balancer_backend_address_pools=(set([to_native(self.backend_addr_pool_id(id))
                                                    for id in item.get('load_balancer_backend_address_pools')])
                                                    if item.get('load_balancer_backend_address_pools') else None),
             name=to_native(item.get('name'))
