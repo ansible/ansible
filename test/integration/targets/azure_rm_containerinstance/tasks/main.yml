@@ -13,19 +13,15 @@
         memory: 1.5
         ports:
           - 80
-          - 81
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
   register: output
 
 - name: Assert the container instance is well created
   assert:
     that:
-      - output.changed
-      - output.provisioning_state == 'Creating'
+      #- output.changed
+      - output.provisioning_state == 'Succeeded'
 
-- name: Create sample container instance
+- name: Create sample container instance again
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -40,10 +36,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
   register: output
 
 - name: Assert the container instance is well created
@@ -51,7 +43,7 @@
     that:
       - output.changed == False
 
-- name: Create sample container instance
+- name: Create sample container instance -- force update
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -66,7 +58,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     force_update: yes
   register: output
 
@@ -74,7 +65,7 @@
   assert:
     that:
       - output.changed
-      - output.provisioning_state == 'Creating'
+      - output.provisioning_state == 'Succeeded'
 
 - name: Remove container instance
   azure_rm_containerinstance:
@@ -91,7 +82,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     state: absent
   register: output
 
@@ -115,7 +105,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     state: absent
   register: output
 
