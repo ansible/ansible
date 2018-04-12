@@ -105,4 +105,8 @@
       state: absent
       cidr_block: "10.0.0.0/26"
       <<: *aws_connection_info
+    register: result
+    retries: 10
+    delay: 3
+    until: result is not failed
     ignore_errors: true
