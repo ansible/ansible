@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, Aaron Smith <ajsmith10381@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -20,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -38,12 +27,10 @@ options:
         description:
             - Cluster ID of the EMR cluster.
         required: true
-        default: None
     steps:
         description:
             - Steps to run against the EMR cluster.
         required: true
-        default: None
 extends_documentation_fragment:
   - aws
   - ec2
@@ -69,59 +56,43 @@ step_ids:
 '''
 
 
-from collections import defaultdict
-
 try:
     import botocore
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
-class EMRConnection(object):
-
-    def __init__(self, module, region, **aws_connect_params):
-        try:
-            self.connection = boto3_conn(module, conn_type='client',
-                                         resource='emr', region=region,
-                                         **aws_connect_params)
-            self.module = module
-        except Exception as e:
-            module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
-
-        self.region = region
-
-    def add_emr_steps(self):
-        cluster_id = self.module.params.get('cluster_id')
-        steps = self.module.params.get('steps')
-
-        try:
-            results = self.connection.add_job_flow_steps(
-                JobFlowId=cluster_id,
-                Steps=steps
-            )
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Couldn't add step to EMR Cluster")
-        return camel_dict_to_snake_dict(results)
+def add_emr_steps(cluster_id, steps):
+    try:
+        results = self.connection.add_job_flow_steps(
+            JobFlowId=cluster_id,
+            Steps=steps
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        self.module.fail_json_aws(e, msg="Couldn't add step(s) to EMR Cluster")
+    return camel_dict_to_snake_dict(results)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        cluster_id=dict(type='string', required=True),
-        steps=dict(type='list', required=True)
-    ))
+    module = AnsibleAWSModule(
+        argument_spec={
+            'cluster_id': dict(type='str', required=True),
+            'steps': dict(type='list', required=True),
+        },
+        supports_check_mode=True,
+    )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module, conn_type='client', resource='emr', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    region, dummy, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EMRConnection(module, region, **aws_connect_params)
+    cluster_id = module.params.get('cluster_id')
+    steps = module.params.get('steps')
 
-    emr_step_details = connection.add_emr_steps()
+    emr_step_details = connection.add_emr_steps(cluster_id, steps)
 
     module.exit_json(changed=True, ansible_facts={'emr': emr_step_details})
 
