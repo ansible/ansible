@@ -993,7 +993,23 @@ class PyVmomiHelper(PyVmomi):
                                           " a VLAN name under VM network list.")
 
             if 'name' in network and find_obj(self.content, [vim.Network], network['name']) is None:
-                self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
+                netfound = False
+                host = None
+                vm = self.get_vm()
+                if vm:
+                    host = vm.summary.runtime.host
+                elif self.params['esxi_hostname']:
+                    host = self.select_host()
+
+                if host is not None:
+                    for hostnet in host.network:
+                        if hostnet.name == network['name']:
+                            netfound = True
+                            break
+
+                if not netfound:
+                    self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
+
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
