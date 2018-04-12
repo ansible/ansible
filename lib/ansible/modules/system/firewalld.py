@@ -829,7 +829,7 @@ def main():
 
     # Verify required params are provided
     if immediate and fw_offline:
-        module.fail(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
+        module.fail_json(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
     changed = False
     msgs = []
