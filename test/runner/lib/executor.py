@@ -88,6 +88,10 @@ from lib.config import (
     WindowsIntegrationConfig,
 )
 
+from lib.metadata import (
+    ChangeDescription,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -1029,23 +1033,24 @@ def get_changes_filter(args):
     """
     paths = detect_changes(args)
 
+    if not args.metadata.change_description:
+        if paths:
+            changes = categorize_changes(args, paths, args.command)
+        else:
+            changes = ChangeDescription()
+
+        args.metadata.change_description = changes
+
     if paths is None:
         return []  # change detection not enabled, do not filter targets
 
     if not paths:
         raise NoChangesDetected()
 
-    commands = categorize_changes(args, paths, args.command)
-
-    targets = commands.get(args.command)
-
-    if targets is None:
+    if args.metadata.change_description.targets is None:
         raise NoTestsForChanges()
 
-    if targets == ['all']:
-        return []  # changes require testing all targets, do not filter targets
-
-    return targets
+    return args.metadata.change_description.targets
 
 
 def detect_changes(args):
@@ -1175,6 +1180,49 @@ def get_integration_filter(args, targets):
     return get_integration_local_filter(args, targets)
 
 
+def common_integration_filter(args, targets, exclude):
+    """
+    :type args: IntegrationConfig
+    :type targets: tuple[IntegrationTarget]
+    :type exclude: list[str]
+    """
+    override_disabled = set(target for target in args.include if target.startswith('disabled/'))
+
+    if not args.allow_disabled:
+        skip = 'disabled/'
+        override = [target.name for target in targets if override_disabled & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
+        if skipped:
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-disabled or prefixing with "disabled/": %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
+    override_unsupported = set(target for target in args.include if target.startswith('unsupported/'))
+
+    if not args.allow_unsupported:
+        skip = 'unsupported/'
+        override = [target.name for target in targets if override_unsupported & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
+        if skipped:
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-unsupported or prefixing with "unsupported/": %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
+    override_unstable = set(target for target in args.include if target.startswith('unstable/'))
+
+    if args.allow_unstable_changed:
+        override_unstable |= set(args.metadata.change_description.focused_targets or [])
+
+    if not args.allow_unstable:
+        skip = 'unstable/'
+        override = [target.name for target in targets if override_unstable & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
+        if skipped:
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
+
 def get_integration_local_filter(args, targets):
     """
     :type args: IntegrationConfig
@@ -1182,6 +1230,8 @@ def get_integration_local_filter(args, targets):
     :rtype: list[str]
     """
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     if not args.allow_root and os.getuid() != 0:
         skip = 'needs/root/'
@@ -1224,6 +1274,8 @@ def get_integration_docker_filter(args, targets):
     :rtype: list[str]
     """
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     if not args.docker_privileged:
         skip = 'needs/privileged/'
@@ -1270,6 +1322,8 @@ def get_integration_remote_filter(args, targets):
     platform = parts[0]
 
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     skip = 'skip/%s/' % platform
     skipped = [target.name for target in targets if skip in target.aliases]
