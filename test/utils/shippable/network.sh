@@ -3,7 +3,8 @@
 set -o pipefail
 
 # shellcheck disable=SC2086
-ansible-test network-integration --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' network-integration: .* (targeted)$' || true; } > /tmp/network.txt
+ansible-test network-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} 2>&1 \
+    | { grep ' network-integration: .* (targeted)$' || true; } > /tmp/network.txt
 
 if [ "${COVERAGE}" ]; then
     # when on-demand coverage is enabled, force tests to run for all network platforms
@@ -49,7 +50,8 @@ for version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    ansible-test network-integration --color -v --retry-on-error "${target}" --docker default --python "${version}" \
-        ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} "${platforms[@]}" \
+    ansible-test network-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+         "${platforms[@]}" \
+        --docker default --python "${version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
