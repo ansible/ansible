@@ -26,36 +26,14 @@ notes:
 - Some of the options are likely only used for developers within Meraki
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
     name:
         description:
-        - Organization ID of an organization
+        - Name of an organization.
+        - If C(clone) is specified, C(name) is the name of the new organization.
     state:
         description:
         - Create or query organizations
         choices: ['query', 'present']
-    host:
-        description:
-        - Hostname for Meraki dashboard
-        - Only useful for internal Meraki developers
-        type: string
-        default: 'api.meraki.com'
-    use_proxy:
-        description:
-        - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
-        type: bool
-    use_ssl:
-        description:
-        - If C(no), it will use HTTP. Otherwise it will use HTTPS.
-        - Only useful for internal Meraki developers
-        type: bool
-        default: 'yes'
-    output_level:
-        description:
-        - Set amount of debug output during module execution.
-        choices: ['normal', 'debug']
     clone:
         description:
         - Organization to clone to a new organization.
@@ -63,6 +41,7 @@ options:
 
 author:
     - Kevin Breit (@kbreit)
+extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = '''
@@ -85,6 +64,14 @@ EXAMPLES = '''
     name: YourOrg
     state: present
   delegate_to: localhost
+
+- name: Clone an organization named Org to a new one called ClonedOrg
+  meraki_organization:
+    auth_key: abc12345
+    clone: Org
+    name: ClonedOrg
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -101,65 +88,14 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
-# def find_org_id(data, name):
-#     ''' Find an organization's ID based on the provided name '''
-#     for i in data:
-#         if i['name'] == name:
-#             return i['id']
-
-# def meraki_request(module, result, url, method, headers, payload):
-#     try:
-#         resp, info = fetch_url(module, url,
-#                                data=json.dumps(payload),
-#                                headers=headers,
-#                                method=method,
-#                                use_proxy=meraki.params['use_proxy'],
-#                                force=False,
-#                                )
-#     except Exception as e:
-#         module.fail_json(msg=str(e), **debug_result)
-
-#     # module.fail_json(msg=info['status'])
-#     data = resp.read()
-#     if meraki.params['output_level'] == 'debug':
-#         debug_result['status'] = info['status']
-#         debug_result['resp_headers'] = resp.headers
-#         debug_result['response'] = data
-#     response = json.loads(to_native(data))
-
-#     if info['status'] >= 200 and info['status'] <= 299:
-#         try:
-#             result['message'] = response
-#             if method == 'POST' or method == 'PUT':
-#                 if info['status'] == 201:
-#                     result['changed'] = True
-#         except:
-#             module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
-#     else:
-#         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
-#     return response
 
 def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
     argument_spec = meraki_argument_spec()
-    # argument_spec.update(
-    #                     )
-    #                    clone=dict(type='str'),
-    #                    claim=dict(type='str'),
-    #                    claim_mode=dict(type='str'),
-    #                    inventory=dict(type='bool'),
-    #                    snmp_v2c=dict(type='bool'),
-    #                    snmp_v3=dict(type='bool'),
-    #                    snmp_v3AuthMode=dict(type='str', choices=['md5', 'sha']),
-    #                    snmp_v3AuthPass=dict(type='str', no_log=True),
-    #                    snmp_v3PrivMode=dict(type='str', choices=['des', 'aes128']),
-    #                    snmp_v3PrivPass=dict(type='str', no_log=True),
-    #                    snmp_PeerIP=dict(type='str'),
-    #                    vpn_PublicIP=dict(type='str'),
-    #                    vpn_PrivateSubnets=dict(type='str'),
-    #                    vpn_secret=dict(type='str', no_log=True),
+    argument_spec.update(clone=dict(type='str'),
+                        )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -183,18 +119,20 @@ def main():
     meraki.params['follow_redirects'] = 'all'
     meraki.required_if=[
                            ['state', 'present', ['name']],
-                           # ['clone', ['name']],
+                           ['clone', ['name']],
                            # ['vpn_PublicIP', ['name']],
                        ]
 
     create_urls = {'organizations': '/organizations',
                    }
-
     update_urls = {'organizations': '/organizations/replace_org_id',
                    }
+    clone_urls = {'organizations': '/organizations/replace_org_id/clone',
+                  }
 
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
+    meraki.url_catalog['clone'] = clone_urls
 
     try:
         meraki.params['auth_key'] = os.environ['MERAKI_KEY']
@@ -216,27 +154,12 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    protocol = 'https'
-    if meraki.params['use_ssl'] is not None and meraki.params['use_ssl'] is False:
-        protocol = 'http'
-    host = 'api.meraki.com'
 
-    url = '{0}://api.meraki.com/api/v0/organizations'.format(protocol)
-    headers = {'Content-Type': 'application/json',
-               'X-Cisco-Meraki-API-Key': meraki.params['auth_key'],
-               }
-    method = None
+    # method = None
+    # org_id = None
 
-    if meraki.params['output_level'] == 'debug':
-      debug_result=dict(url=url,
-                        method=method,
-                        headers=headers,
-                        payload=payload,
-                        )
-      if meraki.params['state']:
-          debug_result['state'] = meraki.params['state']
 
-    org_id = None
+    # meraki.fail_json(msg=meraki.is_org_valid(meraki.get_orgs(), org_name='AnsibleTestOrg'))
 
     if meraki.params['state'] == 'query':
       if meraki.params['name'] is None:  # Query all organizations, no matter what
@@ -249,16 +172,21 @@ def main():
           if o['name'] == meraki.params['name']:
             meraki.result['organization'] = o
     elif meraki.params['state'] == 'present':
-      if meraki.params['org_id'] is None and meraki.params['name'] is not None:  # Create new organization
-        payload = {'name': meraki.params['name']}
-        meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('create'), payload=json.dumps(payload)))
-      elif meraki.params['org_id'] is not None and meraki.params['name'] is not None:  # Update an existing organization
-        # meraki.fail_json(msg='update code triggered')
-        payload = {'name': meraki.params['name'],
-                   'id': meraki.params['org_id'],
-                   }
-        # meraki.fail_json(msg=meraki.construct_path('update', org_id=meraki.params['org_id']), payload=payload)
-        meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('update', org_id=meraki.params['org_id']), payload=json.dumps(payload), method='PUT'))
+        if meraki.params['clone'] is not None:  # Cloning
+            payload = {'name': meraki.params['name']}
+            # meraki.fail_json(msg=meraki.construct_path('clone', org_name=meraki.params['clone']))
+            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('clone', org_name=meraki.params['clone']),
+                                                                  payload=json.dumps(payload),
+                                                                  method='POST'))
+        elif meraki.params['org_id'] is None and meraki.params['name'] is not None:  # Create new organization
+            payload = {'name': meraki.params['name']}
+            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('create'), payload=json.dumps(payload)))
+        elif meraki.params['org_id'] is not None and meraki.params['name'] is not None:  # Update an existing organization
+            payload = {'name': meraki.params['name'],
+                       'id': meraki.params['org_id'],
+                       }
+            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('update', org_id=meraki.params['org_id']), payload=json.dumps(payload), method='PUT'))
+
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**result)

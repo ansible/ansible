@@ -25,7 +25,7 @@ options:
         description:
         - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-    use_ssl:
+    use_https:
         description:
         - If C(no), it will use HTTP. Otherwise it will use HTTPS.
         - Only useful for internal Meraki developers

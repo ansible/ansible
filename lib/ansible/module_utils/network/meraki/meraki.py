@@ -45,7 +45,7 @@ def meraki_argument_spec():
                 username=dict(type='str'),
                 state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
                 use_proxy=dict(type='bool', default=True),
-                use_ssl=dict(type='bool', default=True),
+                use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
@@ -126,6 +126,10 @@ class MerakiModule(object):
         self.module.required_if = [('state', 'present', ['name']),
                                    ('state', 'absent', ['name']),
                                    ]
+        self.module.mutually_exclusive=[
+                                        ('org_id', 'org_name'),
+                                       ]
+
 
         # Validate whether parameters are compatible
         if self.params['state'] == 'absent':
@@ -134,30 +138,30 @@ class MerakiModule(object):
         self.modifiable_methods = ['POST', 'PUT', 'DELETE']
 
     def define_protocol(self):
-        ''' Set protocol based on use_ssl parameters '''
-        if self.params['use_ssl'] is True:
+        ''' Set protocol based on use_https parameters '''
+        if self.params['use_https'] is True:
             self.params['protocol'] = 'https'
         else:
             self.params['protocol'] = 'http'
 
-    def define_method(self):
-        ''' Set method. May not need to stay. '''
-        if self.params['state'] == 'query':
-            self.method = 'GET'
-        elif self.params['state'] == 'absent':
-            self.method = 'DELETE'
-        elif self.params['state'] == 'present':
-            if self.function == 'organizations':
-                if self.params['org_id'] is not None:
-                    self.method = 'PUT'
-                else:
-                    self.method = 'POST'
-            elif self.is_new() is True:
-                self.method = 'POST'
-            elif self.is_update_required() is True:
-                self.method = 'PUT'
-            else:
-                return -1
+    # def define_method(self):
+    #     ''' Set method. May not need to stay. '''
+    #     if self.params['state'] == 'query':
+    #         self.method = 'GET'
+    #     elif self.params['state'] == 'absent':
+    #         self.method = 'DELETE'
+    #     elif self.params['state'] == 'present':
+    #         if self.function == 'organizations':
+    #             if self.params['org_id'] is not None:
+    #                 self.method = 'PUT'
+    #             else:
+    #                 self.method = 'POST'
+    #         elif self.is_new() is True:
+    #             self.method = 'POST'
+    #         elif self.is_update_required() is True:
+    #             self.method = 'PUT'
+    #         else:
+    #             return -1
 
     def response_json(self, rawoutput):
         ''' Handle Dashboard API response output '''
@@ -220,40 +224,70 @@ class MerakiModule(object):
     def get_orgs(self):
         ''' Downloads all organizations '''
         return json.loads(self.request('/organizations', method='GET'))
-        # return self.response_json(self.request('GET', '/organizations'))
 
-    def is_org(self, org_id):
-        ''' Checks whether an organization exists based on its id '''
-        orgs = self.get_orgs()
-        for o in orgs:
-            if o['id'] == org_id:
-                return True
-        self.fail_json(msg='No organization found with ID {0}'.format(org_id))
+    def is_org_valid(self, data, org_name=None, org_id=None):
+        ''' Checks whether a specific org exists and is duplicated '''
+        ''' If 0, doesn't exist. 1, exists and not duplicated. >1 duplicated '''
+        org_count = 0
+        if org_name is not None:
+            for o in data:
+                if o['name'] == org_name:
+                    org_count += 1
+        if org_id is not None:
+            for o in data:
+                if o['id'] == org_id:
+                    org_count += 1
+        return org_count
 
-    def is_org_dupe(self, org_name, data):
-        ''' Checks whether multiple organizations exist with the same name '''
-        dupe_orgs = list()
-        for o in data:
-            if o['name'] == org_name:
-                dupe_orgs.append(o)
-        if len(dupe_orgs) == 0:
-            self.fail_json(msg="Found no organizations matching name {0}".format(org_name))
-        elif len(dupe_orgs) == 1:
-            return dupe_orgs[0]
-        elif len(dupe_orgs) > 1:
-            # TODO: Output organization info for each matching org
-            # TODO: Output networks associated for each matching org
-            self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
+    # def is_org(self, data, org_id=None, org_name=None):
+    #     ''' Checks whether an organization exists based on its id or name'''
+    #     ''' TODO: Add support for duplicate checking'''
+    #     orgs = self.get_orgs()
+    #     if org_name:
+    #         for o in orgs:
+    #             if o['name'] == org_name:
+    #                 return True
+    #         self.fail_json(msg='No organization found with name {0}'.format(org_name))
+
+    #     if org_id:
+    #         for o in orgs:
+    #             if o['id'] == org_id:
+    #                 return True
+    #         self.fail_json(msg='No organization found with ID {0}'.format(org_id))
+
+    # def is_org_dupe(self, org_name, data):
+    #     ''' Checks whether multiple organizations exist with the same name '''
+    #     dupe_orgs = list()
+    #     for o in data:
+    #         if o['name'] == org_name:
+    #             dupe_orgs.append(o)
+    #     if len(dupe_orgs) == 0:
+    #         self.fail_json(msg="Found no organizations matching name {0}".format(org_name))
+    #     elif len(dupe_orgs) == 1:
+    #         return dupe_orgs[0]
+    #     elif len(dupe_orgs) > 1:
+    #         # TODO: Output organization info for each matching org
+    #         # TODO: Output networks associated for each matching org
+    #         self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
 
     def get_org_id(self, org_name):
         ''' Returns an organization id based on organization name, only if unique
-            If org_id is specified, return that instead of a lookup
+            If org_id is specified as parameter, return that instead of a lookup
         '''
+        orgs = self.get_orgs()
         if self.params['org_id'] is not None:
-            if self.is_org(self.params['org_id']) is True:
+            if self.is_org_valid(orgs, org_id=self.params['org_id']) is True:
                 return self.params['org_id']
-        org = self.is_org_dupe(self.params['org_name'], self.get_orgs())
-        return org['id']
+        org_count = self.is_org_valid(orgs, org_name=org_name)
+        if org_count == 0:
+            self.fail_json(msg='There are no organizations with the name {0}'.format(org_name))
+        if org_count > 1:
+            self.fail_json(msg='There are multiple organizations with the name {0}'.format(org_name))
+        elif org_count == 1:
+            for i in orgs:
+                if org_name == i['name']:
+                    # self.fail_json(msg=i['id'])
+                    return str(i['id'])
 
     def get_net(self, org_name, net_name):
         ''' Return network information '''
@@ -270,42 +304,33 @@ class MerakiModule(object):
                 net = self.get_net(org_name, net_name)
                 return net['id']
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None):
+    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
         built_path = None
         if function is None:
             built_path = self.url_catalog[action][self.function]
         else:
             self.function = function
             built_path = self.url_catalog[action][function]
-        if 'replace_org_id' in built_path:
+        if 'replace_org_id' in built_path:  # TODO: This is a mess, fix it
             if org_id is None:
-                return built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
+                return built_path.replace('replace_org_id', self.get_org_id(org_name))
             else:
                 return built_path.replace('replace_org_id', str(org_id))
         elif 'replace_net_id' in built_path:
             if net_id is None:
                 return built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
             else:
-                    return built_path.replace('replace_net_id', str(net_id))
+                return built_path.replace('replace_net_id', str(net_id))
         return built_path
-
-    def create_object(self, payload):
-        create_path = self.construct_path('create')
-        return self.response_json(self.request('POST', create_path, payload=payload))
-
-    def delete_object(self, payload):
-        delete_path = self.construct_path('delete')
-        return self.response_json(self.request('DELETE', delete_path, payload=payload))
 
     def request(self, path, method=None, payload=None):
         ''' Generic HTTP method for Meraki requests '''
         self.path = path
         self.define_protocol()
-        if self.define_method() is -1:  # No changes are needed to existing object
-            return
+        # if self.define_method() is -1:  # No changes are needed to existing object
+        #     return
 
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
-
         if payload is None:
             resp, info = fetch_url(self.module, self.url,
                                    headers=self.headers,
@@ -325,9 +350,12 @@ class MerakiModule(object):
         self.status = info['status']
 
         if self.status >= 400:
-            if self.function == 'vlans':
-                if self.status == 400:
-                    return to_native(info['body'])
+            try:
+                self.error['text'] = self.response_json(info['body'])
+                self.error['code'] = info['status']
+                self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
+            except KeyError:
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)            
         elif self.status >= 300:
             try:
                 self.error['text'] = self.response_json(info['body'])
@@ -339,8 +367,7 @@ class MerakiModule(object):
             self.result['changed'] = True
         if self.status == 200 and method == 'PUT':
             self.result['changed'] = True
-        response = to_native(resp.read())
-        return response
+        return to_native(resp.read())
 
     def exit_json(self, **kwargs):
         if 'state' in self.params:
@@ -358,17 +385,6 @@ class MerakiModule(object):
             self.result['status'] = self.status
             self.result['url'] = self.url
 
-        # if 'state' in self.params:
-        #     self.original = self.existing
-        #     if self.params['state'] in ('absent', 'present'):
-        #         self.get_existing()
-
-        #     self.result['current'] = self.existing
-
-        #     if self.params['output_level'] in ('debug', 'info'):
-        #         self.result['sent'] = self.config
-        #         self.result['proposed'] = self.proposed
-
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
 
@@ -382,12 +398,6 @@ class MerakiModule(object):
             if self.params['state'] in ('absent', 'present'):
                 if self.params['output_level'] in ('debug', 'info'):
                     self.result['previous'] = self.existing
-
-            # Return the gory details when we need it
-            # if self.params['output_level'] == 'debug':
-            #     if self.imdata is not None:
-            #         self.result['imdata'] = self.imdata
-            #         self.result['totalCount'] = self.totalCount
 
         if self.params['output_level'] == 'debug':
             if self.url is not None:
