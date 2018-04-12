@@ -4,7 +4,7 @@
 import traceback
 
 try:
-    import botocore.waiter as core_waiter
+    from botocore.exceptions import ClientError
 except ImportError:
     pass  # caught by HAS_BOTO3
 
