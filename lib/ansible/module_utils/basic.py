@@ -1848,9 +1848,9 @@ class AnsibleModule(object):
     def _check_type_str(self, value):
         if isinstance(value, string_types):
             return value
-        # Note: This could throw a unicode error if value's __str__() method
-        # returns non-ascii.  Have to port utils.to_bytes() if that happens
-        return str(value)
+        if isinstance(value, (list, dict)):
+            self.warn("Parameter value %s is expected to be string but was %s" % (value, value.__class__.__name__))
+        return to_native(value)
 
     def _check_type_list(self, value):
         if isinstance(value, list):
