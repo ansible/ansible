@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, Aaron Smith <ajsmith10381@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -103,15 +92,13 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-from collections import defaultdict
-
 try:
     import botocore
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
@@ -167,22 +154,22 @@ class IAMConnection(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        state=dict(choices=['present', 'absent'], required=True),
-        min_pw_length=dict(type='int', default=6),
-        require_symbols=dict(type='bool', default=False),
-        require_numbers=dict(type='bool', default=False),
-        require_uppercase=dict(type='bool', default=False),
-        require_lowercase=dict(type='bool', default=False),
-        allow_pw_change=dict(type='bool', default=False),
-        pw_max_age=dict(type='int', default=0),
-        pw_reuse_prevent=dict(type='int', default=0),
-        pw_expire=dict(type='bool', default=False),
-    ))
-
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+    module = AnsibleAWSModule(
+        argument_spec={
+            'cluster_id': dict(type='str', required=True),
+            'state': dict(choices=['present', 'absent'], required=True),
+            'min_pw_length': dict(type='int', default=6),
+            'require_symbols': dict(type='bool', default=False),
+            'require_numbers': dict(type='bool', default=False),
+            'require_uppercase': dict(type='bool', default=False),
+            'require_lowercase': dict(type='bool', default=False),
+            'allow_pw_change': dict(type='bool', default=False),
+            'pw_max_age': dict(type='int', default=0),
+            'pw_reuse_prevent': dict(type='int', default=0),
+            'pw_expire': dict(type='bool', default=False),
+        },
+        supports_check_mode=True,
+    )
 
     region, dummy, aws_connect_params = get_aws_connection_info(module, boto3=True)
     resource = IAMConnection(module, region, **aws_connect_params)
