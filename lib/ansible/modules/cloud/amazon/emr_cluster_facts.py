@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+
+# Copyright: (c) 2018, Aaron Smith <ajsmith10381@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -8,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -25,8 +26,7 @@ options:
     id:
         description:
             - ID of the EMR cluster.
-        required: false
-        default: None
+        required: true
 extends_documentation_fragment:
   - aws
   - ec2
@@ -261,54 +261,38 @@ cluster:
           sample: ''
 '''
 
-
-from collections import defaultdict
-
 try:
     import botocore
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
-
-class EMRConnection(object):
-
-    def __init__(self, module, region, **aws_connect_params):
-        try:
-            self.connection = boto3_conn(module, conn_type='client',
-                                         resource='emr', region=region,
-                                         **aws_connect_params)
-            self.module = module
-        except Exception as e:
-            module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
-        self.region = region
-
-    def get_emr_cluster(self, cluster_id=None):
-        try:
-            results = self.connection.describe_cluster(ClusterId=cluster_id)
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Couldn't get EMR cluster facts")
-        return camel_dict_to_snake_dict(results)
+def get_emr_cluster(conn, cluster_id):
+    try:
+        results = conn.describe_cluster(ClusterId=cluster_id)
+        results['Cluster']['Tags'] = boto3_tag_list_to_ansible_dict(results['Cluster'].get('Tags', []))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get EMR cluster facts")
+    return camel_dict_to_snake_dict(results)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        id=dict()
-    ))
+    module = AnsibleAWSModule(
+        argument_spec={
+            'cluster_id': dict(type='str', required=True),
+        },
+        supports_check_mode=True,
+    )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module, conn_type='client', resource='emr', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    region, dummy, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EMRConnection(module, region, **aws_connect_params)
+    cluster_id = module.params.get('cluster_id')
 
-    cluster_id = module.params.get('id')
-
-    emr_cluster_info = connection.get_emr_cluster(cluster_id)
+    emr_cluster_info = get_emr_cluster(connection, cluster_id)
 
     module.exit_json(changed=False, ansible_facts={'EMR': emr_cluster_info})
 
