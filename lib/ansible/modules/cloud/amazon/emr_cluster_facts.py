@@ -23,7 +23,7 @@ requirements: [ boto3 ]
 author:
     - "Aaron Smith (@slapula)"
 options:
-    id:
+    cluster_id:
         description:
             - ID of the EMR cluster.
         required: true
@@ -35,7 +35,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Get EMR Cluster facts from myTestEmrCluster
   emr_cluster_facts:
-    id: 'j-7OV2AF536ZBF'
+    cluster_id: 'j-7OV2AF536ZBF'
   register: result
 '''
 
@@ -270,7 +270,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
-def get_emr_cluster(conn, cluster_id):
+def get_emr_cluster(conn, module, cluster_id):
     try:
         results = conn.describe_cluster(ClusterId=cluster_id)
         results['Cluster']['Tags'] = boto3_tag_list_to_ansible_dict(results['Cluster'].get('Tags', []))
@@ -292,7 +292,7 @@ def main():
 
     cluster_id = module.params.get('cluster_id')
 
-    emr_cluster_info = get_emr_cluster(connection, cluster_id)
+    emr_cluster_info = get_emr_cluster(connection, module, cluster_id)
 
     module.exit_json(changed=False, ansible_facts={'EMR': emr_cluster_info})
 
