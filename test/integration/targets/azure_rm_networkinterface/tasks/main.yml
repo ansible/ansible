@@ -182,6 +182,10 @@
           public_ip_allocation_method: Static
         - name: ipconfig1
           public_ip_name: testnic003
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: lbtestfromansible
   register: output
 
 - assert:
