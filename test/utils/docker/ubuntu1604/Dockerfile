@@ -34,7 +34,6 @@ RUN apt-get update -y && \
     python-dbus \
     python-httplib2 \
     python-jinja2 \
-    python-keyczar \
     python-lxml \
     python-mock \
     python-mysqldb \

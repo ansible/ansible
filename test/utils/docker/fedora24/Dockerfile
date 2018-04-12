@@ -40,7 +40,6 @@ RUN dnf clean all && \
     python-devel \
     python-httplib2 \
     python-jinja2 \
-    python-keyczar \
     python-lxml \
     python-mock \
     python-nose \
