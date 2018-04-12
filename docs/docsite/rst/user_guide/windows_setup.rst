@@ -35,7 +35,7 @@ This is an example of how to run this script from PowerShell:
 .. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
-    $file = "$env:TEMP\Upgrade-PowerShell.ps1"
+    $file = "$env:temp\Upgrade-PowerShell.ps1"
     $username = "Administrator"
     $password = "Password"
 
@@ -93,7 +93,7 @@ The following PowerShell command will install the hotfix:
 .. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
-    $file = "$env:SystemDrive\temp\Install-WMF3Hotfix.ps1"
+    $file = "$env:temp\Install-WMF3Hotfix.ps1"
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
@@ -116,7 +116,7 @@ To use this script, run the following in PowerShell:
 .. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
-    $file = "$env:SystemDrive\temp\ConfigureRemotingForAnsible.ps1"
+    $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
 
