@@ -156,6 +156,7 @@ options:
                     - List of an existing load-balancer backend address pool id to associate with the network interface.
                     - It can be write as a resource id.
                     - Also can be a dict of I(name) and I(load_balancer).
+                version_added: 2.6
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
@@ -165,6 +166,7 @@ options:
     has_security_group:
         description:
             - Whether need the NIC created with a security group
+        version_added: 2.6            
         default: True
     security_group_name:
         description:
