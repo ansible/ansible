@@ -37,8 +37,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-      - Abbreviated commands in lines are NOT idempotent, see
-        L(Network FAQ,../network/user_guide/faq.html).
     aliases: ['commands']
   parents:
     description:
@@ -134,6 +132,8 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+notes:
+  - Abbreviated commands are NOT idempotent, see L(Network FAQ,../network/user_guide/faq.html).
 """
 
 EXAMPLES = """
@@ -159,9 +159,8 @@ EXAMPLES = """
     lines:
       # - shut
       - shutdown
-    # parents: int g0/0/0/0
-    parents: interface GigabitEthernet0/0/0/0
-
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """

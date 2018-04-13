@@ -44,8 +44,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-      - Abbreviated commands in lines are NOT idempotent, see
-        L(Network FAQ,../network/user_guide/faq.html).
     aliases: ['commands']
   parents:
     description:
@@ -205,6 +203,8 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+notes:
+  - Abbreviated commands are NOT idempotent, see L(Network FAQ,../network/user_guide/faq.html).
 """
 
 EXAMPLES = """
@@ -242,9 +242,8 @@ EXAMPLES = """
     lines:
       # - shut
       - shutdown
-    # parents: int eth1/1
-    parents: interface Ethernet1/1
-
+    # parents: int eth1
+    parents: interface Ethernet1
 """
 
 RETURN = """
