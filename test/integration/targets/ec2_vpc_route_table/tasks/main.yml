@@ -25,7 +25,7 @@
       state: present
       tags:
         Public: "{{ item.public|string }}"
-        Name: "{{ item.public|ternary('public', 'private') }}-{{ item.az }}"
+        Name: "{{ (item.public|bool)|ternary('public', 'private') }}-{{ item.az }}"
       <<: *aws_connection_info
     with_items:
       - cidr: 10.228.228.0/24

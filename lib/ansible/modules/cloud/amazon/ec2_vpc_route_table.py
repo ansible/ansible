@@ -256,7 +256,7 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
     'Name' tag, or a CIDR such as 10.0.0.0/8.
 
     Note that this function is duplicated in other ec2 modules, and should
-    potentially be moved into potentially be moved into a shared module_utils
+    potentially be moved into a shared module_utils
     """
     subnet_ids = []
     subnet_names = []
