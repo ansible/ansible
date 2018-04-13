@@ -68,3 +68,19 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a Job Template with extra_vars
+  tower_job_template:
+    name: hello-world
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    machine_credential: Demo Credential
+    job_type: run
+    extra_vars: test=value
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
