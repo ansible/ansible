@@ -175,9 +175,6 @@ class Block(Base, Become, Conditional, Taggable):
             new_task_list = []
             for task in task_list:
                 new_task = task.copy(exclude_parent=True)
-                # Ensure new_block has a parent, so that we maintain context
-                if not new_block._parent and task._parent._parent:
-                    new_block._parent = task._parent._parent.copy(exclude_tasks=True)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
                     if task._parent == new_block:
@@ -205,7 +202,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._parent = None
         if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
+            new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
             new_me.block = _dupe_task_list(self.block or [], new_me)
