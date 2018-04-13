@@ -105,23 +105,28 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python pathing not having a Python 2.X in /usr/bin/python on a remote machine?
+How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-While you can write ansible modules in any language, most ansible modules are written in Python, and some of these
-are important core ones.
+While you can write Ansible modules in any language, most Ansible modules are written in Python,
+including the ones central to letting Ansible work.
 
-By default, Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
-2.6 or higher.
+By default, Ansible assumes it can find a :command:`/usr/bin/python` on your remote system that is
+either Python2, version 2.6 or higher or Python3, 3.5 or higher.
 
-Setting the inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
-used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
-system does not point to a Python 2.X interpreter.
+Setting the inventory variable ``ansible_python_interpreter`` on any host will tell Ansible to
+auto-replace the Python interpreter with that value instead. Thus, you can point to any Python you
+want on the system if :command:`/usr/bin/python` on your system does not point to a compatible
+Python interpreter.
 
-Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
-get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
-support is being worked on but some Ansible modules are not yet ported to run under Python 3.0.  This is not a problem though
-as you can just install Python 2 also on a managed host.
+Some platforms may only have Python 3 installed by default. If it is not installed as
+:command:`/usr/bin/python`, you will need to configure the path to the interpreter via
+``ansible_python_interpreter``. Although most core modules will work with Python 3, there may be some
+special purpose ones which do not or you may encounter a bug in an edge case. As a temporary
+workaround you can install Python 2 on the managed host and configure Ansible to use that Python via
+``ansible_python_interpreter``. If there's no mention in the module's documentation that the module
+requires Python 2, you can also report a bug on our `bug tracker
+<https://github.com/ansible/ansible/issues>`_ so that the incompatibility can be fixed in a future release.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
