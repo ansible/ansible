@@ -310,6 +310,10 @@ class Interfaces(FactsBase):
         match = re.search(r'(\w+) Duplex', data, re.M)
         if match:
             return match.group(1)
+        else:
+            alt_match = re.search(r'(\w+)-duplex', data, re.M)
+            if alt_match:
+                return alt_match.group(1)
 
     def parse_type(self, data):
         match = re.search(r'Hardware is (.+),', data, re.M)
