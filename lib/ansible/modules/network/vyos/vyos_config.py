@@ -63,7 +63,9 @@ options:
       - The C(backup) argument will backup the current devices active
         configuration to the Ansible control host prior to making any
         changes.  The backup file will be located in the backup folder
-        in the root of the playbook.
+        in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not
+        exist, it is created.
     type: bool
     default: 'no'
   comment:
