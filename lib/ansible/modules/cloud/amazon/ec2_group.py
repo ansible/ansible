@@ -705,6 +705,32 @@ def update_tags(client, module, group_id, current_tags, tags, purge_tags):
     return bool(tags_need_modify or tags_to_delete)
 
 
+def update_rule_descriptions(module, group_id, present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list):
+    changed = False
+    client = module.client('ec2')
+    ingress_needs_desc_update = []
+    egress_needs_desc_update = []
+
+    for present_rule in present_egress:
+        needs_update = [r for r in named_tuple_egress_list if rule_cmp(r, present_rule) and r.description != present_rule.description]
+        for r in needs_update:
+            named_tuple_egress_list.remove(r)
+        egress_needs_desc_update.extend(needs_update)
+    for present_rule in present_ingress:
+        needs_update = [r for r in named_tuple_ingress_list if rule_cmp(r, present_rule) and r.description != present_rule.description]
+        for r in needs_update:
+            named_tuple_ingress_list.remove(r)
+        ingress_needs_desc_update.extend(needs_update)
+
+    if ingress_needs_desc_update:
+        update_rules_description(module, client, 'in', group_id, rules_to_permissions(ingress_needs_desc_update))
+        changed |= True
+    if egress_needs_desc_update:
+        update_rules_description(module, client, 'out', group_id, rules_to_permissions(egress_needs_desc_update))
+        changed |= True
+    return changed
+
+
 def create_security_group(client, module, name, description, vpc_id):
     if not module.check_mode:
         params = dict(GroupName=name, Description=description)
@@ -925,26 +951,7 @@ def main():
         else:
             revoke_egress = []
 
-        # TODO this could probably be a function that's separate.
-        ingress_needs_desc_update = []
-        egress_needs_desc_update = []
-        for present_rule in present_egress:
-            needs_update = [r for r in named_tuple_egress_list if rule_cmp(r, present_rule) and r.description != present_rule.description]
-            for r in needs_update:
-                named_tuple_egress_list.remove(r)
-            egress_needs_desc_update.extend(needs_update)
-        for present_rule in present_ingress:
-            needs_update = [r for r in named_tuple_ingress_list if rule_cmp(r, present_rule) and r.description != present_rule.description]
-            for r in needs_update:
-                named_tuple_ingress_list.remove(r)
-            ingress_needs_desc_update.extend(needs_update)
-
-        if ingress_needs_desc_update:
-            update_rules_description(module, client, 'in', group['GroupId'], rules_to_permissions(ingress_needs_desc_update))
-            changed |= True
-        if egress_needs_desc_update:
-            update_rules_description(module, client, 'out', group['GroupId'], rules_to_permissions(egress_needs_desc_update))
-            changed |= True
+        changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list)
 
         # Revoke old rules
         changed |= remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'])
