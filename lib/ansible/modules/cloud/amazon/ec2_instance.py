@@ -630,7 +630,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
 import ansible.module_utils.ec2 as ec2_utils
@@ -671,7 +671,7 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
             if p not in tower_conf:
                 module.fail_json(msg="Incomplete tower_callback configuration. tower_callback.{0} not set.".format(p))
 
-        if isinstance(tower_conf['job_template_id'], text_type):
+        if isinstance(tower_conf['job_template_id'], string_types):
             tower_conf['job_template_id'] = urlparse.quote(tower_conf['job_template_id'])
         tpl = string.Template(textwrap.dedent("""#!/bin/bash
         set -x
@@ -811,7 +811,7 @@ def build_network_spec(params, ec2=None):
             'DeviceIndex': idx,
         }
 
-        if isinstance(interface_params, text_type):
+        if isinstance(interface_params, string_types):
             # naive case where user gave
             # network_interfaces: [eni-1234, eni-4567, ....]
             # put into normal data structure so we don't dupe code
@@ -1104,7 +1104,7 @@ def change_network_attachments(instance, params, ec2):
         for inty in params.get('network').get('interfaces'):
             if isinstance(inty, dict) and 'id' in inty:
                 new_ids.append(inty['id'])
-            elif isinstance(inty, text_type):
+            elif isinstance(inty, string_types):
                 new_ids.append(inty)
         # network.interfaces can create the need to attach new interfaces
         old_ids = [inty['NetworkInterfaceId'] for inty in instance['NetworkInterfaces']]
@@ -1427,7 +1427,7 @@ def main():
             # only need to change instances that aren't already stopped
             filters['instance-state-name'] = ['stopping', 'pending', 'running']
 
-        if isinstance(module.params.get('instance_ids'), text_type):
+        if isinstance(module.params.get('instance_ids'), string_types):
             filters['instance-id'] = [module.params.get('instance_ids')]
         elif isinstance(module.params.get('instance_ids'), list) and len(module.params.get('instance_ids')):
             filters['instance-id'] = module.params.get('instance_ids')
