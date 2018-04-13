@@ -232,7 +232,7 @@ from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 try:
     import spwd
     HAVE_SPWD = True
-except:
+except ImportError:
     HAVE_SPWD = False
 
 
@@ -628,9 +628,8 @@ class User(object):
         info = self.user_info()
         try:
             ssh_key_file = self.get_ssh_key_path()
-        except Exception:
-            e = get_exception()
-            return (1, '', str(e))
+        except Exception as e:
+            return (1, '', to_native(e))
         ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             if self.module.check_mode:
@@ -2044,7 +2043,6 @@ class HPUX(User):
     def modify_user(self):
         cmd = ['/usr/sam/lbin/usermod.sam']
         info = self.user_info()
-        has_append = self._check_usermod_append()
 
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
