@@ -267,10 +267,10 @@ EXAMPLES = """
 - name: for idempotency, use full-form commands
   ios_config:
     lines:
-	  # - shut
-	  - shutdown
-	# parents: int gig1/0/11
-	parents: interface GigabitEthernet1/0/11
+      # - shut
+      - shutdown
+    # parents: int gig1/0/11
+    parents: interface GigabitEthernet1/0/11
 
 """
 

@@ -249,10 +249,10 @@ EXAMPLES = """
 - name: for idempotency, use full-form commands
   nxos_config:
     lines:
-	  # - shut
-	  - shutdown
-	# parents: int eth1/1
-	parents: interface Ethernet1/1
+      # - shut
+      - shutdown
+    # parents: int eth1/1
+    parents: interface Ethernet1/1
 
 """
 

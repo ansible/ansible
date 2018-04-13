@@ -240,10 +240,10 @@ EXAMPLES = """
 - name: for idempotency, use full-form commands
   eos_config:
     lines:
-	  # - shut
-	  - shutdown
-	# parents: int eth1/1
-	parents: interface Ethernet1/1
+      # - shut
+      - shutdown
+    # parents: int eth1/1
+    parents: interface Ethernet1/1
 
 """
 

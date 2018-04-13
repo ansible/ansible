@@ -157,10 +157,10 @@ EXAMPLES = """
 - name: for idempotency, use full-form commands
   iosxr_config:
     lines:
-	  # - shut
-	  - shutdown
-	# parents: int g0/0/0/0
-	parents: interface GigabitEthernet0/0/0/0
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/0
+    parents: interface GigabitEthernet0/0/0/0
 
 """
 
