@@ -1,0 +1,2 @@
+bugfixes:
+  - eos cliconf get_config() format type fix (https://github.com/ansible/ansible/pull/38682)
