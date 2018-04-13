@@ -184,10 +184,7 @@ class Block(Base, Become, Conditional, Taggable):
                         # If task._parent is the same as new_block, just replace it
                         new_task._parent = new_block
                     else:
-                        # task may not be a direct child of new_block, ensure new_task carries the correct parent
-                        # and then search for the correct place to insert new_block
-                        new_task._parent = task._parent
-
+                        # task may not be a direct child of new_block, search for the correct place to insert new_block
                         cur_obj = new_task._parent
                         while cur_obj._parent and cur_obj._parent != new_block:
                             cur_obj = cur_obj._parent
