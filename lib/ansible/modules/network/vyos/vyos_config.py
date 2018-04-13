@@ -42,7 +42,7 @@ options:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
-      - Abbreviated commands in lines are NOT idempotent, see 
+      - Abbreviated commands in lines are NOT idempotent, see
         L(Network FAQ,../network/user_guide/faq.html).
   src:
     description:

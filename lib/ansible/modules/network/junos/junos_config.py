@@ -32,7 +32,7 @@ options:
         lines to push into the remote device.  Each line must start with
         either C(set) or C(delete).  This argument is mutually exclusive
         with the I(src) argument.
-      - Abbreviated commands in lines are NOT idempotent, see 
+      - Abbreviated commands in lines are NOT idempotent, see
         L(Network FAQ,../network/user_guide/faq.html).
   src:
     description:
