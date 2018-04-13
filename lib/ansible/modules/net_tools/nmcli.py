@@ -34,7 +34,7 @@ options:
             - Whether the device should exist or not, taking action if the state is different from what is stated.
     autoconnect:
         required: False
-        default: "yes"
+        default: True
         type: bool
         description:
             - Whether the connection should start on boot.
@@ -1210,7 +1210,7 @@ def main():
     # Parsing argument file
     module = AnsibleModule(
         argument_spec=dict(
-            autoconnect=dict(required=False, default=None, type='bool'),
+            autoconnect=dict(required=False, default=True, type='bool'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             conn_name=dict(required=True, type='str'),
             master=dict(required=False, default=None, type='str'),
