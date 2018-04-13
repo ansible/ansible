@@ -16,21 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# FILE LOOKUP
+## FILE LOOKUP
 
 - name: make a new file to read
-  copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
+  copy:
+    dest: "{{ output_dir }}/foo.txt"
+    mode: 0644
+    content: "bar"
 
 - name: load the file as a fact
   set_fact:
     foo: "{{ lookup('file', output_dir + '/foo.txt' ) }}"
 
-- debug: var=foo
+- debug:
+    var: foo
 
 - name: verify file lookup
   assert:
     that:
-        - "foo == 'bar'"
+      - "foo == 'bar'"
 
 - name: Lookup a file that does not exist and expect failure
   set_fact:
@@ -57,21 +61,24 @@
       - missing_file_result is success
       - missing_file == ''
 
-# PASSWORD LOOKUP
+## PASSWORD LOOKUP
 
 - name: remove previous password files and directory
-  file: dest={{item}} state=absent
+  file:
+    dest: "{{ item }}"
+    state: absent
   with_items:
-  - "{{output_dir}}/lookup/password"
-  - "{{output_dir}}/lookup/password_with_salt"
-  - "{{output_dir}}/lookup"
+    - "{{output_dir}}/lookup/password"
+    - "{{output_dir}}/lookup/password_with_salt"
+    - "{{output_dir}}/lookup"
 
 - name: create a password file
   set_fact:
     newpass: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
 
 - name: stat the password file directory
-  stat: path="{{output_dir}}/lookup"
+  stat:
+    path: "{{ output_dir }}/lookup"
   register: result
 
 - name: assert the directory's permissions
@@ -80,59 +87,63 @@
     - result.stat.mode == '0700'
 
 - name: stat the password file
-  stat: path="{{output_dir}}/lookup/password"
+  stat:
+    path: "{{ output_dir }}/lookup/password"
   register: result
 
 - name: assert the directory's permissions
   assert:
     that:
-    - result.stat.mode == '0600'
+      - result.stat.mode == '0600'
 
 - name: get password length
-  shell: wc -c {{output_dir}}/lookup/password | awk '{print $1}'
+  shell: "wc -c {{ output_dir }}/lookup/password | awk '{print $1}'"
   register: wc_result
 
-- debug: var=wc_result.stdout
+- debug:
+    var: wc_result.stdout
 
 - name: read password
-  shell: cat {{output_dir}}/lookup/password
+  shell: cat {{ output_dir }}/lookup/password
   register: cat_result
 
-- debug: var=cat_result.stdout
+- debug:
+    var: cat_result.stdout
 
 - name: verify password
   assert:
     that:
-        - "wc_result.stdout == '9'"
-        - "cat_result.stdout == newpass"
-        - "' salt=' not in cat_result.stdout"
+      - "wc_result.stdout == '9'"
+      - "cat_result.stdout == newpass"
+      - "' salt=' not in cat_result.stdout"
 
 - name: fetch password from an existing file
   set_fact:
     pass2: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
 
 - name: read password (again)
-  shell: cat {{output_dir}}/lookup/password
+  shell: cat {{ output_dir }}/lookup/password
   register: cat_result2
 
-- debug: var=cat_result2.stdout
+- debug:
+    var: cat_result2.stdout
 
 - name: verify password (again)
   assert:
     that:
-        - "cat_result2.stdout == newpass"
-        - "' salt=' not in cat_result2.stdout"
-
-
+      - "cat_result2.stdout == newpass"
+      - "' salt=' not in cat_result2.stdout"
 
 - name: create a password (with salt) file
-  debug: msg={{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=sha256_crypt') }}
+  debug:
+    msg: "{{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=sha256_crypt') }}"
 
 - name: read password and salt
-  shell: cat {{output_dir}}/lookup/password_with_salt
+  shell: cat {{ output_dir }}/lookup/password_with_salt
   register: cat_pass_salt
 
-- debug: var=cat_pass_salt.stdout
+- debug:
+    var: cat_pass_salt.stdout
 
 - name: fetch unencrypted password
   set_fact:
@@ -143,10 +154,10 @@
 - name: verify password and salt
   assert:
     that:
-        - "cat_pass_salt.stdout != newpass"
-        - "cat_pass_salt.stdout.startswith(newpass)"
-        - "' salt=' in cat_pass_salt.stdout"
-        - "' salt=' not in newpass"
+      - "cat_pass_salt.stdout != newpass"
+      - "cat_pass_salt.stdout.startswith(newpass)"
+      - "' salt=' in cat_pass_salt.stdout"
+      - "' salt=' not in newpass"
 
 
 - name: fetch unencrypted password (using empty encrypt parameter)
@@ -156,7 +167,7 @@
 - name: verify lookup password behavior
   assert:
     that:
-        - "newpass == newpass2"
+      - "newpass == newpass2"
 
 - name: verify that we can generate a 1st password without writing it
   set_fact:
@@ -169,9 +180,9 @@
 - name: verify lookup password behavior with /dev/null
   assert:
     that:
-        - "newpass != newpass2"
+      - "newpass != newpass2"
 
-# ENV LOOKUP
+## ENV LOOKUP
 
 - name: get HOME environment var value
   shell: "echo $HOME"
@@ -181,52 +192,59 @@
   set_fact:
     test_val: "{{ lookup('env', 'HOME') }}"
 
-- debug: var=home_var_value.stdout
-- debug: var=test_val
+- debug:
+    var: home_var_value.stdout
+
+- debug:
+    var: test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == home_var_value.stdout"
+      - "test_val == home_var_value.stdout"
 
 
-# PIPE LOOKUP
+## PIPE LOOKUP
 
 # https://github.com/ansible/ansible/issues/6550
 - name: confirm pipe lookup works with a single positional arg
-  debug: msg="{{ lookup('pipe', 'ls') }}"
+  debug:
+    msg: "{{ lookup('pipe', 'ls') }}"
 
 
-# LOOKUP TEMPLATING
+## LOOKUP TEMPLATING
 
 - name: use bare interpolation
-  debug: msg="got {{item}}"
-  with_items: "{{things1}}"
+  debug:
+    msg: "got {{item}}"
+  loop: "{{ things1 }}"
   register: bare_var
 
 - name: verify that list was interpolated
   assert:
     that:
-        - "bare_var.results[0].item == 1"
-        - "bare_var.results[1].item == 2"
+      - "bare_var.results[0].item == 1"
+      - "bare_var.results[1].item == 2"
 
 - name: use list with bare strings in it
-  debug: msg={{item}}
-  with_items:
+  debug:
+    msg: "{{ item }}"
+  loop:
     - things2
     - things1
 
 - name: use list with undefined var in it
-  debug: msg={{item}}
-  with_items: "{{things2}}"
+  debug:
+    msg: "{{ item }}"
+  loop: "{{ things2 }}"
   ignore_errors: True
 
 
-# BUG #10073 nested template handling
+## BUG #10073 nested template handling
 
 - name: set variable that clashes
   set_fact:
-      LOGNAME: foobar
+    LOGNAME: foobar
 
 
 - name: get LOGNAME environment var value
@@ -237,19 +255,21 @@
   set_fact:
     test_val: "{{ lookup('env', 'LOGNAME') }}"
 
-- debug: var=test_val
+- debug:
+    var: test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+      - "test_val == known_var_value.stdout"
 
 
-- name: set with_dict
-  shell: echo "{{ item.key + '=' + item.value  }}"
-  with_dict: "{{ mydict }}"
+- name: set with dict lookup
+  shell: 'echo "{{ item.key + ''='' + item.value  }}"'
+  loop: "{{ lookup('dict', mydict, want_list=True) }}"
 
-# URL Lookups
+
+## URL Lookups
 
 - name: Test that retrieving a url works
   set_fact:
@@ -281,26 +301,28 @@
       - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
-  debug: var={{item}}
+  debug:
+    var: "{{ item }}"
   with_cartesian:
-    - ["A", "B", "C"]
-    - ["1", "2", "3"]
+      - ["A", "B", "C"]
+      - ["1", "2", "3"]
   register: product
 
 - name: Verify cartesian lookup
   assert:
     that:
-        - product.results[0]['item'] == ["A", "1"]
-        - product.results[1]['item'] == ["A", "2"]
-        - product.results[2]['item'] == ["A", "3"]
-        - product.results[3]['item'] == ["B", "1"]
-        - product.results[4]['item'] == ["B", "2"]
-        - product.results[5]['item'] == ["B", "3"]
-        - product.results[6]['item'] == ["C", "1"]
-        - product.results[7]['item'] == ["C", "2"]
-        - product.results[8]['item'] == ["C", "3"]
+      - product.results[0]['item'] == ["A", "1"]
+      - product.results[1]['item'] == ["A", "2"]
+      - product.results[2]['item'] == ["A", "3"]
+      - product.results[3]['item'] == ["B", "1"]
+      - product.results[4]['item'] == ["B", "2"]
+      - product.results[5]['item'] == ["B", "3"]
+      - product.results[6]['item'] == ["C", "1"]
+      - product.results[7]['item'] == ["C", "2"]
+      - product.results[8]['item'] == ["C", "3"]
 
-# Template lookups
+
+## Template lookups
 
 # ref #18526
 - name: Test that we have a proper jinja search path in template lookup
@@ -309,9 +331,10 @@
 
 - assert:
     that:
-      - "hello_world|trim == 'Hello world!'"
+      - "hello_world | trim == 'Hello world!'"
 
-# Vars lookups
+
+## Vars lookups
 
 - name: Test that we can give it a single value and receive a single value
   set_fact:
