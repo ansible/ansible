@@ -58,42 +58,31 @@ class ActionModule(ActionBase):
         if reboot_result.get('failed', False):
             raise AnsibleError(reboot_result['msg'])
 
-        display.vvv("win_updates: checking WUA is not busy with win_shell "
-                    "command")
-        # While this always returns False after a reboot it doesn't return a
-        # value until Windows is actually ready and finished installing updates
-        # This needs to run with become as WUA doesn't work over WinRM
-        # Ignore connection errors as another reboot can happen
-        command = "(New-Object -ComObject Microsoft.Update.Session)." \
-                  "CreateUpdateInstaller().IsBusy"
-        shell_module_args = {
-            '_raw_params': command
-        }
+        # this can only run when using become, we can work without it but it's
+        # best to check if we can
+        if self._play_context.become:
+            display.vvv("win_updates: checking WUA is not busy with win_shell "
+                        "command")
+            # While this always returns False after a reboot it doesn't return
+            # a value until Windows is actually ready and finished installing
+            # updates. This needs to run with become as WUA doesn't work over
+            # WinRM, ignore connection errors as another reboot can happen
+            command = "(New-Object -ComObject Microsoft.Update.Session)." \
+                      "CreateUpdateInstaller().IsBusy"
+            shell_module_args = {
+                '_raw_params': command
+            }
 
-        # run win_shell module with become and ignore any errors in case of
-        # a windows reboot during execution
-        orig_become = self._play_context.become
-        orig_become_method = self._play_context.become_method
-        orig_become_user = self._play_context.become_user
-        if orig_become is None or orig_become is False:
-            self._play_context.become = True
-        if orig_become_method != 'runas':
-            self._play_context.become_method = 'runas'
-        if orig_become_user is None or 'root':
-            self._play_context.become_user = 'SYSTEM'
-        try:
-            shell_result = self._execute_module(module_name='win_shell',
-                                                module_args=shell_module_args,
-                                                task_vars=task_vars)
-            display.vvv("win_updates: shell wait results: %s"
-                        % json.dumps(shell_result))
-        except Exception as exc:
-            display.debug("win_updates: Fatal error when running shell "
-                          "command, attempting to recover: %s" % to_text(exc))
-        finally:
-            self._play_context.become = orig_become
-            self._play_context.become_method = orig_become_method
-            self._play_context.become_user = orig_become_user
+            try:
+                shell_result = self._execute_module(
+                    module_name='win_shell', module_args=shell_module_args,
+                    task_vars=task_vars
+                )
+                display.vvv("win_updates: shell wait results: %s"
+                            % json.dumps(shell_result))
+            except Exception as exc:
+                display.debug("win_updates: Fatal error when running shell "
+                              "command, attempting to recover: %s" % to_text(exc))
 
         display.vvv("win_updates: ensure the connection is up and running")
         # in case Windows needs to reboot again after the updates, we wait for

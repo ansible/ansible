@@ -95,19 +95,27 @@ notes:
   C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- By default C(win_updates) runs the module as a scheduled task, it is
+  recommended to run the task with C(become) to bypass the scheduled tasks and
+  speed up the execution.
 - More information about PowerShell and how it handles RegEx strings can be
   found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
 '''
 
 EXAMPLES = r'''
-- name: Install all security, critical, and rollup updates
+# It is highly recommended to use become as scheduled tasks can cause further
+# complications.
+- name: Install all security, critical, and rollup updates without a scheduled task
   win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
 
-- name: Install only security updates
+- name: Install only security updates as a scheduled task
   win_updates:
     category_names: SecurityUpdates
 
@@ -139,37 +147,6 @@ EXAMPLES = r'''
     blacklist:
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
-
-# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
-- name: Search for Windows updates asynchronously
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 10
-  register: updates_to_install
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
-
-# Async can also be run in the background in a fire and forget fashion
-- name: Search for Windows updates asynchronously (poll and forget)
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 0
-  register: updates_to_install_async
-
-- name: get status of Windows Update async job
-  async_status:
-    jid: '{{ updates_to_install_async.ansible_job_id }}'
-  register: updates_to_install_result
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
 '''
 
 RETURN = r'''
