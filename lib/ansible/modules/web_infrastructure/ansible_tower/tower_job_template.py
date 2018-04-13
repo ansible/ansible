@@ -77,6 +77,7 @@ options:
     extra_vars:
       description:
         - Extra variables used by Ansible in YAML or key=value format.
+      version_added: "2.6"
     extra_vars_path:
       description:
         - Path to the C(extra_vars) YAML file.
