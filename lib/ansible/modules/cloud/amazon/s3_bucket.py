@@ -74,7 +74,9 @@ options:
     type: bool
   encryption:
     description:
-      - Describes the default server-side encryption to apply to new objects in the bucket. If none is specified, the default encryption will be applied.
+      - Describes the default server-side encryption to apply to new objects in the bucket.
+        If the argument is not specified, the default encryption will be applied when creating the bucket.
+        In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitely.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.6"
   encryption_key_id:
@@ -291,10 +293,13 @@ def create_or_update_bucket(s3_client, module, location):
 
 
     # Encryption
-    try:
-        current_encryption = get_bucket_encryption(s3_client, name)
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to get bucket encryption")
+    if hasattr(s3_client, "get_bucket_encryption"):
+        try:
+            current_encryption = get_bucket_encryption(s3_client, name)
+        except (ClientError, BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to get bucket encryption")
+    elif encryption is not None:
+        module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
 
     if encryption is not None:
         current_encryption_algorithm = current_encryption.get('SSEAlgorithm') if current_encryption else None
@@ -629,8 +634,8 @@ def main():
             tags=dict(required=False, default=None, type='dict'),
             versioning=dict(default=None, type='bool'),
             ceph=dict(default='no', type='bool'),
-            encryption=dict(type='str', default=None, choices=['none', 'AES256', 'aws:kms']),
-            encryption_key_id=dict(type='str')
+            encryption=dict(choices=['none', 'AES256', 'aws:kms']),
+            encryption_key_id=dict()
         )
     )
 
