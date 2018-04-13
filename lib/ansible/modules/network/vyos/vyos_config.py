@@ -105,7 +105,7 @@ EXAMPLES = """
 
 - name: for idempotency, use full-form commands
   nxos_config:
-	lines:
+    lines:
 	  # - shut
 	  - shutdown
 	# parents: int eth1/1

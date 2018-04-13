@@ -239,7 +239,7 @@ EXAMPLES = """
 
 - name: for idempotency, use full-form commands
   eos_config:
-	lines:
+    lines:
 	  # - shut
 	  - shutdown
 	# parents: int eth1/1

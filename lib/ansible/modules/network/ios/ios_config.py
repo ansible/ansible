@@ -266,7 +266,7 @@ EXAMPLES = """
 
 - name: for idempotency, use full-form commands
   ios_config:
-	lines:
+    lines:
 	  # - shut
 	  - shutdown
 	# parents: int gig1/0/11

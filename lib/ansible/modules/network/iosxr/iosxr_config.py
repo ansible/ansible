@@ -156,7 +156,7 @@ EXAMPLES = """
 
 - name: for idempotency, use full-form commands
   iosxr_config:
-	lines:
+    lines:
 	  # - shut
 	  - shutdown
 	# parents: int g0/0/0/0

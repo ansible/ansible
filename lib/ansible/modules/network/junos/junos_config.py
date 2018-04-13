@@ -160,7 +160,7 @@ EXAMPLES = """
 
 - name: for idempotency, use full-form commands
   junos_config:
-	lines:
+    lines:
 	  # - shut
 	  - shutdown
 	# parents: int eth1/1
