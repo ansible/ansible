@@ -1,0 +1,2 @@
+bugfixes:
+- Update documentation related to datacenter in vmware_guest_find module. Mark datacenter as optional.
