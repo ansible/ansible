@@ -177,18 +177,19 @@ class Block(Base, Become, Conditional, Taggable):
                 new_task = task.copy(exclude_parent=True)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
-                    # go up the parentage tree until we find an
-                    # object without a parent or a parent that matches the new_block
-                    # and make this new block their parent.
-                    #
-                    # we start with new_task._parent, because new_task._parent is the same as new_block
-                    # but simply replacing it doesn't suffice, as we seem to lose important context, so we
-                    # must traverse farther
-                    cur_obj = new_task._parent
-                    while cur_obj._parent and cur_obj._parent != new_block:
-                        cur_obj = cur_obj._parent
+                    if task._parent == new_block:
+                        # If task._parent is the same as new_block, just replace it
+                        new_task._parent = new_block
+                    else:
+                        # task may not be a direct child of new_block, ensure new_task carries the correct parent
+                        # and then search for the correct place to insert new_block
+                        new_task._parent = task._parent
 
-                    cur_obj._parent = new_block
+                        cur_obj = new_task._parent
+                        while cur_obj._parent and cur_obj._parent != new_block:
+                            cur_obj = cur_obj._parent
+
+                        cur_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
