@@ -73,9 +73,8 @@ options:
         in the playbook root directory or role root directory, if
         playbook is part of an ansible role. If the directory does not
         exist, it is created.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   comment:
     description:
       - Allows a commit description to be specified to be included
