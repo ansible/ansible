@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: vyos
 notes:
   - Tested against VYOS 1.1.7
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -86,9 +88,6 @@ options:
         active configuration is saved.
     type: bool
     default: 'no'
-notes:
-  - Abbreviated commands are NOT idempotent, see
-    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 """
 
 EXAMPLES = """

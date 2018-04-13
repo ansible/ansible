@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: eos
 notes:
   - Tested against EOS 4.15
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -203,9 +205,6 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
-notes:
-  - Abbreviated commands are NOT idempotent, see
-    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 """
 
 EXAMPLES = """

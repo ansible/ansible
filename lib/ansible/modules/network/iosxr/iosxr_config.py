@@ -27,6 +27,8 @@ extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
   - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
@@ -132,9 +134,6 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
-notes:
-  - Abbreviated commands are NOT idempotent, see
-    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 """
 
 EXAMPLES = """
