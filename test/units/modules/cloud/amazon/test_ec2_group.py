@@ -51,3 +51,15 @@ def test_from_permission():
     perms = list(group_module.rule_from_group_permission(internal_prefix_http))
     assert len(perms) == 1
     assert perms[0].target == 'p-1234'
+
+def test_rule_to_permission():
+    tests = [
+        group_module.Rule((22,22), 'udp', 'sg-1234567890', 'group', None),
+        group_module.Rule((1,65535), 'tcp', '0.0.0.0/0', 'ipv4', "All TCP from everywhere"),
+        group_module.Rule((443,443), 'tcp', 'ip-123456', 'ip_prefix', "Traffic to privatelink IPs"),
+        group_module.Rule((443,443), 'tcp', 'feed:dead:::beef/64', 'ipv6', None),
+    ]
+    for test in tests:
+        perm = group_module.to_permission(test)
+        assert perm['FromPort'], perm['ToPort'] == test.port_range
+        assert perm['IpProtocol'] == test.protocol

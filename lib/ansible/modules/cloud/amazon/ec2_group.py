@@ -616,47 +616,6 @@ def update_rules_description(module, client, rule_type, group_id, ip_permissions
         module.fail_json_aws(e, msg="Unable to update rule description for group %s" % group_id)
 
 
-def serialize_group_grant(group_id, rule):
-    permission = {'IpProtocol': rule['proto'],
-                  'FromPort': rule['from_port'],
-                  'ToPort': rule['to_port'],
-                  'UserIdGroupPairs': [{'GroupId': group_id}]}
-
-    if 'rule_desc' in rule:
-        permission['UserIdGroupPairs'][0]['Description'] = rule.get('rule_desc') or ''
-
-    return fix_port_and_protocol(permission)
-
-
-def serialize_revoke(grant, rule):
-    permission = {'IpProtocol': rule['IpProtocol'],
-                  'FromPort': rule.get('FromPort'),
-                  'ToPort': rule.get('ToPort')}
-    if 'GroupId' in grant:
-        permission['UserIdGroupPairs'] = [{'GroupId': grant['GroupId']}]
-    elif 'CidrIp' in grant:
-        permission['IpRanges'] = [grant]
-    elif 'CidrIpv6' in grant:
-        permission['Ipv6Ranges'] = [grant]
-    return fix_port_and_protocol(permission)
-
-
-def serialize_ip_grant(rule, thisip, ethertype):
-    permission = {'IpProtocol': rule['proto'],
-                  'FromPort': rule['from_port'],
-                  'ToPort': rule['to_port']}
-    if ethertype == "ipv4":
-        permission['IpRanges'] = [{'CidrIp': thisip}]
-        if 'rule_desc' in rule:
-            permission['IpRanges'][0]['Description'] = rule.get('rule_desc') or ''
-    elif ethertype == "ipv6":
-        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
-        if 'rule_desc' in rule:
-            permission['Ipv6Ranges'][0]['Description'] = rule.get('rule_desc') or ''
-
-    return fix_port_and_protocol(permission)
-
-
 def fix_port_and_protocol(permission):
     for key in ('FromPort', 'ToPort'):
         if key in permission:
