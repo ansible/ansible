@@ -74,7 +74,7 @@ options:
     host_config_key:
       description:
         - Allow provisioning callbacks using this host config key.
-    extra_vars_path:
+    extra_vars:
       description:
         - Extra variables used by Ansible in YAML or key=value format.
     extra_vars_path:
