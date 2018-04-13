@@ -167,15 +167,15 @@ class ManageIQDynamicResourceDefinition(object):
         # Check if properties has the following keys,
         # These keys are returned from the API response even if they are empty
         # So we remove them to compare accuratley
-        for key in ['attributes' ,'associations', 'methods']:
+        for key in ['attributes', 'associations', 'methods']:
             if not self.has_field(dynamic_resource_definition, key):
                 dynamic_resource_definition['properties'].pop(key)
 
         if dynamic_resource_definition and name == dynamic_resource_definition.get(
             'name'
-            ) and properties == dynamic_resource_definition.get(
-                'properties'
-            ):
+        ) and properties == dynamic_resource_definition.get(
+            'properties'
+        ):
             return dict(
                 changed=False,
                 msg="Dynamic resource definition %s is not changed." % (name)
