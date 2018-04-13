@@ -69,6 +69,10 @@ class Block(Base, Become, Conditional, Taggable):
         '''object comparison based on _uuid'''
         return self._uuid == other._uuid
 
+    def __ne__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid != other._uuid
+
     def get_vars(self):
         '''
         Blocks do not store variables directly, however they may be a member
@@ -174,20 +178,17 @@ class Block(Base, Become, Conditional, Taggable):
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
                     # go up the parentage tree until we find an
-                    # object without a parent and make this new
-                    # block their parent
-                    cur_obj = new_task
-                    while cur_obj._parent:
-                        if cur_obj._parent:
-                            prev_obj = cur_obj
+                    # object without a parent or a parent that matches the new_block
+                    # and make this new block their parent.
+                    #
+                    # we start with new_task._parent, because new_task._parent is the same as new_block
+                    # but simply replacing it doesn't suffice, as we seem to lose important context, so we
+                    # must traverse farther
+                    cur_obj = new_task._parent
+                    while cur_obj._parent and cur_obj._parent != new_block:
                         cur_obj = cur_obj._parent
 
-                    # Ensure that we don't make the new_block the parent of itself
-                    if cur_obj != new_block:
-                        cur_obj._parent = new_block
-                    else:
-                        # prev_obj._parent is cur_obj, to allow for mutability we need to use prev_obj
-                        prev_obj._parent = new_block
+                    cur_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
