@@ -1347,7 +1347,6 @@ lib/ansible/modules/network/nxos/nxos_igmp_interface.py E326
 lib/ansible/modules/network/nxos/nxos_interface.py E324
 lib/ansible/modules/network/nxos/nxos_lldp.py E326
 lib/ansible/modules/network/nxos/nxos_logging.py E325
-lib/ansible/modules/network/nxos/nxos_ntp_options.py E324
 lib/ansible/modules/network/nxos/nxos_nxapi.py E324
 lib/ansible/modules/network/nxos/nxos_nxapi.py E325
 lib/ansible/modules/network/nxos/nxos_nxapi.py E326
