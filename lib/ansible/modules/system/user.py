@@ -169,6 +169,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
+<<<<<<< HEAD
               Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     local:
@@ -180,6 +181,7 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
+              Currently supported on GNU/Linux and FreeBSD.
 '''
 
 EXAMPLES = '''
@@ -225,6 +227,8 @@ import pwd
 import shutil
 import socket
 import time
+import calendar
+import shutil
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
@@ -295,9 +299,10 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime(module.params['expires'])
-            except Exception as e:
-                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, to_native(e)))
+                self.expires = time.gmtime(module.params['expires'] // 86400 * 86400)
+            except Exception:
+                e = get_exception()
+                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -514,7 +519,8 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires:
+        if self.expires is not None and info[7] != self.expires:
+            # cmd.append('--expiredate') # SLES11 usermod does not know --expiredate
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -595,6 +601,11 @@ class User(object):
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
+        expire = self.user_expire()
+        if expire is not None and len(expire) > 0:
+            info.append(time.gmtime(float(expire) * 86400))
+        else:
+            info.append(None)
         return info
 
     def user_password(self):
@@ -613,6 +624,23 @@ class User(object):
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
         return passwd
+
+    def user_expire(self):
+        expire = None
+        if HAVE_SPWD:
+            try:
+                expire = spwd.getspnam(self.name)[7]
+            except KeyError:
+                return expire
+        if not self.user_exists():
+            return expire
+        elif self.SHADOWFILE:
+            # Read shadow file for user's expiry time
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        expire = line.split(':')[7]
+        return expire
 
     def get_ssh_key_path(self):
         info = self.user_info()
@@ -743,6 +771,37 @@ class FreeBsdUser(User):
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
 
+    def user_info(self):
+        if not self.user_exists():
+            return False
+        info = self.get_pwd_info()
+        if len(info[1]) == 1 or len(info[1]) == 0:
+            info[1] = self.user_password()
+        expire = self.user_expire()
+        if expire is not None and len(expire) > 0:
+            info.append(time.gmtime(float(expire)))
+        else:
+            info.append(None)
+        return info
+
+    def user_expire(self):
+        expire = None
+        if HAVE_SPWD:
+            try:
+                expire = spwd.getspnam(self.name)[6]
+            except KeyError:
+                return expire
+        if not self.user_exists():
+            return expire
+        elif self.SHADOWFILE:
+            # Read shadow file for user's expiry time
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        expire = line.split(':')[6]
+
+        return expire
+
     def remove_user(self):
         cmd = [
             self.module.get_bin_path('pw', True),
@@ -805,9 +864,11 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
+            expire = calendar.timegm(self.expires)
+            if expire == 0:
+                expire = 1  # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append(str(expire))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -902,10 +963,12 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
-        if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
+        if self.expires is not None and info[7] != self.expires:
+            expire = calendar.timegm(self.expires)
+            if expire == 0:
+                expire = 1  # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append(str(expire))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
