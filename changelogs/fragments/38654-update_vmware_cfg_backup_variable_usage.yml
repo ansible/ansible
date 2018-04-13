@@ -1,0 +1,2 @@
+bugfixes:
+- Changed hostname variable in order for the esxi host to be found when authentication against a vcenter was done.
