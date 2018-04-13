@@ -139,7 +139,7 @@ module = None
 
 def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None):
     if not os.path.exists(bin_path):
-        module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
+        module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(bin_path))
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
