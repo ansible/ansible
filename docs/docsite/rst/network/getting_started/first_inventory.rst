@@ -165,9 +165,9 @@ With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternative
 Protecting Sensitive Variables with ``ansible-vault`` 
 ================================================================================
 
-The ``ansible-vault`` command provides encryption for files and/or individual variables like passwords. This tutorial uses SSH passwords for an example. You can use the commands below to encrypt other sensitive information, such as database passwords, privilege-escalation passwords and more.
+The ``ansible-vault`` command provides encryption for files and/or individual variables like passwords. This tutorial will show you how to encrypt a single SSH password. You can use the commands below to encrypt other sensitive information, such as database passwords, privilege-escalation passwords and more.
 
-First you must create a password for ansible-vault itself. Then you can encrypt dozens of different passwords across your Ansible project. You can access all those secrets with a single password (the ansible-vault password) when you run your playbooks. Here's a simple example.
+First you must create a password for ansible-vault itself. It is used as the encryption key, and with this you can encrypt dozens of different passwords across your Ansible project. You can access all those secrets (encrypted values) with a single password (the ansible-vault password) when you run your playbooks. Here's a simple example.
 
 Create a file and write your password for ansible-vault to it:
 
@@ -175,13 +175,13 @@ Create a file and write your password for ansible-vault to it:
 
    echo "my-ansible-vault-pw" > ~/my-ansible-vault-pw-file
 
-Encrypt the ssh password for your VyOS network devices, pulling your ansible-vault password from the file you just created:
+Create the encrypted ssh password for your VyOS network devices, pulling your ansible-vault password from the file you just created:
 
 .. code-block:: bash
 
    ansible-vault encrypt_string --vault-id my_user@~/my-ansible-vault-pw-file 'VyOS_SSH_password' --name 'ansible_ssh_pass'
 
-If you prefer to type your vault password rather than store it in a file, you can request a prompt:
+If you prefer to type your ansible-vault password rather than store it in a file, you can request a prompt:
 
 .. code-block:: bash
 
@@ -229,6 +229,19 @@ Or with a prompt instead of the vault password file:
 .. code-block:: bash
 
    ansible-playbook -i inventory --vault-id my_user@prompt first_playbook.yml
+
+To see the original value, you can use the debug module. Please note if your YAML file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this, please make a copy of the file without the ansible_connection variable. 
+
+.. code-block:: console
+
+   cat vyos.yml | grep -v ansible_connection >> vyos_no_connection.yml
+
+   ansible localhost -m debug -a var="ansible_ssh_pass" -e "@vyos_no_connection.yml" --ask-vault-pass
+   Vault password:
+
+   localhost | SUCCESS => {
+       "ansible_ssh_pass": "VyOS_SSH_password"
+   }
 
 
 .. warning::
