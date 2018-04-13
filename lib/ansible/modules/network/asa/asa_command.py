@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,8 +40,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
   match:
     description:
@@ -61,7 +49,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -70,7 +57,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -78,7 +64,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
@@ -133,9 +118,12 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import time
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import run_commands
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import run_commands
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 
@@ -194,7 +182,6 @@ def main():
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-
     result.update({
         'changed': False,
         'stdout': responses,
@@ -206,4 +193,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

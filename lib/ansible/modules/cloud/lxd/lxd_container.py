@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -227,7 +216,7 @@ EXAMPLES = '''
         flat: true
 '''
 
-RETURN='''
+RETURN = '''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
@@ -249,9 +238,13 @@ actions:
   type: list
   sample: '["create", "start"]'
 '''
-
+import datetime
 import os
+import time
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
+
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -276,16 +269,6 @@ CONFIG_PARAMS = [
     'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'
 ]
 
-try:
-    callable(all)
-except NameError:
-    # For python <2.5
-    # This definition is copied from https://docs.python.org/2/library/functions.html#all
-    def all(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
 
 class LXDContainerManagement(object):
     def __init__(self, module):
@@ -345,7 +328,7 @@ class LXDContainerManagement(object):
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
 
     def _change_state(self, action, force_stop=False):
-        body_json={'action': action, 'timeout': self.timeout}
+        body_json = {'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
         return self.client.do('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
@@ -380,7 +363,9 @@ class LXDContainerManagement(object):
         self._change_state('unfreeze')
         self.actions.append('unfreez')
 
-    def _container_ipv4_addresses(self, ignore_devices=['lo']):
+    def _container_ipv4_addresses(self, ignore_devices=None):
+        ignore_devices = ['lo'] if ignore_devices is None else ignore_devices
+
         resp_json = self._get_container_state_json()
         network = resp_json['metadata']['network'] or {}
         network = dict((k, v) for k, v in network.items() if k not in ignore_devices) or {}
@@ -389,7 +374,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.values()])
+        return len(addresses) > 0 and all(len(v) > 0 for v in addresses.values())
 
     def _get_addresses(self):
         try:
@@ -542,6 +527,7 @@ class LXDContainerManagement(object):
                 fail_params['logs'] = e.kwargs['logs']
             self.module.fail_json(**fail_params)
 
+
 def main():
     """Ansible Main module."""
 
@@ -600,7 +586,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )
@@ -608,7 +594,6 @@ def main():
     lxd_manage = LXDContainerManagement(module=module)
     lxd_manage.run()
 
-# import module bits
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

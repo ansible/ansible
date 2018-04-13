@@ -25,7 +25,8 @@ if sys.version_info[:2] != (2, 6):
     import requests
 
 
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 
 class TestNetscalerServiceModule(TestModule):
@@ -65,12 +66,14 @@ class TestNetscalerServiceModule(TestModule):
         ))
 
     def setUp(self):
+        super(TestNetscalerServiceModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerServiceModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 
@@ -162,6 +165,7 @@ class TestNetscalerServiceModule(TestModule):
             'ansible.modules.network.netscaler.netscaler_service',
             ConfigProxy=m,
             service_exists=service_exists_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -190,6 +194,7 @@ class TestNetscalerServiceModule(TestModule):
             service_identical=service_identical_mock,
             monitor_bindings_identical=monitor_bindings_identical_mock,
             all_identical=all_identical_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -220,6 +225,7 @@ class TestNetscalerServiceModule(TestModule):
             monitor_bindings_identical=monitor_bindings_identical_mock,
             all_identical=all_identical_mock,
             sync_monitor_bindings=sync_monitor_bindings_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -247,6 +253,7 @@ class TestNetscalerServiceModule(TestModule):
             service_exists=service_exists_mock,
             service_identical=service_identical_mock,
             monitor_bindings_identical=monitor_bindings_identical_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()

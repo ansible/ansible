@@ -1,30 +1,21 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: aws_api_gateway
 short_description: Manage AWS API Gateway APIs
 description:
-     - Allows for the management of API Gatway APIs
+     - Allows for the management of API Gateway APIs
      - Normally you should give the api_id since there is no other
        stable guaranteed unique identifier for the API.  If you do
        not give api_id then a new API will be create each time
@@ -72,6 +63,7 @@ author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
     - aws
+    - ec2
 notes:
    - A future version of this module will probably use tags or another
      ID so that an API can be create only once.
@@ -82,7 +74,6 @@ notes:
 
 EXAMPLES = '''
 # Update API resources for development
-tasks:
 - name: update API
   aws_api_gateway:
     api_id: 'abc123321cba'
@@ -90,7 +81,6 @@ tasks:
     swagger_file: my_api.yml
 
 # update definitions and deploy API to production
-tasks:
 - name: deploy API
   aws_api_gateway:
     api_id: 'abc123321cba'
@@ -115,16 +105,16 @@ output:
 '''
 
 import json
-from ansible.module_utils.basic import AnsibleModule, traceback
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict, AWSRetry
-
-from ansible.module_utils.ec2 import HAS_BOTO3
 
 try:
     import botocore
     HAS_BOTOCORE = True
 except ImportError:
     HAS_BOTOCORE = False
+
+from ansible.module_utils.basic import AnsibleModule, traceback
+from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, ec2_argument_spec, get_aws_connection_info,
+                                      boto3_conn, camel_dict_to_snake_dict)
 
 
 def main():

@@ -1,0 +1,80 @@
+- name: Prepare random number
+  set_fact:
+    random_postfix: "{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create instance of SQL Server -- check mode
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+
+- name: Create again instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state == 'Ready'
+
+- name: Delete instance of SQL Server -- check mode
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false

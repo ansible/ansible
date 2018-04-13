@@ -1,30 +1,18 @@
 #!/usr/bin/python
 #
-# Create a webfaction database using Ansible and the Webfaction API
-#
-# ------------------------------------------
-#
 # (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
 #     * Andy Baker
 #     * Federico Tarantini
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Create a webfaction database using Ansible and the Webfaction API
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -53,7 +41,6 @@ options:
     state:
         description:
             - Whether the database should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -66,8 +53,6 @@ options:
     password:
         description:
             - The password for the new database user.
-        required: false
-        default: None
 
     login_name:
         description:
@@ -82,7 +67,6 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
 '''
 
 EXAMPLES = '''
@@ -103,29 +87,31 @@ EXAMPLES = '''
 
 '''
 
-import socket
-import xmlrpclib
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
-            type = dict(required=True),
-            password = dict(required=False, default=None, no_log=True),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
-            machine = dict(required=False, default=False),
+            type=dict(required=True, choices=['mysql', 'postgresql']),
+            password=dict(required=False, default=None, no_log=True),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
+            machine=dict(required=False, default=None),
         ),
         supports_check_mode=True
     )
-    db_name  = module.params['name']
+    db_name = module.params['name']
     db_state = module.params['state']
-    db_type  = module.params['type']
+    db_type = module.params['type']
     db_passwd = module.params['password']
 
     if module.params['machine']:
@@ -162,9 +148,8 @@ def main():
 
             # If it exists with the right type, we don't change anything.
             module.exit_json(
-                changed = False,
+                changed=False,
             )
-
 
         if not module.check_mode:
             # If this isn't a dry run, create the db
@@ -181,7 +166,7 @@ def main():
         if not module.check_mode:
 
             if not (existing_db or existing_user):
-                module.exit_json(changed = False,)
+                module.exit_json(changed=False,)
 
             if existing_db:
                 # Delete the db if it exists
@@ -199,11 +184,10 @@ def main():
         module.fail_json(msg="Unknown state specified: {}".format(db_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

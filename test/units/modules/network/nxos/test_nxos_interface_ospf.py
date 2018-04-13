@@ -29,6 +29,8 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
     module = nxos_interface_ospf
 
     def setUp(self):
+        super(TestNxosInterfaceOspfModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_interface_ospf.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -36,6 +38,7 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosInterfaceOspfModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
@@ -47,3 +50,7 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
     def test_nxos_interface_ospf(self):
         set_module_args(dict(interface='ethernet1/32', ospf=1, area=1))
         self.execute_module(changed=True, commands=['interface Ethernet1/32', 'ip router ospf 1 area 0.0.0.1'])
+
+    def test_loopback_interface_failed(self):
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, passive_interface=True))
+        self.execute_module(failed=True, changed=False)

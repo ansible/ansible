@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # (c) 2016, Pierre Jodouin <pjodouin@virtualcomputing.solutions>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -74,7 +66,7 @@ requirements:
     - boto3
 extends_documentation_fragment:
     - aws
-
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -110,6 +102,7 @@ lambda_stream_events:
     type: list
 '''
 
+import re
 import sys
 
 try:
@@ -118,6 +111,10 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -225,7 +222,7 @@ def validate_params(module, aws):
     function_name = module.params['lambda_function_arn']
 
     # validate function name
-    if not re.search('^[\w\-:]+$', function_name):
+    if not re.search(r'^[\w\-:]+$', function_name):
         module.fail_json(
             msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
         )
@@ -422,10 +419,6 @@ def main():
 
     module.exit_json(**results)
 
-
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

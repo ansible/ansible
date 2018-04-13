@@ -1,23 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
-#
-# This file is part of Ansible (sort of)
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017, Kenneth D. Evensen <kevensen@redhat.com>
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -72,7 +63,8 @@ options:
       'args_present' any args listed in module_arguments are added if
       missing from the existing rule.  Furthermore, if the module argument
       takes a value denoted by '=', the value will be changed to that specified
-      in module_arguments.
+      in module_arguments.  Note that module_arguments is a list.  Please see
+      the examples for usage.
   state:
     default: updated
     choices:
@@ -167,7 +159,7 @@ EXAMPLES = """
     name: system-auth
     type: session control='[success=1 default=ignore]'
     module_path: pam_succeed_if.so
-    module_arguments: 'crond quiet'
+    module_arguments: crond,quiet
     state: args_absent
 
 - name: Ensure specific arguments are present in a rule
@@ -176,7 +168,28 @@ EXAMPLES = """
     type: session
     control: '[success=1 default=ignore]'
     module_path: pam_succeed_if.so
-    module_arguments: 'crond quiet'
+    module_arguments: crond,quiet
+    state: args_present
+
+- name: Ensure specific arguments are present in a rule (alternative)
+  pamd:
+    name: system-auth
+    type: session
+    control: '[success=1 default=ignore]'
+    module_path: pam_succeed_if.so
+    module_arguments:
+    - crond
+    - quiet
+    state: args_present
+
+- name: Module arguments requiring commas must be listed as a Yaml list
+  pamd:
+    name: special-module
+    type: account
+    control: required
+    module_path: pam_access.so
+    module_arguments:
+    - listsep=,
     state: args_present
 
 - name: Update specific argument value in a rule
@@ -187,6 +200,17 @@ EXAMPLES = """
     module_path: pam_faillock.so
     module_arguments: 'fail_interval=300'
     state: args_present
+
+- name: Add pam common-auth rule for duo
+  pamd:
+    name: common-auth
+    new_type: auth
+    new_control: '[success=1 default=ignore]'
+    new_module_path: '/lib64/security/pam_duo.so'
+    state: after
+    type: auth
+    module_path: pam_sss.so
+    control: 'requisite'
 """
 
 RETURN = '''
@@ -229,8 +253,9 @@ dest:
 ...
 '''
 
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import os
 import re
 import time
@@ -269,22 +294,21 @@ class PamdRule(object):
 
         if '[' in stringline:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    \[([A-Za-z0-9_=\s]+)\]\s*   # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
+                    \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
+                    ([A-Za-z0-9/_\-\.]+)\s*         # Rule Path
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
             complicated = True
         else:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                r"""([@\-A-Za-z0-9_]+)\s*        # Rule Type
+                    ([A-Za-z0-9_\-]+)\s*          # Rule Control
+                    ([A-Za-z0-9/_\-\.]*)\s*        # Rule Path
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
-
         rule_type = result.group(1)
         if complicated:
             rule_control = '[' + result.group(2) + ']'
@@ -328,19 +352,18 @@ class PamdService(object):
             self.name = self.ansible.params["name"]
 
     def load_rules_from_file(self):
-        self.fname = self.path + "/" + self.name
+        self.fname = os.path.join(self.path, self.name)
         stringline = ''
         try:
             for line in open(self.fname, 'r'):
-                stringline += line.rstrip()
+                stringline += line.rstrip().lstrip()
                 stringline += '\n'
-            self.load_rules_from_string(stringline)
+            self.load_rules_from_string(stringline.replace("\\\n", ""))
 
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.ansible.fail_json(msg='Unable to open/read PAM module \
                                    file %s with error %s.  And line %s' %
-                                   (self.fname, str(e), stringline))
+                                   (self.fname, to_native(e), stringline))
 
     def load_rules_from_string(self, stringvalue):
         for line in stringvalue.splitlines():
@@ -350,6 +373,10 @@ class PamdService(object):
             elif (not line.startswith('#') and
                   not line.isspace() and
                   len(line) != 0):
+                try:
+                    self.ansible.log(msg="Creating rule from string %s" % stringline)
+                except AttributeError:
+                    pass
                 self.rules.append(PamdRule.rulefromstring(stringline))
 
     def write(self):
@@ -469,7 +496,10 @@ def insert_after_rule(service, old_rule, new_rule):
         if (old_rule.rule_type == rule.rule_type and
                 old_rule.rule_control == rule.rule_control and
                 old_rule.rule_module_path == rule.rule_module_path):
-            if (new_rule.rule_type != service.rules[index + 1].rule_type or
+            if (index == len(service.rules) - 1):
+                service.rules.insert(len(service.rules), new_rule)
+                changed = True
+            elif (new_rule.rule_type != service.rules[index + 1].rule_type or
                     new_rule.rule_control !=
                     service.rules[index + 1].rule_control or
                     new_rule.rule_module_path !=
@@ -655,6 +685,7 @@ def main():
     module.params['dest'] = pamd.fname
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

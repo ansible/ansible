@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -47,39 +39,25 @@ options:
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
-    required: false
-    default: null
   message_retention_period:
     description:
       - The message retention period in seconds.
-    required: false
-    default: null
   maximum_message_size:
     description:
       - The maximum message size in bytes.
-    required: false
-    default: null
   delivery_delay:
     description:
       - The delivery delay in seconds.
-    required: false
-    default: null
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
-    required: false
-    default: null
   policy:
     description:
       - The json dict policy to attach to queue
-    required: false
-    default: null
     version_added: "2.1"
   redrive_policy:
     description:
       - json dict with the redrive_policy (see example)
-    required: false
-    default: null
     version_added: "2.2"
 extends_documentation_fragment:
     - aws
@@ -241,7 +219,7 @@ def update_sqs_queue(queue,
 
 
 def set_queue_attribute(queue, attribute, value, check_mode=False):
-    if not value:
+    if not value and value != 0:
         return False
 
     try:

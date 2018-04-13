@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -45,17 +35,14 @@ options:
         - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
         - Mutually exclusive with C(definition).
         - Required when no C(definition) is provided.
-      required: false
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
-        - Required when no C(definition) is provided.
-      required: false
+        - Required when C(definition) is provided.
   files:
       description:
         - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
         - Files are loaded and merged in the order given.
-      required: false
   state:
       description:
         - Desired state of the project.
@@ -65,33 +52,27 @@ options:
         - absent
         - present
       default: present
-      required: false
   services:
       description:
         - When C(state) is I(present) run I(docker-compose up) on a subset of services.
-      required: false
   scale:
       description:
         - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
-      required: false
   dependencies:
       description:
         - When C(state) is I(present) specify whether or not to include linked services.
       type: bool
-      required: false
-      default: true
+      default: 'yes'
   definition:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
         - Mutually exclusive with C(project_src) and C(files).
-      required: false
   hostname_check:
       description:
         - Whether or not to check the Docker daemon's hostname against the name provided in the client certificate.
       type: bool
-      required: false
-      default: false
+      default: 'no'
   recreate:
       description:
         - By default containers will be recreated when their configuration differs from the service definition.
@@ -111,53 +92,44 @@ options:
         - Use the C(nocache) option to ignore the image cache when performing the build.
         - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
       type: bool
-      required: false
-      default: false
+      default: 'no'
   pull:
       description:
         - Use with state I(present) to always pull images prior to starting the application.
         - Same as running docker-compose pull.
         - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
       type: bool
-      required: false
-      default: false
+      default: 'no'
       version_added: "2.2"
   nocache:
       description:
         - Use with the build option to ignore the cache during the image build process.
       type: bool
-      required: false
-      default: false
+      default: 'no'
       version_added: "2.2"
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
-      required: false
-      default: null
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
-      required: false
       type: bool
-      default: false
+      default: 'no'
   stopped:
       description:
         - Use with state I(present) to leave the containers in an exited or non-running state.
-      required: false
       type: bool
-      default: false
+      default: 'no'
   restarted:
       description:
         - Use with state I(present) to restart all containers.
-      required: false
       type: bool
-      default: false
+      default: 'no'
   debug:
       description:
         - Include I(actions) in the return values.
-      required: false
       type: bool
-      default: false
+      default: 'no'
 
 extends_documentation_fragment:
     - docker
@@ -449,38 +421,37 @@ actions:
                           type: string
 '''
 
-HAS_YAML = True
-HAS_YAML_EXC = None
-HAS_COMPOSE = True
-HAS_COMPOSE_EXC = None
-MINIMUM_COMPOSE_VERSION = '1.7.0'
-
-import sys
+import os
 import re
+import sys
+import tempfile
+from contextlib import contextmanager
+from distutils.version import LooseVersion
 
 try:
     import yaml
+    HAS_YAML = True
+    HAS_YAML_EXC = None
 except ImportError as exc:
     HAS_YAML = False
     HAS_YAML_EXC = str(exc)
 
-from distutils.version import LooseVersion
-from ansible.module_utils.basic import *
-
 try:
     from compose import __version__ as compose_version
-    from compose.project import ProjectError
     from compose.cli.command import project_from_options
-    from compose.service import ConvergenceStrategy, NoSuchImageError
+    from compose.service import NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
     from compose.const import DEFAULT_TIMEOUT
+    HAS_COMPOSE = True
+    HAS_COMPOSE_EXC = None
+    MINIMUM_COMPOSE_VERSION = '1.7.0'
+
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker_common import *
-from contextlib import contextmanager
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 
 
 AUTH_PARAM_MAPPING = {
@@ -522,8 +493,8 @@ def make_redirection_tempfiles():
 
 
 def cleanup_redirection_tempfiles(out_name, err_name):
-    get_redirected_output(out_name)
-    get_redirected_output(err_name)
+    for i in [out_name, err_name]:
+        os.remove(i)
 
 
 def get_redirected_output(path_name):
@@ -531,9 +502,8 @@ def get_redirected_output(path_name):
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
-            new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
+            new_line = re.sub(r'\x1b\[.+m', '', line)
             output.append(new_line)
-    fd.close()
     os.remove(path_name)
     return output
 
@@ -698,7 +668,7 @@ class ContainerManager(DockerBaseClass):
 
         up_options = {
             u'--no-recreate': False,
-            u'--build': True,
+            u'--build': False,
             u'--no-build': False,
             u'--no-deps': False,
             u'--force-recreate': False,
@@ -906,7 +876,7 @@ class ContainerManager(DockerBaseClass):
 
                     # build the image
                     try:
-                        new_image_id = service.build(pull=True, no_cache=self.nocache)
+                        new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
                         self.client.fail("Error: build failed with %s" % str(exc))
 

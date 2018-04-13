@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -39,22 +39,15 @@ options:
   domain:
     description:
       - Domain the instance group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance group is related to.
-    required: false
-    default: null
   project:
     description:
       - Project the instance group is related to.
-    required: false
-    default: null
   state:
     description:
       - State of the instance group.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack

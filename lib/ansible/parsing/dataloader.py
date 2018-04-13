@@ -1,19 +1,6 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -21,20 +8,18 @@ __metaclass__ = type
 
 import copy
 import os
-import json
+import os.path
 import re
 import tempfile
-from yaml import YAMLError
 
+from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
-from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
+from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.utils.path import unfrackpath
 
 try:
@@ -42,6 +27,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'
 # this is not perfect but people should really avoid 'tasks' dirs outside roles when using Ansible.
@@ -73,52 +59,20 @@ class DataLoader:
         self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
-        self.set_vault_password(None)
+        # TODO: replace with a ref to something that can get the password
+        #       a creds/auth provider
+        # self.set_vault_password(None)
+        self._vaults = {}
+        self._vault = VaultLib()
+        self.set_vault_secrets(None)
 
-    def set_vault_password(self, b_vault_password):
-        self._b_vault_password = b_vault_password
-        self._vault = VaultLib(b_password=b_vault_password)
+    # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
+    def set_vault_secrets(self, vault_secrets):
+        self._vault.secrets = vault_secrets
 
     def load(self, data, file_name='<string>', show_content=True):
-        '''
-        Creates a python datastructure from the given data, which can be either
-        a JSON or YAML string.
-        '''
-        new_data = None
-
-        # YAML parser will take JSON as it is a subset.
-        if isinstance(data, AnsibleUnicode):
-            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-            # they are unable to cope with our subclass.
-            # Unwrap and re-wrap the unicode so we can keep track of line
-            # numbers
-            in_data = text_type(data)
-        else:
-            in_data = data
-
-        try:
-            # we first try to load this data as JSON
-            new_data = json.loads(data)
-        except:
-            # must not be JSON, let the rest try
-            if isinstance(data, AnsibleUnicode):
-                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-                # they are unable to cope with our subclass.
-                # Unwrap and re-wrap the unicode so we can keep track of line
-                # numbers
-                in_data = text_type(data)
-            else:
-                in_data = data
-            try:
-                new_data = self._safe_load(in_data, file_name=file_name)
-            except YAMLError as yaml_exc:
-                self._handle_error(yaml_exc, file_name, show_content)
-
-            if isinstance(data, AnsibleUnicode):
-                new_data = AnsibleUnicode(new_data)
-                new_data.ansible_pos = data.ansible_pos
-
-        return new_data
+        '''Backwards compat for now'''
+        return from_yaml(data, file_name, show_content, self._vault.secrets)
 
     def load_from_file(self, file_name, cache=True, unsafe=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
@@ -167,58 +121,48 @@ class DataLoader:
         path = self.path_dwim(path)
         return is_executable(path)
 
-    def _safe_load(self, stream, file_name=None):
-        ''' Implements yaml.safe_load(), except using our custom loader class. '''
+    def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
+        '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
-        loader = AnsibleLoader(stream, file_name, self._b_vault_password)
-        try:
-            return loader.get_single_data()
-        finally:
-            try:
-                loader.dispose()
-            except AttributeError:
-                pass  # older versions of yaml don't have dispose function, ignore
+        if not is_encrypted(b_vault_data):
+            show_content = True
+            return b_vault_data, show_content
+
+        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
+        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+
+        show_content = False
+        return b_data, show_content
 
     def _get_file_contents(self, file_name):
         '''
-        Reads the file contents from the given file name, and will decrypt them
-        if they are found to be vault-encrypted.
+        Reads the file contents from the given file name
+
+        If the contents are vault-encrypted, it will decrypt them and return
+        the decrypted data
+
+        :arg file_name: The name of the file to read.  If this is a relative
+            path, it will be expanded relative to the basedir
+        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleParserError: if we were unable to read the file
+        :return: Returns a byte string of the file contents
         '''
         if not file_name or not isinstance(file_name, (binary_type, text_type)):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
-        b_file_name = to_bytes(file_name)
+        b_file_name = to_bytes(self.path_dwim(file_name))
+        # This is what we really want but have to fix unittests to make it pass
+        # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
-        show_content = True
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
-                if is_encrypted(data):
-                    data = self._vault.decrypt(data, filename=b_file_name)
-                    show_content = False
-
-            return (data, show_content)
+                return self._decrypt_if_vault_data(data, b_file_name)
 
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
-
-    def _handle_error(self, yaml_exc, file_name, show_content):
-        '''
-        Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
-        file name/position where a YAML exception occurred, and raises an AnsibleParserError
-        to display the syntax exception information.
-        '''
-
-        # if the YAML exception contains a problem mark, use it to construct
-        # an object the error class can use to display the faulty line
-        err_obj = None
-        if hasattr(yaml_exc, 'problem_mark'):
-            err_obj = AnsibleBaseYAMLObject()
-            err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
-
-        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
     def get_basedir(self):
         ''' returns the current basedir '''
@@ -252,10 +196,10 @@ class DataLoader:
         b_path = to_bytes(path, errors='surrogate_or_strict')
         b_upath = to_bytes(unfrackpath(path, follow=False), errors='surrogate_or_strict')
 
-        for finddir in (b'meta', b'tasks'):
-            for suffix in (b'.yml', b'.yaml', b''):
-                b_main = b'main%s' % (suffix)
-                b_tasked = b'%s/%s' % (finddir, b_main)
+        for b_finddir in (b'meta', b'tasks'):
+            for b_suffix in (b'.yml', b'.yaml', b''):
+                b_main = b'main%s' % (b_suffix)
+                b_tasked = os.path.join(b_finddir, b_main)
 
                 if (
                     RE_TASKS.search(path) and
@@ -352,19 +296,11 @@ class DataLoader:
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
                 b_mydir = os.path.dirname(b_upath)
 
-                # FIXME: this detection fails with non main.yml roles
                 # if path is in role and 'tasks' not there already, add it into the search
-                if is_role or self._is_role(path):
-                    if b_mydir.endswith(b'tasks'):
+                if (is_role or self._is_role(path)) and b_mydir.endswith(b'tasks'):
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
-                    else:
-                        # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] != b_dirname:
-                            search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b_source))
-
-                elif b_dirname not in b_source.split(b'/'):
+                else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
                         search.append(os.path.join(b_upath, b_dirname, b_source))
@@ -416,9 +352,6 @@ class DataLoader:
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
             raise AnsibleFileNotFound(file_name=file_path)
 
-        if not self._vault:
-            self._vault = VaultLib(b_password="")
-
         real_path = self.path_dwim(file_path)
 
         try:
@@ -432,8 +365,8 @@ class DataLoader:
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name
                         data = f.read()
-                        if not self._b_vault_password:
-                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % to_native(file_path))
+                        if not self._vault.secrets:
+                            raise AnsibleParserError("A vault password or secret must be specified to decrypt %s" % to_native(file_path))
 
                         data = self._vault.decrypt(data, filename=real_path)
                         # Make a temp file
@@ -461,3 +394,53 @@ class DataLoader:
                 self.cleanup_tmp_file(f)
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_native(e))
+
+    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
+        """
+        Find vars files in a given path with specified name. This will find
+        files in a dir named <name>/ or a file called <name> ending in known
+        extensions.
+        """
+
+        b_path = to_bytes(os.path.join(path, name))
+        found = []
+
+        if extensions is None:
+            # Look for file with no extension first to find dir before file
+            extensions = [''] + C.YAML_FILENAME_EXTENSIONS
+        # add valid extensions to name
+        for ext in extensions:
+
+            if '.' in ext:
+                full_path = b_path + to_bytes(ext)
+            elif ext:
+                full_path = b'.'.join([b_path, to_bytes(ext)])
+            else:
+                full_path = b_path
+
+            if self.path_exists(full_path):
+                if self.is_directory(full_path):
+                    if allow_dir:
+                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
+                    else:
+                        next
+                else:
+                    found.append(full_path)
+                break
+        return found
+
+    def _get_dir_vars_files(self, path, extensions):
+        found = []
+        for spath in sorted(self.list_directory(path)):
+            if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
+
+                ext = os.path.splitext(spath)[-1]
+                full_spath = os.path.join(path, spath)
+
+                if self.is_directory(full_spath) and not ext:  # recursive search if dir
+                    found.extend(self._get_dir_vars_files(full_spath, extensions))
+                elif self.is_file(full_spath) and (not ext or to_text(ext) in extensions):
+                    # only consider files with valid extensions or no extension
+                    found.append(full_spath)
+
+        return found

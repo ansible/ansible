@@ -1,0 +1,81 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp_snooping sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: gt_run="false"
+- set_fact: gt_run="true"
+  when: not (platform is match("N5K")) and not (platform is match("N35"))
+
+- set_fact: group_timeout="never"
+  when: not (platform is match("N5K")) and not (platform is match("N35"))
+
+- set_fact: def_group_timeout="default"
+  when: not (platform is match("N5K")) and not (platform is match("N35"))
+
+- block:
+
+  - name: Configure igmp snooping with non-default values
+    nxos_igmp_snooping: &non-default
+      snooping: false
+      group_timeout: "{{group_timeout|default(omit)}}"
+      link_local_grp_supp: false
+      report_supp: false
+      v3_report_supp: true
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+  - block:
+    - name: "Check Idempotence - Configure igmp snooping with non-default values"
+      nxos_igmp_snooping: *non-default
+      register: result
+
+    - assert: &false
+        that:
+          - "result.changed == false"
+    when: (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  - name: Configure igmp snooping with default group timeout
+    nxos_igmp_snooping: &defgt
+      group_timeout: "{{def_group_timeout|default(omit)}}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+    when: gt_run
+
+  - block:
+    - name: "Check Idempotence"
+      nxos_igmp_snooping: *defgt
+      register: result
+
+    - assert: *false
+    when: gt_run or (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: &default
+      state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - block:
+    - name: "Check Idempotence - Configure igmp snooping with default values"
+      nxos_igmp_snooping: *default
+      register: result
+
+    - assert: *false
+    when: (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  always:
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: *default
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp_snooping sanity test"

@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 # This module is also sponsored by E.T.A.I. (www.etai.fr)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -77,11 +67,12 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Gather VM facts
+- name: Gather facts from standalone ESXi server having datacenter as 'ha-datacenter'
   vmware_guest_facts:
     hostname: 192.168.1.209
     username: administrator@vsphere.local
     password: vmware
+    datacenter: ha-datacenter
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
   delegate_to: localhost
@@ -96,47 +87,20 @@ instance:
     sample: None
 """
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts, vmware_argument_spec
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-
 try:
     import pyVmomi
     from pyVmomi import vim
-
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
-class PyVmomiHelper(object):
+class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
-        if not HAS_PYVMOMI:
-            module.fail_json(msg='pyvmomi module required')
-
-        self.module = module
-        self.params = module.params
-        self.content = connect_to_api(self.module)
-
-    def getvm(self, name=None, uuid=None, folder=None):
-        vm = None
-        match_first = False
-        if uuid:
-            vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
-        elif folder and name:
-            if self.params['name_match'] == 'first':
-                match_first = True
-            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
-        return vm
-
-    def gather_facts(self, vm):
-        return gather_vm_facts(self.content, vm)
+        super(PyVmomiHelper, self).__init__(module)
 
 
 def main():
@@ -157,9 +121,7 @@ def main():
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'],
-                   folder=module.params['folder'],
-                   uuid=module.params['uuid'])
+    vm = pyv.get_vm()
 
     # VM already exists
     if vm:
@@ -168,12 +130,8 @@ def main():
         except Exception as exc:
             module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
-        msg = "Unable to gather facts for non-existing VM "
-        if module.params['name']:
-            msg += "%(name)s" % module.params
-        elif module.params['uuid']:
-            msg += "%(uuid)s" % module.params
-        module.fail_json(msg=msg)
+        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % module.params.get('uuid') or module.params.get('name'))
+
 
 if __name__ == '__main__':
     main()

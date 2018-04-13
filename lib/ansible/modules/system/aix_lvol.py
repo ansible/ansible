@@ -2,25 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Alain Dejoux <adejoux@djouxtech.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
@@ -154,20 +144,20 @@ def parse_lv(data):
     name = None
 
     for line in data.splitlines():
-        match = re.search("LOGICAL VOLUME:\s+(\w+)\s+VOLUME GROUP:\s+(\w+)", line)
+        match = re.search(r"LOGICAL VOLUME:\s+(\w+)\s+VOLUME GROUP:\s+(\w+)", line)
         if match is not None:
             name = match.group(1)
             vg = match.group(2)
             continue
-        match = re.search("LPs:\s+(\d+).*PPs", line)
+        match = re.search(r"LPs:\s+(\d+).*PPs", line)
         if match is not None:
             lps = int(match.group(1))
             continue
-        match = re.search("PP SIZE:\s+(\d+)", line)
+        match = re.search(r"PP SIZE:\s+(\d+)", line)
         if match is not None:
             pp_size = int(match.group(1))
             continue
-        match = re.search("INTER-POLICY:\s+(\w+)", line)
+        match = re.search(r"INTER-POLICY:\s+(\w+)", line)
         if match is not None:
             policy = match.group(1)
             continue
@@ -184,22 +174,22 @@ def parse_vg(data):
 
     for line in data.splitlines():
 
-        match = re.search("VOLUME GROUP:\s+(\w+)", line)
+        match = re.search(r"VOLUME GROUP:\s+(\w+)", line)
         if match is not None:
             name = match.group(1)
             continue
 
-        match = re.search("TOTAL PP.*\((\d+)", line)
+        match = re.search(r"TOTAL PP.*\((\d+)", line)
         if match is not None:
             size = int(match.group(1))
             continue
 
-        match = re.search("PP SIZE:\s+(\d+)", line)
+        match = re.search(r"PP SIZE:\s+(\d+)", line)
         if match is not None:
             pp_size = int(match.group(1))
             continue
 
-        match = re.search("FREE PP.*\((\d+)", line)
+        match = re.search(r"FREE PP.*\((\d+)", line)
         if match is not None:
             free = int(match.group(1))
             continue

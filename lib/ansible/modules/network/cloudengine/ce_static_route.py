@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -48,42 +48,27 @@ options:
     next_hop:
         description:
             - Next hop address of static route.
-        required: false
-        default: null
     nhp_interface:
         description:
             - Next hop interface full name of static route.
-        required: false
-        default: null
     vrf:
         description:
             - VPN instance of destination ip address.
-        required: false
-        default: null
     destvrf:
         description:
             - VPN instance of next hop ip address.
-        required: false
-        default: null
     tag:
         description:
             - Route tag value (numeric).
-        required: false
-        default: null
     description:
         description:
             - Name of the route. Used with the name parameter on the CLI.
-        required: false
-        default: null
     pref:
         description:
             - Preference or administrative difference of route (range 1-255).
-        required: false
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         choices: ['present','absent']
         default: present
 '''
@@ -180,7 +165,7 @@ changed:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_STATIC_ROUTE = """
 <filter type="subtree">

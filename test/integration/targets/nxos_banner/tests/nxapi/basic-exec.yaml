@@ -1,45 +1,32 @@
 ---
-- name: setup - remove exec
-  nxos_banner:
-    banner: exec
-    state: absent
-    provider: "{{ nxapi }}"
+- debug: msg="START nxapi/nxos_banner exec test"
 
-- name: Set exec
-  nxos_banner:
-    banner: exec
-    text: |
-      this is my exec banner
-      that has a multiline
-      string
-    state: present
-    provider: "{{ nxapi }}"
-  register: result
+- block:
+    - name: setup - remove exec
+      nxos_banner: &remove
+        banner: exec
+        state: absent
+        provider: "{{ nxapi }}"
 
-- debug:
-    msg: "{{ result }}"
+    - name: Set exec
+      nxos_banner: &exec
+        banner: exec
+        text: |
+          this is my exec banner
+          that has a multiline
+          string
+        state: present
+        provider: "{{ nxapi }}"
+      register: result
 
-- assert:
-    that:
-      - "result.changed == true"
-      - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
 
-- name: Set exec again (idempotent)
-  nxos_banner:
-    banner: exec
-    text: |
-      this is my exec banner
-      that has a multiline
-      string
-    state: present
-    provider: "{{ nxapi }}"
-  register: result
+    - name: teardown - remove exec
+      nxos_banner: *remove
 
-- assert:
-    that:
-      - "result.changed == false"
-      - "result.commands | length == 0"
+  when: platform is match("N7K")
 
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
+- debug: msg="END nxapi/nxos_banner exec test"

@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Adam Števko <adam.stevko@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -62,11 +51,11 @@ options:
 '''
 
 EXAMPLES = '''
-name: Create 'vlan42' VLAN over 'bnx0' link
-dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
+- name: Create 'vlan42' VLAN over 'bnx0' link
+  dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
 
-name: Remove 'vlan1337' VLAN interface
-dladm_vlan: name=vlan1337 state=absent
+- name: Remove 'vlan1337' VLAN interface
+  dladm_vlan: name=vlan1337 state=absent
 '''
 
 RETURN = '''

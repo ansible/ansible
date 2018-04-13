@@ -1,25 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Darren Worrall <darren@iweb.co.uk>
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, Darren Worrall <darren@iweb.co.uk>
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -29,8 +15,8 @@ DOCUMENTATION = '''
 module: cs_ip_address
 short_description: Manages public IP address associations on Apache CloudStack based clouds.
 description:
-    - Acquires and associates a public IP to an account or project. Due to API
-      limitations this is not an idempotent call, so be sure to only
+    - Acquires and associates a public IP to an account or project.
+    - Due to API limitations this is not an idempotent call, so be sure to only
       conditionally call this when C(state=present)
 version_added: '2.0'
 author:
@@ -41,58 +27,49 @@ options:
     description:
       - Public IP address.
       - Required if C(state=absent)
-    required: false
-    default: null
   domain:
     description:
       - Domain the IP address is related to.
-    required: false
-    default: null
   network:
     description:
       - Network the IP address is related to.
-    required: false
-    default: null
   vpc:
     description:
       - VPC the IP address is related to.
-    required: false
-    default: null
     version_added: "2.2"
   account:
     description:
       - Account the IP address is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the IP address is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the IP address is in.
       - If not set, default zone is used.
-    required: false
-    default: null
+  state:
+    description:
+      - State of the IP address.
+    default: present
+    choices: [ present, absent ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Associate an IP address conditonally
-- local_action:
+- name: Associate an IP address conditonally
+  local_action:
     module: cs_ip_address
     network: My Network
   register: ip_address
   when: instance.public_ip is undefined
 
-# Disassociate an IP address
-- local_action:
+- name: Disassociate an IP address
+  local_action:
     module: cs_ip_address
     ip_address: 1.2.3.4
     state: absent

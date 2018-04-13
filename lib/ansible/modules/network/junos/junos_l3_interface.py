@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -49,10 +38,6 @@ options:
     default: 0
   aggregate:
     description: List of L3 interfaces definitions
-  purge:
-    description:
-      - Purge L3 interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the L3 interface configuration.
@@ -67,7 +52,9 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -79,6 +66,24 @@ EXAMPLES = """
 - name: Remove ge-0/0/1 IPv4 address
   junos_l3_interface:
     name: ge-0/0/1
+    state: absent
+
+- name: Set ipv4 address using aggregate
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
+      ipv6: fd5d:12c9:2201:2::2
+
+- name: Delete ipv4 address using aggregate
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
     state: absent
 """
 
@@ -95,10 +100,13 @@ diff:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
     from lxml.etree import tostring
@@ -111,28 +119,37 @@ USE_PERSISTENT_CONNECTION = True
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
+    element_spec = dict(
+        name=dict(),
         ipv4=dict(),
         ipv6=dict(),
         unit=dict(default=0, type='int'),
-        aggregate=dict(),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
-    required_one_of = [['ipv4', 'ipv6']]
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
+                           mutually_exclusive=mutually_exclusive,
                            required_one_of=required_one_of)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -148,11 +165,26 @@ def main():
         ('ipv6', {'xpath': 'inet6/address/name', 'top': 'unit/family', 'is_key': True})
     ])
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    params = to_param_list(module)
 
+    requests = list()
+    for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
+
+        item = param.copy()
+        if not item['ipv4'] and not item['ipv6']:
+            module.fail_json(msg="one of the following is required: ipv4,ipv6")
+
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
+
+    diff = None
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

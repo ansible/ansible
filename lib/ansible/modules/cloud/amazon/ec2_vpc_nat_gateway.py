@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,33 +23,25 @@ options:
   state:
     description:
       - Ensure NAT Gateway is present or absent.
-    required: false
     default: "present"
     choices: ["present", "absent"]
   nat_gateway_id:
     description:
       - The id AWS dynamically allocates to the NAT Gateway on creation.
         This is required when the absent option is present.
-    required: false
-    default: None
   subnet_id:
     description:
       - The id of the subnet to create the NAT Gateway in. This is required
         with the present option.
-    required: false
-    default: None
   allocation_id:
     description:
       - The id of the elastic IP allocation. If this is not passed and the
         eip_address is not passed. An EIP is generated for this NAT Gateway.
-    required: false
-    default: None
   eip_address:
     description:
       - The elastic IP address of the EIP you want attached to this NAT Gateway.
         If this is not passed and the allocation_id is not passed,
         an EIP is generated for this NAT Gateway.
-    required: false
   if_exist_do_not_create:
     description:
       - if a NAT Gateway exists already in the subnet_id, then do not create a new one.
@@ -68,25 +52,20 @@ options:
       - Deallocate the EIP from the VPC.
       - Option is only valid with the absent state.
       - You should use this with the wait option. Since you can not release an address while a delete operation is happening.
-    required: false
-    default: true
+    default: 'yes'
   wait:
     description:
       - Wait for operation to complete before returning.
-    required: false
-    default: false
+    default: 'no'
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
-    required: false
     default: 300
   client_token:
     description:
       - Optional unique token to be used during create to ensure idempotency.
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
-    required: false
-
 author:
   - "Allen Sanabria (@linuxdynasty)"
   - "Jon Hadfield (@jonhadfield)"
@@ -210,10 +189,6 @@ nat_gateway_addresses:
   ]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3
-
 import datetime
 import random
 import time
@@ -222,6 +197,11 @@ try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
+                                      camel_dict_to_snake_dict, HAS_BOTO3)
+
 
 DRY_RUN_GATEWAYS = [
     {
@@ -691,7 +671,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
         else:
             result = DRY_RUN_GATEWAYS[0]
             result['create_time'] = datetime.datetime.utcnow()
-            result['nat_gateway_addresses'][0]['Allocation_id'] = allocation_id
+            result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
             result['subnet_id'] = subnet_id
 
         success = True
@@ -714,13 +694,13 @@ def create(client, subnet_id, allocation_id, client_token=None,
     except botocore.exceptions.ClientError as e:
         if "IdempotentParameterMismatch" in e.message:
             err_msg = (
-                'NAT Gateway does not support update and token has already been provided'
+                'NAT Gateway does not support update and token has already been provided: ' + str(e)
             )
         else:
             err_msg = str(e)
-            success = False
-            changed = False
-            result = None
+        success = False
+        changed = False
+        result = None
 
     return success, changed, err_msg, result
 

@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -40,134 +32,100 @@ options:
     description:
       - the password to authenticate with
       - you can use PROXMOX_PASSWORD environment variable
-    default: null
-    required: false
   vmid:
     description:
       - the instance id
       - if not set, the next available VM ID will be fetched from ProxmoxAPI.
       - if not set, will be fetched from PromoxAPI based on the hostname
-    default: null
-    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
-    default: false
-    required: false
     type: bool
+    default: 'no'
   node:
     description:
       - Proxmox VE node, when new VM will be created
       - required only for C(state=present)
       - for another states will be autodiscovered
-    default: null
-    required: false
   pool:
     description:
       - Proxmox VE resource pool
-    default: null
-    required: false
     version_added: "2.3"
   password:
     description:
       - the instance root password
       - required only for C(state=present)
-    default: null
-    required: false
   hostname:
     description:
       - the instance hostname
       - required only for C(state=present)
       - must be unique if vmid is not passed
-    default: null
-    required: false
   ostemplate:
     description:
       - the template for VM creating
       - required only for C(state=present)
-    default: null
-    required: false
   disk:
     description:
       - hard disk size in GB for instance
     default: 3
-    required: false
   cores:
     description:
       - Specify number of cores per socket.
-    required: false
     default: 1
     version_added: 2.4
   cpus:
     description:
       - numbers of allocated cpus for instance
     default: 1
-    required: false
   memory:
     description:
       - memory size in MB for instance
     default: 512
-    required: false
   swap:
     description:
       - swap memory size in MB for instance
     default: 0
-    required: false
   netif:
     description:
       - specifies network interfaces for the container. As a hash/dictionary defining interfaces.
-    default: null
-    required: false
   mounts:
     description:
       - specifies additional mounts (separate disks) for the container. As a hash/dictionary defining mount points
-    default: null
-    required: false
     version_added: "2.2"
   ip_address:
     description:
       - specifies the address the container will be assigned
-    default: null
-    required: false
   onboot:
     description:
       - specifies whether a VM will be started during system bootup
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   storage:
     description:
       - target storage
     default: 'local'
-    required: false
   cpuunits:
     description:
       - CPU weight for a VM
     default: 1000
-    required: false
   nameserver:
     description:
       - sets DNS server IP address for a container
-    default: null
-    required: false
   searchdomain:
     description:
       - sets DNS search domain for a container
-    default: null
-    required: false
   timeout:
     description:
       - timeout for operations
     default: 30
-    required: false
   force:
     description:
       - forcing operations
       - can be used only with states C(present), C(stopped), C(restarted)
       - with C(state=present) force option allow to overwrite existing container
       - with states C(stopped) , C(restarted) allow to force stop instance
-    default: false
-    required: false
     type: bool
+    default: 'no'
   state:
     description:
      - Indicate desired state of the instance
@@ -177,13 +135,12 @@ options:
     description:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
     version_added: "2.3"
-    default: null
   unprivileged:
     version_added: "2.3"
     description:
       - Indicate if the container should be unprivileged
-    default: false
-    required: false
+    type: bool
+    default: 'no'
 
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
@@ -327,15 +284,17 @@ EXAMPLES = '''
 
 import os
 import time
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+import traceback
 
 try:
     from proxmoxer import ProxmoxAPI
     HAS_PROXMOXER = True
 except ImportError:
     HAS_PROXMOXER = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 VZ_TYPE = None
 
@@ -344,13 +303,13 @@ def get_nextvmid(module, proxmox):
     try:
         vmid = proxmox.cluster.nextid.get()
         return vmid
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg="Unable to get next vmid. Failed with exception: %s" % exc)
+    except Exception as e:
+        module.fail_json(msg="Unable to get next vmid. Failed with exception: %s" % to_native(e),
+                         exception=traceback.format_exc())
 
 
 def get_vmid(proxmox, hostname):
-    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == hostname]
+    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if 'name' in vm and vm['name'] == hostname]
 
 
 def get_instance(proxmox, vmid):
@@ -523,7 +482,10 @@ def main():
     if not vmid and state == 'present':
         vmid = get_nextvmid(module, proxmox)
     elif not vmid and hostname:
-        vmid = get_vmid(proxmox, hostname)[0]
+        hosts = get_vmid(proxmox, hostname)
+        if len(hosts) == 0:
+            module.fail_json(msg="Vmid could not be fetched => Hostname doesn't exist (action: %s)" % state)
+        vmid = hosts[0]
     elif not vmid:
         module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
 
@@ -637,7 +599,7 @@ def main():
 
                 time.sleep(1)
         except Exception as e:
-            module.fail_json(msg="deletion of VM %s failed with exception: %s" % (vmid, e))
+            module.fail_json(msg="deletion of VM %s failed with exception: %s" % (vmid, to_native(e)))
 
 
 if __name__ == '__main__':

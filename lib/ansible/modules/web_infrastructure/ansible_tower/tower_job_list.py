@@ -2,21 +2,13 @@
 # coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,20 +26,18 @@ options:
     status:
       description:
         - Only list jobs with this status.
-      default: null
       choices: ['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']
     page:
       description:
         - Page number of the results to fetch.
-      default: null
     all_pages:
       description:
         - Fetch all the pages and return a single result.
-      default: False
+      type: bool
+      default: 'no'
     query:
       description:
-        - Query used to further filter the list of jobs. {"foo":"bar"} will be passed at ?foo=bar
-      default: null
+        - Query used to further filter the list of jobs. C({"foo":"bar"}) will be passed at C(?foo=bar)
 extends_documentation_fragment: tower
 '''
 
@@ -90,20 +80,15 @@ results:
 
 from ansible.module_utils.basic import AnsibleModule
 
+from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import (
-        tower_auth_config,
-        tower_check_mode,
-        tower_argument_spec,
-    )
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():

@@ -4,22 +4,13 @@
 # (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -46,68 +37,54 @@ requirements:
   - python-ldap
 options:
   bind_dn:
-    required: false
-    default: null
     description:
       - A DN to bind with. If this is omitted, we'll try a SASL bind with
         the EXTERNAL mechanism. If this is blank, we'll use an anonymous
         bind.
   bind_pw:
-    required: false
-    default: null
     description:
       - The password to use with I(bind_dn).
   dn:
-    required: true
     description:
       - The DN of the entry to add or remove.
+    required: true
   attributes:
-    required: false
-    default: null
     description:
       - If I(state=present), attributes necessary to create an entry. Existing
         entries are never modified. To assert specific attribute values on an
         existing entry, use M(ldap_attr) module instead.
   objectClass:
-    required: false
-    default: null
     description:
       - If I(state=present), value or list of values to use when creating
         the entry. It can either be a string or an actual list of
         strings.
   params:
-    required: false
-    default: null
     description:
       - List of options which allows to overwrite any of the task or the
         I(attributes) options. To remove an option, set the value of the option
         to C(null).
   server_uri:
-    required: false
-    default: ldapi:///
     description:
       - A URI to the LDAP server. The default value lets the underlying
         LDAP client library look for a UNIX domain socket in its default
         location.
+    default: ldapi:///
   start_tls:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - If true, we'll use the START_TLS LDAP extension.
+    type: bool
+    default: 'no'
   state:
-    required: false
-    choices: [present, absent]
-    default: present
     description:
       - The target state of the entry.
+    choices: [present, absent]
+    default: present
   validate_certs:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - If C(no), SSL certificates will not be validated. This should only be
         used on sites using self-signed certificates.
+    type: bool
+    default: 'yes'
     version_added: "2.4"
 """
 
@@ -156,8 +133,7 @@ RETURN = """
 # Default return values
 """
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+import traceback
 
 try:
     import ldap
@@ -167,6 +143,10 @@ try:
     HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 class LdapEntry(object):
@@ -251,19 +231,19 @@ class LdapEntry(object):
         if self.start_tls:
             try:
                 connection.start_tls_s()
-            except ldap.LDAPError:
-                e = get_exception()
-                self.module.fail_json(msg="Cannot start TLS.", details=str(e))
+            except ldap.LDAPError as e:
+                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
+                                      exception=traceback.format_exc())
 
         try:
             if self.bind_dn is not None:
                 connection.simple_bind_s(self.bind_dn, self.bind_pw)
             else:
                 connection.sasl_interactive_bind_s('', ldap.sasl.external())
-        except ldap.LDAPError:
-            e = get_exception()
+        except ldap.LDAPError as e:
             self.module.fail_json(
-                msg="Cannot bind to the server.", details=str(e))
+                msg="Cannot bind to the server.", details=to_native(e),
+                exception=traceback.format_exc())
 
         return connection
 
@@ -298,7 +278,7 @@ def main():
     # Check if objectClass is of the correct type
     if (
             module.params['objectClass'] is not None and not (
-                isinstance(module.params['objectClass'], basestring) or
+                isinstance(module.params['objectClass'], string_types) or
                 isinstance(module.params['objectClass'], list))):
         module.fail_json(msg="objectClass must be either a string or a list.")
 
@@ -326,9 +306,8 @@ def main():
     if action is not None and not module.check_mode:
         try:
             action()
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Entry action failed.", details=str(e))
+        except Exception as e:
+            module.fail_json(msg="Entry action failed.", details=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=(action is not None))
 

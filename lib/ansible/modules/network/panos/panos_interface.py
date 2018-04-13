@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,13 +78,12 @@ EXAMPLES = '''
     create_default_route: "yes"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
-
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -98,8 +97,8 @@ _IF_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
 
 _ZONE_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
               "/vsys/entry/zone/entry"
-_ZONE_XPATH_QUERY = _ZONE_XPATH+"[network/layer3/member/text()='%s']"
-_ZONE_XPATH_IF = _ZONE_XPATH+"[@name='%s']/network/layer3/member[text()='%s']"
+_ZONE_XPATH_QUERY = _ZONE_XPATH + "[network/layer3/member/text()='%s']"
+_ZONE_XPATH_IF = _ZONE_XPATH + "[@name='%s']/network/layer3/member[text()='%s']"
 _VR_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
             "/network/virtual-router/entry"
 
@@ -120,9 +119,9 @@ def add_dhcp_if(xapi, if_name, zone_name, create_default_route):
     if_xml = (''.join(if_xml)) % (if_name, cdr)
     xapi.edit(xpath=_IF_XPATH % if_name, element=if_xml)
 
-    xapi.set(xpath=_ZONE_XPATH+"[@name='%s']/network/layer3" % zone_name,
+    xapi.set(xpath=_ZONE_XPATH + "[@name='%s']/network/layer3" % zone_name,
              element='<member>%s</member>' % if_name)
-    xapi.set(xpath=_VR_XPATH+"[@name='default']/interface",
+    xapi.set(xpath=_VR_XPATH + "[@name='default']/interface",
              element='<member>%s</member>' % if_name)
 
     return True
@@ -171,14 +170,14 @@ def main():
 
     try:
         changed = add_dhcp_if(xapi, if_name, zone_name, create_default_route)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     if changed and commit:
         xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

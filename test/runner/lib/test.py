@@ -194,14 +194,16 @@ class TestFailure(TestResult):
         :type test: str
         :type python_version: str | None
         :type messages: list[TestMessage] | None
-        :type summary: str | None
+        :type summary: unicode | None
         """
         super(TestFailure, self).__init__(command, test, python_version)
 
         if messages:
             messages = sorted(messages, key=lambda m: m.sort_key)
+        else:
+            messages = []
 
-        self.messages = messages or []
+        self.messages = messages
         self.summary = summary
 
     def write(self, args):
@@ -259,9 +261,9 @@ class TestFailure(TestResult):
         """
         :type args: TestConfig
         """
-        message = self.format_title()
-        output = self.format_block()
         docs = self.find_docs()
+        message = self.format_title(help_link=docs)
+        output = self.format_block()
 
         if self.messages:
             verified = all((m.confidence or 0) >= 50 for m in self.messages)
@@ -329,18 +331,24 @@ class TestFailure(TestResult):
 
         return None
 
-    def format_title(self):
+    def format_title(self, help_link=None):
         """
+        :type help_link: str | None
         :rtype: str
         """
         command = self.format_command()
 
         if self.summary:
-            reason = 'error'
+            reason = 'the error'
         else:
-            reason = 'error' if len(self.messages) == 1 else 'errors'
+            reason = '1 error' if len(self.messages) == 1 else '%d errors' % len(self.messages)
 
-        title = 'The test `%s` failed with the following %s:' % (command, reason)
+        if help_link:
+            help_link_markup = ' [[explain](%s)]' % help_link
+        else:
+            help_link_markup = ''
+
+        title = 'The test `%s`%s failed with %s:' % (command, help_link_markup, reason)
 
         return title
 
@@ -351,7 +359,7 @@ class TestFailure(TestResult):
         if self.summary:
             block = self.summary
         else:
-            block = '\n'.join(str(m) for m in self.messages)
+            block = '\n'.join(m.format() for m in self.messages)
 
         message = block.strip()
 

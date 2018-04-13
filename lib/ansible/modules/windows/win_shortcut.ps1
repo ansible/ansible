@@ -1,32 +1,18 @@
 #!powershell
-# (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
+#Requires -Module Ansible.ModuleUtils.Legacy
+
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src"
+$orig_src = Get-AnsibleParam -obj $params -name "src"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "absent","present"
 $orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
@@ -39,6 +25,7 @@ $windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" 
 # Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
 $description = Expand-Environment($orig_description)
+$src = Expand-Environment($orig_src)
 
 $result = @{
     changed = $false
@@ -82,8 +69,10 @@ If ($state -eq "absent") {
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
         }
-        If (-not (Split-Path -Path $src -IsAbsolute)) {
-            Fail-Json -obj $result -message "Source '$src' is not found in PATH and not an absolute path."
+        If (-not (Test-Path -Path $src -IsValid)) {
+            If (-not (Split-Path -Path $src -IsAbsolute)) {
+                Fail-Json -obj $result -message "Source '$src' is not found in PATH and not a valid or absolute path."
+            }
         }
     }
 
@@ -146,4 +135,4 @@ If ($state -eq "absent") {
     }
 }
 
-Exit-Json $result
+Exit-Json -obj $result

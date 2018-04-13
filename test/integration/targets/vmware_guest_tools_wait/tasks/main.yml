@@ -1,0 +1,97 @@
+# Test code for the vmware_guest_tools_wait module.
+# Copyright: (c) 2017 Philippe Dellaert <philippe@dellaert.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+  when: "{{ ansible_user_id == 'root' }}"
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of virtual machines from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vms
+
+- set_fact: vm1="{{ vms['json'][0] }}"
+
+- name: Power on VM1
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ vm1|basename }}"
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    state: poweredon
+    folder: "{{ vm1|dirname }}"
+
+# FixMe: govcsim does not support VMware tools status reporting
+## Testcase 0001: Wait for VMware tools to become available by name
+#- name: Waiting until VMware tools becomes available
+#  vmware_guest_tools_wait:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    name: "{{ vm1 | basename }}"
+#    folder: "{{ vm1 | dirname }}"
+#  register: guest_facts_0001
+#
+#- debug: msg="{{ guest_facts_0001 }}"
+#
+#- assert:
+#    that:
+#      - "guest_facts_0001['instance']['hw_name'] == vm1 | basename"
+#      - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
+#      - "guest_facts_0001['instance']['guest_tools_status'] == 'guestToolsRunning'"
+#
+#- set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+#
+#- debug: var=vm1_uuid
+#
+# Testcase 0002: Wait for VMware tools to become available by UUID
+#- name: Waiting until VMware tools becomes available
+#  vmware_guest_tools_wait:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    uuid: "{{ vm1_uuid }}"
+#  register: guest_facts_0002
+#
+#- debug: msg="{{ guest_facts_0002 }}"
+#
+#- assert:
+#    that:
+#      - "guest_facts_0002['instance']['hw_name'] == vm1 | basename"
+#      - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
+#      - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"
+#      - "guest_facts_0002['instance']['guest_tools_status'] == 'guestToolsRunning'"

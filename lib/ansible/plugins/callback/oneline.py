@@ -1,23 +1,19 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: oneline
+    type: stdout
+    short_description: oneline Ansible screen output
+    version_added: historical
+    description:
+        - This is the output callback used by the -o/--one-line command line option.
+'''
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
@@ -60,11 +56,19 @@ class CallbackModule(CallbackBase):
                               color=C.COLOR_ERROR)
 
     def v2_runner_on_ok(self, result):
-        if result._task.action in C.MODULE_NO_JSON:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, 'SUCCESS'), color=C.COLOR_OK)
+
+        if result._result.get('changed', False):
+            color = C.COLOR_CHANGED
+            state = 'CHANGED'
         else:
-            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n', '')),
-                                  color=C.COLOR_OK)
+            color = C.COLOR_OK
+            state = 'SUCCESS'
+
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, state), color=color)
+        else:
+            self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=0).replace('\n', '')),
+                                  color=color)
 
     def v2_runner_on_unreachable(self, result):
         self._display.display("%s | UNREACHABLE!: %s" % (result._host.get_name(), result._result.get('msg', '')), color=C.COLOR_UNREACHABLE)

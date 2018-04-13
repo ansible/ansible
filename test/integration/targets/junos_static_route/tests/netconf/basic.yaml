@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_static_route netconf/basic.yaml"
+- debug: msg="START junos_static_route netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove static route
   junos_static_route:
@@ -140,3 +140,112 @@
 - assert:
     that:
       - "result.changed == false"
+
+- name: Setup static route for aggegrate
+  junos_static_route:
+    aggregate:
+    - address: 4.4.4.0/24
+    - address: 5.5.5.0/24
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Confgiure static route using aggegrate
+  junos_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *route 4.4.4.0/24")
+      - result.diff.prepared is search("\+ *next-hop 3.3.3.3")
+      - result.diff.prepared is search("\+ *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("\+ *preference 30")
+      - result.diff.prepared is search("\+ *preference 10")
+      - result.diff.prepared is search("\+ *route 5.5.5.0/24")
+      - result.diff.prepared is search("\+ *next-hop 6.6.6.6")
+      - result.diff.prepared is search("\+ *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("\+ *preference 30")
+      - result.diff.prepared is search("\+ *preference 11")
+
+- name: Deactivate static route configuration using aggegrate
+  junos_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *inactive[:] route 4.4.4.0/24")
+      - result.diff.prepared is search("! *inactive[:] qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("! *inactive[:] preference")
+      - result.diff.prepared is search("! *inactive[:] route 5.5.5.0/24")
+      - result.diff.prepared is search("! *inactive[:] qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("! *inactive[:] preference")
+
+- name: Activate static route configuration using aggegrate
+  junos_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *active[:] route 4.4.4.0/24")
+      - result.diff.prepared is search("! *active[:] qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("! *active[:] preference")
+      - result.diff.prepared is search("! *active[:] route 5.5.5.0/24")
+      - result.diff.prepared is search("! *active[:] qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("! *active[:] preference")
+
+- name: Delete static route configuration using aggegrate
+  junos_static_route:
+    aggregate:
+      - address: 4.4.4.0/24
+      - address: 5.5.5.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *route 4.4.4.0/24")
+      - result.diff.prepared is search("\- *next-hop 3.3.3.3")
+      - result.diff.prepared is search("\- *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("\- *preference 30")
+      - result.diff.prepared is search("\- *preference 10")
+      - result.diff.prepared is search("\- *route 5.5.5.0/24")
+      - result.diff.prepared is search("\- *next-hop 6.6.6.6")
+      - result.diff.prepared is search("\- *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("\- *preference 30")
+      - result.diff.prepared is search("\- *preference 11")
+
+- name: Delete static route configuration using aggegrate (idempotent)
+  junos_static_route:
+    aggregate:
+      - address: 4.4.4.0/24
+      - address: 5.5.5.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END junos_static_route netconf/basic.yaml on connection={{ ansible_connection }}"

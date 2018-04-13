@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -29,10 +18,10 @@ DOCUMENTATION = """
 module: net_static_route
 version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage static IP routes on network devices
+short_description: Manage static IP routes on network appliances (routers, switches et. al.)
 description:
   - This module provides declarative management of static
-    IP routes on network devices.
+    IP routes on network appliances (routers, switches et. al.).
 options:
   prefix:
     description:
@@ -49,11 +38,11 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-  collection:
+  aggregate:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the collections parameter.
+      - Purge static routes not defined in the I(aggregate) parameter.
     default: no
   state:
     description:
@@ -76,11 +65,18 @@ EXAMPLES = """
     next_hop: 10.0.0.1
     state: absent
 
-- name: configure collections of static routes
+- name: configure aggregates of static routes
   net_static_route:
-    collection:
+    aggregate:
       - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
       - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
+
+- name: Remove static route collections
+  net_static_route:
+    aggregate:
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
+    state: absent
 """
 
 RETURN = """

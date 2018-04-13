@@ -1,24 +1,14 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -35,47 +25,32 @@ options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with
               given NTP server or peer.
-        required: false
-        default: null
     prefer:
         description:
             - Makes given NTP server or peer the preferred
               NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enabled', 'disabled']
     vrf_name:
         description:
             - Makes the device communicate with the given
               NTP server or peer over a specific VRF.
-        required: false
-        default: null
     source_addr:
         description:
             - Local source address from which NTP messages are sent.
-        required: false
-        default: null
     source_int:
         description:
             - Local source interface from which NTP messages are sent.
               Must be fully qualified interface name.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -127,24 +102,23 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import check_args, load_config, nxos_argument_spec, run_commands
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
 
-    return body
+    commands = [{
+        'command': command,
+        'output': output,
+    }]
+    return run_commands(module, commands)
 
 
 def flatten_list(command_lists):
@@ -170,7 +144,7 @@ def get_ntp_source(module):
             else:
                 source_type = 'source'
             source = output[0].split()[2].lower()
-        except AttributeError:
+        except (AttributeError, IndexError):
             source_type = None
             source = None
 
@@ -190,9 +164,9 @@ def get_ntp_peer(module):
             ntp = response
         if ntp:
             ntp_regex = (
-                ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
-                "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
-                "(key\s(?P<key_id>\d+))?.*"
+                r".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
+                r"\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
+                r"(key\s(?P<key_id>\d+))?.*"
             )
 
             split_ntp = ntp.splitlines()
@@ -319,14 +293,13 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[
-                                    ['server','peer'],
-                                    ['source_addr','source_int']],
-                                supports_check_mode=True)
+                           mutually_exclusive=[
+                               ['server', 'peer'],
+                               ['source_addr', 'source_int']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     server = module.params['server'] or None
     peer = module.params['peer'] or None
@@ -425,6 +398,5 @@ def main():
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

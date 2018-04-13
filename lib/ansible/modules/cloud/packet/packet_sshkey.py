@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2016 Tomas Karasek <tom.to.the.k@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -29,7 +19,7 @@ description:
      - Create/delete an SSH key in Packet host.
      - API is documented at U(https://www.packet.net/help/api/#page:ssh-keys,header:ssh-keys-ssh-keys-post).
 version_added: "2.3"
-author: "Tomas Karasek <tom.to.the.k@gmail.com>"
+author: "Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>"
 options:
   state:
     description:
@@ -112,8 +102,6 @@ import uuid
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
-
-
 try:
     import packet
 except ImportError:
@@ -125,7 +113,7 @@ PACKET_API_TOKEN_ENV_VAR = "PACKET_API_TOKEN"
 
 def serialize_sshkey(sshkey):
     sshkey_data = {}
-    copy_keys = ['id', 'key', 'label','fingerprint']
+    copy_keys = ['id', 'key', 'label', 'fingerprint']
     for name in copy_keys:
         sshkey_data[name] = getattr(sshkey, name)
     return sshkey_data
@@ -144,7 +132,7 @@ def load_key_string(key_str):
     key_str = key_str.strip()
     ret_dict['key'] = key_str
     cut_key = key_str.split()
-    if len(cut_key) in [2,3]:
+    if len(cut_key) in [2, 3]:
         if len(cut_key) == 3:
             ret_dict['label'] = cut_key[2]
     else:
@@ -177,7 +165,7 @@ def get_sshkey_selector(module):
             return k.key == select_dict['key']
         else:
             # if key string not specified, all the fields must match
-            return all([select_dict[f] == getattr(k,f) for f in select_dict])
+            return all([select_dict[f] == getattr(k, f) for f in select_dict])
     return selector
 
 
@@ -200,10 +188,10 @@ def act_on_sshkeys(target_state, module, packet_conn):
                 newkey['label'] = module.params.get('label')
             for param in ('label', 'key'):
                 if param not in newkey:
-                    _msg=("If you want to ensure a key is present, you must "
-                          "supply both a label and a key string, either in "
-                          "module params, or in a key file. %s is missing"
-                          % param)
+                    _msg = ("If you want to ensure a key is present, you must "
+                            "supply both a label and a key string, either in "
+                            "module params, or in a key file. %s is missing"
+                            % param)
                     raise Exception(_msg)
             matching_sshkeys = []
             new_key_response = packet_conn.create_ssh_key(
@@ -220,7 +208,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
             except Exception as e:
                 _msg = ("while trying to remove sshkey %s, id %s %s, "
                         "got error: %s" %
-                       (k.label, k.id, target_state, e))
+                        (k.label, k.id, target_state, e))
                 raise Exception(_msg)
 
     return {
@@ -232,7 +220,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state = dict(choices=['present', 'absent'], default='present'),
+            state=dict(choices=['present', 'absent'], default='present'),
             auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR),
                             no_log=True),
             label=dict(type='str', aliases=['name'], default=None),
@@ -248,16 +236,16 @@ def main():
             ('key', 'fingerprint'),
             ('key', 'id'),
             ('key_file', 'key'),
-            ]
+        ]
     )
 
     if not HAS_PACKET_SDK:
         module.fail_json(msg='packet required for this module')
 
     if not module.params.get('auth_token'):
-        _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" %
-                       PACKET_API_TOKEN_ENV_VAR)
+        _fail_msg = ("if Packet API token is not in environment variable %s, "
+                     "the auth_token parameter is required" %
+                     PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 
     auth_token = module.params.get('auth_token')
@@ -266,7 +254,7 @@ def main():
 
     state = module.params.get('state')
 
-    if state in ['present','absent']:
+    if state in ['present', 'absent']:
         try:
             module.exit_json(**act_on_sshkeys(state, module, packet_conn))
         except Exception as e:

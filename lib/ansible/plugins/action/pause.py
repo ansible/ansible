@@ -47,7 +47,7 @@ def timeout_handler(signum, frame):
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
-    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', '']
+    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', 'echo', '']
     BYPASS_HOST_LOOP = True
 
     def run(self, tmp=None, task_vars=None):
@@ -56,10 +56,13 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         duration_unit = 'minutes'
         prompt = None
         seconds = None
+        echo = True
+        echo_prompt = ''
         result.update(dict(
             changed=False,
             rc=0,
@@ -68,14 +71,35 @@ class ActionModule(ActionBase):
             start=None,
             stop=None,
             delta=None,
+            echo=echo
         ))
 
-        # Is 'args' empty, then this is the default prompted pause
-        if self._task.args is None or len(self._task.args.keys()) == 0:
-            prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
+        if not set(self._task.args.keys()) <= set(self.PAUSE_TYPES):
+            result['failed'] = True
+            result['msg'] = "Invalid argument given. Must be one of: %s" % ", ".join(self.PAUSE_TYPES)
+            return result
+
+        # Should keystrokes be echoed to stdout?
+        if 'echo' in self._task.args:
+            echo = self._task.args['echo']
+            if not type(echo) == bool:
+                result['failed'] = True
+                result['msg'] = "'%s' is not a valid setting for 'echo'." % self._task.args['echo']
+                return result
+
+            # Add a note saying the output is hidden if echo is disabled
+            if not echo:
+                echo_prompt = ' (output is hidden)'
+
+        # Is 'prompt' a key in 'args'?
+        if 'prompt' in self._task.args:
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
+        else:
+            # If no custom prompt is specified, set a default prompt
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
-        elif 'minutes' in self._task.args or 'seconds' in self._task.args:
+        if 'minutes' in self._task.args or 'seconds' in self._task.args:
             try:
                 if 'minutes' in self._task.args:
                     # The time() command operates in seconds so we need to
@@ -90,16 +114,6 @@ class ActionModule(ActionBase):
                 result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
                 return result
 
-        # Is 'prompt' a key in 'args'?
-        elif 'prompt' in self._task.args:
-            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
-
-        else:
-            # I have no idea what you're trying to do. But it's so wrong.
-            result['failed'] = True
-            result['msg'] = "invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES)
-            return result
-
         ########################################################################
         # Begin the hard work!
 
@@ -113,32 +127,56 @@ class ActionModule(ActionBase):
             if seconds is not None:
                 if seconds < 1:
                     seconds = 1
+
                 # setup the alarm handler
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(seconds)
-                # show the prompt
-                display.display("Pausing for %d seconds" % seconds)
+
+                # show the timer and control prompts
+                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
                 display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+
+                # show the prompt specified in the task
+                if 'prompt' in self._task.args:
+                    display.display(prompt)
+
             else:
                 display.display(prompt)
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
-            if PY3:
-                stdin = self._connection._new_stdin.buffer
-            else:
-                stdin = self._connection._new_stdin
             fd = None
             try:
+                if PY3:
+                    stdin = self._connection._new_stdin.buffer
+                else:
+                    stdin = self._connection._new_stdin
                 fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
-                pass
+                stdin = None
             if fd is not None:
                 if isatty(fd):
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
+
+                    # Enable a few things turned off by tty.setraw()
+                    # ICANON -> Allows characters to be deleted and hides things like ^M.
+                    # ICRNL -> Makes the return key work when ICANON is enabled, otherwise
+                    #          you get stuck at the prompt with no way to get out of it.
+                    # See man termios for details on these flags
+                    if not seconds:
+                        new_settings = termios.tcgetattr(fd)
+                        new_settings[0] = new_settings[0] | termios.ICRNL
+                        new_settings[3] = new_settings[3] | termios.ICANON
+                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+
+                        if echo:
+                            # Enable ECHO since tty.setraw() disables it
+                            new_settings = termios.tcgetattr(fd)
+                            new_settings[3] = new_settings[3] | termios.ECHO
+                            termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
@@ -147,8 +185,10 @@ class ActionModule(ActionBase):
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-                        if key_pressed == b'\x03':
-                            raise KeyboardInterrupt
+
+                        if seconds:
+                            if key_pressed == b'\x03':
+                                raise KeyboardInterrupt
 
                     if not seconds:
                         if fd is None or not isatty(fd):

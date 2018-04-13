@@ -6,15 +6,31 @@
       apk:
         - openssl
         - py-pip
+        - ca-certificates
+        - openssl-dev
+        - python2-dev
+        - libffi-dev
+        - gcc
+        - libstdc\+\+
+        - make
+        - musl-dev
       apt:
         - openssl
         - python-pip
+        - python-dev
+        - libffi-dev
       yum:
         - openssl
         - python-pip
+        - python-devel
+        - gcc
+        - libffi-devel
       dnf:
         - openssl
         - python-pip
+        - python-devel
+        - gcc
+        - libffi-devel
   tasks:
     - name: Check for nginx
       stat:
@@ -29,9 +45,15 @@
 
     - name: Install OS Packages
       package:
-        name: "{{ item }}"
+        name: "{{ os_packages[ansible_pkg_mgr] }}"
         update_cache: "{{ (ansible_pkg_mgr == 'dnf')|ternary(omit, 'yes') }}"
-      with_items: "{{ os_packages[ansible_pkg_mgr] }}"
+
+    - name: Symlink libstdc++
+      file:
+        state: link
+        src: /usr/lib/libstdc++.so.6
+        dest: /usr/lib/libstdc++.so
+      when: ansible_pkg_mgr == 'apk'
 
     - name: Create cert directories
       file:
@@ -82,7 +104,7 @@
 
     - name: Generate ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/ansible.http.tests-cert.pem -infiles /root/ca/ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/ansible.http.tests-cert.pem -infiles /root/ca/ansible.http.tests-req.pem
 
     - name: Generate sni1.ansible.http.tests key
       command: >
@@ -91,7 +113,7 @@
 
     - name: Generate sni1.ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni1.ansible.http.tests-cert.pem -infiles /root/ca/sni1.ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/sni1.ansible.http.tests-cert.pem -infiles /root/ca/sni1.ansible.http.tests-req.pem
 
     - name: Generate sni2.ansible.http.tests key
       command: >
@@ -100,7 +122,7 @@
 
     - name: Generate sni2.ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem
 
     - name: Generate client key
       command: >
@@ -109,7 +131,7 @@
 
     - name: Generate client.ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/client.ansible.http.tests-cert.pem -infiles /root/ca/client.ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/client.ansible.http.tests-cert.pem -infiles /root/ca/client.ansible.http.tests-req.pem
 
     - name: Copy cacert.pem into nginx doc root for easy retrieval
       copy:
@@ -129,14 +151,16 @@
 
     - name: Install gunicorn and httpbin
       pip:
-        name: "{{ item }}"
+        name: "{{ item.name }}"
+        version: "{{ item.version|default(omit) }}"
       with_items:
-        - gunicorn
-        - httpbin
+        - name: gunicorn
+        - name: httpbin
+          version: '0.6.2'
 
     - name: Copy services.sh script
       copy:
-        src: services.sh
+        src: "{{ playbook_dir }}/services.sh"
         dest: /services.sh
         mode: 0755
 

@@ -1,0 +1,19 @@
+System Type            : S6000
+System Mode            : 1.0
+Software Version       : 9.12(0.0)
+
+Unit Type               Serial Number  Part Number  Rev  Piece Part ID            Rev  Svc Tag  Exprs Svc Code
+--------------------------------------------------------------------------------------------------------------
+* 0  S6000-01-FE-32T    NA             08YWFG       A00  CN-08YWFG-28298-3AG-0031 A00  6BJ8VS1  137 581 490 89
+  0  S6000-PWR-AC       NA             0T9FNW       A00  CN-0T9FNW-28298-3AG-0119 A00  NA       NA
+  0  S6000-FAN          NA             0MGDH8       A00  CN-0MGDH8-28298-3AG-0094 A00  NA       NA
+  0  S6000-FAN          NA             0MGDH8       A00  CN-0MGDH8-28298-3AG-0096 A00  NA       NA
+  0  S6000-FAN          NA             0MGDH8       A00  CN-0MGDH8-28298-3AG-0095 A00  NA       NA
+
+ * - Management Unit
+
+
+Software Protocol Configured
+--------------------------------------------------------------
+  LLDP
+

@@ -1,23 +1,38 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2013, Steven Dossett <sdossett@panath.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: inventory_hostnames
+    author:
+      - Michael DeHaan <michael.dehaan@gmail.com>
+      - Steven Dossett <sdossett@panath.com>
+    version_added: "1.3"
+    short_description: list of inventory hosts matching a host pattern
+    description:
+      - "This lookup understands 'host patterns' as used bye the `hosts:` keyword in plays
+        and can return a list of matching hosts from inventory"
+    notes:
+      - this is only worth for 'hostname patterns' it is easier to loop over the group/group_names variables otherwise.
+"""
+
+EXAMPLES = """
+- name: show all the hosts matching the pattern, ie all but the group www
+  debug:
+    msg: "{{ item }}"
+  with_inventory_hostnames:
+    - all:!www
+"""
+
+RETURN = """
+ _hostnames:
+    description: list of hostnames that matched the host pattern in inventory
+    type: list
+"""
 
 from ansible.inventory.manager import split_host_pattern, order_patterns
 from ansible.plugins.lookup import LookupBase

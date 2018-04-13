@@ -1,9 +1,11 @@
 ---
+- debug:
+    msg: "cli/basic-post-login.yaml on connection={{ ansible_connection }}"
+
 - name: setup - remove post-login
   vyos_banner:
     banner: post-login
     state: absent
-    provider: "{{ cli }}"
 
 - name: Set post-login
   vyos_banner:
@@ -13,7 +15,6 @@
       that has a multiline
       string
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -33,7 +34,6 @@
       that has a multiline
       string
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:

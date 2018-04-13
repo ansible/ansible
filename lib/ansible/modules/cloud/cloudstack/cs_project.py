@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -40,36 +40,27 @@ options:
     description:
       - Display text of the project.
       - If not specified, C(name) will be used as C(display_text).
-    required: false
-    default: null
   state:
     description:
       - State of the project.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'active', 'suspended' ]
   domain:
     description:
       - Domain the project is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the project is related to.
-    required: false
-    default: null
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     version_added: "2.2"
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

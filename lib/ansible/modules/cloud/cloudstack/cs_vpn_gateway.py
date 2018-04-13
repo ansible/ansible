@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -39,35 +39,26 @@ options:
   state:
     description:
       - State of the VPN gateway.
-    required: false
     default: "present"
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the VPN gateway is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the VPN gateway is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the VPN gateway is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

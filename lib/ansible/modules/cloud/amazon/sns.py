@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -39,7 +29,6 @@ options:
   subject:
     description:
       - Subject line for email delivery.
-    required: false
   topic:
     description:
       - The topic you want to publish to.
@@ -47,46 +36,34 @@ options:
   email:
     description:
       - Message to send to email-only subscription
-    required: false
   sqs:
     description:
       - Message to send to SQS-only subscription
-    required: false
   sms:
     description:
       - Message to send to SMS-only subscription
-    required: false
   http:
     description:
       - Message to send to HTTP-only subscription
-    required: false
   https:
     description:
       - Message to send to HTTPS-only subscription
-    required: false
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: None
     aliases: ['ec2_secret_key', 'secret_key']
   aws_access_key:
     description:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
     aliases: ['ec2_access_key', 'access_key']
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
     aliases: ['aws_region', 'ec2_region']
   message_attributes:
     description:
       - Dictionary of message attributes. These are optional structured data entries to be sent along to the endpoint.
       - This is in AWS's distinct Name/Type/Value format; see example below.
-    required: false
-    default: None
   message_structure:
     description:
       - The payload format to use for the message.
@@ -94,7 +71,9 @@ options:
     required: true
     default: json
     choices: ['json', 'string']
-
+extends_documentation_fragment:
+ - ec2
+ - aws
 requirements:
     - "boto"
 """
@@ -129,14 +108,8 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
-from ansible.module_utils.pycompat24 import get_exception
+import json
+import traceback
 
 try:
     import boto
@@ -145,6 +118,10 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def arn_topic_lookup(connection, short_topic):
@@ -196,9 +173,8 @@ def main():
         module.fail_json(msg="region must be specified")
     try:
         connection = connect_to_aws(boto.sns, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     if not message_structure == 'string' and message_attributes:
         module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
@@ -237,11 +213,11 @@ def main():
         connection.publish(topic=arn_topic, subject=subject,
                            message_structure=message_structure, message=json_msg,
                            message_attributes=message_attributes)
-    except boto.exception.BotoServerError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(msg="OK")
+
 
 if __name__ == '__main__':
     main()

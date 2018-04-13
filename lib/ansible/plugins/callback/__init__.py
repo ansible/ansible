@@ -26,9 +26,10 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -45,7 +46,7 @@ except ImportError:
 __all__ = ["CallbackBase"]
 
 
-class CallbackBase:
+class CallbackBase(AnsiblePlugin):
 
     '''
     This is a base ansible callback class that does nothing. New callbacks should
@@ -53,7 +54,7 @@ class CallbackBase:
     custom actions.
     '''
 
-    def __init__(self, display=None):
+    def __init__(self, display=None, options=None):
         if display:
             self._display = display
         else:
@@ -68,14 +69,40 @@ class CallbackBase:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
+            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
+
+        self.disabled = False
+
+        self._plugin_options = {}
+        if options is not None:
+            self.set_options(options)
+
+        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation')
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
+    def set_option(self, k, v):
+        self._plugin_options[k] = v
+
+    def get_option(self, k):
+        return self._plugin_options[k]
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        ''' This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
+            Also _options was already taken for CLI args and callbacks use _plugin_options instead.
+        '''
+
+        # load from config
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
+
+        # or parse specific options
+        if direct:
+            for k in direct:
+                if k in self._plugin_options:
+                    self.set_option(k, direct[k])
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
-        if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
@@ -99,7 +126,7 @@ class CallbackBase:
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
-        if C.COMMAND_WARNINGS:
+        if C.ACTION_WARNINGS:
             if 'warnings' in res and res['warnings']:
                 for warning in res['warnings']:
                     self._display.warning(warning)
@@ -208,10 +235,12 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
+        ''' removes data from results for display '''
         if task_name in ['debug']:
-            for remove_key in ('changed', 'invocation', 'failed', 'skipped'):
-                if remove_key in result:
-                    del result[remove_key]
+            for hideme in self._hide_in_debug:
+                result.pop(hideme, None)
+                if 'msg' in result:
+                    result.pop('item', None)
 
     def set_play_context(self, play_context):
         pass
@@ -300,9 +329,7 @@ class CallbackBase:
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
 
-    def v2_runner_on_no_hosts(self, task):
-        self.runner_on_no_hosts()
-
+    # FIXME: not called
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
@@ -310,24 +337,22 @@ class CallbackBase:
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
+    # FIXME: not called
     def v2_runner_on_async_ok(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_ok(host, result._result, jid)
 
+    # FIXME: not called
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_failed(host, result._result, jid)
 
-    def v2_runner_on_file_diff(self, result, diff):
-        pass  # no v1 correspondence
-
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
 
-    def v2_playbook_on_notify(self, result, handler):
-        host = result._host.get_name()
+    def v2_playbook_on_notify(self, handler, host):
         self.playbook_on_notify(host, handler)
 
     def v2_playbook_on_no_hosts_matched(self):
@@ -339,6 +364,7 @@ class CallbackBase:
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
 
+    # FIXME: not called
     def v2_playbook_on_cleanup_task_start(self, task):
         pass  # no v1 correspondence
 
@@ -348,13 +374,12 @@ class CallbackBase:
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
-    def v2_playbook_on_setup(self):
-        self.playbook_on_setup()
-
+    # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):
         host = result._host.get_name()
         self.playbook_on_import_for_host(host, imported_file)
 
+    # FIXME: not called
     def v2_playbook_on_not_import_for_host(self, result, missing_file):
         host = result._host.get_name()
         self.playbook_on_not_import_for_host(host, missing_file)

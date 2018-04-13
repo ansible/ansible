@@ -28,9 +28,10 @@
 
 import os
 import re
-from time import sleep
 
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
+from ansible.module_utils.six import string_types, binary_type, text_type
 
 try:
     import boto
@@ -47,12 +48,12 @@ except:
     HAS_BOTO3 = False
 
 try:
-    from distutils.version import LooseVersion
-    HAS_LOOSE_VERSION = True
-except:
-    HAS_LOOSE_VERSION = False
-
-from ansible.module_utils.six import string_types, binary_type, text_type
+    # Although this is to allow Python 3 the ability to use the custom comparison as a key, Python 2.7 also
+    # uses this (and it works as expected). Python 2.6 will trigger the ImportError.
+    from functools import cmp_to_key
+    PY3_COMPARISON = True
+except ImportError:
+    PY3_COMPARISON = False
 
 
 class AnsibleAWSError(Exception):
@@ -77,7 +78,7 @@ class AWSRetry(CloudRetry):
         return error.response['Error']['Code']
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, catch_extra_error_codes=None):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         #
@@ -90,22 +91,26 @@ class AWSRetry(CloudRetry):
         # https://github.com/boto/boto3/issues/876 (and linked PRs etc)
         retry_on = [
             'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-            'InternalFailure', 'InternalError', 'TooManyRequestsException'
+            'InternalFailure', 'InternalError', 'TooManyRequestsException',
+            'Throttling'
         ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
 
         not_found = re.compile(r'^\w+.NotFound')
-        if response_code in retry_on or not_found.search(response_code):
-            return True
-        else:
-            return False
+        return response_code in retry_on or not_found.search(response_code)
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
-    except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
-                             'parameter in the boto3_conn function call')
+    except ValueError as e:
+        module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
+        module.fail_json(msg=to_native(e))
+    except botocore.exceptions.NoRegionError as e:
+        module.fail_json(msg="The %s module requires a region and none was found in configuration, "
+                         "environment variables or module parameters" % module._name)
 
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -128,7 +133,25 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
+
 boto3_inventory_conn = _boto3_conn
+
+
+def boto_exception(err):
+    """
+    Extracts the error message from a boto exception.
+
+    :param err: Exception from boto
+    :return: Error message
+    """
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
+    else:
+        error = '%s: %s' % (Exception, err)
+
+    return error
 
 
 def aws_common_argument_spec():
@@ -178,9 +201,9 @@ def get_aws_connection_info(module, boto3=False):
             access_key = os.environ['AWS_ACCESS_KEY']
         elif os.environ.get('EC2_ACCESS_KEY'):
             access_key = os.environ['EC2_ACCESS_KEY']
-        elif boto.config.get('Credentials', 'aws_access_key_id'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_access_key_id'):
             access_key = boto.config.get('Credentials', 'aws_access_key_id')
-        elif boto.config.get('default', 'aws_access_key_id'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_access_key_id'):
             access_key = boto.config.get('default', 'aws_access_key_id')
         else:
             # in case access_key came in as empty string
@@ -193,9 +216,9 @@ def get_aws_connection_info(module, boto3=False):
             secret_key = os.environ['AWS_SECRET_KEY']
         elif os.environ.get('EC2_SECRET_KEY'):
             secret_key = os.environ['EC2_SECRET_KEY']
-        elif boto.config.get('Credentials', 'aws_secret_access_key'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_secret_access_key'):
             secret_key = boto.config.get('Credentials', 'aws_secret_access_key')
-        elif boto.config.get('default', 'aws_secret_access_key'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_secret_access_key'):
             secret_key = boto.config.get('default', 'aws_secret_access_key')
         else:
             # in case secret_key came in as empty string
@@ -210,13 +233,19 @@ def get_aws_connection_info(module, boto3=False):
             region = os.environ['EC2_REGION']
         else:
             if not boto3:
-                # boto.config.get returns None if config not found
-                region = boto.config.get('Boto', 'aws_region')
-                if not region:
-                    region = boto.config.get('Boto', 'ec2_region')
+                if HAS_BOTO:
+                    # boto.config.get returns None if config not found
+                    region = boto.config.get('Boto', 'aws_region')
+                    if not region:
+                        region = boto.config.get('Boto', 'ec2_region')
+                else:
+                    module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.get_session().get_config_variable('region')
+                try:
+                    region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                except botocore.exceptions.ProfileNotFound as e:
+                    pass
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
@@ -227,9 +256,9 @@ def get_aws_connection_info(module, boto3=False):
             security_token = os.environ['AWS_SESSION_TOKEN']
         elif os.environ.get('EC2_SECURITY_TOKEN'):
             security_token = os.environ['EC2_SECURITY_TOKEN']
-        elif boto.config.get('Credentials', 'aws_security_token'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_security_token'):
             security_token = boto.config.get('Credentials', 'aws_security_token')
-        elif boto.config.get('default', 'aws_security_token'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_security_token'):
             security_token = boto.config.get('default', 'aws_security_token')
         else:
             # in case secret_token came in as empty string
@@ -317,51 +346,53 @@ def ec2_connect(module):
     return ec2
 
 
-def paging(pause=0, marker_property='marker'):
-    """ Adds paging to boto retrieval functions that support a 'marker'
-        this is configurable as not all boto functions seem to use the
-        same name.
+def _camel_to_snake(name, reversible=False):
+
+    def prepend_underscore_and_lower(m):
+        return '_' + m.group(0).lower()
+
+    import re
+    if reversible:
+        upper_pattern = r'[A-Z]'
+    else:
+        # Cope with pluralized abbreviations such as TargetGroupARNs
+        # that would otherwise be rendered target_group_ar_ns
+        upper_pattern = r'[A-Z]{3,}s$'
+
+    s1 = re.sub(upper_pattern, prepend_underscore_and_lower, name)
+    # Handle when there was nothing before the plural_pattern
+    if s1.startswith("_") and not name.startswith("_"):
+        s1 = s1[1:]
+    if reversible:
+        return s1
+
+    # Remainder of solution seems to be https://stackoverflow.com/a/1176023
+    first_cap_pattern = r'(.)([A-Z][a-z]+)'
+    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
+    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
+    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
+
+
+def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     """
-    def wrapper(f):
-        def page(*args, **kwargs):
-            results = []
-            marker = None
-            while True:
-                try:
-                    new = f(*args, marker=marker, **kwargs)
-                    marker = getattr(new, marker_property)
-                    results.extend(new)
-                    if not marker:
-                        break
-                    elif pause:
-                        sleep(pause)
-                except TypeError:
-                    # Older version of boto do not allow for marker param, just run normally
-                    results = f(*args, **kwargs)
-                    break
-            return results
-        return page
-    return wrapper
+    reversible allows two way conversion of a camelized dict
+    such that snake_dict_to_camel_dict(camel_dict_to_snake_dict(x)) == x
 
+    This is achieved through mapping e.g. HTTPEndpoint to h_t_t_p_endpoint
+    where the default would be simply http_endpoint, which gets turned into
+    HttpEndpoint if recamelized.
 
-def camel_dict_to_snake_dict(camel_dict):
-
-    def camel_to_snake(name):
-
-        import re
-
-        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-        all_cap_re = re.compile('([a-z0-9])([A-Z])')
-        s1 = first_cap_re.sub(r'\1_\2', name)
-
-        return all_cap_re.sub(r'\1_\2', s1).lower()
+    ignore_list is used to avoid converting a sub-tree of a dict. This is
+    particularly important for tags, where keys are case-sensitive. We convert
+    the 'Tags' key but nothing below.
+    """
 
     def value_is_list(camel_list):
 
         checked_list = []
         for item in camel_list:
             if isinstance(item, dict):
-                checked_list.append(camel_dict_to_snake_dict(item))
+                checked_list.append(camel_dict_to_snake_dict(item, reversible))
             elif isinstance(item, list):
                 checked_list.append(value_is_list(item))
             else:
@@ -371,36 +402,45 @@ def camel_dict_to_snake_dict(camel_dict):
 
     snake_dict = {}
     for k, v in camel_dict.items():
-        if isinstance(v, dict):
-            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
-        elif isinstance(v, list):
-            snake_dict[camel_to_snake(k)] = value_is_list(v)
+        if isinstance(v, dict) and k not in ignore_list:
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
+        elif isinstance(v, list) and k not in ignore_list:
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
-            snake_dict[camel_to_snake(k)] = v
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = v
 
     return snake_dict
 
 
-def snake_dict_to_camel_dict(snake_dict):
+def _snake_to_camel(snake, capitalize_first=False):
+    if capitalize_first:
+        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
+    else:
+        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
-    def camelize(complex_type):
+
+def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
+    """
+    Perhaps unexpectedly, snake_dict_to_camel_dict returns dromedaryCase
+    rather than true CamelCase. Passing capitalize_first=True returns
+    CamelCase. The default remains False as that was the original implementation
+    """
+
+    def camelize(complex_type, capitalize_first=False):
         if complex_type is None:
             return
         new_type = type(complex_type)()
         if isinstance(complex_type, dict):
             for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
+                new_type[_snake_to_camel(key, capitalize_first)] = camelize(complex_type[key], capitalize_first)
         elif isinstance(complex_type, list):
             for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
+                new_type.append(camelize(complex_type[i], capitalize_first))
         else:
             return complex_type
         return new_type
 
-    def camel(words):
-        return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
-
-    return camelize(snake_dict)
+    return camelize(snake_dict, capitalize_first)
 
 
 def ansible_dict_to_boto3_filter_list(filters_dict):
@@ -409,7 +449,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
@@ -439,7 +479,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     return filters_list
 
 
-def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value_key_name='Value'):
+def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name=None, tag_value_key_name=None):
 
     """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
     Args:
@@ -462,12 +502,17 @@ def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value
         }
     """
 
-    tags_dict = {}
-    for tag in tags_list:
-        if tag_name_key_name in tag:
-            tags_dict[tag[tag_name_key_name]] = tag[tag_value_key_name]
+    if tag_name_key_name and tag_value_key_name:
+        tag_candidates = {tag_name_key_name: tag_value_key_name}
+    else:
+        tag_candidates = {'key': 'value', 'Key': 'Value'}
 
-    return tags_dict
+    if not tags_list:
+        return {}
+    for k, v in tag_candidates.items():
+        if k in tags_list[0] and v in tags_list[0]:
+            return dict((tag[k], tag[v]) for tag in tags_list)
+    raise ValueError("Couldn't find tag key (candidates %s) in tag list %s" % (str(tag_candidates), str(tags_list)))
 
 
 def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value_key_name='Value'):
@@ -495,7 +540,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
 
     tags_list = []
     for k, v in tags_dict.items():
-        tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
+        tags_list.append({tag_name_key_name: k, tag_value_key_name: to_native(v)})
 
     return tags_list
 
@@ -562,6 +607,82 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
     sec_group_id_list += [str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list]
 
     return sec_group_id_list
+
+
+def _hashable_policy(policy, policy_list):
+    """
+        Takes a policy and returns a list, the contents of which are all hashable and sorted.
+        Example input policy:
+        {'Version': '2012-10-17',
+         'Statement': [{'Action': 's3:PutObjectAcl',
+                        'Sid': 'AddCannedAcl2',
+                        'Resource': 'arn:aws:s3:::test_policy/*',
+                        'Effect': 'Allow',
+                        'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
+                       }]}
+        Returned value:
+        [('Statement',  ((('Action', (u's3:PutObjectAcl',)),
+                          ('Effect', (u'Allow',)),
+                          ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
+                          ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',)))),
+         ('Version', (u'2012-10-17',)))]
+
+    """
+    if isinstance(policy, list):
+        for each in policy:
+            tupleified = _hashable_policy(each, [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append(tupleified)
+    elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        return [(to_text(policy))]
+    elif isinstance(policy, dict):
+        sorted_keys = list(policy.keys())
+        sorted_keys.sort()
+        for key in sorted_keys:
+            tupleified = _hashable_policy(policy[key], [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append((key, tupleified))
+
+    # ensure we aren't returning deeply nested structures of length 1
+    if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
+        policy_list = policy_list[0]
+    if isinstance(policy_list, list):
+        if PY3_COMPARISON:
+            policy_list.sort(key=cmp_to_key(py3cmp))
+        else:
+            policy_list.sort()
+    return policy_list
+
+
+def py3cmp(a, b):
+    """ Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3."""
+    try:
+        if a > b:
+            return 1
+        elif a < b:
+            return -1
+        else:
+            return 0
+    except TypeError as e:
+        # check to see if they're tuple-string
+        # always say strings are less than tuples (to maintain compatibility with python2)
+        str_ind = to_text(e).find('str')
+        tup_ind = to_text(e).find('tuple')
+        if -1 not in (str_ind, tup_ind):
+            if str_ind < tup_ind:
+                return -1
+            elif tup_ind < str_ind:
+                return 1
+        raise
+
+
+def compare_policies(current_policy, new_policy):
+    """ Compares the existing policy and the updated policy
+        Returns True if there is a difference between policies.
+    """
+    return set(_hashable_policy(new_policy, [])) != set(_hashable_policy(current_policy, []))
 
 
 def sort_json_policy_dict(policy_dict):
@@ -655,8 +776,8 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
-hese may not be able to be used out of the box.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ
+    these may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:

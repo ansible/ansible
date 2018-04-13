@@ -3,24 +3,13 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -32,11 +21,13 @@ short_description: Try to connect to host, verify a usable python and return C(p
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
-     C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
-   - This is NOT ICMP ping, this is just a trivial test module.
-   - For Windows targets, use the M(ping) module instead.
+     C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
+   - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
+   - For Windows targets, use the M(win_ping) module instead.
+   - For Network targets, use the M(net_ping) module instead.
 notes:
-   - For Windows targets, use the M(ping) module instead.
+   - For Windows targets, use the M(win_ping) module instead.
+   - For Network targets, use the M(net_ping) module instead.
 options:
   data:
     description:

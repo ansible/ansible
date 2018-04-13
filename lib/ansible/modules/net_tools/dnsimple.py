@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,73 +24,52 @@ options:
       - >
         Account email. If omitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for.
         If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)
-    required: false
-    default: null
 
   account_api_token:
     description:
       - Account API token. See I(account_email) for info.
-    required: false
-    default: null
 
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple. If omitted, a list of domains
         will be returned.
       - If domain is present but the domain doesn't exist, it will be created.
-    required: false
-    default: null
 
   record:
     description:
       - Record to add, if blank a record for the domain will be created, supports the wildcard (*)
-    required: false
-    default: null
 
   record_ids:
     description:
       - List of records to ensure they either exist or don't exist
-    required: false
-    default: null
 
   type:
     description:
       - The type of DNS record to create
-    required: false
     choices: [ 'A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL' ]
-    default: null
 
   ttl:
     description:
       - The TTL to give the new record
-    required: false
     default: 3600 (one hour)
 
   value:
     description:
       - Record value
       - "Must be specified when trying to ensure a record exists"
-    required: false
-    default: null
 
   priority:
     description:
       - Record priority
-    required: false
-    default: null
 
   state:
     description:
       - whether the record should exist or not
-    required: false
     choices: [ 'present', 'absent' ]
-    default: null
 
   solo:
     description:
       - Whether the record should be the only one for that record type and record name. Only use with state=present on a record
-    required: false
-    default: null
 
 requirements: [ dnsimple ]
 author: "Alex Coomans (@drcapulet)"
@@ -169,12 +140,16 @@ EXAMPLES = '''
 '''
 
 import os
+
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import DNSimpleException
     HAS_DNSIMPLE = True
 except ImportError:
     HAS_DNSIMPLE = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -192,26 +167,26 @@ def main():
             state=dict(required=False, choices=['present', 'absent']),
             solo=dict(required=False, type='bool'),
         ),
-        required_together = (
+        required_together=(
             ['record', 'value']
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     if not HAS_DNSIMPLE:
         module.fail_json(msg="dnsimple required for this module")
 
-    account_email     = module.params.get('account_email')
+    account_email = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
-    domain            = module.params.get('domain')
-    record            = module.params.get('record')
-    record_ids        = module.params.get('record_ids')
-    record_type       = module.params.get('type')
-    ttl               = module.params.get('ttl')
-    value             = module.params.get('value')
-    priority          = module.params.get('priority')
-    state             = module.params.get('state')
-    is_solo           = module.params.get('solo')
+    domain = module.params.get('domain')
+    record = module.params.get('record')
+    record_ids = module.params.get('record_ids')
+    record_type = module.params.get('type')
+    ttl = module.params.get('ttl')
+    value = module.params.get('value')
+    priority = module.params.get('priority')
+    state = module.params.get('state')
+    is_solo = module.params.get('solo')
 
     if account_email and account_api_token:
         client = DNSimple(email=account_email, api_token=account_api_token)
@@ -282,7 +257,7 @@ def main():
                     if rr['ttl'] != ttl or rr['prio'] != priority:
                         data = {}
                         if ttl:
-                            data['ttl']  = ttl
+                            data['ttl'] = ttl
                         if priority:
                             data['prio'] = priority
                         if module.check_mode:
@@ -294,12 +269,12 @@ def main():
                 else:
                     # create it
                     data = {
-                        'name':        record,
+                        'name': record,
                         'record_type': record_type,
-                        'content':     value,
+                        'content': value,
                     }
                     if ttl:
-                        data['ttl']  = ttl
+                        data['ttl'] = ttl
                     if priority:
                         data['prio'] = priority
                     if module.check_mode:
@@ -319,7 +294,7 @@ def main():
         # Make sure these record_ids either all exist or none
         if domain and record_ids:
             current_records = [str(r['record']['id']) for r in client.records(str(domain))]
-            wanted_records  = [str(r) for r in record_ids]
+            wanted_records = [str(r) for r in record_ids]
             if state == 'present':
                 difference = list(set(wanted_records) - set(current_records))
                 if difference:
@@ -338,15 +313,11 @@ def main():
             else:
                 module.fail_json(msg="'%s' is an unknown value for the state argument" % state)
 
-    except DNSimpleException:
-        e = get_exception()
+    except DNSimpleException as e:
         module.fail_json(msg="Unable to contact DNSimple: %s" % e.message)
 
     module.fail_json(msg="Unknown what you wanted me to do")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

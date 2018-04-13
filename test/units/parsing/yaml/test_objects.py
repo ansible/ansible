@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 
+from ansible.errors import AnsibleError
 
 from ansible.parsing import vault
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -29,6 +30,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml import objects
 
 from units.mock.yaml_helper import YamlTestUtils
+from units.mock.vault_helper import TextVaultSecret
 
 
 class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
@@ -68,16 +70,22 @@ class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
 
 class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def setUp(self):
-        self.vault_password = "hunter42"
-        self.good_vault = vault.VaultLib(self.vault_password)
+        self.good_vault_password = "hunter42"
+        good_vault_secret = TextVaultSecret(self.good_vault_password)
+        self.good_vault_secrets = [('good_vault_password', good_vault_secret)]
+        self.good_vault = vault.VaultLib(self.good_vault_secrets)
 
+        # TODO: make this use two vault secret identities instead of two vaultSecrets
         self.wrong_vault_password = 'not-hunter42'
-        self.wrong_vault = vault.VaultLib(self.wrong_vault_password)
+        wrong_vault_secret = TextVaultSecret(self.wrong_vault_password)
+        self.wrong_vault_secrets = [('wrong_vault_password', wrong_vault_secret)]
+        self.wrong_vault = vault.VaultLib(self.wrong_vault_secrets)
 
         self.vault = self.good_vault
+        self.vault_secrets = self.good_vault_secrets
 
     def _loader(self, stream):
-        return AnsibleLoader(stream, vault_password=self.vault_password)
+        return AnsibleLoader(stream, vault_secrets=self.vault_secrets)
 
     def test_dump_load_cycle(self):
         aveu = self._from_plaintext('the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle')
@@ -86,12 +94,13 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def assert_values(self, avu, seq):
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
 
-        self.assertEquals(avu, seq)
+        self.assertEqual(avu, seq)
         self.assertTrue(avu.vault is self.vault)
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
     def _from_plaintext(self, seq):
-        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault)
+        id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
+        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
 
     def _from_ciphertext(self, ciphertext):
         avu = objects.AnsibleVaultEncryptedUnicode(ciphertext)
@@ -126,7 +135,7 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         avu = self._from_plaintext(seq)
         b_avu = avu.encode('utf-8', 'strict')
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
-        self.assertEquals(b_avu, seq.encode('utf-8', 'strict'))
+        self.assertEqual(b_avu, seq.encode('utf-8', 'strict'))
         self.assertTrue(avu.vault is self.vault)
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
@@ -135,4 +144,8 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         seq = ''
         self.vault = self.wrong_vault
         avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
+
+        def compare(avu, seq):
+            return avu == seq
+
+        self.assertRaises(AnsibleError, compare, avu, seq)

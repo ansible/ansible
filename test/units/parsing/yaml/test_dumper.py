@@ -19,12 +19,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import io
-import yaml
-
-try:
-    from _yaml import ParserError
-except ImportError:
-    from yaml.parser import ParserError
 
 from ansible.compat.tests import unittest
 from ansible.parsing import vault
@@ -32,12 +26,15 @@ from ansible.parsing.yaml import dumper, objects
 from ansible.parsing.yaml.loader import AnsibleLoader
 
 from units.mock.yaml_helper import YamlTestUtils
+from units.mock.vault_helper import TextVaultSecret
 
 
 class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
     def setUp(self):
         self.vault_password = "hunter42"
-        self.good_vault = vault.VaultLib(self.vault_password)
+        vault_secret = TextVaultSecret(self.vault_password)
+        self.vault_secrets = [('vault_secret', vault_secret)]
+        self.good_vault = vault.VaultLib(self.vault_secrets)
         self.vault = self.good_vault
         self.stream = self._build_stream()
         self.dumper = dumper.AnsibleDumper
@@ -48,11 +45,12 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         return stream
 
     def _loader(self, stream):
-        return AnsibleLoader(stream, vault_password=self.vault_password)
+        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
 
     def test(self):
         plaintext = 'This is a string we are going to encrypt.'
-        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(plaintext, vault=self.vault)
+        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(plaintext, vault=self.vault,
+                                                                  secret=vault.match_secrets(self.vault_secrets, ['vault_secret'])[0][1])
 
         yaml_out = self._dump_string(avu, dumper=self.dumper)
         stream = self._build_stream(yaml_out)
@@ -60,4 +58,4 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
         data_from_yaml = loader.get_single_data()
 
-        self.assertEquals(plaintext, data_from_yaml.data)
+        self.assertEqual(plaintext, data_from_yaml.data)

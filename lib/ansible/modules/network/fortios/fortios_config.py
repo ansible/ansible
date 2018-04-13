@@ -2,24 +2,13 @@
 #
 # Ansible module to manage configuration on fortios devices
 # (c) 2016, Benjamin Jolivot <bjolivot@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,7 +25,7 @@ extends_documentation_fragment: fortios
 options:
   src:
     description:
-      - The I(src) argument provides a path to the configuration file
+      - The I(src) argument provides a path to the configuration template
         to load into the remote device.
   filter:
     description:
@@ -68,7 +57,7 @@ EXAMPLES = """
     host: 192.168.0.254
     username: admin
     password: password
-    src: new_configuration.conf
+    src: new_configuration.conf.j2
 
 """
 
@@ -83,33 +72,30 @@ change_string:
   type: string
 """
 
-
-
-from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.fortios import backup
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.network.fortios.fortios import fortios_argument_spec, fortios_required_if
+from ansible.module_utils.network.fortios.fortios import backup
 
-
-#check for pyFG lib
+# check for pyFG lib
 try:
     from pyFG import FortiOS, FortiConfig
     from pyFG.fortios import logger
     from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
-    HAS_PYFG=True
+    HAS_PYFG = True
 except:
-    HAS_PYFG=False
+    HAS_PYFG = False
+
 
 # some blocks don't support update, so remove them
-NOT_UPDATABLE_CONFIG_OBJECTS=[
+NOT_UPDATABLE_CONFIG_OBJECTS = [
     "vpn certificate local",
 ]
 
+
 def main():
     argument_spec = dict(
-        src       = dict(type='str', default=None),
-        filter    = dict(type='str', default=""),
+        src=dict(type='str', default=None),
+        filter=dict(type='str', default=""),
     )
 
     argument_spec.update(fortios_argument_spec)
@@ -128,20 +114,20 @@ def main():
     if not HAS_PYFG:
         module.fail_json(msg='Could not import the python library pyFG required by this module')
 
-    #define device
-    f = FortiOS( module.params['host'],
-        username=module.params['username'],
-        password=module.params['password'],
-        timeout=module.params['timeout'],
-        vdom=module.params['vdom'])
+    # define device
+    f = FortiOS(module.params['host'],
+                username=module.params['username'],
+                password=module.params['password'],
+                timeout=module.params['timeout'],
+                vdom=module.params['vdom'])
 
-    #connect
+    # connect
     try:
         f.open()
     except:
         module.fail_json(msg='Error connecting device')
 
-    #get  config
+    # get  config
     try:
         f.load_config(path=module.params['filter'])
         result['running_config'] = f.running_config.to_text()
@@ -149,24 +135,23 @@ def main():
     except:
         module.fail_json(msg='Error reading running config')
 
-    #backup config
+    # backup config
     if module.params['backup']:
         backup(module, f.running_config.to_text())
 
-
-    #update config
+    # update config
     if module.params['src'] is not None:
-        #store config in str
+        # store config in str
         try:
-            conf_str = open(module.params['src'], 'r').read()
+            conf_str = module.params['src']
             f.load_config(in_candidate=True, config_text=conf_str)
         except:
             module.fail_json(msg="Can't open configuration file, or configuration invalid")
 
-        #get updates lines
+        # get updates lines
         change_string = f.compare_config()
 
-        #remove not updatable parts
+        # remove not updatable parts
         c = FortiConfig()
         c.parse_config_output(change_string)
 
@@ -179,22 +164,19 @@ def main():
             result['change_string'] = change_string
             result['changed'] = True
 
-        #Commit if not check mode
+        # Commit if not check mode
         if module.check_mode is False and change_string != "":
             try:
                 f.commit(change_string)
-            except CommandExecutionException:
-                e = get_exception()
+            except CommandExecutionException as e:
                 module.fail_json(msg="Unable to execute command, check your args, the error was {0}".format(e.message))
-            except FailedCommit:
-                e = get_exception()
+            except FailedCommit as e:
                 module.fail_json(msg="Unable to commit, check your args, the error was {0}".format(e.message))
-            except ForcedCommit:
-                e = get_exception()
+            except ForcedCommit as e:
                 module.fail_json(msg="Failed to force commit, check your args, the error was {0}".format(e.message))
 
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()
-

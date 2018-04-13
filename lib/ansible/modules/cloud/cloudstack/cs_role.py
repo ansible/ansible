@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -40,25 +40,19 @@ options:
     description:
       - ID of the role.
       - If provided, C(id) is used as key.
-    required: false
-    default: null
     aliases: [ 'uuid' ]
   role_type:
     description:
       - Type of the role.
       - Only considered for creation.
-    required: false
     default: User
     choices: [ 'User', 'DomainAdmin', 'ResourceAdmin', 'Admin' ]
   description:
     description:
       - Description of the role.
-    required: false
-    default: null
   state:
     description:
       - State of the role.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack

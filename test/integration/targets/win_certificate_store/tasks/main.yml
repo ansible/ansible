@@ -1,0 +1,121 @@
+### keys in files/ have been generated with
+# generate root private key
+# openssl genrsa -aes256 -out enckey.pem 2048
+# openssl rsa -in envkey.pem -out root-key.pem
+#
+# generate root certificate
+# openssl req -x509 -key root-key.pem -days 24855 -out root-vert.pem -subj "/CN=root.ansible.com/C=US"
+#
+# generate subject private key
+# openssl genrsa -aes256 -out enckey.pem 2048
+# openssl rsa -in enckey.pem -out subj-key.pem
+#
+# generate subject certificate
+# openssl req -new -key subj-key.pem -out cert.csr -subj "/CN=subject.ansible.com/C=US"
+# openssl x509 -req -in cert.csr -CA root-cert.pem -CAkey root-key.pem -CAcreateserial -out subj-cert.pem -days 24855
+###
+---
+- name: ensure test dir is present
+  win_file:
+    path: '{{win_cert_dir}}\exported'
+    state: directory
+
+- name: ensure certificates are removed from store before test
+  win_certificate_store:
+    thumbprint: '{{item}}'
+    state: absent
+  with_items:
+  - '{{subj_thumbprint}}'
+  - '{{root_thumbprint}}'
+
+- name: ensure certificates are removed from custom store before test
+  win_certificate_store:
+    thumbprint: '{{item}}'
+    state: absent
+    store_name: TrustedPeople
+    store_location: CurrentUser
+  with_items:
+  - '{{subj_thumbprint}}'
+  - '{{root_thumbprint}}'
+
+# these files are created on the fly so we don't store binary in the git repo
+- name: create PKCS12 without password
+  command: 'openssl pkcs12 -export -out subj-cert-without-pass.pfx -inkey subj-key.pem -in subj-cert.pem -passout pass:'
+  args:
+    chdir: '{{role_path}}/files'
+  delegate_to: localhost
+  run_once: yes
+
+- name: create PKCS12 with password
+  command: 'openssl pkcs12 -export -out subj-cert-with-pass.pfx -inkey subj-key.pem -in subj-cert.pem -passout pass:{{key_password}}'
+  args:
+    chdir: '{{role_path}}/files'
+  delegate_to: localhost
+  run_once: yes
+
+- name: create DER encoded cert
+  command: openssl x509 -outform der -in subj-cert.pem -out subj-cert.cer
+  args:
+    chdir: '{{role_path}}/files'
+  delegate_to: localhost
+  run_once: yes
+
+- name: create PEM encoded PKCS7 file
+  command: openssl crl2pkcs7 -nocrl -certfile subj-cert.pem -certfile root-cert.pem -out chain.pem
+  args:
+    chdir: '{{role_path}}/files'
+  delegate_to: localhost
+  run_once: yes
+
+- name: create DER encoded PKCS7 file
+  command: openssl crl2pkcs7 -nocrl -certfile subj-cert.pem -certfile root-cert.pem -out chain.p7b -outform der
+  args:
+    chdir: '{{role_path}}/files'
+  delegate_to: localhost
+  run_once: yes
+
+- name: copy across test cert files
+  win_copy:
+    src: files/
+    dest: '{{win_cert_dir}}'
+
+- block:
+  - name: run tests
+    include_tasks: test.yml
+  
+  always:
+  - name: ensure generated keys are deleted
+    file:
+      path: '{{role_path}}/files/{{item}}'
+      state: absent
+    delegate_to: localhost
+    run_once: yes
+    with_items:
+    - subj-cert-with-pass.pfx
+    - subj-cert-without-pass.pfx
+    - subj-cert.cer
+    - chain.pem
+    - chain.p7b
+  
+  - name: ensure certificates are removed from store after test
+    win_certificate_store:
+      thumbprint: '{{item}}'
+      state: absent
+    with_items:
+    - '{{subj_thumbprint}}'
+    - '{{root_thumbprint}}'
+
+  - name: ensure certificates are removed from custom store after test
+    win_certificate_store:
+      thumbprint: '{{item}}'
+      state: absent
+      store_name: TrustedPeople
+      store_location: CurrentUser
+    with_items:
+    - '{{subj_thumbprint}}'
+    - '{{root_thumbprint}}'
+
+  - name: ensure test dir is deleted
+    win_file:
+      path: '{{win_cert_dir}}'
+      state: absent

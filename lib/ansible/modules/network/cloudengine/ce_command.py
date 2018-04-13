@@ -17,7 +17,7 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,8 +50,6 @@ options:
         the task to wait for a particular conditional to be true
         before moving forward.   If the conditional is not true
         by the configured retries, the task fails.  See examples.
-    required: false
-    default: null
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -60,7 +58,6 @@ options:
         then all conditionals in the I(wait_for) must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
   retries:
     description:
@@ -68,7 +65,6 @@ options:
         before it is considered failed.  The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
-    required: false
     default: 10
   interval:
     description:
@@ -76,7 +72,6 @@ options:
         of the command.  If the command does not pass the specified
         conditional, the interval indicates how to long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
@@ -95,8 +90,6 @@ EXAMPLES = """
       username: "{{ username }}"
       password: "{{ password }}"
       transport: cli
-
-  tasks:
 
   tasks:
   - name: "Run display version on remote devices"
@@ -150,19 +143,21 @@ failed_conditions:
 
 
 import time
+import traceback
 
-from ansible.module_utils.ce import run_commands
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.ce import ce_argument_spec, check_args
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, check_args
+from ansible.module_utils.network.cloudengine.ce import run_commands
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines
@@ -223,9 +218,8 @@ def main():
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -249,7 +243,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

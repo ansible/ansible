@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,39 +27,11 @@ options:
   description:
     description:
     - A description of this command.
-    required: false
   state:
     description: State to ensure
-    required: false
     default: present
     choices: ['present', 'absent']
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: "ipa.example.com"
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: "admin"
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: "https"
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
@@ -97,9 +60,11 @@ sudocmd:
   type: dict
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
+from ansible.module_utils._text import to_native
 
 
 class SudoCmdIPAClient(IPAClient):
@@ -162,21 +127,13 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            description=dict(type='str', required=False),
-            state=dict(type='str', required=False, default='present',
-                       choices=['present', 'absent', 'enabled', 'disabled']),
-            sudocmd=dict(type='str', required=True, aliases=['name']),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(description=dict(type='str'),
+                         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+                         sudocmd=dict(type='str', required=True, aliases=['name']))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     client = SudoCmdIPAClient(module=module,
                               host=module.params['ipa_host'],
@@ -187,9 +144,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, sudocmd = ensure(module, client)
         module.exit_json(changed=changed, sudocmd=sudocmd)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

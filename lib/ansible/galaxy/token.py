@@ -22,8 +22,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+from stat import S_IRUSR, S_IWUSR
+
 import yaml
-from stat import *
 
 try:
     from __main__ import display

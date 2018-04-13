@@ -2,30 +2,17 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Romeo Theriault <romeot () hawaii.edu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# see examples/playbooks/uri.yml
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: uri
 short_description: Interacts with webservices
@@ -39,64 +26,51 @@ options:
     description:
       - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
     required: true
-    default: null
   dest:
     description:
-      - path of where to download the file to (if desired). If I(dest) is a
+      - A path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
-    required: false
-    default: null
   user:
     description:
-      - username for the module to use for Digest, Basic or WSSE authentication.
-    required: false
-    default: null
+      - A username for the module to use for Digest, Basic or WSSE authentication.
   password:
     description:
-      - password for the module to use for Digest, Basic or WSSE authentication.
-    required: false
-    default: null
+      - A password for the module to use for Digest, Basic or WSSE authentication.
   body:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
         to 'json' it will take an already formatted JSON string or convert a data structure
         into JSON.
-    required: false
-    default: null
   body_format:
     description:
       - The serialization format of the body. When set to json, encodes the
         body argument, if needed, and automatically sets the Content-Type header accordingly.
         As of C(2.3) it is possible to override the `Content-Type` header, when
         set to json via the I(headers) option.
-    required: false
     choices: [ "raw", "json" ]
     default: raw
     version_added: "2.0"
   method:
     description:
       - The HTTP method of the request or response. It MUST be uppercase.
-    required: false
     choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
     default: "GET"
   return_content:
     description:
-      - Whether or not to return the body of the request as a "content" key in
+      - Whether or not to return the body of the response as a "content" key in
         the dictionary result. If the reported Content-type is
         "application/json", then the JSON is additionally loaded into a key
         called C(json) in the dictionary results.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   force_basic_auth:
     description:
       - The library used by the uri module only sends authentication information when a webservice
         responds to an initial request with a 401 status. Since some basic auth services do not properly
         send a 401, logins will fail. This option forces the sending of the Basic authentication header
         upon initial request.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   follow_redirects:
     description:
       - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
@@ -105,81 +79,68 @@ options:
         any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
         where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
         are deprecated and will be removed in some future version of Ansible.
-    required: false
-    choices: [ "all", "safe", "none" ]
+    choices: [ all, none, safe ]
     default: "safe"
   creates:
     description:
-      - a filename, when it already exists, this step will not be run.
-    required: false
+      - A filename, when it already exists, this step will not be run.
   removes:
     description:
-      - a filename, when it does not exist, this step will not be run.
-    required: false
+      - A filename, when it does not exist, this step will not be run.
   status_code:
     description:
       - A valid, numeric, HTTP status code that signifies success of the
         request. Can also be comma separated list of status codes.
-    required: false
     default: 200
   timeout:
     description:
       - The socket level timeout in seconds
-    required: false
     default: 30
   HEADER_:
     description:
       - Any parameter starting with "HEADER_" is a sent with your request as a header.
         For example, HEADER_Content-Type="application/json" would send the header
         "Content-Type" along with your request with a value of "application/json".
-        This option is deprecated as of C(2.1) and may be removed in a future
-        release. Use I(headers) instead.
-    required: false
-    default: null
+        This option is deprecated as of C(2.1) and will be removed in Ansible-2.9.
+        Use I(headers) instead.
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
           of C(2.3) supplying C(Content-Type) here will override the header
           generated by supplying C(json) for I(body_format).
-    required: false
-    default: null
     version_added: '2.1'
   others:
     description:
-      - all arguments accepted by the M(file) module also work here
-    required: false
+      - All arguments accepted by the M(file) module also work here
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated.  This should only
         set to C(no) used on personally controlled sites using self-signed
         certificates.  Prior to 1.9.2 the code defaulted to C(no).
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: '1.9.2'
   client_cert:
-    required: false
-    default: null
     description:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
         the key is included, I(client_key) is not required
-    version_added: 2.4
+    version_added: '2.4'
   client_key:
-    required: false
-    default: null
     description:
       - PEM formatted file that contains your private key to be used for SSL
         client authentication. If I(client_cert) contains both the certificate
         and key, this option is not required.
-    version_added: 2.4
+    version_added: '2.4'
 notes:
-  - The dependency on httplib2 was removed in Ansible 2.1
+  - The dependency on httplib2 was removed in Ansible 2.1.
+  - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(win_uri) module instead.
-author: "Romeo Theriault (@romeotheriault)"
+author:
+- Romeo Theriault (@romeotheriault)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Check that you can connect (GET) to a page and it returns a status 200
   uri:
     url: http://www.example.com
@@ -237,46 +198,69 @@ EXAMPLES = '''
 
 '''
 
+RETURN = r'''
+# The return information includes all the HTTP headers in lower-case.
+msg:
+  description: The HTTP message from the request
+  returned: always
+  type: string
+  sample: OK (unknown bytes)
+redirected:
+  description: Whether the request was redirected
+  returned: always
+  type: bool
+  sample: false
+status:
+  description: The HTTP status code from the request
+  returned: always
+  type: int
+  sample: 200
+url:
+  description: The actual URL used for the request
+  returned: always
+  type: string
+  sample: https://www.ansible.com/
+'''
+
 import cgi
 import datetime
+import json
 import os
 import shutil
 import tempfile
+import traceback
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.six as six
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+
+JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp()
+    fd, tmpsrc = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
     f = open(tmpsrc, 'wb')
     try:
         f.write(content)
-    except Exception:
-        err = get_exception()
+    except Exception as e:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
+                         exception=traceback.format_exc())
     f.close()
 
-    checksum_src   = None
-    checksum_dest  = None
+    checksum_src = None
+    checksum_dest = None
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source %s does not exist" % (tmpsrc))
+        module.fail_json(msg="Source '%s' does not exist" % tmpsrc)
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json( msg="Source %s not readable" % (tmpsrc))
+        module.fail_json(msg="Source '%s' not readable" % tmpsrc)
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -284,23 +268,23 @@ def write_file(module, url, dest, content):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (dest))
+            module.fail_json(msg="Destination '%s' not writable" % dest)
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not readable" % (dest))
+            module.fail_json(msg="Destination '%s' not readable" % dest)
         checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination dir %s not writable" % (os.path.dirname(dest)))
+            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest))
 
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
+                             exception=traceback.format_exc())
 
     os.remove(tmpsrc)
 
@@ -344,7 +328,6 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # we'll reset back to the supplied value soon
         follow_redirects = module.params['follow_redirects']
         module.params['follow_redirects'] = False
-        dest = os.path.expanduser(dest)
         if os.path.isdir(dest):
             # first check if we are redirected to a file download
             _, redir_info = fetch_url(module, url, data=body,
@@ -386,28 +369,29 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 def main():
     argument_spec = url_argument_spec()
     argument_spec.update(dict(
-        dest = dict(required=False, default=None, type='path'),
-        url_username = dict(required=False, default=None, aliases=['user']),
-        url_password = dict(required=False, default=None, aliases=['password'], no_log=True),
-        body = dict(required=False, default=None, type='raw'),
-        body_format = dict(required=False, default='raw', choices=['raw', 'json']),
-        method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
-        return_content = dict(required=False, default='no', type='bool'),
-        follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
-        creates = dict(required=False, default=None, type='path'),
-        removes = dict(required=False, default=None, type='path'),
-        status_code = dict(required=False, default=[200], type='list'),
-        timeout = dict(required=False, default=30, type='int'),
-        headers = dict(required=False, type='dict', default={})
+        dest=dict(type='path'),
+        url_username=dict(type='str', aliases=['user']),
+        url_password=dict(type='str', aliases=['password'], no_log=True),
+        body=dict(type='raw'),
+        body_format=dict(type='str', default='raw', choices=['raw', 'json']),
+        method=dict(type='str', default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
+        return_content=dict(type='bool', default='no'),
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+        creates=dict(type='path'),
+        removes=dict(type='path'),
+        status_code=dict(type='list', default=[200]),
+        timeout=dict(type='int', default=30),
+        headers=dict(type='dict', default={})
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        # TODO: Remove check_invalid_arguments in 2.9
         check_invalid_arguments=False,
         add_file_common_args=True
     )
 
-    url  = module.params['url']
+    url = module.params['url']
     body = module.params['body']
     body_format = module.params['body_format'].lower()
     method = module.params['method']
@@ -428,29 +412,30 @@ def main():
         if 'content-type' not in lower_header_keys:
             dict_headers['Content-Type'] = 'application/json'
 
+    # TODO: Deprecated section.  Remove in Ansible 2.9
     # Grab all the http headers. Need this hack since passing multi-values is
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
     for key, value in six.iteritems(module.params):
         if key.startswith("HEADER_"):
-            module.deprecate('Supplying headers via HEADER_* is deprecated and '
-                             'will be removed in a future version. Please use '
-                             '`headers` to supply headers for the request')
+            module.deprecate('Supplying headers via HEADER_* is deprecated. Please use `headers` to'
+                             ' supply headers for the request', version='2.9')
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
+    # End deprecated section
 
     if creates is not None:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since %s exists" % creates, changed=False, rc=0)
+            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False, rc=0)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename do not exists.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, rc=0)
+            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False, rc=0)
 
     # Make the request
     resp, content, dest = uri(module, url, dest, body, body_format, method,
@@ -494,7 +479,7 @@ def main():
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
-        if 'application/json' in content_type or 'text/json' in content_type:
+        if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
@@ -504,7 +489,7 @@ def main():
         u_content = to_text(content, encoding=content_encoding)
 
     if resp['status'] not in status_code:
-        uresp['msg'] = 'Status code was not %s: %s' % (status_code, uresp.get('msg', ''))
+        uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
         module.fail_json(content=u_content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=u_content, **uresp)

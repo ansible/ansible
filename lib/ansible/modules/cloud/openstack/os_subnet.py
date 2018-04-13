@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,13 +27,11 @@ options:
      description:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
-     required: false
      default: present
    network_name:
      description:
         - Name of the network to which the subnet should be attached
         - Required when I(state) is 'present'
-     required: false
    name:
      description:
        - The name of the subnet that should be created. Although Neutron
@@ -53,78 +43,58 @@ options:
         - The CIDR representation of the subnet that should be assigned to
           the subnet. Required when I(state) is 'present' and a subnetpool
           is not specified.
-     required: false
-     default: None
    ip_version:
      description:
         - The IP version of the subnet 4 or 6
-     required: false
      default: 4
    enable_dhcp:
      description:
         - Whether DHCP should be enabled for this subnet.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    gateway_ip:
      description:
         - The ip that would be assigned to the gateway for this subnet
-     required: false
-     default: None
    no_gateway_ip:
      description:
         - The gateway IP would not be assigned for this subnet
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.2"
    dns_nameservers:
      description:
         - List of DNS nameservers for this subnet.
-     required: false
-     default: None
    allocation_pool_start:
      description:
         - From the subnet pool the starting address from which the IP should
           be allocated.
-     required: false
-     default: None
    allocation_pool_end:
      description:
         - From the subnet pool the last IP that should be assigned to the
           virtual machines.
-     required: false
-     default: None
    host_routes:
      description:
         - A list of host route dictionaries for the subnet.
-     required: false
-     default: None
    ipv6_ra_mode:
      description:
         - IPv6 router advertisement mode
      choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
-     required: false
-     default: None
    ipv6_address_mode:
      description:
         - IPv6 address mode
      choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
-     required: false
-     default: None
    use_default_subnetpool:
      description:
         - Use the default subnetpool for I(ip_version) to obtain a CIDR.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    project:
      description:
         - Project name or ID containing the subnet (name admin-only)
-     required: false
-     default: None
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -165,20 +135,13 @@ EXAMPLES = '''
     ipv6_address_mode: dhcpv6-stateless
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _can_update(subnet, module, cloud):
     """Check for differences in non-updatable values"""
     network_name = module.params['network_name']
-    cidr = module.params['cidr']
     ip_version = int(module.params['ip_version'])
     ipv6_ra_mode = module.params['ipv6_ra_mode']
     ipv6_a_mode = module.params['ipv6_address_mode']
@@ -199,6 +162,7 @@ def _can_update(subnet, module, cloud):
     if ipv6_a_mode and subnet.get('ipv6_address_mode', None) != ipv6_a_mode:
         module.fail_json(msg='Cannot update ipv6_address_mode in existing \
                               subnet')
+
 
 def _needs_update(subnet, module, cloud):
     """Check for differences in the updatable values."""
@@ -276,9 +240,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     network_name = module.params['network_name']
     cidr = module.params['cidr']
@@ -296,10 +257,9 @@ def main():
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
 
-    if (use_default_subnetpool and
-            StrictVersion(shade.__version__) < StrictVersion('1.16.0')):
-        module.fail_json(msg="To utilize use_default_subnetpool, the installed"
-                             " version of the shade library MUST be >=1.16.0")
+    min_version = None
+    if use_default_subnetpool:
+        min_version = '1.16.0'
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -319,8 +279,8 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
@@ -384,8 +344,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

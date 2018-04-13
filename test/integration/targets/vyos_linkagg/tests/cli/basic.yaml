@@ -1,4 +1,6 @@
 ---
+- debug: msg="cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Remove linkagg
   vyos_linkagg:
     name: bond0
@@ -127,7 +129,7 @@
 
 - name: Create collection of linkagg definitions
   vyos_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1] }
         - { name: bond1, members: [eth2] }
     state: present
@@ -143,7 +145,7 @@
 
 - name: Create collection of linkagg definitions again (idempotent)
   vyos_linkagg:
-    collection:
+    aggregate:
         - { name: bond0, members: [eth1] }
         - { name: bond1, members: [eth2] }
     state: present
@@ -155,9 +157,9 @@
 
 - name: Remove collection of linkagg definitions
   vyos_linkagg:
-    collection:
-      - { name: bond0 }
-      - { name: bond1 }
+    aggregate:
+      - name: bond0
+      - name: bond1
     state: absent
   register: result
 
@@ -171,9 +173,9 @@
 
 - name: Remove collection of linkagg definitions again (idempotent)
   vyos_linkagg:
-    collection:
-      - { name: bond0 }
-      - { name: bond1 }
+    aggregate:
+      - name: bond0
+      - name: bond1
     state: absent
   register: result
 

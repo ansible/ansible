@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - If C(state=absent), the module will attempt to remove the given key configuration.
       If a matching key configuration isn't found on the device, the module will fail.
     - If C(state=absent) and C(authentication=on), authentication will be turned off.
@@ -46,32 +47,26 @@ options:
         description:
             - MD5 String.
         required: true
-        default: null
     auth_type:
         description:
             - Whether the given md5string is in cleartext or
               has been encrypted. If in cleartext, the device
               will encrypt it before storing it.
-        required: false
         default: text
         choices: ['text', 'encrypt']
     trusted_key:
         description:
             - Whether the given key is required to be supplied by a time source
               for the device to synchronize to the time source.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        choices: [ 'false', 'true' ]
+        default: 'false'
     authentication:
         description:
             - Turns NTP authentication on or off.
-        required: false
-        default: null
         choices: ['on', 'off']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -82,67 +77,37 @@ EXAMPLES = '''
     key_id: 32
     md5string: hello
     auth_type: text
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"auth_type": "text", "authentication": "off",
-            "key_id": "32", "md5string": "helloWorld",
-            "trusted_key": "true"}
-existing:
-    description:
-        - k/v pairs of existing ntp authentication
-    returned: always
-    type: dict
-    sample: {"authentication": "off", "trusted_key": "false"}
-end_state:
-    description: k/v pairs of ntp authentication after module execution
-    returned: always
-    type: dict
-    sample: {"authentication": "off", "key_id": "32",
-            "md5string": "kapqgWjwdg", "trusted_key": "true"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: ["ntp authentication-key 32 md5 helloWorld 0", "ntp trusted-key 32"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-
 import re
 
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
-    return body
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        command = {
+            'command': command,
+            'output': 'json',
+        }
+    else:
+        command = {
+            'command': command,
+            'output': 'text',
+        }
+
+    return run_commands(module, [command])
 
 
 def flatten_list(command_lists):
@@ -173,8 +138,7 @@ def get_ntp_trusted_key(module):
     trusted_key_list = []
     command = 'show run | inc ntp.trusted-key'
 
-    trusted_key_str = execute_show_command(
-        command, module, command_type='cli_show_ascii')[0]
+    trusted_key_str = execute_show_command(command, module)[0]
     if trusted_key_str:
         trusted_keys = trusted_key_str.splitlines()
 
@@ -191,13 +155,13 @@ def get_ntp_trusted_key(module):
 def get_ntp_auth_key(key_id, module):
     authentication_key = {}
     command = 'show run | inc ntp.authentication-key.{0}'.format(key_id)
-    auth_regex = (".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
-                  "md5\s(?P<md5string>\S+).*")
+    auth_regex = (r".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
+                  r"md5\s(?P<md5string>\S+).*")
 
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = execute_show_command(command, module)[0]
 
     try:
-        match_authentication = re.match(auth_regex, body[0], re.DOTALL)
+        match_authentication = re.match(auth_regex, body, re.DOTALL)
         group_authentication = match_authentication.groupdict()
         key_id = group_authentication["key_id"]
         md5string = group_authentication['md5string']
@@ -228,7 +192,7 @@ def get_ntp_auth_info(key_id, module):
 
 
 def auth_type_to_num(auth_type):
-    if auth_type == 'encrypt' :
+    if auth_type == 'encrypt':
         return '7'
     else:
         return '0'
@@ -288,11 +252,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     key_id = module.params['key_id']
     md5string = module.params['md5string']
@@ -355,4 +318,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

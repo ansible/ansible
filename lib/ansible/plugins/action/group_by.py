@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
+from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
@@ -31,6 +32,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if 'key' not in self._task.args:
             result['failed'] = True
@@ -38,8 +40,11 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
-        group_name = group_name.replace(' ', '-')
+        parent_groups = self._task.args.get('parents', ['all'])
+        if isinstance(parent_groups, string_types):
+            parent_groups = [parent_groups]
 
         result['changed'] = False
-        result['add_group'] = group_name
+        result['add_group'] = group_name.replace(' ', '-')
+        result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
         return result

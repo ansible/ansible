@@ -2,20 +2,13 @@
 
 # (c) 2017, Alberto Murillo <alberto.murillo.silva@intel.com>
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,55 +27,38 @@ options:
     description:
       - URL pointing to the contents of available bundles.
         If not specified, the contents are retrieved from clearlinux.org.
-    required: false
-    default: null
   format:
     description:
       - The format suffix for version file downloads. For example [1,2,3,staging,etc].
         If not specified, the default format is used.
-    required: false
-    default: null
   manifest:
     description:
       - The manifest contains information about the bundles at certaion version of the OS.
         Specify a Manifest version to verify against that version or leave unspecified to
         verify against the current version.
-    required: false
-    default: null
     aliases: [release, version]
   name:
     description:
       - Name of the (I)bundle to install or remove.
-    required: false
-    default: null
     aliases: [bundle]
   state:
     description:
       - Indicates the desired (I)bundle state. C(present) ensures the bundle
         is installed while C(absent) ensures the (I)bundle is not installed.
-    required: false
     default: present
     choices: [present, absent]
   update:
     description:
       - Updates the OS to the latest version.
-    required: false
-    default: no
   url:
     description:
       - Overrides both I(contenturl) and I(versionurl).
-    required: false
-    default: null
   verify:
     description:
       - Verify content for OS version.
-    required: false
-    default: null
   versionurl:
     description:
       - URL for version string download.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

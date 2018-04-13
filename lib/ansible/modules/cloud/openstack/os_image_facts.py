@@ -1,21 +1,13 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -48,7 +40,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created image named image1
   os_image_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -56,7 +48,7 @@ EXAMPLES = '''
 
 - name: Show openstack facts
   debug:
-    var: openstack
+    var: openstack_image
 '''
 
 RETURN = '''
@@ -135,11 +127,8 @@ openstack_image:
             type: int
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -150,11 +139,8 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         image = cloud.get_image(module.params['image'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_image=image))
@@ -162,9 +148,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()
-

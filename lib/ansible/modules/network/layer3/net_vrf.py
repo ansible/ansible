@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -40,11 +29,11 @@ options:
   interfaces:
     description:
       - List of interfaces the VRF should be configured on.
-  collection:
+  aggregate:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the collections parameter.
+      - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
   state:
     description:
@@ -61,6 +50,23 @@ EXAMPLES = """
 - name: remove VRF named MANAGEMENT
   net_vrf:
     name: MANAGEMENT
+    state: absent
+
+- name: Create aggregate of VRFs with purge
+  net_vrf:
+    aggregate:
+      - { name: test4, rd: "1:204" }
+      - { name: test5, rd: "1:205" }
+    state: present
+    purge: yes
+
+- name: Delete aggregate of VRFs
+  net_vrf:
+    aggregate:
+      - name: test2
+      - name: test3
+      - name: test4
+      - name: test5
     state: absent
 """
 

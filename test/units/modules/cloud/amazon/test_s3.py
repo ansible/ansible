@@ -1,10 +1,15 @@
 import pytest
+
 import unittest
 
-import ansible.modules.cloud.amazon.s3 as s3
+try:
+    import ansible.modules.cloud.amazon.s3 as s3
+except ImportError:
+    pytestmark = pytest.mark.skip("This test requires the s3 Python libraries")
+
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
-boto = pytest.importorskip("boto")
+boto3 = pytest.importorskip("boto3")
 
 
 class TestUrlparse(unittest.TestCase):
@@ -32,5 +37,5 @@ class TestUrlparse(unittest.TestCase):
         location = None
         rgw = True
         s3_url = "http://bla.blubb"
-        actual = s3.get_s3_connection(aws_connect_kwargs, location, rgw, s3_url)
-        self.assertEqual("bla.blubb", actual.host)
+        actual = s3.get_s3_connection(None, aws_connect_kwargs, location, rgw, s3_url)
+        self.assertEqual(bool("bla.blubb" in str(actual._endpoint)), True)

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -33,29 +33,20 @@ options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with given NTP server or peer.
-        required: false
-        default: null
     is_preferred:
         description:
             - Makes given NTP server or peer the preferred NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     vpn_name:
         description:
             - Makes the device communicate with the given
               NTP server or peer over a specific vpn.
-        required: false
         default: '_public_'
     source_int:
         description:
@@ -63,12 +54,9 @@ options:
               Must be fully qualified interface name, i.e. C(40GE1/0/22), C(vlanif10).
               Interface types, such as C(10GE), C(40GE), C(100GE), C(Eth-Trunk), C(LoopBack),
               C(MEth), C(NULL), C(Tunnel), C(Vlanif).
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -144,7 +132,7 @@ changed:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config, set_nc_config
 
 CE_NC_GET_NTP_CONFIG = """
 <filter type="subtree">
@@ -353,8 +341,8 @@ class Ntp(object):
         if not addr_list:
             self.module.fail_json(msg='Error: Match ip-address fail.')
 
-        value = ((long(addr_list[0][0])) * 0x1000000) + (long(addr_list[0][1]) * 0x10000) + \
-            (long(addr_list[0][2]) * 0x100) + (long(addr_list[0][3]))
+        value = ((int(addr_list[0][0])) * 0x1000000) + (int(addr_list[0][1]) * 0x10000) + \
+            (int(addr_list[0][2]) * 0x100) + (int(addr_list[0][3]))
         if (value & (0xff000000) == 0x7f000000) or (value & (0xF0000000) == 0xF0000000) \
                 or (value & (0xF0000000) == 0xE0000000) or (value == 0):
             return False

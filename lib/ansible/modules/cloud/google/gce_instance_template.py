@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,8 +28,6 @@ options:
   name:
     description:
       - The name of the GCE instance template.
-    required: true
-    default: null
   size:
     description:
       - The desired machine type for the instance template.
@@ -46,18 +36,15 @@ options:
     description:
       - A source disk to attach to the instance.
         Cannot specify both I(image) and I(source).
-    default: null
   image:
     description:
       - The image to use to create the instance.
         Cannot specify both both I(image) and I(source).
-    default: null
   image_family:
     description:
       - The image family to use to create the instance.
         If I(image) has been used I(image_family) is ignored.
         Cannot specify both I(image) and I(source).
-    default: null
   disk_type:
     description:
       - Specify a C(pd-standard) disk or C(pd-ssd)
@@ -75,12 +62,12 @@ options:
   subnetwork:
     description:
       - The Subnetwork resource name for this instance.
-    default: null
   can_ip_forward:
     description:
-      - Set to True to allow instance to
+      - Set to C(yes) to allow instance to
         send/receive non-matching src/dst packets.
-    default: false
+    type: bool
+    default: 'no'
   external_ip:
     description:
       - The external IP address to use.
@@ -92,13 +79,11 @@ options:
   service_account_email:
     description:
       - service account email
-    default: null
   service_account_permissions:
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -110,61 +95,49 @@ options:
       - Defines whether the instance should be
         automatically restarted when it is
         terminated by Compute Engine.
-    default: null
   preemptible:
     description:
       - Defines whether the instance is preemptible.
-    default: null
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
-    default: null
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
-    default: null
   description:
     description:
       - description of instance template
-    default: null
   disks:
     description:
       - a list of persistent disks to attach to the instance; a string value
         gives the name of the disk; alternatively, a dictionary value can
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
-    default: null
   nic_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
-    default: null
   disks_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted formatted disks[] structure. Case sensitive.
         see U(https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource) for detailed information
-    default: null
     version_added: "2.4"
   project_id:
     description:
       - your GCE project ID
-    default: null
   pem_file:
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    default: null
   credentials_file:
     description:
       - path to the JSON file associated with the service account email
-    default: null
   subnetwork_region:
     version_added: "2.4"
     description:
       - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
-    default: null
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
@@ -243,8 +216,12 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
+import traceback
+try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
 
 try:
     import libcloud
@@ -258,11 +235,9 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
+from ansible.module_utils._text import to_native
 
 
 def get_info(inst):
@@ -294,16 +269,15 @@ def create_instance_template(module, gce):
     subnetwork_region = module.params.get('subnetwork_region')
     can_ip_forward = module.params.get('can_ip_forward')
     external_ip = module.params.get('external_ip')
-    service_account_email = module.params.get('service_account_email')
     service_account_permissions = module.params.get(
         'service_account_permissions')
+    service_account_email = module.params.get('service_account_email')
     on_host_maintenance = module.params.get('on_host_maintenance')
     automatic_restart = module.params.get('automatic_restart')
     preemptible = module.params.get('preemptible')
     tags = module.params.get('tags')
     metadata = module.params.get('metadata')
     description = module.params.get('description')
-    disks = module.params.get('disks')
     disks_gce_struct = module.params.get('disks_gce_struct')
     changed = False
 
@@ -377,7 +351,10 @@ def create_instance_template(module, gce):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
-        ex_sa_perms.append({'email': "default"})
+        if service_account_email is not None:
+            ex_sa_perms.append({'email': str(service_account_email)})
+        else:
+            ex_sa_perms.append({'email': "default"})
         ex_sa_perms[0]['scopes'] = service_account_permissions
     gce_args['service_accounts'] = ex_sa_perms
 
@@ -467,8 +444,9 @@ def delete_instance_template(module, gce):
     try:
         instance = gce.ex_get_instancetemplate(name)
         current_state = "present"
-    except GoogleBaseError as err:
-        json_data = dict(msg='instance template not exists')
+    except GoogleBaseError as e:
+        json_data = dict(msg='instance template not exists: %s' % to_native(e),
+                         exception=traceback.format_exc())
 
     if current_state == "present":
         rc = instance.destroy()
@@ -519,26 +497,26 @@ def check_if_system_state_would_be_changed(module, gce):
     state = module.params.get("state")
     name = module.params.get("name")
 
-    instance = None
     try:
-        instance = gce.ex_get_instancetemplate(name)
+        gce.ex_get_instancetemplate(name)
         current_state = "present"
-    except GoogleBaseError as err:
-        module.fail_json(msg='GCE get instancetemplate problem')
+    except GoogleBaseError as e:
+        module.fail_json(msg='GCE get instancetemplate problem: %s' % to_native(e),
+                         exception=traceback.format_exc())
 
     if current_state != state:
         changed = True
 
     if current_state == "absent":
         if changed:
-            output = 'instance template {} will be created'.format(name)
+            output = 'instance template {0} will be created'.format(name)
         else:
-            output = 'nothing to do for instance template {} '.format(name)
+            output = 'nothing to do for instance template {0} '.format(name)
     if current_state == "present":
         if changed:
-            output = 'instance template {} will be destroyed'.format(name)
+            output = 'instance template {0} will be destroyed'.format(name)
         else:
-            output = 'nothing to do for instance template {} '.format(name)
+            output = 'nothing to do for instance template {0} '.format(name)
 
     return (changed, output)
 
@@ -587,8 +565,8 @@ def main():
 
     try:
         gce = gce_connect(module)
-    except GoogleBaseError as err:
-        module.fail_json(msg='GCE Connexion failed')
+    except GoogleBaseError as e:
+        module.fail_json(msg='GCE Connexion failed %s' % to_native(e), exception=traceback.format_exc())
 
     if module.check_mode:
         (changed, output) = check_if_system_state_would_be_changed(module, gce)

@@ -9,7 +9,7 @@
 - name: test Powershell Gallery module setup
   assert:
     that:
-      - "module_setup|changed"
+      - "module_setup is changed"
       - "module_setup.output == 'Module {{ powershell_module }} installed'"
 
 - name: check idempotency reinstalling module
@@ -21,7 +21,7 @@
 - name: test win_psmodule idempotency
   assert:
     that:
-      - "not module_reinstall|changed"
+      - "module_reinstall is not changed"
 
 - name: check module install with allow_clobber not active
   win_psmodule:
@@ -32,7 +32,7 @@
 - name: test allow_clobber has failed
   assert:
     that:
-      - "fail_allow_clobber|failed"
+      - "fail_allow_clobber is failed"
 
 - name: check module install with allow_clobber active
   win_psmodule:
@@ -43,7 +43,7 @@
 - name: test module install with allow_clobber active
   assert:
     that:
-      - "ok_allow_clobber|changed"
+      - "ok_allow_clobber is changed"
 
 - name: check wrong module install attempt
   win_psmodule: 
@@ -55,7 +55,7 @@
 - name: test module setup fails
   assert:
     that:
-      - "module_fail|failed"
+      - "module_fail is failed"
 
 - name: check fake custom ps repository registration attempt
   win_psmodule:
@@ -68,7 +68,7 @@
 - name: test fake custom ps repository registration attempt
   assert:
     that:
-      - "repo_fail|failed"
+      - "repo_fail is failed"
 
 - name: check module is installed
   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
@@ -97,7 +97,7 @@
 - name: test powershell module removal
   assert:
     that:
-      - "module_uninstall|changed"
+      - "module_uninstall is changed"
       - "module_uninstall.output == 'Module {{ powershell_module }} removed'"
 
 - name: check module is uninstalled
@@ -118,7 +118,7 @@
 - name: test idempotency
   assert:
     that:
-      - "not module_uninstall_2|changed"
+      - "module_uninstall_2 is not changed"
 
 - name: check removing allow_clobber module
   win_psmodule:
@@ -129,8 +129,8 @@
 - name: test removing allow_clobber module
   assert:
     that:
-      - "not module_uninstall_2|changed"
-      - "module_uninstall_3|changed"
+      - "module_uninstall_2 is not changed"
+      - "module_uninstall_3 is changed"
 
       
       

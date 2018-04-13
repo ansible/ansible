@@ -1,21 +1,11 @@
 # this is a virtual module that is entirely implemented server side
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -84,6 +74,13 @@ options:
     type: bool
     default: 'no'
     version_added: '2.4'
+  lstrip_blocks:
+    description:
+      - If this is set to True leading spaces and tabs are stripped from the start of a line to a block.
+        Setting this option to True requires Jinja2 version >=2.7.
+    type: bool
+    default: 'no'
+    version_added: '2.6'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
@@ -91,6 +88,13 @@ options:
         if the destination does not exist.
     type: bool
     default: 'yes'
+  follow:
+    description:
+      - This flag indicates that filesystem links in the destination, if they exist, should be followed.
+      - Previous to Ansible 2.4, this was hardcoded as C(yes).
+    type: bool
+    default: 'no'
+    version_added: "2.4"
 notes:
   - For Windows you can use M(win_template) which uses '\r\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
@@ -137,7 +141,7 @@ EXAMPLES = r'''
 - template:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: 'visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
 
 # Update sshd configuration safely, avoid locking yourself out
 - template:

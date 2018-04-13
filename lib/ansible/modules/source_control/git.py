@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -35,62 +25,48 @@ description:
     - Manage I(git) checkouts of repositories to deploy files or software.
 options:
     repo:
-        required: true
-        aliases: [ name ]
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
-    dest:
         required: true
+        aliases: [ name ]
+    dest:
         description:
-            - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(clone) is set to C(no)
-              This change was made in version 1.8.3. Prior to this version,
-              the C(dest) parameter was always required.
+            - The path of where the repository should be checked out. This
+              parameter is required, unless C(clone) is set to C(no).
+        required: true
     version:
-        required: false
-        default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
+        default: "HEAD"
     accept_hostkey:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        version_added: "1.5"
         description:
             - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
               present as an ssh options.
-    ssh_opts:
-        required: false
-        default: None
+        type: bool
+        default: 'no'
         version_added: "1.5"
+    ssh_opts:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
-    key_file:
-        required: false
-        default: None
         version_added: "1.5"
+    key_file:
         description:
             - Specify an optional private key file to use for the checkout.
+        version_added: "1.5"
     reference:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Reference repository (see "git clone --reference ...")
+        version_added: "1.4"
     remote:
-        required: false
-        default: "origin"
         description:
             - Name of the remote.
+        default: "origin"
     refspec:
-        required: false
-        default: null
-        version_added: "1.9"
         description:
             - Add an additional refspec to be fetched.
               If version is set to a I(SHA-1) not reachable from any branch
@@ -98,101 +74,90 @@ options:
               the I(SHA-1).
               Uses the same syntax as the 'git fetch' command.
               An example value could be "refs/meta/config".
+        version_added: "1.9"
     force:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
               'yes' and could not be disabled.  Prior to 1.9, the default was
               `yes`
+        type: bool
+        default: 'no'
+        version_added: "0.7"
     depth:
-        required: false
-        default: null
-        version_added: "1.2"
         description:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
+        version_added: "1.2"
     clone:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.9"
         description:
             - If C(no), do not clone the repository if it does not exist locally
+        type: bool
+        default: 'yes'
+        version_added: "1.9"
     update:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.2"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+            - Operations like archive will work on the existing (old) repository and might
+              not respond to changes to the options version or remote.
+        type: bool
+        default: 'yes'
+        version_added: "1.2"
     executable:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
-    bare:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
         version_added: "1.4"
+    bare:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+        type: bool
+        default: 'no'
+        version_added: "1.4"
     umask:
-        required: false
-        default: null
-        version_added: "2.2"
         description:
             - The umask to set before doing any checkouts, or any other
               repository maintenance.
+        version_added: "2.2"
 
     recursive:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.6"
         description:
             - if C(no), repository will be cloned without the --recursive
               option, skipping sub-modules.
+        type: bool
+        default: 'yes'
+        version_added: "1.6"
 
     track_submodules:
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
-        version_added: "1.8"
         description:
             - if C(yes), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
               C(no), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
               to git submodule update.
+        type: bool
+        default: 'no'
+        version_added: "1.8"
 
     verify_commit:
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
-        version_added: "2.0"
         description:
             - if C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.
+        type: bool
+        default: 'no'
+        version_added: "2.0"
 
     archive:
-        required: false
-        version_added: "2.4"
         description:
             - Specify archive file path with extension. If specified, creates an
               archive file of the specified format containing the tree structure
               for the source tree.
               Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+        version_added: "2.4"
 
 requirements:
     - git>=1.7.1 (the command line tool)
@@ -279,7 +244,6 @@ import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -468,9 +432,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
-        if remote != 'origin':
-            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    if bare and remote != 'origin':
+        module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
         cmd = [git_path, 'fetch']
@@ -727,9 +690,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
                 refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))
-                refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
-            else:
-                refspecs.append(version)
+            refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/' + version + ':refs/tags/' + version)
         if refspecs:
@@ -956,20 +917,19 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             result.update(changed=False)
             # Cleanup before exiting
             try:
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
             except OSError:
                 pass
         else:
             try:
                 shutil.move(new_archive, archive)
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
                 result.update(changed=True)
-            except OSError:
-                exception = get_exception()
+            except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
                                  details="Error occured while moving : %s"
-                                         % exception)
+                                         % to_native(e))
     else:
         # Perform archive from local directory
         git_archive(git_path, module, dest, archive, archive_fmt, version)
@@ -1081,7 +1041,6 @@ def main():
     result.update(before=None)
 
     local_mods = False
-    need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -1097,13 +1056,21 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
-        need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
         result['before'] = get_version(module, git_path, dest)
         result.update(after=result['before'])
+        if archive:
+            # Git archive is not supported by all git servers, so
+            # we will first clone and perform git archive from local directory
+            if module.check_mode:
+                result.update(changed=True)
+                module.exit_json(**result)
+
+            create_archive(git_path, module, dest, archive, version, repo, result)
+
         module.exit_json(**result)
     else:
         # else do a pull
@@ -1177,14 +1144,6 @@ def main():
             module.exit_json(**result)
 
         create_archive(git_path, module, dest, archive, version, repo, result)
-
-    # cleanup the wrapper script
-    if ssh_wrapper:
-        try:
-            os.remove(ssh_wrapper)
-        except OSError:
-            # No need to fail if the file already doesn't exist
-            pass
 
     module.exit_json(**result)
 

@@ -38,17 +38,19 @@ The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the
 additional methods for connecting to AWS using the standard module arguments
 
-  try:
-      m.aws_connect(resource='lambda') # - get an AWS connection.
-  except Exception:
-      m.fail_json_aws(Exception, msg="trying to connect") # - take an exception and make a decent failure
+      m.resource('lambda') # - get an AWS connection as a boto3 resource.
+
+or
+
+      m.client('sts') # - get an AWS connection as a boto3 client.
 
 
 """
 
+from functools import wraps
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
@@ -100,6 +102,7 @@ class AnsibleAWSModule(object):
                 msg='Python modules "botocore" or "boto3" are missing, please install both')
 
         self.check_mode = self._module.check_mode
+        self._name = self._module._name
 
     @property
     def params(self):
@@ -110,6 +113,23 @@ class AnsibleAWSModule(object):
 
     def fail_json(self, *args, **kwargs):
         return self._module.fail_json(*args, **kwargs)
+
+    def debug(self, *args, **kwargs):
+        return self._module.debug(*args, **kwargs)
+
+    def warn(self, *args, **kwargs):
+        return self._module.warn(*args, **kwargs)
+
+    def client(self, service, retry_decorator=None):
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
+        conn = boto3_conn(self, conn_type='client', resource=service,
+                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
+
+    def resource(self, service):
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
+        return boto3_conn(self, conn_type='resource', resource=service,
+                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception
@@ -141,3 +161,29 @@ class AnsibleAWSModule(object):
         else:
             self._module.fail_json(msg=message, exception=last_traceback,
                                    **camel_dict_to_snake_dict(response))
+
+
+class _RetryingBotoClientWrapper(object):
+    def __init__(self, client, retry):
+        self.client = client
+        self.retry = retry
+
+    def _create_optional_retry_wrapper_function(self, unwrapped):
+        retrying_wrapper = self.retry(unwrapped)
+
+        @wraps(unwrapped)
+        def deciding_wrapper(aws_retry=False, *args, **kwargs):
+            if aws_retry:
+                return retrying_wrapper(*args, **kwargs)
+            else:
+                return unwrapped(*args, **kwargs)
+        return deciding_wrapper
+
+    def __getattr__(self, name):
+        unwrapped = getattr(self.client, name)
+        if callable(unwrapped):
+            wrapped = self._create_optional_retry_wrapper_function(unwrapped)
+            setattr(self, name, wrapped)
+            return wrapped
+        else:
+            return unwrapped

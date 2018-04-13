@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -30,7 +30,6 @@ options:
     description:
       - Type of IAM resource
     required: true
-    default: null
     choices: [ "user", "group", "role"]
   iam_name:
     description:
@@ -43,23 +42,19 @@ options:
   policy_document:
     description:
       - The path to the properly json formatted policy file (mutually exclusive with C(policy_json))
-    required: false
   policy_json:
     description:
       - A properly json formatted policy as string (mutually exclusive with C(policy_document),
         see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
-    required: false
   state:
     description:
       - Whether to create or delete the IAM policy.
     required: true
-    default: null
     choices: [ "present", "absent"]
   skip_duplicates:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
         the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
-    required: false
     default: "/"
 
 notes:
@@ -72,7 +67,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Create a policy with the name of 'Admin' to the group 'administrators'
-tasks:
 - name: Assign a policy called Admin to the administrators group
   iam_policy:
     iam_type: group
@@ -83,7 +77,6 @@ tasks:
 
 # Advanced example, create two new groups and add a READ-ONLY policy to both
 # groups.
-task:
 - name: Create Two Groups, Mario and Luigi
   iam:
     iam_type: group
@@ -104,7 +97,6 @@ task:
   with_items: "{{ new_groups.results }}"
 
 # Create a new S3 policy with prefix per user
-tasks:
 - name: Create S3 policy from template
   iam_policy:
     iam_type: user
@@ -118,7 +110,7 @@ tasks:
 
 '''
 import json
-import urllib
+
 try:
     import boto
     import boto.iam
@@ -127,16 +119,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto_exception
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import urllib
 
 
 def user_action(module, iam, name, policy_name, skip, pdoc, state):
@@ -144,15 +130,15 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
     changed = False
     try:
         current_policies = [cp for cp in iam.get_all_user_policies(name).
-                                            list_user_policies_result.
-                                            policy_names]
+                            list_user_policies_result.
+                            policy_names]
         matching_policies = []
         for pol in current_policies:
             '''
             urllib is needed here because boto returns url encoded strings instead
             '''
-            if urllib.unquote(iam.get_user_policy(name, pol).
-                              get_user_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_user_policy(name, pol).
+                                    get_user_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
 
@@ -174,8 +160,8 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
                     module.exit_json(changed=changed, msg="%s policy is already absent" % policy_name)
 
         updated_policies = [cp for cp in iam.get_all_user_policies(name).
-                                            list_user_policies_result.
-                                            policy_names]
+                            list_user_policies_result.
+                            policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -188,8 +174,8 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     changed = False
     try:
         current_policies = [cp for cp in iam.list_role_policies(name).
-                                            list_role_policies_result.
-                                            policy_names]
+                            list_role_policies_result.
+                            policy_names]
     except boto.exception.BotoServerError as e:
         if e.error_code == "NoSuchEntity":
             # Role doesn't exist so it's safe to assume the policy doesn't either
@@ -200,8 +186,8 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     try:
         matching_policies = []
         for pol in current_policies:
-            if urllib.unquote(iam.get_role_policy(name, pol).
-                              get_role_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_role_policy(name, pol).
+                                    get_role_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
 
@@ -226,8 +212,8 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
                     module.fail_json(msg=err.message)
 
         updated_policies = [cp for cp in iam.list_role_policies(name).
-                                            list_role_policies_result.
-                                            policy_names]
+                            list_role_policies_result.
+                            policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -238,19 +224,19 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
 def group_action(module, iam, name, policy_name, skip, pdoc, state):
     policy_match = False
     changed = False
-    msg=''
+    msg = ''
     try:
         current_policies = [cp for cp in iam.get_all_group_policies(name).
-                                            list_group_policies_result.
-                                            policy_names]
+                            list_group_policies_result.
+                            policy_names]
         matching_policies = []
         for pol in current_policies:
-            if urllib.unquote(iam.get_group_policy(name, pol).
-                              get_group_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_group_policy(name, pol).
+                                    get_group_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
-                msg=("The policy document you specified already exists "
-                     "under the name %s." % pol)
+                msg = ("The policy document you specified already exists "
+                       "under the name %s." % pol)
         if state == 'present':
             # If policy document does not already exist (either it's changed
             # or the policy is not present) or if we're not skipping dupes then
@@ -270,8 +256,8 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
                                      msg="%s policy is already absent" % policy_name)
 
         updated_policies = [cp for cp in iam.get_all_group_policies(name).
-                                            list_group_policies_result.
-                                            policy_names]
+                            list_group_policies_result.
+                            policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -317,13 +303,13 @@ def main():
     elif module.params.get('policy_json') is not None:
         pdoc = module.params.get('policy_json')
         # if its a string, assume it is already JSON
-        if not isinstance(pdoc, basestring):
+        if not isinstance(pdoc, string_types):
             try:
                 pdoc = json.dumps(pdoc)
             except Exception as e:
                 module.fail_json(msg='Failed to convert the policy into valid JSON: %s' % str(e))
     else:
-        pdoc=None
+        pdoc = None
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -349,12 +335,10 @@ def main():
         module.exit_json(changed=changed, role_name=name, policies=current_policies)
     elif iam_type == 'group':
         changed, group_name, current_policies, msg = group_action(module, iam, name,
-                                                           policy_name, skip, pdoc,
-                                                           state)
+                                                                  policy_name, skip, pdoc,
+                                                                  state)
         module.exit_json(changed=changed, group_name=name, policies=current_policies, msg=msg)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

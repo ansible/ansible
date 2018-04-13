@@ -1,0 +1,42 @@
+---
+- name: setup - remove login
+  iosxr_banner:
+    banner: login
+    provider: "{{ netconf }}"
+    state: absent
+
+- name: Set login
+  iosxr_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my login banner' in result.xml"
+      - "'that has a multiline' in result.xml"
+
+- name: Set login again (idempotent)
+  iosxr_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.xml | length == 0"

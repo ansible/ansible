@@ -1,0 +1,15 @@
+- name: set timezone to Etc/UTC
+  timezone:
+    name: Etc/UTC
+
+- name: set timezone to Australia/Brisbane
+  timezone:
+    name: Australia/Brisbane
+  register: timezone_set
+
+- name: ensure timezone changed
+  assert:
+    that:
+      - timezone_set.changed
+      - timezone_set.diff.after.name == 'Australia/Brisbane'
+      - timezone_set.diff.before.name == 'Etc/UTC'

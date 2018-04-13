@@ -6,7 +6,7 @@
 - name: verify test fail missing url if host is not existent
   assert:
     that:
-      - host|failed
+      - host is failed
       - 'host.msg == "missing required arguments: name"'
 
 - name: test fail missing params if host is not existent
@@ -17,8 +17,8 @@
 - name: verify test fail missing params if host is not existent
   assert:
     that:
-      - host|failed
-      - 'host.msg == "missing required arguments: password,username,hypervisor,pod"'
+      - host is failed
+      - 'host.msg == "missing required arguments: password, username, hypervisor, pod"'
 
 - name: test create a host in check mode
   cs_host:
@@ -38,7 +38,7 @@
 - name: verify test create a host in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
 
 - name: test create a host
   cs_host:
@@ -57,7 +57,7 @@
 - name: verify test create a host
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -91,7 +91,7 @@
 - name: verify test create a host idempotence
   assert:
     that:
-      - not host|changed
+      - host is not changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -120,7 +120,7 @@
 - name: verify test update a host in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -148,7 +148,7 @@
 - name: verify test update a host in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -176,7 +176,7 @@
 - name: verify test update a host idempotence
   assert:
     that:
-      - not host|changed
+      - host is not changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -203,7 +203,7 @@
 - name: verify test update host remove host_tags
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.host_tags|length == 0
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
@@ -231,7 +231,7 @@
 - name: verify test update host remove host_tags idempotence
   assert:
     that:
-      - not host|changed
+      - host is not changed
       - len(host.host_tags) == 0
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
@@ -254,7 +254,7 @@
 - name: verify test put host in maintenance in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -274,7 +274,7 @@
 - name: verify test put host in maintenance
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -294,7 +294,7 @@
 - name: verify test put host in maintenance idempotence
   assert:
     that:
-      - not host|changed
+      - host is not changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -315,7 +315,7 @@
 - name: verify test put host out of maintenance in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -335,7 +335,7 @@
 - name: verify test put host out of maintenance
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -355,7 +355,7 @@
 - name: verify test put host out of maintenance idempotence
   assert:
     that:
-      - not host|changed
+      - host is not changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -376,7 +376,7 @@
 - name: verify test remove a host in check mode
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -396,7 +396,7 @@
 - name: verify test remove a host
   assert:
     that:
-      - host|changed
+      - host is changed
       - host.cluster == 'C0-basic'
       - host.pod == 'POD0-basic'
       - host.hypervisor == 'Simulator'
@@ -416,4 +416,4 @@
 - name: verify test remove a host idempotenc
   assert:
     that:
-      - not host|changed
+      - host is not changed

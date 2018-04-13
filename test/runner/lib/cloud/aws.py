@@ -68,6 +68,7 @@ class AwsCloudProvider(CloudProvider):
                 ACCESS_KEY=credentials['access_key'],
                 SECRET_KEY=credentials['secret_key'],
                 SECURITY_TOKEN=credentials['session_token'],
+                REGION='us-east-1',
             )
 
             config = self._populate_config_template(config, values)
@@ -78,7 +79,7 @@ class AwsCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'aws', 'sts', persist=False, stage=self.args.remote_stage)
+        return AnsibleCoreCI(self.args, 'aws', 'sts', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
 
 
 class AwsCloudEnvironment(CloudEnvironment):

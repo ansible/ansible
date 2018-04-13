@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -59,86 +49,65 @@ options:
           - Unique name for the service on a node, must be unique per node,
             required if registering a service. May be omitted if registering
             a node level check
-        required: false
     service_id:
         description:
           - the ID for the service, must be unique per node, defaults to the
             service name if the service name is supplied
-        required: false
         default: service_name if supplied
     host:
         description:
           - host of the consul agent defaults to localhost
-        required: false
         default: localhost
     port:
         description:
           - the port on which the consul agent is running
-        required: false
         default: 8500
     scheme:
         description:
           - the protocol scheme on which the consul agent is running
-        required: false
         default: http
         version_added: "2.1"
     validate_certs:
         description:
           - whether to verify the tls certificate of the consul agent
-        required: false
-        default: True
+        type: bool
+        default: 'yes'
         version_added: "2.1"
     notes:
         description:
           - Notes to attach to check when registering it.
-        required: false
-        default: None
     service_port:
         description:
           - the port on which the service is listening. Can optionally be supplied for
             registration of a service, i.e. if service_name or service_id is set
-        required: false
-        default: None
     service_address:
         description:
           - the address to advertise that the service will be listening on.
             This value will be passed as the I(Address) parameter to Consul's
             U(/v1/agent/service/register) API method, so refer to the Consul API
             documentation for further details.
-        required: false
-        default: None
         version_added: "2.1"
     tags:
         description:
           - a list of tags that will be attached to the service registration.
-        required: false
-        default: None
     script:
         description:
           - the script/command that will be run periodically to check the health
             of the service. Scripts require an interval and vise versa
-        required: false
-        default: None
     interval:
         description:
           - the interval at which the service check will be run. This is a number
             with a s or m suffix to signify the units of seconds or minutes e.g
             15s or 1m. If no suffix is supplied, m will be used by default e.g.
             1 will be 1m. Required if the script param is specified.
-        required: false
-        default: None
     check_id:
         description:
           - an ID for the service check, defaults to the check name, ignored if
             part of a service definition.
-        required: false
-        default: None
     check_name:
         description:
           - a name for the service check, defaults to the check id. required if
             standalone, ignored if part of service definition.
-        required: false
-        default: None
     ttl:
         description:
           - checks can be registered with a ttl instead of a script and interval
@@ -148,29 +117,21 @@ options:
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes e.g 15s or 1m. If no suffix
             is supplied, m will be used by default e.g. 1 will be 1m
-        required: false
-        default: None
     http:
         description:
           - checks can be registered with an http endpoint. This means that consul
             will check that the http endpoint returns a successful http status.
             Interval must also be provided with this option.
-        required: false
-        default: None
         version_added: "2.0"
     timeout:
         description:
           - A custom HTTP check timeout. The consul default is 10 seconds.
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes, e.g. 15s or 1m.
-        required: false
-        default: None
         version_added: "2.0"
     token:
         description:
           - the token key indentifying an ACL rule set. May be required to register services.
-        required: false
-        default: None
 """
 
 EXAMPLES = '''
@@ -238,9 +199,21 @@ EXAMPLES = '''
 try:
     import consul
     from requests.exceptions import ConnectionError
+
+    class PatchedConsulAgentService(consul.Consul.Agent.Service):
+        def deregister(self, service_id, token=None):
+            params = {}
+            if token:
+                params['token'] = token
+            return self.agent.http.put(consul.base.CB.bool(),
+                                       '/v1/agent/service/deregister/%s' % service_id,
+                                       params=params)
+
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def register_with_consul(module):
@@ -285,7 +258,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name and not service_id:
+    if not check.name and not check.service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -314,7 +287,7 @@ def remove_check(module, check_id):
 
 
 def add_service(module, service):
-    ''' registers a service with the the current agent '''
+    ''' registers a service with the current agent '''
     result = service
     changed = False
 
@@ -345,18 +318,20 @@ def remove_service(module, service_id):
     consul_api = get_consul_api(module)
     service = get_service_by_id_or_name(consul_api, service_id)
     if service:
-        consul_api.agent.service.deregister(service_id)
+        consul_api.agent.service.deregister(service_id, token=module.params.get('token'))
         module.exit_json(changed=True, id=service_id)
 
     module.exit_json(changed=False, id=service_id)
 
 
 def get_consul_api(module, token=None):
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=module.params.get('token'))
+    consulClient = consul.Consul(host=module.params.get('host'),
+                                 port=module.params.get('port'),
+                                 scheme=module.params.get('scheme'),
+                                 verify=module.params.get('validate_certs'),
+                                 token=module.params.get('token'))
+    consulClient.agent.service = PatchedConsulAgentService(consulClient)
+    return consulClient
 
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
@@ -367,9 +342,9 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
@@ -397,8 +372,8 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_port') and not module.params.get('service_name'):
-        module.fail_json(msg="service_port supplied but no service_name, a name is required to configure a service.")
+    elif not module.params.get('service_name'):
+        module.fail_json(msg="service_name is required to configure a service.")
 
 
 class ConsulService():
@@ -425,7 +400,7 @@ class ConsulService():
             optional['port'] = self.port
 
         if len(self.checks) > 0:
-            optional['check'] = checks[0].check
+            optional['check'] = self.checks[0].check
 
         consul_api.agent.service.register(
             self.name,
@@ -464,7 +439,7 @@ class ConsulService():
         return data
 
 
-class ConsulCheck():
+class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
                  script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
@@ -513,8 +488,8 @@ class ConsulCheck():
                 self.check_id == other.check_id and
                 self.service_id == other.service_id and
                 self.name == other.name and
-                self.script == script and
-                self.interval == interval)
+                self.script == other.script and
+                self.interval == other.interval)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -586,7 +561,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

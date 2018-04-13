@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/src_basic.yaml"
+- debug: msg="START netconf/src_basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   junos_config:
@@ -101,4 +101,4 @@
     that:
       - "result.changed == true"
 
-- debug: msg="END netconf/src_basic.yaml"
+- debug: msg="END netconf/src_basic.yaml on connection={{ ansible_connection }}"

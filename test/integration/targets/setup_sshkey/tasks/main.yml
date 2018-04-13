@@ -15,33 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: create random file
-  shell: mktemp /tmp/id_rsa.XXXXXX
-  register: sshkey
+- name: create a temp file
+  tempfile:
+    state: file
+  register: sshkey_file
   tags:
     - prepare
 
 - name: generate sshkey
-  shell: echo 'y' | ssh-keygen -P '' -f {{sshkey.stdout}}
+  shell: echo 'y' | ssh-keygen -P '' -f {{ sshkey_file.path }}
   tags:
     - prepare
 
-- name: record key_material
-  command: cat {{sshkey.stdout}}.pub
-  register: key_material
+- name: create another temp file
+  tempfile:
+    state: file
+  register: another_sshkey_file
+  tags:
+    - prepare
+
+- name: generate another_sshkey
+  shell: echo 'y' | ssh-keygen -P '' -f {{ another_sshkey_file.path }}
   tags:
     - prepare
 
 - name: record fingerprint
-  shell: ssh-keygen -lf {{sshkey.stdout}}.pub
+  shell: openssl rsa -in {{ sshkey_file.path }} -pubout -outform DER 2>/dev/null | openssl md5 -c
   register: fingerprint
   tags:
     - prepare
 
 - name: set facts for future roles
   set_fact:
-    sshkey: '{{sshkey.stdout}}'
-    key_material: '{{key_material.stdout}}'
-    fingerprint: '{{fingerprint.stdout.split()[1]}}'
+    sshkey: '{{ sshkey_file.path }}'
+    key_material: "{{ lookup('file', sshkey_file.path ~ '.pub') }}"
+    another_key_material: "{{ lookup('file', another_sshkey_file.path ~ '.pub') }}"
+    fingerprint: '{{ fingerprint.stdout.split()[1] }}'
   tags:
     - prepare

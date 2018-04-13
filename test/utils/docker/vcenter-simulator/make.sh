@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t ansible:vcenter-simulator .
+docker build --no-cache -t ansible:vcenter-simulator .

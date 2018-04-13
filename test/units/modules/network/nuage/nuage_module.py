@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
-from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import set_module_args as _set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 from nose.plugins.skip import SkipTest
 try:
@@ -31,27 +28,15 @@ except ImportError:
 
 
 def set_module_args(args):
-    set_module_args_custom_auth(args=args, auth={
-        'api_username': 'csproot',
-        'api_password': 'csproot',
-        'api_enterprise': 'csp',
-        'api_url': 'https://localhost:8443',
-        'api_version': 'v5_0'
-    })
-
-
-def set_module_args_custom_auth(args, auth):
-    args['auth'] = auth
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
+    if 'auth' not in args:
+        args['auth'] = {
+            'api_username': 'csproot',
+            'api_password': 'csproot',
+            'api_enterprise': 'csp',
+            'api_url': 'https://localhost:8443',
+            'api_version': 'v5_0'
+        }
+    return _set_module_args(args)
 
 
 class MockNuageResponse(object):
@@ -66,9 +51,10 @@ class MockNuageConnection(object):
         self.response = MockNuageResponse(status_code, reason, errors)
 
 
-class TestNuageModule(unittest.TestCase):
+class TestNuageModule(ModuleTestCase):
 
     def setUp(self):
+        super(TestNuageModule, self).setUp()
 
         def session_start(self):
             self._root_object = vsdk.NUMe()
@@ -79,22 +65,6 @@ class TestNuageModule(unittest.TestCase):
         self.session_mock = patch('vspk.v5_0.NUVSDSession.start', new=session_start)
         self.session_mock.start()
 
-        def fail_json(*args, **kwargs):
-            kwargs['failed'] = True
-            raise AnsibleFailJson(kwargs)
-
-        self.fail_json_mock = patch('ansible.module_utils.basic.AnsibleModule.fail_json', new=fail_json)
-        self.fail_json_mock.start()
-
-        def exit_json(*args, **kwargs):
-            if 'changed' not in kwargs:
-                kwargs['changed'] = False
-            raise AnsibleExitJson(kwargs)
-
-        self.exit_json_mock = patch('ansible.module_utils.basic.AnsibleModule.exit_json', new=exit_json)
-        self.exit_json_mock.start()
-
     def tearDown(self):
+        super(TestNuageModule, self).tearDown()
         self.session_mock.stop()
-        self.fail_json_mock.stop()
-        self.exit_json_mock.stop()

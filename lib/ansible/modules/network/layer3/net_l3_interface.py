@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -43,11 +32,11 @@ options:
   ipv6:
     description:
       - IPv6 of the L3 interface.
-  collection:
+  aggregate:
     description: List of L3 interfaces definitions
   purge:
     description:
-      - Purge L3 interfaces not defined in the collections parameter.
+      - Purge L3 interfaces not defined in the I(aggregate) parameter.
     default: no
   state:
     description:
@@ -65,6 +54,19 @@ EXAMPLES = """
 - name: Remove eth0 IPv4 address
   net_l3_interface:
     name: eth0
+    state: absent
+
+- name: Set IP addresses on aggregate
+  net_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+
+- name: Remove IP addresses on aggregate
+  net_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
     state: absent
 """
 

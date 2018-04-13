@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -34,7 +32,8 @@ description:
     rendezvous point (RP) address instance.
 author: Gabriele Gerbino (@GGabriele)
 notes:
-  - C(state=absent) remove the whole rp-address configuration, if existing.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - C(state=absent) is currently not supported on all platforms.
 options:
   rp_address:
     description:
@@ -45,26 +44,24 @@ options:
   group_list:
     description:
       - Group range for static RP. Valid values are multicast addresses.
-    required: false
-    default: null
   prefix_list:
     description:
       - Prefix list policy for static RP. Valid values are prefix-list
         policy names.
-    required: false
-    default: null
   route_map:
     description:
       - Route map policy for static RP. Valid values are route-map
         policy names.
-    required: false
-    default: null
   bidir:
     description:
       - Group range is treated in PIM bidirectional mode.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: true
+    default: present
+    choices: ['present','absent','default']
 '''
 EXAMPLES = '''
 - nxos_pim_rp_address:
@@ -83,13 +80,13 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
-def get_existing(module, args):
+def get_existing(module, args, gl):
     existing = {}
     config = str(get_config(module))
     address = module.params['rp_address']
@@ -100,16 +97,22 @@ def get_existing(module, args):
         values = line.split()
         if values[0] != address:
             continue
+        if gl and 'group-list' not in line:
+            continue
+        elif not gl and 'group-list' in line:
+            if '224.0.0.0/4' not in line:  # ignore default group-list
+                continue
 
         existing['bidir'] = existing.get('bidir') or 'bidir' in line
         if len(values) > 2:
-            value = values[1]
-            if values[2] == 'route-map':
+            value = values[2]
+            if values[1] == 'route-map':
                 existing['route_map'] = value
-            elif values[2] == 'prefix-list':
+            elif values[1] == 'prefix-list':
                 existing['prefix_list'] = value
-            elif values[2] == 'group-list':
-                existing['group_list'] = value
+            elif values[1] == 'group-list':
+                if value != '224.0.0.0/4':  # ignore default group-list
+                    existing['group_list'] = value
 
     return existing
 
@@ -117,6 +120,14 @@ def get_existing(module, args):
 def state_present(module, existing, proposed, candidate):
     address = module.params['rp_address']
     command = 'ip pim rp-address {0}'.format(address)
+    if module.params['group_list'] and not proposed.get('group_list'):
+        command += ' group-list ' + module.params['group_list']
+    if module.params['prefix_list']:
+        if not proposed.get('prefix_list'):
+            command += ' prefix-list ' + module.params['prefix_list']
+    if module.params['route_map']:
+        if not proposed.get('route_map'):
+            command += ' route-map ' + module.params['route_map']
     commands = build_command(proposed, command)
     if commands:
         candidate.add(commands, parents=[])
@@ -135,13 +146,31 @@ def build_command(param_dict, command):
 def state_absent(module, existing, candidate):
     address = module.params['rp_address']
 
+    commands = []
     command = 'no ip pim rp-address {0}'.format(address)
-    if existing.get('group_list'):
+    if module.params['group_list'] == existing.get('group_list'):
         commands = build_command(existing, command)
-    else:
+    elif not module.params['group_list']:
         commands = [command]
 
-    candidate.add(commands, parents=[])
+    if commands:
+        candidate.add(commands, parents=[])
+
+
+def get_proposed(pargs, existing):
+    proposed = {}
+
+    for key, value in pargs.items():
+        if key != 'rp_address':
+            if str(value).lower() == 'true':
+                value = True
+            elif str(value).lower() == 'false':
+                value = False
+
+            if existing.get(key) != value:
+                proposed[key] = value
+
+    return proposed
 
 
 def main():
@@ -175,20 +204,16 @@ def main():
         'bidir'
     ]
 
-    existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
 
-    proposed = {}
-    for key, value in proposed_args.items():
-        if key != 'rp_address':
-            if str(value).lower() == 'true':
-                value = True
-            elif str(value).lower() == 'false':
-                value = False
+    if module.params['group_list']:
+        existing = get_existing(module, args, True)
+        proposed = get_proposed(proposed_args, existing)
 
-            if existing.get(key) != value:
-                proposed[key] = value
+    else:
+        existing = get_existing(module, args, False)
+        proposed = get_proposed(proposed_args, existing)
 
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present' and (proposed or not existing):
@@ -200,7 +225,19 @@ def main():
         candidate = candidate.items_text()
         result['commands'] = candidate
         result['changed'] = True
-        load_config(module, candidate)
+        msgs = load_config(module, candidate, True)
+        if msgs:
+            for item in msgs:
+                if item:
+                    if isinstance(item, dict):
+                        err_str = item['clierror']
+                    else:
+                        err_str = item
+                    if 'No policy was configured' in err_str:
+                        if state == 'absent':
+                            addr = module.params['rp_address']
+                            new_cmd = 'no ip pim rp-address {0}'.format(addr)
+                            load_config(module, new_cmd)
 
     module.exit_json(**result)
 

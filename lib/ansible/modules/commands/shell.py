@@ -1,23 +1,15 @@
-# There is no actual shell module source, when you use 'shell' in ansible,
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# # There is no actual shell module source, when you use 'shell' in ansible,
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -38,45 +30,42 @@ options:
       - The shell module takes a free form command to run, as a string.  There's not an actual
         option named "free form".  See the examples!
     required: true
-    default: null
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
   removes:
     description:
       - a filename, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
-    required: no
-    default: null
   chdir:
     description:
       - cd into this directory before running the command
-    required: false
-    default: null
     version_added: "0.6"
   executable:
     description:
       - change the shell used to execute the command. Should be an absolute path to the executable.
-    required: false
-    default: null
     version_added: "0.9"
   warn:
     description:
       - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
-    required: false
-    default: True
+    type: bool
+    default: 'yes'
     version_added: "1.8"
+  stdin:
+    version_added: "2.4"
+    description:
+      - Set the stdin of the command directly to the specified value.
 notes:
-   -  If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless the C(shell)
-      module is explicitly required. When running ad-hoc commands, use your best
-      judgement.
-   -  To sanitize any variables passed to the shell module, you should use
-      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
+  -  If you want to execute a command securely and predictably, it may be
+     better to use the M(command) module instead. Best practices when writing
+     playbooks will follow the trend of using M(command) unless the C(shell)
+     module is explicitly required. When running ad-hoc commands, use your best
+     judgement.
+  -  To sanitize any variables passed to the shell module, you should use
+     "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - For Windows targets, use the M(win_shell) module instead.
+  - Rather than using here documents to create multi-line scripts inside playbooks,
+    use the M(script) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team

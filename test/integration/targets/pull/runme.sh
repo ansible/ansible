@@ -11,6 +11,8 @@ repo_dir="${temp_dir}/repo"
 pull_dir="${temp_dir}/pull"
 temp_log="${temp_dir}/pull.log"
 
+ansible-playbook setup.yml
+
 cp -av "pull-integration-test" "${repo_dir}"
 cd "${repo_dir}"
 (
@@ -30,7 +32,12 @@ if ! grep MAGICKEYWORD "${temp_log}"; then
 fi
 
 # test for https://github.com/ansible/ansible/issues/13681
-if grep '127\.0\.0\.1' "${temp_log}"; then
+if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
     echo "Found host 127.0.0.1 in output. Only localhost should be present."
+    exit 1
+fi
+# make sure one host was run
+if ! egrep 'localhost.*ok' "${temp_log}"; then
+    echo "Did not find host localhost in output."
     exit 1
 fi

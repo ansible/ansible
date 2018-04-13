@@ -1,5 +1,5 @@
 ---
-- debug: msg="START vyos_interface cli/basic.yaml"
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Run vyos lsmod command
   vyos_command:
@@ -84,7 +84,7 @@
 - name: Disable interface
   vyos_interface:
     name: eth1
-    state: down
+    enabled: False
   register: result
 
 - assert:
@@ -95,7 +95,7 @@
 - name: Enable interface
   vyos_interface:
     name: eth1
-    state: up
+    enabled: True
   register: result
 
 - assert:
@@ -167,8 +167,10 @@
 - name: Disable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, state: down}
-      - { name: eth2, description: test-interface-2, state: down}
+      - name: eth1
+      - name: eth2
+    description: test-interface
+    enabled: False
   register: result
 
 - assert:
@@ -180,8 +182,9 @@
 - name: Enable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, state: present}
-      - { name: eth2, description: test-interface-2, state: present}
+      - name: eth1
+      - name: eth2
+    enabled: True
   register: result
 
 - assert:
@@ -193,8 +196,9 @@
 - name: Delete interface aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:
@@ -206,8 +210,9 @@
 - name: Delete interface aggregate (idempotent)
   vyos_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:

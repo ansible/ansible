@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -33,33 +24,23 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
+    aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
-    required: false
-    default: null
   template:
     description:
       - Template used to create the database
-    required: false
-    default: null
   encoding:
     description:
       - Encoding of the database
-    required: false
-    default: null
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.
-    required: false
-    default: null
   lc_ctype:
     description:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
-    required: false
-    default: null
   state:
     description: |
         The database state. present implies that the database should be created if necessary.
@@ -69,7 +50,6 @@ options:
         (Added in 2.4) The format of the backup will be detected based on the target name.
         Supported compression formats for dump and restore are: .bz2, .gz, and .xz
         Supported formats for dump and restore are: .sql and .tar
-    required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
   target:
@@ -80,6 +60,11 @@ options:
     version_added: "2.4"
     description:
       - Further arguments for pg_dump or pg_restore. Used when state is "dump" or "restore"
+  maintenance_db:
+    version_added: "2.5"
+    description:
+      - The value specifies the initial database (which is also called as maintenance DB) that Ansible connects to.
+    default: postgres
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -120,25 +105,24 @@ EXAMPLES = '''
     target_opts: "-n public"
 '''
 
-HAS_PSYCOPG2 = False
+import os
+import pipes
+import subprocess
+import traceback
+
 try:
     import psycopg2
     import psycopg2.extras
-    import pipes
-    import subprocess
-    import os
-
 except ImportError:
-    pass
+    HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
-from ansible.module_utils.six import iteritems
-
-import traceback
 
 import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -156,10 +140,12 @@ def set_owner(cursor, db, owner):
     cursor.execute(query)
     return True
 
+
 def get_encoding_id(cursor, encoding):
     query = "SELECT pg_char_to_encoding(%(encoding)s) AS encoding_id;"
     cursor.execute(query, {'encoding': encoding})
     return cursor.fetchone()['encoding_id']
+
 
 def get_db_info(cursor, db):
     query = """
@@ -172,10 +158,12 @@ def get_db_info(cursor, db):
     cursor.execute(query, {'db': db})
     return cursor.fetchone()
 
+
 def db_exists(cursor, db):
     query = "SELECT * FROM pg_database WHERE datname=%(db)s"
     cursor.execute(query, {'db': db})
     return cursor.rowcount == 1
+
 
 def db_delete(cursor, db):
     if db_exists(cursor, db):
@@ -184,6 +172,7 @@ def db_delete(cursor, db):
         return True
     else:
         return False
+
 
 def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype)
@@ -225,6 +214,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return False
 
+
 def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     if not db_exists(cursor, db):
         return False
@@ -241,6 +231,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
             return False
         else:
             return True
+
 
 def db_dump(module, target, target_opts="",
             db=None,
@@ -277,13 +268,14 @@ def db_dump(module, target, target_opts="",
 
     return do_with_password(module, cmd, password)
 
+
 def db_restore(module, target, target_opts="",
-            db=None,
-            user=None,
-            password=None,
-            host=None,
-            port=None,
-            **kw):
+               db=None,
+               user=None,
+               password=None,
+               host=None,
+               port=None,
+               **kw):
 
     flags = login_flags(db, host, port, user)
     comp_prog_path = None
@@ -328,6 +320,7 @@ def db_restore(module, target, target_opts="",
 
     return do_with_password(module, cmd, password)
 
+
 def login_flags(db, host, port, user, db_prefix=True):
     """
     returns a list of connection argument strings each prefixed
@@ -351,6 +344,7 @@ def login_flags(db, host, port, user, db_prefix=True):
         flags.append(' --username={0}'.format(user))
     return flags
 
+
 def do_with_password(module, cmd, password):
     env = {}
     if password:
@@ -362,6 +356,7 @@ def do_with_password(module, cmd, password):
 # Module execution.
 #
 
+
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
@@ -372,21 +367,20 @@ def main():
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
-        target=dict(default=""),
+        target=dict(default="", type="path"),
         target_opts=dict(default=""),
+        maintenance_db=dict(default="postgres"),
     ))
-
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not HAS_PSYCOPG2:
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
-    port = module.params["port"]
     owner = module.params["owner"]
     template = module.params["template"]
     encoding = module.params["encoding"]
@@ -395,21 +389,21 @@ def main():
     target = module.params["target"]
     target_opts = module.params["target_opts"]
     state = module.params["state"]
-    sslrootcert = module.params["ssl_rootcert"]
     changed = False
+    maintenance_db = module.params['maintenance_db']
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "ssl_mode":"sslmode",
-        "ssl_rootcert":"sslrootcert"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ssl_rootcert": "sslrootcert"
     }
-    kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
@@ -421,12 +415,10 @@ def main():
     if target == "":
         target = "{0}/{1}.sql".format(os.getcwd(), db)
         target = os.path.expanduser(target)
-    else:
-        target = os.path.expanduser(target)
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
-        db_connection = psycopg2.connect(database="postgres", **kw)
+        db_connection = psycopg2.connect(database=maintenance_db, **kw)
 
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
@@ -435,20 +427,17 @@ def main():
             db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    except pgutils.LibraryError:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+    except pgutils.LibraryError as e:
+        module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
 
-    except TypeError:
-        e = get_exception()
+    except TypeError as e:
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e),
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
                              exception=traceback.format_exc())
-        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -461,16 +450,14 @@ def main():
         if state == "absent":
             try:
                 changed = db_delete(cursor, db)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state == "present":
             try:
                 changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state in ("dump", "restore"):
             method = state == "dump" and db_dump or db_restore
@@ -480,19 +467,16 @@ def main():
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
                     module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:
         # Avoid catching this on Python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Database query failed: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, db=db)
 

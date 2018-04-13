@@ -20,11 +20,7 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import sys
-import syslog
-
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 from ansible.module_utils.basic import heuristic_log_sanitize
 
 

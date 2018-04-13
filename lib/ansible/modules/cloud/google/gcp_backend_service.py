@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2017 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 DOCUMENTATION = '''
@@ -56,13 +46,10 @@ options:
   enable_cdn:
     description:
        - If true, enable Cloud CDN for this Backend Service.
-    required: false
   port_name:
     description:
       - Name of the port on the managed instance group (MIG) that backend
         services can forward data to. Required for external load balancing.
-    required: false
-    default: null
   protocol:
     description:
        - The protocol this Backend Service uses to communicate with backends.
@@ -76,22 +63,15 @@ options:
   service_account_email:
     description:
       - Service account email
-    required: false
-    default: null
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email.
-    default: null
-    required: false
   project_id:
     description:
       - GCE project ID.
-    required: false
-    default: null
   state:
     description:
       - Desired state of the resource
-    required: false
     default: "present"
     choices: ["absent", "present"]
 '''
@@ -180,6 +160,11 @@ timeout:
     sample: "myhttpport"
 '''
 
+try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
 
 try:
     import libcloud
@@ -193,13 +178,6 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 from ansible.module_utils.gcp import check_params
@@ -415,6 +393,7 @@ def main():
     json_output['changed'] = changed
     json_output.update(params)
     module.exit_json(**json_output)
+
 
 if __name__ == '__main__':
     main()

@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -40,82 +30,54 @@ options:
     description:
       - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
         this parameter is mandatory when creating or updating a firewall rule
-    required: false
-    default: null
-    aliases: []
   ipv4_range:
     description:
       - the IPv4 address range in CIDR notation for the network
         this parameter is not mandatory when you specified existing network in name parameter, but when you create new network, this parameter is mandatory
-    required: false
     aliases: ['cidr']
   fwname:
     description:
       - name of the firewall rule
-    required: false
-    default: null
     aliases: ['fwrule']
   name:
     description:
       - name of the network
-    required: false
-    default: null
-    aliases: []
   src_range:
     description:
       - the source IPv4 address range in CIDR notation
-    required: false
     default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   state:
     description:
       - desired state of the network or firewall
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
-    aliases: []
   service_account_email:
     version_added: "1.6"
     description:
       - service account email
-    required: false
-    default: null
-    aliases: []
   pem_file:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
-    aliases: []
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    required: false
-    default: null
-    aliases: []
   project_id:
     version_added: "1.6"
     description:
       - your GCE project ID
-    required: false
-    default: null
-    aliases: []
   mode:
     version_added: "2.2"
     description:
@@ -124,31 +86,20 @@ options:
         "auto" automatically generates subnetworks in different regions
         "custom" uses networks to group subnets of user specified IP address ranges
         https://cloud.google.com/compute/docs/networking#network_types
-    required: false
     default: "legacy"
     choices: ["legacy", "auto", "custom"]
-    aliases: []
   subnet_name:
     version_added: "2.2"
     description:
       - name of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_region:
     version_added: "2.2"
     description:
       - region of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_desc:
     version_added: "2.2"
     description:
       - description of subnet to create
-    required: false
-    default: null
-    aliases: []
 
 requirements:
     - "python >= 2.6"
@@ -274,12 +225,15 @@ target_tags:
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError
+    from libcloud.common.google import GoogleBaseError, QuotaExceededError, ResourceExistsError, ResourceNotFoundError
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+
 
 def format_allowed_section(allowed):
     """Format each section of the allowed list"""
@@ -299,6 +253,7 @@ def format_allowed_section(allowed):
         return_val["ports"] = ports
     return return_val
 
+
 def format_allowed(allowed):
     """Format the 'allowed' value so that it is GCE compatible."""
     return_value = []
@@ -310,33 +265,34 @@ def format_allowed(allowed):
             return_value.append(format_allowed_section(section))
     return return_value
 
+
 def sorted_allowed_list(allowed_list):
     """Sort allowed_list (output of format_allowed) by protocol and port."""
     # sort by protocol
-    allowed_by_protocol = sorted(allowed_list,key=lambda x: x['IPProtocol'])
+    allowed_by_protocol = sorted(allowed_list, key=lambda x: x['IPProtocol'])
     # sort the ports list
     return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            allowed = dict(),
-            ipv4_range = dict(),
-            fwname = dict(),
-            name = dict(),
-            src_range = dict(default=[], type='list'),
-            src_tags = dict(default=[], type='list'),
-            target_tags = dict(default=[], type='list'),
-            state = dict(default='present'),
-            service_account_email = dict(),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
-            mode = dict(default='legacy', choices=['legacy', 'auto', 'custom']),
-            subnet_name = dict(),
-            subnet_region = dict(),
-            subnet_desc = dict(),
+        argument_spec=dict(
+            allowed=dict(),
+            ipv4_range=dict(),
+            fwname=dict(),
+            name=dict(),
+            src_range=dict(default=[], type='list'),
+            src_tags=dict(default=[], type='list'),
+            target_tags=dict(default=[], type='list'),
+            state=dict(default='present'),
+            service_account_email=dict(),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
+            mode=dict(default='legacy', choices=['legacy', 'auto', 'custom']),
+            subnet_name=dict(),
+            subnet_region=dict(),
+            subnet_desc=dict(),
         )
     )
 
@@ -385,8 +341,8 @@ def main():
         if name and not network:
             if not ipv4_range and mode != 'auto':
                 module.fail_json(msg="Network '" + name + "' is not found. To create network in legacy or custom mode, 'ipv4_range' parameter is required",
-                    changed=False)
-            args = [ipv4_range if mode =='legacy' else None]
+                                 changed=False)
+            args = [ipv4_range if mode == 'legacy' else None]
             kwargs = {}
             if mode != 'legacy':
                 kwargs['mode'] = mode
@@ -420,8 +376,7 @@ def main():
             if not allowed and not src_range and not src_tags:
                 if changed and network:
                     module.fail_json(
-                        msg="Network created, but missing required " + \
-                        "firewall rule parameter(s)", changed=True)
+                        msg="Network created, but missing required " + "firewall rule parameter(s)", changed=True)
                 module.fail_json(
                     msg="Missing required firewall rule parameter(s)",
                     changed=False)
@@ -490,7 +445,7 @@ def main():
             except ResourceNotFoundError:
                 try:
                     gce.ex_create_firewall(fwname, allowed_list, network=name,
-                        source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
+                                           source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
                     changed = True
 
                 except Exception as e:
@@ -552,9 +507,6 @@ def main():
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

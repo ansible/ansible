@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2017 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -53,7 +43,6 @@ options:
   check_interval:
     description:
        - How often (in seconds) to send a health check.
-    required: false
     default: 5
   healthcheck_name:
     description:
@@ -75,7 +64,6 @@ options:
     description:
        - The TCP port number for the health check request. The default value is
          443 for HTTPS and 80 for HTTP.
-    required: false
   request_path:
     description:
        - The request path of the HTTPS health check request.
@@ -90,33 +78,26 @@ options:
        - How long (in seconds) to wait for a response before claiming
          failure. It is invalid for timeout
          to have a greater value than check_interval.
-    required: false
     default: 5
   unhealthy_threshold:
     description:
        - A so-far healthy instance will be marked unhealthy after this
          many consecutive failures.
-    required: false
     default: 2
   healthy_threshold:
     description:
        - A so-far unhealthy instance will be marked healthy after this
          many consecutive successes.
-    required: false
     default: 2
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   service_account_permissions:
     version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -126,13 +107,9 @@ options:
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     description:
       - Your GCP project ID
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -197,10 +174,9 @@ healthcheck:
     sample: { "name": "my-hc", "port": 443, "requestPath": "/foo" }
 '''
 
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gcp import check_params, get_google_api_client, GCPUtils
+from ansible.module_utils.gcp import get_google_api_client, GCPUtils
+
 
 USER_AGENT_PRODUCT = 'ansible-healthcheck'
 USER_AGENT_VERSION = '0.0.1'

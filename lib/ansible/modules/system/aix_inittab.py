@@ -2,33 +2,21 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Joris Weijters <joris.weijters@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-
 DOCUMENTATION = '''
 ---
-author: "Joris Weijters (@molekuul)"
+author:
+- Joris Weijters (@molekuul)
 module: aix_inittab
-short_description: Manages the inittab on AIX.
+short_description: Manages the inittab on AIX
 description:
     - Manages the inittab on AIX.
 version_added: "2.3"
@@ -36,47 +24,47 @@ options:
   name:
     description:
     - Name of the inittab entry.
-    required: True
+    required: yes
     aliases: ['service']
   runlevel:
     description:
     - Runlevel of the entry.
-    required: True
+    required: yes
   action:
     description:
     - Action what the init has to do with this entry.
-    required: True
-    choices: [
-               'respawn',
-               'wait',
-               'once',
-               'boot',
-               'bootwait',
-               'powerfail',
-               'powerwait',
-               'off',
-               'hold',
-               'ondemand',
-               'initdefault',
-               'sysinit'
-              ]
+    required: yes
+    choices:
+    - boot
+    - bootwait
+    - hold
+    - initdefault
+    - off
+    - once
+    - ondemand
+    - powerfail
+    - powerwait
+    - respawn
+    - sysinit
+    - wait
   command:
     description:
     - What command has to run.
-    required: True
+    required: yes
   insertafter:
     description:
     - After which inittabline should the new entry inserted.
   state:
     description:
-    - Whether the entry should be present or absent in the inittab file
-    choices: [ "present", "absent" ]
+    - Whether the entry should be present or absent in the inittab file.
+    choices: [ absent, present ]
     default: present
 notes:
-  - The changes are persistent across reboots, you need root rights to read or adjust the inittab with the lsitab, chitab,
-    mkitab or rmitab commands.
-  - tested on AIX 7.1.
-requirements: [ 'itertools']
+  - The changes are persistent across reboots, you need root rights to read or adjust the inittab with the C(lsitab), chitab,
+    C(mkitab) or C(rmitab) commands.
+  - Tested on AIX 7.1.
+requirements:
+- itertools
 '''
 
 EXAMPLES = '''
@@ -86,7 +74,7 @@ EXAMPLES = '''
     name: startmyservice
     runlevel: 4
     action: once
-    command: "echo hello"
+    command: echo hello
     insertafter: existingservice
     state: present
   become: yes
@@ -97,17 +85,16 @@ EXAMPLES = '''
     name: startmyservice
     runlevel: 2
     action: wait
-    command: "echo hello"
+    command: echo hello
     state: present
   become: yes
 
-# Remove inittab entry startmyservice.
-- name: remove startmyservice from inittab
+- name: Remove startmyservice from inittab
   aix_inittab:
     name: startmyservice
     runlevel: 2
     action: wait
-    command: "echo hello"
+    command: echo hello
     state: absent
   become: yes
 '''
@@ -158,28 +145,25 @@ def main():
     # initialize
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, type='str', aliases=['service']),
-            runlevel=dict(required=True, type='str'),
-            action=dict(choices=[
-                'respawn',
-                'wait',
-                'once',
+            name=dict(type='str', required=True, aliases=['service']),
+            runlevel=dict(type='str', required=True),
+            action=dict(type='str', choices=[
                 'boot',
                 'bootwait',
+                'hold',
+                'initdefault',
+                'off',
+                'once',
+                'ondemand',
                 'powerfail',
                 'powerwait',
-                'off',
-                'hold',
-                'ondemand',
-                'initdefault',
-                'sysinit'
-            ], type='str'),
-            command=dict(required=True, type='str'),
+                'respawn',
+                'sysinit',
+                'wait',
+            ]),
+            command=dict(type='str', required=True),
             insertafter=dict(type='str'),
-            state=dict(choices=[
-                'present',
-                'absent',
-            ], required=True, type='str'),
+            state=dict(type='str', required=True, choices=['absent', 'present']),
         ),
         supports_check_mode=True,
     )

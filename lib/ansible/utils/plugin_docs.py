@@ -20,15 +20,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import ast
-import yaml
-
 from collections import MutableMapping, MutableSet, MutableSequence
 
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
-from ansible.parsing.metadata import extract_metadata
+from ansible.module_utils._text import to_native
+from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import fragment_loader
 
 try:
     from __main__ import display
@@ -44,9 +42,25 @@ BLACKLIST = {
 }
 
 
-def add_fragments(doc, filename):
+def merge_fragment(target, source):
 
-    fragments = doc.get('extends_documentation_fragment', [])
+    for key, value in source.items():
+        if key in target:
+            # assumes both structures have same type
+            if isinstance(target[key], MutableMapping):
+                value.update(target[key])
+            elif isinstance(target[key], MutableSet):
+                value.add(target[key])
+            elif isinstance(target[key], MutableSequence):
+                value = sorted(frozenset(value + target[key]))
+            else:
+                raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
+        target[key] = value
+
+
+def add_fragments(doc, filename, fragment_loader):
+
+    fragments = doc.pop('extends_documentation_fragment', [])
 
     if isinstance(fragments, string_types):
         fragments = [fragments]
@@ -62,7 +76,8 @@ def add_fragments(doc, filename):
             fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
-        assert fragment_class is not None
+        if fragment_class is None:
+            raise AnsibleAssertionError('fragment_class is None')
 
         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
@@ -77,110 +92,31 @@ def add_fragments(doc, filename):
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
-        for key, value in fragment.items():
-            if key in doc:
-                # assumes both structures have same type
-                if isinstance(doc[key], MutableMapping):
-                    value.update(doc[key])
-                elif isinstance(doc[key], MutableSet):
-                    value.add(doc[key])
-                elif isinstance(doc[key], MutableSequence):
-                    value = sorted(frozenset(value + doc[key]))
-                else:
-                    raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" % (fragment_name, filename))
-            doc[key] = value
+        # ensure options themselves are directly merged
+        if 'options' in doc:
+            try:
+                merge_fragment(doc['options'], fragment.pop('options'))
+            except Exception as e:
+                raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+        else:
+            doc['options'] = fragment.pop('options')
 
-
-def get_docstring(filename, verbose=False):
-    """
-    Search for assignment of the DOCUMENTATION and EXAMPLES variables
-    in the given file.
-    Parse DOCUMENTATION from YAML and return the YAML doc or None
-    together with EXAMPLES, as plain text.
-
-    DOCUMENTATION can be extended using documentation fragments
-    loaded by the PluginLoader from the module_docs_fragments
-    directory.
-    """
-
-    # FIXME: Should refactor this so that we have a docstring parsing
-    # function and a separate variable parsing function
-    # Can have a function one higher that invokes whichever is needed
-    #
-    # Should look roughly like this:
-    # get_plugin_doc(filename, verbose=False)
-    #   documentation = extract_docstring(plugin_ast, identifier, verbose=False)
-    #   if not documentation and not (filter or test):
-    #       documentation = extract_variables(plugin_ast)
-    #   documentation['metadata'] = extract_metadata(plugin_ast)
-
-    data = {
-        'doc': None,
-        'plainexamples': None,
-        'returndocs': None,
-        'metadata': None
-    }
-
-    string_to_vars = {
-        'DOCUMENTATION': 'doc',
-        'EXAMPLES': 'plainexamples',
-        'RETURN': 'returndocs',
-    }
-
-    try:
-        b_module_data = open(filename, 'rb').read()
-        M = ast.parse(b_module_data)
+        # merge rest of the sections
         try:
-            display.debug('Attempt first docstring is yaml docs')
-            docstring = yaml.load(M.body[0].value.s)
-            for string in string_to_vars.keys():
-                if string in docstring:
-                    data[string_to_vars[string]] = docstring[string]
-                display.debug('assigned :%s' % string_to_vars[string])
+            merge_fragment(doc, fragment)
         except Exception as e:
-            display.debug('failed docstring parsing: %s' % str(e))
+            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
-        if 'docs' not in data or not data['docs']:
-            display.debug('Fallback to vars parsing')
-            for child in M.body:
-                if isinstance(child, ast.Assign):
-                    for t in child.targets:
-                        try:
-                            theid = t.id
-                        except AttributeError:
-                            # skip errors can happen when trying to use the normal code
-                            display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
-                            continue
 
-                        if theid in string_to_vars:
-                            varkey = string_to_vars[theid]
-                            if isinstance(child.value, ast.Dict):
-                                data[varkey] = ast.literal_eval(child.value)
-                            else:
-                                if theid == 'DOCUMENTATION':
-                                    # string should be yaml
-                                    data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
-                                else:
-                                    # not yaml, should be a simple string
-                                    data[varkey] = child.value.s
-                            display.debug('assigned :%s' % varkey)
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
+    """
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
+    """
 
-        # Metadata is per-file rather than per-plugin/function
-        data['metadata'] = extract_metadata(module_ast=M)[0]
+    data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
-        # add fragments to documentation
-        if data['doc']:
-            add_fragments(data['doc'], filename)
-
-        # remove version
-        if data['metadata']:
-            for x in ('version', 'metadata_version'):
-                if x in data['metadata']:
-                    del data['metadata'][x]
-    except Exception as e:
-        display.error("unable to parse %s" % filename)
-        if verbose is True:
-            display.display("unable to parse %s" % filename)
-            raise
+    # add fragments to documentation
+    if data.get('doc', False):
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']

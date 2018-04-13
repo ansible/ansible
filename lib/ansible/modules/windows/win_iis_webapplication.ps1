@@ -71,7 +71,7 @@ try {
 
   # Remove application
   if ($state -eq 'absent' -and $application) {
-    $application = Remove-WebApplication -Site $site -Name $name $WhatIf:$check_mode
+    $application = Remove-WebApplication -Site $site -Name $name -WhatIf:$check_mode
     $result.changed = $true
   }
 

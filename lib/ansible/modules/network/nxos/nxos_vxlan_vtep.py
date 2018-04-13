@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -34,6 +32,7 @@ description:
     that terminates VXLAN tunnels.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The module is used to manage NVE properties, not to create NVE
     interfaces. Use M(nxos_interface) if you wish to do so.
   - C(state=absent) removes the interface.
@@ -46,37 +45,26 @@ options:
   description:
     description:
       - Description of the NVE interface.
-    required: false
-    default: null
   host_reachability:
     description:
       - Specify mechanism for host reachability advertisement.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   shutdown:
     description:
       - Administratively shutdown the NVE interface.
-    required: false
-    choices: ['true','false']
-    default: false
+    type: bool
   source_interface:
     description:
       - Specify the loopback interface whose IP address should be
         used for the NVE interface.
-    required: false
-    default: null
   source_interface_hold_down_time:
     description:
       - Suppresses advertisement of the NVE loopback address until
         the overlay has converged.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -101,10 +89,11 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'shutdown',
@@ -121,6 +110,7 @@ PARAM_TO_COMMAND_KEYMAP = {
 PARAM_TO_DEFAULT_KEYMAP = {
     'description': False,
     'shutdown': True,
+    'source_interface_hold_down_time': '180',
 }
 
 
@@ -150,7 +140,7 @@ def get_value(arg, config, module):
         value = ''
         if arg == 'description':
             if NO_DESC_REGEX.search(config):
-                value = ''
+                value = False
             elif PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value').strip()
         elif arg == 'source_interface':
@@ -169,7 +159,7 @@ def get_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['all']))
 
     interface_string = 'interface {0}'.format(module.params['interface'].lower())
     parents = [interface_string]
@@ -271,7 +261,6 @@ def main():
         shutdown=dict(required=False, type='bool'),
         source_interface=dict(required=False, type='str'),
         source_interface_hold_down_time=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 
@@ -285,7 +274,7 @@ def main():
 
     state = module.params['state']
 
-    args = PARAM_TO_DEFAULT_KEYMAP.keys()
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
 
     existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
@@ -294,18 +283,14 @@ def main():
     proposed = {}
     for key, value in proposed_args.items():
         if key != 'interface':
-            if str(value).lower() == 'true':
-                value = True
-            elif str(value).lower() == 'false':
-                value = False
-            elif str(value).lower() == 'default':
+            if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
                 if value is None:
                     if key in BOOL_PARAMS:
                         value = False
                     else:
                         value = 'default'
-            if existing.get(key) != value:
+            if str(existing.get(key)).lower() != str(value).lower():
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)

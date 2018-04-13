@@ -1,5 +1,7 @@
 ---
 - debug: msg="START TRANSPORT:NXAPI nxos_command sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Disable feature BGP"
   nxos_feature:
@@ -19,7 +21,6 @@
   - assert: &fail
       that:
         - "result.failed == true"
-        - "'Input CLI command error' in result.msg"
 
   - name: "Enable feature BGP"
     nxos_feature:
@@ -41,15 +42,17 @@
 
   - name: "Run show running-config bgp - should pass"
     nxos_command:
-      commands:
-        - sh running-config bgp
+      commands: 
+        - command: sh running-config bgp
+          output: text
       provider: "{{ nxapi }}"
+      timeout: 120
     register: result
 
   - assert:
       that:
         - "result.failed == false"
-        - "'65535' in result.stdout[0]"
+        - "'65535' in result.stdout[0]|to_json"
 
   - name: "Run an invalid command - should fail"
     nxos_command:

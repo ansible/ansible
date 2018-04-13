@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -250,11 +240,14 @@ image:
     type: dict
     sample: {}
 '''
+import os
+import re
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils._text import to_native
 
 try:
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.auth import resolve_repository_name
     else:
         from docker.auth.auth import resolve_repository_name
@@ -346,6 +339,8 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
+                    if image and image == self.results['image']:
+                        self.results['changed'] = False
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
@@ -404,8 +399,12 @@ class ImageManager(DockerBaseClass):
 
             try:
                 with open(self.archive_path, 'w') as fd:
-                    for chunk in image.stream(2048, decode_content=False):
-                        fd.write(chunk)
+                    if HAS_DOCKER_PY_3:
+                        for chunk in image:
+                            fd.write(chunk)
+                    else:
+                        for chunk in image.stream(2048, decode_content=False):
+                            fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
@@ -435,7 +434,7 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 status = None
                 try:
-                    for line in self.client.push(repository, tag=tag, stream=True,  decode=True):
+                    for line in self.client.push(repository, tag=tag, stream=True, decode=True):
                         self.log(line, pretty_print=True)
                         if line.get('errorDetail'):
                             raise Exception(line['errorDetail']['message'])
@@ -505,13 +504,14 @@ class ImageManager(DockerBaseClass):
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
-            stream=True,
             timeout=self.http_timeout,
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
             decode=True
         )
+        if not HAS_DOCKER_PY_3:
+            params['stream'] = True
         build_output = []
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)
@@ -519,8 +519,7 @@ class ImageManager(DockerBaseClass):
             params['container_limits'] = self.container_limits
         if self.buildargs:
             for key, value in self.buildargs.items():
-                if not isinstance(value, basestring):
-                    self.buildargs[key] = str(value)
+                self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
 
         for line in self.client.build(**params):
@@ -603,9 +602,6 @@ def main():
     ImageManager(client, results)
     client.module.exit_json(**results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

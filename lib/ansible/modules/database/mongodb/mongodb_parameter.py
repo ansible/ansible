@@ -1,28 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-(c) 2016, Loic Blot <loic.blot@unix-experience.fr>
-Sponsored by Infopro Digital. http://www.infopro-digital.com/
-Sponsored by E.T.A.I. http://www.etai.fr/
+# (c) 2016, Loic Blot <loic.blot@unix-experience.fr>
+# Sponsored by Infopro Digital. http://www.infopro-digital.com/
+# Sponsored by E.T.A.I. http://www.etai.fr/
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
 
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -38,33 +27,23 @@ options:
     login_user:
         description:
             - The username used to authenticate with
-        required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
-        required: false
-        default: null
     login_host:
         description:
             - The host running the database
-        required: false
         default: localhost
     login_port:
         description:
             - The port to connect to
-        required: false
         default: 27017
     login_database:
         description:
             - The database where login credentials are stored
-        required: false
-        default: null
     replica_set:
         description:
             - Replica set to connect to (automatically connects to primary for writes)
-        required: false
-        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -72,8 +51,8 @@ options:
     ssl:
         description:
             - Whether to use an SSL connection when connecting to the database
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     param:
         description:
             - MongoDB administrative parameter to modify
@@ -85,7 +64,6 @@ options:
     param_type:
         description:
             - Define the parameter value (str, int)
-        required: false
         default: str
 
 notes:
@@ -115,6 +93,7 @@ after:
 '''
 
 import os
+import traceback
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -132,8 +111,8 @@ else:
     pymongo_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 # =========================================
@@ -197,7 +176,6 @@ def main():
         if param_type == 'int':
             value = int(value)
     except ValueError:
-        e = get_exception()
         module.fail_json(msg="value '%s' is not %s" % (value, param_type))
 
     try:
@@ -217,17 +195,15 @@ def main():
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password, source=login_database)
 
-    except ConnectionFailure:
-        e = get_exception()
-        module.fail_json(msg='unable to connect to database: %s' % str(e))
+    except ConnectionFailure as e:
+        module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
     db = client.admin
 
     try:
         after_value = db.command("setParameter", **{param: value})
-    except OperationFailure:
-        e = get_exception()
-        module.fail_json(msg="unable to change parameter: %s" % str(e))
+    except OperationFailure as e:
+        module.fail_json(msg="unable to change parameter: %s" % to_native(e), exception=traceback.format_exc())
 
     if "was" not in after_value:
         module.exit_json(changed=True, msg="Unable to determine old value, assume it changed.")
@@ -236,5 +212,5 @@ def main():
                          after=value)
 
 
-if __name__ ==  '__main__':
+if __name__ == '__main__':
     main()

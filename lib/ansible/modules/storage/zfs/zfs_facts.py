@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Adam Števko <adam.stevko@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,42 +25,35 @@ options:
     name:
         description:
             - ZFS dataset name.
-        aliases: [ "ds", "dataset" ]
         required: yes
+        aliases: [ "ds", "dataset" ]
     recurse:
         description:
             - Specifies if properties for any children should be recursively
               displayed.
         type: bool
-        default: False
-        required: false
+        default: 'no'
     parsable:
         description:
             - Specifies if property values should be displayed in machine
               friendly format.
         type: bool
-        default: False
-        required: false
+        default: 'no'
     properties:
         description:
             - Specifies which dataset properties should be queried in comma-separated format.
               For more information about dataset properties, check zfs(1M) man page.
-        aliases: [ "props" ]
         default: all
-        required: false
+        aliases: [ "props" ]
     type:
         description:
             - Specifies which datasets types to display. Multiple values have to be
               provided in comma-separated form.
-        aliases: [ "props" ]
-        default: all
         choices: [ 'all', 'filesystem', 'volume', 'snapshot', 'bookmark' ]
-        required: false
+        default: all
     depth:
         description:
             - Specifiies recurion depth.
-        default: None
-        required: false
 '''
 
 EXAMPLES = '''
@@ -171,10 +153,11 @@ zfs_datasets:
             }
 '''
 
-import os
 from collections import defaultdict
-from ansible.module_utils.six import iteritems
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
 
 SUPPORTED_TYPES = ['all', 'filesystem', 'volume', 'snapshot', 'bookmark']
 

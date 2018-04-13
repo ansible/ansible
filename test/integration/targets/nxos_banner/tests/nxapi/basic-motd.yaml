@@ -1,12 +1,14 @@
 ---
+- debug: msg="START nxapi/nxos_banner motd test"
+
 - name: setup - remove motd
-  nxos_banner:
+  nxos_banner: &remove
     banner: motd
     state: absent
     provider: "{{ nxapi }}"
 
 - name: Set motd
-  nxos_banner:
+  nxos_banner: &motd
     banner: motd
     text: |
       this is my motd banner
@@ -15,32 +17,13 @@
     state: present
     provider: "{{ nxapi }}"
   register: result
-
-- debug:
-    msg: "{{ result }}"
 
 - assert:
     that:
       - "result.changed == true"
       - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
 
-- name: Set motd again (idempotent)
-  nxos_banner:
-    banner: motd
-    text: |
-      this is my motd banner
-      that has a multiline
-      string
-    state: present
-    provider: "{{ nxapi }}"
-  register: result
+- name: teardown - remove motd
+  nxos_banner: *remove
 
-- assert:
-    that:
-      - "result.changed == false"
-      - "result.commands | length == 0"
-
-
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
+- debug: msg="END nxapi/nxos_banner motd test"

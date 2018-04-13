@@ -23,6 +23,7 @@ import collections
 
 from jinja2.runtime import Undefined
 
+from ansible.module_utils._text import to_bytes
 from ansible.template import Templar
 
 STATIC_VARS = [
@@ -46,7 +47,7 @@ try:
 except ImportError:
     from sha import sha as sha1
 
-__all__ = ['HostVars']
+__all__ = ['HostVars', 'HostVarsVars']
 
 
 # Note -- this is a Mapping, not a MutableMapping
@@ -69,6 +70,7 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
 
     def _find_host(self, host_name):
+        # does not use inventory.hosts so it can create localhost on demand
         return self._inventory.get_host(host_name)
 
     def raw_get(self, host_name):
@@ -84,11 +86,9 @@ class HostVars(collections.Mapping):
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
-        if sha1_hash not in self._cached_result:
-            templar = Templar(variables=data, loader=self._loader)
-            self._cached_result[sha1_hash] = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
-        return self._cached_result[sha1_hash]
+        if isinstance(data, Undefined):
+            return data
+        return HostVarsVars(data, loader=self._loader)
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)
@@ -100,18 +100,43 @@ class HostVars(collections.Mapping):
         self._variable_manager.set_host_facts(host, facts)
 
     def __contains__(self, host_name):
+        # does not use inventory.hosts so it can create localhost on demand
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-            yield host.name
+        for host in self._inventory.hosts:
+            yield host
 
     def __len__(self):
-        return len(self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True))
+        return len(self._inventory.hosts)
 
     def __repr__(self):
         out = {}
-        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-            name = host.name
-            out[name] = self.get(name)
+        for host in self._inventory.hosts:
+            out[host] = self.get(host)
         return repr(out)
+
+
+class HostVarsVars(collections.Mapping):
+
+    def __init__(self, variables, loader):
+        self._vars = variables
+        self._loader = loader
+
+    def __getitem__(self, var):
+        templar = Templar(variables=self._vars, loader=self._loader)
+        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return foo
+
+    def __contains__(self, var):
+        return (var in self._vars)
+
+    def __iter__(self):
+        for var in self._vars.keys():
+            yield var
+
+    def __len__(self):
+        return len(self._vars.keys())
+
+    def __repr__(self):
+        return repr(self._vars)

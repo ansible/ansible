@@ -30,17 +30,28 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     terminal_stderr_re = [
-        re.compile(r"error:", re.I),
-        re.compile(r"^Removing.* not allowed")
+        re.compile(br"error:", re.I),
+        re.compile(br"Removing.* not allowed, it is being used")
     ]
 
-    def on_authorize(self, passwd=None):
-        if self._get_prompt().endswith(b'#'):
+    def on_open_shell(self):
+        if self._get_prompt().strip().endswith(b'#'):
+            self.disable_pager()
+
+    def disable_pager(self):
+        cmd = {u'command': u'no terminal pager'}
+        try:
+            self._exec_cli_command(u'no terminal pager')
+        except AnsibleConnectionFailure:
+            raise AnsibleConnectionFailure('unable to disable terminal pager')
+
+    def on_become(self, passwd=None):
+        if self._get_prompt().strip().endswith(b'#'):
             return
 
         cmd = {u'command': u'enable'}
@@ -52,6 +63,7 @@ class TerminalModule(TerminalBase):
 
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
-            self._exec_cli_command(u'no terminal pager')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+
+        self.disable_pager()

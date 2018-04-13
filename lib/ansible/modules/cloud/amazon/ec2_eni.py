@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,58 +32,43 @@ options:
   eni_id:
     description:
       - The ID of the ENI (to modify); if null and state is present, a new eni will be created.
-    required: false
-    default: null
   instance_id:
     description:
       - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or
         detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
-    required: false
-    default: null
   private_ip_address:
     description:
       - Private IP address.
-    required: false
-    default: null
   subnet_id:
     description:
       - ID of subnet in which to create the ENI.
-    required: false
   description:
     description:
       - Optional description of the ENI.
-    required: false
-    default: null
   security_groups:
     description:
       - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you
         can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
-    required: false
-    default: null
   state:
     description:
       - Create or delete ENI
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   device_index:
     description:
       - The index of the device for the network interface attachment on the instance.
-    required: false
     default: 0
   attached:
     description:
       - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
         won't change
-    required: false
-    default: yes
+    default: 'yes'
     version_added: 2.2
   force_detach:
     description:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
         to None or when deleting an interface with state=absent.
-    required: false
-    default: no
+    default: 'no'
   delete_on_termination:
     description:
       - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the
@@ -100,6 +85,12 @@ options:
         This option is mutually exclusive of secondary_private_ip_address_count
     required: false
     version_added: 2.2
+  purge_secondary_private_ip_addresses:
+    description:
+      - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
+        Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
+    default: no
+    version_added: 2.5
   secondary_private_ip_address_count:
     description:
       - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
@@ -372,6 +363,7 @@ def modify_eni(connection, vpc_id, module, eni):
     source_dest_check = module.params.get("source_dest_check")
     delete_on_termination = module.params.get("delete_on_termination")
     secondary_private_ip_addresses = module.params.get("secondary_private_ip_addresses")
+    purge_secondary_private_ip_addresses = module.params.get("purge_secondary_private_ip_addresses")
     secondary_private_ip_address_count = module.params.get("secondary_private_ip_address_count")
     changed = False
 
@@ -397,15 +389,20 @@ def modify_eni(connection, vpc_id, module, eni):
         current_secondary_addresses = [i.private_ip_address for i in eni.private_ip_addresses if not i.primary]
         if secondary_private_ip_addresses is not None:
             secondary_addresses_to_remove = list(set(current_secondary_addresses) - set(secondary_private_ip_addresses))
-            if secondary_addresses_to_remove:
+            if secondary_addresses_to_remove and purge_secondary_private_ip_addresses:
                 connection.unassign_private_ip_addresses(network_interface_id=eni.id,
                                                          private_ip_addresses=list(set(current_secondary_addresses) -
                                                                                    set(secondary_private_ip_addresses)),
                                                          dry_run=False)
-            connection.assign_private_ip_addresses(network_interface_id=eni.id,
-                                                   private_ip_addresses=secondary_private_ip_addresses,
-                                                   secondary_private_ip_address_count=None,
-                                                   allow_reassignment=False, dry_run=False)
+                changed = True
+
+            secondary_addresses_to_add = list(set(secondary_private_ip_addresses) - set(current_secondary_addresses))
+            if secondary_addresses_to_add:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id,
+                                                       private_ip_addresses=secondary_addresses_to_add,
+                                                       secondary_private_ip_address_count=None,
+                                                       allow_reassignment=False, dry_run=False)
+                changed = True
         if secondary_private_ip_address_count is not None:
             current_secondary_address_count = len(current_secondary_addresses)
 
@@ -562,6 +559,7 @@ def main():
             source_dest_check=dict(default=None, type='bool'),
             delete_on_termination=dict(default=None, type='bool'),
             secondary_private_ip_addresses=dict(default=None, type='list'),
+            purge_secondary_private_ip_addresses=dict(default=False, type='bool'),
             secondary_private_ip_address_count=dict(default=None, type='int'),
             attached=dict(default=None, type='bool')
         )
@@ -573,7 +571,8 @@ def main():
                            ],
                            required_if=([
                                ('state', 'absent', ['eni_id']),
-                               ('attached', True, ['instance_id'])
+                               ('attached', True, ['instance_id']),
+                               ('purge_secondary_private_ip_addresses', True, ['secondary_private_ip_addresses'])
                            ])
                            )
 

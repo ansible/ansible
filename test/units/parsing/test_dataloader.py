@@ -26,6 +26,8 @@ from ansible.compat.tests.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import PY3
+
+from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader
 
 from units.mock.path import mock_unfrackpath_noop
@@ -38,6 +40,12 @@ class TestDataLoader(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    @patch('os.path.exists')
+    def test__is_role(self, p_exists):
+        p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
+        self.assertTrue(self._loader._is_role('test_path/tasks'))
+        self.assertTrue(self._loader._is_role('test_path/'))
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_json_from_file(self, mock_def):
@@ -118,7 +126,8 @@ class TestDataLoaderWithVault(unittest.TestCase):
 
     def setUp(self):
         self._loader = DataLoader()
-        self._loader.set_vault_password('ansible')
+        vault_secrets = [('default', TextVaultSecret('ansible'))]
+        self._loader.set_vault_secrets(vault_secrets)
 
     def tearDown(self):
         pass

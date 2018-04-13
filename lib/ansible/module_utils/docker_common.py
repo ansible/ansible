@@ -29,6 +29,7 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FA
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
+HAS_DOCKER_PY_3 = False
 HAS_DOCKER_ERROR = None
 
 try:
@@ -38,7 +39,12 @@ try:
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker import auth
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+
+    if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
+        HAS_DOCKER_PY_3 = True
+        from docker import APIClient as Client
+        from docker.types import Ulimit, LogConfig
+    elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
         from docker.types import Ulimit, LogConfig
@@ -79,7 +85,7 @@ DOCKER_REQUIRED_TOGETHER = [
 ]
 
 DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
-EMAIL_REGEX = '[^@]+@[^@]+\.[^@]+'
+EMAIL_REGEX = r'[^@]+@[^@]+\.[^@]+'
 BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 
@@ -89,6 +95,9 @@ if not HAS_DOCKER_PY:
     class Client(object):
         def __init__(self, **kwargs):
             pass
+
+    class APIError(Exception):
+        pass
 
 
 class DockerBaseClass(object):

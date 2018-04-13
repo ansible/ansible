@@ -144,12 +144,22 @@ def load_extra_vars(loader, options):
 
 
 def load_options_vars(options, version):
-    options_vars = {}
-    # For now only return check mode, but we can easily return more
-    # options if we need variables for them
-    if hasattr(options, 'check'):
-        options_vars['ansible_check_mode'] = options.check
-    options_vars['ansible_version'] = version
+
+    options_vars = {'ansible_version': version}
+    attrs = {'check': 'check_mode',
+             'diff': 'diff_mode',
+             'forks': 'forks',
+             'inventory': 'inventory_sources',
+             'skip_tags': 'skip_tags',
+             'subset': 'limit',
+             'tags': 'run_tags',
+             'verbosity': 'verbosity'}
+
+    for attr, alias in attrs.items():
+        opt = getattr(options, attr, None)
+        if opt is not None:
+            options_vars['ansible_%s' % alias] = opt
+
     return options_vars
 
 

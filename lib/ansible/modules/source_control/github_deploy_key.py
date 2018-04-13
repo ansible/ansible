@@ -1,26 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'supported_by': 'community',
-    'status': ['preview']
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -36,63 +25,49 @@ options:
     description:
       - The name of the individual account or organization that owns the GitHub repository.
     required: true
-    default: null
     aliases: [ 'account', 'organization' ]
   repo:
     description:
       - The name of the GitHub repository.
     required: true
-    default: null
     aliases: [ 'repository' ]
   name:
     description:
       - The name for the deploy key.
     required: true
-    default: null
     aliases: [ 'title', 'label' ]
   key:
     description:
       - The SSH public key to add to the repository as a deploy key.
     required: true
-    default: null
   read_only:
     description:
       - If C(true), the deploy key will only be able to read repository contents. Otherwise, the deploy key will be able to read and write.
-    required: false
     type: bool
-    default: yes
+    default: 'yes'
   state:
     description:
       - The state of the deploy key.
-    required: false
     default: "present"
     choices: [ "present", "absent" ]
   force:
     description:
       - If C(true), forcefully adds the deploy key by deleting any existing deploy key with the same public key or title.
-    required: false
-    default: no
     type: bool
+    default: 'no'
   username:
     description:
       - The username to authenticate with.
-    required: false
-    default: null
   password:
     description:
       - The password to authenticate with. A personal access token can be used here in place of a password.
-    required: false
-    default: null
   token:
     description:
       - The OAuth2 token or personal access token to authenticate with. Mutually exclusive with I(password).
-    required: false
-    default: null
   otp:
     description:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
-    required: false
-    default: null
+    aliases: ['2fa_token']
 requirements:
    - python-requests
 notes:
@@ -176,9 +151,10 @@ id:
     sample: 24381901
 '''
 
+import json
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-import json
 
 
 class GithubDeployKey(object):

@@ -2,21 +2,13 @@
 # coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,41 +25,35 @@ description:
 options:
     job_template:
       description:
-        - Name of the job_template to use.
+        - Name of the job template to use.
       required: True
     job_explanation:
       description:
         - Job explanation field.
-      default: null
     job_type:
       description:
         - Job_type to use for the job, only used if prompt for job_type is set.
       choices: ["run", "check", "scan"]
-      default: null
     inventory:
       description:
         - Inventory to use for the job, only used if prompt for inventory is set.
-      default: null
     credential:
       description:
         - Credential to use for job, only used if prompt for credential is set.
-      default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Prepend '@' if a file.
-      default: null
+        - Extra_vars to use for the job_template. Prepend C(@) if a file.
     limit:
       description:
-        - Limit to use for the job_template.
-      default: null
+        - Limit to use for the I(job_template).
     tags:
       description:
         - Specific tags to use for from playbook.
-      default: null
     use_job_endpoint:
       description:
         - Disable launching jobs from job template.
-      default: False
+      type: bool
+      default: 'no'
 extends_documentation_fragment: tower
 '''
 
@@ -98,20 +84,15 @@ status:
 
 from ansible.module_utils.basic import AnsibleModule
 
+from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import (
-        tower_auth_config,
-        tower_check_mode,
-        tower_argument_spec,
-    )
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():

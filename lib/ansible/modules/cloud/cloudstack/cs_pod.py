@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -39,41 +39,28 @@ options:
   id:
     description:
       - uuid of the existing pod.
-    default: null
-    required: false
   start_ip:
     description:
       - Starting IP address for the Pod.
       - Required on C(state=present)
-    default: null
-    required: false
   end_ip:
     description:
       - Ending IP address for the Pod.
-    default: null
-    required: false
   netmask:
     description:
       - Netmask for the Pod.
       - Required on C(state=present)
-    default: null
-    required: false
   gateway:
     description:
       - Gateway for the Pod.
       - Required on C(state=present)
-    default: null
-    required: false
   zone:
     description:
       - Name of the zone in which the pod belongs to.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the pod.
-    required: false
     default: 'present'
     choices: [ 'present', 'enabled', 'disabled', 'absent' ]
 extends_documentation_fragment: cloudstack

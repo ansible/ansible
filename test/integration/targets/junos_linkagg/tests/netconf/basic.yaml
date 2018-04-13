@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_linkagg netconf/basic.yaml"
+- debug: msg="START junos_linkagg netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove linkagg
   junos_linkagg:
@@ -37,7 +37,6 @@
       - "'<device-count>4</device-count>' in config.xml"
       - "'<bundle>ae0</bundle>' in config.xml"
       - "'<active/>' in config.xml"
-      - "'<description>configured by junos_linkagg</description>' in config.xml"
 
 - name: configure linkagg (idempotent)
   junos_linkagg:
@@ -126,17 +125,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' in config.xml"
-      - "'+   disable;' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Enable linkagg interface
   junos_linkagg:
@@ -145,16 +137,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' not in config.xml"
+      - result.diff.prepared is search("\- *disable")
 
 - name: Deactivate linkagg
   junos_linkagg:
@@ -250,3 +236,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_linkagg netconf/basic.yaml on connection={{ ansible_connection }}"

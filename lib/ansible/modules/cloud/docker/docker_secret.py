@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -152,7 +142,6 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils._text import to_native, to_bytes
 
@@ -266,7 +255,7 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
-        data=dict(type='str'),
+        data=dict(type='str', no_log=True),
         labels=dict(type='dict'),
         force=dict(type='bool', default=False)
     )

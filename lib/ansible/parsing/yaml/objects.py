@@ -22,7 +22,7 @@ __metaclass__ = type
 import yaml
 
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 
 
 class AnsibleBaseYAMLObject(object):
@@ -76,11 +76,11 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
     yaml_tag = u'!vault'
 
     @classmethod
-    def from_plaintext(cls, seq, vault):
+    def from_plaintext(cls, seq, vault, secret):
         if not vault:
             raise vault.AnsibleVaultError('Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
 
-        ciphertext = vault.encrypt(seq)
+        ciphertext = vault.encrypt(seq, secret)
         avu = cls(ciphertext)
         avu.vault = vault
         return avu
@@ -131,7 +131,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         return str(self.data)
 
     def __unicode__(self):
-        return unicode(self.data)
+        return to_text(self.data, errors='surrogate_or_strict')
 
     def encode(self, encoding=None, errors=None):
         return self.data.encode(encoding, errors)

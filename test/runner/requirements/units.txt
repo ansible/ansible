@@ -1,4 +1,3 @@
-boto
 boto3
 placebo
 cryptography
@@ -13,6 +12,7 @@ pytest-xdist
 python-memcached
 pyyaml
 redis
+requests
 setuptools > 0.6 # pytest-xdist installed via requirements does not work with very old setuptools (sanity_ok)
 unittest2 ; python_version < '2.7'
 netaddr
@@ -23,8 +23,8 @@ f5-sdk ; python_version >= '2.7'
 f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
 
-# requirement for modules using Netconf protocol
-ncclient
+# requirement for Fortinet specific modules
+pyfmg
 
 # requirement for aci_rest module
 xmljson

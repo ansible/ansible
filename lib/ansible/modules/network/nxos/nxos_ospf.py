@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -60,10 +58,10 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 PARAM_TO_COMMAND_KEYMAP = {
@@ -74,7 +72,7 @@ PARAM_TO_COMMAND_KEYMAP = {
 def get_value(config, module):
     splitted_config = config.splitlines()
     value_list = []
-    REGEX = '^router ospf\s(?P<ospf>\S+).*'
+    REGEX = r'^router ospf\s(?P<ospf>\S+).*'
     for line in splitted_config:
         value = ''
         if 'router ospf' in line:
@@ -113,10 +111,7 @@ def state_absent(module, proposed, candidate):
 def main():
     argument_spec = dict(
         ospf=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -139,7 +134,7 @@ def main():
         existing_list = existing['ospf']
 
     candidate = CustomNetworkConfig(indent=3)
-    if state == 'present':
+    if state == 'present' and ospf not in existing_list:
         state_present(module, proposed, candidate)
     if state == 'absent' and ospf in existing_list:
         state_absent(module, proposed, candidate)

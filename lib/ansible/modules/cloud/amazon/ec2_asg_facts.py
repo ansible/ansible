@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,6 +18,7 @@ short_description: Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
 description:
   - Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
 version_added: "2.2"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   name:
@@ -224,16 +217,16 @@ termination_policies:
     sample: ["Default"]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ec2_argument_spec
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3
-
 import re
 
 try:
     from botocore.exceptions import ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec,
+                                      camel_dict_to_snake_dict, HAS_BOTO3)
 
 
 def match_asg_tags(tags_to_match, asg):
@@ -377,9 +370,13 @@ def find_asgs(conn, module, name=None, tags=None):
                 del(asg['target_group_ar_ns'])
             if asg.get('target_group_arns'):
                 if elbv2:
-                    tg_paginator = elbv2.get_paginator('describe_target_groups')
-                    tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
-                    asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+                    try:
+                        tg_paginator = elbv2.get_paginator('describe_target_groups')
+                        tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
+                        asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+                    except ClientError as e:
+                        if e.response['Error']['Code'] == 'TargetGroupNotFound':
+                            asg['target_group_names'] = []
             else:
                 asg['target_group_names'] = []
             matched_asgs.append(asg)

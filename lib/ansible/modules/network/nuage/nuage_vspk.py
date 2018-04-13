@@ -2,24 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Nokia
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -40,38 +31,30 @@ options:
             - Requires a I(api_url) parameter (example https://10.0.0.10:8443).
             - Requires a I(api_version) parameter (example v4_0).
         required: true
-        default: null
     type:
         description:
             - The type of entity you want to work on (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
         required: true
-        default: null
     id:
         description:
             - The ID of the entity you want to work on.
             - In combination with I(command=find), it will only return the single entity.
             - In combination with I(state), it will either update or delete this entity.
             - Will take precedence over I(match_filter) and I(properties) whenever an entity needs to be found.
-        required: false
-        default: null
     parent_id:
         description:
             - The ID of the parent of the entity you want to work on.
             - When I(state) is specified, the entity will be gathered from this parent, if it exists, unless an I(id) is specified.
             - When I(command=find) is specified, the entity will be searched for in this parent, unless an I(id) is specified.
             - If specified, I(parent_type) also needs to be specified.
-        required: false
-        default: null
     parent_type:
         description:
             - The type of parent the ID is specified for (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
             - If specified, I(parent_id) also needs to be specified.
-        required: false
-        default: null
     state:
         description:
             - Specifies the desired state of the entity.
@@ -79,8 +62,6 @@ options:
             - If I(state=present), in case the relationship with the parent is a member relationship, will assign the entity as a member of the parent.
             - If I(state=absent), in case the relationship with the parent is a member relationship, will unassign the entity as a member of the parent.
             - Either I(state) or I(command) needs to be defined, both can not be defined at the same time.
-        required: false
-        default: null
         choices:
             - present
             - absent
@@ -98,8 +79,6 @@ options:
               the module will exit with an error.
             - With I(command=wait_for_job), the job will always be returned, even if the state is ERROR situation.
             - Either I(state) or I(command) needs to be defined, both can not be defined at the same time.
-        required: false
-        default: null
         choices:
             - find
             - change_password
@@ -109,14 +88,10 @@ options:
         description:
             - A filter used when looking (both in I(command) and I(state) for entities, in the format the Nuage VSP API expects.
             - If I(match_filter) is defined, it will take precedence over the I(properties), but not on the I(id)
-        required: false
-        default: null
     properties:
         description:
             - Properties are the key, value pairs of the different properties an entity has.
             - If no I(id) and no I(match_filter) is specified, these are used to find or determine if the entity exists.
-        required: false
-        default: null
     children:
         description:
             - Can be used to specify a set of child entities.
@@ -125,8 +100,6 @@ options:
             - The function of each of these properties is the same as in the general task definition.
             - This can be used recursively
             - Only useable in case I(state=present).
-        required: false
-        default: null
 notes:
     - Check mode is supported, but with some caveats. It will not do any changes, and if possible try to determine if it is able do what is requested.
     - In case a parent id is provided from a previous task, it might be empty and if a search is possible on root, it will do so, which can impact performance.
@@ -194,7 +167,7 @@ EXAMPLES = '''
     state: present
     properties:
       name: "{{ enterprise_new_name }}-basic"
-  when: nuage_check_enterprise | failed
+  when: nuage_check_enterprise is failed
 
 # Creating a User in an Enterprise
 - name: Create admin user
@@ -373,7 +346,6 @@ entities:
 '''
 
 import time
-from ansible.module_utils.basic import AnsibleModule
 
 try:
     import importlib
@@ -386,6 +358,9 @@ try:
     HAS_BAMBOU = True
 except ImportError:
     HAS_BAMBOU = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 SUPPORTED_COMMANDS = ['find', 'change_password', 'wait_for_job', 'get_csp_enterprise']
 VSPK = None

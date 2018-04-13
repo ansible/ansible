@@ -1,21 +1,14 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -31,18 +24,14 @@ options:
     description:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
-    default: null
   tags:
     description:
       - "A dict of tags to apply to the internet gateway. Any tags currently applied to the internet gateway and not present here will be removed."
-    required: false
-    default: null
     aliases: [ 'resource_tags' ]
     version_added: "2.4"
   state:
     description:
       - Create or terminate the IGW
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
@@ -97,8 +86,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
@@ -127,18 +114,30 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         if cur_tags == tags:
             return {'changed': False, 'tags': cur_tags}
 
+        if check_mode:
+            latest_check_mode_tags = cur_tags
+
         to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
         if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
+            if check_mode:
+                # just overwriting latest_check_mode_tags instead of deleting keys
+                latest_check_mode_tags = dict((k, cur_tags[k]) for k in cur_tags if k not in to_delete)
+            else:
+                vpc_conn.delete_tags(resource_id, to_delete)
 
         to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
         if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
+            if check_mode:
+                latest_check_mode_tags.update(to_add)
+            else:
+                vpc_conn.create_tags(resource_id, to_add)
 
+        if check_mode:
+            return {'changed': True, 'tags': latest_check_mode_tags}
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        raise AnsibleTagCreationException(
+        raise AnsibleIGWException(
             'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
 
 
@@ -187,6 +186,11 @@ def ensure_igw_present(vpc_conn, vpc_id, tags, check_mode):
     igw.vpc_id = vpc_id
 
     if tags != igw.tags:
+        if check_mode:
+            check_mode_tags = ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
+            igw_info = get_igw_info(igw)
+            igw_info.get('tags', {}).update(check_mode_tags.get('tags', {}))
+            return {'changed': True, 'gateway': igw_info}
         ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
         igw.tags = tags
         changed = True

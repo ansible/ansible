@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_pim
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosPimModule(TestNxosModule):
     module = nxos_pim
 
     def setUp(self):
+        super(TestNxosPimModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_pim.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosPimModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosPimModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

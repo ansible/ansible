@@ -4,7 +4,7 @@ Ansible Module Development Walkthrough
 ======================================
 
 
-In this section, we will walk through developing, testing, and debugging an Ansible module. 
+In this section, we will walk through developing, testing, and debugging an Ansible module.
 
 What's covered in this section:
 
@@ -23,7 +23,17 @@ What's covered in this section:
 
 Environment setup
 =================
+Prerequisites Via Apt (Ubuntu)
+``````````````````````````````
+Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
 
+.. code:: bash
+
+    sudo apt update
+    sudo apt install build-essential libssl-dev libffi-dev python-dev
+
+Common Environment setup
+````````````````````````
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
 2. Change directory into the repository root dir: ``$ cd ansible``
@@ -51,14 +61,16 @@ working on a whole new file. Here is an example:
 -  Navigate to the directory that you want to develop your new module
    in. E.g. ``$ cd lib/ansible/modules/cloud/azure/``
 -  Create your new module file: ``$ touch my_new_test_module.py``
--  Paste this simple into the new module file: (explanation in comments)::
+-  Paste this example code into the new module file: (explanation in comments)
+
+.. code:: python
 
     #!/usr/bin/python
 
     ANSIBLE_METADATA = {
-        'metadata_version': '1.0',
+        'metadata_version': '1.1',
         'status': ['preview'],
-        'supported_by': 'curated'
+        'supported_by': 'community'
     }
 
     DOCUMENTATION = '''
@@ -82,7 +94,7 @@ working on a whole new file. Here is an example:
                 - Control to demo if the result of this module is changed or not
             required: false
 
-    extends_documentation_fragment
+    extends_documentation_fragment:
         - azure
 
     author:
@@ -187,14 +199,14 @@ that can run locally.
 -  Create an arguments file in ``/tmp/args.json`` with the following
    content: (explanation below)
 
-   .. code:: json
+.. code:: json
 
-       {
-         "ANSIBLE_MODULE_ARGS": {
-       "name": "hello",
-       "new": true
-         }
-       }
+    {
+        "ANSIBLE_MODULE_ARGS": {
+            "name": "hello",
+            "new": true
+        }
+    }
 
 -  If you are using a virtual environment (highly recommended for
    development) activate it: ``$ . venv/bin/activate``
@@ -205,7 +217,7 @@ that can run locally.
 This should be working output that resembles something like the
 following:
 
-::
+.. code:: json
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
@@ -219,29 +231,30 @@ If you want to test your new module, you can now consume it with an
 Ansible playbook.
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
--  Add the following to the new playbook file \`\`\`yaml ---
--  name: test my new module connection: local hosts: localhost
+-  Add the following to the new playbook file::
 
-tasks: - name: run the new module my\_new\_test\_module: name: 'hello'
-new: true register: testout
+    - name: test my new module
+      connection: local
+      hosts: localhost
+      tasks:
+      - name: run the new module
+        my_new_test_module:
+          name: 'hello'
+          new: true
+        register: testout
+      - name: dump test output
+        debug:
+          msg: '{{ testout }}'
 
-::
-
-    - name: dump test output
-      debug:
-        msg: '{{ testout }}'
-
-::
-
-- Run the playbook and analyze the output: `$ ansible-playbook ./testmod.yml`
+- Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
 Debugging (local)
-=================   
+=================
 
 If you want to break into a module and step through with the debugger, locally running the module you can do:
 
-- Set a breakpoint in the module: `import pdb; pdb.set_trace()`
-- Run the module on the local machine: `$ python -m pdb ./my_new_test_module.py ./args.json`
+- Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
+- Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
 Debugging (remote)
 ==================
@@ -254,7 +267,7 @@ In the event you want to debug a module that is running on a remote target (i.e.
 - SSH into the remote target after the completion of the playbook
 - Navigate to the directory (most likely it is going to be your ansible remote user defined or implied from the playbook: ``~/.ansible/tmp/ansible-tmp-...``)
 - Here you should see the module that you executed from your Ansible controller, but this is the zipped file that Ansible sent to the remote host. You can run this by specifying ``python my_test_module.py`` (not necessary)
-- To debug, though, we will want to extra this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
+- To debug, though, we will want to extract this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
 - Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
 - Modify or set a breakpoint in the unzipped module
 - Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
@@ -278,20 +291,20 @@ test/units/modules/.../test/my_new_test_module.py``
 Going Further
 =============
 
-If you are starting new development or fixing a bug, create a new branch:
+If you would like to contribute to the main Ansible repository
+by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
+of the Ansible repository and develop against a new feature
+branch using the ``devel`` branch as a starting point.
 
-``$ git checkout -b my-new-branch``. 
-
-If you are planning on contributing
-back to the main Ansible repository, fork the Ansible repository into
-your own GitHub account and developing against the new non-devel branch
-in your fork. When you believe you have a good working code change,
-submit a pull request to the Ansible repository.
+When you you have a good working code change,
+submit a pull request to the Ansible repository by selecting
+your feature branch as a source and the Ansible devel branch as
+a target.
 
 If you want to submit a new module to the upstream Ansible repo, be sure
 to run through sanity checks first. For example:
 
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME`` 
+``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
 Note that this example requires docker to be installed and running. If you'd rather not use a
 container for this, you can choose to use ``--tox`` instead of ``--docker``.
@@ -309,5 +322,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source 
+Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
 material for this topic.

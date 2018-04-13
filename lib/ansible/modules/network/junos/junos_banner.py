@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -47,7 +36,6 @@ options:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -57,13 +45,15 @@ options:
   active:
     description:
       - Specifies whether or not the configuration is active or deactivated
-    default: True
-    choices: [True, False]
+    type: bool
+    default: 'yes'
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -112,9 +102,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -151,8 +141,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -172,7 +160,7 @@ def main():
     ele = map_obj_to_ele(module, want, top)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

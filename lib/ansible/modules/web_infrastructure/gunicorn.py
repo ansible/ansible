@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Alejandro Gomez <alexgomez2202@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -60,7 +50,7 @@ options:
   worker:
     choices: ['sync', 'eventlet', 'gevent', 'tornado ', 'gthread', 'gaiohttp']
     description:
-      - 'The type of workers to use. The default class (sync) should handle most “normal” types of workloads.'
+      - 'The type of workers to use. The default class (sync) should handle most "normal" types of workloads.'
   user:
     description:
       -  'Switch worker processes to run as this user.'
@@ -140,14 +130,6 @@ def main():
         'user': '-u',
     }
 
-    # temporary files in case no option provided
-    tmp_error_log = '/tmp/gunicorn.temp.error.log'
-    tmp_pid_file = '/tmp/gunicorn.temp.pid'
-
-    # remove temp file if exists
-    remove_tmp_file(tmp_pid_file)
-    remove_tmp_file(tmp_error_log)
-
     module = AnsibleModule(
         argument_spec=dict(
             app=dict(required=True, type='str', aliases=['name']),
@@ -162,6 +144,14 @@ def main():
                         ),
         )
     )
+
+    # temporary files in case no option provided
+    tmp_error_log = os.path.join(module.tmpdir, 'gunicorn.temp.error.log')
+    tmp_pid_file = os.path.join(module.tmpdir, 'gunicorn.temp.pid')
+
+    # remove temp file if exists
+    remove_tmp_file(tmp_pid_file)
+    remove_tmp_file(tmp_error_log)
 
     # obtain app name and venv
     params = module.params

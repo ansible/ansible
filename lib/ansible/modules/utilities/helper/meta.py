@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Ansible, a Red Hat company
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -41,7 +31,9 @@ options:
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
         - >
           C(refresh_inventory) (added in 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
-          re-executed. This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
+          re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
+          or, if available for your specific inventory datasource (for es.: aws), you can use the an inventory plugin instead of an inventory script).
+          This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
         - "C(noop) (added in 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use."
         - "C(clear_facts) (added in 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared, including the fact cache."
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."

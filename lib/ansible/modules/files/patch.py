@@ -1,25 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Luis Alberto Perez Lazaro <luisperlazaro@gmail.com>
-# (c) 2015, Jakub Jirutka <jakub@jirutka.cz>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Luis Alberto Perez Lazaro <luisperlazaro@gmail.com>
+# Copyright: (c) 2015, Jakub Jirutka <jakub@jirutka.cz>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -97,8 +87,9 @@ EXAMPLES = r'''
 '''
 
 import os
-
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from traceback import format_exc
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class PatchError(Exception):
@@ -157,7 +148,6 @@ def main():
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
 
-    p.src = os.path.expanduser(p.src)
     if not os.access(p.src, os.R_OK):
         module.fail_json(msg="src %s doesn't exist or not readable" % (p.src))
 
@@ -186,9 +176,8 @@ def main():
             apply_patch(patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary, strip=p.strip,
                         dry_run=module.check_mode, backup=p.backup)
             changed = True
-        except PatchError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except PatchError as e:
+            module.fail_json(msg=to_native(e), exception=format_exc())
 
     module.exit_json(changed=changed)
 

@@ -1,9 +1,8 @@
 ---
-- debug: msg="START junos_vlan netconf/basic.yaml"
+- debug: msg="START junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove vlan
   junos_vlan:
-    vlan_id: 100
     name: test-vlan
     description: test vlan
     state: absent
@@ -102,3 +101,92 @@
     that:
       - "result.changed == true"
       - "'<name>test-vlan</name>' not in config.xml"
+
+- name: Setup vlan configuration for aggregate
+  junos_vlan:
+    aggregate:
+      - vlan_id: 159
+        name: test_vlan_1
+      - vlan_id: 160
+        name: test_vlan_2
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1 }
+      - { vlan_id: 161, name: test_vlan_2 }
+    description: test vlan
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *test_vlan_1")
+      - result.diff.prepared is search("\+ *vlan-id 159")
+      - result.diff.prepared is search("\+ *vlan-id 161")
+      - result.diff.prepared is search("\+ *description \"test vlan\"")
+
+- name: Deactivate vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - name: test_vlan_2
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *inactive[:] test_vlan_1")
+      - result.diff.prepared is search("! *inactive[:] test_vlan_2")
+
+- name: activate vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - name: test_vlan_2
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *active[:] test_vlan_1")
+      - result.diff.prepared is search("! *active[:] test_vlan_2")
+
+- name: Delete vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - vlan_id: 159
+        name: test_vlan_1
+      - name: test_vlan_2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *test_vlan_1")
+      - result.diff.prepared is search("\- *vlan-id 159")
+      - result.diff.prepared is search("\- *test_vlan_2")
+
+- name: Delete vlan configuration using aggregate (idempotent)
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1 }
+      - name: test_vlan_2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"

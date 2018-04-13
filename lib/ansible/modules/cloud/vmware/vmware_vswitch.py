@@ -1,98 +1,118 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: vmware_vswitch
-short_description: Add a VMware Standard Switch to an ESXi host
+short_description: Add or remove a VMware Standard Switch to an ESXi host
 description:
-    - Add a VMware Standard Switch to an ESXi host
+- Add or remove a VMware Standard Switch to an ESXi host.
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac), Russell Teague (@mtnbikenc)"
+author:
+- Joseph Callen (@jcpowermac)
+- Russell Teague (@mtnbikenc)
 notes:
-    - Tested on vSphere 5.5
+- Tested on vSphere 5.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 options:
-    switch_name:
-        description:
-            - vSwitch name to add
-        required: True
-    nic_name:
-        description:
-            - vmnic name to attach to vswitch
-        required: False
-    number_of_ports:
-        description:
-            - Number of port to configure on vswitch
-        default: 128
-        required: False
-    mtu:
-        description:
-            - MTU to configure on vswitch
-        required: False
-    state:
-        description:
-            - Add or remove the switch
-        default: 'present'
-        choices:
-            - 'present'
-            - 'absent'
-        required: False
-extends_documentation_fragment: vmware.documentation
+  switch:
+    description:
+    - vSwitch name to add.
+    - Alias C(switch) is added in version 2.4.
+    required: yes
+    aliases: [ switch_name ]
+  nics:
+    description:
+    - A list of vmnic names or vmnic name to attach to vSwitch.
+    - Alias C(nics) is added in version 2.4.
+    aliases: [ nic_name ]
+  number_of_ports:
+    description:
+    - Number of port to configure on vSwitch.
+    default: 128
+  mtu:
+    description:
+    - MTU to configure on vSwitch.
+    default: 1500
+  state:
+    description:
+    - Add or remove the switch.
+    default: present
+    choices: [ absent, present ]
+  esxi_hostname:
+    description:
+    - Manage the vSwitch using this ESXi host system
+    version_added: "2.5"
+    aliases: [ 'host' ]
+extends_documentation_fragment:
+- vmware.documentation
 '''
 
 EXAMPLES = '''
 - name: Add a VMware vSwitch
-  local_action:
+  action:
     module: vmware_vswitch
     hostname: esxi_hostname
     username: esxi_username
     password: esxi_password
-    switch_name: vswitch_name
-    nic_name: vmnic_name
+    switch: vswitch_name
+    nics: vmnic_name
     mtu: 9000
+  delegate_to: localhost
 
 - name: Add a VMWare vSwitch without any physical NIC attached
   vmware_vswitch:
     hostname: 192.168.10.1
     username: admin
     password: password123
-    switch_name: vswitch_0001
+    switch: vswitch_0001
     mtu: 9000
+  delegate_to: localhost
 
+- name: Add a VMWare vSwitch with multiple NICs
+  vmware_vswitch:
+    hostname: esxi_hostname
+    username: esxi_username
+    password: esxi_password
+    switch: vmware_vswitch_0004
+    nics:
+    - vmnic1
+    - vmnic2
+    mtu: 9000
+  delegate_to: localhost
+
+- name: Add a VMware vSwitch to a specific host system
+  vmware_vswitch:
+    hostname: 192.168.10.1
+    username: esxi_username
+    password: esxi_password
+    esxi_hostname: DC0_H0
+    switch_name: vswitch_001
+    nic_name: vmnic0
+    mtu: 9000
+  delegate_to: localhost
 '''
 
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, get_all_objs
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
-from ansible.module_utils.vmware import vmware_argument_spec, get_all_objs, connect_to_api
-from ansible.module_utils.basic import AnsibleModule
+    pass
 
 
 def find_vswitch_by_name(host, vswitch_name):
@@ -102,19 +122,17 @@ def find_vswitch_by_name(host, vswitch_name):
     return None
 
 
-class VMwareHostVirtualSwitch(object):
-
+class VMwareHostVirtualSwitch(PyVmomi):
     def __init__(self, module):
+        super(VMwareHostVirtualSwitch, self).__init__(module)
         self.host_system = None
-        self.content = None
         self.vss = None
-        self.module = module
-        self.switch_name = module.params['switch_name']
+        self.switch = module.params['switch']
         self.number_of_ports = module.params['number_of_ports']
-        self.nic_name = module.params['nic_name']
+        self.nics = module.params['nics']
         self.mtu = module.params['mtu']
         self.state = module.params['state']
-        self.content = connect_to_api(self.module)
+        self.esxi_hostname = module.params['esxi_hostname']
 
     def process_state(self):
         try:
@@ -146,9 +164,9 @@ class VMwareHostVirtualSwitch(object):
         vss_spec = vim.host.VirtualSwitch.Specification()
         vss_spec.numPorts = self.number_of_ports
         vss_spec.mtu = self.mtu
-        if self.nic_name:
-            vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
-        self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch_name, spec=vss_spec)
+        if self.nics:
+            vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=self.nics)
+        self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch, spec=vss_spec)
         self.module.exit_json(changed=True)
 
     def state_exit_unchanged(self):
@@ -177,12 +195,21 @@ class VMwareHostVirtualSwitch(object):
         self.module.exit_json(changed=False, msg="Currently not implemented.")
 
     def check_vswitch_configuration(self):
-        host = get_all_objs(self.content, [vim.HostSystem])
-        if not host:
+        hosts = get_all_objs(self.content, [vim.HostSystem])
+        if not hosts:
             self.module.fail_json(msg="Unable to find host")
 
-        self.host_system = list(host.keys())[0]
-        self.vss = find_vswitch_by_name(self.host_system, self.switch_name)
+        desired_host_system = None
+        if self.esxi_hostname:
+            for host_system_obj, host_system_name in iteritems(hosts):
+                if host_system_name == self.esxi_hostname:
+                    desired_host_system = host_system_obj
+
+        if desired_host_system:
+            self.host_system = desired_host_system
+        else:
+            self.host_system = list(hosts.keys())[0]
+        self.vss = find_vswitch_by_name(self.host_system, self.switch)
 
         if self.vss is None:
             return 'absent'
@@ -192,19 +219,21 @@ class VMwareHostVirtualSwitch(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(switch_name=dict(required=True, type='str'),
-                              nic_name=dict(required=False, type='str'),
-                              number_of_ports=dict(required=False, type='int', default=128),
-                              mtu=dict(required=False, type='int', default=1500),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(dict(
+        switch=dict(type='str', required=True, aliases=['switch_name']),
+        nics=dict(type='list', aliases=['nic_name']),
+        number_of_ports=dict(type='int', default=128),
+        mtu=dict(type='int', default=1500),
+        state=dict(type='str', default='present', choices=['absent', 'present'])),
+        esxi_hostname=dict(type='str', aliases=['host']),
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
 
     host_virtual_switch = VMwareHostVirtualSwitch(module)
     host_virtual_switch.process_state()
+
 
 if __name__ == '__main__':
     main()

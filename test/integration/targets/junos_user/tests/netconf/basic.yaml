@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_user netconf/basic.yaml"
+- debug: msg="START junos_user netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove user
   junos_user:
@@ -27,7 +27,7 @@
       - "result.changed == true"
       - "'<name>test_user</name>' in config.xml"
       - "'<full-name>test_user</full-name>' in config.xml"
-      - "'<class>read-only</class>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
 
 - name: Create user again (idempotent)
   junos_user:
@@ -85,7 +85,7 @@
       - "result.changed == true"
       - "'<name>test_user</name>' in config.xml"
       - "'<full-name>test_user</full-name>' in config.xml"
-      - "'<class>read-only</class>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
 
 - name: Delete user
   junos_user:
@@ -123,7 +123,7 @@
 
 - name: Teardown list of users
   junos_user:
-    collection:
+    aggregate:
       - {name: test_user1, state: absent}
       - {name: test_user2, state: absent}
     provider: "{{ netconf }}"
@@ -131,7 +131,7 @@
 
 - name: Create list of users
   junos_user:
-    collection:
+    aggregate:
       - {name: test_user1, full_name: test_user2, role: operator, state: present}
       - {name: test_user2, full_name: test_user2, role: read-only, state: present}
     provider: "{{ netconf }}"
@@ -151,7 +151,7 @@
 
 - name: Delete list of users
   junos_user:
-    collection:
+    aggregate:
       - {name: test_user1, full_name: test_user2, role: operator, state: absent}
       - {name: test_user2, full_name: test_user2, role: read-only, state: absent}
     provider: "{{ netconf }}"
@@ -168,3 +168,28 @@
       - "result.changed == true"
       - "'<name>test_user1</name>' not in config.xml"
       - "'<name>test_user2</name>' not in config.xml"
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - name: ansible
+      - {name: test_user1, full_name: test_user2, role: operator}
+      - {name: test_user2, full_name: test_user2, role: read-only}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Purge users except the users in aggregate
+  junos_user:
+    aggregate:
+      - name: ansible
+    purge: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\- *user test_user1")
+      - result.diff.prepared is search("\- *user test_user2")
+
+- debug: msg="END junos_user netconf/basic.yaml on connection={{ ansible_connection }}"

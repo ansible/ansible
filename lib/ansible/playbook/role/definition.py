@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -72,7 +72,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        assert isinstance(ds, dict) or isinstance(ds, string_types) or isinstance(ds, AnsibleBaseYAMLObject)
+        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+            raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
             ds = super(RoleDefinition, self).preprocess_data(ds)

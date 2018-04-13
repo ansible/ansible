@@ -1,0 +1,64 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snapshot sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: snapshot_run="true"
+- set_fact: snapshot_run="false"
+  when: titanium and ( connection.transport is match('nxapi'))
+
+- block:
+  - name: create snapshot
+    nxos_snapshot:
+      action: create
+      snapshot_name: test_snapshot1
+      description: Ansible
+      provider: "{{ connection }}"
+
+  - name: create another snapshot
+    nxos_snapshot:
+      action: create
+      snapshot_name: test_snapshot2
+      description: row
+      section: myshow
+      show_command: show ip interface brief
+      row_id: ROW_intf
+      element_key1: intf-name
+      provider: "{{ connection }}"
+
+  - name: compare snapshots
+    nxos_snapshot:
+      action: compare
+      snapshot1: test_snapshot1
+      snapshot2: test_snapshot2
+      comparison_results_file: compare_snapshots.txt
+      compare_option: summary
+      path: '.'
+      provider: "{{ connection }}"
+
+  - name: FAIL compare snapshots
+    nxos_snapshot:
+      action: compare
+      snapshot1: test_snapshot1
+      snapshot2: test_snapshot2
+      compare_option: summary
+      path: '.'
+      provider: "{{ connection }}"
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'result.failed == True'
+        - '"action is compare but all of the following are missing: comparison_results_file" in result.msg'
+
+  when: snapshot_run
+
+  always:
+  - name: delete snapshot
+    nxos_snapshot:
+      action: delete_all
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_snapshot sanity test"

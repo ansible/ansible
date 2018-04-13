@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Olivier Boukili <boukili.olivier@gmail.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,42 +27,36 @@ description:
     python module.
 options:
   balancer_url_suffix:
-    default: /balancer-manager/
     description:
       - Suffix of the balancer pool url required to access the balancer pool
         status page (e.g. balancer_vhost[:port]/balancer_url_suffix).
-    required: false
+    default: /balancer-manager/
   balancer_vhost:
-    default: None
     description:
       - (ipv4|ipv6|fqdn):port of the Apache httpd 2.4 mod_proxy balancer pool.
     required: true
   member_host:
-    default: None
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
         Port number is autodetected and should not be specified here.
         If undefined, apache2_mod_proxy module will return a members list of
         dictionaries of all the current balancer pool members' attributes.
-    required: false
   state:
-    default: None
     description:
       - Desired state of the member host.
         (absent|disabled),drained,hot_standby,ignore_errors can be
         simultaneously invoked by separating them with a comma (e.g. state=drained,ignore_errors).
-    required: false
     choices: ["present", "absent", "enabled", "disabled", "drained", "hot_standby", "ignore_errors"]
   tls:
-    default: false
     description:
       - Use https to access balancer management page.
-    choices: ["true", "false"]
+    type: bool
+    default: 'no'
   validate_certs:
-    default: true
     description:
       - Validate ssl/tls certificates.
-    choices: ["true", "false"]
+    type: bool
+    default: 'yes'
 '''
 
 EXAMPLES = '''
@@ -259,9 +243,7 @@ class BalancerMember(object):
 
         balancer_member_page = fetch_url(self.module, self.management_url)
 
-        try:
-            assert balancer_member_page[1]['status'] == 200
-        except AssertionError:
+        if balancer_member_page[1]['status'] != 200:
             self.module.fail_json(msg="Could not get balancer_member_page, check for connectivity! " + balancer_member_page[1])
         else:
             try:
@@ -306,9 +288,7 @@ class BalancerMember(object):
                 request_body = request_body + str(values_mapping[k]) + '=0'
 
         response = fetch_url(self.module, self.management_url, data=str(request_body))
-        try:
-            assert response[1]['status'] == 200
-        except AssertionError:
+        if response[1]['status'] != 200:
             self.module.fail_json(msg="Could not set the member status! " + self.host + " " + response[1]['status'])
 
     attributes = property(get_member_attributes)
@@ -333,9 +313,7 @@ class Balancer(object):
     def fetch_balancer_page(self):
         """ Returns the balancer management html page as a string for later parsing."""
         page = fetch_url(self.module, str(self.url))
-        try:
-            assert page[1]['status'] == 200
-        except AssertionError:
+        if page[1]['status'] != 200:
             self.module.fail_json(msg="Could not get balancer page! HTTP status response: " + str(page[1]['status']))
         else:
             content = page[0].read()
@@ -353,9 +331,7 @@ class Balancer(object):
         else:
             for element in soup.findAll('a')[1::1]:
                 balancer_member_suffix = str(element.get('href'))
-                try:
-                    assert balancer_member_suffix is not ''
-                except AssertionError:
+                if not balancer_member_suffix:
                     self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
                 else:
                     yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)

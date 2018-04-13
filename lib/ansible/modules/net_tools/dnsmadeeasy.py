@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,34 +25,27 @@ options:
     description:
       - Account API Key.
     required: true
-    default: null
 
   account_secret:
     description:
       - Account Secret Key.
     required: true
-    default: null
 
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
         resolution
     required: true
-    default: null
 
   record_name:
     description:
       - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
         of the state argument.
-    required: false
-    default: null
 
   record_type:
     description:
       - Record type.
-    required: false
     choices: [ 'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
-    default: null
 
   record_value:
     description:
@@ -70,13 +55,10 @@ options:
       - >
         If record_value is not specified; no changes will be made and the record will be returned in 'result'
         (in other words, this module can be used to fetch a record's current id, type, and ttl)
-    required: false
-    default: null
 
   record_ttl:
     description:
       - record's "Time to live".  Number of seconds the record remains cached in DNS servers.
-    required: false
     default: 1800
 
   state:
@@ -84,23 +66,20 @@ options:
       - whether the record should exist or not
     required: true
     choices: [ 'present', 'absent' ]
-    default: null
 
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 1.5.1
 
   monitor:
     description:
       - If C(yes), add or change the monitor.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   systemDescription:
@@ -151,68 +130,58 @@ options:
   httpFqdn:
     description:
       - The fully qualified domain name used by the monitor.
-    required: false
     version_added: 2.4
 
   httpFile:
     description:
       - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
-    required: false
     version_added: 2.4
 
   httpQueryString:
     description:
       - The string in the httpFile that the monitor queries for HTTP or HTTPS.
-    required: False
     version_added: 2.4
 
   failover:
     description:
       - If C(yes), add or change the failover.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   autoFailover:
     description:
       - If true, fallback to the primary IP address is manual after a failover.
       - If false, fallback to the primary IP address is automatic after a failover.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   ip1:
     description:
       - Primary IP address for the failover.
       - Required if adding or changing the monitor or failover.
-    required: false
     version_added: 2.4
 
   ip2:
     description:
       - Secondary IP address for the failover.
       - Required if adding or changing the failover.
-    required: false
     version_added: 2.4
 
   ip3:
     description:
       - Tertiary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip4:
     description:
       - Quaternary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip5:
     description:
       - Quinary IP address for the failover.
-    required: false
     version_added: 2.4
 
 notes:
@@ -385,19 +354,18 @@ EXAMPLES = '''
 # DNSMadeEasy module specific support methods.
 #
 
+import json
+import hashlib
+import hmac
+from time import strftime, gmtime
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six import string_types
 
-IMPORT_ERROR = None
-try:
-    import json
-    from time import strftime, gmtime
-    import hashlib
-    import hmac
-except ImportError:
-    e = get_exception()
-    IMPORT_ERROR = str(e)
 
-class DME2:
+class DME2(object):
 
     def __init__(self, apikey, secret, domain, module):
         self.module = module
@@ -410,7 +378,7 @@ class DME2:
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
-        self.contactList_map = None # ["contactList_name"] => ID
+        self.contactList_map = None  # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -437,7 +405,7 @@ class DME2:
 
     def query(self, resource, method, data=None):
         url = self.baseurl + resource
-        if data and not isinstance(data, basestring):
+        if data and not isinstance(data, string_types):
             data = urlencode(data)
 
         response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
@@ -480,12 +448,12 @@ class DME2:
         if not self.all_records:
             self.all_records = self.getRecords()
 
-        if record_type in ["A", "AAAA", "CNAME", "ANAME", "HTTPRED", "PTR"]:
+        if record_type in ["CNAME", "ANAME", "HTTPRED", "PTR"]:
             for result in self.all_records:
                 if result['name'] == record_name and result['type'] == record_type:
                     return result
             return False
-        elif record_type in ["MX", "NS", "TXT", "SRV"]:
+        elif record_type in ["A", "AAAA", "MX", "NS", "TXT", "SRV"]:
             for result in self.all_records:
                 if record_type == "MX":
                     value = record_value.split(" ")[1]
@@ -503,7 +471,7 @@ class DME2:
         return self.query(self.record_url, 'GET')['data']
 
     def _instMap(self, type):
-        #@TODO cache this call so it's executed only once per ansible execution
+        # @TODO cache this call so it's executed only once per ansible execution
         map = {}
         results = {}
 
@@ -521,15 +489,15 @@ class DME2:
         return json.dumps(data, separators=(',', ':'))
 
     def createRecord(self, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url, 'POST', data)
 
     def updateRecord(self, record_id, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'PUT', data)
 
     def deleteRecord(self, record_id):
-        #@TODO remove record from the cache when impleneted
+        # @TODO remove record from the cache when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'DELETE')
 
     def getMonitor(self, record_id):
@@ -559,6 +527,7 @@ class DME2:
 # ===========================================
 # Module execution.
 #
+
 
 def main():
 
@@ -590,7 +559,7 @@ def main():
             ip3=dict(required=False),
             ip4=dict(required=False),
             ip5=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']
@@ -600,9 +569,6 @@ def main():
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
         ]
     )
-
-    if IMPORT_ERROR:
-        module.fail_json(msg="Import Error: " + IMPORT_ERROR)
 
     protocols = dict(TCP=1, UDP=2, HTTP=3, DNS=4, SMTP=5, HTTPS=6)
     sensitivities = dict(Low=8, Medium=5, High=3)
@@ -687,7 +653,7 @@ def main():
     # Follow Keyword Controlled Behavior
     if state == 'present':
         # return the record if no value is specified
-        if not "value" in new_record:
+        if "value" not in new_record:
             if not current_record:
                 module.fail_json(
                     msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))
@@ -721,15 +687,12 @@ def main():
             module.exit_json(changed=True)
 
         # record does not exist, return w/o change.
-        module.exit_json(changed=False)
+        module.exit_json(changed=changed)
 
     else:
         module.fail_json(
             msg="'%s' is an unknown value for the state argument" % state)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

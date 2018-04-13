@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -35,10 +33,13 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature must be enabled with feature scp-server.
   - If the file is already present (md5 sums match), no transfer will
     take place.
   - Check mode will tell you if the file would be copied.
+requirements:
+  - paramiko
 options:
   local_file:
     description:
@@ -48,23 +49,24 @@ options:
     description:
       - Remote file path of the copy. Remote directories must exist.
         If omitted, the name of the local file will be used.
-    required: false
-    default: null
   file_system:
     description:
       - The remote file system of the device. If omitted,
-        devices that support a file_system parameter will use
+        devices that support a I(file_system) parameter will use
         their default values.
-    required: false
-    default: null
+  connect_ssh_port:
+    description:
+      - SSH port to connect to server during transfer of file
+    default: 22
+    version_added: "2.5"
 '''
 
 EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+    remote_file: "test_file.txt"
+    provider: "{{ cli }}"
+    connect_ssh_port: "{{ ansible_ssh_port }}"
 '''
 
 RETURN = '''
@@ -88,10 +90,16 @@ remote_file:
 import os
 import re
 import time
-import paramiko
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -102,7 +110,7 @@ except ImportError:
 
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return False
     return True
@@ -110,7 +118,7 @@ def remote_file_exists(module, dst, file_system='bootflash:'):
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return 0
     return body.split()[0].strip()
@@ -121,8 +129,8 @@ def local_file_exists(module):
 
 
 def get_flash_size(module):
-    command = 'dir {}'.format(module.params['file_system'])
-    body = run_commands(module, [command])[0]
+    command = 'dir {0}'.format(module.params['file_system'])
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
 
     match = re.search(r'(\d+) bytes free', body)
     bytes_free = match.group(1)
@@ -145,18 +153,22 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    hostname = module.params['host']
-    username = module.params['username']
-    password = module.params['password']
+    provider = module.params['provider']
+
+    hostname = module.params.get('host') or provider.get('host')
+    username = module.params.get('username') or provider.get('username')
+    password = module.params.get('password') or provider.get('password')
+    port = module.params.get('connect_ssh_port')
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(
         hostname=hostname,
         username=username,
-        password=password)
+        password=password,
+        port=port)
 
-    full_remote_path = '{}{}'.format(module.params['file_system'], dest)
+    full_remote_path = '{0}{1}'.format(module.params['file_system'], dest)
     scp = SCPClient(ssh.get_transport())
     try:
         scp.put(module.params['local_file'], full_remote_path)
@@ -181,14 +193,18 @@ def main():
         local_file=dict(required=True),
         remote_file=dict(required=False),
         file_system=dict(required=False, default='bootflash:'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        connect_ssh_port=dict(required=False, type='int', default=22),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    if not HAS_PARAMIKO:
+        module.fail_json(
+            msg='library paramiko is required but does not appear to be '
+                'installed. It can be installed using `pip install paramiko`'
+        )
 
     if not HAS_SCP:
         module.fail_json(
@@ -209,7 +225,7 @@ def main():
     results['file_system'] = file_system
 
     if not local_file_exists(module):
-        module.fail_json(msg="Local file {} not found".format(local_file))
+        module.fail_json(msg="Local file {0} not found".format(local_file))
 
     dest = remote_file or os.path.basename(local_file)
     remote_exists = remote_file_exists(module, dest, file_system=file_system)

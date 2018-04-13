@@ -31,10 +31,13 @@ class TestNxosCommandModule(TestNxosModule):
     module = nxos_command
 
     def setUp(self):
+        super(TestNxosCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestNxosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None, device=''):

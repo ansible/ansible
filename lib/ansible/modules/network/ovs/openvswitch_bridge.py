@@ -1,30 +1,17 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
-#
 # Portions copyright @ 2015 VMware, Inc.
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# pylint: disable=C0111
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -43,46 +30,34 @@ options:
             - Name of bridge or fake bridge to manage
     parent:
         version_added: "2.3"
-        required: false
-        default: None
         description:
             - Bridge parent of the fake bridge to manage
     vlan:
         version_added: "2.3"
-        required: false
-        default: None
         description:
             - The VLAN id of the fake bridge to manage (must be between 0 and
               4095). This parameter is required if I(parent) parameter is set.
     state:
-        required: false
         default: "present"
         choices: [ present, absent ]
         description:
             - Whether the bridge should exist
     timeout:
-        required: false
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
     external_ids:
         version_added: 2.0
-        required: false
-        default: None
         description:
             - A dictionary of external-ids. Omitting this parameter is a No-op.
               To  clear all external-ids pass an empty value.
     fail_mode:
         version_added: 2.0
-        default: None
-        required: false
         choices : [secure, standalone]
         description:
             - Set bridge fail-mode. The default value (None) is a No-op.
     set:
         version_added: 2.3
-        required: false
-        default: None
         description:
             - Run set command after bridge configuration. This parameter is
               non-idempotent, play will always return I(changed) state if
@@ -114,13 +89,14 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.pycompat24 import get_exception
+
 
 def _fail_mode_to_str(text):
     if not text:
         return None
     else:
         return text.strip()
+
 
 def _external_ids_to_dict(text):
     if not text:
@@ -134,6 +110,7 @@ def _external_ids_to_dict(text):
                 d[k] = v
 
         return d
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
@@ -169,7 +146,7 @@ def map_obj_to_commands(want, have, module):
             command = templatized_command % module.params
 
             if want['parent']:
-                templatized_command =  "%(parent)s %(vlan)s"
+                templatized_command = "%(parent)s %(vlan)s"
                 command += " " + templatized_command % module.params
 
             if want['set']:
@@ -188,7 +165,7 @@ def map_obj_to_commands(want, have, module):
             if want['external_ids']:
                 for k, v in iteritems(want['external_ids']):
                     templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
-                                        " br-set-external-id %(bridge)s")
+                                           " br-set-external-id %(bridge)s")
                     command = templatized_command % module.params
                     command += " " + k + " " + v
                     commands.append(command)
@@ -246,10 +223,10 @@ def map_params_to_obj(module):
 
     return obj
 
-# pylint: disable=E0602
+
 def main():
     """ Entry point. """
-    argument_spec={
+    argument_spec = {
         'bridge': {'required': True},
         'parent': {'default': None},
         'vlan': {'default': None, 'type': 'int'},

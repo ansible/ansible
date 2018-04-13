@@ -5,20 +5,13 @@
 # Based on pacman (Afterburn <http://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
 # and apt (Matthew Williams <matthew@flowroute.com>) modules.
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -36,20 +29,16 @@ options:
     description:
       - During upgrade, reset versioned world dependencies and change logic to prefer replacing or downgrading packages (instead of holding them)
         if the currently installed package is no longer available from any repository.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.4"
   name:
     description:
       - A package name, like C(foo), or multiple packages, like C(foo, bar).
-    required: false
-    default: null
   repository:
     description:
-      - A package repository or multiple repositories
-    required: false
-    default: null
+      - A package repository or multiple repositories.
+        Unlike with the underlying apk command, this list will override the system repositories rather than supplement them.
     version_added: "2.4"
   state:
     description:
@@ -57,23 +46,21 @@ options:
       - C(present) ensures the package(s) is/are present.
       - C(absent) ensures the package(s) is/are absent.
       - C(latest) ensures the package(s) is/are present and the latest version(s).
-    required: false
     default: present
     choices: [ "present", "absent", "latest" ]
   update_cache:
     description:
       - Update repository indexes. Can be run with other steps or on it's own.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   upgrade:
     description:
       - Upgrade all installed packages to their latest version.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 notes:
   - '"name" and "upgrade" are mutually exclusive.'
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
@@ -152,15 +139,17 @@ import re
 # Import module snippets.
 from ansible.module_utils.basic import AnsibleModule
 
+
 def parse_for_packages(stdout):
     packages = []
     data = stdout.split('\n')
-    regex = re.compile('^\(\d+/\d+\)\s+\S+\s+(\S+)')
+    regex = re.compile(r'^\(\d+/\d+\)\s+\S+\s+(\S+)')
     for l in data:
         p = regex.search(l)
         if p:
             packages.append(p.group(1))
     return packages
+
 
 def update_package_db(module, exit):
     cmd = "%s update" % (APK_PATH)
@@ -172,6 +161,19 @@ def update_package_db(module, exit):
     else:
         return True
 
+
+def query_toplevel(module, name):
+    # /etc/apk/world contains a list of top-level packages separated by ' ' or \n
+    # packages may contain repository (@) or version (=<>~) separator characters or start with negation !
+    regex = re.compile(r'^' + re.escape(name) + r'([@=<>~].+)?$')
+    with open('/etc/apk/world') as f:
+        content = f.read().split()
+        for p in content:
+            if regex.search(p):
+                return True
+    return False
+
+
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -179,6 +181,7 @@ def query_package(module, name):
         return True
     else:
         return False
+
 
 def query_latest(module, name):
     cmd = "%s version %s" % (APK_PATH, name)
@@ -189,6 +192,7 @@ def query_latest(module, name):
         return False
     return True
 
+
 def query_virtual(module, name):
     cmd = "%s -v info --description %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -196,6 +200,7 @@ def query_virtual(module, name):
     if re.search(search_pattern, stdout):
         return True
     return False
+
 
 def get_dependencies(module, name):
     cmd = "%s -v info --depends %s" % (APK_PATH, name)
@@ -205,6 +210,7 @@ def get_dependencies(module, name):
         return dependencies[1:]
     else:
         return []
+
 
 def upgrade_packages(module, available):
     if module.check_mode:
@@ -221,6 +227,7 @@ def upgrade_packages(module, available):
         module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr, packages=packagelist)
 
+
 def install_packages(module, names, state):
     upgrade = False
     to_install = []
@@ -234,7 +241,7 @@ def install_packages(module, names, state):
                 if state == 'latest' and not query_latest(module, dependency):
                     to_upgrade.append(dependency)
         else:
-            if not query_package(module, name):
+            if not query_toplevel(module, name):
                 to_install.append(name)
             elif state == 'latest' and not query_latest(module, name):
                 to_upgrade.append(name)
@@ -259,6 +266,7 @@ def install_packages(module, names, state):
         module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
 
+
 def remove_packages(module, names):
     installed = []
     for name in names:
@@ -273,12 +281,18 @@ def remove_packages(module, names):
         cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     packagelist = parse_for_packages(stdout)
+    # Check to see if packages are still present because of dependencies
+    for name in installed:
+        if query_package(module, name):
+            rc = 1
+            break
     if rc != 0:
         module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
 
 # ==========================================
 # Main control flow.
+
 
 def main():
     module = AnsibleModule(
@@ -306,7 +320,7 @@ def main():
     # add repositories to the APK_PATH
     if p['repository']:
         for r in p['repository']:
-            APK_PATH = "%s --repository %s" % (APK_PATH, r)
+            APK_PATH = "%s --repository %s --repositories-file /dev/null" % (APK_PATH, r)
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:

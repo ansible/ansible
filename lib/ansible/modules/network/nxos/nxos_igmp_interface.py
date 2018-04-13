@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
@@ -55,77 +56,56 @@ options:
     version:
         description:
             - IGMP version. It can be 2 or 3.
-        required: false
-        default: null
         choices: ['2', '3']
     startup_query_interval:
         description:
             - Query interval used when the IGMP process starts up.
               The range is from 1 to 18000. The default is 31.
-        required: false
-        default: null
     startup_query_count:
         description:
             - Query count used when the IGMP process starts up.
               The range is from 1 to 10. The default is 2.
-        required: false
-        default: null
     robustness:
         description:
             - Sets the robustness variable. Values can range from 1 to 7.
               The default is 2.
-        required: false
-        default: null
     querier_timeout:
         description:
             - Sets the querier timeout that the software uses when deciding
               to take over as the querier. Values can range from 1 to 65535
               seconds. The default is 255 seconds.
-        required: false
-        default: null
     query_mrt:
         description:
             - Sets the response time advertised in IGMP queries.
               Values can range from 1 to 25 seconds. The default is 10 seconds.
-        required: false
-        default: null
     query_interval:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
-              he default is 125 seconds.
-        required: false
-        default: null
+              The default is 125 seconds.
     last_member_qrt:
         description:
             - Sets the query interval waited after sending membership reports
               before the software deletes the group state. Values can range
               from 1 to 25 seconds. The default is 1 second.
-        required: false
-        default: null
     last_member_query_count:
         description:
             - Sets the number of times that the software sends an IGMP query
               in response to a host leave message.
               Values can range from 1 to 5. The default is 2.
-        required: false
-        default: null
     group_timeout:
         description:
             - Sets the group membership timeout for IGMPv2.
               Values can range from 3 to 65,535 seconds.
               The default is 260 seconds.
-        required: false
-        default: null
     report_llg:
         description:
             - Configures report-link-local-groups.
               Enables sending reports for groups in 224.0.0.0/24.
               Reports are always sent for nonlink local groups.
               By default, reports are not sent for link local groups.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     immediate_leave:
         description:
             - Enables the device to remove the group entry from the multicast
@@ -134,34 +114,24 @@ options:
               IGMPv2 group memberships on a given IGMP interface because the
               device does not send group-specific queries.
               The default is disabled.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     oif_routemap:
         description:
             - Configure a routemap for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_prefix:
         description:
             - Configure a prefix for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_source:
         description:
             - Configure a source for static outgoing interface (OIF).
-        required: false
-        default: null
     restart:
         description:
             - Restart IGMP.
-        required: false
-        choices: ['true', 'false']
-        default: null
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''
@@ -170,11 +140,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     startup_query_interval: 30
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
-
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
@@ -235,22 +201,26 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 import re
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
-    return body
+def execute_show_command(command, module, command_type='cli_show'):
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
+
+    return run_commands(module, cmds)
 
 
 def get_interface_mode(interface, intf_type, module):
@@ -318,7 +288,7 @@ def get_igmp_interface(module, interface):
         'ConfiguredStartupQueryInterval': 'startup_query_interval',
         'StartupQueryCount': 'startup_query_count',
         'RobustnessVariable': 'robustness',
-        'QuerierTimeout': 'querier_timeout',
+        'ConfiguredQuerierTimeout': 'querier_timeout',
         'ConfiguredMaxResponseTime': 'query_mrt',
         'ConfiguredQueryInterval': 'query_interval',
         'LastMemberMTR': 'last_member_qrt',
@@ -331,16 +301,16 @@ def get_igmp_interface(module, interface):
     if body:
         resource = body['TABLE_vrf']['ROW_vrf']['TABLE_if']['ROW_if']
         igmp = apply_key_map(key_map, resource)
-        report_llg = str(resource['ReportingForLinkLocal'])
+        report_llg = str(resource['ReportingForLinkLocal']).lower()
         if report_llg == 'true':
             igmp['report_llg'] = True
         elif report_llg == 'false':
             igmp['report_llg'] = False
 
-        immediate_leave = str(resource['ImmediateLeave'])  # returns en or dis
-        if immediate_leave == 'en':
+        immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
+        if re.search(r'^en|^true|^enabled', immediate_leave):
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis':
+        elif re.search(r'^dis|^false|^disabled', immediate_leave):
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
@@ -354,11 +324,11 @@ def get_igmp_interface(module, interface):
     staticoif = []
     if body:
         split_body = body.split('\n')
-        route_map_regex = ('.*ip igmp static-oif route-map\s+'
-                           '(?P<route_map>\S+).*')
-        prefix_source_regex = ('.*ip igmp static-oif\s+(?P<prefix>'
-                               '((\d+.){3}\d+))(\ssource\s'
-                               '(?P<source>\S+))?.*')
+        route_map_regex = (r'.*ip igmp static-oif route-map\s+'
+                           r'(?P<route_map>\S+).*')
+        prefix_source_regex = (r'.*ip igmp static-oif\s+(?P<prefix>'
+                               r'((\d+.){3}\d+))(\ssource\s'
+                               r'(?P<source>\S+))?.*')
 
         for line in split_body:
             temp = {}
@@ -497,11 +467,11 @@ def config_remove_oif(existing, existing_oif_prefix_source):
             if each.get('prefix') and each.get('source'):
                 command = 'no ip igmp static-oif {0} source {1} '.format(
                     each.get('prefix'), each.get('source')
-                    )
+                )
             elif each.get('prefix'):
                 command = 'no ip igmp static-oif {0}'.format(
                     each.get('prefix')
-                    )
+                )
             if command:
                 commands.append(command)
             command = None
@@ -529,20 +499,16 @@ def main():
         oif_source=dict(required=False, type='str'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
-                       default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+                   default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     state = module.params['state']
     interface = module.params['interface']
@@ -603,7 +569,7 @@ def main():
     changed = False
     commands = []
     proposed = dict((k, v) for k, v in module.params.items()
-                     if v is not None and k in args)
+                    if v is not None and k in args)
 
     CANNOT_ABSENT = ['version', 'startup_query_interval',
                      'startup_query_count', 'robustness', 'querier_timeout',
@@ -695,4 +661,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

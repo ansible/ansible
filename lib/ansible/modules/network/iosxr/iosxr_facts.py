@@ -1,23 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +25,9 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
 options:
   gather_subset:
     description:
@@ -122,11 +117,10 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.iosxr import run_commands
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_command
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 
 class FactsBase(object):
@@ -142,12 +136,12 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def commands(self):
-        return(['show version brief'])
+        return(['show version | utility head -n 20'])
 
     def populate(self, results):
-        self.facts['version'] = self.parse_version(results['show version brief'])
-        self.facts['image'] = self.parse_image(results['show version brief'])
-        self.facts['hostname'] = self.parse_hostname(results['show version brief'])
+        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
+        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
+        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -175,7 +169,7 @@ class Hardware(FactsBase):
             results['dir /all'])
 
         match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-            results['show memory summary'])
+                          results['show memory summary'])
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -197,7 +191,7 @@ class Interfaces(FactsBase):
 
     def commands(self):
         return(['show interfaces', 'show ipv6 interface',
-            'show lldp', 'show lldp neighbors detail'])
+                'show lldp', 'show lldp neighbors detail'])
 
     def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
@@ -369,7 +363,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -414,7 +407,7 @@ def main():
     try:
         for inst in instances:
             commands = inst.commands()
-            responses = run_commands(module, commands)
+            responses = run_command(module, commands)
             results = dict(zip(commands, responses))
             inst.populate(results)
             facts.update(inst.facts)

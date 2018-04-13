@@ -1,20 +1,13 @@
 #!/usr/bin/python
 # (c) 2016, Flavio Percoco <flavio@redhat.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,29 +26,23 @@ options:
   host:
     description:
       - Tiller's server host
-    required: false
     default: "localhost"
   port:
     description:
       - Tiller's server port
-    required: false
     default: 44134
   namespace:
     description:
       - Kubernetes namespace where the chart should be installed
-    required: false
     default: "default"
   name:
     description:
       - Release name to manage
-    required: false
-    default: null
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
-    required: false
     choices: ['absent', 'purged', 'present']
-    default: "installed"
+    default: "present"
   chart:
     description: |
       A map describing the chart to install. For example:
@@ -65,18 +52,16 @@ options:
         source:
           type: repo
           location: https://kubernetes-charts.storage.googleapis.com
-    required: false
     default: {}
   values:
     description:
       - A map of value options for the chart.
-    required: false
     default: {}
   disable_hooks:
     description:
       - Whether to disable hooks during the uninstall process
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 '''
 
 RETURN = ''' # '''
@@ -91,7 +76,7 @@ EXAMPLES = '''
       source:
         type: repo
         location: https://kubernetes-charts.storage.googleapis.com
-    state: installed
+    state: present
     name: my-memcached
     namespace: default
 
@@ -102,9 +87,6 @@ EXAMPLES = '''
     name: my-memcached
 '''
 
-
-import os
-
 try:
     import grpc
     from pyhelm import tiller
@@ -112,7 +94,6 @@ try:
     HAS_PYHELM = True
 except ImportError as exc:
     HAS_PYHELM = False
-
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -126,14 +107,19 @@ def install(module, tserver):
     namespace = module.params['namespace']
 
     chartb = chartbuilder.ChartBuilder(chart)
-    try:
-        result = tserver.install_release(chartb.get_helm_chart(), namespace,
-                                         dry_run=False, name=name,
-                                         values=values)
+    r_matches = (x for x in tserver.list_releases()
+                 if x.name == name and x.namespace == namespace)
+    installed_release = next(r_matches, None)
+    if installed_release:
+        if installed_release.chart.metadata.version != chart['version']:
+            tserver.update_release(chartb.get_helm_chart(), False,
+                                   namespace, name=name, values=values)
+            changed = True
+    else:
+        tserver.install_release(chartb.get_helm_chart(), namespace,
+                                dry_run=False, name=name,
+                                values=values)
         changed = True
-    except grpc._channel._Rendezvous as exc:
-        if "already exists" not in str(exc):
-            raise exc
 
     return dict(changed=changed)
 
@@ -149,7 +135,7 @@ def delete(module, tserver, purge=False):
     disable_hooks = params['disable_hooks']
 
     try:
-        result = tserver.uninstall_release(name, disable_hooks, purge)
+        tserver.uninstall_release(name, disable_hooks, purge)
         changed = True
     except grpc._channel._Rendezvous as exc:
         if 'not found' not in str(exc):

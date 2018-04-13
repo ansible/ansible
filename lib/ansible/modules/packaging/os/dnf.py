@@ -4,23 +4,13 @@
 # Copyright 2015 Cristian van Ee <cristian at cvee.org>
 # Copyright 2015 Igor Gnatenko <i.gnatenko.brain@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -35,23 +25,18 @@ description:
 options:
   name:
     description:
-      - >
-        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file.
+      - "A list of package names, or package specifier with version, like C(name-1.0)
+        When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file."
     required: true
-    default: null
-    aliases: []
 
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
-    required: false
-    default: null
 
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-    required: false
     choices: [ "present", "latest", "absent" ]
     default: "present"
 
@@ -60,40 +45,28 @@ options:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   conf_file:
     description:
       - The remote dnf configuration file to use for the transaction.
-    required: false
-    default: null
-    aliases: []
 
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'no'
 
   installroot:
     description:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
-    required: false
     version_added: "2.3"
     default: "/"
 
@@ -102,15 +75,14 @@ options:
       - If C(yes), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
-    required: false
-    choices: [ "yes", "no" ]
+    type: bool
     version_added: "2.4"
-
-notes: ["autoremove requires dnf >= 2.0.1"]
-# informational: requirements for nodes
+notes:
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
   - "python >= 2.6"
   - python-dnf
+  - for the autoremove option you need dnf >= 2.0.1"
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
@@ -178,6 +150,7 @@ except ImportError:
     HAS_DNF = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
@@ -359,7 +332,7 @@ def ensure(module, base, state, names, autoremove):
         for group_spec in (g.strip() for g in group_specs):
             group = base.comps.group_by_pattern(group_spec)
             if group:
-                groups.append(group)
+                groups.append(group.id)
             else:
                 environment = base.comps.environment_by_pattern(group_spec)
                 if environment:
@@ -380,13 +353,13 @@ def ensure(module, base, state, names, autoremove):
                     # In dnf 2.0 if all the mandatory packages in a group do
                     # not install, an error is raised.  We want to capture
                     # this but still install as much as possible.
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
                     base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             # Install packages.
             for pkg_spec in pkg_specs:
@@ -404,7 +377,7 @@ def ensure(module, base, state, names, autoremove):
                         # If not already installed, try to install.
                         base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
@@ -412,9 +385,9 @@ def ensure(module, base, state, names, autoremove):
                         base.environment_upgrade(environment)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.environment_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             for pkg_spec in pkg_specs:
                 # best effort causes to install the latest package
