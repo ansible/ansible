@@ -19,7 +19,7 @@ When the dynamic inventory provider is called with the single argument ``--list`
 
     {
         "group001": {
-            "hosts": ["host001", "" "host002"],
+            "hosts": ["host001", "host002"],
             "vars": {
                 "var1": true
             },
