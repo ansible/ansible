@@ -25,26 +25,31 @@ author:
 requirements: [ json, botocore, boto3 ]
 options:
     name:
-      descritpion:
-        - Name of the pipeline
-      required: true
+        description:
+            - Name of the pipeline
+        required: true
     role_arn:
-      descritpion:
-        - ARN of the IAM role to use when executing the pipeline
-      required: true
+        description:
+            - ARN of the IAM role to use when executing the pipeline
+          required: true
     artifact_store:
-      description:
-        - Location information where articacts are stored (on S3). Dictionary with fields: type: <str>, location: <str>, encrypion_key: { id: <str>, type: <str> }
-      required: true
+        description:
+            - Location information where articacts are stored (on S3). Dictionary with fields: type: <str>, location: <str>, encrypion_key: { id: <str>, type: <str> }
+        required: true
     stages:
-      description:
-        - List of stages to perfoem in the CodePipeline. List of dictionaries
-      required: true
+        description:
+            - List of stages to perfoem in the CodePipeline. List of dictionaries
+        required: true
     version:
-      description:
-        - Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
-      required: false
-      default: 1
+        description:
+            - Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
+        required: false
+        default: 1
+    state:
+        description:
+            - Create or remove code pipeline
+        default: 'present'
+        choices: ['present', 'absent']
 extends_documentation_fragment:
     - aws
     - ec2
@@ -66,7 +71,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-
+codepipeline:
+    description: Returns the dictionary desribing the code pipeline configuration.
+    returned: success
+    type: complex
+    contains:
+        name:
+            descriptoin: Name of the CodePipeline
+            returned: always
+            type: string
 '''
 
 import traceback
@@ -87,7 +100,7 @@ def create_pipeline(client, name, role_arn, artifact_store, stages, version, mod
         resp = client.create_pipeline(pipeline=pipeline_dict)
         return resp
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable create pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable create pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json(msg="Unable to create pipeline".format(name, to_native(e)),
@@ -99,10 +112,10 @@ def update_pipeline(client, pipeline_dict, module):
         resp = client.update_pipeline(pipeline=pipeline_dict)
         return resp
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable update pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable update pipeline {0}: {1}".format(pipeline_dict['name'], to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to update pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable to update pipeline {0}: {1}".format(pipeline_dict['name'], to_native(e)),
                          exception=traceback.format_exc())
 
 
@@ -111,10 +124,10 @@ def delete_pipeline(client, name, module):
         resp = client.delete_pipeline(name=name)
         return resp
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable delete pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable delete pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to delete pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable to delete pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc())
 
 
@@ -130,7 +143,7 @@ def describe_pipeline(client, name, version, module):
     except botocore.exceptions.ClientError as e:
         return pipeline
     except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Error when calling client.get_pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Error when calling client.get_pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc())
 
 def main():
