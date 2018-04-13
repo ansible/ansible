@@ -32,6 +32,30 @@
     that:
         - "foo == 'bar'"
 
+- name: Lookup a file that does not exist and expect failure
+  set_fact:
+    missing_file: "{{ lookup('file', output_dir + '/bar.txt') }}"
+  ignore_errors: yes
+  register: missing_file_result
+
+- name: verify lookup of a missing file failed
+  assert:
+    that:
+      - missing_file_result is failed
+
+- name: Lookup a file that does not exist with ignore_missing=True
+  set_fact:
+    missing_file: "{{ lookup('file', output_dir + '/bar.txt', ignore_missing=True) }}"
+  register: missing_file_result
+
+- debug:
+    var: missing_file_result
+
+- name: verify lookup did not fail and returned empty string
+  assert:
+    that:
+      - missing_file_result is success
+      - missing_file == ''
 
 # PASSWORD LOOKUP
 

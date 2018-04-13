@@ -13,31 +13,39 @@ DOCUMENTATION = """
         - This lookup returns the contents from a file on the Ansible controller's file system.
     options:
       _terms:
-        description: path(s) of files to read
+        description: Path(s) of files to read
         required: True
       rstrip:
-        description: whether or not to remove whitespace from the ending of the looked-up file
+        description: Whether or not to remove whitespace from the ending of the looked-up file
         type: bool
         required: False
         default: True
       lstrip:
-        description: whether or not to remove whitespace from the beginning of the looked-up file
+        description: Whether or not to remove whitespace from the beginning of the looked-up file
+        type: bool
+        required: False
+        default: False
+      ignore_missing:
+        description: Whether or not to ignore missing file errors
+        version_added: 2.7
         type: bool
         required: False
         default: False
     notes:
-      - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
-      - this lookup does not understand 'globing', use the fileglob lookup instead.
+      - If read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
+      - This lookup does not understand 'globing', use the fileglob lookup instead.
 """
 
 EXAMPLES = """
-- debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
+- debug:
+    msg: "The value of foo.txt is {{ lookup('file', '/etc/foo.txt') }}"
 
-- name: display multiple file contents
-  debug: var=item
+- name: Display multiple file contents
+  debug:
+    var: item
   with_file:
     - "/path/to/foo.txt"
-    - "bar.txt"  # will be looked in files/ dir relative to play or in role
+    - "bar.txt"             # will be looked in files/ dir relative to play or in role
     - "/path/to/biz.txt"
 """
 
@@ -63,12 +71,13 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         ret = []
+        ignore_missing = kwargs.get('ignore_missing', False)
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
             # Find the file in the expected search path
-            lookupfile = self.find_file_in_search_path(variables, 'files', term)
+            lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing)
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
@@ -79,6 +88,8 @@ class LookupModule(LookupBase):
                     if kwargs.get('rstrip', True):
                         contents = contents.rstrip()
                     ret.append(contents)
+                elif ignore_missing:
+                    return ret.append('')
                 else:
                     raise AnsibleParserError()
             except AnsibleParserError:
