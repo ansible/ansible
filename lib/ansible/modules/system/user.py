@@ -44,6 +44,7 @@ options:
         description:
             - Darwin/OS X only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
+        version_added: "2.6"
     non_unique:
         description:
             - Optionally when used with the -u option, this option allows to
@@ -271,7 +272,7 @@ class User(object):
         self.state = module.params['state']
         self.name = module.params['name']
         self.uid = module.params['uid']
-        self.hidden     = module.params['hidden']
+        self.hidden = module.params['hidden']
         self.non_unique = module.params['non_unique']
         self.seuser = module.params['seuser']
         self.group = module.params['group']
@@ -1520,6 +1521,23 @@ class DarwinUser(User):
         ('group', 'PrimaryGroupID'),
         ('hidden', 'IsHidden'),
     ]
+
+    def __init__(self, module):
+
+        super(DarwinUser, self).__init__(module)
+
+        # make the user hidden if option is set or deffer to system option
+        if self.hidden is None:
+            if self.system:
+                self.hidden = 1
+        elif self.hidden:
+            self.hidden = 1
+        else:
+            self.hidden = 0
+
+        # add hidden to processing if set
+        if self.hidden is not None:
+            self.fields.append(('hidden', 'IsHidden'))
 
     def _get_dscl(self):
         return [self.module.get_bin_path('dscl', True), self.dscl_directory]
