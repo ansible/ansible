@@ -74,6 +74,9 @@ options:
     host_config_key:
       description:
         - Allow provisioning callbacks using this host config key.
+    extra_vars:
+      description:
+        - Extra variables used by Ansible in YAML or key=value format.
     extra_vars_path:
       description:
         - Path to the C(extra_vars) YAML file.
@@ -159,9 +162,13 @@ def update_fields(p):
         v = params.pop(old_k)
         params_update[new_k] = v
 
-    extra_vars = params.get('extra_vars_path')
+    extra_vars = params.get('extra_vars')
     if extra_vars is not None:
-        params_update['extra_vars'] = ['@' + extra_vars]
+        params_update['extra_vars'] = [extra_vars]
+
+    extra_vars_path = params.get('extra_vars_path')
+    if extra_vars_path is not None:
+        params_update['extra_vars'] = ['@' + extra_vars_path]
 
     params.update(params_update)
     return params
@@ -205,6 +212,7 @@ def main():
         job_tags=dict(),
         skip_tags=dict(),
         host_config_key=dict(),
+        extra_vars=dict(type='str', required=False),
         extra_vars_path=dict(type='path', required=False),
         ask_extra_vars=dict(type='bool', default=False),
         ask_limit=dict(type='bool', default=False),
