@@ -31,7 +31,7 @@ requirements:
 options:
     esxi_hostname:
         description:
-            - Name of ESXi server.
+            - Name of ESXi server. This is required only if authentication against a vCenter is done.
         required: False
     dest:
         description:
@@ -51,17 +51,17 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# save the ESXi configuration locally
+# save the ESXi configuration locally by authenticating directly against the ESXi host
 - name: ESXI backup test
   local_action:
       module: vmware_cfg_backup
-      hostname: esxi_host
+      hostname: esxi_hostname
       username: user
       password: pass
       state: saved
       dest: /tmp/
 
-# save the ESXi configuration locally for specific ESXi
+# save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
 - name: ESXI backup test
   local_action:
       module: vmware_cfg_backup
@@ -133,7 +133,7 @@ class VMwareConfigurationBackup(PyVmomi):
             self.module.fail_json(msg="Source file {} does not exist".format(self.src))
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
-        url = url.replace('*', self.hostname)
+        url = url.replace('*', self.host.name)
         # find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
         try:
             request = open_url(url=url, method='HEAD', validate_certs=self.validate_certs)
@@ -169,7 +169,7 @@ class VMwareConfigurationBackup(PyVmomi):
 
     def save_configuration(self):
         url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
-        url = url.replace('*', self.hostname)
+        url = url.replace('*', self.host.name)
         if os.path.isdir(self.dest):
             filename = url.rsplit('/', 1)[1]
             self.dest = os.path.join(self.dest, filename)
