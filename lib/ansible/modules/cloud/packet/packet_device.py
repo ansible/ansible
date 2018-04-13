@@ -607,8 +607,6 @@ def main():
         ),
         required_one_of=[('device_ids', 'hostnames',)],
         mutually_exclusive=[
-            ('always_pxe', 'operating_system'),
-            ('ipxe_script_url', 'operating_system'),
             ('hostnames', 'device_ids'),
             ('count', 'device_ids'),
             ('count_offset', 'device_ids'),
