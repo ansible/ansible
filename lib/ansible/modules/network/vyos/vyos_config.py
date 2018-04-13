@@ -87,7 +87,8 @@ options:
     type: bool
     default: 'no'
 notes:
-  - Abbreviated commands are NOT idempotent, see L(Network FAQ,../network/user_guide/faq.html).
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 """
 
 EXAMPLES = """
