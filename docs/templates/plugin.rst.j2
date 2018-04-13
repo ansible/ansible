@@ -386,7 +386,7 @@ please refer to this `Knowledge Base article <https://access.redhat.com/articles
 
 {% else %}
 
-This module is flagged as **deprecated** and will be removed in version { deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see :ref:`DEPRECATED`.
+This module is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see `DEPRECATED`_.
 
 {% endif %}
 
