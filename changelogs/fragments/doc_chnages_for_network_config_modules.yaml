@@ -1,0 +1,2 @@
+bugfixes:
+- backup options doc change to reflect backup directory location in case playbook is run from a role
