@@ -1088,7 +1088,8 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
                 if 'device_type' in network_devices[key]:
                     device = self.device_helper.get_device(network_devices[key]['device_type'], network_name)
-                    if nic.device != device:
+                    device_class = type(device)
+                    if not isinstance(nic.device, device_class):
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
                 # Changing mac address has no effect when editing interface
