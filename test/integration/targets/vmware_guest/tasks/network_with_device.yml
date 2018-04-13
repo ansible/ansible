@@ -58,7 +58,7 @@
       memory_mb: 512
       num_cpus: 1
     networks:
-      - name: "DC0_DVPG0"
+      - name: 'VM Network'
         device_type: "vmxnet3"
   register: vm_result
 
@@ -86,7 +86,7 @@
       memory_mb: 512
       num_cpus: 1
     networks:
-      - name: "DC0_DVPG0"
+      - name: 'VM Network'
         device_type: "vmxnet3"
   register: vm_result_again
 
