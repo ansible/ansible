@@ -46,7 +46,8 @@ notes:
     - Route-map check not performed (same as CLI) check when configuring
       route-map with 'static-oif'
     - If restart is set to true with other params set, the restart will happen
-      last, i.e. after the configuration takes place.
+      last, i.e. after the configuration takes place. However, 'restart' itself
+      is not idempotent as it is an action and not configuration.
 options:
     interface:
         description:
@@ -55,48 +56,51 @@ options:
         required: true
     version:
         description:
-            - IGMP version. It can be 2 or 3.
+            - IGMP version. It can be 2 or 3 or keyword 'default'.
         choices: ['2', '3']
     startup_query_interval:
         description:
             - Query interval used when the IGMP process starts up.
-              The range is from 1 to 18000. The default is 31.
+              The range is from 1 to 18000 or keyword 'default'.
+              The default is 31.
     startup_query_count:
         description:
             - Query count used when the IGMP process starts up.
-              The range is from 1 to 10. The default is 2.
+              The range is from 1 to 10 or keyword 'default'.
+              The default is 2.
     robustness:
         description:
-            - Sets the robustness variable. Values can range from 1 to 7.
-              The default is 2.
+            - Sets the robustness variable. Values can range from 1 to 7 or
+              keyword 'default'. The default is 2.
     querier_timeout:
         description:
             - Sets the querier timeout that the software uses when deciding
               to take over as the querier. Values can range from 1 to 65535
-              seconds. The default is 255 seconds.
+              seconds or keyword 'default'. The default is 255 seconds.
     query_mrt:
         description:
             - Sets the response time advertised in IGMP queries.
-              Values can range from 1 to 25 seconds. The default is 10 seconds.
+              Values can range from 1 to 25 seconds or keyword 'default'.
+              The default is 10 seconds.
     query_interval:
         description:
             - Sets the frequency at which the software sends IGMP host query
-              messages. Values can range from 1 to 18000 seconds.
-              The default is 125 seconds.
+              messages. Values can range from 1 to 18000 seconds or keyword
+              'default'. The default is 125 seconds.
     last_member_qrt:
         description:
             - Sets the query interval waited after sending membership reports
               before the software deletes the group state. Values can range
-              from 1 to 25 seconds. The default is 1 second.
+              from 1 to 25 seconds or keyword 'default'. The default is 1 second.
     last_member_query_count:
         description:
             - Sets the number of times that the software sends an IGMP query
               in response to a host leave message.
-              Values can range from 1 to 5. The default is 2.
+              Values can range from 1 to 5 or keyword 'default'. The default is 2.
     group_timeout:
         description:
             - Sets the group membership timeout for IGMPv2.
-              Values can range from 3 to 65,535 seconds.
+              Values can range from 3 to 65,535 seconds or keyword 'default'.
               The default is 260 seconds.
     report_llg:
         description:
@@ -105,7 +109,7 @@ options:
               Reports are always sent for nonlink local groups.
               By default, reports are not sent for link local groups.
         type: bool
-        default: 'no'
+        default: 'false'
     immediate_leave:
         description:
             - Enables the device to remove the group entry from the multicast
@@ -115,10 +119,11 @@ options:
               device does not send group-specific queries.
               The default is disabled.
         type: bool
-        default: 'no'
+        default: 'false'
     oif_routemap:
         description:
-            - Configure a routemap for static outgoing interface (OIF).
+            - Configure a routemap for static outgoing interface (OIF) or
+              keyword 'default'.
     oif_prefix:
         description:
             - Configure a prefix for static outgoing interface (OIF).
@@ -127,13 +132,13 @@ options:
             - Configure a source for static outgoing interface (OIF).
     restart:
         description:
-            - Restart IGMP.
+            - Restart IGMP. This is NOT idempotent as this is action only.
         type: bool
     state:
         description:
             - Manages desired state of the resource.
         default: present
-        choices: ['present', 'default']
+        choices: ['present', 'absent', 'default']
 '''
 EXAMPLES = '''
 - nxos_igmp_interface:
@@ -146,54 +151,22 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
+    sample: {"startup_query_count": "30"}
 existing:
     description: k/v pairs of existing BGP configuration
     returned: always
     type: dict
-    sample: {"asn": "65535", "bestpath_always_compare_med": false,
-            "bestpath_aspath_multipath_relax": false,
-            "bestpath_compare_neighborid": false,
-            "bestpath_compare_routerid": false,
-            "bestpath_cost_community_ignore": false,
-            "bestpath_med_confed": false,
-            "bestpath_med_missing_as_worst": false,
-            "bestpath_med_non_deterministic": false, "cluster_id": "",
-            "confederation_id": "", "confederation_peers": "",
-            "graceful_restart": true, "graceful_restart_helper": false,
-            "graceful_restart_timers_restart": "120",
-            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
-            "log_neighbor_changes": false, "maxas_limit": "",
-            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
-            "router_id": "11.11.11.11", "suppress_fib_pending": false,
-            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
-            "timer_bgp_keepalive": "60", "vrf": "test"}
+    sample: {"startup_query_count": "2"}
 end_state:
     description: k/v pairs of BGP configuration after module execution
     returned: always
     type: dict
-    sample: {"asn": "65535", "bestpath_always_compare_med": false,
-            "bestpath_aspath_multipath_relax": false,
-            "bestpath_compare_neighborid": false,
-            "bestpath_compare_routerid": false,
-            "bestpath_cost_community_ignore": false,
-            "bestpath_med_confed": false,
-            "bestpath_med_missing_as_worst": false,
-            "bestpath_med_non_deterministic": false, "cluster_id": "",
-            "confederation_id": "", "confederation_peers": "",
-            "graceful_restart": true, "graceful_restart_helper": false,
-            "graceful_restart_timers_restart": "120",
-            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
-            "log_neighbor_changes": false, "maxas_limit": "",
-            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
-            "router_id": "1.1.1.1",  "suppress_fib_pending": false,
-            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
-            "timer_bgp_keepalive": "60", "vrf": "test"}
+    sample: {"startup_query_count": "30"}
 updates:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+    sample: ["interface Ethernet1/32", "ip igmp startup-query-count 30"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -369,7 +342,7 @@ def get_igmp_interface(module, interface):
     return igmp
 
 
-def config_igmp_interface(delta, found_both, found_prefix):
+def config_igmp_interface(delta, existing, found_both, found_prefix):
     CMDS = {
         'version': 'ip igmp version {0}',
         'startup_query_interval': 'ip igmp startup-query-interval {0}',
@@ -390,6 +363,7 @@ def config_igmp_interface(delta, found_both, found_prefix):
 
     commands = []
     command = None
+    def_vals = get_igmp_interface_defaults()
 
     for key, value in delta.items():
         if key == 'oif_source' or found_both or found_prefix:
@@ -401,8 +375,18 @@ def config_igmp_interface(delta, found_both, found_prefix):
             else:
                 command = CMDS.get('oif_prefix').format(
                     delta.get('oif_prefix'))
+        elif key == 'oif_routemap':
+            if value == 'default':
+                if existing.get(key):
+                    command = 'no ' + CMDS.get(key).format('dummy')
+            else:
+                command = CMDS.get(key).format(value)
         elif value:
-            command = CMDS.get(key).format(value)
+            if value == 'default':
+                if def_vals.get(key) != existing.get(key):
+                    command = CMDS.get(key).format(def_vals.get(key))
+            else:
+                command = CMDS.get(key).format(value)
         elif not value:
             command = 'no {0}'.format(CMDS.get(key).format(value))
 
@@ -447,7 +431,7 @@ def config_default_igmp_interface(existing, delta, found_both, found_prefix):
     proposed = get_igmp_interface_defaults()
     delta = dict(set(proposed.items()).difference(existing.items()))
     if delta:
-        command = config_igmp_interface(delta, found_both, found_prefix)
+        command = config_igmp_interface(delta, existing, found_both, found_prefix)
 
         if command:
             for each in command:
@@ -459,10 +443,9 @@ def config_default_igmp_interface(existing, delta, found_both, found_prefix):
 def config_remove_oif(existing, existing_oif_prefix_source):
     commands = []
     command = None
-    if existing.get('routemap'):
-        command = 'no ip igmp static-oif route-map {0}'.format(
-            existing.get('routemap'))
-    if existing_oif_prefix_source:
+    if existing.get('oif_routemap'):
+        commands.append('no ip igmp static-oif route-map {0}'.format('dummy'))
+    elif existing_oif_prefix_source:
         for each in existing_oif_prefix_source:
             if each.get('prefix') and each.get('source'):
                 command = 'no ip igmp static-oif {0} source {1} '.format(
@@ -516,9 +499,8 @@ def main():
     oif_source = module.params['oif_source']
     oif_routemap = module.params['oif_routemap']
 
-    if oif_source:
-        if not oif_prefix:
-            module.fail_json(msg='oif_prefix required when setting oif_source')
+    if oif_source and not oif_prefix:
+        module.fail_json(msg='oif_prefix required when setting oif_source')
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':
@@ -609,7 +591,7 @@ def main():
 
     if state == 'present':
         if delta:
-            command = config_igmp_interface(delta, found_both, found_prefix)
+            command = config_igmp_interface(delta, existing, found_both, found_prefix)
             if command:
                 commands.append(command)
 
@@ -631,9 +613,6 @@ def main():
         if command:
             commands.append(command)
 
-    if module.params['restart']:
-        commands.append('restart igmp')
-
     cmds = []
     results = {}
     if commands:
@@ -648,6 +627,10 @@ def main():
             end_state = get_igmp_interface(module, interface)
             if 'configure' in cmds:
                 cmds.pop(0)
+
+    if module.params['restart']:
+        cmd = {'command': 'restart igmp', 'output': 'text'}
+        run_commands(module, cmd)
 
     results['proposed'] = proposed
     results['existing'] = existing_copy
