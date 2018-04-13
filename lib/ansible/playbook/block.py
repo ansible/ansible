@@ -175,6 +175,9 @@ class Block(Base, Become, Conditional, Taggable):
             new_task_list = []
             for task in task_list:
                 new_task = task.copy(exclude_parent=True)
+                # Ensure new_block has a parent, so that we maintain context
+                if not new_block._parent and task._parent._parent:
+                    new_block._parent = task._parent._parent.copy(exclude_tasks=True)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
                     if task._parent == new_block:
