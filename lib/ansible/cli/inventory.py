@@ -230,8 +230,7 @@ class InventoryCLI(CLI):
         # get info from inventory source
         res = group.get_vars()
 
-        # FIXME: add switch to skip vars plugins
-        # add vars plugin info
+        # FIXME: add switch to skip vars plugins, add vars plugin info
         for inventory_dir in self.inventory._sources:
             res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
 
@@ -301,7 +300,7 @@ class InventoryCLI(CLI):
                 result.append(self._graph_name(host.name, depth))
                 result.extend(self._show_vars(host.get_vars(), depth + 1))
 
-        result.extend(self._show_vars(group.get_vars(), depth))
+        result.extend(self._show_vars(self._get_group_variables(group), depth))
 
         return result
 
