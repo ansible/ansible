@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: digital_ocean_space
 short_description: Manage spaces in DigitalOcean.
@@ -57,7 +57,7 @@ notes:
 '''
 
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: create a space
   digital_ocean_space:
     name: cool_example_space
@@ -78,14 +78,19 @@ EXAMPLES = '''
 '''
 
 
-RETURN = ''' # '''
+RETURN = r'''#'''
 
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 from ansible.module_utils._text import to_native
+
+try:
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    pass  # handled by AnsibleAWSModule
 
 
 def space_exists(client, module):
@@ -93,13 +98,15 @@ def space_exists(client, module):
     try:
         client.head_bucket(Bucket=space_name)
         return True
-    except:
+    except ClientError:
         return False
 
 
 def create_space(client, module, result):
     space_name = module.params.get('name')
     canned_acl = module.params.get('canned_acl')
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.create_bucket(
             Bucket=space_name,
@@ -107,13 +114,15 @@ def create_space(client, module, result):
         )
         result['changed'] = True
         return result
-    except:
-        module.fail_json(msg="Failed to create space: {0}".format(space_name))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to create space: {0}".format(space_name))
 
 
 def update_space(client, module, result):
     space_name = module.params.get('name')
     canned_acl = module.params.get('canned_acl')
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.put_bucket_acl(
             Bucket=space_name,
@@ -121,18 +130,20 @@ def update_space(client, module, result):
         )
         result['changed'] = True
         return result
-    except:
-        module.fail_json(msg="Failed to update space ACL: {0}".format(space_name))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to update space ACL: {0}".format(space_name))
 
 
 def delete_space(client, module, result):
     space_name = module.params.get('name')
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.delete_bucket(Bucket=space_name)
         result['changed'] = True
         return result
-    except:
-        module.fail_json(msg="Failed to delete space: {0}".format(space_name))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to delete space: {0}".format(space_name))
 
 
 def main():
@@ -142,8 +153,8 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         region=dict(type='str', default='nyc3'),
         canned_acl=dict(type='str', choices=['private', 'public-read'], default='private'),
-        access_id=dict(type='str', default=os.getenv('DO_ACCESS_KEY_ID', '')),
-        secret_key=dict(type='str', default=os.getenv('DO_SECRET_ACCESS_KEY', '')),
+        access_id=dict(type='str', fallback=(env_fallback, ['DO_ACCESS_KEY_ID'])),
+        secret_key=dict(type='str', fallback=(env_fallback, ['DO_SECRET_ACCESS_KEY'])),
     )
 
     module = AnsibleAWSModule(
@@ -168,14 +179,16 @@ def main():
         aws_secret_access_key=secret_key
     )
 
+    space_status = space_exists(client, module)
+
     if desired_state == 'present':
-        if not space_exists(client, module):
+        if not space_status:
             create_space(client, module, result)
-        if space_exists(client, module):
+        if space_status:
             update_space(client, module, result)
 
     if desired_state == 'absent':
-        if space_exists(client, module):
+        if space_status:
             delete_space(client, module, result)
 
     module.exit_json(changed=result['changed'])
