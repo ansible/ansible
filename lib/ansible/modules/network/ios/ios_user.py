@@ -206,11 +206,11 @@ def sshkey_fingerprint(sshkey):
     if ' ' in sshkey:
         # ssh-rsa AAA...== comment
         keyparts = sshkey.split(' ')
-        keyparts[1] = hashlib.md5(base64.decodestring(keyparts[1])).hexdigest().upper()
+        keyparts[1] = hashlib.md5(base64.b64decode(keyparts[1])).hexdigest().upper()
         return ' '.join(keyparts)
     else:
         # just the key, assume rsa type
-        return 'ssh-rsa %s' % hashlib.md5(base64.decodestring(sshkey)).hexdigest().upper()
+        return 'ssh-rsa %s' % hashlib.md5(base64.b64decode(sshkey)).hexdigest().upper()
 
 
 def map_obj_to_commands(updates, module):
