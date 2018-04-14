@@ -1,0 +1,2 @@
+bugfixes:
+- Set default network type as 'dhcp' if user has not specified any.
