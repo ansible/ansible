@@ -80,5 +80,5 @@
     that:
       - 'result.changed == true'
       - '"no username ansibletest1" in result.commands[0]["command"]'
-      - '"no username ansibletest2" in result.commands[1]["command"]'
-      - '"no username ansibletest3" in result.commands[2]["command"]'
+      - '"no username ansibletest2" in result.commands[4]["command"]'
+      - '"no username ansibletest3" in result.commands[8]["command"]'
