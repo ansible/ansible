@@ -82,6 +82,7 @@ options:
     description:
       - Specifies the SSH public key to configure
         for the given username.  This argument accepts a valid SSH key value.
+    version_added: "2.6"
   nopassword:
     description:
       - Defines the username without assigning
