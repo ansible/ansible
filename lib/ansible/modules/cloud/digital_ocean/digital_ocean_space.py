@@ -32,6 +32,7 @@ options:
   region:
     description:
     - Region where the space will reside.
+    default: 'nyc3'
   canned_acl:
     description:
     - Canned ACL to apply to the bucket.
@@ -39,12 +40,12 @@ options:
     choices: ['private', 'public-read']
   access_id:
     description:
-    - Access ID used for authentication with Digital Ocean Spaces API.
-    default: DO_ACCESS_KEY_ID
+    - Access ID used for authentication with Digital Ocean Spaces API (Default is DO_ACCESS_KEY_ID).
+    default: ''
   secret_key:
     description:
-    - Secret key used for authentication with Digital Ocean Spaces API.
-    default: DO_SECRET_ACCESS_KEY
+    - Secret key used for authentication with Digital Ocean Spaces API (Default is DO_SECRET_ACCESS_KEY).
+    default: ''
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables are used for authentication with the Digital Ocean
@@ -77,6 +78,7 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 import os
+import boto3
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -135,9 +137,9 @@ def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     argument_spec.update(
         name=dict(type='str', required=True),
-        state=dict(type='str', default='present'),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
         region=dict(type='str', default='nyc3'),
-        canned_acl=dict(type='str', default='private'),
+        canned_acl=dict(type='str', choices=['private', 'public-read'], default='private'),
         access_id=dict(type='str', default=os.getenv('DO_ACCESS_KEY_ID', '')),
         secret_key=dict(type='str', default=os.getenv('DO_SECRET_ACCESS_KEY', '')),
     )
