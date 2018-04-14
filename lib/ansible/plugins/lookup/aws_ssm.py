@@ -19,7 +19,7 @@ requirements:
   - botocore
 short_description: Get the value for a SSM parameter or all parameters under a path.
 description:
-  - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters.
+  - Get the value for an Amazon Simple Systems Manager parameter or a hierarchy of parameters.
     The first argument you pass the lookup can either be a parameter name or a hierarchy of
     parameters. Hierarchies start with a forward slash and end with the parameter name. Up to
     5 layers may be specified.
@@ -62,16 +62,16 @@ EXAMPLES = '''
   debug: msg="{{ lookup('aws_ssm', 'Hello' ) }}"
 
 - name: lookup ssm parameter store in nominated region
-  debug: msg="{{ lookup('aws_ssm', 'Hello', region=us-east-2 ) }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', region='us-east-2' ) }}"
 
 - name: lookup ssm parameter store without decrypted
   debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=False ) }}"
 
 - name: lookup ssm parameter store in nominated aws profile
-  debug: msg="{{ lookup('aws_ssm', 'Hello', aws_profile=myprofile ) }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', aws_profile='myprofile' ) }}"
 
 - name: lookup ssm parameter store with all options.
-  debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=false, region=us-east-2, aws_profile=myprofile') }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=false, region='us-east-2', aws_profile='myprofile') }}"
 
 - name: lookup a key which doesn't exist, returns ""
   debug: msg="{{ lookup('aws_ssm', 'NoKey') }}"
@@ -88,10 +88,10 @@ EXAMPLES = '''
   debug: msg="{{ "the secret was:" ~ temp_secret | default('couldn\'t access secret') }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path
-  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, bypath=true, recursive=true' ) }}"
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', bypath=true, recursive=true ) }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
-  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, shortnames=true, bypath=true, recursive=true ) }}"
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', shortnames=true, bypath=true, recursive=true ) }}"
 
 - name: Iterate over a parameter hierarchy
   debug: msg='key contains {{item.Name}} with value {{item.Value}} '
