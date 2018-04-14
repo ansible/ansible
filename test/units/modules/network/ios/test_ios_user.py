@@ -57,13 +57,15 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
-        cmds = [{
-            "command": "no username ansible", "answer": "y", "newline": False,
-            "prompt": "This operation will remove all username related configurations with same name",
-        },
-        'ip ssh pubkey-chain',
-        ' no username ansible',
-        ' exit']
+        cmds = [
+            {
+                "command": "no username ansible", "answer": "y", "newline": False,
+                "prompt": "This operation will remove all username related configurations with same name",
+            },
+            'ip ssh pubkey-chain',
+            ' no username ansible',
+            ' exit'
+        ]
 
         result_cmd = []
         for i in result['commands']:
