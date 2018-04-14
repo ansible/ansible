@@ -19,6 +19,7 @@ description:
     - Create and remove spaces in DigitalOcean.
 author: "Aaron Smith (@slapula)"
 version_added: "2.6"
+requirements: [ 'botocore', 'boto3' ]
 options:
   name:
     description:
@@ -46,7 +47,10 @@ options:
     description:
     - Secret key used for authentication with Digital Ocean Spaces API (Default is DO_SECRET_ACCESS_KEY).
     default: ''
-extends_documentation_fragment: digital_ocean.documentation
+extends_documentation_fragment:
+    - digital_ocean.documentation
+    - aws
+    - ec2
 notes:
   - Two environment variables are used for authentication with the Digital Ocean
     Spaces API.  They are DO_ACCESS_KEY_ID and DO_SECRET_ACCESS_KEY.  You can
@@ -157,11 +161,13 @@ def main():
     access_id = module.params.get('access_id')
     secret_key = module.params.get('secret_key')
 
-    client = module.client('s3',
-                            region_name=region,
-                            endpoint_url="https://{0}.digitaloceanspaces.com".format(region),
-                            aws_access_key_id=access_id,
-                            aws_secret_access_key=secret_key)
+    client = module.client(
+        's3',
+        region_name=region,
+        endpoint_url="https://{0}.digitaloceanspaces.com".format(region),
+        aws_access_key_id=access_id,
+        aws_secret_access_key=secret_key
+    )
 
     if desired_state == 'present':
         if not space_exists(client, module):
