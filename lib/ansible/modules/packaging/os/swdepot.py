@@ -90,10 +90,12 @@ def query_package(module, name, depot=None):
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, shlex_quote(depot), shlex_quote(name), shlex_quote(name)),
-                                                use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command(r"%s -s %s %s | grep -v \# | grep %s" % (
+            cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
     else:
-        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, shlex_quote(name), shlex_quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command(r"%s %s | grep -v \# | grep %s" % (
+            cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+
     if rc == 0:
         version = re.sub(r"\s\s+|\t", " ", stdout).strip().split()[1]
     else:
