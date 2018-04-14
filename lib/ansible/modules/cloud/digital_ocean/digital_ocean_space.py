@@ -78,7 +78,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 import os
-import boto3
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -144,7 +143,7 @@ def main():
         secret_key=dict(type='str', default=os.getenv('DO_SECRET_ACCESS_KEY', '')),
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
@@ -158,8 +157,7 @@ def main():
     access_id = module.params.get('access_id')
     secret_key = module.params.get('secret_key')
 
-    session = boto3.session.Session()
-    client = session.client('s3',
+    client = module.client('s3',
                             region_name=region,
                             endpoint_url="https://{0}.digitaloceanspaces.com".format(region),
                             aws_access_key_id=access_id,
