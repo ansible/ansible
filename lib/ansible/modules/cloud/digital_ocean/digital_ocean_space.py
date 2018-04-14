@@ -77,9 +77,9 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 import os
-import boto3
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 from ansible.module_utils._text import to_native
 
@@ -138,8 +138,8 @@ def main():
         state=dict(type='str', default='present'),
         region=dict(type='str', default='nyc3'),
         canned_acl=dict(type='str', default='private'),
-        access_id=dict(type='str', default=os.environ['DO_ACCESS_KEY_ID']),
-        secret_key=dict(type='str', default=os.environ['DO_SECRET_ACCESS_KEY']),
+        access_id=dict(type='str', default=os.getenv('DO_ACCESS_KEY_ID', '')),
+        secret_key=dict(type='str', default=os.getenv('DO_SECRET_ACCESS_KEY', '')),
     )
 
     module = AnsibleModule(
