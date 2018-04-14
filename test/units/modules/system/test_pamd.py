@@ -1,9 +1,98 @@
 from __future__ import (absolute_import, division, print_function)
 from ansible.compat.tests import unittest
 
-
 from ansible.modules.system.pamd import PamdRule
+from ansible.modules.system.pamd import PamdLine
+from ansible.modules.system.pamd import PamdComment
+from ansible.modules.system.pamd import PamdInclude
 from ansible.modules.system.pamd import PamdService
+
+
+class PamdLineTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.pamd_line = PamdLine("This is a test")
+
+    def test_line(self):
+        self.assertEqual("This is a test", str(self.pamd_line))
+
+    def test_matches(self):
+        self.assertFalse(self.pamd_line.matches("test", "matches", "foo", "bar"))
+
+
+class PamdIncludeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.good_include = PamdInclude("@include foobar")
+        self.bad_include = PamdInclude("include foobar")
+
+    def test_line(self):
+        self.assertEqual("@include foobar", str(self.good_include))
+
+    def test_matches(self):
+        self.assertFalse(self.good_include.matches("something", "something", "dark", "side"))
+
+    def test_valid(self):
+        self.assertTrue(self.good_include.is_valid)
+        self.assertFalse(self.bad_include.is_valid)
+
+
+class PamdCommentTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.good_comment = PamdComment("# This is a test comment")
+        self.bad_comment = PamdComment("This is a bad test comment")
+
+    def test_line(self):
+        self.assertEqual("# This is a test comment", str(self.good_comment))
+
+    def test_matches(self):
+        self.assertFalse(self.good_comment.matches("test", "matches", "foo", "bar"))
+
+    def test_valid(self):
+        self.assertTrue(self.good_comment.is_valid)
+        self.assertFalse(self.bad_comment.is_valid)
+
+
+class PamdRuleTestCase(unittest.TestCase):
+    def setUp(self):
+        self.rule = PamdRule('account', 'optional', 'pam_keyinit.so', 'revoke')
+
+    def test_type(self):
+        self.assertEqual(self.rule.rule_type, 'account')
+
+    def test_control(self):
+        self.assertEqual(self.rule.rule_control, 'optional')
+        self.assertEqual(self.rule._control, 'optional')
+
+    def test_path(self):
+        self.assertEqual(self.rule.rule_path, 'pam_keyinit.so')
+
+    def test_args(self):
+        self.assertEqual(self.rule.rule_args, ['revoke'])
+
+    def test_valid(self):
+        self.assertTrue(self.rule.validate()[0])
+
+
+class PamdRuleBadValidationTestCase(unittest.TestCase):
+    def setUp(self):
+        self.bad_type = PamdRule('foobar', 'optional', 'pam_keyinit.so', 'revoke')
+        self.bad_control_simple = PamdRule('account', 'foobar', 'pam_keyinit.so', 'revoke')
+        self.bad_control_value = PamdRule('account', '[foobar=1 default=ignore]', 'pam_keyinit.so', 'revoke')
+        self.bad_control_action = PamdRule('account', '[success=1 default=foobar]', 'pam_keyinit.so', 'revoke')
+
+    def test_validate_bad_type(self):
+        self.assertFalse(self.bad_type.validate()[0])
+
+    def test_validate_bad_control_simple(self):
+        self.assertFalse(self.bad_control_simple.validate()[0])
+
+    def test_validate_bad_control_value(self):
+        self.assertFalse(self.bad_control_value.validate()[0])
+
+    def test_validate_bad_control_action(self):
+        self.assertFalse(self.bad_control_action.validate()[0])
 
 
 class PamdServiceTestCase(unittest.TestCase):
@@ -40,6 +129,10 @@ session    required pam_limits.so
 session    [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
 session    [success=1 test=me default=ignore] pam_succeed_if.so service in crond quiet use_uid
 session    required pam_unix.so"""
+
+        self.simple_system_auth_string = """#%PAM-1.0
+        auth       required pam_env.so
+"""
 
         self.pamd = PamdService(self.system_auth_string)
 
@@ -145,7 +238,6 @@ session    required pam_unix.so"""
         self.assertIn(str(test_rule), str(self.pamd))
 
     # Insert Before
-
     def test_insert_before_rule(self):
 
         count = self.pamd.insert_before('account', 'required', 'pam_access.so',
@@ -187,6 +279,11 @@ session    required pam_unix.so"""
     def test_insert_before_first_rule(self):
         self.assertTrue(self.pamd.insert_before('auth', 'required', 'pam_env.so',
                                                 new_type='account', new_control='required', new_path='pam_limits.so'))
+
+    def test_insert_before_first_rule_simple(self):
+        simple_service = PamdService(self.simple_system_auth_string)
+        self.assertTrue(simple_service.insert_before('auth', 'required', 'pam_env.so',
+                        new_type='account', new_control='required', new_path='pam_limits.so'))
 
     # Insert After
     def test_insert_after_rule(self):

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2017, Kenneth D. Evensen <kevensen@redhat.com>
+# (c) 2017, Kenneth D. Evensen <kdevensen@gmail.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -284,6 +284,7 @@ RULE_REGEX = re.compile(r"""(?P<rule_type>auth|account|session|password)\s+
 
 
 class PamdLine(object):
+
     def __init__(self, line):
         self.line = line
         self.prev = None
@@ -298,25 +299,49 @@ class PamdLine(object):
 
 
 class PamdComment(PamdLine):
+
     def __init__(self, line):
         super(PamdComment, self).__init__(line)
+
+    @property
+    def is_valid(self):
+        if self.line.startswith('#'):
+            return True
+        return False
 
 
 class PamdInclude(PamdLine):
     def __init__(self, line):
         super(PamdInclude, self).__init__(line)
 
+    @property
+    def is_valid(self):
+        if self.line.startswith('@include'):
+            return True
+        return False
+
 
 class PamdRule(PamdLine):
+
+    valid_types = ['account', 'auth', 'password', 'session']
+    valid_simple_controls = ['required', 'requisite', 'sufficicent', 'optional', 'include', 'substack']
+    valid_control_values = ['success', 'open_err', 'symbol_err', 'service_err', 'system_err', 'buf_err',
+                            'perm_denied', 'auth_err', 'cred_insufficient', 'authinfo_unavail', 'user_unknown',
+                            'maxtries', 'new_authtok_reqd', 'acct_expired', 'session_err', 'cred_unavail',
+                            'cred_expired', 'cred_err', 'no_module_data', 'conv_err', 'authtok_err',
+                            'authtok_recover_err', 'authtok_lock_busy', 'authtok_disable_aging', 'try_again',
+                            'ignore', 'abort', 'authtok_expired', 'module_unknown', 'bad_item', 'conv_again',
+                            'incomplete', 'default']
+    valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
+
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
+        self._control = None
+        self._args = None
         self.rule_type = rule_type
         self.rule_control = rule_control
+
         self.rule_path = rule_path
-        if isinstance(rule_args, str):
-            rule_args.replace(" = ", "=")
-            self.rule_args = rule_args.split(" ")
-        else:
-            self.rule_args = rule_args
+        self.rule_args = rule_args
 
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
@@ -337,8 +362,67 @@ class PamdRule(PamdLine):
         return '{0: <11}{1} {2}'.format(self.rule_type, self.rule_control, self.rule_path)
 
     @property
+    def rule_control(self):
+        if isinstance(self._control, list):
+            return '[' + ' '.join(self._control) + ']'
+        return self._control
+
+    @rule_control.setter
+    def rule_control(self, control):
+        if control.startswith('['):
+            control = control.replace(' = ', '=').replace('[', '').replace(']', '')
+            self._control = control.split(' ')
+        else:
+            self._control = control
+
+    @property
+    def rule_args(self):
+        if not self._args:
+            return []
+        return self._args
+
+    @rule_args.setter
+    def rule_args(self, args):
+        if isinstance(args, str):
+            args = args.replace(" = ", "=")
+            self._args = args.split(" ")
+        else:
+            self._args = args
+
+    @property
     def line(self):
         return str(self)
+
+    @classmethod
+    def is_action_unsigned_int(cls, string_num):
+        number = 0
+        try:
+            number = int(string_num)
+        except ValueError:
+            return False
+
+        if number >= 0:
+            return True
+        return False
+
+    def validate(self):
+        # Validate the rule type
+        if self.rule_type not in PamdRule.valid_types:
+            return False, "Rule type, " + self.rule_type + ", is not valid in rule " + self.line
+        # Validate the rule control
+        if isinstance(self.rule_control, str) and self.rule_control not in PamdRule.valid_simple_controls:
+            return False, "Rule control, " + self.rule_control + ", is not valid in rule " + self.line
+        elif isinstance(self.rule_control, list):
+            for control in self.rule_control:
+                value, action = control.split("=")
+                if value not in PamdRule.valid_control_values:
+                    return False, "Rule control value, " + value + ", is not valid in rule " + self.line
+                if action not in PamdRule.valid_control_actions and not PamdRule.is_action_unsigned_int(action):
+                    return False, "Rule control action, " + action + ", is not valid in rule " + self.line
+
+        # TODO: Validate path
+
+        return True, "Rule is valid " + self.line
 
 
 # PamdService encapsulates an entire service and contains one or more rules.  It seems the best way is to do this
@@ -565,6 +649,15 @@ class PamdService(object):
 
         return changed
 
+    def validate(self):
+        current_line = self._head
+
+        while current_line is not None:
+            if not current_line.is_valid()[0]:
+                return current_line.is_valid()
+            current_line = current_line.next
+        return True, "Module is valid"
+
     def __str__(self):
         lines = []
         current_line = self._head
@@ -573,10 +666,10 @@ class PamdService(object):
             lines.append(str(current_line))
             current_line = current_line.next
 
-        if lines[0].startswith("# Updated by Ansible"):
-            lines.pop(0)
+        if lines[1].startswith("# Updated by Ansible"):
+            lines.pop(1)
 
-        lines.insert(0, "# Updated by Ansible - " + datetime.now().isoformat())
+        lines.insert(1, "# Updated by Ansible - " + datetime.now().isoformat())
 
         return '\n'.join(lines)
 
@@ -655,6 +748,13 @@ def main():
                                                module.params['module_arguments'])
     elif action == 'absent':
         changes = service.remove(module.params['type'], module.params['control'], module.params['module_path'])
+
+    valid, msg = service.validate()
+
+    # If the module is not valid (meaning one of the rules is invalid), we will fail
+    if not valid:
+        module.fail_json(msg=msg)
+
     # If not check mode and something changed, backup the original if necessary then write out the file or fail
     if not module.check_mode and changes > 0:
         pamd_file = os.path.realpath(fname)
