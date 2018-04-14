@@ -157,7 +157,7 @@ Examples:
   # Get the n-th (zero-based indexing) host in DISK_CLUSTER_ID_0 information (note that the order in all group is non-deterministic):
 
     $ n=2
-    $ host=`ansible -o -i opennebula.py --list-hosts DISK_CLUSTER_ID_0 --limit DISK_CLUSTER_ID_0[$n] | grep -v -E '\(|\)'`
+    $ host=`ansible -o -i opennebula.py --list-hosts DISK_CLUSTER_ID_0 --limit DISK_CLUSTER_ID_0[$n] | grep -v hosts`
     $ python opennebula.py --pretty --host $host
 
   # Ping the host when ssh key-based authentication is not configured, using root/password credentials:
@@ -403,7 +403,8 @@ def get_inventory(connection, vm_name=None, vmpool_info=(-2, -1, -1, -1), ansibl
                 if vms[name]['ansible_host'] is not None:
                     append_inventory_group('ansible_host', name, data)
             except IndexError:
-                print('Incorrect ansible-nic-index %s for ansible-network-id %s for VM ID %s' % (ansible_nic_index, ansible_network_id, vms[name]['ID']), file=sys.stderr)
+                print('Incorrect ansible-nic-index %s for ansible-network-id %s for VM ID %s' % (ansible_nic_index,
+                                                                                                 ansible_network_id, vms[name]['ID']), file=sys.stderr)
 
         data["_meta"] = {
             'hostvars': vms,
