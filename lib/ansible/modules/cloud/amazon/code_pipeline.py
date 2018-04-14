@@ -31,10 +31,10 @@ options:
     role_arn:
         description:
             - ARN of the IAM role to use when executing the pipeline
-          required: true
+        required: true
     artifact_store:
         description:
-            - Location information where articacts are stored (on S3). Dictionary with fields: type: <str>, location: <str>, encrypion_key: { id: <str>, type: <str> }
+            - Location information where articacts are stored (on S3). Dictionary with fields type and location.
         required: true
     stages:
         description:
@@ -92,8 +92,9 @@ try:
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
+
 def create_pipeline(client, name, role_arn, artifact_store, stages, version, module):
-    pipeline_dict = { 'name': name, 'roleArn': role_arn, 'artifactStore': artifact_store, 'stages': stages }
+    pipeline_dict = {'name': name, 'roleArn': role_arn, 'artifactStore': artifact_store, 'stages': stages}
     if version:
         pipeline_dict['version'] = version
     try:
@@ -146,6 +147,7 @@ def describe_pipeline(client, name, version, module):
         module.fail_json(msg="Error when calling client.get_pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc())
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -154,8 +156,7 @@ def main():
         artifact_store=dict(required=True, type='dict'),
         stages=dict(required=True, type='list'),
         version=dict(required=False, type='int'),
-        state=dict(choices=['present', 'absent'],
-                   default='present'),
+        state=dict(choices=['present', 'absent'], default='present')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
@@ -178,13 +179,14 @@ def main():
             pipeline_result = update_pipeline(client=client_conn, pipeline_dict=found_code_pipeline['pipeline'], module=module)
             changed = True
         else:
-            pipeline_result = create_pipeline(client=client_conn,
-                                            name=module.params['name'],
-                                            role_arn=module.params['role_arn'],
-                                            artifact_store=module.params['artifact_store'],
-                                            stages=module.params['stages'],
-                                            version=module.params['version'],
-                                            module=module)
+            pipeline_result = create_pipeline(
+                    client=client_conn,
+                    name=module.params['name'],
+                    role_arn=module.params['role_arn'],
+                    artifact_store=module.params['artifact_store'],
+                    stages=module.params['stages'],
+                    version=module.params['version'],
+                    module=module)
             changed = True
     elif state == 'absent':
         if found_code_pipeline:
