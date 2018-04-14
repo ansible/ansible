@@ -50,7 +50,6 @@ options:
 extends_documentation_fragment:
     - digital_ocean.documentation
     - aws
-    - ec2
 notes:
   - Two environment variables are used for authentication with the Digital Ocean
     Spaces API.  They are DO_ACCESS_KEY_ID and DO_SECRET_ACCESS_KEY.  You can
