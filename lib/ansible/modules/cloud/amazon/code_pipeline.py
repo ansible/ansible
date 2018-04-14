@@ -44,7 +44,6 @@ options:
         description:
             - Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
         required: false
-        default: 1
     state:
         description:
             - Create or remove code pipeline
@@ -104,7 +103,7 @@ def create_pipeline(client, name, role_arn, artifact_store, stages, version, mod
         module.fail_json(msg="Unable create pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to create pipeline".format(name, to_native(e)),
+        module.fail_json(msg="Unable to create pipeline {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc())
 
 
@@ -135,7 +134,7 @@ def delete_pipeline(client, name, module):
 def describe_pipeline(client, name, version, module):
     pipeline = {}
     try:
-        if type(version) is int:
+        if isinstance(version, int) is int:
             pipeline = client.get_pipeline(name=name, version=version)
             return pipeline
         else:
@@ -180,13 +179,13 @@ def main():
             changed = True
         else:
             pipeline_result = create_pipeline(
-                    client=client_conn,
-                    name=module.params['name'],
-                    role_arn=module.params['role_arn'],
-                    artifact_store=module.params['artifact_store'],
-                    stages=module.params['stages'],
-                    version=module.params['version'],
-                    module=module)
+                client=client_conn,
+                name=module.params['name'],
+                role_arn=module.params['role_arn'],
+                artifact_store=module.params['artifact_store'],
+                stages=module.params['stages'],
+                version=module.params['version'],
+                module=module)
             changed = True
     elif state == 'absent':
         if found_code_pipeline:
