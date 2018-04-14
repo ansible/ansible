@@ -151,6 +151,14 @@ def check_command(module, commandline):
         module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
 
+def check_directory(module, chdir):
+    if not os.path.exists(chdir):
+        module.fail_json(msg="The %s directory does not exist" % chdir)
+    
+    if not os.path.isdir(chdir):
+        module.fail_json(msg="The file %s is not a directory" % chdir)
+      
+
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -186,6 +194,7 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
+        check_directory(module, chdir)
         chdir = os.path.abspath(chdir)
         os.chdir(chdir)
 
