@@ -152,6 +152,8 @@ def check_command(module, commandline):
 
 
 def check_directory(module, chdir):
+    ''' Validates the directory being passed to the chdir args parameter '''
+
     if not os.path.exists(chdir):
         module.fail_json(msg="The directory %s does not exist" % chdir)
 
