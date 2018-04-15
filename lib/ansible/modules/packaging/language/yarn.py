@@ -176,17 +176,17 @@ class Yarn(object):
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = self.executable + args
 
             if self.globally:
                 # Yarn global arg is inserted before the command (e.g. `yarn global {some-command}`)
-                cmd = self.executable + ['global'] + args
+                args.insert(0, 'global')
+
+            cmd = self.executable + args
+
             if self.production:
                 cmd.append('--production')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
-            if self.name:
-                cmd.append(self.name_version)
             if self.registry:
                 cmd.append('--registry')
                 cmd.append(self.registry)
@@ -204,54 +204,89 @@ class Yarn(object):
                     self.module.fail_json(msg="Path provided %s is not a directory" % self.path)
                 cwd = self.path
 
+                if not os.path.isfile(os.path.join(self.path, 'package.json')):
+                    self.module.fail_json(msg="Package.json does not exist in provided path.")
+
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
-            return out
+            return out, err
+
         return ''
 
     def list(self):
-        cmd = ['list', '--json']
+        cmd = ['list', '--depth=0', '--json']
 
         installed = list()
         missing = list()
-        data = json.loads(self._exec(cmd, True, False))
-        if 'dependencies' in data:
-            for dep in data['dependencies']:
-                if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
-                    missing.append(dep)
-                elif 'invalid' in data['dependencies'][dep] and data['dependencies'][dep]['invalid']:
-                    missing.append(dep)
-                else:
-                    installed.append(dep)
-            if self.name and self.name not in installed:
-                missing.append(self.name)
-        # Named dependency not installed
-        else:
+
+        if not os.path.isfile(os.path.join(self.path, 'yarn.lock')):
+            missing.append(self.name)
+            return installed, missing
+
+        result, error = self._exec(cmd, True, False)
+
+        if error:
+            self.module.fail_json(error)
+
+        data = json.loads(result)
+        try:
+            dependencies = data['data']['trees']
+        except KeyError:
+            missing.append(self.name)
+            return installed, missing
+
+        for dep in dependencies:
+            name, version = dep['name'].split('@')
+            installed.append(name)
+
+        if self.name not in installed:
             missing.append(self.name)
 
         return installed, missing
 
     def install(self):
-        if self.name or self.name_version:
+        # TODO: Handle case when installing all pkgs with state: latest
+        if self.name_version:
             # Yarn has a separate command for installing packages by name...
-            return self._exec(['add'])
+            return self._exec(['add', self.name_version])
         # And one for installing all packages in package.json
-        return self._exec(['install'])
+        return self._exec(['install', '--non-interactive'])
 
     def update(self):
-        return self._exec(['upgrade'])
+        return self._exec(['upgrade', '--latest'])
 
     def uninstall(self):
-        return self._exec(['remove'])
+        return self._exec(['remove', self.name_version])
 
     def list_outdated(self):
         outdated = list()
-        data = self._exec(['outdated'], True, False)
-        for dep in data.splitlines():
-            if dep:
-                # node.js v0.10.22 changed the `npm outdated` module separator
-                # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split(r'\s|@', dep, 1)
-                outdated.append(pkg)
+
+        if not os.path.isfile(os.path.join(self.path, 'yarn.lock')):
+            return outdated
+
+        cmd_result, err = self._exec(['outdated', '--json'], True, False)
+        if err:
+            self.module.fail_json(err)
+
+        outdated_packages_data = cmd_result.splitlines()[1]
+
+        data = json.loads(outdated_packages_data)
+
+        try:
+            outdated_dependencies = data['data']['body']
+        except KeyError:
+            return outdated
+
+        for dep in outdated_dependencies:
+            # Outdated dependencies returned as a list of lists, where
+            # item at index 0 is the name of the dependency
+            outdated.append(dep[0])
+
+        # for dep in data.splitlines():
+        #     if dep:
+        #         # node.js v0.10.22 changed the `npm outdated` module separator
+        #         # from "@" to " ". Split on both for backwards compatibility.
+        #         pkg, other = re.split(r'\s|@', dep, 1)
+        #         outdated.append(pkg)
 
         return outdated
 
@@ -287,6 +322,8 @@ def main():
         module.fail_json(msg='Path must be specified when not using global arg')
     if state == 'absent' and not name:
         module.fail_json(msg='Package must be explicitly named when uninstalling.')
+    if state == 'latest':
+        version = 'latest'
 
     yarn = Yarn(module,
                 name=name,
@@ -299,28 +336,36 @@ def main():
                 ignore_scripts=ignore_scripts)
 
     changed = False
+    out = ''
+    err = ''
     if state == 'present':
-        installed, missing = yarn.list()
-        if len(missing):
+
+        if name:
+            installed, missing = yarn.list()
+            if len(missing):
+                changed = True
+                out, err = yarn.install()
+        else:
             changed = True
-            out = yarn.install()
+            out, err = yarn.install()
+
     elif state == 'latest':
         installed, missing = yarn.list()
         outdated = yarn.list_outdated()
         if len(missing):
             changed = True
-            out = yarn.install()
+            out, err = yarn.install()
         if len(outdated):
             changed = True
-            out = yarn.update()
+            out, err = yarn.update()
     else:
         # state == absent
         installed, missing = yarn.list()
         if name in installed:
             changed = True
-            out = yarn.uninstall()
+            out, err = yarn.uninstall()
 
-    module.exit_json(changed=changed, out=out)
+    module.exit_json(changed=changed, out=out, err=err)
 
 
 if __name__ == '__main__':

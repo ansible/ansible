@@ -33,3 +33,35 @@
       that:
         - yarn_install is success
         - yarn_install is changed
+
+  - name: 'Assert idempotency when installing the same package again.'
+    yarn:
+      path: '{{ output_dir }}'
+      executable: '{{ yarn_bin_path }}/yarn'
+      name: '{{ package }}'
+      state: present
+    environment:
+      - PATH: '{{yarn_bin_path}}:{{node_path}}:{{ansible_env.PATH}}'
+    register: yarn_reinstall
+
+  - name: 'Assert no change after reinstalling the same package'
+    assert:
+      that:
+        - yarn_reinstall is success
+        - not (yarn_resintall is changed)
+
+  - name: 'Remove a package'
+    yarn:
+      path: '{{ output_dir }}'
+      executable: '{{ yarn_bin_path }}/yarn'
+      name: '{{ package }}'
+      state: absent
+    environment:
+      - PATH: '{{yarn_bin_path}}:{{node_path}}:{{ansible_env.PATH}}'
+    register: yarn_uninstall_package
+
+  - name: 'Assert package removed'
+    assert:
+      that:
+        - yarn_uninstall_package is success
+        - yarn_uninstall_package is changed
