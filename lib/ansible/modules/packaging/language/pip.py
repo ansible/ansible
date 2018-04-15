@@ -491,9 +491,13 @@ def main():
         if name:
             for pkg in name:
                 cmd += ' %s' % _get_full_name(pkg, version)
+        elif requirements:
+            cmd += ' -r %s' % requirements
         else:
-            if requirements:
-                cmd += ' -r %s' % requirements
+            module.exit_json(
+                changed=False,
+                warnings=["No valid name or requirements file found."],
+            )
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
