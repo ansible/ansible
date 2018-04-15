@@ -148,19 +148,26 @@ class ManageIQDynamicResourceDefinition(object):
         )
 
     def has_field(self, dynamic_resource_definition, key):
-        """ Check if definition properties has a specific key"""
-        if dynamic_resource_definition and dynamic_resource_definition.get('properties', {}).get(key):
-            return True
-        return
+        """ Check if definition properties has a specific key.
+
+        If key is unhashble, return.
+        """
+        try:
+            if dynamic_resource_definition and dynamic_resource_definition.get('properties', {}).get(key):
+                return True
+        except TypeError:
+            return
+        else:
+            return
 
     def edit_definition(self, dynamic_resource_definition, name, properties):
         """ Edit the dynamic resource definition in manageiq.
 
         Returns:
-            the name, created_at, updated_at, id, href, and properties.
+            a dictionary with the result.
         """
         # check for required arguments
-        for key, value in dict(name=name, properties=properties).items():
+        for key, value in dict(properties=properties).items():
             if value in (None, ''):
                 self.module.fail_json(msg="missing required argument: %s" % (key))
 
