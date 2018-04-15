@@ -2865,12 +2865,12 @@ class AnsibleModule(object):
 
         # reset the pwd
         if not os.path.exists(prev_dir):
-            self.fail_json(msg="The %s directory does not exist" % prev_dir)
+            self.fail_json(msg="The directory %s does not exist" % prev_dir)
 
-        if not os.path.isdir(chdir):
+        if not os.path.isdir(prev_dir):
             self.fail_json(msg="The file %s is not a directory" % prev_dir)
-    
-        if os.path.isdir(prev_dir) and os.path.exists(prev_dir): 
+
+        if os.path.isdir(prev_dir) and os.path.exists(prev_dir):
             os.chdir(prev_dir)
 
         if encoding is not None:

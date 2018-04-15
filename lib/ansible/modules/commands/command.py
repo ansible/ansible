@@ -153,11 +153,11 @@ def check_command(module, commandline):
 
 def check_directory(module, chdir):
     if not os.path.exists(chdir):
-        module.fail_json(msg="The %s directory does not exist" % chdir)
-    
+        module.fail_json(msg="The directory %s does not exist" % chdir)
+
     if not os.path.isdir(chdir):
         module.fail_json(msg="The file %s is not a directory" % chdir)
-      
+
 
 def main():
 
