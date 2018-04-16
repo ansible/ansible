@@ -40,7 +40,7 @@ options:
             - Optionally sets the I(UID) of the user.
     hidden:
         required: false
-        type: boolean
+        type: bool
         description:
             - Darwin/OS X only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
