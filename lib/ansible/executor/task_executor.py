@@ -813,6 +813,9 @@ class TaskExecutor:
 
     def _set_connection_options(self, variables, templar):
 
+        # Keep the pre-delegate values for these keys
+        PRESERVE_ORIG = ('inventory_hostname',)
+
         # create copy with delegation built in
         final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
 
@@ -822,7 +825,9 @@ class TaskExecutor:
         # create dict of 'templated vars'
         options = {'_extras': {}}
         for k in option_vars:
-            if k in final_vars:
+            if k in PRESERVE_ORIG:
+                options[k] = templar.template(variables[k])
+            elif k in final_vars:
                 options[k] = templar.template(final_vars[k])
 
         # add extras if plugin supports them
