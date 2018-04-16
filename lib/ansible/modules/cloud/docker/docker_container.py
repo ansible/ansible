@@ -404,7 +404,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker-py >= 1.8.0"
     - "Docker API >= 1.20"
 '''
 
