@@ -48,7 +48,8 @@ options:
     choices: ['present', 'absent']
 notes:
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
-  - Works with network_cli and local connection type only.
+  - Recommended connection: network_cli. See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+    Also works with local connection type for legacy playbooks.
 """
 
 EXAMPLES = """
