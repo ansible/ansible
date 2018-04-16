@@ -69,6 +69,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Works with netconf and local connection type only.
 extends_documentation_fragment: junos
 """
 
