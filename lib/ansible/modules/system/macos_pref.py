@@ -31,9 +31,9 @@ description:
       nested dictionaries so that users can very specifically target nested
       keys without having to assign unchanged peer or parent values.
 requirements:
-    - Target machine should be running macOS
+    - Target machine should be running macOS.
     - PyObjc python module (preinstalled when using system python since macOS 10.5 Leopard).
-      When using python 3 you have to install PyObjc manually.
+      When using another python installation, it has to be installed manually.
 options:
     domain:
         description:
@@ -77,12 +77,15 @@ options:
         default: replace
         choices: ["replace", "merge", "absent"]
 notes:
+    - The required PyObjc python module is preinstalled when using system
+      available python since macOS 10.5 Leopard. When using another python
+      installation the PyObjc module has to be installed manually.
     - macOS caches preferences aggressively. This module should take care of
       updating caches but in some cases you may need to logout and login to
       apply the changes.
     - Check mode can be use with this module.
-    - Nested keys need to be quoted when use in abbreviated form
-      (because they contains colons and that messes with the syntax).
+    - Nested keys need to be quoted when used in abbreviated form
+      (because they contains colons which mess with the syntax).
     - Dates need to be quoted.
     - First level (not nested) quoted boolean, integers and floats are
       converted to boolean, integer and float unless C(type) is specified.
@@ -165,8 +168,8 @@ EXAMPLES = '''
   register: finder_view_settings
 
 - name: Check show all files
-  fail: msg="Only iconSize=50 is acceptable!"
-  when: finder_view_settings.value.IconViewSettings.iconSize != 50
+  assert:
+    that: "finder_view_settings.value.IconViewSettings.iconSize != 50"
 
 
 # Delete a key
@@ -518,11 +521,12 @@ class CFPreferences(object):
                 'Index {0} in key `{1}` out of range.'
                 .format(last_key, key)
             )
-        # Value is present.
+
         if (
             (isinstance(node, list) and last_key < len(node))
             or (not isinstance(node, list) and last_key in node)
         ):
+            # Value is present.
             if not equivalent_types(node[last_key], value):
                 raise TypeError(
                     'New value type does not match current value type for key '
@@ -536,13 +540,13 @@ class CFPreferences(object):
                 self._deep_merge(node[last_key], value)
             else:
                 node[last_key] = value
-        # Value not present.
         else:
-            # Handle array.
+            # Value not present.
             if isinstance(node, list):
+                # Handle array.
                 node.append(value)
-            # Handle dict.
             else:
+                # Handle dict.
                 node[last_key] = value
 
         # Update the plist.
