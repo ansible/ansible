@@ -175,7 +175,15 @@ def main():
 
     if state == 'present':
         if 'pipeline' in found_code_pipeline:
-            pipeline_result = update_pipeline(client=client_conn, pipeline_dict=found_code_pipeline['pipeline'], module=module)
+            pipeline_dict = found_code_pipeline['pipeline']
+            # Update dictionary with provided module params:
+            pipeline_dict['roleArn'] = module.params['role_arn']
+            pipeline_dict['artifactStore'] = module.params['artifact_store']
+            pipeline_dict['stages'] = module.params['stages']
+            if isinstance(module.params['version'], int):
+                pipeline_dict['version'] = module.params['version']
+
+            pipeline_result = update_pipeline(client=client_conn, pipeline_dict=pipeline_dict, module=module)
             changed = True
         else:
             pipeline_result = create_pipeline(
