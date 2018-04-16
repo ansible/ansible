@@ -551,9 +551,9 @@ class PlayContext(Base):
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
+                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
                 else:
-                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
             elif self.become_method == 'pmrun':
 
