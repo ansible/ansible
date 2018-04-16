@@ -176,7 +176,7 @@ options:
     password_lock:
         description:
             - Lock the password (usermod -L ). 
-              WARNING : implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
+              WARNING implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
               This option does not disable the user, only lock the password.
         type: bool
         version_added: "2.6"
@@ -531,7 +531,7 @@ class User(object):
         if self.password_lock:
             cmd.append('-L')
         elif self.password_lock is not None:
-              cmd.append('-U')
+            cmd.append('-U')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
