@@ -58,10 +58,10 @@ options:
     version_added: "2.1"
   ignore_tables:
     description:
-      - A list of table names that will be ignored in the dump in the form database_name.table_name
+      - A list of table names that will be ignored in the dump of the form database_name.table_name
     required: false
-    default: empty list
-    version_added: "2.5"
+    default: []
+    version_added: "2.6"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -273,7 +273,7 @@ def main():
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
             quick=dict(default=True, type='bool'),
-            ignore_tables=dict(default=list(), type='list')
+            ignore_tables=dict(default=[], type='list')
         ),
         supports_check_mode=True
     )
