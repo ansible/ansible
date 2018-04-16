@@ -91,6 +91,10 @@ DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
+# FIXME: expand to other plugins, but never doc fragments
+CONFIGURABLE_PLUGINS = ('cache', 'callback', 'connection', 'inventory', 'lookup', 'shell')
+# NOTE: always update the docs/docsite/Makefile to match
+DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'vars')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
