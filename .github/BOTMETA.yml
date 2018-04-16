@@ -301,7 +301,6 @@ files:
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_guest.py: dagwieers
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/vsphere_guest.py: dagwieers
