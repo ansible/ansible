@@ -121,13 +121,8 @@ class ManageIQDynamicResourceDefinition(object):
         """ Creates the dynamic resource definition in manageiq.
 
         Returns:
-            the name, created_at, updated_at, id, href, and properties.
+            a dictionary with changed and msg.
         """
-        # check for required arguments
-        for key, value in dict(name=name, properties=properties).items():
-            if value in (None, ''):
-                self.module.fail_json(msg="missing required argument: %s" % (key))
-
         url = '%s/generic_object_definitions' % (self.api_url)
 
         resource = {
@@ -164,13 +159,8 @@ class ManageIQDynamicResourceDefinition(object):
         """ Edit the dynamic resource definition in manageiq.
 
         Returns:
-            a dictionary with the result.
+            a dictionary with the changed and msg.
         """
-        # check for required arguments
-        for key, value in dict(properties=properties).items():
-            if value in (None, ''):
-                self.module.fail_json(msg="missing required argument: %s" % (key))
-
         # Check if properties has the following keys,
         # These keys are returned from the API response even if they are empty
         # So we remove them to compare accuratley
@@ -239,11 +229,13 @@ def main():
         state=dict(choices=['absent', 'present'], default='present'),
         properties=dict(type='dict')
     )
+    required_if = [('state', 'present', ('properties', ))]
     # add the manageiq connection arguments to the arguments
     argument_spec.update(manageiq_argument_spec())
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=required_if,
     )
 
     name = module.params['name']
