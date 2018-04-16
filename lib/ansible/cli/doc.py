@@ -72,8 +72,7 @@ class DocCLI(CLI):
                                help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
                                help='Choose which plugin type (defaults to "module")',
-                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'shell', 'strategy', 'vars'])
-
+                               choices=C.DOCUMENTABLE_PLUGINS)
         super(DocCLI, self).parse()
 
         if [self.options.all_plugins, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
