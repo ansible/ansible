@@ -16,14 +16,14 @@ def test_tests_as_filters_warning(mocker):
     # Call successful test, ensure the message is correct
     filters['successful']({})
     display.deprecated.assert_called_once_with(
-        'Using tests as filters is deprecated. Instead of using `result|successful` instead use `result is successful`', version='2.9'
+        'Using tests as filters is deprecated. Instead of using `result|successful` use `result is successful`', version='2.9'
     )
 
     # Call success test, ensure the message is correct
     display.deprecated.reset_mock()
     filters['success']({})
     display.deprecated.assert_called_once_with(
-        'Using tests as filters is deprecated. Instead of using `result|success` instead use `result is success`', version='2.9'
+        'Using tests as filters is deprecated. Instead of using `result|success` use `result is success`', version='2.9'
     )
 
     # Call bool filter, ensure no deprecation message was displayed
