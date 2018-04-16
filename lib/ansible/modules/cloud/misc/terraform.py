@@ -138,6 +138,8 @@ module = None
 
 
 def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None):
+    if project_path in [None, ''] or '/' not in project_path:
+        module.fail_json(msg="Path for Terraform project can not be None or ''.")
     if not os.path.exists(bin_path):
         module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(bin_path))
     if not os.path.isdir(project_path):
@@ -217,7 +219,7 @@ def main():
     if bin_path is not None:
         command = [bin_path]
     else:
-        command = [module.get_bin_path('terraform')]
+        command = [module.get_bin_path('terraform', required=True)]
 
     if force_init:
         init_plugins(command[0], project_path)
