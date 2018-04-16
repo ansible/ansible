@@ -94,9 +94,8 @@ options:
       - A filename, when it does not exist, this step will not be run.
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the
+      - A list of valid, numeric, HTTP status codes that signifies success of the
         request.
-      - Can also be comma separated list of status codes.
     default: 200
   timeout:
     description:
@@ -490,7 +489,7 @@ def main():
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
-        # and the filename do not exits.  This allows idempotence
+        # and the filename does not exist.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False, rc=0)
