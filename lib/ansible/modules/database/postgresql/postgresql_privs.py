@@ -44,7 +44,7 @@ options:
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group,
-              default_privs]
+              default_privs, foreign_data_wrapper, foreign_server]
   objs:
     description:
       - Comma separated list of database objects to set privileges on.
@@ -484,6 +484,18 @@ class Connection(object):
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
+    def get_foreign_data_wrapper_acls(self, fdws):
+        query = """SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+                   WHERE fdwname = ANY (%s) ORDER BY fdwname"""
+        self.cursor.execute(query, (fdws,))
+        return [t[0] for t in self.cursor.fetchall()]
+
+    def get_foreign_server_acls(self, fs):
+        query = """SELECT srvacl FROM pg_catalog.pg_foreign_server
+                   WHERE srvname = ANY (%s) ORDER BY srvname"""
+        self.cursor.execute(query, (fs,))
+        return [t[0] for t in self.cursor.fetchall()]
+
     # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles,
@@ -525,6 +537,10 @@ class Connection(object):
             get_status = self.get_group_memberships
         elif obj_type == 'default_privs':
             get_status = partial(self.get_default_privs, schema_qualifier)
+        elif obj_type == 'foreign_data_wrapper':
+            get_status = self.get_foreign_data_wrapper_acls
+        elif obj_type == 'foreign_server':
+            get_status = self.get_foreign_server_acls
         else:
             raise Error('Unsupported database object type "%s".' % obj_type)
 
@@ -559,7 +575,8 @@ class Connection(object):
                 obj_ids = [pg_quote_identifier(i, 'table') for i in obj_ids]
             # Note: obj_type has been checked against a set of string literals
             # and privs was escaped when it was parsed
-            set_what = '%s ON %s %s' % (','.join(privs), obj_type,
+            # Note: Underscores are replaced with spaces to support multi-word obj_type
+            set_what = '%s ON %s %s' % (','.join(privs), obj_type.replace('_', ' '),
                                         ','.join(obj_ids))
 
         # for_whom: SQL-fragment specifying for whom to set the above
@@ -706,7 +723,9 @@ def main():
                                'language',
                                'tablespace',
                                'group',
-                               'default_privs']),
+                               'default_privs',
+                               'foreign_data_wrapper',
+                               'foreign_server']),
             objs=dict(required=False, aliases=['obj']),
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
