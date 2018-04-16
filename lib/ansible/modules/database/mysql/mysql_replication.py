@@ -200,7 +200,7 @@ def start_slave(cursor, connection_name):
 def changemaster(cursor, chm, chm_params, connection_name):
     sql_param = ",".join(chm)
     if connection_name:
-        query = 'CHANGE MASTER \"%s\" TO %s' % (connection_name,sql_param)
+        query = 'CHANGE MASTER \"%s\" TO %s' % (connection_name, sql_param)
     else:
         query = 'CHANGE MASTER TO %s' % sql_param
     cursor.execute(query, chm_params)
@@ -290,7 +290,7 @@ def main():
         module.exit_json(**status)
 
     elif mode in "getslave":
-        status = get_slave_status(cursor,connection_name)
+        status = get_slave_status(cursor, connection_name)
         if not isinstance(status, dict):
             status = dict(Is_Slave=False, msg="Server is not configured as mysql slave")
         else:
