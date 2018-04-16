@@ -433,7 +433,7 @@ class Task(Base, Conditional, Taggable, Become):
             if _parent and (value is None or extend):
                 if getattr(_parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and getattr(_parent, '_inheritable', True) and hasattr(_parent, '_get_parent_attribute'):
+                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
                         parent_value = _parent._attributes.get(attr, None)
