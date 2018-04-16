@@ -56,7 +56,7 @@ options:
     description:
       - Transport type for volume.
     default: tcp
-    choices: [ rdma, tcp, tcp,rdma ]
+    choices: [ tcp, rdma, 'tcp,rdma' ]
   bricks:
     description:
       - Brick paths on servers. Multiple brick paths can be separated by commas.
