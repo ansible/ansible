@@ -40,7 +40,7 @@ class VcenterProvider(CloudProvider):
         super(VcenterProvider, self).__init__(args, config_extension='.ini')
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'ansible/ansible:vcenter-simulator@sha256:1a92e84f477ae4c45f9070a5419a0fc2b46abaecdb5bc396826741bca65ce028'
+        self.image = 'quay.io/ansible/vcenter-test-container:1.0.1'
         self.container_name = ''
 
     def filter(self, targets, exclude):
