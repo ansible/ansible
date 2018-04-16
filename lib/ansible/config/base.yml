@@ -1268,6 +1268,15 @@ ERROR_ON_MISSING_HANDLER:
   ini:
   - {key: error_on_missing_handler, section: defaults}
   type: boolean
+EXPAND_PATH_FILE_TESTS:
+  name: Expand path file tests
+  default: False
+  description:
+    - Jinja2 file tests expand user and variables in path.
+  env: [{name: ANSIBLE_EXPAND_PATH_FILE_TESTS}]
+  ini:
+  - {key: expand_path_file_tests, section: jinja2}
+  type: boolean
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   default: False
@@ -1279,7 +1288,7 @@ GALAXY_IGNORE_CERTS:
   - {key: ignore_certs, section: galaxy}
   type: boolean
 GALAXY_ROLE_SKELETON:
-  name: Galaxy skeleton direcotry
+  name: Galaxy skeleton directory
   default:
   description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
