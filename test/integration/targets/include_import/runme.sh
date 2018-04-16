@@ -41,3 +41,7 @@ ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory
 # https://github.com/ansible/ansible/issues/34782
 ANSIBLE_STRATEGY='linear' ansible-playbook nested.yml  -i ../../inventory "$@" --skip-tags never
 ANSIBLE_STRATEGY='free' ansible-playbook nested.yml  -i ../../inventory "$@" --skip-tags never
+
+# Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
+# https://github.com/ansible/ansible/pull/38827
+ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i ../../inventory "$@"
