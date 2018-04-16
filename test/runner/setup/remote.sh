@@ -22,7 +22,7 @@ if [ "${platform}" = "freebsd" ]; then
          sleep 10
     done
 
-    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python - --force-reinstall
+    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 elif [ "${platform}" = "rhel" ]; then
     while true; do
         yum install -y \
@@ -36,7 +36,7 @@ elif [ "${platform}" = "rhel" ]; then
          sleep 10
     done
 
-    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python - --force-reinstall
+    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
