@@ -632,7 +632,7 @@ class Templar:
                     if errors == 'warn':
                         display.warning(msg)
                     elif errors == 'ignore':
-                        display.log(msg)
+                        display.display(msg, log_only=True)
                     else:
                         raise AnsibleError(to_native(msg))
                 ran = None
