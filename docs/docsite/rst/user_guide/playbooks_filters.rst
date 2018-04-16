@@ -895,6 +895,14 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
 
+To expand a path containing environment variables::
+
+    {{ path | expandvars }}
+
+.. note:: `expandvars` expands local variables, using it on remote paths can lead to errors.
+
+.. versionadded:: 2.6
+
 To get the real path of a link (new in version 1.8)::
 
     {{ path | realpath }}
