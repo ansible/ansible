@@ -58,4 +58,3 @@ class Handler(Task):
         ''' return the name of the handler, never display args'''
 
         return super(Handler, self).get_name(display_args=False)
-
