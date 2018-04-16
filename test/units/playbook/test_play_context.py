@@ -119,6 +119,7 @@ def test_play_context_make_become_cmd(parser):
     ksu_exe = 'ksu'
     ksu_flags = ''
     dzdo_exe = 'dzdo'
+    dzdo_flags = ''
 
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert cmd == default_cmd
@@ -167,11 +168,11 @@ def test_play_context_make_become_cmd(parser):
 
     play_context.become_method = 'dzdo'
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-    assert cmd == """%s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd)
+    assert cmd == """%s %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd)
 
     play_context.become_pass = 'testpass'
     play_context.become_method = 'dzdo'
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-    assert (cmd == """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, shlex_quote(play_context.prompt),
-                                                               play_context.become_user, default_exe,
-                                                               play_context.success_key, default_cmd))
+    assert (cmd == """%s %s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, shlex_quote(play_context.prompt),
+                                                                  play_context.become_user, default_exe,
+                                                                  play_context.success_key, default_cmd))
