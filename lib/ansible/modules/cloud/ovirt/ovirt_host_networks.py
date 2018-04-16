@@ -433,12 +433,13 @@ def main():
                 ] if networks else None,
             )
         elif state == 'absent' and nic:
+            attachments = []
             nic_service = nics_service.nic_service(nic.id)
 
-            attachments_service = nic_service.network_attachments_service()
-            attachments = attachments_service.list()
             attached_labels = set([str(lbl.id) for lbl in nic_service.network_labels_service().list()])
             if networks:
+                attachments_service = nic_service.network_attachments_service()
+                attachments = attachments_service.list()
                 attachments = [
                     attachment for attachment in attachments
                     if get_link_name(connection, attachment.network) in network_names
@@ -460,7 +461,7 @@ def main():
                     removed_labels=[
                         otypes.NetworkLabel(id=str(name)) for name in labels
                     ] if labels else None,
-                    removed_network_attachments=list(attachments),
+                    removed_network_attachments=attachments if attachments else None,
                 )
 
         nic = search_by_name(nics_service, nic_name)
