@@ -1,0 +1,11 @@
+bzr==2.8.0.dev1
+click==6.7
+configobj==5.0.6
+Flask==0.12.2
+itsdangerous==0.24
+Jinja2==2.10
+MarkupSafe==1.0
+mercurial==4.0
+psutil==5.4.3
+six==1.10.0
+Werkzeug==0.14.1
