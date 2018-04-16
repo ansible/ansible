@@ -119,7 +119,7 @@ def test_play_context_make_become_cmd(parser):
     ksu_exe = 'ksu'
     ksu_flags = ''
     dzdo_exe = 'dzdo'
-    dzdo_flags = ' -i '
+    dzdo_flags = ''
 
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert cmd == default_cmd
