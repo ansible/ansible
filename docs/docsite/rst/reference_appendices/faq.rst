@@ -130,6 +130,77 @@ requires Python 2, you can also report a bug on our `bug tracker
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
+Common Platform Issues
+++++++++++++++++++++++
+
+Running in a virtualenv
+-----------------------
+
+You can install Ansible into a virtualenv on the controller quite simply:
+
+.. code-block:: shell
+
+    $ virtualenv ansible
+    $ source ./ansible/bin/activate
+    $ pip install ansible
+
+If you want to run under Python 3 instead of Python 2 you may want to change that slightly:
+
+.. code-block:: shell
+
+    $ virtualenv ansible
+    $ source ./ansible/bin/activate
+    $ pip3 install ansible
+
+If you need to use any libraries which are not available via pip (for instance, SELinux Python
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
+need to install them into the virtualenv.  There are two methods:
+
+* When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
+  installed in the system's Python:
+
+  .. code-block:: shell
+
+      $ virtualenv ansible --system-site-packages
+
+* Copy those files in manually from the system.  For instance, for SELinux bindings you might do:
+
+  .. code-block:: shell
+
+      $ virtualenv ansible --system-site-packages
+      $ cp -r -v /usr/lib64/python3.*/site-packages/selinux/ ./py3-ansible/lib64/python3.*/site-packages/
+      $ cp -v /usr/lib64/python3.*/site-packages/*selinux*.so ./py3-ansible/lib64/python3.*/site-packages/
+
+
+Running on BSD
+--------------
+
+.. seealso:: :ref:`working_with_bsd`
+
+
+Running on Solaris
+------------------
+
+Some Solaris machines use a non-POSIX shell by default.  This can cause trouble for things such as
+Ansible's default remote temp dir which depends on the tilde being expanded as per POSIX.  There are
+several workarounds:
+
+* You can set :ref:`remote_tmp` to a path that will expand correctly with the Solaris shell.  For
+  example, in the ansible config file you can set::
+
+    remote_tmp=$HOME/.ansible/tmp
+
+  In Ansible 2.5 and later, you can also set it per-host like this::
+
+    solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
+
+* You can set :ref:`ansible_shell_executable` to the path to a POSIX compatible shell.  For
+  instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
+  this in inventory like so::
+
+    solaris1 ansible_shell_executable=/usr/xpg4/bin/sh
+
+
 .. _use_roles:
 
 What is the best way to make content reusable/redistributable?
