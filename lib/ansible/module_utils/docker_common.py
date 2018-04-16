@@ -37,7 +37,7 @@ try:
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
+    from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
@@ -62,13 +62,10 @@ DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
 DEFAULT_SSL_VERSION = "1.0"
-try:
-    DEFAULT_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
-except NameError:
-    DEFAULT_TIMEOUT = 60
+DEFAULT_TIMEOUT = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url'], default='unix://var/run/docker.sock'),
+    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST),
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
     api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
     timeout=dict(type='int', default=DEFAULT_TIMEOUT),
@@ -243,7 +240,7 @@ class AnsibleDockerClient(Client):
             tls_verify=self._get_value('tls_verfy', params['tls_verify'], 'DOCKER_TLS_VERIFY',
                                        DEFAULT_TLS_VERIFY),
             timeout=self._get_value('timeout', params['timeout'], 'DOCKER_TIMEOUT',
-                                    DEFAULT_TIMEOUT_SECONDS),
+                                    DEFAULT_TIMEOUT),
         )
 
         if result['tls_hostname'] is None:

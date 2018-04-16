@@ -125,11 +125,6 @@ options:
         - Use with state I(present) to restart all containers.
       type: bool
       default: 'no'
-  debug:
-      description:
-        - Include I(actions) in the return values.
-      type: bool
-      default: 'no'
   remove_orphans:
       description:
         - Remove containers for services not defined in the compose file.
