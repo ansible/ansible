@@ -778,9 +778,6 @@ class TaskExecutor:
         correct connection object from the list of connection plugins
         '''
 
-        # set the original hostname in the play_context
-        self._play_context.task_inventory_hostname = variables.get('inventory_hostname', '')
-
         if self._task.delegate_to is not None:
             # since we're delegating, we don't want to use interpreter values
             # which would have been set for the original target host

@@ -134,7 +134,6 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
-    _task_inventory_hostname = FieldAttribute(isa='string')
     _remote_addr = FieldAttribute(isa='string')
     _password = FieldAttribute(isa='string')
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
