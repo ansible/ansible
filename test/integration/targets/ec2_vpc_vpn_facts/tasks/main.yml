@@ -27,7 +27,7 @@
     ec2_vpc_vgw:
       state: present
       vpc_id: '{{ vpc_result.vpc.id }}'
-      name: testvgw
+      name: "{{ resource_prefix }}-vgw"
       <<: *aws_connection_info
     register: vgw
     
