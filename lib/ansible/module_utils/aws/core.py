@@ -38,12 +38,25 @@ The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the
 additional methods for connecting to AWS using the standard module arguments
 
-      m.resource('lambda') # - get an AWS connection as a boto3 resource.
+    m.resource('lambda') # - get an AWS connection as a boto3 resource.
 
 or
 
-      m.client('sts') # - get an AWS connection as a boto3 client.
+    m.client('sts') # - get an AWS connection as a boto3 client.
 
+To make use of AWSRetry easier, it can now be wrapped around any call from a
+module-created client. To add retries to a client, create a client:
+
+    m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+    ec2 = m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+    ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
 
 """
 
