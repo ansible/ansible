@@ -12,29 +12,30 @@ Always add information AFTER of these html comments.
 
 ##### COMPONENT NAME
 <!---
-Insert below this comment the name of the module, plugin, task or feature.
+Insert, BELOW THIS COMMENT, the name of the module, plugin, task or feature.
 Do not include extra details here, e.g. "vyos_command" not "the network module vyos_command" or the full path
 -->
 
 ##### ANSIBLE VERSION
-<!--- Paste verbatim output from "ansible --version" between quotes below -->
+<!--- Paste, BELOW THIS COMMENT, verbatim output from "ansible --version" between quotes below -->
 ```
 
 ```
 
 ##### CONFIGURATION
 <!---
-If using Ansible 2.4 or above, paste the results of "ansible-config dump --only-changed"
+If using Ansible 2.4 or above, paste, BELOW THIS COMMENT, the results of "ansible-config dump --only-changed"
 Otherwise, mention any settings you have changed/added/removed in ansible.cfg
 (or using the ANSIBLE_* environment variables).
 -->
 
 ##### OS / ENVIRONMENT
 <!---
-Mention the OS you are running Ansible from, and the OS you are
+Mention, BELOW THIS COMMENT, the OS you are running Ansible from, and the OS you are
 managing, or say "N/A" for anything that is not platform-specific.
 Also mention the specific version of what you are trying to control,
 e.g. if this is a network bug the version of firmware on the network device.
+
 -->
 
 ##### SUMMARY
