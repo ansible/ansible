@@ -219,7 +219,7 @@ def delegate_docker(args, exclude, require):
             if args.docker_memory:
                 test_options.extend([
                     '--memory=%d' % args.docker_memory,
-                    '--memory-swap=0',
+                    '--memory-swap=%d' % args.docker_memory,
                 ])
 
             docker_socket = '/var/run/docker.sock'
