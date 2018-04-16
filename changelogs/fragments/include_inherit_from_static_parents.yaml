@@ -1,0 +1,2 @@
+bugfixes:
+- dynamic includes - Allow inheriting attributes from static parents (https://github.com/ansible/ansible/pull/38827)
