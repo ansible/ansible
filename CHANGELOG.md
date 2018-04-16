@@ -10,6 +10,8 @@ Ansible Changes By Release
 * Fix win_copy to preserve the global Ansible local tmp path instead of
   deleting it when dealing with multiple files
   (https://github.com/ansible/ansible/pull/37964)
+* Improved performance for dynamic includes by fixing re-parenting on copy
+  (https://github.com/ansible/ansible/pull/38747)
 
 
 <a id="2.4.4"></a>
