@@ -109,7 +109,6 @@ options:
               Reports are always sent for nonlink local groups.
               By default, reports are not sent for link local groups.
         type: bool
-        default: 'false'
     immediate_leave:
         description:
             - Enables the device to remove the group entry from the multicast
@@ -119,7 +118,6 @@ options:
               device does not send group-specific queries.
               The default is disabled.
         type: bool
-        default: 'false'
     oif_routemap:
         description:
             - Configure a routemap for static outgoing interface (OIF) or
@@ -139,7 +137,8 @@ options:
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
               Keyword 'default' is also accpted which removes all existing prefix/sources.
-              ex: [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
+              See below for example
+              [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
     restart:
         description:
             - Restart IGMP. This is NOT idempotent as this is action only.
@@ -147,7 +146,7 @@ options:
     state:
         description:
             - Manages desired state of the resource.
-        default: present
+        default: 'present'
         choices: ['present', 'absent', 'default']
 '''
 EXAMPLES = '''
