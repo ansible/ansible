@@ -137,6 +137,7 @@ options:
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
               Keyword 'default' is also accpted which removes all existing prefix/sources.
+        version_added: 2.6
     restart:
         description:
             - Restart IGMP. This is NOT idempotent as this is action only.
