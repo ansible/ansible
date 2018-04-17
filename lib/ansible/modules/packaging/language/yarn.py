@@ -45,7 +45,7 @@ options:
       - Install the node.js library globally
     required: false
     default: no
-    choices: [ "yes", "no" ]
+    type: bool
   executable:
     description:
       - The executable location for yarn.
@@ -54,14 +54,14 @@ options:
     description:
       - Use the --ignore-scripts flag when installing.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
   production:
     description:
       - Install dependencies in production mode.
       - Yarn will ignore any dependencies under devDependencies in package.json
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
   registry:
     description:

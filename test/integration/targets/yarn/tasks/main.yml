@@ -24,5 +24,5 @@
     nodejs_path: 'node-v{{ nodejs_version }}-{{ ansible_system|lower }}-x{{ ansible_userspace_bits }}'
     yarn_version: '{{ item.yarn_version }}'
   with_items:
-    - {node_version: 4.8.0, yarn_version: 1.5.1}  # Lowest compatible nodejs version
-    - {node_version: 8.0.0, yarn_version: 1.5.1}
+    - {node_version: 4.8.0, yarn_version: 1.6.0}  # Lowest compatible nodejs version
+    - {node_version: 8.0.0, yarn_version: 1.6.0}
