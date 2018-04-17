@@ -4,7 +4,8 @@
 
 # Ansible imports
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names, \
-    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_policies as compare_dicts
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_policies as compare_dicts, \
+    AWSRetry
 from ansible.module_utils.aws.elb_utils import get_elb, get_elb_listener, convert_tg_name_to_arn
 
 # Non-ansible imports
@@ -67,8 +68,11 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            elb_attributes = boto3_tag_list_to_ansible_dict(self.connection.describe_load_balancer_attributes(
-                                                            LoadBalancerArn=self.elb['LoadBalancerArn'])['Attributes'])
+            attr_list = AWSRetry.jittered_backoff()(
+                self.connection.describe_load_balancer_attributes
+            )(LoadBalancerArn=self.elb['LoadBalancerArn'])['Attributes']
+
+            elb_attributes = boto3_tag_list_to_ansible_dict(attr_list)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -90,7 +94,9 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            return self.connection.describe_tags(ResourceArns=[self.elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
+            return AWSRetry.jittered_backoff()(
+                self.connection.describe_tags
+            )(ResourceArns=[self.elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -102,7 +108,9 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            self.connection.remove_tags(ResourceArns=[self.elb['LoadBalancerArn']], TagKeys=tags_to_delete)
+            AWSRetry.jittered_backoff()(
+                self.connection.remove_tags
+            )(ResourceArns=[self.elb['LoadBalancerArn']], TagKeys=tags_to_delete)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -116,7 +124,9 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            self.connection.add_tags(ResourceArns=[self.elb['LoadBalancerArn']], Tags=self.tags)
+            AWSRetry.jittered_backoff()(
+                self.connection.add_tags
+            )(ResourceArns=[self.elb['LoadBalancerArn']], Tags=self.tags)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -129,7 +139,9 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
+            AWSRetry.jittered_backoff()(
+                self.connection.delete_load_balancer
+            )(LoadBalancerArn=self.elb['LoadBalancerArn'])
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -171,7 +183,9 @@ class ElasticLoadBalancerV2(object):
         """
 
         try:
-            self.connection.set_subnets(LoadBalancerArn=self.elb['LoadBalancerArn'], Subnets=self.subnets)
+            AWSRetry.jittered_backoff()(
+                self.connection.set_subnets
+            )(LoadBalancerArn=self.elb['LoadBalancerArn'], Subnets=self.subnets)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -203,7 +217,9 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         self.type = 'application'
         if module.params.get('security_groups') is not None:
             try:
-                self.security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), self.connection_ec2, boto3=True)
+                self.security_groups = AWSRetry.jittered_backoff()(
+                    get_ec2_security_group_ids_from_names
+                )(module.params.get('security_groups'), self.connection_ec2, boto3=True)
             except ValueError as e:
                 self.module.fail_json(msg=str(e), exception=traceback.format_exc())
             except (BotoCoreError, ClientError) as e:
@@ -236,7 +252,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             params['Tags'] = self.tags
 
         try:
-            self.elb = self.connection.create_load_balancer(**params)['LoadBalancers'][0]
+            self.elb = AWSRetry.jittered_backoff()(self.connection.create_load_balancer)(**params)['LoadBalancers'][0]
             self.changed = True
             self.new_load_balancer = True
         except (BotoCoreError, ClientError) as e:
@@ -270,12 +286,14 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
         if update_attributes:
             try:
-                self.connection.modify_load_balancer_attributes(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
+                AWSRetry.jittered_backoff()(
+                    self.connection.modify_load_balancer_attributes
+                )(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
                 self.changed = True
             except (BotoCoreError, ClientError) as e:
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
-                    self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
+                    AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
 
     def compare_security_groups(self):
@@ -297,7 +315,9 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         """
 
         try:
-            self.connection.set_security_groups(LoadBalancerArn=self.elb['LoadBalancerArn'], SecurityGroups=self.security_groups)
+            AWSRetry.jittered_backoff()(
+                self.connection.set_security_groups
+            )(LoadBalancerArn=self.elb['LoadBalancerArn'], SecurityGroups=self.security_groups)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -339,7 +359,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
             params['Tags'] = self.tags
 
         try:
-            self.elb = self.connection.create_load_balancer(**params)['LoadBalancers'][0]
+            self.elb = AWSRetry.jittered_backoff()(self.connection.create_load_balancer)(**params)['LoadBalancers'][0]
             self.changed = True
             self.new_load_balancer = True
         except (BotoCoreError, ClientError) as e:
@@ -363,12 +383,14 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
         if update_attributes:
             try:
-                self.connection.modify_load_balancer_attributes(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
+                AWSRetry.jittered_backoff()(
+                    self.connection.modify_load_balancer_attributes
+                )(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
                 self.changed = True
             except (BotoCoreError, ClientError) as e:
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
-                    self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
+                    AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
 
 
@@ -405,7 +427,7 @@ class ELBListeners(object):
 
         try:
             listener_paginator = self.connection.get_paginator('describe_listeners')
-            return (listener_paginator.paginate(LoadBalancerArn=self.elb_arn).build_full_result())['Listeners']
+            return (AWSRetry.jittered_backoff()(listener_paginator.paginate)(LoadBalancerArn=self.elb_arn).build_full_result())['Listeners']
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -530,7 +552,7 @@ class ELBListener(object):
             # Rules is not a valid parameter for create_listener
             if 'Rules' in self.listener:
                 self.listener.pop('Rules')
-            self.connection.create_listener(LoadBalancerArn=self.elb_arn, **self.listener)
+            AWSRetry.jittered_backoff()(self.connection.create_listener)(LoadBalancerArn=self.elb_arn, **self.listener)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -540,14 +562,14 @@ class ELBListener(object):
             # Rules is not a valid parameter for modify_listener
             if 'Rules' in self.listener:
                 self.listener.pop('Rules')
-            self.connection.modify_listener(**self.listener)
+            AWSRetry.jittered_backoff()(self.connection.modify_listener)(**self.listener)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
     def delete(self):
 
         try:
-            self.connection.delete_listener(ListenerArn=self.listener)
+            AWSRetry.jittered_backoff()(self.connection.delete_listener)(ListenerArn=self.listener)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -594,7 +616,7 @@ class ELBListenerRules(object):
     def _get_elb_listener_rules(self):
 
         try:
-            return self.connection.describe_rules(ListenerArn=self.current_listener['ListenerArn'])['Rules']
+            return AWSRetry.jittered_backoff()(self.connection.describe_rules)(ListenerArn=self.current_listener['ListenerArn'])['Rules']
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -699,7 +721,7 @@ class ELBListenerRule(object):
         try:
             self.rule['ListenerArn'] = self.listener_arn
             self.rule['Priority'] = int(self.rule['Priority'])
-            self.connection.create_rule(**self.rule)
+            AWSRetry.jittered_backoff()(self.connection.create_rule)(**self.rule)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -714,7 +736,7 @@ class ELBListenerRule(object):
 
         try:
             del self.rule['Priority']
-            self.connection.modify_rule(**self.rule)
+            AWSRetry.jittered_backoff()(self.connection.modify_rule)(**self.rule)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 
@@ -728,7 +750,7 @@ class ELBListenerRule(object):
         """
 
         try:
-            self.connection.delete_rule(RuleArn=self.rule['RuleArn'])
+            AWSRetry.jittered_backoff()(self.connection.delete_rule)(RuleArn=self.rule['RuleArn'])
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e)
 

@@ -2,6 +2,8 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.ec2 import AWSRetry
+
 # Non-ansible imports
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -18,6 +20,22 @@ def get_elb(connection, module, elb_name):
     :param elb_name: Name of load balancer to get
     :return: boto3 ELB dict or None if not found
     """
+    try:
+        return _get_elb(connection, module, elb_name)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff()
+def _get_elb(connection, module, elb_name):
+    """
+    Get an ELB based on name using AWSRetry. If not found, return None.
+
+    :param connection: AWS boto3 elbv2 connection
+    :param module: Ansible module
+    :param elb_name: Name of load balancer to get
+    :return: boto3 ELB dict or None if not found
+    """
 
     try:
         load_balancer_paginator = connection.get_paginator('describe_load_balancers')
@@ -26,7 +44,7 @@ def get_elb(connection, module, elb_name):
         if e.response['Error']['Code'] == 'LoadBalancerNotFound':
             return None
         else:
-            module.fail_json_aws(e)
+            raise e
 
 
 def get_elb_listener(connection, module, elb_arn, listener_port):
@@ -42,7 +60,7 @@ def get_elb_listener(connection, module, elb_arn, listener_port):
 
     try:
         listener_paginator = connection.get_paginator('describe_listeners')
-        listeners = (listener_paginator.paginate(LoadBalancerArn=elb_arn).build_full_result())['Listeners']
+        listeners = (AWSRetry.jittered_backoff()(listener_paginator.paginate)(LoadBalancerArn=elb_arn).build_full_result())['Listeners']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e)
 
@@ -67,7 +85,7 @@ def get_elb_listener_rules(connection, module, listener_arn):
     """
 
     try:
-        return connection.describe_rules(ListenerArn=listener_arn)['Rules']
+        return AWSRetry.jittered_backoff()(connection.describe_rules)(ListenerArn=listener_arn)['Rules']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e)
 
@@ -83,7 +101,7 @@ def convert_tg_name_to_arn(connection, module, tg_name):
     """
 
     try:
-        response = connection.describe_target_groups(Names=[tg_name])
+        response = AWSRetry.jittered_backoff()(connection.describe_target_groups)(Names=[tg_name])
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e)
 
