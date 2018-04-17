@@ -1020,8 +1020,7 @@ def main():
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
                 if updated_cache_time != post_cache_update_time:
                     updated_cache = True
-                    updated_cache_time = post_cache_update_time
-                mtimestamp, updated_cache_time = get_updated_cache_time()
+                updated_cache_time = post_cache_update_time
 
             # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.
