@@ -46,55 +46,55 @@
 - name: create file
   shell: touch somefile chdir={{output_dir}}
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 - name: create zip with password
   shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: unarchive file with password
   unarchive: src={{output_dir}}/test-password.zip dest=/tmp/ password=1234
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: verify that the file was unarchived
   file: path=/tmp/somefile state=file
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 - name: clean up test artifacts
   shell: rm {{output_dir}}/test-password.zip /tmp/somefile
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 # negative case unzip with wrong password
 - name: create file
   shell: touch somefile chdir={{output_dir}}
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: create zip with password
   shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: unarchive file with password
   unarchive: src={{output_dir}}/test-password.zip dest=/tmp/ password=wrongpass
   register: unarchive
   ignore_errors: yes
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: check that we got error incorrect password
   assert:
     that:
       - '"failed to unpack" in unarchive.msg'
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: clean up test artifacts
   shell: rm {{output_dir}}/test-password.zip
   when:
-    - zip_is_installed.failed !=  true
+    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
