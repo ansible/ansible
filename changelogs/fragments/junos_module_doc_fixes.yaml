@@ -1,0 +1,2 @@
+bugfixes:
+- Add supported connection in junos module documentation (https://github.com/ansible/ansible/pull/38813)
