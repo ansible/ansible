@@ -110,6 +110,9 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
+      choices:
+          - 'all'
+          - 'local'
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
@@ -130,7 +133,6 @@ options:
         - Remove containers for services not defined in the compose file.
       type: bool
       default: false
-      version_added: 2.6
   timeout:
     description:
         - timeout in seconds for container shutdown when attached or when containers are already running.

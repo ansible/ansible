@@ -317,9 +317,6 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py E325
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py E326
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E325
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E326
-lib/ansible/modules/cloud/docker/docker_container.py E326
-lib/ansible/modules/cloud/docker/docker_image.py E326
-lib/ansible/modules/cloud/docker/docker_service.py E326
 lib/ansible/modules/cloud/google/gc_storage.py E322
 lib/ansible/modules/cloud/google/gc_storage.py E324
 lib/ansible/modules/cloud/google/gc_storage.py E325

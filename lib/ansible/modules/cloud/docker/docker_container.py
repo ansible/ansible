@@ -78,7 +78,6 @@ options:
   dns_opts:
     description:
       - list of DNS options
-    version_added: "2.6"
   dns_servers:
     description:
       - List of custom DNS servers.
@@ -215,12 +214,7 @@ options:
     required: true
   network_mode:
     description:
-      - Connect the container to a network.
-    choices:
-      - bridge
-      - container:<name|id>
-      - host
-      - none
+      - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
   userns_mode:
      description:
        - User namespace to use
@@ -304,10 +298,10 @@ options:
     description:
       - Container restart policy. Place quotes around I(no) option.
     choices:
-      - always
-      - no
-      - on-failure
-      - unless-stopped
+      - 'no'
+      - 'on-failure'
+      - 'always'
+      - 'unless-stopped'
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.

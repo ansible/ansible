@@ -62,13 +62,13 @@ DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
 DEFAULT_SSL_VERSION = "1.0"
-DEFAULT_TIMEOUT = 60
+DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
     docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST),
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
     api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
-    timeout=dict(type='int', default=DEFAULT_TIMEOUT),
+    timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS),
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
@@ -240,7 +240,7 @@ class AnsibleDockerClient(Client):
             tls_verify=self._get_value('tls_verfy', params['tls_verify'], 'DOCKER_TLS_VERIFY',
                                        DEFAULT_TLS_VERIFY),
             timeout=self._get_value('timeout', params['timeout'], 'DOCKER_TIMEOUT',
-                                    DEFAULT_TIMEOUT),
+                                    DEFAULT_TIMEOUT_SECONDS),
         )
 
         if result['tls_hostname'] is None:
