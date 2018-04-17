@@ -56,6 +56,25 @@ except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
+
+# The next 2 imports ``docker.models`` and ``docker.ssladapter`` are used
+# to ensure the user does not have both ``docker`` and ``docker-py`` modules
+# installed, as they utilize the same namespace are are incompatible
+try:
+    # docker
+    import docker.models
+    HAS_DOCKER_MODELS = True
+except ImportError:
+    HAS_DOCKER_MODELS = False
+
+try:
+    # docker-py
+    import docker.ssladapter
+    HAS_DOCKER_SSLADAPTER = True
+except ImportError:
+    HAS_DOCKER_SSLADAPTER = False
+
+
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
@@ -143,6 +162,10 @@ class AnsibleDockerClient(Client):
             mutually_exclusive=mutually_exclusive_params,
             required_together=required_together_params,
             required_if=required_if)
+
+        if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
+            self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
+                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python module")
 
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
