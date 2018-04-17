@@ -38,7 +38,6 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
-    default: Dockerfile
     required: false
     version_added: "2.0"
   force:
@@ -156,10 +155,10 @@ options:
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that the server's certificate is valid for the
         server. NOTE: If you specify this option, it will set the value of the tls or tls_verify parameters."
     choices:
-      - no
-      - encrypt
-      - verify
-    default: no
+      - 'no'
+      - 'encrypt'
+      - 'verify'
+    default: 'no'
     required: false
     version_added: "2.0"
 
