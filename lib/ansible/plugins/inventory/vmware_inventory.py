@@ -12,6 +12,7 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from VMware environment.
         - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
+        - 'Please make sure you mention "enable_plugins = vmware_inventory" in inventory section of ansible.cfg.'
     extends_documentation_fragment:
       - constructed
       - inventory_cache
@@ -51,7 +52,7 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 Sample configuration file for VMware dynamic inventory
 
-plugin: vmware
+plugin: vmware_inventory
 strict: False
 hostname: 10.65.223.31
 username: administrator@vsphere.local
@@ -104,7 +105,7 @@ from ansible.module_utils.six import PY3
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
-    NAME = 'vmware'
+    NAME = 'vmware_inventory'
 
     def _set_params(self):
         """
@@ -279,7 +280,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # VMware does not provide a way to uniquely identify VM by its name
                 # i.e. there can be two virtual machines with same name
                 # Appending "_" and VMware UUID to make it unique
-                current_host = temp_vm_object_property.val + "_" + temp_vm_object.obj.config.instanceUuid
+                current_host = temp_vm_object_property.val + "_" + temp_vm_object.obj.config.uuid
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
