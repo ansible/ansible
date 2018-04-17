@@ -379,7 +379,11 @@ class ELBListeners(object):
         self.connection = connection
         self.module = module
         self.elb_arn = elb_arn
-        self.listeners = self._ensure_listeners_default_action_has_arn(module.params.get("listeners"))
+        listeners = module.params.get("listeners")
+        if listeners is not None:
+            # Remove suboption argspec defaults of None from each listener
+            listeners = [{x: listener_dict[x] for x in listener_dict if listener_dict[x] is not None} for listener_dict in listeners]
+        self.listeners = self._ensure_listeners_default_action_has_arn(listeners)
         self.current_listeners = self._get_elb_listeners()
         self.purge_listeners = module.params.get("purge_listeners")
         self.changed = False

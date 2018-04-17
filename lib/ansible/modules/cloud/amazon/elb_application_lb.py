@@ -374,7 +374,7 @@ def create_or_update_elb(elb_obj):
             elb_obj.modify_security_groups()
 
         # Tags - only need to play with tags if tags parameter has been set to something
-        if elb_obj.tags:
+        if elb_obj.tags is not None:
 
             # Delete necessary tags
             tags_need_modify, tags_to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(elb_obj.elb['tags']),
@@ -491,12 +491,12 @@ def main():
             listeners=dict(type='list',
                            elements='dict',
                            options=dict(
-                               Protocol=dict(type='list', required=True),
+                               Protocol=dict(type='str', required=True),
                                Port=dict(type='int', required=True),
                                SslPolicy=dict(type='str'),
                                Certificates=dict(type='list'),
                                DefaultActions=dict(type='list', required=True),
-                               Rules=dict(type='dict')
+                               Rules=dict(type='list')
                            )
                            ),
             name=dict(required=True, type='str'),
@@ -507,6 +507,7 @@ def main():
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
             state=dict(choices=['present', 'absent'], type='str'),
             tags=dict(default={}, type='dict'),
+            wait_timeout=dict(type='int'),
             wait=dict(default=False, type='bool')
         )
     )
@@ -526,19 +527,14 @@ def main():
         for listener in listeners:
             for key in listener.keys():
                 if key == 'Protocol' and listener[key] == 'HTTPS':
-                    if 'SslPolicy' not in listener.keys():
+                    if listener.get('SslPolicy') is None:
                         module.fail_json(msg="'SslPolicy' is a required listener dict key when Protocol = HTTPS")
 
-                    if 'Certificates' not in listener.keys():
-                        module.fail_json(msg="'SslPolicy' is a required listener dict key when Protocol = HTTPS")
+                    if listener.get('Certificates') is None:
+                        module.fail_json(msg="'Certificates' is a required listener dict key when Protocol = HTTPS")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_params)
-        connection_ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = module.client('elbv2')
+    connection_ec2 = module.client('ec2')
 
     state = module.params.get("state")
 
