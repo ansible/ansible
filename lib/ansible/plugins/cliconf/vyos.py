@@ -24,7 +24,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'vyos'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version:\s*(\S+)', data)
@@ -46,17 +46,17 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        reply = self.get(b'show host name')
+        reply = self.get('show host name')
         device_info['network_os_hostname'] = to_text(reply, errors='surrogate_or_strict').strip()
 
         return device_info
 
     def get_config(self, source='running', format='text'):
-        return self.send_command(b'show configuration commands')
+        return self.send_command('show configuration commands')
 
     def edit_config(self, command):
         for cmd in chain(['configure'], to_list(command)):
-            self.send_command(to_bytes(cmd))
+            self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
@@ -66,10 +66,10 @@ class Cliconf(CliconfBase):
             command = 'commit comment "{0}"'.format(comment)
         else:
             command = 'commit'
-        self.send_command(to_bytes(command))
+        self.send_command(command)
 
     def discard_changes(self, *args, **kwargs):
-        self.send_command(b'exit discard')
+        self.send_command('exit discard')
 
     def get_capabilities(self):
         result = {}

@@ -55,13 +55,11 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     """
     A base class for implementing cli connections
 
-    .. note:: Unlike most of Ansible, nearly all strings in
-        :class:`CliconfBase` plugins are byte strings.  This is because of
-        how close to the underlying platform these plugins operate.  Remember
-        to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
-        problems.
+    .. note:: String inputs to :meth:`send_command` will be cast to byte strings
+         within this method and as such are not required to be made byte strings
+         beforehand.  Please avoid using literal byte strings (``b'string'``) in
+         :class:`CliConfBase` plugins as this can lead to unexpected errors when
+         running on Python 3
 
     List of supported rpc's:
         :get_config: Retrieves the specified configuration from the device
