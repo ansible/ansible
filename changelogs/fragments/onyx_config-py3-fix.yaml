@@ -1,0 +1,2 @@
+bugfixes:
+- Fix onyx_config action plugin when used on Python 3 https://github.com/ansible/ansible/pull/38343
