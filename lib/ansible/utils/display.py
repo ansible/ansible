@@ -224,11 +224,23 @@ class Display:
             self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
+    def safe_wrap(self, msg, cols):
+        '''
+        textwrap.wrap is poorly written for unbroken strings of >1MB
+        in size, so if any user data is being written this method should
+        be used.
+        '''
+        CUTOFF = 500000  # 500k limit
+        msg_len = len(msg)
+        if msg_len > CUTOFF:
+            msg = msg[:CUTOFF] + " (...additional %s characters truncated...)" % (msg_len - CUTOFF)
+        return textwrap.wrap(msg, cols)
+
     def warning(self, msg, formatted=False):
 
         if not formatted:
             new_msg = "\n[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = self.safe_wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
@@ -279,7 +291,7 @@ class Display:
     def error(self, msg, wrap_text=True):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = self.safe_wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
