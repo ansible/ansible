@@ -1,0 +1,2 @@
+bugfixes:
+- win_regedit - wait for garbage collection to finish before trying to unload the hive in case handles didn't unload in time (https://github.com/ansible/ansible/pull/38912)
