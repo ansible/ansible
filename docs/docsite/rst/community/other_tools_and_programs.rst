@@ -18,3 +18,5 @@ of some of the most popular of these tools.
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ is a collaboratively curated list of awesome Ansible resources.
 
 - `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory.
+
+- `Molecule <http://github.com/metacloud/molecule>`_ A testing framework for Ansible plays and roles.
