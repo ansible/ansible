@@ -41,6 +41,7 @@ options:
     description:
       - Type of database object to set privileges on.
       - The `default_prives` choice is available starting at version 2.7.
+      - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.7'.
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group,
