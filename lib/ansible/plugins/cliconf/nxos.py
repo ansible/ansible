@@ -53,7 +53,7 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', format='text', flags=None):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
 
-        cmd = 'show {} '.format(lookup[source])
+        cmd = 'show {0} '.format(lookup[source])
         if flags:
             cmd += ' '.join(flags)
         cmd = cmd.strip()
