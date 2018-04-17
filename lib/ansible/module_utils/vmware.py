@@ -305,8 +305,14 @@ def gather_vm_facts(content, vm):
 
     # facts that may or may not exist
     if vm.summary.runtime.host:
-        host = vm.summary.runtime.host
-        facts['hw_esxi_host'] = host.summary.config.name
+        try:
+            host = vm.summary.runtime.host
+            facts['hw_esxi_host'] = host.summary.config.name
+        except vim.fault.NoPermission:
+            # User does not have read permission for the host system,
+            # proceed without this value. This value does not contribute or hamper
+            # provisioning or power management operations.
+            pass
     if vm.summary.runtime.dasVmProtection:
         facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
 
