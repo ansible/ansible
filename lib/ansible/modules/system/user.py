@@ -175,9 +175,10 @@ options:
         version_added: "1.9"
     password_lock:
         description:
-            - Lock the password (usermod -L ).
-              WARNING implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
-              This option does not disable the user, only lock the password.
+            - Lock the password (usermod -L, pw lock, usermod -C).
+              BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
+              This option does not disable the user, only lock the password. Do not change the password in the same task.
+              Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD.
         type: bool
         version_added: "2.6"
     local:
@@ -922,9 +923,6 @@ class FreeBsdUser(User):
             cmd.append('-e')
             cmd.append(str(int(days)))
 
-        if self.password_lock:
-            cmd.append('-L')
-
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
@@ -943,6 +941,29 @@ class FreeBsdUser(User):
             ]
             return self.execute_command(cmd)
 
+        # we have to lock/unlock the password in a distinct command
+        if self.password_lock:
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'lock',
+                '-n',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+        elif self.password_lock is not None:
+             cmd = [
+                self.module.get_bin_path('pw', True),
+                'unlock',
+                '-n',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
         return (rc, out, err)
 
 
@@ -1268,6 +1289,11 @@ class NetBSDUser(User):
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
+
+        if self.password_lock:
+            cmd.append('-C yes')
+        elif self.password_lock is not None:
+            cmd.append('-C no')
 
         # skip if no changes to be made
         if len(cmd) == 1:
