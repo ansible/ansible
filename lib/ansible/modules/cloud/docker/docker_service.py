@@ -110,6 +110,9 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
+      choices:
+          - 'all'
+          - 'local'
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
@@ -125,11 +128,15 @@ options:
         - Use with state I(present) to restart all containers.
       type: bool
       default: 'no'
-  debug:
+  remove_orphans:
       description:
-        - Include I(actions) in the return values.
+        - Remove containers for services not defined in the compose file.
       type: bool
-      default: 'no'
+      default: false
+  timeout:
+    description:
+        - timeout in seconds for container shutdown when attached or when containers are already running.
+    default: 10
 
 extends_documentation_fragment:
     - docker
