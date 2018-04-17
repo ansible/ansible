@@ -737,6 +737,47 @@ def build_volume_spec(params):
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
+def add_or_update_instance_profile(instance, desired_profile_name):
+    instance_profile_setting = instance.get('IamInstanceProfile')
+    if instance_profile_setting and desired_profile_name:
+        if desired_profile_name in (instance_profile_setting.get('Name'), instance_profile_setting.get('Arn')):
+            # great, the profile we asked for is what's there
+            return False
+        else:
+            desired_arn = determine_iam_role(desired_profile_name)
+            if instance_profile_setting.get('Arn') == desired_arn:
+                return False
+        # update association
+        ec2 = module.client('ec2')
+        try:
+            association = ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
+        except botocore.exceptions.ClientError as e:
+            # check for InvalidAssociationID.NotFound
+            module.fail_json_aws(e, "Could not find instance profile association")
+        try:
+            resp = ec2.replace_iam_instance_profile_association(
+                AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)}
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate instance profile")
+
+    if not instance_profile_setting and desired_profile_name:
+        # create association
+        ec2 = module.client('ec2')
+        try:
+            resp = ec2.associate_iam_instance_profile(
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)},
+                InstanceId=instance['InstanceId']
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate new instance profile")
+
+    return False
+
+
 def build_network_spec(params, ec2=None):
     """
     Returns list of interfaces [complex]
@@ -1292,9 +1333,9 @@ def pretty_instance(i):
 def determine_iam_role(name_or_arn):
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
-    iam = module.client('iam')
+    iam = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
     try:
-        role = iam.get_instance_profile(InstanceProfileName=name_or_arn)
+        role = iam.get_instance_profile(InstanceProfileName=name_or_arn, aws_retry=True)
         return role['InstanceProfile']['Arn']
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
@@ -1313,6 +1354,8 @@ def handle_existing(existing_matches, changed, ec2, state):
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
         ec2.modify_instance_attribute(**c)
+    changed |= bool(changes)
+    changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
     altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
     module.exit_json(
