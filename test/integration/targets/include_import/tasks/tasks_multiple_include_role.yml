@@ -77,3 +77,83 @@
   include_role:
     name: role1
     tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 17
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 18
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 19
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 20
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 21
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 22
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 23
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 24
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 25
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 26
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 27
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 28
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 29
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 30
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 31
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
+
+- name: Include 32
+  include_role:
+    name: role1
+    tasks_from: "tasks_{{ tasks_file_name }}.yml"
