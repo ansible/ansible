@@ -39,7 +39,7 @@ notes:
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
       C(query_interval), C(last_member_qrt), C(last_member_query_count),
       C(group_timeout), C(report_llg), and C(immediate_leave).
-    - When C(state=absent), all configs for C(oif_prefix), C(oif_source), and
+    - When C(state=absent), all configs for C(oif_ps), and
       C(oif_routemap) will be removed.
     - PIM must be enabled to use this module.
     - This module is for Layer 3 interfaces.
@@ -126,10 +126,20 @@ options:
               keyword 'default'.
     oif_prefix:
         description:
-            - Configure a prefix for static outgoing interface (OIF).
+            - Configure a prefix for static outgoing interface (OIF). This
+              argument is deprecated, please use oif_ps instead.
     oif_source:
         description:
-            - Configure a source for static outgoing interface (OIF).
+            - Configure a source for static outgoing interface (OIF). This
+              argument is deprecated, please use oif_ps instead.
+    oif_ps:
+        description:
+            - Configure prefixes and sources for static outgoing interface (OIF). This
+              is a list of dict where each dict has source and prefix defined or just
+              prefix if source is not needed. The specified values will be configured
+              on the device and if any previous prefix/sources exist, they will be removed.
+              Keyword 'default' is also accpted which removes all existing prefix/sources.
+              ex: [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
     restart:
         description:
             - Restart IGMP. This is NOT idempotent as this is action only.
@@ -272,6 +282,8 @@ def get_igmp_interface(module, interface):
     body = execute_show_command(command, module)[0]
 
     if body:
+        if 'not running' in body:
+            return igmp
         resource = body['TABLE_vrf']['ROW_vrf']['TABLE_if']['ROW_if']
         igmp = apply_key_map(key_map, resource)
         report_llg = str(resource['ReportingForLinkLocal']).lower()
@@ -342,7 +354,7 @@ def get_igmp_interface(module, interface):
     return igmp
 
 
-def config_igmp_interface(delta, existing, found_both, found_prefix):
+def config_igmp_interface(delta, existing, existing_oif_prefix_source):
     CMDS = {
         'version': 'ip igmp version {0}',
         'startup_query_interval': 'ip igmp startup-query-interval {0}',
@@ -366,19 +378,35 @@ def config_igmp_interface(delta, existing, found_both, found_prefix):
     def_vals = get_igmp_interface_defaults()
 
     for key, value in delta.items():
-        if key == 'oif_source' or found_both or found_prefix:
-            pass
-        elif key == 'oif_prefix':
-            if delta.get('oif_source'):
-                command = CMDS.get('oif_prefix_source').format(
-                    delta.get('oif_prefix'), delta.get('oif_source'))
-            else:
-                command = CMDS.get('oif_prefix').format(
-                    delta.get('oif_prefix'))
+        if key == 'oif_ps':
+            for each in value:
+                if each in existing_oif_prefix_source:
+                    existing_oif_prefix_source.remove(each)
+                else:
+                    # add new prefix/sources
+                    pf = each['prefix']
+                    src = ''
+                    if 'source' in each.keys():
+                        src = each['source']
+                    if src:
+                        commands.append(CMDS.get('oif_prefix_source').format(pf, src))
+                    else:
+                        commands.append(CMDS.get('oif_prefix').format(pf))
+            if existing_oif_prefix_source:
+                for each in existing_oif_prefix_source:
+                        # remove stale prefix/sources
+                        pf = each['prefix']
+                        src = ''
+                        if 'source' in each.keys():
+                            src = each['source']
+                        if src:
+                            commands.append('no ' + CMDS.get('oif_prefix_source').format(pf, src))
+                        else:
+                            commands.append('no ' + CMDS.get('oif_prefix').format(pf))
         elif key == 'oif_routemap':
             if value == 'default':
                 if existing.get(key):
-                    command = 'no ' + CMDS.get(key).format('dummy')
+                    command = 'no ' + CMDS.get(key).format(existing.get(key))
             else:
                 command = CMDS.get(key).format(value)
         elif value:
@@ -426,12 +454,12 @@ def get_igmp_interface_defaults():
     return default
 
 
-def config_default_igmp_interface(existing, delta, found_both, found_prefix):
+def config_default_igmp_interface(existing, delta):
     commands = []
     proposed = get_igmp_interface_defaults()
     delta = dict(set(proposed.items()).difference(existing.items()))
     if delta:
-        command = config_igmp_interface(delta, existing, found_both, found_prefix)
+        command = config_igmp_interface(delta, existing, None)
 
         if command:
             for each in command:
@@ -444,7 +472,7 @@ def config_remove_oif(existing, existing_oif_prefix_source):
     commands = []
     command = None
     if existing.get('oif_routemap'):
-        commands.append('no ip igmp static-oif route-map {0}'.format('dummy'))
+        commands.append('no ip igmp static-oif route-map {0}'.format(existing.get('oif_routemap')))
     elif existing_oif_prefix_source:
         for each in existing_oif_prefix_source:
             if each.get('prefix') and each.get('source'):
@@ -478,16 +506,22 @@ def main():
         report_llg=dict(type='bool'),
         immediate_leave=dict(type='bool'),
         oif_routemap=dict(required=False, type='str'),
-        oif_prefix=dict(required=False, type='str'),
-        oif_source=dict(required=False, type='str'),
+        oif_prefix=dict(required=False, type='str', removed_in_version='2.10'),
+        oif_source=dict(required=False, type='str', removed_in_version='2.10'),
+        oif_ps=dict(required=False, type='list', elements='dict'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
                    default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
+    mutually_exclusive = [('oif_ps', 'oif_prefix'),
+                          ('oif_ps', 'oif_source'),
+                          ('oif_ps', 'oif_routemap'),
+                          ('oif_prefix', 'oif_routemap')]
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -498,17 +532,19 @@ def main():
     oif_prefix = module.params['oif_prefix']
     oif_source = module.params['oif_source']
     oif_routemap = module.params['oif_routemap']
+    oif_ps = module.params['oif_ps']
 
-    if oif_source and not oif_prefix:
-        module.fail_json(msg='oif_prefix required when setting oif_source')
+    if not oif_ps:
+        if oif_source and not oif_prefix:
+            module.fail_json(msg='oif_prefix required when setting oif_source')
+        elif oif_source and oif_prefix:
+            oif_ps = [{'source': oif_source, 'prefix': oif_prefix}]
+        elif not oif_source and oif_prefix:
+            oif_ps = [{'prefix': oif_prefix}]
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':
         module.fail_json(msg='this module only works on Layer 3 interfaces')
-
-    if oif_prefix and oif_routemap:
-        module.fail_json(msg='cannot use oif_prefix AND oif_routemap.'
-                             '  select one.')
 
     existing = get_igmp_interface(module, interface)
     existing_copy = existing.copy()
@@ -525,7 +561,7 @@ def main():
         module.fail_json(msg='Delete static-oif configurations on this '
                              'interface if you want to use a routemap')
 
-    if oif_prefix and existing.get('oif_routemap'):
+    if oif_ps and existing.get('oif_routemap'):
         module.fail_json(msg='Delete static-oif route-map configuration '
                              'on this interface if you want to config '
                              'static entries')
@@ -544,8 +580,6 @@ def main():
         'report_llg',
         'immediate_leave',
         'oif_routemap',
-        'oif_prefix',
-        'oif_source'
     ]
 
     changed = False
@@ -563,41 +597,26 @@ def main():
         for each in CANNOT_ABSENT:
             if each in proposed:
                 module.fail_json(msg='only params: oif_prefix, oif_source, '
-                                     'oif_routemap can be used when '
+                                     'oif_ps, oif_routemap can be used when '
                                      'state=absent')
 
-    # delta check for all params except oif_prefix and oif_source
+    # delta check for all params except oif_ps
     delta = dict(set(proposed.items()).difference(existing.items()))
 
-    # now check to see there is a delta for prefix and source command option
-    found_both = False
-    found_prefix = False
-
-    if existing_oif_prefix_source:
-        if oif_prefix and oif_source:
-            for each in existing_oif_prefix_source:
-                if (oif_prefix == each.get('prefix') and
-                        oif_source == each.get('source')):
-                    found_both = True
-            if not found_both:
-                delta['prefix'] = oif_prefix
-                delta['source'] = oif_source
-        elif oif_prefix:
-            for each in existing_oif_prefix_source:
-                if oif_prefix == each.get('prefix') and not each.get('source'):
-                    found_prefix = True
-            if not found_prefix:
-                delta['prefix'] = oif_prefix
+    if oif_ps:
+        if oif_ps == ['default']:
+            delta['oif_ps'] = []
+        else:
+            delta['oif_ps'] = oif_ps
 
     if state == 'present':
         if delta:
-            command = config_igmp_interface(delta, existing, found_both, found_prefix)
+            command = config_igmp_interface(delta, existing, existing_oif_prefix_source)
             if command:
                 commands.append(command)
 
     elif state == 'default':
-        command = config_default_igmp_interface(existing, delta,
-                                                found_both, found_prefix)
+        command = config_default_igmp_interface(existing, delta)
         if command:
             commands.append(command)
     elif state == 'absent':
@@ -608,8 +627,7 @@ def main():
         if command:
             commands.append(command)
 
-        command = config_default_igmp_interface(existing, delta,
-                                                found_both, found_prefix)
+        command = config_default_igmp_interface(existing, delta)
         if command:
             commands.append(command)
 
