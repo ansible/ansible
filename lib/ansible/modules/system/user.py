@@ -175,7 +175,7 @@ options:
         version_added: "1.9"
     password_lock:
         description:
-            - Lock the password (usermod -L ). 
+            - Lock the password (usermod -L ).
               WARNING implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
               This option does not disable the user, only lock the password.
         type: bool
