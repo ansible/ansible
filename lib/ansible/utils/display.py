@@ -58,11 +58,12 @@ class FilterBlackList(logging.Filter):
 def safe_wrap(msg, columns):
 
     LIMIT = 500000
+    CUTOFF = C.DISPLAY_CUTOFF_SIZE
+
     current = 0
     wrapped = ''
 
     fullmsg = len(msg)
-
     while current < fullmsg:
 
         if len(msg[current:]) < LIMIT:
@@ -70,6 +71,9 @@ def safe_wrap(msg, columns):
         else:
             wrapped += textwrap.wrap(msg[current:LIMIT], columns)
             current += LIMIT
+
+        if CUTTOFF and current >= CUTOFF:
+            break
 
     return wrapped
 

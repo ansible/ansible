@@ -1252,6 +1252,15 @@ DISPLAY_ARGS_TO_STDOUT:
   - {key: display_args_to_stdout, section: defaults}
   type: boolean
   version_added: "2.1"
+DISPLAY_CUTOFF_SIZE:
+   name: Limit displayed msg size
+   type: integer
+   description:
+     - Control the maximum size of messages outputed by Ansible
+   env: [{name: ANSIBLE_DISPLAY_CUTOFF_SIZE}]
+   ini:
+     - {key: display_cutoff_size, section: defaults}
+   version_added: "2.6"
 DISPLAY_SKIPPED_HOSTS:
   name: Show skipped results
   default: True
