@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -tt
+#!/usr/bin/env python3
 
 # To run this script, first make webdocs in the toplevel of the checkout.  This will generate all
 # rst files from their sources.  Then run this script ./docs/bin/find-plugin-refs.py
@@ -16,7 +16,7 @@ import re
 from ansible.module_utils._text import to_text
 
 
-TOPDIR=os.path.join(os.path.dirname(__file__), '..', 'docsite', 'rst')
+TOPDIR = os.path.join(os.path.dirname(__file__), '..', 'docsite', 'rst')
 
 
 def plugin_names(topdir):
@@ -58,10 +58,6 @@ def process_refs(topdir, plugin_names):
                     if label in plugin_names:
                         print(':ref:`{0}` matching plugin {1} was found in {2}'.format(ref_match.group(1), label, os.path.join(dirpath, filename)))
 
-        #for directory in dirnames:
-            #process_refs(os.path.join(topdir, directory), plugin_names)
-
-
 
 if __name__ == '__main__':
 
@@ -85,5 +81,3 @@ if __name__ == '__main__':
     # :ref:`command` matching plugin command was found in ./../docsite/rst/user_guide/intro_adhoc.rst
     # :ref:`shell` matching plugin shell was found in ./../docsite/rst/user_guide/intro_adhoc.rst
     # :ref:`config` matching plugin config was found in ./../docsite/rst/installation_guide/intro_configuration.rst
-
-
