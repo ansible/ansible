@@ -137,16 +137,15 @@ options:
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
               Keyword 'default' is also accpted which removes all existing prefix/sources.
-              See below for example
-              [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
     restart:
         description:
             - Restart IGMP. This is NOT idempotent as this is action only.
         type: bool
+        default: False
     state:
         description:
             - Manages desired state of the resource.
-        default: 'present'
+        default: present
         choices: ['present', 'absent', 'default']
 '''
 EXAMPLES = '''
