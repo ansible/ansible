@@ -153,6 +153,7 @@ EXAMPLES = '''
 - nxos_igmp_interface:
     interface: ethernet1/32
     startup_query_interval: 30
+    oif_ps: [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
     state: present
 '''
 RETURN = '''
@@ -160,22 +161,25 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"startup_query_count": "30"}
+    sample: {"startup_query_count": "30",
+             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]}
 existing:
-    description: k/v pairs of existing BGP configuration
+    description: k/v pairs of existing igmp_interface configuration
     returned: always
     type: dict
-    sample: {"startup_query_count": "2"}
+    sample: {"startup_query_count": "2", "oif_ps": []}
 end_state:
-    description: k/v pairs of BGP configuration after module execution
+    description: k/v pairs of igmp interface configuration after module execution
     returned: always
     type: dict
-    sample: {"startup_query_count": "30"}
+    sample: {"startup_query_count": "30",
+             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]}
 updates:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["interface Ethernet1/32", "ip igmp startup-query-count 30"]
+    sample: ["interface Ethernet1/32", "ip igmp startup-query-count 30",
+             "ip igmp static-oif 238.2.2.6", "ip igmp static-oif 238.2.2.5 source 1.1.1.1"]
 changed:
     description: check to see if a change was made on the device
     returned: always
