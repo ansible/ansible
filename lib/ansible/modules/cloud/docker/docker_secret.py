@@ -38,9 +38,10 @@ options:
     required: false
   force:
     description:
-      - Boolean. Use with state C(present) to always remove and recreate an existing secret.
+      - Use with state C(present) to always remove and recreate an existing secret.
       - If I(true), an existing secret will be replaced, even if it has not changed.
     default: false
+    type: bool
   name:
     description:
       - The name of the secret.

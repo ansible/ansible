@@ -37,7 +37,7 @@ try:
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
+    from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
@@ -78,21 +78,23 @@ except ImportError:
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
+DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
+DEFAULT_SSL_VERSION = "1.0"
+DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url']),
-    tls_hostname=dict(type='str'),
-    api_version=dict(type='str', aliases=['docker_api_version']),
-    timeout=dict(type='int'),
+    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST),
+    tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
+    api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
+    timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS),
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str'),
-    tls=dict(type='bool'),
-    tls_verify=dict(type='bool'),
-    debug=dict(type='bool', default=False),
-    filter_logger=dict(type='bool', default=False),
+    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION),
+    tls=dict(type='bool', default=DEFAULT_TLS),
+    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
+    debug=dict(type='bool', default=False)
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = [
