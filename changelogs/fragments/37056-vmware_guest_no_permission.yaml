@@ -1,0 +1,2 @@
+bugfixes:
+- Adds exception handling which is raised when user does not have correct set of permissions/privileges to read virtual machine facts.
