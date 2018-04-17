@@ -19,9 +19,6 @@
         <<: *aws_connection_info
       register: iam_role
 
-    - name: Wait for IAM role to be available, otherwise the next step will fail (Invalid IAM Instance Profile name)
-      command: sleep 10
-
     - name: Make instance with an instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-default-vpc"
