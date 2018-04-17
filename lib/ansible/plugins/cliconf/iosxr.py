@@ -24,7 +24,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'iosxr'
-        reply = self.get(b'show version | utility head -n 20')
+        reply = self.get('show version | utility head -n 20')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -61,9 +61,9 @@ class Cliconf(CliconfBase):
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if filter:
-            cmd = to_bytes('show {0} {1}'.format(lookup[source], filter), errors='surrogate_or_strict')
+            cmd = 'show {0} {1}'.format(lookup[source], filter)
         else:
-            cmd = to_bytes('show {0}'.format(lookup[source]), errors='surrogate_or_strict')
+            cmd = 'show {0}'.format(lookup[source])
 
         return self.send_command(cmd)
 
@@ -94,10 +94,10 @@ class Cliconf(CliconfBase):
             command = 'commit comment {0}'.format(comment)
         else:
             command = 'commit'
-        self.send_command(to_bytes(command))
+        self.send_command(command)
 
     def discard_changes(self):
-        self.send_command(b'abort')
+        self.send_command('abort')
 
     def get_capabilities(self):
         result = {}
