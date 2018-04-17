@@ -37,11 +37,7 @@ except ImportError:
     from ansible.utils.display import Display
     global_display = Display()
 
-try:
-    from __main__ import cli
-except ImportError:
-    # using API w/o cli
-    cli = False
+import __main__
 
 __all__ = ["CallbackBase"]
 
@@ -60,8 +56,8 @@ class CallbackBase(AnsiblePlugin):
         else:
             self._display = global_display
 
-        if cli:
-            self._options = cli.options
+        if getattr(__main__, 'cli', False):
+            self._options = __main__.cli.options
         else:
             self._options = None
 
