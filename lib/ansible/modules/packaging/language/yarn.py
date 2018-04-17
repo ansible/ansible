@@ -32,12 +32,13 @@ options:
     required: false
   path:
     description:
-      - The base path where Node.js packages will be installed.
+      - The base path where Node.js libraries will be installed.
+      - This is where the node_modules folder lives.
     required: false
   version:
     description:
       - The version of the library to be installed.
-      - Must be in semver format
+      - Must be in semver format. If "latest" is desired, use "state" arg instead
     required: false
   global:
     description:
@@ -48,7 +49,6 @@ options:
   executable:
     description:
       - The executable location for yarn.
-      - This is useful if you are using a version manager, such as nvm
     required: false
   ignore_scripts:
     description:
@@ -154,6 +154,9 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class Yarn(object):
+
+    DEFAULT_GLOBAL_INSTALLATION_PATH = '~/.config/yarn/global'
+
     def __init__(self, module, **kwargs):
         self.module = module
         self.globally = kwargs['globally']
@@ -164,15 +167,16 @@ class Yarn(object):
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
 
+        # Specify a version of package if version arg passed in
+        self.name_version = None
+
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
         else:
             self.executable = [module.get_bin_path('yarn', True)]
 
-        if kwargs['version']:
+        if kwargs['version'] and self.name is not None:
             self.name_version = self.name + '@' + str(self.version)
-        else:
-            self.name_version = self.name
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
@@ -196,7 +200,7 @@ class Yarn(object):
 
             # If path is specified, cd into that path and run the command.
             cwd = None
-            if self.path:
+            if self.path and not self.globally:
                 if not os.path.exists(self.path):
                     # Module will make directory if not exists.
                     os.makedirs(self.path)
@@ -225,7 +229,7 @@ class Yarn(object):
         result, error = self._exec(cmd, True, False)
 
         if error:
-            self.module.fail_json(error)
+            self.module.fail_json(msg=error)
 
         data = json.loads(result)
         try:
@@ -244,7 +248,6 @@ class Yarn(object):
         return installed, missing
 
     def install(self):
-        # TODO: Handle case when installing all pkgs with state: latest
         if self.name_version:
             # Yarn has a separate command for installing packages by name...
             return self._exec(['add', self.name_version])
@@ -255,7 +258,7 @@ class Yarn(object):
         return self._exec(['upgrade', '--latest'])
 
     def uninstall(self):
-        return self._exec(['remove', self.name_version])
+        return self._exec(['remove', self.name])
 
     def list_outdated(self):
         outdated = list()
@@ -265,7 +268,7 @@ class Yarn(object):
 
         cmd_result, err = self._exec(['outdated', '--json'], True, False)
         if err:
-            self.module.fail_json(err)
+            self.module.fail_json(msg=err)
 
         outdated_packages_data = cmd_result.splitlines()[1]
 
@@ -280,14 +283,6 @@ class Yarn(object):
             # Outdated dependencies returned as a list of lists, where
             # item at index 0 is the name of the dependency
             outdated.append(dep[0])
-
-        # for dep in data.splitlines():
-        #     if dep:
-        #         # node.js v0.10.22 changed the `npm outdated` module separator
-        #         # from "@" to " ". Split on both for backwards compatibility.
-        #         pkg, other = re.split(r'\s|@', dep, 1)
-        #         outdated.append(pkg)
-
         return outdated
 
 
@@ -318,12 +313,21 @@ def main():
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
 
-    if not path and not globally:
+    # When installing globally, users should not be able to define a path for installation.
+    # Require a path if global is False, though!
+    if path is None and globally is False:
         module.fail_json(msg='Path must be specified when not using global arg')
+    elif path and globally is True:
+        module.fail_json(msg='Cannot specify path if doing global installation')
+
     if state == 'absent' and not name:
         module.fail_json(msg='Package must be explicitly named when uninstalling.')
     if state == 'latest':
         version = 'latest'
+
+    # When installing globally, use the defined path for global node_modules
+    if globally:
+        path = Yarn.DEFAULT_GLOBAL_INSTALLATION_PATH
 
     yarn = Yarn(module,
                 name=name,
@@ -340,24 +344,29 @@ def main():
     err = ''
     if state == 'present':
 
-        if name:
+        if not name:
+            changed = True
+            out, err = yarn.install()
+        else:
             installed, missing = yarn.list()
             if len(missing):
                 changed = True
                 out, err = yarn.install()
-        else:
-            changed = True
-            out, err = yarn.install()
 
     elif state == 'latest':
-        installed, missing = yarn.list()
-        outdated = yarn.list_outdated()
-        if len(missing):
+
+        if not name:
             changed = True
             out, err = yarn.install()
-        if len(outdated):
-            changed = True
-            out, err = yarn.update()
+        else:
+            installed, missing = yarn.list()
+            outdated = yarn.list_outdated()
+            if len(missing):
+                changed = True
+                out, err = yarn.install()
+            if len(outdated):
+                changed = True
+                out, err = yarn.update()
     else:
         # state == absent
         installed, missing = yarn.list()

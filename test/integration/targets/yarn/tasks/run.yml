@@ -98,8 +98,6 @@
         that:
           - yarn_update_old_package is changed
 
-
-
     - name: 'Remove a package'
       yarn:
         path: '{{ output_dir }}'
