@@ -54,6 +54,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vMX JUNOS version 17.3R1.10.
+  - Works with C(local) connections only.
 """
 
 EXAMPLES = """
