@@ -6,6 +6,7 @@ grep '^#!' -rIn . \
     | grep ':1:' | sed 's/:1:/:/' | grep -v -E \
     -e '^\./lib/ansible/modules/' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
+    -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell\r$' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!/usr/bin/python$' \
     -e '^\./test/integration/targets/module_precedence/.*lib.*:#!/usr/bin/python$' \
     -e '^\./hacking/cherrypick.py:#!/usr/bin/env python3$' \
