@@ -1,0 +1,81 @@
+---
+- name: Run Pester test(s) specifying a fake test file
+  win_pester:
+    path: '{{test_win_pester_path}}\fakefile.ps1'
+  register: fake_file
+  failed_when: '"Cannot find file or directory: ''" + test_win_pester_path + "\\fakefile.ps1'' as it does not exist" not in fake_file.msg'
+
+- name: Run Pester test(s) specifying a fake folder
+  win_pester:
+    path: '{{test_win_pester_path }}\fakedir'
+  register: fake_folder
+  failed_when: '"Cannot find file or directory: ''" + test_win_pester_path + "\\fakedir'' as it does not exist" not in fake_folder.msg'
+
+- name: Run Pester test(s) specifying a test file and a higher pester version
+  win_pester:
+    path: '{{test_win_pester_path}}\test01.test.ps1'
+    minimum_version: '6.0.0'
+  register: invalid_version
+  failed_when: '"Pester version is not greater or equal to 6.0.0" not in invalid_version.msg'
+
+- name: Run Pester test(s) specifying a test file
+  win_pester:
+    path: '{{test_win_pester_path}}\test01.test.ps1'
+  register: file_result
+
+- name: assert Run Pester test(s) specify a test file
+  assert:
+    that:
+    - file_result.changed
+    - not file_result.failed
+    - file_result.output.TotalCount == 1
+
+- name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
+  win_pester:
+    path: '{{test_win_pester_path}}\test01.test.ps1'
+    minimum_version: 3.0.0
+  register: file_result_with_version
+
+- name: assert Run Pester test(s) specifying a test file and a minimum mandatory Pester version
+  assert:
+    that:
+    - file_result_with_version.changed
+    - not file_result_with_version.failed
+    - file_result_with_version.output.TotalCount == 1
+
+- name: Run Pester test(s) located in a folder. Folder path end with '\'
+  win_pester:
+    path: '{{test_win_pester_path}}\'
+  register: dir_with_ending_slash
+
+- name: assert Run Pester test(s) located in a folder. Folder path end with '\'
+  assert:
+    that:
+    - dir_with_ending_slash.changed
+    - not dir_with_ending_slash.failed
+    - dir_with_ending_slash.output.TotalCount == 2
+
+- name: Run Pester test(s) located in a folder. Folder path does not end with '\' 
+  win_pester:
+    path: '{{test_win_pester_path}}'
+  register: dir_without_ending_slash
+
+- name: assert Run Pester test(s) located in a folder. Folder does not end with '\'
+  assert:
+    that:
+    - dir_without_ending_slash.changed
+    - not dir_without_ending_slash.failed
+    - dir_without_ending_slash.output.TotalCount == 2
+
+- name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
+  win_pester:
+    path: '{{test_win_pester_path}}'
+    minimum_version: 3.0.0
+  register: dir_with_version
+
+- name: assert Run Pester test(s) located in a folder and with a minimum mandatory Pester version
+  assert:
+    that:
+    - dir_with_version.changed
+    - not dir_with_version.failed
+    - dir_with_version.output.TotalCount == 2
