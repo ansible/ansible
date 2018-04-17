@@ -44,11 +44,11 @@ options:
     plugin_bin:
         description:
             - Location of the plugin binary
-        default: /opt/kibana/bin/kibana
+        default: /usr/share/kibana/bin/kibana-plugin
     plugin_dir:
         description:
             - Your configured plugin directory specified in Kibana
-        default: /opt/kibana/installedPlugins/
+        default: /usr/share/kibana/plugins
     version:
         description:
             - Version of the plugin to be installed.
@@ -115,8 +115,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 PACKAGE_STATE_MAP = dict(
-    present="--install",
-    absent="--remove"
+    present="install",
+    absent="remove"
 )
 
 
@@ -196,8 +196,8 @@ def main():
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
             url=dict(default=None),
             timeout=dict(default="1m"),
-            plugin_bin=dict(default="/opt/kibana/bin/kibana", type="path"),
-            plugin_dir=dict(default="/opt/kibana/installedPlugins/", type="path"),
+            plugin_bin=dict(default="/usr/share/kibana/bin/kibana-plugin", type="path"),
+            plugin_dir=dict(default="/usr/share/kibana/plugins/", type="path"),
             version=dict(default=None),
             force=dict(default="no", type="bool")
         ),
