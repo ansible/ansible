@@ -67,8 +67,6 @@ lib/ansible/modules/storage/infinidat/infini_vol.py ansible-format-automatic-spe
 lib/ansible/modules/storage/purestorage/purefa_host.py ansible-format-automatic-specification
 lib/ansible/modules/storage/purestorage/purefa_pg.py ansible-format-automatic-specification
 lib/ansible/modules/system/firewalld.py ansible-format-automatic-specification
-lib/ansible/plugins/cliconf/junos.py ansible-no-format-on-bytestring 3
-lib/ansible/plugins/cliconf/nxos.py ansible-format-automatic-specification
 test/runner/injector/importer.py missing-docstring 3.7
 test/runner/injector/injector.py missing-docstring 3.7
 test/runner/lib/ansible_util.py missing-docstring 3.7
