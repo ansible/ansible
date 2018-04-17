@@ -562,6 +562,7 @@ $key_prefix[$path]
 } finally {
     if ($hive) {
         [GC]::Collect()
+        [GC]::WaitForPendingFinalizers()
         try {
             [Ansible.RegistryUtil]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {
