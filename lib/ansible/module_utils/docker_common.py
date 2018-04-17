@@ -164,7 +164,7 @@ class AnsibleDockerClient(Client):
             required_if=required_if)
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
-            self.fail("Cannot have both the docker-py and docker python modules installed installed together as they use the same namespace and "
+            self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python module")
 
         if not HAS_DOCKER_PY:
