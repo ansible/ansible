@@ -584,7 +584,7 @@ def add_extra_docker_options(parser, integration=True):
 
     docker.add_argument('--docker-util',
                         metavar='IMAGE',
-                        default='ansible/ansible@sha256:00f26e1d1909315ab1038751fc9397dd3cf7655604ba3b68fccda754c8630e50',  # httptester
+                        default='quay.io/ansible/http-test-container:1.0.0',
                         help='docker utility image to provide test services')
 
     docker.add_argument('--docker-privileged',
