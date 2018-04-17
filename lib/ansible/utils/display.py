@@ -55,6 +55,25 @@ class FilterBlackList(logging.Filter):
         return not any(f.filter(record) for f in self.blacklist)
 
 
+def safe_wrap(msg, columns):
+
+    LIMIT = 500000
+    current = 0
+    wrapped = ''
+
+    fullmsg = len(msg)
+
+    while current < fullmsg:
+
+        if len(msg[current:]) < LIMIT:
+            wrapped += textwrap.wrap(msg[current:], columns)
+        else:
+            wrapped += textwrap.wrap(msg[current:LIMIT], columns)
+            current += LIMIT
+
+    return wrapped
+
+
 logger = None
 # TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
@@ -101,7 +120,7 @@ class Display:
                 self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_WHITELIST:
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 
@@ -217,7 +236,7 @@ class Display:
         else:
             raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
+        wrapped = safe_wrap(new_msg, self.columns, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:
@@ -228,7 +247,7 @@ class Display:
 
         if not formatted:
             new_msg = "\n[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = safe_wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
@@ -279,7 +298,7 @@ class Display:
     def error(self, msg, wrap_text=True):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = safe_wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
