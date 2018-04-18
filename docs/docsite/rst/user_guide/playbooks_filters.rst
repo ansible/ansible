@@ -899,7 +899,7 @@ To expand a path containing environment variables::
 
     {{ path | expandvars }}
 
-.. note:: `expandvars` expands local variables, using it on remote paths can lead to errors.
+.. note:: `expandvars` expands local variables; using it on remote paths can lead to errors.
 
 .. versionadded:: 2.6
 
