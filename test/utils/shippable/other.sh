@@ -9,7 +9,7 @@ retry.py apt-get install -qq \
     shellcheck \
     python2.4 \
 
-retry.py pip install tox --disable-pip-version-check
+retry.py pip install 'tox<3.0.0' --disable-pip-version-check
 
 echo '{"verified": false, "results": []}' > test/results/bot/ansible-test-failure.json
 
