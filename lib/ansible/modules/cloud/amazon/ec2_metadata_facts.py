@@ -420,6 +420,7 @@ ansible_facts:
 import json
 import re
 import socket
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
@@ -445,7 +446,16 @@ class Ec2Metadata(object):
         self._prefix = 'ansible_ec2_%s'
 
     def _fetch(self, url):
-        (response, info) = fetch_url(self.module, url, force=True)
+        response, info = fetch_url(self.module, url, force=True)
+
+        if not info.get('msg', '').startswith('OK'):
+            time.sleep(3)
+            # request went bad, retry once then raise
+            self.module.warn('Retrying query to metadata service. First attempt failed: {0}'.format(info['msg']))
+            response, info = fetch_url(self.module, url, force=True)
+            if not info.get('msg', '').startswith('OK'):
+                # fail out now
+                self.module.fail_json(msg='Failed to retrieve metadata from AWS: {0}'.format(info['msg']), response=info)
         if response:
             data = response.read()
         else:
