@@ -80,7 +80,7 @@ Before you can use NX-API to connect to a switch, you must enable NX-API. To ena
           enable_https: yes
       when: ansible_network_os == 'nxos'
 
-To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi>` module documentation.
+To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi_module>` module documentation.
 
 Once NX-API is enabled, change your ``group_vars/nxos.yml`` to use the NX-API connection.
 
