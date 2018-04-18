@@ -43,8 +43,8 @@
       register: yarn_version
 
     - name: 'Create dummy package.json'
-      template:
-        src: package.j2
+      copy:
+        src: templates/package.j2
         dest: '{{ output_dir }}/package.json'
 
     - name: 'Install all packages.'
