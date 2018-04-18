@@ -954,7 +954,7 @@ class FreeBsdUser(User):
                 cmd.append(self.uid)
             return self.execute_command(cmd)
         elif self.password_lock is not None:
-             cmd = [
+            cmd = [
                 self.module.get_bin_path('pw', True),
                 'unlock',
                 '-n',
