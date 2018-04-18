@@ -291,6 +291,7 @@ def gather_vm_facts(content, vm):
         'hw_guest_ha_state': None,
         'hw_is_template': vm.config.template,
         'hw_folder': None,
+        'instance_uuid': vm.config.instanceUuid,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
         'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
         'guest_question': vm.summary.runtime.question,
