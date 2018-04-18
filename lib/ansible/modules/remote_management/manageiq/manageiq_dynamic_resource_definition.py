@@ -37,14 +37,11 @@ options:
       - The dynamic resource definition's properties.
     suboptions:
         attributes:
-          description: dictionary of attributes to pass to the API.
+          description: dictionary of attributes consists of name and type.
         associations:
           description: dictionary with service and provider class.
         methods:
           description: list of methods to add to dynamic resource definition.
-  manageiq_connection:
-    description: ManageIQ connection details.
-  version_added: '2.6'
 '''
 
 EXAMPLES = '''
@@ -150,7 +147,6 @@ class ManageIQDynamicResourceDefinition(object):
             changed=True,
             msg="successfully created the dynamic resource definition %s: %s" % (name, result['results'])
         )
-
 
     def edit_definition(self, dynamic_resource_definition, name, properties):
         """ Edit the dynamic resource definition in manageiq.
