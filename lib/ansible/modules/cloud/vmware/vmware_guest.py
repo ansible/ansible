@@ -138,6 +138,10 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(disk_mode) (string): Type of disk mode. Available options are :'
+    - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
+    - '     - C(independent_persistent): Same as persistent, but not affected by snapshots.'
+    - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
   cdrom:
     description:
     - A CD-ROM configuration for the VM.
@@ -523,7 +527,6 @@ class PyVmomiDeviceHelper(object):
         diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        diskspec.device.backing.diskMode = 'persistent'
         diskspec.device.controllerKey = scsi_ctl.device.key
 
         if self.next_disk_unit_number == 7:
@@ -1504,6 +1507,15 @@ class PyVmomiHelper(PyVmomi):
             else:
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
+
+            diskspec.device.backing.diskMode = "presistent"
+            if 'disk_mode' in expected_disk_spec:
+                disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
+                valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
+                if disk_mode not in valid_disk_mode:
+                    self.module.fail_json(msg="disk_mode specified is not valid."
+                                              " Should be one of ['%s']" % "', '".join(valid_disk_mode))
+                diskspec.device.backing.diskMode = disk_mode
 
             # is it thin?
             if 'type' in expected_disk_spec:
