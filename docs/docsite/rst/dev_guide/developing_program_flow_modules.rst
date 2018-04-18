@@ -33,11 +33,11 @@ a playbook satisfy certain criteria.)
 More often, Action Plugins set up some values on the controller, then invoke an
 actual module on the managed node that does something with these values.  An
 easy to understand version of this is the :ref:`template Action Plugin
-<template>`.  The :ref:`template Action Plugin <template>` takes values from
+<template_module>`.  The :ref:`template Action Plugin <template_module>` takes values from
 the user to construct a file in a temporary location on the controller using
 variables from the playbook environment.  It then transfers the temporary file
 to a temporary file on the remote system.  After that, it invokes the
-:ref:`copy module <copy>` which operates on the remote system to move the file
+:ref:`copy module <copy_module>` which operates on the remote system to move the file
 into its final location, sets file permissions, and so on.
 
 .. _flow_new_style_modules:
