@@ -14,22 +14,6 @@
     that:
     - new_way.data == 'success'
 
-- name: call old WANTS_JSON module with windows line endings
-  legacy_only_old_way_win_line_ending:
-  register: old_way_win
-
-- assert:
-    that:
-    - old_way_win.data == 'success'
-
-- name: call module with only legacy requires and windows line endings
-  legacy_only_new_way_win_line_ending:
-  register: new_way_win
-
-- assert:
-    that:
-    - new_way_win.data == 'success'
-
 - name: call module with local module_utils
   uses_local_utils:
   register: local_utils
