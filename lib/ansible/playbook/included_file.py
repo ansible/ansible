@@ -151,7 +151,7 @@ class IncludedFile:
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_variables:
                                 from_key = from_arg.replace('_from', '')
-                                new_task._from_files[from_key] = templar.template(include_variables[from_arg])
+                                new_task._from_files[from_key] = templar.template(include_variables.pop(from_arg))
 
                         inc_file = IncludedFile("role", include_variables, new_task, is_role=True)
 
