@@ -252,6 +252,12 @@
       - result10.msg == 'option changed'
       - content10 == expected10
 
+- name: Clean test file
+  copy:
+    content: ""
+    dest: "{{ output_file }}"
+    force: yes
+
 - name: Ensure "hate=coke" is created within no section
   ini_file:
     section:
