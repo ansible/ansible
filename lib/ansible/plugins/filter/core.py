@@ -530,6 +530,7 @@ class FilterModule(object):
             'basename': partial(unicode_wrap, os.path.basename),
             'dirname': partial(unicode_wrap, os.path.dirname),
             'expanduser': partial(unicode_wrap, os.path.expanduser),
+            'expandvars': partial(unicode_wrap, os.path.expandvars),
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),
