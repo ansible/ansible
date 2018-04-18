@@ -35,7 +35,16 @@ options:
   properties:
     description:
       - The dynamic resource definition's properties.
-    version_added: '2.6'
+    suboptions:
+        attributes:
+          description: dictionary of attributes to pass to the API.
+        associations:
+          description: dictionary with service and provider class.
+        methods:
+          description: list of methods to add to dynamic resource definition.
+  manageiq_connection:
+    description: ManageIQ connection details.
+  version_added: '2.6'
 '''
 
 EXAMPLES = '''
@@ -142,18 +151,6 @@ class ManageIQDynamicResourceDefinition(object):
             msg="successfully created the dynamic resource definition %s: %s" % (name, result['results'])
         )
 
-    def has_field(self, dynamic_resource_definition, key):
-        """ Check if definition properties has a specific key.
-
-        If key is unhashble, return.
-        """
-        try:
-            if dynamic_resource_definition and dynamic_resource_definition.get('properties', {}).get(key):
-                return True
-        except TypeError:
-            return
-        else:
-            return
 
     def edit_definition(self, dynamic_resource_definition, name, properties):
         """ Edit the dynamic resource definition in manageiq.
@@ -164,14 +161,13 @@ class ManageIQDynamicResourceDefinition(object):
         # Check if properties has the following keys,
         # These keys are returned from the API response even if they are empty
         # So we remove them to compare accuratley
-        for key in ['attributes', 'associations', 'methods']:
-            if not self.has_field(dynamic_resource_definition, key):
-                dynamic_resource_definition['properties'].pop(key)
-
-        if dynamic_resource_definition and name == dynamic_resource_definition.get(
-            'name'
-        ) and properties == dynamic_resource_definition.get(
-            'properties'
+        current_properties = dynamic_resource_definition.get('properties', {})
+        current_name = dynamic_resource_definition.get('name')
+        if (
+            current_name == name and
+            current_properties.get('attributes', {}) == properties.get('attributes', {}) and
+            current_properties.get('associations', {}) == properties.get('associations', {}) and
+            current_properties.get('methods', []) == properties.get('methods', [])
         ):
             return dict(
                 changed=False,
@@ -203,11 +199,6 @@ class ManageIQDynamicResourceDefinition(object):
         Returns:
             the name.
         """
-        # check for required arguments
-        for key, value in dict(name=dynamic_resource_definition).items():
-            if value in (None, ''):
-                self.module.fail_json(msg="missing required argument: %s" % (key))
-
         url = '%s/generic_object_definitions/%s' % (self.api_url, dynamic_resource_definition['id'])
 
         try:
