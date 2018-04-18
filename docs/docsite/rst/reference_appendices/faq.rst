@@ -181,9 +181,9 @@ Running on BSD
 Running on Solaris
 ------------------
 
-Some Solaris machines use a non-POSIX shell by default.  This can cause trouble for things such as
-Ansible's default remote temp dir which depends on the tilde being expanded as per POSIX.  There are
-several workarounds:
+By default, Solaris 10 and earlier run a non-POSIX shell which does not correctly expand the default
+tmp directory Ansible uses ( :file:`~/.ansible/tmp`). If you see module failures on Solaris machines, this
+is likely the problem. There are several workarounds:
 
 * You can set :ref:`remote_tmp` to a path that will expand correctly with the Solaris shell.  For
   example, in the ansible config file you can set::
@@ -199,6 +199,8 @@ several workarounds:
   this in inventory like so::
 
     solaris1 ansible_shell_executable=/usr/xpg4/bin/sh
+
+  (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
 
 
 .. _use_roles:
