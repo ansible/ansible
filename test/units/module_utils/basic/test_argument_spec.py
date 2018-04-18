@@ -412,6 +412,23 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
 
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_subspec_not_required_defaults(self, stdin):
+        # Check that top level not required, processed subspec defaults
+        am = basic.AnsibleModule(argument_spec={
+            'one': {
+                'type': 'dict',
+                'options': {
+                    'two': {
+                        'default': True,
+                        'type': 'bool',
+                    }
+                }
+            }
+        })
+
+        assert am.params['one']['two'] is True
+
 
 class TestLoadFileCommonArguments:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
