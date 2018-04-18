@@ -32,6 +32,7 @@ For documentation on using a particular network module, consult the :doc:`list o
    :caption: User Guide
 
    user_guide/index
+   user_guide/faq
    user_guide/network_best_practices_2.5
    user_guide/network_debug_troubleshooting
    user_guide/network_working_with_command_output
