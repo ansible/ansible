@@ -854,6 +854,7 @@ class VmsModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super(VmsModule, self).__init__(*args, **kwargs)
         self._initialization = None
+        self._is_new = False
 
     def __get_template_with_version(self):
         """
@@ -862,8 +863,8 @@ class VmsModule(BaseModule):
         through it's version until we find the version we look for.
         """
         template = None
+        templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
-            templates_service = self._connection.system_service().templates_service()
             templates = templates_service.list(search='name=%s' % self.param('template'))
             if self.param('template_version'):
                 templates = [
@@ -878,6 +879,9 @@ class VmsModule(BaseModule):
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
+        elif self._is_new:
+            # If template isn't specified and VM is about to be created specify default template:
+            template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
 
         return template
 
@@ -1117,10 +1121,9 @@ class VmsModule(BaseModule):
         )
 
     def pre_create(self, entity):
-        # If VM don't exists, and template is not specified, set it to Blank:
+        # Mark if entity exists before touching it:
         if entity is None:
-            if self.param('template') is None:
-                self._module.params['template'] = 'Blank'
+            self._is_new = True
 
     def post_update(self, entity):
         self.post_present(entity.id)
