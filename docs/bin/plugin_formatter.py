@@ -560,6 +560,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
+                         'plugin_type': plugin_type
                          }
         text = templates['support_list'].render(template_data)
         write_data(text, output_dir, data['output'])
