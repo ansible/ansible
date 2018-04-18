@@ -132,17 +132,17 @@ Modules removed
 
 The following modules no longer exist:
 
-* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface>` instead
-* :ref:`cl_interface_policy <cl_interface_policy>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_bridge <cl_bridge>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_img_install <cl_img_install>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_ports <cl_ports>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_license <cl_license>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_interface <cl_interface>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_bond <cl_bond>` use :ref:`nclu <nclu>` instead
-* :ref:`ec2_vpc <ec2_vpc>` use :ref:`ec2_vpc_net <ec2_vpc_net>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl>` instead.
-* :ref:`ec2_ami_search <ec2_ami_search>` use :ref:`ec2_ami_facts <ec2_ami_facts>` instead
-* :ref:`docker <docker>` use :ref:`docker_container <docker_container>` and :ref:`docker_image <docker_image>` instead
+* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface_module>` instead
+* :ref:`cl_interface_policy <cl_interface_policy_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_bridge <cl_bridge_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_img_install <cl_img_install_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_ports <cl_ports_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_license <cl_license_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_interface <cl_interface_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_bond <cl_bond_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`ec2_vpc <ec2_vpc_module>` use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
+* :ref:`ec2_ami_search <ec2_ami_search_module>` use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
+* :ref:`docker <docker_module>` use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
 
 Deprecation notices
 -------------------
@@ -150,23 +150,23 @@ Deprecation notices
 The following modules will be removed in Ansible 2.9. Please update your playbooks accordingly.
 
 * Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
-* :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
-* :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
-* :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
-* :ref:`panos_security_policy <panos_security_policy>` use :ref:`panos_security_rule <panos_security_rule>` instead.
-* :ref:`panos_nat_policy <panos_nat_policy>` use :ref:`panos_nat_rule <panos_nat_rule>` instead.
-* :ref:`vsphere_guest <vsphere_guest>` use :ref:`vmware_guest <vmware_guest>` instead.
+* :ref:`nxos_ip_interface <nxos_ip_interface_module>` use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
+* :ref:`nxos_portchannel <nxos_portchannel_module>` use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
+* :ref:`nxos_switchport <nxos_switchport_module>` use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
+* :ref:`panos_security_policy <panos_security_policy_module>` use :ref:`panos_security_rule <panos_security_rule_module>` instead.
+* :ref:`panos_nat_policy <panos_nat_policy_module>` use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
+* :ref:`vsphere_guest <vsphere_guest_module>` use :ref:`vmware_guest <vmware_guest_module>` instead.
 
 Noteworthy module changes
 -------------------------
 
-* The :ref:`stat <stat>` and :ref:`win_stat <win_stat>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
+* The :ref:`stat <stat_module>` and :ref:`win_stat <win_stat_module>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
 
 This option will be removed starting with Ansible version 2.9. The options ``get_checksum: True``
 and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
-* ``osx_say`` module was renamed into :ref:`say <say>`.
+* ``osx_say`` module was renamed into :ref:`say <say_module>`.
 
 Plugins
 =======
