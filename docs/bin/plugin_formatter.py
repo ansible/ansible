@@ -117,7 +117,7 @@ def html_ify(text):
     t = _CONST.sub(r"<code>\1</code>", t)
     t = _RULER.sub(r"<hr/>", t)
 
-    return t
+    return t.strip()
 
 
 def rst_fmt(text, fmt):
