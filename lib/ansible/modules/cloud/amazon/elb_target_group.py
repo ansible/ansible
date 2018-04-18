@@ -502,7 +502,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': int(target['Port'])})
+                            instances_to_add.append({'Id': target['Id'], 'Port': int(target.get('Port', module.params.get('port')))})
 
                     changed = True
                     try:
