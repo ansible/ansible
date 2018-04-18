@@ -153,7 +153,9 @@ EXAMPLES = '''
 - nxos_igmp_interface:
     interface: ethernet1/32
     startup_query_interval: 30
-    oif_ps: [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
+    oif_ps:
+      - { 'prefix': '238.2.2.6' }
+      - {'source': '1.1.1.1', 'prefix': '238.2.2.5'}
     state: present
 '''
 RETURN = '''
@@ -462,7 +464,7 @@ def config_default_igmp_interface(existing, delta):
     proposed = get_igmp_interface_defaults()
     delta = dict(set(proposed.items()).difference(existing.items()))
     if delta:
-        command = config_igmp_interface(delta, existing, None)
+        command = config_igmp_interface(delta, existing, existing_oif_prefix_source=None)
 
         if command:
             for each in command:
@@ -537,13 +539,12 @@ def main():
     oif_routemap = module.params['oif_routemap']
     oif_ps = module.params['oif_ps']
 
-    if not oif_ps:
-        if oif_source and not oif_prefix:
-            module.fail_json(msg='oif_prefix required when setting oif_source')
-        elif oif_source and oif_prefix:
-            oif_ps = [{'source': oif_source, 'prefix': oif_prefix}]
-        elif not oif_source and oif_prefix:
-            oif_ps = [{'prefix': oif_prefix}]
+    if oif_source and not oif_prefix:
+        module.fail_json(msg='oif_prefix required when setting oif_source')
+    elif oif_source and oif_prefix:
+        oif_ps = [{'source': oif_source, 'prefix': oif_prefix}]
+    elif not oif_source and oif_prefix:
+        oif_ps = [{'prefix': oif_prefix}]
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':

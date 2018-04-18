@@ -83,7 +83,10 @@
       last_member_qrt: default
       last_member_query_count: default
       group_timeout: default
-      oif_ps: [{'prefix': '238.2.2.6'}, {'prefix': '238.2.2.5'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]
+      oif_ps:
+        - {'prefix': '238.2.2.6'}
+        - {'prefix': '238.2.2.5'}
+        - {'source': '1.1.1.1', 'prefix': '238.2.2.5'}
       state: present
       provider: "{{ connection }}"
     register: result
