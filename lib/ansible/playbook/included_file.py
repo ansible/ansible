@@ -142,7 +142,7 @@ class IncludedFile:
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
                         # template the included role's name here
-                        role_name = include_variables.get('name', include_variables.get('role', None))
+                        role_name = include_variables.pop('name', include_variables.pop('role', None))
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
