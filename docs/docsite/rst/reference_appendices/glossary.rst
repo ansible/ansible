@@ -96,7 +96,7 @@ when a term comes up on the mailing list.
         they can be used in :term:`playbooks` and templates just like
         variables, facts are things that are inferred, rather than set.  Facts
         are automatically discovered by Ansible when running plays by
-        executing the internal :ref:`setup module <setup>` on the remote nodes.  You
+        executing the internal :ref:`setup module <setup_module>` on the remote nodes.  You
         never have to call the setup module explicitly, it just runs, but it
         can be disabled to save time if it is not needed or you can tell
         ansible to collect only a subset of the full facts via the
@@ -267,7 +267,7 @@ when a term comes up on the mailing list.
         Generally, Ansible is not a programming language. It prefers to be
         more declarative, though various constructs like ``loop`` allow
         a particular task to be repeated for multiple items in a list.
-        Certain modules, like :ref:`yum <yum>` and :ref:`apt <apt>`, actually take
+        Certain modules, like :ref:`yum <yum_module>` and :ref:`apt <apt_module>`, actually take
         lists directly, and can install all packages given in those lists
         within a single transaction, dramatically speeding up total time to
         configuration, so they can be used without loops.
@@ -368,7 +368,7 @@ when a term comes up on the mailing list.
 
     Resource Model
         Ansible modules work in terms of resources.   For instance, the
-        :ref:`file module <file>` will select a particular file and ensure
+        :ref:`file module <file_module>` will select a particular file and ensure
         that the attributes of that resource match a particular model. As an
         example, we might wish to change the owner of :file:`/etc/motd` to
         ``root`` if it is not already set to ``root``, or set its mode to
@@ -412,8 +412,8 @@ when a term comes up on the mailing list.
         perform many operations wrapped in a sudo command, and can work with
         both password-less and password-based sudo.  Some operations that
         don't normally work with sudo (like scp file transfer) can be achieved
-        with Ansible's :ref:`copy <copy>`, :ref:`template <template>`, and
-        :ref:`fetch <fetch>` modules while running in sudo mode.
+        with Ansible's :ref:`copy <copy_module>`, :ref:`template <template_module>`, and
+        :ref:`fetch <fetch_module>` modules while running in sudo mode.
 
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
