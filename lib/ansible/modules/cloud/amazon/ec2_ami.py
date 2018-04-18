@@ -656,7 +656,7 @@ def main():
         virtualization_type=dict(default='hvm'),
         root_device_name=dict(),
         delete_snapshot=dict(default=False, type='bool'),
-        name=dict(default=''),
+        name=dict(),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(default=900, type='int'),
         description=dict(default=''),
@@ -679,6 +679,11 @@ def main():
             ['state', 'absent', ['image_id']],
         ]
     )
+
+    # Using a required_one_of=[['name', 'image_id']] overrides the message that should be provided by
+    # the required_if for state=absent, so check manually instead
+    if not any([module.params['image_id'], module.params['name']]):
+        module.fail_json(msg="one of the following is required: name, image_id")
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
