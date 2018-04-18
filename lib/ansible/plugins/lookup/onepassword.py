@@ -53,9 +53,10 @@ RETURN = """
 """
 
 import json
+import errno
 from subprocess import Popen, PIPE
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleLookupError
 from ansible.plugins.lookup import LookupBase
 
 
@@ -71,8 +72,12 @@ class OnePass(object):
     def assert_logged_in(self):
         try:
             self._run(["get", "account"])
-        except:
-            raise AnsibleError("Not logged into 1Password: please run 'op signin' first")
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                raise AnsibleLookupError("1Password CLI tool not installed in path on control machine")
+            raise e
+        except AnsibleLookupError:
+            raise AnsibleLookupError("Not logged into 1Password: please run 'op signin' first")
 
     def get_field(self, item_id, field, section=None, vault=None):
         args = ["get", "item", item_id]
@@ -86,7 +91,7 @@ class OnePass(object):
         out, err = p.communicate()
         rc = p.wait()
         if rc != expected_rc:
-            raise AnsibleError(err)
+            raise AnsibleLookupError(err)
         return out, err
 
     def _parse_field(self, data_json, field_name, section_title=None):
