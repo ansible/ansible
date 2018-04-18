@@ -508,7 +508,7 @@ def ensure_subnet_present(conn, module):
 
 
 def ensure_final_subnet(conn, module, subnet, start_time):
-    for rewait in range(0, 10):
+    for rewait in range(0, 30):
         map_public_correct = False
         assign_ipv6_correct = False
 
@@ -531,7 +531,7 @@ def ensure_final_subnet(conn, module, subnet, start_time):
         if map_public_correct and assign_ipv6_correct:
             break
 
-        time.sleep(3)
+        time.sleep(5)
         subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
 
     return subnet
