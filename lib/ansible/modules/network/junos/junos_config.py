@@ -143,6 +143,8 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
@@ -174,6 +176,12 @@ EXAMPLES = """
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
+
+- name: for idempotency, use full-form commands
+  junos_config:
+    lines:
+      # - set int ge-0/0/1 unit 0 desc "Test interface"
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
 """
 
 RETURN = """

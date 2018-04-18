@@ -35,6 +35,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -285,6 +287,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   ios_config:
     save_when: modified
+
+- name: for idempotency, use full-form commands
+  ios_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int gig1/0/11
+    parents: interface GigabitEthernet1/0/11
 """
 
 RETURN = """

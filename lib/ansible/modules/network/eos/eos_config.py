@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: eos
 notes:
   - Tested against EOS 4.15
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -257,6 +259,14 @@ EXAMPLES = """
   eos_config:
     diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+- name: for idempotency, use full-form commands
+  eos_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int eth1
+    parents: interface Ethernet1
 """
 
 RETURN = """

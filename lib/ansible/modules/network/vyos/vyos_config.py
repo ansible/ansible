@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: vyos
 notes:
   - Tested against VYOS 1.1.7
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -112,6 +114,12 @@ EXAMPLES = """
   vyos_config:
     src: vyos.cfg
     backup: yes
+
+- name: for idempotency, use full-form commands
+  vyos_config:
+    lines:
+      # - set int eth eth2 description 'OUTSIDE'
+      - set interface ethernet eth2 description 'OUTSIDE'
 """
 
 RETURN = """
