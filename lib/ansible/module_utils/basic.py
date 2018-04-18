@@ -775,6 +775,9 @@ def _json_encode_fallback(obj):
         return list(obj)
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
+    # handle AnsibleVaultEncryptedUnicode without needing to import non module_utils libraries:
+    elif hasattr(obj, '_ciphertext') and hasattr(obj, 'yaml_tag'):
+        return "%s %s" % (obj.yaml_tag, obj._ciphertext)
     raise TypeError("Cannot json serialize %s" % to_native(obj))
 
 
