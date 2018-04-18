@@ -18,3 +18,5 @@ bugfixes:
 - nxos_igmp - Fix nxos_igmp (https://github.com/ansible/ansible/pull/38496)
 - nxos_hsrp - Fix nxos_hsrp (https://github.com/ansible/ansible/pull/38410)
 - nxos_igmp_snooping - Fix nxos_igmp_snooping (https://github.com/ansible/ansible/pull/38566)
+- nxos_ntp_auth - Fix nxos_ntp_auth issues (https://github.com/ansible/ansible/pull/38824)
+- nxos_ntp_options - Fix nxos_ntp_options issues (https://github.com/ansible/ansible/pull/38695)
