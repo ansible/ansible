@@ -97,16 +97,6 @@ class TestSlxosConfigModule(TestSlxosModule):
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
 
-    def test_slxos_config_save(self):
-        self.run_commands.return_value = "hostname foo"
-        set_module_args(dict(save=True))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
-        self.assertEqual(self.get_config.call_count, 0)
-        self.assertEqual(self.load_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
-        self.assertIn('copy running-config startup-config', args['command'])
-
     def test_slxos_config_lines_wo_parents(self):
         set_module_args(dict(lines=['hostname foo']))
         commands = ['hostname foo']
