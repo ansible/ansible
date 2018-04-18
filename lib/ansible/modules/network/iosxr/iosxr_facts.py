@@ -307,7 +307,7 @@ class Interfaces(FactsBase):
             return int(match.group(1))
 
     def parse_duplex(self, data):
-        match = re.search(r'(\w+) Duplex', data, re.M)
+        match = re.search(r'(\w+)(?: D|-d)uplex', data, re.M)
         if match:
             return match.group(1)
 
