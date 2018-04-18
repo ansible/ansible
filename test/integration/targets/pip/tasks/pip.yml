@@ -154,7 +154,7 @@
 # Upgrade pip in virtualenv
 - name: download get-pip.py
   get_url:
-    url: https://bootstrap.pypa.io/get-pip.py
+    url: https://bootstrap.pypa.io/2.6/get-pip.py
     dest: "{{ output_dir }}"
 
 - name: install pip
