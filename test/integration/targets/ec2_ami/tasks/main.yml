@@ -87,6 +87,30 @@
 
     # ============================================================
 
+    - name: test clean failure if not providing image_id or name with state=present
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: present
+        description: '{{ ec2_ami_description }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        root_device_name: /dev/xvda
+      register: result
+      ignore_errors: yes
+
+    - name: assert error message is helpful
+      assert:
+        that:
+          - result.failed
+          - "result.msg == 'one of the following is required: name, image_id'"
+
+    # ============================================================
+
     - name: create an image from the instance
       ec2_ami:
         ec2_region: '{{ec2_region}}'
@@ -295,7 +319,6 @@
         security_token: '{{security_token}}'
         state: present
         image_id: '{{ result.image_id }}'
-        name: '{{ ec2_ami_name }}_ami'
         description: '{{ ec2_ami_description }}'
         tags:
           Name: '{{ ec2_ami_name }}_ami'
