@@ -1319,7 +1319,10 @@ class CloudFrontValidationManager(object):
         ])
         self.__valid_viewer_certificate_minimum_protocol_versions = set([
             'SSLv3',
-            'TLSv1'
+            'TLSv1',
+            'TLSv1_2016',
+            'TLSv1.1_2016',
+            'TLSv1.2_2018'
         ])
         self.__valid_viewer_certificate_certificate_sources = set([
             'cloudfront',
