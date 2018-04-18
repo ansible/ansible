@@ -424,6 +424,15 @@ def main():
                     if get_link_name(connection, attachment.network) in network_names
                 ]
 
+            # Remove unmanaged networks:
+            unmanaged_networks_service = host_service.unmanaged_networks_service()
+            unmanaged_networks = [(u.id, u.name) for u in unmanaged_networks_service.list()]
+            for net_id, net_name in unmanaged_networks:
+                if net_name in network_names:
+                    if not module.check_mode:
+                        unmanaged_networks_service.unmanaged_network_service(net_id).remove()
+                    host_networks_module.changed = True
+
             # Need to check if there are any labels to be removed, as backend fail
             # if we try to send remove non existing label, for bond and attachments it's OK:
             if (labels and set(labels).intersection(attached_labels)) or bond or attachments:
