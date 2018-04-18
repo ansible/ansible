@@ -105,17 +105,6 @@ options:
         as the delimiting character.  This only applies to the
         configuration action.
     default: "@"
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.6.
-    type: bool
-    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -142,15 +131,6 @@ options:
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    type: bool
-    default: 'no'
-  save:
-    description:
-      - The C(save) argument instructs the module to save the running-
-        config to the startup-config at the conclusion of the module
-        running.  If check mode is specified, this argument is ignored.
-      - This option is deprecated as of Ansible 2.4 and will be removed
-        in Ansible 2.8, use C(save_when) instead.
     type: bool
     default: 'no'
   save_when:
@@ -345,17 +325,10 @@ def main():
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
-
-        # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.8'),
-
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     mutually_exclusive = [('lines', 'src'),
-                          ('parents', 'src'),
-                          ('save', 'save_when')]
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -420,7 +393,7 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
-    if module.params['save_when'] == 'always' or module.params['save']:
+    if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show startup-config'])
