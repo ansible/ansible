@@ -94,11 +94,12 @@ specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module does not support extended shell syntax like piping and redirects (although
-   shell variables will always work). If your command requires shell-specific syntax, use the `shell` module
-   instead. Read more about the differences on the :ref:`working_with_modules` page.
+   The :ref:`command module <module_command>` does not support extended shell syntax like piping and
+   redirects (although shell variables will always work). If your command requires shell-specific
+   syntax, use the `shell` module instead. Read more about the differences on the
+   :ref:`working_with_modules` page.
 
-Using the :ref:`shell` module looks like this::
+Using the :ref:`shell module <module_shell>` looks like this::
 
     $ ansible raleigh -m shell -a 'echo $TERM'
 
