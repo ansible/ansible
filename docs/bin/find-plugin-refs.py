@@ -38,7 +38,7 @@ def plugin_names(topdir):
 
 def process_refs(topdir, plugin_names):
     REF_RE = re.compile(':ref:`([^`]*)`')
-    LABEL_RE = re.compile('<[^>]*>`$')
+    LABEL_RE = re.compile('<([^>]*)>$')
 
     # Walk the whole docs tree looking for :ref:.  Anywhere those are found, search for `([^`]*)`
     for dirpath, dirnames, filenames in os.walk(topdir):
