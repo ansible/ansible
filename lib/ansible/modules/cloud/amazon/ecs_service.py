@@ -349,7 +349,7 @@ class EcsServiceManager:
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration
+            deploymentConfiguration=deployment_configuration,
             healthCheckGracePeriodSeconds=healthcheck_graceperiod)
         return response['service']
 
