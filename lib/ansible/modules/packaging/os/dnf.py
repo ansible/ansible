@@ -612,6 +612,11 @@ def ensure(module, base, state, names, autoremove):
         for package in base.transaction.remove_set:
             response['results'].append("Removed: {0}".format(package))
 
+        # We need to do this so that DNF writes the files into modules.d
+        # generic ansible shutdown doesn't always trigger the correct things.
+        base.close()
+        del base
+
         if failures:
             module.fail_json(msg='Failed to install some of the '
                                  'specified packages',
