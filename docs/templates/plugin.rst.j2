@@ -261,10 +261,12 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td>
                     <div class="cell-border">
                         {% if value.description is string %}
-                            <div>@{ value.description | html_ify }@</div>
+                            <div>@{ value.description | html_ify }@
+                            </div>
                         {% else %}
                             {% for desc in value.description %}
-                                <div>@{ desc | html_ify }@</div>
+                                <div>@{ desc | html_ify }@
+                                </div>
                             {% endfor %}
                         {% endif %}
                         <br/>
