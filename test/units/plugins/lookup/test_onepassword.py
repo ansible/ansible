@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils import six
 
 from ansible.plugins.lookup.onepassword import LookupModule, OnePass
+from ansible.plugins.lookup.onepassword_raw import LookupModule as RawLookupModule
 
 
 # Intentionally excludes metadata leaf nodes that would exist in real output if not relevant.
@@ -240,6 +241,12 @@ class TestOnePass(unittest.TestCase):
         for dummy, query, dummy, field_name, field_value in query_generator:
             self.assertEqual(field_value, op.get_field(query, field_name))
 
+    def test_onepassword_get_raw(self):
+        op = MockOnePass()
+        for entry in MOCK_ENTRIES:
+            for query in entry['queries']:
+                self.assertEqual(json.dumps(entry['output']), op.get_raw(query))
+
     def test_onepassword_get_not_found(self):
         op = MockOnePass()
         self.assertEqual('', op.get_field('a fake query', 'a fake field'))
@@ -293,3 +300,18 @@ class TestLookupModule(unittest.TestCase):
 
         dummy, query, dummy, dummy, field_value = get_one_mock_query('password')
         self.assertEqual([field_value], lookup_plugin.run([query]))
+
+
+@patch('ansible.plugins.lookup.onepassword.OnePass', MockOnePass)
+class TestRawLookupModule(unittest.TestCase):
+
+    def test_onepassword_raw_plugin_multiple(self):
+        raw_lookup_plugin = RawLookupModule()
+
+        entry = MOCK_ENTRIES[0]
+        raw_value = json.dumps(entry['output'])
+
+        self.assertEqual(
+            [raw_value] * len(entry['queries']),
+            raw_lookup_plugin.run(entry['queries'])
+        )

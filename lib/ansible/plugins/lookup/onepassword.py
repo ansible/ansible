@@ -18,9 +18,9 @@ DOCUMENTATION = """
     requirements:
       - op (1Password command line utility: https://support.1password.com/command-line/)
       - must have already logged into 1Password using op CLI
-    short_description: fetch data from 1Password
+    short_description: fetch field values from 1Password
     description:
-      - use the op command line utility to fetch specific fields from 1Password
+      - onepassword wraps the op command line utility to fetch specific field values from 1Password
     options:
       _terms:
         description: identifier(s) (UUID, name or domain; case-insensitive) of item(s) to retrieve
@@ -79,11 +79,15 @@ class OnePass(object):
         except AnsibleLookupError:
             raise AnsibleLookupError("Not logged into 1Password: please run 'op signin' first")
 
-    def get_field(self, item_id, field, section=None, vault=None):
+    def get_raw(self, item_id, vault=None):
         args = ["get", "item", item_id]
         if vault is not None:
             args += ['--vault={0}'.format(vault)]
         output, dummy = self._run(args)
+        return output
+
+    def get_field(self, item_id, field, section=None, vault=None):
+        output = self.get_raw(item_id, vault)
         return self._parse_field(output, field, section) if output != '' else ''
 
     def _run(self, args, expected_rc=0):
