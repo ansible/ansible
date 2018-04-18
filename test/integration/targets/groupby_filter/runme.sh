@@ -16,7 +16,7 @@ virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
 
-curl https://bootstrap.pypa.io/get-pip.py > "${MYTMPDIR}/get-pip.py"
+curl https://bootstrap.pypa.io/2.6/get-pip.py > "${MYTMPDIR}/get-pip.py"
 python "${MYTMPDIR}/get-pip.py"
 
 pip install -U jinja2==2.9.4
