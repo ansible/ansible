@@ -27,8 +27,8 @@ description:
 version_added: "2.6"
 requirements:
   - Whitelisting this callback plugin
-  - Create a HTTP collector source in Sumologic and specify a custom timestamp format of 'yyyy-MM-dd HH:mm:ss ZZZZ' and a custom timestamp locator
-    of '"timestamp": "(.*)"'
+  - 'Create a HTTP collector source in Sumologic and specify a custom timestamp format of C(yyyy-MM-dd HH:mm:ss ZZZZ) and a custom timestamp locator
+    of C("timestamp": "(.*)")'
 options:
   url:
     description: URL to the Sumologic HTTP collector source
