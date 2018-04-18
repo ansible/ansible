@@ -1,3 +1,2 @@
 bugfixes:
-- win_uri - do not override existing header when using the ``headers`` key.
-  https://github.com/ansible/ansible/pull/37845
+- win_uri - do not override existing header when using the ``headers`` key. (https://github.com/ansible/ansible/pull/37845)

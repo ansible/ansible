@@ -1,3 +1,2 @@
 bugfixes:
-- jira module - Fix bytes/text handling for base64 encoding authentication tokens
-  https://github.com/ansible/ansible/pull/33862
+- jira module - Fix bytes/text handling for base64 encoding authentication tokens (https://github.com/ansible/ansible/pull/33862)

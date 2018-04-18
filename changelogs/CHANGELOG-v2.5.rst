@@ -2,15 +2,212 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
-v2.5.0
+v2.5.1
 ======
 
 Release Summary
 ---------------
 
-| Release Date: 2018-03-22
+| Release Date: 2018-04-18
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
+
+Minor Changes
+-------------
+
+- Updated example in vcenter_license module.
+
+- Updated virtual machine facts with instanceUUID which is unique for each VM irrespective of name and BIOS UUID.
+
+
+Bugfixes
+--------
+
+- EOS can not check configuration without use of config session (ANSIBLE_EOS_USE_SESSIONS=0). Fix is to throw error when hiting into this exception case. Configs would neither be checked nor be played on the eos device.
+
+- Adds exception handling which is raised when user does not have correct set of permissions/privileges to read virtual machine facts.
+
+- onyx_pfc_interface - Add support for changes in pfc output in onyx 3.6.6000 https://github.com/ansible/ansible/pull/37651
+
+- Fix mlag summary json parsing for onyx version 3.6.6000 and above https://github.com/ansible/ansible/pull/38191
+
+- Update documentation related to datacenter in vmware_guest_find module. Mark datacenter as optional.
+
+- Set default network type as 'dhcp' if user has not specified any.
+
+- nmcli change default value of autoconnect
+
+- azure_rm_image - Allow Azure images to be created with tags, bug was introduced in Ansible v2.5.0
+
+- azure_rm_networkinterface - fixed examples in module documentation and added fix to allow an IP configuration with no public IP (https://github.com/ansible/ansible/pull/36824)
+
+- azure_rm_virtualmachine - removed docs note that says on marketplace images can be used, custom images were added in 2.5
+
+- Improve keyed groups for complex inventory
+
+- Made separator configurable
+
+- Fixed some exception types
+
+- Better error messages
+
+- backup options doc change to reflect backup directory location in case playbook is run from a role
+
+- filters - Don't overwrite builtin jinja2 filters with tests (https://github.com/ansible/ansible/pull/37881)
+
+- edgeos_command - add action plugin to backup config (https://github.com/ansible/ansible/pull/37619)
+
+- eos_vlan - fixed eos_vlan not working when having more than 6 interfaces (https://github.com/ansible/ansible/pull/38347)
+
+- Various grafana_* modules - Port away from the deprecated b64encodestring function to the b64encode function instead. (https://github.com/ansible/ansible/pull/38388)
+
+- include_role - Fix parameter templating (https://github.com/ansible/ansible/pull/36372)
+
+- include_vars - Call DataLoader.load with the correct signature to prevent hang on error processing (https://github.com/ansible/ansible/pull/38194)
+
+- ios_interface - neighbors option now include CDP neighbors (https://github.com/ansible/ansible/pull/37667)
+
+- ios_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37389)
+
+- Add supported connection in junos module documentation (https://github.com/ansible/ansible/pull/38813)
+
+- _nxos_switchport - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37328)
+
+- nxos_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37336)
+
+- nxos_snapshot - fix documentation and add required parameter logic (https://github.com/ansible/ansible/pull/37232, https://github.com/ansible/ansible/pull/37248)
+
+- Improve integration test - Ensure each transport test runs only once (https://github.com/ansible/ansible/pull/37462)
+
+- nxos_user - Integration test (https://github.com/ansible/ansible/pull/37852)
+
+- nxos_bgp_af - Fix UnboundLocalError (https://github.com/ansible/ansible/pull/37610)
+
+- nxos_vrf - Fix nxos_vrf issues (https://github.com/ansible/ansible/pull/37092)
+
+- nxos_vrf_af - Fix nxos_vrf_af issues (https://github.com/ansible/ansible/pull/37211)
+
+- nxos_udld - Fix nxos_udld issues (https://github.com/ansible/ansible/pull/37418)
+
+- nxos_vlan - Fix nxos_vlan issues (https://github.com/ansible/ansible/pull/38008)
+
+- nxos_vlan - nxos_vlan purge (https://github.com/ansible/ansible/pull/38202)
+
+- nxos_aaa_server - Fix nxos_aaa_server (https://github.com/ansible/ansible/pull/38117)
+
+- nxos_aaa_server_host - Fix nxos_aaa_server_host (https://github.com/ansible/ansible/pull/38188)
+
+- nxos_acl - Fix nxos_acl (https://github.com/ansible/ansible/pull/38283)
+
+- nxos_static_route - Fix nxos_static_route (https://github.com/ansible/ansible/pull/37614)
+
+- nxos_acl_interface test - Fix nxos_acl_interface test (https://github.com/ansible/ansible/pull/38230)
+
+- nxos_igmp - Fix nxos_igmp (https://github.com/ansible/ansible/pull/38496)
+
+- nxos_hsrp - Fix nxos_hsrp (https://github.com/ansible/ansible/pull/38410)
+
+- nxos_igmp_snooping - Fix nxos_igmp_snooping (https://github.com/ansible/ansible/pull/38566)
+
+- nxos_ntp_auth - Fix nxos_ntp_auth issues (https://github.com/ansible/ansible/pull/38824)
+
+- nxos_ntp_options - Fix nxos_ntp_options issues (https://github.com/ansible/ansible/pull/38695)
+
+- Fix onyx_config action plugin when used on Python 3 https://github.com/ansible/ansible/pull/38343
+
+- openssl_certificate - Handle dump() in check_mode https://github.com/ansible/ansible/pull/38386
+
+- Fix traceback when creating or stopping ovirt vms (https://github.com/ansible/ansible/pull/37249)
+
+- Fix for consul_kv idempotence on Python3 https://github.com/ansible/ansible/issues/35893
+
+- Fix csvfile lookup plugin when used on Python3 https://github.com/ansible/ansible/pull/37625
+
+- ec2 - Fix ec2 user_data parameter to properly convert to base64 on python3 (https://github.com/ansible/ansible/pull/37628)
+
+- Fix to send and receive bytes over a socket in the haproxy module which was causing tracebacks on Python3 https://github.com/ansible/ansible/pull/35176
+
+- jira module - Fix bytes/text handling for base64 encoding authentication tokens (https://github.com/ansible/ansible/pull/33862)
+
+- ansible-pull - fixed a bug checking for changes when we've pulled from the git repository on python3 https://github.com/ansible/ansible/issues/36962
+
+- Fix bytes/text handling in vagrant dynamic inventory https://github.com/ansible/ansible/pull/37631
+
+- wait_for_connection - Fix python3 compatibility bug (https://github.com/ansible/ansible/pull/37646)
+
+- restore stderr ouput even if script module run is successful (https://github.com/ansible/ansible/pull/38177)
+
+- ec2_asg - no longer terminates an instance before creating a replacement (https://github.com/ansible/ansible/pull/36679)
+
+- ec2_group - security groups in default VPCs now have a default egress rule (https://github.com/ansible/ansible/pull/38018)
+
+- inventory correctly removes hosts from 'ungrouped' group (https://github.com/ansible/ansible/pull/37617)
+
+- letsencrypt - fixed domain matching authorization (https://github.com/ansible/ansible/pull/37558)
+
+- letsencrypt - improved elliptic curve account key parsing (https://github.com/ansible/ansible/pull/37275)
+
+- facts are no longer processed more than once for each action (https://github.com/ansible/ansible/issues/37535)
+
+- cs_vpc_offering - only return VPC offferings matching name arg (https://github.com/ansible/ansible/pull/37783)
+
+- cs_configuration - filter names inside the module instead of relying on API (https://github.com/ansible/ansible/pull/37910)
+
+- various fixes to networking module connection subsystem (https://github.com/ansible/ansible/pull/37529)
+
+- ios_* - fixed netconf issues (https://github.com/ansible/ansible/pull/38155)
+
+- ovirt_* - various bugfixes (https://github.com/ansible/ansible/pull/38341)
+
+- ansible-vault no longer requires '--encrypt-vault-id' with edit (https://github.com/ansible/ansible/pull/35923)
+
+- k8s lookup plugin now uses same auth method as other k8s modules (https://github.com/ansible/ansible/pull/37533)
+
+- ansible-inventory now properly displays group_var graph (https://github.com/ansible/ansible/pull/38744)
+
+- setup - FreeBSD fact gathering no longer fails on missing dmesg, sysctl, etc (https://github.com/ansible/ansible/pull/37194)
+
+- inventory scripts now read passwords without byte interpolation (https://github.com/ansible/ansible/pull/35582)
+
+- user - fixed password expiration support in FreeBSD
+
+- meta - inventory_refresh now works properly on YAML inventory plugins (https://github.com/ansible/ansible/pull/38242)
+
+- foreman callback plugin - fixed API options (https://github.com/ansible/ansible/pull/38138)
+
+- win_certificate_store - fixed a typo that stopped it from getting the key_storage values
+
+- win_copy - Preserve the local tmp folder instead of deleting it so future tasks can use it (https://github.com/ansible/ansible/pull/37964)
+
+- powershell - fixed issue with passing in a bool and int to the Windows environment block, also allow special chars in the env key name (https://github.com/ansible/ansible/pull/37215)
+
+- Ansible.ModuleUtils.FileUtil - Catch DirectoryNotFoundException with Test-AnsiblePath (https://github.com/ansible/ansible/pull/37968)
+
+- win_exec_wrapper - support loading of Windows modules different different line endings than the core modules (https://github.com/ansible/ansible/pull/37291)
+
+- win_reboot - fix deprecated warning message to show version in correct spot (https://github.com/ansible/ansible/pull/37898)
+
+- win_regedit - wait for garbage collection to finish before trying to unload the hive in case handles didn't unload in time (https://github.com/ansible/ansible/pull/38912)
+
+- win_service - Fix bug with win_service not being able to handle special chars like '[' (https://github.com/ansible/ansible/pull/37897)
+
+- win_setup - Use connection name for network interfaces as interface name isn't helpful (https://github.com/ansible/ansible/pull/37327)
+
+- win_setup - fix bug where getting the machine SID would take a long time in large domain environments (https://github.com/ansible/ansible/pull/38646)
+
+- win_updates - handle if the module fails to load and return the error message (https://github.com/ansible/ansible/pull/38363)
+
+- win_uri - do not override existing header when using the ``headers`` key. (https://github.com/ansible/ansible/pull/37845)
+
+- win_uri - convert status code values to an int before validating them in server response (https://github.com/ansible/ansible/pull/38080)
+
+- windows - display UTF-8 characters correctly in Windows return json (https://github.com/ansible/ansible/pull/37229)
+
+- winrm - when managing Kerberos tickets in Ansible, get a forwardable ticket if delegation is set (https://github.com/ansible/ansible/pull/37815)
+
+
+v2.5.0
+======
 
 Major Changes
 -------------
@@ -642,7 +839,7 @@ Bugfixes
 
 - znode - fixed a bug calling the zookeeper API under Python3 https://github.com/ansible/ansible/pull/36999
 
-- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. https://github.com/ansible/ansible/pull/37048
+- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. (https://github.com/ansible/ansible/pull/37048)
 
 - fixed templating issues in loop_control (https://github.com/ansible/ansible/pull/36124)
 

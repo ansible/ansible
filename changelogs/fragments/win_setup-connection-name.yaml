@@ -1,3 +1,2 @@
 bugfixes:
-- win_setup - Use connection name for network interfaces as interface name isn't helpful
-  https://github.com/ansible/ansible/pull/37327
+- win_setup - Use connection name for network interfaces as interface name isn't helpful (https://github.com/ansible/ansible/pull/37327)

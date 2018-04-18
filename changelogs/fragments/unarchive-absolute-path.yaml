@@ -1,5 +1,3 @@
 ---
 bugfixes:
-- Fix for unarchive when users use the --strip-components extra_opt to tar
-  causing ansible to set permissions on the wrong directory.
-  https://github.com/ansible/ansible/pull/37048
+- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. (https://github.com/ansible/ansible/pull/37048)

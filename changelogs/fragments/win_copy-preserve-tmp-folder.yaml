@@ -1,3 +1,2 @@
 bugfixes:
-- win_copy - Preserve the local tmp folder instead of deleting it so future tasks can use it
-  https://github.com/ansible/ansible/pull/37964
+- win_copy - Preserve the local tmp folder instead of deleting it so future tasks can use it (https://github.com/ansible/ansible/pull/37964)

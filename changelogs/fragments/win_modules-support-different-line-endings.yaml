@@ -1,2 +1,2 @@
-bugfixes
+bugfixes:
 - win_exec_wrapper - support loading of Windows modules different different line endings than the core modules (https://github.com/ansible/ansible/pull/37291)

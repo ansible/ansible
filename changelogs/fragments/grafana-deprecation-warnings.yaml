@@ -1,4 +1,3 @@
 ---
 bugfixes:
-- Various grafana_* modules - Port away from the deprecated b64encodestring
-  function to the b64encode function instead. https://github.com/ansible/ansible/pull/38388
+- Various grafana_* modules - Port away from the deprecated b64encodestring function to the b64encode function instead. (https://github.com/ansible/ansible/pull/38388)

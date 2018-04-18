@@ -1,3 +1,2 @@
 bugfixes:
-- win_updates - handle if the module fails to load and return the error message
-  https://github.com/ansible/ansible/pull/38363
+- win_updates - handle if the module fails to load and return the error message (https://github.com/ansible/ansible/pull/38363)

@@ -1,4 +1,2 @@
 bugfixes:
-  - Connection error messages may contain characters that jinja2 would
-    interpret as a template.  Wrap the error string so this doesn't happen
-    (https://github.com/ansible/ansible/pull/37329)
+  - Connection error messages may contain characters that jinja2 would interpret as a template.  Wrap the error string so this doesn't happen (https://github.com/ansible/ansible/pull/37329)

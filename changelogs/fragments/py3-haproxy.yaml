@@ -1,3 +1,2 @@
 bugfixes:
-- Fix to send and receive bytes over a socket in the haproxy module which was
-  causing tracebacks on Python3 https://github.com/ansible/ansible/pull/35176
+- Fix to send and receive bytes over a socket in the haproxy module which was causing tracebacks on Python3 https://github.com/ansible/ansible/pull/35176
