@@ -50,13 +50,13 @@ or for my custom callback:
 
   stdout_callback = mycallback
 
-This only affects :doc:`../ansible-playbook` by default.
+This only affects :ref:`ansible-playbook` by default.
 
 Managing AdHoc
 ``````````````
 
-The :doc:`ansible <../ansible>` AdHoc command specifically uses a different callback plugin for stdout,
-so there is an extra setting in :doc:`ansible.cfg <../config>` you need to add to use the stdout callback defined above:
+The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout,
+so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:
 
 .. code-block:: ini
 
@@ -87,19 +87,21 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
 
 .. seealso::
 
-   :doc:`../playbooks`
-       An introduction to playbooks
+   :doc:`action`
+       Ansible Action plugins
+   :doc:`cache`
+       Ansible cache plugins
+   :doc:`connection`
+       Ansible connection plugins
    :doc:`inventory`
        Ansible inventory plugins
-   :doc:`../playbooks_filters`
-       Jinja2 filter plugins
-   :doc:`../playbooks_tests`
-       Jinja2 test plugins
-   :doc:`../playbooks_lookups`
-       Jinja2 lookup plugins
+   :doc:`shell`
+       Ansible Shell plugins
+   :doc:`strategy`
+       Ansible Strategy plugins
    :doc:`vars`
-       Ansible vars plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Ansible Vars plugins
+   `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
