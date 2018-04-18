@@ -1,0 +1,2 @@
+bugfixes:
+    ensure C locale for chkconfig to allow sane screen scraping https://github.com/ansible/ansible/pull/38980
