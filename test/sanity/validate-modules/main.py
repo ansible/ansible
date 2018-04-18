@@ -1082,8 +1082,9 @@ class ModuleValidator(Validator):
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
             # TODO: needs to recursively traverse suboptions
+
             arg_default = None
-            if 'default' in data and not is_empty(data['default']):
+            if 'options' not in data and 'default' in data and not is_empty(data['default']):
                 try:
                     with CaptureStd():
                         arg_default = _type_checker(data['default'])
@@ -1100,6 +1101,7 @@ class ModuleValidator(Validator):
             try:
                 doc_default = None
                 doc_options_arg = docs.get('options', {}).get(arg, {})
+
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
