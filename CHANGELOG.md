@@ -10,9 +10,8 @@ Ansible Changes By Release
 ### Major Changes
 
 ### Deprecations (to be removed in 2.10)
-* `oif_prefix` and `oif_source` properties are deprecated in the nxos_igmp_interface
-  module.  Use the `oif_ps` parameter with a dictionary of prefix and source
-  to values instead.
+* In the `nxos_igmp_interface` module, `oif_prefix` and `oif_source` properties are deprecated.
+  Use the `oif_ps` parameter with a dictionary of prefix and source to values instead.
 
 See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
 

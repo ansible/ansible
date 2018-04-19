@@ -57,7 +57,7 @@ options:
     version:
         description:
             - IGMP version. It can be 2 or 3 or keyword 'default'.
-        choices: ['2', '3']
+        choices: ['2', '3', 'default']
     startup_query_interval:
         description:
             - Query interval used when the IGMP process starts up.
@@ -124,12 +124,12 @@ options:
               keyword 'default'.
     oif_prefix:
         description:
-            - Configure a prefix for static outgoing interface (OIF). This
-              argument is deprecated, please use oif_ps instead.
+            - This argument is deprecated, please use oif_ps instead.
+              Configure a prefix for static outgoing interface (OIF).
     oif_source:
         description:
-            - Configure a source for static outgoing interface (OIF). This
-              argument is deprecated, please use oif_ps instead.
+            - This argument is deprecated, please use oif_ps instead.
+              Configure a source for static outgoing interface (OIF).
     oif_ps:
         description:
             - Configure prefixes and sources for static outgoing interface (OIF). This
@@ -155,7 +155,7 @@ EXAMPLES = '''
     startup_query_interval: 30
     oif_ps:
       - { 'prefix': '238.2.2.6' }
-      - {'source': '1.1.1.1', 'prefix': '238.2.2.5'}
+      - { 'source': '1.1.1.1', 'prefix': '238.2.2.5'}
     state: present
 '''
 RETURN = '''
