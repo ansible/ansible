@@ -110,6 +110,6 @@ class LookupModule(LookupBase):
         res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
         if res is not None:
             for obj in res:
-                 if 'extattrs' in obj:
-                     obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+                if 'extattrs' in obj:
+                    obj['extattrs'] = flatten_extattrs(obj['extattrs'])
         return res
