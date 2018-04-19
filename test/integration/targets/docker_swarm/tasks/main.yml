@@ -1,5 +1,5 @@
 - include: Ubuntu.yml
   when: ansible_os_family == 'Debian'
 
-- include: test_secrets.yml
+- include: test_swarm.yml
   when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
