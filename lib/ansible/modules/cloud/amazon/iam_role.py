@@ -236,7 +236,11 @@ def create_or_update_role(connection, module):
     # If role is None, create it
     if role is None:
         try:
-            role = connection.create_role(**params)
+            if not module.check_mode:
+                role = connection.create_role(**params)
+            else:
+                role = {'MadeInCheckMode': True}
+                role['AssumeRolePolicyDocument'] = json.loads(params['AssumeRolePolicyDocument'])
             changed = True
         except ClientError as e:
             module.fail_json(msg="Unable to create role: {0}".format(to_native(e)),
@@ -248,7 +252,8 @@ def create_or_update_role(connection, module):
         # Check Assumed Policy document
         if not compare_assume_role_policy_doc(role['AssumeRolePolicyDocument'], params['AssumeRolePolicyDocument']):
             try:
-                connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
+                if not module.check_mode:
+                    connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
                 changed = True
             except ClientError as e:
                 module.fail_json(msg="Unable to update assume role policy for role {0}: {1}".format(params['RoleName'], to_native(e)),
@@ -279,7 +284,8 @@ def create_or_update_role(connection, module):
             # Attach roles not already attached
             for policy_arn in set(managed_policies) - set(current_attached_policies_arn_list):
                 try:
-                    connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
+                    if not module.check_mode:
+                        connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
                 except ClientError as e:
                     module.fail_json(msg="Unable to attach policy {0} to role {1}: {2}".format(policy_arn, params['RoleName'], to_native(e)),
                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -289,7 +295,7 @@ def create_or_update_role(connection, module):
                 changed = True
 
     # Instance profile
-    if create_instance_profile:
+    if create_instance_profile and not role.get('MadeInCheckMode', False):
         try:
             instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
         except ClientError as e:
@@ -301,7 +307,8 @@ def create_or_update_role(connection, module):
         if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
             # Make sure an instance profile is attached
             try:
-                connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
+                if not module.check_mode:
+                    connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
                 changed = True
             except ClientError as e:
                 # If the profile already exists, no problem, move on
@@ -313,12 +320,14 @@ def create_or_update_role(connection, module):
             except BotoCoreError as e:
                 module.fail_json(msg="Unable to create instance profile for role {0}: {1}".format(params['RoleName'], to_native(e)),
                                  exception=traceback.format_exc())
-            connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+            if not module.check_mode:
+                connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
-    role = get_role(connection, module, params['RoleName'])
+    if not role.get('MadeInCheckMode', False):
+        role = get_role(connection, module, params['RoleName'])
+        role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
 
-    role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
