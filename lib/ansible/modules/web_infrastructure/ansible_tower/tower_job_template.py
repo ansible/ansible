@@ -163,9 +163,9 @@ def update_fields(p):
         v = params.pop(old_k)
         params_update[new_k] = v
 
-    extra_vars = str(params.get('extra_vars'))
+    extra_vars = params.get('extra_vars')
     if extra_vars is not None:
-        params_update['extra_vars'] = [extra_vars]
+        params_update['extra_vars'] = [str(extra_vars)]
 
     extra_vars_path = params.get('extra_vars_path')
     if extra_vars_path is not None:
