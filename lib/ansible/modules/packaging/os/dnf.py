@@ -193,6 +193,7 @@ _modularity = _modularity_available
 # Needed for the FIXUP code
 import fnmatch
 
+
 def _ensure_dnf(module):
     if not HAS_DNF:
         if PY2:
@@ -321,11 +322,9 @@ def _mark_package_install(module, base, pkg_spec):
         module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
-
 # FIXME: This is because the DNF API seem to just abort inside hawkey with
 #        various input. Including things like installed modules passed to
 #        install. This is all bad.
-
 
 def _mod_match_profiles(prefix, profiles, ui):
     if fnmatch.fnmatch(prefix, ui):
