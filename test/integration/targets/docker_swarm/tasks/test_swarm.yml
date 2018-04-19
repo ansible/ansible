@@ -15,5 +15,5 @@
   assert:
     that:
        - 'output.failed'
-       - 'output.msg == "missing required arguments: advertise_addr"'
+       - 'output.msg == "state is init but all of the following are missing: advertise_addr"'
 
