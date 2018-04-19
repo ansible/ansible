@@ -1,8 +1,8 @@
 - name: List all organizations
-    meraki_organiztaion:
-      auth_key: abc123
-      status: query
-    delegate_to: localhost
+  meraki_organization:
+    auth_key: abc123
+    status: query
+  delegate_to: localhost
 
 - name: Query information about a single organization named YourOrg
   meraki_organization:
@@ -17,4 +17,3 @@
     name: YourOrg
     status: present
   delegate_to: localhost
-  

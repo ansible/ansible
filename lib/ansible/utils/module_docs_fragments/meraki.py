@@ -35,4 +35,14 @@ options:
         description:
         - Set amount of debug output during module execution
         choices: ['normal', 'debug']
+    timeout:
+        description:
+        - Time to timeout for HTTP requests.
+        type: int
+        default: 30
+    validate_certs:
+        description:
+        - Whether to validate HTTP certificates.
+        type: bool
+        default: 'yes'
 '''

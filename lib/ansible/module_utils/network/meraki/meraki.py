@@ -42,16 +42,14 @@ def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
                 name=dict(type='str'),
-                username=dict(type='str'),
                 state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
-                use_proxy=dict(type='bool', default=True),
+                use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str'),
                 org_id=dict(type='str'),
-                net_name=dict(type='str'),
                 )
 
 
@@ -101,9 +99,6 @@ class MerakiModule(object):
                          'staticRoutes': '/networks/replace_net_id/staticRoutes',
                          'vlans': '/networks/replace_net_id/vlans',
                          'devices': '/networks/replace_net_id/devices',
-                         'ssids': '/networks/replace_net_id/ssids',
-                         'staticRoutes': '/networks/replace_net_id/staticRoutes',
-                         'groupPolicies': '/networks/replace_net_id/groupPolicies',
                          }
 
         self.get_one_urls = {'organizations': '/organizations/replace_org_id',
@@ -116,7 +111,7 @@ class MerakiModule(object):
                             'create': None,
                             'update': None,
                             'delete': None,
-                            'Misc': None,
+                            'misc': None,
                             }
 
         if self.module._debug or self.params['output_level'] == 'debug':
@@ -126,11 +121,8 @@ class MerakiModule(object):
         self.module.required_if = [('state', 'present', ['name']),
                                    ('state', 'absent', ['name']),
                                    ]
-        self.module.mutually_exclusive=[
-                                        ('org_id', 'org_name'),
-                                       ]
-
-
+        self.module.mutually_exclusive = [('org_id', 'org_name'),
+                                          ]
         # Validate whether parameters are compatible
         if self.params['state'] == 'absent':
             if self.params['org_name'] or self.params['org_id']:
@@ -143,25 +135,6 @@ class MerakiModule(object):
             self.params['protocol'] = 'https'
         else:
             self.params['protocol'] = 'http'
-
-    # def define_method(self):
-    #     ''' Set method. May not need to stay. '''
-    #     if self.params['state'] == 'query':
-    #         self.method = 'GET'
-    #     elif self.params['state'] == 'absent':
-    #         self.method = 'DELETE'
-    #     elif self.params['state'] == 'present':
-    #         if self.function == 'organizations':
-    #             if self.params['org_id'] is not None:
-    #                 self.method = 'PUT'
-    #             else:
-    #                 self.method = 'POST'
-    #         elif self.is_new() is True:
-    #             self.method = 'POST'
-    #         elif self.is_update_required() is True:
-    #             self.method = 'PUT'
-    #         else:
-    #             return -1
 
     def response_json(self, rawoutput):
         ''' Handle Dashboard API response output '''
@@ -200,8 +173,10 @@ class MerakiModule(object):
         self.define_protocol()
         self.path = path
 
-        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
-
+        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'],
+                                                 self.params['host'],
+                                                 self.path.lstrip('/')
+                                                 )
         resp, info = fetch_url(self.module, self.url,
                                headers=self.headers,
                                method='GET',
@@ -238,37 +213,6 @@ class MerakiModule(object):
                 if o['id'] == org_id:
                     org_count += 1
         return org_count
-
-    # def is_org(self, data, org_id=None, org_name=None):
-    #     ''' Checks whether an organization exists based on its id or name'''
-    #     ''' TODO: Add support for duplicate checking'''
-    #     orgs = self.get_orgs()
-    #     if org_name:
-    #         for o in orgs:
-    #             if o['name'] == org_name:
-    #                 return True
-    #         self.fail_json(msg='No organization found with name {0}'.format(org_name))
-
-    #     if org_id:
-    #         for o in orgs:
-    #             if o['id'] == org_id:
-    #                 return True
-    #         self.fail_json(msg='No organization found with ID {0}'.format(org_id))
-
-    # def is_org_dupe(self, org_name, data):
-    #     ''' Checks whether multiple organizations exist with the same name '''
-    #     dupe_orgs = list()
-    #     for o in data:
-    #         if o['name'] == org_name:
-    #             dupe_orgs.append(o)
-    #     if len(dupe_orgs) == 0:
-    #         self.fail_json(msg="Found no organizations matching name {0}".format(org_name))
-    #     elif len(dupe_orgs) == 1:
-    #         return dupe_orgs[0]
-    #     elif len(dupe_orgs) > 1:
-    #         # TODO: Output organization info for each matching org
-    #         # TODO: Output networks associated for each matching org
-    #         self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
 
     def get_org_id(self, org_name):
         ''' Returns an organization id based on organization name, only if unique
@@ -355,7 +299,7 @@ class MerakiModule(object):
                 self.error['code'] = info['status']
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
             except KeyError:
-                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)            
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         elif self.status >= 300:
             try:
                 self.error['text'] = self.response_json(info['body'])

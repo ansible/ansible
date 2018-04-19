@@ -38,6 +38,14 @@ options:
         description:
         - Organization to clone to a new organization.
         type: string
+    org_name:
+        description:
+        - Name of organization.
+        - Used when C(name) should refer to another object.
+        type: string
+    org_id:
+        description:
+        - ID of organization
 
 author:
     - Kevin Breit (@kbreit)
@@ -95,7 +103,7 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
-                        )
+                         )
 
     # seed the result dict in the object
     # we primarily care about changed and state
