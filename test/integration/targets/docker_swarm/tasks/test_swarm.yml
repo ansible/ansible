@@ -3,7 +3,7 @@
     state: present 
     name: "{{ item }}"
   with_items:
-    - docker==2.7.0
+    - docker==2.1.0
 
 - name: Test parameters with state=init
   docker_swarm:
