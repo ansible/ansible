@@ -146,7 +146,7 @@ def is_switchport(name, module):
 
 def interface_is_portchannel(name, module):
     if get_interface_type(name) == 'ethernet':
-        config = get_config(module, flags=[' | section interface'])
+        config = get_config(module, flags=[' | include interface'])
         if 'channel group' in config:
             return True
 
