@@ -1,0 +1,18 @@
+- name: Install Python requirements
+  pip:
+    state: present 
+    name: "{{ item }}"
+  with_items:
+    - docker==2.7.0
+
+- name: Parameter state should be required
+  docker_swarm:
+    state: "init"
+  register: output
+    
+- name: assert failure when called with state=init and no advertise_addr
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "missing required arguments: advertise_addr"'
+
