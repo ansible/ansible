@@ -77,28 +77,44 @@ options:
         required by any such package. Should be used alone or when state is I(absent)
     type: bool
     version_added: "2.4"
-notes:
-  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
-requirements:
-  - "python >= 2.6"
-  - python-dnf
-  - for the autoremove option you need dnf >= 2.0.1"
 
   modularity:
     description:
       - If C(yes), group install/upgrade/remove operations now apply to modules if set to false then those operations apply to "comps groups".
     type: bool
     version_added: "?.?"
+    default: true
+
 notes:
-  - This automatically sets itself to true on a system with a dnf that supports modularity.
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
   - "python >= 2.6"
   - python-dnf
+  - for the autoremove option you need dnf >= 2.0.1"
   - for the modularity option to be set you need dnf with modularity support
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
   - "Berend De Schouwer (github.com/berenddeschouwer)"
+'''
+
+RETURN = '''
+failures:
+    description: list of install failures
+    returned: failure, when needed
+    type: list
+results:
+    description: list of pkgs installed
+    returned: success, when needed
+    type: list
+stdout:
+    description: output from dnf API
+    returned: success, when needed
+    type: string
+stderr:
+    description: error output from dnf API
+    returned: success, when needed
+    type: string
 '''
 
 EXAMPLES = '''
@@ -166,6 +182,16 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
+_modularity_available = False
+try:
+    from dnf.module.exceptions import NoModuleException
+    _modularity_available = True
+except:
+    pass
+# _modularity = False
+_modularity = _modularity_available
+# Needed for the FIXUP code
+import fnmatch
 
 def _ensure_dnf(module):
     if not HAS_DNF:
@@ -295,19 +321,12 @@ def _mark_package_install(module, base, pkg_spec):
         module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
-_modularity_available = False
-try:
-    from dnf.module.exceptions import NoModuleException
-    _modularity_available = True
-except:
-    pass
-# _modularity = False
-_modularity = _modularity_available
 
 # FIXME: This is because the DNF API seem to just abort inside hawkey with
 #        various input. Including things like installed modules passed to
 #        install. This is all bad.
-import fnmatch
+
+
 def _mod_match_profiles(prefix, profiles, ui):
     if fnmatch.fnmatch(prefix, ui):
         return True
@@ -316,6 +335,7 @@ def _mod_match_profiles(prefix, profiles, ui):
         if fnmatch.fnmatch(data, ui):
             return True
     return False
+
 
 def _mod_match(mod, ui):
     data = mod.name
@@ -329,34 +349,43 @@ def _mod_match(mod, ui):
         return True
 
     return False
+
+
 def _mod_available(base, ui):
     amods = base.repo_module_dict.list_module_version_all()
     for amod in amods:
         if _mod_match(amod, ui):
             return True
     return False
+
+
 def _mod_enabled(base, ui):
     emods = base.repo_module_dict.list_module_version_enabled()
     for emod in emods:
         if _mod_match(emod, ui):
             return True
     return False
+
+
 def _mod_installed(base, ui):
     imods = base.repo_module_dict.list_module_version_installed()
     for imod in imods:
         if _mod_match(imod, ui):
             return imod
     return None
+
+
 def _mod_upgrade(base, ui):
     amods = base.repo_module_dict.list_module_version_all()
     for amod in amods:
         if _mod_match(amod, ui):
             imod = _mod_installed(base, amod.name + ":" + amod.stream)
-            if imod is None: # Shrug
+            if imod is None:  # Shrug
                 continue
             if amod.version > imod.version:
                 return True
     return False
+
 
 def _parse_ui_spec(names):
     pkg_specs, mod_specs, grp_specs, filenames = [], [], [], []
@@ -424,7 +453,7 @@ def ensure(module, base, state, names, autoremove):
 
             # Install modules.
             for mod in mod_specs:
-                if _mod_installed(base, mod): # API seems to exist if installed
+                if _mod_installed(base, mod):  # API seems to exist if installed
                     continue
                 if not _mod_available(base, mod):
                     failures.append((mod, "Can't find module"))
@@ -461,7 +490,7 @@ def ensure(module, base, state, names, autoremove):
 
             # Upgrade modules.
             for mod in mod_specs:
-                if not _mod_installed(base, mod): # API doesn't install
+                if not _mod_installed(base, mod):  # API doesn't install
                     if not _mod_available(base, mod):
                         failures.append((mod, "Can't find module"))
                         continue
@@ -470,11 +499,11 @@ def ensure(module, base, state, names, autoremove):
                     except dnf.exceptions.Error as e:
                         failures.append((mod, to_native(e)))
                         continue
-                if not _mod_upgrade(base, mod): # API seems to exist if not
+                if not _mod_upgrade(base, mod):  # API seems to exist if not
                     continue
 
                 try:
-                    skipped_grps, _, _ = base.repo_module_dict.upgrade([mod], True)
+                    skipped_grps, dummy, dummy = base.repo_module_dict.upgrade([mod], True)
                 except dnf.exceptions.Error as e:
                     failures.append((mod, to_native(e)))
 
@@ -536,7 +565,7 @@ def ensure(module, base, state, names, autoremove):
                 if not _mod_enabled(base, mod):
                     continue
                 try:
-                    base.repo_module_dict.disable(mod,True)
+                    base.repo_module_dict.disable(mod, True)
                     changed = True
                 except dnf.exceptions.Error as e:
                     failures.append((mod_specs, to_native(e)))
