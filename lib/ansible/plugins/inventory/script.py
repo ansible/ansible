@@ -121,7 +121,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
                 # if no other errors happened and you want to force displaying stderr, do so now
-                if err and self.get_option('always_show_stderr'):
+                # We need to check for "> 1" because the above an empty string gets concatenated with "\n".
+                if len(err) > 1 and self.get_option('always_show_stderr'):
                     self.display.error(msg=to_text(err))
 
             processed = self._cache[cache_key]
