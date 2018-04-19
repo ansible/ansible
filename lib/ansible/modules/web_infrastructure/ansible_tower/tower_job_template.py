@@ -107,6 +107,11 @@ options:
         - Activate privilege escalation.
       type: bool
       default: 'no'
+    allow_simultaneous:
+      description:
+        - Allow parallel job execution.
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
@@ -151,6 +156,8 @@ def update_fields(p):
         'ask_limit': 'ask_limit_on_launch',
         'ask_tags': 'ask_tags_on_launch',
         'ask_job_type': 'ask_job_type_on_launch',
+        'ask_inventory': 'ask_inventory_on_launch',
+        'ask_credential': 'ask_credential_on_launch',
         'machine_credential': 'credential',
     }
 
@@ -213,6 +220,7 @@ def main():
         ask_inventory=dict(type='bool', default=False),
         ask_credential=dict(type='bool', default=False),
         become_enabled=dict(type='bool', default=False),
+        allow_simultaneous=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
