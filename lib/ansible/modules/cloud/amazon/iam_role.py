@@ -206,7 +206,8 @@ def convert_friendly_names_to_arns(connection, module, policy_names):
 def remove_policies(connection, module, policies_to_remove, params):
     for policy in policies_to_remove:
         try:
-            connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
+            if not module.check_mode:
+                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
         except ClientError as e:
             module.fail_json(msg="Unable to detach policy {0} from {1}: {2}".format(policy, params['RoleName'], to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -351,7 +352,8 @@ def destroy_role(connection, module):
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
             try:
-                connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
+                if not module.check_mode:
+                    connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
             except ClientError as e:
                 module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(
                                  params['RoleName'], profile['InstanceProfileName'], to_native(e)),
@@ -364,7 +366,8 @@ def destroy_role(connection, module):
         # Now remove any attached policies otherwise deletion fails
         try:
             for policy in get_attached_policy_list(connection, module, params['RoleName']):
-                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
+                if not module.check_mode:
+                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
         except ClientError as e:
             module.fail_json(msg="Unable to detach policy {0} from role {1}: {2}".format(policy['PolicyArn'], params['RoleName'], to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -373,7 +376,8 @@ def destroy_role(connection, module):
                              exception=traceback.format_exc())
 
         try:
-            connection.delete_role(**params)
+            if not module.check_mode:
+                connection.delete_role(**params)
         except ClientError as e:
             module.fail_json(msg="Unable to delete role: {0}".format(to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
