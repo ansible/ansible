@@ -68,6 +68,14 @@
       public_ip_name: testvm001
       security_group: testvm001
 
+- name: Create second NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      virtual_network: testvm001
+      subnet: testvm001
+      security_group: testvm001
+
 - name: Create virtual machine
   register: output
   azure_rm_virtualmachine:
@@ -81,7 +89,9 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: testvm001
+      network_interfaces:
+                          - testvm001
+                          - testvm002
       availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
         offer: UbuntuServer
@@ -185,7 +195,9 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: testvm001
+      network_interfaces:
+                          - testvm001
+                          - testvm002]
       image:
         offer: UbuntuServer
         publisher: Canonical
