@@ -213,7 +213,7 @@ def main():
         job_tags=dict(),
         skip_tags=dict(),
         host_config_key=dict(),
-        extra_vars=dict(type='str', required=False),
+        extra_vars=dict(type='dict', required=False),
         extra_vars_path=dict(type='path', required=False),
         ask_extra_vars=dict(type='bool', default=False),
         ask_limit=dict(type='bool', default=False),
