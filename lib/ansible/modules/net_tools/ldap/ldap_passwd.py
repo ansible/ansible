@@ -94,17 +94,14 @@ class LdapPasswd(LdapGeneric):
             try:
                 u_con.start_tls_s()
             except ldap.LDAPError as e:
-                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
-                                      exception=traceback.format_exc())
+                self.fail("Cannot start TLS.", e)
 
         try:
             u_con.simple_bind_s(self.dn, self.passwd)
         except ldap.INVALID_CREDENTIALS:
             return True
         except ldap.LDAPError as e:
-            self.module.fail_json(
-                msg="Cannot bind to the server.", details=to_native(e),
-                exception=traceback.format_exc())
+            self.fail("Cannot bind to the server.", e)
         else:
             return False
         finally:
@@ -140,9 +137,7 @@ def main():
         else:
             module.exit_json(changed=ldap.passwd_set())
     except Exception as e:
-        module.fail_json(msg="Passwd action failed.",
-                         details=to_native(e),
-                         exception=traceback.format_exc())
+        ldap.fail("Passwd action failed.", e)
 
 
 if __name__ == '__main__':

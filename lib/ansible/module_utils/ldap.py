@@ -56,6 +56,11 @@ class LdapGeneric(object):
         # Establish connection
         self.connection = self._connect_to_ldap()
 
+    def fail(self, msg, exn):
+        self.module.fail_json(msg=msg,
+                              details=to_native(exn),
+                              exception=traceback.format_exc())
+
     def _connect_to_ldap(self):
         if not self.verify_cert:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
@@ -66,8 +71,7 @@ class LdapGeneric(object):
             try:
                 connection.start_tls_s()
             except ldap.LDAPError as e:
-                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
-                                      exception=traceback.format_exc())
+                self.module.fail("Cannot start TLS.", e)
 
         try:
             if self.bind_dn is not None:

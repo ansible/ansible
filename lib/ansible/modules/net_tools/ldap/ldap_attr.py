@@ -198,9 +198,7 @@ class LdapAttr(LdapGeneric):
             results = self.connection.search_s(
                 self.dn, ldap.SCOPE_BASE, attrlist=[self.name])
         except ldap.LDAPError as e:
-            self.module.fail_json(
-                msg="Cannot search for attribute %s" % self.name,
-                details=to_native(e))
+            self.fail("Cannot search for attribute %s" % self.name, e)
 
         current = results[0][1].get(self.name, [])
         modlist = []
