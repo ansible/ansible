@@ -527,3 +527,111 @@ Passing arguments via stdin was chosen for the following reasons:
   systems limit the total size of the environment.  This could lead to
   truncation of the parameters if we hit that limit.
 
+
+.. _ansiblemodule:
+
+AnsibleModule
+-------------
+
+.. _argument_spec:
+
+Argument Spec
+^^^^^^^^^^^^^
+
+The ``argument_spec`` provided to ``AnsibleModule`` defines the supported arguments for a module, as well as their type, defaults and more.
+
+Example ``argument_spec``:
+
+.. code-block:: python
+
+    module = AnsibleModule(argument_spec=dict(
+        top_level=dict(
+            type='dict',
+            options=dict(
+                second_level=dict(
+                    default=True,
+                    type='bool',
+                )
+            )
+        )
+    ))
+
+This section will discss the behavioral attributes for arguments
+
+type
+~~~~
+
+``type`` allows you to define the type of the value accepted for the argument. The default value for ``type`` is ``str``. Possible values are:
+
+* str
+* list
+* dict
+* bool
+* int
+* float
+* path
+* raw
+* jsonarg
+* json
+* bytes
+* bits
+
+The ``raw`` type, performs no type validation or type casing, and maintains the type of the passed value.
+
+elements
+~~~~~~~~
+
+``elements`` works in combination with ``type`` when ``type='list'``. ``elements`` can then be defined as ``elements='int'`` or any other type, indicating that each element of the specified list should be of that type.
+
+default
+~~~~~~~
+
+The ``default`` option allows sets a default value for the argument for the scenario when the argument is not provided to the module. When not specified, the default value is ``None``.
+
+fallback
+~~~~~~~~
+
+``fallback`` accepts a ``tuple`` where the first argument is a callable (function) that will be used to perform the lookup, based on the second argument. The second argument is a list of values to be accepted by the callable.
+
+The most common callable used is ``env_fallback`` which will allow an argument to optionally use an environment variable when the argument is not supplied.
+
+Example::
+
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']))
+
+choices
+~~~~~~~
+
+``choices`` accepts a list of choices that the argument will accept. The types of ``choices`` should match the ``type``.
+
+required
+~~~~~~~~
+
+``required`` accepts a boolean, either ``True`` or ``False`` that indicates that the argument is required. This should not be used in combination with ``default``.
+
+no_log
+~~~~~~
+
+``no_log`` indicates that the value of the argument should not be logged or displayed.
+
+aliases
+~~~~~~~
+
+``aliases`` accepts a list of alternative argument names for the argument, such as the case where the argument is ``name`` but the module accepts ``aliases=['pkg']`` to allow ``pkg`` to be interchangably with ``name``
+
+options
+~~~~~~~
+
+``options`` implements the ability to create a sub-argument_spec, where the sub options of the top level argument are also validated using the attributes discussed in this section. The example at the top of this section demonstrates use of ``options``. ``type`` or ``elements`` should be ``dict`` is this case.
+
+apply_defaults
+~~~~~~~~~~~~~~
+
+``apply_defaults`` works alongside ``options`` and allows the ``default`` of the sub-options to be applied even when the top-level argument is not supplied.
+
+In the example of the ``argument_spec`` at the top of this section, it would allow ``module.params['top_level']['second_level']`` to be defined, even if the user does not provide ``top_level`` when calling the module.
+
+removed_in_version
+~~~~~~~~~~~~~~~~~~
+
+``removed_in_version`` indicates which version of Ansible a deprecated argument will be removed in.
