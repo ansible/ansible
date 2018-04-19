@@ -88,7 +88,10 @@ class LdapPasswd(LdapGeneric):
         self.passwd = self.module.params['passwd']
 
     def passwd_check(self):
-        u_con = ldap.initialize(self.server_uri)
+        try:
+            u_con = ldap.initialize(self.server_uri)
+        except ldap.LDAPError as e:
+            self.fail("Cannot initialize LDAP connection", e)
 
         if self.start_tls:
             try:
@@ -113,7 +116,10 @@ class LdapPasswd(LdapGeneric):
             return False
 
         # Change the password (or throw an exception)
-        self.connection.passwd_set(self.dn, None, self.passwd)
+        try:
+            self.connection.passwd_set(self.dn, None, self.passwd)
+        except ldap.LDAPError as e:
+            self.fail("Unable to set password", e)
 
         # We successfully changed the password  \o/
         return True
@@ -131,13 +137,10 @@ def main():
 
     ldap = LdapPasswd(module)
 
-    try:
-        if module.check_mode:
-            module.exit_json(changed=ldap.passwd_check())
-        else:
-            module.exit_json(changed=ldap.passwd_set())
-    except Exception as e:
-        ldap.fail("Passwd action failed.", e)
+    if module.check_mode:
+        module.exit_json(changed=ldap.passwd_check())
+    else:
+        module.exit_json(changed=ldap.passwd_set())
 
 
 if __name__ == '__main__':
