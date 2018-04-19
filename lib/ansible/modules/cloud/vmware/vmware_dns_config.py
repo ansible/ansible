@@ -62,7 +62,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, get_all_objs, vmware_argument_spec
+from ansible.module_utils.vmware_common.vmware import HAS_PYVMOMI, connect_to_api, get_all_objs, vmware_argument_spec
 
 
 def configure_dns(host_system, hostname, domainname, dns_servers):

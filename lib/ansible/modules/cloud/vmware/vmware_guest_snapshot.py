@@ -223,7 +223,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import PyVmomi, list_snapshots, vmware_argument_spec
+from ansible.module_utils.vmware_common.vmware import PyVmomi, list_snapshots, vmware_argument_spec
 
 
 class PyVmomiHelper(PyVmomi):

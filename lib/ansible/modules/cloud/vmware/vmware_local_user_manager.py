@@ -72,7 +72,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
+from ansible.module_utils.vmware_common.vmware import PyVmomi, vmware_argument_spec
 
 
 class VMwareLocalUserManager(PyVmomi):

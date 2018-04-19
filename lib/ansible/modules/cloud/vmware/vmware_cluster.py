@@ -76,14 +76,10 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (HAS_PYVMOMI,
-                                         TaskError,
-                                         connect_to_api,
-                                         find_cluster_by_name_datacenter,
-                                         find_datacenter_by_name,
-                                         vmware_argument_spec,
-                                         wait_for_task
-                                         )
+from ansible.module_utils.vmware_common.vmware import (HAS_PYVMOMI, TaskError,
+                                                       connect_to_api, find_cluster_by_name_datacenter,
+                                                       find_datacenter_by_name, vmware_argument_spec,
+                                                       wait_for_task)
 
 
 class VMwareCluster(object):

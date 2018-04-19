@@ -44,7 +44,7 @@ ansible_facts:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, bytes_to_human
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, find_obj
+from ansible.module_utils.vmware_common.vmware import connect_to_api, vmware_argument_spec, find_obj
 
 try:
     from pyVmomi import vim, vmodl

@@ -77,8 +77,9 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (vmware_argument_spec, find_dvs_by_name, find_hostsystem_by_name,
-                                         connect_to_api, find_dvspg_by_name)
+from ansible.module_utils.vmware_common.vmware import (vmware_argument_spec, find_dvs_by_name,
+                                                       find_hostsystem_by_name,
+                                                       connect_to_api, find_dvspg_by_name)
 
 
 class VMwareMigrateVmk(object):

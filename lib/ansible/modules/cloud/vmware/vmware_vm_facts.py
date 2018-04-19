@@ -92,7 +92,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_spec, _get_vm_prop
+from ansible.module_utils.vmware_common.vmware import PyVmomi, get_all_objs, vmware_argument_spec, _get_vm_prop
 
 
 class VmwareVmFacts(PyVmomi):

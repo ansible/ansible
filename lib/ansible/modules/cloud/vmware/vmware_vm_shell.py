@@ -120,8 +120,9 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, find_datacenter_by_name,
-                                         find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec)
+from ansible.module_utils.vmware_common.vmware import (connect_to_api, find_cluster_by_name,
+                                                       find_datacenter_by_name, find_vm_by_id,
+                                                       HAS_PYVMOMI, vmware_argument_spec)
 
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py

@@ -83,7 +83,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
+from ansible.module_utils.vmware_common.vmware import connect_to_api, vmware_argument_spec
 
 
 def find_key(licenses, license):
