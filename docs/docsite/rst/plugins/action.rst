@@ -30,11 +30,6 @@ Plugin List
 You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
 Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples.
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    action/*
-
 .. seealso::
 
    :doc:`cache`
