@@ -40,9 +40,9 @@ options:
     description:
       - If C(directory), all immediate subdirectories will be created if they
         do not exist, since 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist, see the M(copy)
-        or M(template) module if you want that behavior.  If C(link), the symbolic
-        link will be created or changed. Use C(hard) for hardlinks. If C(absent),
+        If C(file), the file will NOT be created if it does not exist; see the C(touch)
+        value or M(copy),  M(template) module if you want that behavior.  If C(link), the
+        symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
         Note that C(absent) will not cause C(file) to fail if the C(path) does not exist
         as the state did not change.
