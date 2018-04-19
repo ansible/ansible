@@ -197,7 +197,7 @@
       os_type: Linux
       network_interfaces:
                           - testvm001
-                          - testvm002]
+                          - testvm002
       image:
         offer: UbuntuServer
         publisher: Canonical
