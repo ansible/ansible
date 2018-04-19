@@ -124,7 +124,7 @@ class LdapPasswd(LdapGeneric):
 
 def main():
     module = AnsibleModule(
-        argument_spec=gen_specs(passwd=dict(type='str', no_log=True)),
+        argument_spec=gen_specs(passwd=dict(no_log=True)),
         supports_check_mode=True,
     )
 
