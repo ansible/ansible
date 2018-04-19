@@ -61,6 +61,9 @@ def main():
         if path.startswith(base_dir):
             path = path[len(base_dir):]
 
+        if path.startswith('rst/'):
+            path = 'docs/docsite/' + path  # fix up paths reported relative to `docs/docsite/`
+
         if level == 'warning':
             code = 'warning'
 
