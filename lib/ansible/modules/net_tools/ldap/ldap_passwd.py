@@ -87,7 +87,7 @@ class LdapPasswd(LdapGeneric):
         # Shortcuts
         self.passwd = self.module.params['passwd']
 
-    def passwd_c(self):
+    def passwd_check(self):
         u_con = ldap.initialize(self.server_uri)
 
         if self.start_tls:
@@ -110,13 +110,13 @@ class LdapPasswd(LdapGeneric):
         finally:
             u_con.unbind()
 
-    def passwd_s(self):
+    def passwd_set(self):
         # Exit early if the password is already valid
-        if not self.passwd_c():
+        if not self.passwd_check():
             return False
 
         # Change the password (or throw an exception)
-        self.connection.passwd_s(self.dn, None, self.passwd)
+        self.connection.passwd_set(self.dn, None, self.passwd)
 
         # We successfully changed the password  \o/
         return True
@@ -136,9 +136,9 @@ def main():
 
     try:
         if module.check_mode:
-            module.exit_json(changed=ldap.passwd_c())
+            module.exit_json(changed=ldap.passwd_check())
         else:
-            module.exit_json(changed=ldap.passwd_s())
+            module.exit_json(changed=ldap.passwd_set())
     except Exception as e:
         module.fail_json(msg="Passwd action failed.",
                          details=to_native(e),
