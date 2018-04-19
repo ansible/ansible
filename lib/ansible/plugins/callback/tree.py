@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     version_added: "2.0"
     description:
         - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
-        - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a commadn line option.
+        - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
 '''
 
 import os
