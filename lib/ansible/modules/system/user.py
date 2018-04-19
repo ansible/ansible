@@ -178,6 +178,14 @@ options:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
               Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
+    password_lock:
+        description:
+            - Lock the password (usermod -L, pw lock, usermod -C).
+              BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
+              This option does not disable the user, only lock the password. Do not change the password in the same task.
+              Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD.
+        type: bool
+        version_added: "2.6"
     local:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
@@ -295,6 +303,7 @@ class User(object):
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
+        self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
 
@@ -525,6 +534,11 @@ class User(object):
         if self.expires:
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+
+        if self.password_lock:
+            cmd.append('-L')
+        elif self.password_lock is not None:
+            cmd.append('-U')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -939,6 +953,29 @@ class FreeBsdUser(User):
             ]
             return self.execute_command(cmd)
 
+        # we have to lock/unlock the password in a distinct command
+        if self.password_lock:
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'lock',
+                '-n',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+        elif self.password_lock is not None:
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'unlock',
+                '-n',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
         return (rc, out, err)
 
 
@@ -1264,6 +1301,11 @@ class NetBSDUser(User):
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
+
+        if self.password_lock:
+            cmd.append('-C yes')
+        elif self.password_lock is not None:
+            cmd.append('-C no')
 
         # skip if no changes to be made
         if len(cmd) == 1:
@@ -2183,6 +2225,7 @@ def main():
             ssh_key_passphrase=dict(type='str', no_log=True),
             update_password=dict(type='str', default='always', choices=['always', 'on_create']),
             expires=dict(type='float'),
+            password_lock=dict(type='bool'),
             local=dict(type='bool'),
         ),
         supports_check_mode=True
