@@ -1524,6 +1524,9 @@ def main():
     result = {}
     result['name'] = service.name
 
+    # ensure language/locale for message matching
+    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
+
     # Find service management tools
     service.get_service_tools()
 
