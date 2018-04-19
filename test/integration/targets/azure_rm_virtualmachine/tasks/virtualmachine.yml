@@ -78,6 +78,10 @@
 
 - name: Create virtual machine
   register: output
+  vars:
+    niclist:
+      - testvm001
+      - testvm002
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -89,9 +93,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces:
-                          - testvm001
-                          - testvm002
+      network_interfaces: niclist
       availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
         offer: UbuntuServer
@@ -184,6 +186,10 @@
           - output.changed
 
 - name: Should be idempotent
+  vars:
+    niclist:
+      - testvm001
+      - testvm002
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -195,9 +201,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces:
-                          - testvm001
-                          - testvm002
+      network_interfaces: niclist
       image:
         offer: UbuntuServer
         publisher: Canonical
