@@ -8,6 +8,7 @@
 - name: Parameter state should be required
   docker_swarm:
     state: "init"
+  ignore_errors: yes
   register: output
     
 - name: assert failure when called with state=init and no advertise_addr
