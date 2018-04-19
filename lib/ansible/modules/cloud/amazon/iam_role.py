@@ -434,7 +434,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[('state', 'present', ['assume_role_policy_document'])])
+                           required_if=[('state', 'present', ['assume_role_policy_document'])],
+                           supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
