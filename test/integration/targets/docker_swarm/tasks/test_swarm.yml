@@ -27,7 +27,7 @@
   assert:
     that:
        - 'output.failed'
-       - 'output.msg == "state is init but all of the following are missing: advertise_addr,remote_addrs,join_token"'
+       - 'output.msg == "state is join but all of the following are missing: advertise_addr, remote_addrs, join_token"'
 
 - name: Test parameters with state=remove
   docker_swarm:
