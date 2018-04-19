@@ -9,9 +9,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = """
@@ -54,7 +56,7 @@ EXAMPLES = """
     dn: "{{ item.key }}"
     passwd: "{{ item.value }}"
   with_dict:
-    alice: "alice123123"
+    alice: alice123123
     bob:   "|30b!"
     admin: "{{ vault_secret }}"
 """
