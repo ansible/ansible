@@ -305,7 +305,7 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
     # Changing method of interface is not an addition
     if option == 'method':
         for ln in lines:
-            if ln.get('line_type', '') == 'iface':
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
                 ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
                 ln['params']['method'] = value
         return lines
