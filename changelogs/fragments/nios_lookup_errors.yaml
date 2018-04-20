@@ -1,0 +1,2 @@
+bugfixes:
+- nios_lookup_err - fixed nios lookup errors out when there are no results
