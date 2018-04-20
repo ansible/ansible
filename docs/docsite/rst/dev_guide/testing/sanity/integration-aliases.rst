@@ -1,36 +1,112 @@
 Sanity Tests » integration-aliases
 ==================================
 
-Each integration test must have an ``aliases`` file to control test execution.
+Integration tests are executed by ``ansible-test`` and reside in directories under ``test/integration/targets/``.
+Each test must have an ``aliases`` file to control test execution.
 
-If the tests cannot be run as part of CI (requires external services, unsupported dependencies, etc.),
-then they most likely belong in ``test/integration/roles/`` instead of ``test/integration/targets/``.
-In that case, do not add an ``aliases`` file. Instead, just relocate the tests.
+Aliases are explained in the following sections. Each alias must be on a separate line in an ``aliases`` file.
 
-In some cases tests requiring external resources can be run as a part of CI.
-This is often true when those resources can be provided by a docker container.
+Groups
+------
 
-However, if you think that the tests should be able to be supported by CI, please discuss test
-organization with @mattclay or @gundalow on GitHub or #ansible-devel on IRC.
+Tests must be configured to run in a specific group. This is done by adding the appropriate group to the ``aliases`` file.
 
-If the tests can be run as part of CI, you'll need to add an appropriate CI alias, such as:
+The following are examples of some of the available groups:
 
 - ``posix/ci/group1``
 - ``windows/ci/group2``
+- ``posix/ci/cloud/group3/azure``
+- ``posix/ci/cloud/group4/aws``
 
-The CI groups are used to balance tests across multiple jobs to minimize test run time.
-Using the relevant ``group1`` entry is fine in most cases. Groups can be changed later to redistribute tests.
+Groups are used to balance tests across multiple CI jobs to minimize test run time.
+They also improve efficiency by keeping tests with similar requirements running together.
 
-Aliases can also be used to express test requirements:
+When selecting a group for a new test, use the same group as existing tests similar to the one being added.
 
-- ``needs/privileged``
-- ``needs/root``
-- ``needs/ssh``
+Requirements
+------------
 
-Other aliases are used to skip tests under certain conditions:
+Aliases can be used to express some test requirements:
 
-- ``skip/freebsd``
-- ``skip/osx``
-- ``skip/python3``
+- ``needs/privileged`` - Requires ``--docker-privileged`` when running tests with ``--docker``.
+- ``needs/root`` - Requires running tests as ``root`` or with ``--docker``.
+- ``needs/ssh`` - Requires SSH connections to localhost (or the test container with ``--docker``) without a password.
 
-Take a look at existing ``aliases`` files to see what aliases are available and how they're used.
+Skipping
+--------
+
+Aliases can be used to skip platforms:
+
+- ``skip/freebsd`` - Skip tests on FreeBSD.
+- ``skip/osx`` - Skip tests on macOS / OS X.
+- ``skip/rhel`` - Skip tests on RHEL.
+
+Aliases can be used to skip Python major versions:
+
+- ``skip/python2`` - Skip tests on Python 2.x.
+- ``skip/python3`` - Skip tests on Python 3.x.
+
+Unstable
+--------
+
+Tests which fail sometimes should be marked with the ``unstable`` alias until the instability has been fixed.
+These tests will continue to run for pull requests which modify the test or the module under test.
+
+This avoids unnecessary test failures for other pull requests, as well as tests on merge runs and nightly CI jobs.
+
+There are two ways to run unstable tests manually:
+
+- Use the ``--allow-unstable`` option for ``ansible-test``
+- Prefix the test name with ``unstable/`` when passing it to ``ansible-test``.
+
+Disabled
+--------
+
+Tests which always fail should be marked with the ``disabled`` alias until they can be fixed.
+
+Disabled tests are automatically skipped.
+
+There are two ways to run disabled tests manually:
+
+- Use the ``--allow-disabled`` option for ``ansible-test``
+- Prefix the test name with ``disabled/`` when passing it to ``ansible-test``.
+
+Unsupported
+-----------
+
+Tests which cannot be run in CI should be marked with the ``unsupported`` alias.
+Most tests can be supported through the use of simulators and/or cloud plugins.
+
+However, if that is not possible then marking a test as unsupported will prevent it from running in CI.
+
+There are two ways to run unsupported tests manually:
+
+* Use the ``--allow-unsupported`` option for ``ansible-test``
+* Prefix the test name with ``unsupported/`` when passing it to ``ansible-test``.
+
+Cloud
+-----
+
+Tests for cloud services and other modules that require access to external APIs usually require special support for testing in CI.
+
+These require an additional alias to indicate the required test plugin.
+
+Some of the available aliases are:
+
+- ``cloud/aws``
+- ``cloud/azure``
+- ``cloud/cs``
+- ``cloud/foreman``
+- ``cloud/openshift``
+- ``cloud/tower``
+- ``cloud/vcenter``
+
+Untested
+--------
+
+Every module and plugin should have integration tests, even if the tests cannot be run in CI.
+
+Questions
+---------
+
+For questions about integration tests reach out to @mattclay or @gundalow on GitHub or #ansible-devel on IRC.
