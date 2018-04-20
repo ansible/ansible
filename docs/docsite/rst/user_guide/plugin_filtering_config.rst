@@ -1,4 +1,4 @@
-.. _plugin_filter_config:
+.. _plugin_filtering_config:
 
 Plugin Filter Configuration
 ===========================

@@ -10,7 +10,7 @@ This list is also available using \`\`ansible-test sanity --list-tests\`\`.
 .. toctree::
    :maxdepth: 1
 
-$(for test in $(../../test/runner/ansible-test sanity --list-tests); do echo "  ${test}"; done)
+$(for test in $(../../test/runner/ansible-test sanity --list-tests); do echo "   ${test}"; done)
 
 
 EOF
