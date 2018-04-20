@@ -1,0 +1,2 @@
+bugfixes:
+ - dont emit empty error due to \n https://github.com/ansible/ansible/pull/39019
