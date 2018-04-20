@@ -1,3 +1,5 @@
+.. _playbooks_lookups:
+
 Lookups
 -------
 
