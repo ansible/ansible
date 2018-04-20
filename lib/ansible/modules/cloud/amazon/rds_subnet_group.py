@@ -105,6 +105,7 @@ def get_subnet_group_info(subnet_group):
         status=subnet_group.status
     )
 
+
 def create_result(changed, subnet_group=None):
     if subnet_group is None:
         return dict(
@@ -115,6 +116,7 @@ def create_result(changed, subnet_group=None):
             changed=changed,
             subnet_group=get_subnet_group_info(subnet_group)
         )
+
 
 def main():
     argument_spec = ec2_argument_spec()
