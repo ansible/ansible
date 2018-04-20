@@ -232,7 +232,7 @@ class Cli:
 
         if not all((bool(use_session), self.supports_sessions)):
             if commit:
-                return self.configure(self, commands)
+                return self.configure(commands)
             else:
                 self._module.warn("EOS can not check config without config session")
                 result = {'changed': True}
