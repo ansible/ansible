@@ -1,0 +1,2 @@
+bugfixes:
+- dynamic includes - Fix IncludedFile comparison for free strategy (https://github.com/ansible/ansible/pull/37083)
