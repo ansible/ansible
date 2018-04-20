@@ -91,6 +91,13 @@ from ansible.module_utils.basic import AnsibleModule
 def install_package(module, name, easy_install, executable_arguments):
     cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
     rc, out, err = module.run_command(cmd)
+    if rc:
+        # split the error message into lines, check if line contains error, then check line does not contain error we wish to ignore.
+        error_lines = err.splitlines()
+        for line in error_lines:
+            if 'error' in line.lower():
+                if 'zip-safe: No such file or directory' not in line:
+                    module.fail_json(msg=err)
     return rc, out, err
 
 
@@ -99,8 +106,8 @@ def _is_package_installed(module, name, easy_install, executable_arguments):
     executable_arguments = executable_arguments[:]
     executable_arguments.append('--dry-run')
     rc, out, err = install_package(module, name, easy_install, executable_arguments)
-    if rc:
-        module.fail_json(msg=err)
+#    if rc:
+#        module.fail_json(msg=err)
     return 'Downloading' not in out
 
 
