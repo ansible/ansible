@@ -16,7 +16,7 @@ The :doc:`host_group_vars <vars/host_group_vars>` plugin shipped with Ansible en
 Enabling Vars Plugins
 +++++++++++++++++++++
 
-You can activate a custom vars plugins by either dropping it into a ``vars_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom vars plugins by either dropping it into a ``vars_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_vars:
