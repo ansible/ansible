@@ -53,7 +53,7 @@ options:
     description:
       - Negate source address param.
     default: false
-    choices: ["true", "false"]
+    type: bool
   dst_addr:
     description:
       - Specifies destination address (or group) object name(s). Required when I(state=present).
@@ -61,7 +61,7 @@ options:
     description:
       - Negate destination address param.
     default: false
-    choices: ["true", "false"]
+    type: bool
   policy_action:
     description:
       - Specifies accept or deny action policy. Required when I(state=present).
@@ -76,7 +76,7 @@ options:
     description:
       - Negate policy service(s) defined in service value.
     default: false
-    choices: ["true", "false"]
+    type: bool
   schedule:
     description:
       - defines policy schedule.
@@ -85,12 +85,12 @@ options:
     description:
       - Enable or disable Nat.
     default: false
-    choices: ["true", "false"]
+    type: bool
   fixedport:
     description:
       - Use fixed port for nat.
     default: false
-    choices: ["true", "false"]
+    type: bool
   poolname:
     description:
       - Specifies NAT pool name.
@@ -117,7 +117,7 @@ options:
     description:
       - Logs beginning of session as well.
     default: false
-    choices: ["true", "false"]
+    type: bool
   comment:
     description:
       - free text to describe policy.

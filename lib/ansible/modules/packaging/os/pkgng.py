@@ -81,7 +81,7 @@ options:
         description:
             - Remove automatically installed packages which are no longer needed.
         required: false
-        tyoe: bool
+        type: bool
         default: no
 author: "bleader (@bleader)"
 notes:

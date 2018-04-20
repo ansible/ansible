@@ -33,7 +33,7 @@ options:
               interfaces do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Create or delete Solaris/illumos IP interfaces.
