@@ -107,7 +107,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 err = to_native(stderr or "")
 
                 if err and not err.endswith('\n'):
-                    err =+ '\n'
+                    err += '\n'
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
