@@ -372,10 +372,36 @@
   file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
   register: file20_result
 
-- name: verify that the result was marked as changed
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/sub2/link1'
+    follow: False
+  register: file20_link_stat
+
+- name: Get stat info for the pointed to file
+  stat:
+    path: '{{ output_dir }}/sub2/link1'
+    follow: True
+  register: file20_links_dest_stat
+
+- name: Get stat info for the file we intend to point to
+  stat:
+    path: '{{ output_dir }}/sub1/file1'
+    follow: False
+  register: file20_dest_stat
+
+- debug: var=file20_dest_stat
+- name: verify that the link was created correctly
   assert:
     that:
+      # file command reports it created something
       - "file20_result.changed == true"
+      # file command created a link
+      - 'file20_link_stat["stat"]["islnk"]'
+      # Link points to the right path
+      - 'file20_link_stat["stat"]["lnk_target"] == "../sub1/file1"'
+      # The link target and the file we intended to link to have the same inode
+      - 'file20_links_dest_stat["stat"]["inode"] == file20_dest_stat["stat"]["inode"]'
 
 - name: create soft link to relative directory
   file: src=sub1 dest={{output_dir}}/sub1-link state=link
