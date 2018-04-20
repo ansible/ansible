@@ -1,0 +1,2 @@
+bugfixes:
+- Fix ios and iosxr terminal prompt regex (https://github.com/ansible/ansible/pull/39063)
