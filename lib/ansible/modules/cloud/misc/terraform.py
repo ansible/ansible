@@ -133,7 +133,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 
 DESTROY_ARGS = ('destroy', '-no-color', '-force')
-APPLY_ARGS = ('apply', '-no-color', '-auto-approve=true')
+APPLY_ARGS = ('apply', '-no-color', '-input=false', '-auto-approve=true')
 module = None
 
 
@@ -159,7 +159,7 @@ def _state_args(state_file):
 
 
 def init_plugins(bin_path, project_path):
-    command = [bin_path, 'init']
+    command = [bin_path, 'init', '-input=false']
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
@@ -169,7 +169,7 @@ def build_plan(bin_path, project_path, variables_args, state_file, plan_path=Non
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
-    command = [bin_path, 'plan', '-no-color', '-detailed-exitcode', '-out', plan_path]
+    command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
     command.extend(_state_args(state_file))
 
     rc, out, err = module.run_command(command + variables_args, cwd=project_path)
