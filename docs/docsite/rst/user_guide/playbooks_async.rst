@@ -1,3 +1,5 @@
+.. _playbooks_async:
+
 Asynchronous Actions and Polling
 ================================
 

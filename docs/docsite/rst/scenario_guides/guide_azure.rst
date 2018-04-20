@@ -238,7 +238,7 @@ virtual network already with an existing subnet, you can run the following to cr
 Dynamic Inventory Script
 ------------------------
 
-If you are not familiar with Ansible's dynamic inventory scripts, check out `Intro to Dynamic Inventory <http://docs.ansible.com/ansible/intro_dynamic_inventory.html>`_.
+If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
 The Azure Resource Manager inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,

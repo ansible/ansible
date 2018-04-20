@@ -4,7 +4,7 @@ Return Values
 .. contents:: Topics
 
 Ansible modules normally return a data structure that can be registered into a variable, or seen directly when output by
-the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and https://docs.ansible.com).
+the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and on the :ref:`main docsite<ansible_documentation>`.
 
 This document covers return values common to all modules.
 
