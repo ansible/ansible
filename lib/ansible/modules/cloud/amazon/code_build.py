@@ -53,7 +53,7 @@ options:
             - The ARN of the AWS IAM role that enables AWS CodeBuild to interact with dependent AWS services on behalf of the AWS account.
         required: false
     timeout_in_minutes:
-         description:
+        description:
             - How long CodeBuild should wait until timing out any build that has not been marked as completed.
         default: 60
         required: false
@@ -307,7 +307,7 @@ def main():
         encryption_key=dict(required=False, type='str'),
         tags=dict(required=False, type='list'),
         vpc_config=dict(required=False, type='dict'),
-        state=dict(required=True, type='str', choices=['present', 'absent'], default='present')
+        state=dict(required=False, type='str', choices=['present', 'absent'], default='present')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
