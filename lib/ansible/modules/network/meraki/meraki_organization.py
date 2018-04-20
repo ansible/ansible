@@ -180,13 +180,13 @@ def main():
                        'id': meraki.params['org_id'],
                        }
             meraki.result['response'] = json.loads(
-                    meraki.request(
-                        meraki.construct_path(
-                            'update',
-                            org_id=meraki.params['org_id']
-                        ),
-                        payload=json.dumps(payload),
-                        method='PUT'))
+                meraki.request(
+                    meraki.construct_path(
+                        'update',
+                        org_id=meraki.params['org_id']
+                    ),
+                    payload=json.dumps(payload),
+                    method='PUT'))
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
