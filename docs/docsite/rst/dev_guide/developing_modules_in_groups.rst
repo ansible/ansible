@@ -33,7 +33,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 Naming Convention
 `````````````````
 
-As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules into categories and topics the Module Index, for example: :doc:`../list_of_database_modules`.
+As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules into categories and topics the Module Index, for example: :ref:`list_of_database_modules`.
 
 The directory name should represent the *product* or *OS* name, not the company name.
 
