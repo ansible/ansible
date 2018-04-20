@@ -738,7 +738,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
 DEFAULT_MANAGED_STR:
   name: Ansible managed
   default: 'Ansible managed'
-  description: Sets the macro for the 'ansible_managed' variable available for M(template) tasks.
+  description: Sets the macro for the 'ansible_managed' variable available for M(template) and M(win_template) modules.  This is only relevant for those two modules.
   env: []
   ini:
   - {key: ansible_managed, section: defaults}
