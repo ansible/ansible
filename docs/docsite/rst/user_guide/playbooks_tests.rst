@@ -1,4 +1,4 @@
-.. _playbook_tests:
+.. _playbooks_tests:
 
 Tests
 -----
