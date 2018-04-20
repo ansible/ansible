@@ -1,0 +1,2 @@
+bugfixes:
+ - single bad path for galaxy is just a warning, error only if no usable paths found https://github.com/ansible/ansible/pull/39082
