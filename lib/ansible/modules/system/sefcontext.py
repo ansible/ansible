@@ -53,6 +53,8 @@ options:
     default: 'yes'
 notes:
 - The changes are persistent across reboots
+- The changes are not effective until you do a restorecon, even if
+  reload is set to yes
 requirements:
 - libselinux-python
 - policycoreutils-python
