@@ -42,7 +42,7 @@ def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
                 name=dict(type='str'),
-                state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
+                state=dict(type='str', choices=['present', 'absent', 'query']),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),

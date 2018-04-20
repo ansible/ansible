@@ -20,11 +20,9 @@ short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
 - Allows for creation, management, and visibility into organizations within Meraki
-
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 - Some of the options are likely only used for developers within Meraki
-
 options:
     name:
         description:
@@ -32,21 +30,18 @@ options:
         - If C(clone) is specified, C(name) is the name of the new organization.
     state:
         description:
-        - Create or query organizations
-        choices: ['query', 'present']
+        - Create or modify an organization
+        choices: ['present', 'query']
     clone:
         description:
         - Organization to clone to a new organization.
-        type: string
     org_name:
         description:
         - Name of organization.
         - Used when C(name) should refer to another object.
-        type: string
     org_id:
         description:
         - ID of organization
-
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -86,7 +81,6 @@ RETURN = '''
 response:
     description: Data returned from Meraki dashboard.
     type: dict
-    state: query
     returned: info
 '''
 
@@ -103,6 +97,7 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
+                         state=dict(type='str', choices=['present', 'query']),
                          )
 
     # seed the result dict in the object
@@ -125,11 +120,9 @@ def main():
 
     meraki.function = 'organizations'
     meraki.params['follow_redirects'] = 'all'
-    meraki.required_if=[
-                           ['state', 'present', ['name']],
-                           ['clone', ['name']],
-                           # ['vpn_PublicIP', ['name']],
-                       ]
+    meraki.required_if = [['state', 'present', ['name']],
+                          ['clone', ['name']],
+                          ]
 
     create_urls = {'organizations': '/organizations',
                    }
@@ -162,23 +155,16 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-
-    # method = None
-    # org_id = None
-
-
-    # meraki.fail_json(msg=meraki.is_org_valid(meraki.get_orgs(), org_name='AnsibleTestOrg'))
-
     if meraki.params['state'] == 'query':
-      if meraki.params['name'] is None:  # Query all organizations, no matter what
-        orgs = meraki.get_orgs()
-        meraki.result['organization'] = orgs
-      elif meraki.params['name'] is not None:  # Query by organization name
-        module.warn('All matching organizations will be returned, even if there are duplicate named organizations')
-        orgs = meraki.get_orgs()
-        for o in orgs:
-          if o['name'] == meraki.params['name']:
-            meraki.result['organization'] = o
+        if meraki.params['name'] is None:  # Query all organizations, no matter what
+            orgs = meraki.get_orgs()
+            meraki.result['organization'] = orgs
+        elif meraki.params['name'] is not None:  # Query by organization name
+            module.warn('All matching organizations will be returned, even if there are duplicate named organizations')
+            orgs = meraki.get_orgs()
+            for o in orgs:
+                if o['name'] == meraki.params['name']:
+                    meraki.result['organization'] = o
     elif meraki.params['state'] == 'present':
         if meraki.params['clone'] is not None:  # Cloning
             payload = {'name': meraki.params['name']}
@@ -193,7 +179,14 @@ def main():
             payload = {'name': meraki.params['name'],
                        'id': meraki.params['org_id'],
                        }
-            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('update', org_id=meraki.params['org_id']), payload=json.dumps(payload), method='PUT'))
+            meraki.result['response'] = json.loads(
+                    meraki.request(
+                        meraki.construct_path(
+                            'update',
+                            org_id=meraki.params['org_id']
+                        ),
+                        payload=json.dumps(payload),
+                        method='PUT'))
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
