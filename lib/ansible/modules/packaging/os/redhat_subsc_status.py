@@ -29,7 +29,7 @@ short_description: host redhat subscription status
 description:
     - Show the status of redhat subscription
     - Can save in .csv file
-version_added: "2.5"
+version_added: "2.6"
 options:
   status:
     description:
