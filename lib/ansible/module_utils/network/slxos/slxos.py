@@ -105,3 +105,44 @@ def run_commands(module, commands):
         responses.append(out)
 
     return responses
+
+
+def get_config(module):
+    """Get switch configuration
+
+    Gets the described device's current configuration. If a configuration has
+    already been retrieved it will return the previously obtained configuration.
+
+    Args:
+        module: A valid AnsibleModule instance.
+
+    Returns:
+        A string containing the configuration.
+    """
+    if not hasattr(module, 'device_configs'):
+        module.device_configs = {}
+    elif module.device_configs != {}:
+        return module.device_configs
+
+    connection = get_connection(module)
+    out = connection.get_config()
+    cfg = to_text(out, errors='surrogate_then_replace').strip()
+    module.device_configs = cfg
+    return cfg
+
+
+def load_config(module, commands):
+    """Apply a list of commands to a device.
+
+    Given a list of commands apply them to the device to modify the
+    configuration in bulk.
+
+    Args:
+        module: A valid AnsibleModule instance.
+        commands: Iterable of command strings.
+
+    Returns:
+        None
+    """
+    connection = get_connection(module)
+    connection.edit_config(commands)
