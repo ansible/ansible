@@ -3,7 +3,7 @@ How To Help
 
 .. contents:: Topics
 
-Thanks for being interested in helping the Ansible project! 
+Thanks for being interested in helping the Ansible project!
 
 There are many ways to help the Ansible project...but first, please read and understand the :ref:`code_of_conduct`.
 
@@ -23,7 +23,7 @@ When you become a power user, your ability and opportunities to help the Ansible
 Ask and answer questions online
 -------------------------------
 
-There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users. 
+There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users.
 
 You can find the official :ref:`Ansible communication channels <communication>`.
 
@@ -45,7 +45,7 @@ If you should discover that the bug you're trying to file already exists in an i
 Review and submit pull requests
 -------------------------------
 
-As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you've got a solution to a bug you've found in Ansible, or if you've got a new feature that you've written and would like to share with millions of Ansible users, read all about the `Ansible development process <http://docs.ansible.com/ansible/latest/community/development_process.rst>`_ to learn how to get your code accepted into Ansible.
+As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you've got a solution to a bug you've found in Ansible, or if you've got a new feature that you've written and would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` to learn how to get your code accepted into Ansible.
 
 Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/byfile.html>`_, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
 
