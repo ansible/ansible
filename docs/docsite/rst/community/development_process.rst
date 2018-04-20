@@ -8,7 +8,7 @@ This section discusses how the Ansible development and triage process works.
 Road Maps
 =========
 
-The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
+The Ansible Core team provides a road map for each upcoming release. These road maps can be found :ref:`here <roadmaps>`.
 
 .. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
    Projects here
