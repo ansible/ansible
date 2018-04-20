@@ -1013,7 +1013,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         resp, info = fetch_url(module,
                                "http://example.com",
                                data=module.jsonify(data)
-                               header={Content-type': 'application/json'},
+                               header={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
         body = resp.read()
