@@ -478,13 +478,17 @@ class GalaxyCLI(CLI):
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.options.roles_path
+            path_found = False
             for path in roles_path:
                 role_path = os.path.expanduser(path)
                 if not os.path.exists(role_path):
-                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % role_path)
+                    display.warning("- the configured path %s does not exist." % role_path)
+                    continue
                 elif not os.path.isdir(role_path):
-                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % role_path)
+                    display.warning("- the configured path %s, exists, but it is not a directory." % role_path)
+                    continue
                 path_files = os.listdir(role_path)
+                path_found = True
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, path_file)
                     if gr.metadata:
@@ -495,6 +499,8 @@ class GalaxyCLI(CLI):
                         if not version:
                             version = "(unknown version)"
                         display.display("- %s, %s" % (path_file, version))
+            if not path_found:
+                raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return 0
 
     def execute_search(self):
