@@ -171,7 +171,7 @@ def tests_as_filters_warning(name, func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         display.deprecated(
-            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` use '
             '`result is %(name)s`' % dict(name=name),
             version='2.9'
         )
@@ -290,7 +290,8 @@ class Templar:
             self.environment.block_end_string,
             self.environment.variable_end_string
         ))
-        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
+        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
+                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     def _get_filters(self, builtin_filters):
         '''
@@ -615,6 +616,7 @@ class Templar:
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
             allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
+            errors = kwargs.pop('errors', 'strict')
 
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
@@ -625,8 +627,14 @@ class Templar:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
                 if self._fail_on_lookup_errors:
-                    raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, "
-                                       "original message: %s" % (name, type(e), e))
+                    msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
+                          (name, type(e), to_text(e))
+                    if errors == 'warn':
+                        display.warning(msg)
+                    elif errors == 'ignore':
+                        display.display(msg, log_only=True)
+                    else:
+                        raise AnsibleError(to_native(msg))
                 ran = None
 
             if ran and not allow_unsafe:

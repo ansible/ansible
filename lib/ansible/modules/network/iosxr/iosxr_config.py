@@ -27,6 +27,8 @@ extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
   - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
@@ -113,8 +115,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -151,6 +154,14 @@ EXAMPLES = """
     src: config.cfg
     replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """

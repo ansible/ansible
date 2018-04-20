@@ -35,6 +35,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -117,8 +119,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -261,6 +264,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   ios_config:
     save_when: modified
+
+- name: for idempotency, use full-form commands
+  ios_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int gig1/0/11
+    parents: interface GigabitEthernet1/0/11
 """
 
 RETURN = """

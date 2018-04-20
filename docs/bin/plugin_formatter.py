@@ -91,7 +91,7 @@ def rst_ify(text):
     try:
         t = _ITALIC.sub(r"*\1*", text)
         t = _BOLD.sub(r"**\1**", t)
-        t = _MODULE.sub(r":ref:`\1 <\1>`", t)
+        t = _MODULE.sub(r":ref:`\1 <\1_module>`", t)
         t = _LINK.sub(r"`\1 <\2>`_", t)
         t = _URL.sub(r"\1", t)
         t = _CONST.sub(r"`\1`", t)
@@ -117,7 +117,7 @@ def html_ify(text):
     t = _CONST.sub(r"<code>\1</code>", t)
     t = _RULER.sub(r"<hr/>", t)
 
-    return t
+    return t.strip()
 
 
 def rst_fmt(text, fmt):
@@ -560,6 +560,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
+                         'plugin_type': plugin_type
                          }
         text = templates['support_list'].render(template_data)
         write_data(text, output_dir, data['output'])

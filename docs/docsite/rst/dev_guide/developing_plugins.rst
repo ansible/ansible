@@ -279,7 +279,7 @@ The following is an example of how this lookup is called::
 
 For more example lookup plugins, check out the source code for the lookup plugins that are included with Ansible here: `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
 
-For more usage examples of lookup plugins, see `Using Lookups <http://docs.ansible.com/ansible/playbooks_lookups.html>`_.
+For more usage examples of lookup plugins, see :ref:`Using Lookups<playbooks_lookups>`.
 
 .. _developing_vars_plugins:
 

@@ -38,11 +38,11 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-      - If C(directory), all immediate subdirectories will be created if they
-        do not exist, since 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist, see the M(copy)
-        or M(template) module if you want that behavior.  If C(link), the symbolic
-        link will be created or changed. Use C(hard) for hardlinks. If C(absent),
+      - If C(directory), all intermediate subdirectories will be created if they
+        do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
+        If C(file), the file will NOT be created if it does not exist; see the C(touch)
+        value or the M(copy) or M(template) module if you want that behavior.  If C(link), the
+        symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
         Note that C(absent) will not cause C(file) to fail if the C(path) does not exist
         as the state did not change.
@@ -53,11 +53,12 @@ options:
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept absolute,
-        relative and nonexisting paths. Relative paths are not expanded.
+      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
+        absolute, relative and nonexisting paths. Relative paths are relative to the file being
+        created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to state=directory)
+      - recursively set the specified file attributes (applies only to directories)
     type: bool
     default: 'no'
     version_added: "1.1"
@@ -182,7 +183,7 @@ def main():
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
-            follow=dict(required=False, default=False, type='bool'),
+            follow=dict(required=False, default=True, type='bool'),
             diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
             validate=dict(required=False, default=None),  # Internal use only, for template and copy
             src=dict(required=False, default=None, type='path'),

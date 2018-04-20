@@ -108,7 +108,10 @@ class LookupModule(LookupBase):
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
         res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
-        for obj in res:
-            if 'extattrs' in obj:
-                obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        if res is not None:
+            for obj in res:
+                if 'extattrs' in obj:
+                    obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        else:
+            res = []
         return res

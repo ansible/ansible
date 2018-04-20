@@ -218,7 +218,7 @@ options:
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
     - ' - C(mac) (string): Customize MAC address.'
     - 'Optional parameters per entry (used for OS customization):'
-    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
+    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
     - ' - C(netmask) (string): Static netmask required for C(ip).'
     - ' - C(gateway) (string): Static gateway.'
@@ -1019,6 +1019,9 @@ class PyVmomiHelper(PyVmomi):
                 # network type as 'static'
                 if 'ip' in network or 'netmask' in network:
                     network['type'] = 'static'
+                else:
+                    # User wants network type as 'dhcp'
+                    network['type'] = 'dhcp'
 
             if network.get('type') == 'static':
                 if 'ip' in network and 'netmask' not in network:
@@ -1719,6 +1722,8 @@ class PyVmomiHelper(PyVmomi):
         # next priority, cluster given, take the root of the pool
         elif self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
             resource_pool = cluster.resourcePool
         # fallback, pick any RP
         else:

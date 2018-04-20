@@ -263,6 +263,7 @@ files:
   $modules/cloud/misc/virt_pool.py: drybjed
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
+  $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
@@ -300,7 +301,6 @@ files:
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_guest.py: dagwieers
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/vsphere_guest.py: dagwieers
@@ -311,9 +311,9 @@ files:
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
   $modules/clustering/etcd3.py: evrardjp
-  $modules/clustering/k8s: chouseknecht sdoran maxamillion fabianvf flaper87
+  $modules/clustering/k8s: chouseknecht samdoran maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
-  $modules/clustering/openshift: chouseknecht sdoran maxamillion fabianvf flaper87
+  $modules/clustering/openshift: chouseknecht samdoran maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
   $modules/clustering/znode.py: treyperry
   $modules/commands/command.py: $team_ansible
@@ -486,6 +486,7 @@ files:
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
   $modules/network/routing/: $team_networking
+  $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/vyos/: Qalthos samdoran
@@ -567,7 +568,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 mkrizek
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 mkrizek kustodian
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -832,7 +833,7 @@ files:
     maintainers: paulquack
     labels: networking
   $module_utils/k8s_common.py:
-    maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
+    maintainers: chouseknecht samdoran maxamillion fabianvf flaper87
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
@@ -849,6 +850,9 @@ files:
     labels: networking
   $module_utils/network/onyx:
     maintainers: $team_onyx
+    labels: networking
+  $module_utils/network/slxos:
+    maintainers: $team_extreme
     labels: networking
   $module_utils/openstack.py:
     maintainers: $team_openstack
@@ -939,6 +943,9 @@ files:
   lib/ansible/plugins/callback/grafana_annotations.py:
     support: community
     maintainers: rrey
+  lib/ansible/plugins/callback/sumologic.py:
+    support: community
+    maintainers: ryancurrah
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
@@ -952,6 +959,9 @@ files:
     - nxos
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
+    labels: networking
+  lib/ansible/plugins/cliconf/slxos.py:
+    maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/connection/lxd.py:
     maintainers: mattclay
@@ -1043,6 +1053,9 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/slxos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1121,6 +1134,7 @@ macros:
   team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit

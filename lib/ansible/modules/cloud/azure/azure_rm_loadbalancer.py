@@ -731,7 +731,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 load_balancing_rules=load_balancing_rules_param
             )
 
-            self.create_or_update_load_balancer(param)
+            self.results['state'] = self.create_or_update_load_balancer(param)
         elif self.state == 'absent' and changed:
             self.delete_load_balancer()
             self.results['state'] = None
