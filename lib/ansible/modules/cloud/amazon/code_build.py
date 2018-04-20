@@ -14,11 +14,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: code_build
-short_description: Create or delete AWS CodeBuild
+short_description: Create or delete an AWS CodeBuild project
 notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html)
 description:
-    - Create or delete a CodeBuild projects on AWS.
+    - Create or delete a CodeBuild projects on AWS, used for building code artifacts from source code.
 version_added: "2.6"
 author:
     - Stefan Horning (@stefanhorning) <horning@mediapeers.com>
@@ -58,7 +58,7 @@ options:
         default: 60
         required: false
     encryption_key:
-        decription:
+        description:
             - The AWS Key Management Service (AWS KMS) customer master key (CMK) to be used for encrypting the build output artifacts.
         required: false
     tags:
@@ -87,6 +87,7 @@ EXAMPLES = '''
     description: My nice little project
     service_role: "arn:aws:iam::123123:role/service-role/code-build-service-role"
     source:
+        # Possible values: BITBUCKET, CODECOMMIT, CODEPIPELINE, GITHUB, S3
         type: CODEPIPELINE
         buildspec: ''
     artifacts:
@@ -102,19 +103,108 @@ EXAMPLES = '''
         environmentVariables:
             - { name: 'PROFILE', value: 'staging' }
     encryption_key: "arn:aws:kms:us-east-1:123123:alias/aws/s3"
+    region: us-east-1
     state: present
 '''
 
 RETURN = '''
 project:
-    description: Returns the dictionary desribing the code project configuration.
-    returned: success
-    type: complex
-    contains:
-        name:
-            descriptoin: Name of the CodeBuild project
-            returned: always
-            type: string
+  description: Returns the dictionary desribing the code project configuration.
+  returned: success
+  type: complex
+  contains:
+    name:
+      descriptoin: Name of the CodeBuild project
+      returned: always
+      type: string
+      sample: my_project
+    arn:
+      description: ARN of the CodeBuild project
+      returned: always
+      type: string
+      sample: arn:aws:codebuild:us-east-1:123123123:project/vod-api-app-builder
+    description:
+      description: A description of the build project
+      returned: always
+      type: string
+      sample: My nice little proejct
+    source:
+      description: Information about the build input source code.
+      returned: always
+      type: complex
+      contains:
+        type:
+          description: The type of the repository
+          returned: always
+          type: string
+          sample: CODEPIPELINE
+        location:
+          description: Location identifier, depending on the source type.
+          returned: when configured
+          type: string
+        git_clone_depth:
+          description: The git clone depth
+          returned: when configured
+          type: int
+        build_spec:
+          description: The build spec declaration to use for the builds in this build project.
+          returned: always
+          type: string
+        auth:
+          desription: Information about the authorization settings for AWS CodeBuild to access the source code to be built.
+          returned: when configured
+          type: complex
+        insecure_ssl:
+          description: True if set to ignore SSL warnings.
+          returned: when configured
+          type: bool
+    artifacts:
+      description: Information about the output of build artifacts
+      returned: always
+      type: complex
+      contains:
+        type:
+          description: The type of build artifact.
+          returned: always
+          type: string
+          sample: CODEPIPELINE
+        location:
+          description: Output location for build artifacts
+          returned: when configured
+          type: string
+        # and more... see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
+    cache:
+      description: Cache settings for the build project.
+      returned: when configured
+      type: complex
+    environment:
+      description: Environment settings for the build
+      returned: always
+      type: complex
+    service_role:
+      description: IAM role to be used during build to access other AWS services.
+      returned: always
+      type: string
+      sample: arn:aws:iam::123123123:role/codebuild-service-role
+    timeout_in_minutes:
+      description: The timeout of a build in minutes
+      returned: always
+      type: int
+      sample: 60
+    tags:
+      description: Tags added to the project
+      returned: when configured
+      type: list
+    created:
+      description: Timestamp of the create time of the project
+      returned: always
+      type: string
+      sample: 2018-04-17T16:56:03.245000+02:00
+    last_modified:
+      description: Timestamp of the time the project was last updated.
+      returned: always
+      type: string
+      sample: 2018-04-17T16:56:03.245000+02:00
 '''
 
 import traceback
@@ -134,7 +224,7 @@ def create_or_update_project(client, params, module):
     # Sanity check and cleanup params not needed for boto methods:
     if not isinstance(name, str):
         module.fail_json(msg="Params was missing name", exception=traceback.format_exc())
-    clean_params = dict((k, v) for k, v in params.iteritems() if v is not None)
+    clean_params = dict((k, v) for k, v in params.items() if v is not None)
     clean_params.pop('region', None)
     clean_params.pop('state', None)
     clean_params.pop('validate_certs', None)
@@ -217,7 +307,7 @@ def main():
         encryption_key=dict(required=False, type='str'),
         tags=dict(required=False, type='list'),
         vpc_config=dict(required=False, type='dict'),
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(required=True, type='str', choices=['present', 'absent'], default='present')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
