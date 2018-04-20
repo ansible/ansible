@@ -11,6 +11,7 @@
 - name: kill vcsim
   uri:
     url: http://{{ vcsim }}:5000/killall
+
 - name: start vcsim with no folders
   uri:
     url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
@@ -42,7 +43,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter_name: datacenter
+    datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
     switch_name: dvSwitch
     uplink_quantity: 2
     discovery_proto: lldp
