@@ -299,13 +299,20 @@ class Block(Base, Become, Conditional, Taggable):
         prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
-            if self._parent and (value is None or extend):
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is None or extend):
                 try:
-                    if getattr(self._parent, 'statically_loaded', True):
-                        if hasattr(self._parent, '_get_parent_attribute'):
-                            parent_value = self._parent._get_parent_attribute(attr)
+                    if getattr(_parent, 'statically_loaded', True):
+                        if hasattr(_parent, '_get_parent_attribute'):
+                            parent_value = _parent._get_parent_attribute(attr)
                         else:
-                            parent_value = self._parent._attributes.get(attr, None)
+                            parent_value = _parent._attributes.get(attr, None)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
