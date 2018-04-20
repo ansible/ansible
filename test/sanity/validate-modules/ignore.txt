@@ -1502,13 +1502,6 @@ lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E325
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_power.py E326
-lib/ansible/modules/remote_management/manageiq/manageiq_alert_profiles.py E324
-lib/ansible/modules/remote_management/manageiq/manageiq_alerts.py E324
-lib/ansible/modules/remote_management/manageiq/manageiq_policies.py E324
-lib/ansible/modules/remote_management/manageiq/manageiq_provider.py E324
-lib/ansible/modules/remote_management/manageiq/manageiq_provider.py E326
-lib/ansible/modules/remote_management/manageiq/manageiq_tags.py E324
-lib/ansible/modules/remote_management/manageiq/manageiq_user.py E324
 lib/ansible/modules/remote_management/oneview/oneview_datacenter_facts.py E322
 lib/ansible/modules/remote_management/oneview/oneview_enclosure_facts.py E322
 lib/ansible/modules/remote_management/oneview/oneview_ethernet_network.py E322
