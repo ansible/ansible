@@ -33,7 +33,10 @@ options:
   content:
     description:
       - When used instead of I(src), sets the contents of a file directly to the specified value.
-        For anything advanced or with formatting also look at the template module.
+        For anything advanced or with formatting also look at the M(template) module. For example,
+        You must use the template module to use advanced variables like 'ansible_managed'.
+        Templating of vars happens before the copy module can do anything with them, so such
+        special vars are simply not available here.
     version_added: "1.1"
   dest:
     description:
