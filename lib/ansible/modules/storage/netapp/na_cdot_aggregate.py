@@ -46,10 +46,16 @@ options:
     - Either C(disk-count) or C(disks) must be supplied. Range [0..2^31-1].
     - Required when C(state=present).
 
+  aggr_new_name:
+    required: false
+    description:
+    - The new name to rename the aggregate.
+    version_added: '2.6'
+
 '''
 
 EXAMPLES = """
-- name: Manage Aggregates
+- name: Create Aggregates
   na_cdot_aggregate:
     state: present
     name: ansibleAggr
@@ -58,10 +64,12 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Manage Aggregates
+- name: Rename Aggregates
   na_cdot_aggregate:
     state: present
     name: ansibleAggr
+    aggr_new_name: ansibleAggrNew
+    disk_count: 1
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
@@ -88,6 +96,7 @@ class NetAppCDOTAggregate(object):
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
             disk_count=dict(required=False, type='int'),
+            aggr_new_name=dict(required=False, type='str', default=None),
         ))
 
         self.module = AnsibleModule(
@@ -104,6 +113,7 @@ class NetAppCDOTAggregate(object):
         self.state = p['state']
         self.name = p['name']
         self.disk_count = p['disk_count']
+        self.new_name = p['aggr_new_name']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -171,7 +181,7 @@ class NetAppCDOTAggregate(object):
         aggr_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'aggr-rename', **{'aggregate': self.name,
                               'new-aggregate-name':
-                                  self.name})
+                                  self.new_name})
 
         try:
             self.server.invoke_successfully(aggr_rename,
@@ -192,8 +202,8 @@ class NetAppCDOTAggregate(object):
                 changed = True
 
             elif self.state == 'present':
-                if self.name is not None and not self.name == \
-                        self.name:
+                if self.new_name is not None and not self.name == \
+                        self.new_name:
                     rename_aggregate = True
                     changed = True
 
