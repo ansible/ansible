@@ -93,7 +93,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: niclist
+      network_interfaces: "{{ niclist }}"
       availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
         offer: UbuntuServer
@@ -201,7 +201,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: niclist
+      network_interfaces: "{{ niclist }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
