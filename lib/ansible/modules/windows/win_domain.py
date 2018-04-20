@@ -21,6 +21,10 @@ options:
     description:
       - the DNS name of the domain which should exist and be reachable or reside on the target Windows host
     required: yes
+  domain_netbios_name:
+    description:
+      - the netbios name of the domain
+    required: no
   safe_mode_password:
     description:
       - safe mode password for the domain controller
