@@ -10,7 +10,7 @@ Getting Started
 Foreword
 ````````
 
-Now that you've read :ref:`intro_installation` and installed Ansible, it's time to get
+Now that you've read the :ref:`installation guide<installation_guide>` and installed Ansible, it's time to get
 started with some ad-hoc commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
