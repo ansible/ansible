@@ -25,6 +25,7 @@ options:
     description:
       - the netbios name of the domain
     required: no
+    version_added: '2.6'
   safe_mode_password:
     description:
       - safe mode password for the domain controller
