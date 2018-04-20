@@ -327,6 +327,9 @@ def create_stack(module, stack_params, cfn):
         else:
             module.fail_json(msg="termination_protection parameter requires botocore >= 1.7.18")
 
+    # Create operation doesn't accept ClientRequestToken parameter.
+    stack_params.pop('ClientRequestToken', None)
+
     try:
         cfn.create_stack(**stack_params)
         result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params.get('ClientRequestToken', None))
