@@ -57,6 +57,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
+# Example for creating a pipeline for continouos deploy of Github code to an ECS cluster (container)
 - code_pipeline:
     name: my_deploy_pipeline
     role_arn: arn:aws:iam::123456:role/AWS-CodePipeline-Service
@@ -64,21 +65,107 @@ EXAMPLES = '''
       type: S3
       locatation: my_s3_codepipline_bucket
     stages:
-      - { name: 'Step 1', actions: [{name: 'fetch'}] }
-      - { name: 'Step 2', actions: [{name: 'build'}] }
-    version: 2
+      - name: Get_source
+        actions:
+          -
+            name: Git_pull
+            actionTypeId:
+              category: Source
+              owner: ThirdParty
+              provider: GitHub
+              version: '1'
+            outputArtifacts:
+              - { name: my-app-source }
+            configuration:
+              Owner: mediapeers
+              Repo: my_gh_repo
+              PollForSourceChanges: 'true'
+              Branch: master
+              # Generate token like this:
+              # https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-rotate-personal-token-CLI.html
+              # GH Link: https://github.com/settings/tokens
+              OAuthToken: 'abc123def456'
+            runOrder: 1
+      - name: Build
+        actions:
+          -
+            name: CodeBuild
+            actionTypeId:
+              category: Build
+              owner: AWS
+              provider: CodeBuild
+              version: '1'
+            inputArtifacts:
+              - { name: my-app-source }
+            outputArtifacts:
+              - { name: my-app-build }
+            configuration:
+              # A project with that name needs to be setup on AWS CodeBuild already (use code_build module).
+              ProjectName: codebuild-project-name
+            runOrder: 1
+      - name: ECS_deploy
+        actions:
+          -
+            name: ECS_deploy
+            actionTypeId:
+              category: Deploy
+              owner: AWS
+              provider: ECS
+              version: '1'
+            inputArtifacts:
+              - { name: vod-api-app-build }
+            configuration:
+              # an ECS cluster with that name needs to be setup on AWS ECS already (use ecs_cluster and ecs_service module)
+              ClusterName: ecs-cluster-name
+              ServiceName: ecs-cluster-service-name
+              FileName: imagedefinitions.json
+    region: us-east-1
+    state: present
 '''
 
 RETURN = '''
-codepipeline:
-    description: Returns the dictionary desribing the code pipeline configuration.
-    returned: success
-    type: complex
-    contains:
-        name:
-            descriptoin: Name of the CodePipeline
-            returned: always
-            type: string
+pipeline:
+  description: Returns the dictionary desribing the code pipeline configuration.
+  returned: success
+  type: complex
+  contains:
+    name:
+      description: Name of the CodePipeline
+      returned: always
+      type: string
+      sample: my_deploy_pipeline
+    role_arn:
+      description: ARN of the IAM role attached to the code pipeline
+      returned: always
+      type: string
+      sample: arn:aws:iam::123123123:role/codepipeline-service-role
+    artifact_store:
+      description: Information about where the build artifacts are stored
+      returned: always
+      type: complex
+      contains:
+        type:
+          desrciption: The type of the artifacts store, such as S3
+          returned: always
+          type: string
+          sample: S3
+        location:
+          description: The location of the artifacts storage (s3 bucket name)
+          returned: always
+          type: string
+          sample: my_s3_codepipline_bucket
+        encryption_key:
+          description: The encryption key used to encrypt the artifacts store, such as an AWS KMS key.
+          returned: when configured
+          type: string
+    stages:
+      description: List of stages configured for this pipeline
+      returned: always
+      type: list
+    version:
+      description: THe version number of the pipeline. This number is auto incremented when pipeline params are changed.
+      returned: always
+      type: int
 '''
 
 import traceback
