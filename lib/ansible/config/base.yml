@@ -1473,7 +1473,7 @@ PLUGIN_FILTERS_CFG:
   version_added: "2.5.0"
   description:
     - "A path to configuration for filtering which plugins installed on the system are allowed to be used."
-    - "See :doc:`plugin_filtering_config` for details of the filter file's format."
+    - "See :ref:`plugin_filtering_config` for details of the filter file's format."
     - " The default is /etc/ansible/plugin_filters.yml"
   ini:
   - key: plugin_filters_cfg
