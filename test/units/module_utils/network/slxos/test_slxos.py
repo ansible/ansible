@@ -129,3 +129,21 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         module.slxos_connection.get.assert_has_calls(calls)
 
         self.assertEqual(responses, run_command_responses)
+
+    @patch('ansible.module_utils.network.slxos.slxos.Connection')
+    def test_load_config(self, connection):
+        """ Test load_config
+        """
+        module = MagicMock()
+
+        commands = [
+            'what does it take',
+            'to be',
+            'number one?',
+            'two is not a winner',
+            'and three nobody remember',
+        ]
+
+        slxos.load_config(module, commands)
+
+        module.slxos_connection.edit_config.assert_called_once_with(commands)
