@@ -33,7 +33,7 @@ The following  checklist items are important guidelines for people who want to c
                         'supported_by': 'community',
                         'metadata_version': '1.1'}
 
-The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
+Read the complete :ref:`module metadata specification <ansible-metadata-block>` for more information.
 
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).

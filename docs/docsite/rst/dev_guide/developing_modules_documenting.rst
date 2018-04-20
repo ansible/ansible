@@ -67,6 +67,7 @@ add the newer line above the older one, like so:
     # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+.. _ansible_metadata_block:
 
 ANSIBLE_METADATA Block
 ----------------------
@@ -129,7 +130,7 @@ Fields
      certified instead)
 
    For information on what the support level values entail, please see
-   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
+   :ref:`Modules Support <modules_support>`.
 
 :status: This field records information about the module that is
    important to the end user. It's a list of strings. The default value

@@ -14,7 +14,7 @@ A great way to help the Ansible project is to become a power user:
 
 * Use Ansible everywhere you can
 * Take tutorials and classes
-* Read the `official documentation <http://docs.ansible.com/ansible/latest/index.html>`_
+* Read the :ref:`official documentation <ansible_documentation>`
 * Study some of the `many excellent books <https://www.amazon.com/s/ref=nb_sb_ss_c_2_7?url=search-alias%3Dstripbooks&field-keywords=ansible&sprefix=ansible%2Caps%2C260>`_ about Ansible
 * `Get certified <https://www.ansible.com/training-certification>`_.
 
