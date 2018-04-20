@@ -72,6 +72,7 @@ def main():
 
     try:
         caller_identity = client.get_caller_identity()
+        caller_identity.pop('ResponseMetadata', None)
         module.exit_json(
             changed=False,
             **camel_dict_to_snake_dict(caller_identity)
