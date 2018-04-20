@@ -240,6 +240,7 @@ EXAMPLES = '''
     account_key: key
     account_secret: secret
     domain: my.com
+    record_type: A
     state: absent
     record_name: test
 
