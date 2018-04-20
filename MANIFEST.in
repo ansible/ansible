@@ -18,5 +18,4 @@ include Makefile
 include VERSION
 include MANIFEST.in
 include CHANGELOG.md
-include contrib/README.md
-recursive-include contrib/inventory *
+recursive-include contrib *
