@@ -578,7 +578,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             diff = {}
         status = True
-        data = dict(changed=True, stdout=out, stderr=err, diff=diff)
+
+        changed = True
+        if build_dep:
+            changed = APT_GET_ZERO not in out
+
+        data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
