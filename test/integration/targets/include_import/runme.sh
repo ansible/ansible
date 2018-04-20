@@ -34,16 +34,23 @@ function cleanup() {
 }
 
 function get_memory() {
-    if [[ -f $(which sw_vers) ]]; then
-        # macOS
-        memory=$(sysctl hw.memsize | awk '{print $2}')
-        memory=$((memory / 1024))
-    else
-        # Linux
-        memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-    fi
+    os=$(uname)
 
-    echo $memory
+    case $os in
+        Darwin )
+            memory=$(sysctl hw.memsize | awk '{print $2}')
+            memory=$((memory / 1024))
+            ;;
+        Linux )
+            memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            ;;
+        FreeBSD )
+            memory=$(sysctl hw.physmem | awk '{print $2}')
+            memory=$((memory / 1024))
+            ;;
+    esac
+
+    echo "$memory"
 }
 
 ## Import (static)
