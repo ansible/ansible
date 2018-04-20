@@ -46,7 +46,6 @@ options:
     description:
     - Defines which resources can trigger an evaluation for the rule.
     - Resource type `rule`
-    required: true
     suboptions:
       compliance_types:
         description:
@@ -149,8 +148,18 @@ options:
     - Resource type `aggregation_authorization`
   account_sources:
     description:
-    - The 12-digit account ID of the account authorized to aggregate data.
+    - Provides a list of source accounts and regions to be aggregated.
     - Resource type `configuration_aggregator`
+    suboptions:
+      account_ids:
+        description:
+        - A list of 12-digit account IDs of accounts being aggregated.
+      aws_regions:
+        description:
+        - A list of source regions being aggregated.
+      all_aws_regions:
+        description:
+        - If true, aggreagate existing AWS Config regions and future regions.
   organization_source:
     description:
     - The region authorized to collect aggregated data.
@@ -180,7 +189,6 @@ EXAMPLES = r'''
     recording_group:
         all_supported: true
         include_global_types: true
-        resource_types: []
 
 - name: Create Delivery Channel for AWS Config
   aws_config:
@@ -188,7 +196,6 @@ EXAMPLES = r'''
     state: present
     resource_type: delivery_channel
     s3_bucket: 'test_aws_config_bucket'
-    s3_prefix: "/*"
     sns_topic_arn: 'arn:aws:sns:us-east-1:123456789012:aws_config_topic:1234ab56-cdef-7g89-01hi-2jk34l5m67no'
     delivery_frequency: 'Twelve_Hours'
 
@@ -202,7 +209,7 @@ EXAMPLES = r'''
         compliance_types:
             - 'AWS::S3::Bucket'
     source:
-        owner: aws
+        owner: AWS
         identifier: 'S3_BUCKET_PUBLIC_WRITE_PROHIBITED'
 
 '''
@@ -483,7 +490,9 @@ def main():
     requirements = [
         ('resource_type', 'rule', ['source']),
         ('resource_type', 'delivery_channel', ['s3_bucket']),
-        ('resource_type', 'configuration_recorder', ['role_arn'])
+        ('resource_type', 'configuration_recorder', ['role_arn', 'recording_group']),
+        ('resource_type', 'aggregation_authorization', ['authorized_account_id', 'authorized_aws_region']),
+        ('resource_type', 'configuration_aggregator', ['account_sources', 'organization_source'])
     ]
 
     module = AnsibleAWSModule(
@@ -496,7 +505,8 @@ def main():
                     'rule',
                     'delivery_channel',
                     'configuration_recorder',
-                    'aggregation_authorization'
+                    'aggregation_authorization',
+                    'configuration_aggregator'
                 ],
                 required=True
             ),
@@ -504,11 +514,29 @@ def main():
             'scope': dict(type='dict'),
             'source': dict(type='dict'),
             'input_parameters': dict(type='str'),
-            'execution_frequency': dict(type='str', choices=['One_Hour', 'Three_Hours', 'Six_Hours', 'Twelve_Hours', 'TwentyFour_Hours']),
+            'execution_frequency': dict(
+                type='str',
+                choices=[
+                    'One_Hour',
+                    'Three_Hours',
+                    'Six_Hours',
+                    'Twelve_Hours',
+                    'TwentyFour_Hours'
+                ]
+            ),
             's3_bucket': dict(type='str'),
             's3_prefix': dict(type='str'),
             'sns_topic_arn': dict(type='str'),
-            'delivery_frequency': dict(type='str', choices=['One_Hour', 'Three_Hours', 'Six_Hours', 'Twelve_Hours', 'TwentyFour_Hours']),
+            'delivery_frequency': dict(
+                type='str',
+                choices=[
+                    'One_Hour',
+                    'Three_Hours',
+                    'Six_Hours',
+                    'Twelve_Hours',
+                    'TwentyFour_Hours'
+                ]
+            ),
             'role_arn': dict(type='str'),
             'recording_group': dict(type='dict'),
             'authorized_account_id': dict(type='str'),
@@ -597,11 +625,11 @@ def main():
             params['roleARN'] = module.params.get('role_arn')
         if module.params.get('recording_group'):
             params['recordingGroup'] = {}
-            if module.params.get('recording_group').get('all_supported'):
+            if module.params.get('recording_group').get('all_supported') is not None:
                 params['recordingGroup'].update({
                     'allSupported': module.params.get('recording_group').get('all_supported')
                 })
-            if module.params.get('recording_group').get('include_global_types'):
+            if module.params.get('recording_group').get('include_global_types') is not None:
                 params['recordingGroup'].update({
                     'includeGlobalResourceTypes': module.params.get('recording_group').get('include_global_types')
                 })
@@ -629,7 +657,7 @@ def main():
                     tmp_dict['AccountIds'] = i.get('account_ids')
                 if i.get('aws_regions'):
                     tmp_dict['AwsRegions'] = i.get('aws_regions')
-                if i.get('all_aws_regions'):
+                if i.get('all_aws_regions') is not None:
                     tmp_dict['AllAwsRegions'] = i.get('all_aws_regions')
                 params['AccountAggregationSources'].append(tmp_dict)
         if module.params.get('organization_source'):
@@ -642,7 +670,7 @@ def main():
                 params['OrganizationAggregationSource'].update({
                     'AwsRegions': module.params.get('organization_source').get('aws_regions')
                 })
-            if module.params.get('organization_source').get('all_aws_regions'):
+            if module.params.get('organization_source').get('all_aws_regions') is not None:
                 params['OrganizationAggregationSourcep'].update({
                     'AllAwsRegions': module.params.get('organization_source').get('all_aws_regions')
                 })
