@@ -108,5 +108,3 @@ The following topics will discuss how to develop and work with modules:
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
-
-.. include:: ./developing_module_utilities.rst
