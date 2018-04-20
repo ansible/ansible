@@ -1,0 +1,2 @@
+bugfixes:
+- docker modules - Error with useful message is both docker and docker-py are found to both be installed (https://github.com/ansible/ansible/pull/38884)
