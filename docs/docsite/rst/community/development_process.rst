@@ -1,3 +1,5 @@
+.. _community_development_process:
+
 The Ansible Development Process
 ===============================
 
