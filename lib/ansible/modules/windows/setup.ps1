@@ -41,16 +41,24 @@ Function Get-MachineSid {
     # only accessible by the Local System account. This method get's the local
     # admin account (ends with -500) and lops it off to get the machine sid.
 
+    $admins_sid = "S-1-5-32-544"
+    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value 
+
     Add-Type -AssemblyName System.DirectoryServices.AccountManagement
     $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
-    $user_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.UserPrincipal($principal_context)
-    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($user_principal)
-    $users = $searcher.FindAll() | Where-Object { $_.Sid -like "*-500" }
-    
+    $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
+    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
+    $groups = $searcher.FindOne()
+
     $machine_sid = $null
-    if ($users -ne $null) {
-        $machine_sid = $users.Sid.AccountDomainSid.Value
+    foreach ($user in $groups.Members) {
+        $user_sid = $user.Sid
+        if ($user_sid.Value.EndsWith("-500")) {
+            $machine_sid = $user_sid.AccountDomainSid.Value
+            break
+        }
     }
+
     return $machine_sid
 }
 
