@@ -1,3 +1,5 @@
+.. _reporting_bugs_and_features:
+
 **************************************
 Reporting Bugs And Requesting Features
 **************************************
