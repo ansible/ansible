@@ -54,6 +54,7 @@ class IncludedFile:
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
+        task_vars_cache = {}
 
         for res in results:
 
@@ -73,7 +74,11 @@ class IncludedFile:
                     if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
                         continue
 
-                    task_vars = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
+                    cache_key = (iterator._play, original_host, original_task)
+                    try:
+                        task_vars = task_vars_cache[cache_key]
+                    except KeyError:
+                        task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
