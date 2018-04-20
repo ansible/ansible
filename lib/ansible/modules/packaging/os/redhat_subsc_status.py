@@ -15,7 +15,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make coding more python3-ish
 
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -43,7 +43,6 @@ options:
     required: false
     default: null
     type: bool
-      
 author:
     - "Kevyn Perez (@Deathice)"
     - "Luis Perez (@dbinary)"
@@ -68,70 +67,65 @@ EXAMPLES = '''
     export_csv: true
 
 '''
-
-
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 import sys
 import csv
 import os
 import subprocess
 import re
+import socket
+
 
 def redhat_subsc_status(module):
-  
-  is_error = False
-  has_changed = False
-  
-  sm = module.params['status']
-  gen_csv = module.params['export_csv']
+    is_error = False
+    has_changed = False
+    sm = module.params['status']
+    gen_csv = module.params['export_csv']
+    hostname = socket.gethostname()
 
-  if sm:
-    output = module.run_command('/usr/sbin/subscription-manager list')
+    if sm:
+        output = module.run_command('/usr/sbin/subscription-manager list')
+        if 'Subscribed' in output[1]:
+            resp = {
+                "Subscription_status": "True"
+            }
+        else:
+            resp = {
+                "Subscription_status": "False"
+            }
+        meta = {"status": "OK", "response": resp}
 
-    if 'Subscribed' in output[1]:
-      resp = {
-        "Subscription_status": "True"
-      }
+        if gen_csv:
+            module.params = [hostname, resp]
+            nm = "/tmp/report_subscription_status.csv"
+            with open(nm, 'wb') as nm:
+                wr = csv.writer(nm, quoting=csv.QUOTE_ALL)
+                wr.writerow(module.params)
 
-    else:
-      resp = {
-        "Subscription_status": "False"
-      }
-    meta = {"status" : "OK", "response" : resp}
+    return is_error, has_changed, meta
 
-    if gen_csv:
-      module.params = ["host", cmd]
-      nm = "/tmp/report_subscription_status.csv"
-      with open (nm, 'wb') as nm:
-        wr = csv.writer(nm, quoting=csv.QUOTE_ALL)
-        wr.writerow(module.params)
-
-  return is_error, has_changed, meta
-  
 
 def main():
+    fields = {
+        "status": {
+            "required": True,
+            "type": "bool",
+        },
+        "export_csv": {
+            "required": False,
+            "type": "bool",
+        },
+    }
 
-  fields = {
-    "status": {
-      "required": True,
-      "type": "bool",
-    },
-    "export_csv": {
-      "required": False,
-      "type": "bool",
-    },
-  }
+    module = AnsibleModule(argument_spec=fields)
 
-  module = AnsibleModule(argument_spec=fields)
+    is_error, has_changed, result = redhat_subsc_status(module)
 
-  #is_error, has_changed, result = redhat_subsc_status(module.params)
-  is_error, has_changed, result = redhat_subsc_status(module)
-
-  if not is_error:
-    module.exit_json(changed=has_changed, meta=result)
-  else:
-    module.fail_json(msg="Error when consult the subscription", meta=result)
+    if not is_error:
+        module.exit_json(changed=has_changed, meta=result)
+    else:
+        module.fail_json(msg="Error when consult the subscription", meta=result)
 
 
 if __name__ == '__main__':
-  main()
+    main()
