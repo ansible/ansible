@@ -193,6 +193,9 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "source-dir":
             lines.append(lineDict(line))
             currently_processing = "NONE"
+        elif words[0] == "source-directory":
+            lines.append(lineDict(line))
+            currently_processing = "NONE"
         elif words[0] == "iface":
             currif = {
                 "pre-up": [],
