@@ -30,9 +30,9 @@ or in the ``ansible.cfg`` file:
     fact_caching=redis
 
 You will also need to configure other settings specific to each plugin. Consult the individual plugin documentation
-or the Ansible :doc:`configuration <../config>` for more details.
+or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details.
 
-A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the directory sources configured in :doc:`ansible.cfg <../config>`.
+A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_cache:

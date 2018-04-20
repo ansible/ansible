@@ -1,3 +1,5 @@
+.. _maintainers:
+
 ****************************
 Module Maintainer Guidelines
 ****************************
@@ -8,8 +10,8 @@ Thank you for being a maintainer of part of Ansible's codebase. This guide provi
 
 In addition to the information below, module maintainers should be familiar with:
 
-* :ref:`General Ansible community development practices <../community>`
-* Documentation on :ref:`module development <../dev_guide/developing_modules>`
+* :ref:`General Ansible community development practices <ansible_community_guide>`
+* Documentation on :ref:`module development <developing_modules>`
 
 
 Maintainer Responsibilities
