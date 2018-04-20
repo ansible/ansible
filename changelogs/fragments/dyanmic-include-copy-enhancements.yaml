@@ -1,0 +1,2 @@
+bugfixes:
+- dynamic includes - Improved performance by fixing re-parenting on copy (https://github.com/ansible/ansible/pull/38747)
