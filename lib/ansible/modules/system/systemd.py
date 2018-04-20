@@ -100,7 +100,7 @@ EXAMPLES = '''
   systemd:
     name: dnf-automatic.timer
     state: started
-    enabled: True
+    enabled: yes
 
 - name: just force systemd to reread configs (2.4 and above)
   systemd:
