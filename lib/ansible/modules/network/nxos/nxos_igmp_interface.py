@@ -155,7 +155,7 @@ EXAMPLES = '''
     startup_query_interval: 30
     oif_ps:
       - { 'prefix': '238.2.2.6' }
-      - { 'source': '1.1.1.1', 'prefix': '238.2.2.5'}
+      - { 'source': '192.168.0.1', 'prefix': '238.2.2.5'}
     state: present
 '''
 RETURN = '''
@@ -164,7 +164,7 @@ proposed:
     returned: always
     type: dict
     sample: {"startup_query_count": "30",
-             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]}
+             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '192.168.0.1', 'prefix': '238.2.2.5'}]}
 existing:
     description: k/v pairs of existing igmp_interface configuration
     returned: always
@@ -175,13 +175,13 @@ end_state:
     returned: always
     type: dict
     sample: {"startup_query_count": "30",
-             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '1.1.1.1', 'prefix': '238.2.2.5'}]}
+             "oif_ps": [{'prefix': '238.2.2.6'}, {'source': '192.168.0.1', 'prefix': '238.2.2.5'}]}
 updates:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface Ethernet1/32", "ip igmp startup-query-count 30",
-             "ip igmp static-oif 238.2.2.6", "ip igmp static-oif 238.2.2.5 source 1.1.1.1"]
+             "ip igmp static-oif 238.2.2.6", "ip igmp static-oif 238.2.2.5 source 192.168.0.1"]
 changed:
     description: check to see if a change was made on the device
     returned: always
