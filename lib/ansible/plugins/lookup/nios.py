@@ -112,4 +112,6 @@ class LookupModule(LookupBase):
             for obj in res:
                 if 'extattrs' in obj:
                     obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        else:
+            res = []
         return res
