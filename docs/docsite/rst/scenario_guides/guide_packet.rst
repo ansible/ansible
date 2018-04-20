@@ -10,7 +10,7 @@ Introduction
 - packet_sshkey: adds a public SSH key from file or value to the Packet infrastructure. Every subsequently-created device will have this public key installed in .ssh/authorized_keys.
 - packet_device: manages servers on Packet. You can use this module to create, restart and delete devices.
 
-Note, this guide assumes you are familiar with Ansible and how it works. If you're not, have a look at their `docs <http://docs.ansible.com/>`_ before getting started.
+Note, this guide assumes you are familiar with Ansible and how it works. If you're not, have a look at their :ref:`docs <ansible_documentation>` before getting started.
 
 Requirements
 ============

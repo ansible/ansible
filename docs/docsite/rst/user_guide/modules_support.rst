@@ -1,3 +1,5 @@
+.. _modules_support:
+
 Module Maintenance & Support
 ----------------------------
 
