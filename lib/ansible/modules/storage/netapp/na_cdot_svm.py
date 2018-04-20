@@ -58,6 +58,12 @@ options:
     -   Required when C(state=present)
     choices: ['unix', 'ntfs', 'mixed', 'unified']
 
+  svm_new_name:
+    description:
+    - The new name to rename the vserver.
+    required: false
+    version_added: '2.6'
+
 '''
 
 EXAMPLES = """
@@ -66,6 +72,18 @@ EXAMPLES = """
       na_cdot_svm:
         state: present
         name: ansibleVServer
+        root_volume: vol1
+        root_volume_aggregate: aggr1
+        root_volume_security_style: mixed
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: Rename SVM
+      na_cdot_svm:
+        state: present
+        name: ansibleVServer
+        svm_new_name: ansibleVServerNew
         root_volume: vol1
         root_volume_aggregate: aggr1
         root_volume_security_style: mixed
@@ -102,6 +120,7 @@ class NetAppCDOTSVM(object):
                                                                  'mixed',
                                                                  'unified'
                                                                  ]),
+            svm_new_name=dict(required=False, type='str', default=None),
         ))
 
         self.module = AnsibleModule(
@@ -122,6 +141,7 @@ class NetAppCDOTSVM(object):
         self.root_volume = p['root_volume']
         self.root_volume_aggregate = p['root_volume_aggregate']
         self.root_volume_security_style = p['root_volume_security_style']
+        self.new_name = p['svm_new_name']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -194,7 +214,7 @@ class NetAppCDOTSVM(object):
     def rename_vserver(self):
         vserver_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-rename', **{'vserver-name': self.name,
-                                 'new-name': self.name})
+                                 'new-name': self.new_name})
 
         try:
             self.server.invoke_successfully(vserver_rename,
@@ -213,7 +233,9 @@ class NetAppCDOTSVM(object):
 
             elif self.state == 'present':
                 # Update properties
-                pass
+                if self.new_name is not None and not self.name != self.new_name:
+                    rename_vserver = True
+                    changed = True
 
         else:
             if self.state == 'present':
