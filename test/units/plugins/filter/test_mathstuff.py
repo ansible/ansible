@@ -106,6 +106,24 @@ class TestPower:
         assert ms.power(10, 3) == 1000
 
 
+class TestHaversine:
+    def test_haversine_non_number(self):
+        with pytest.raises(AnsibleFilterError, message='haversine() only accepts floats'):
+            ms.haversine('km', 'a', 'b', 'c', 'd')
+
+        with pytest.raises(AnsibleFilterError, message='haversine() only accepts floats'):
+            ms.haversine('m', 'a', 'b', 'c', 'd')
+
+        with pytest.raises(AnsibleFilterError, message='haversine() can only be called with km or m'):
+            ms.haversine('z', '35.9914928','-78.907046', '-33.8523063', '151.2085984')
+
+    def test_km(self):
+        assert ms.haversine('km', '35.9914928', '-78.907046', '-33.8523063', '151.2085984') == 15490.46
+
+    def test_m(self):
+        assert ms.haversine('m', '35.9914928', '-78.907046', '-33.8523063', '151.2085984') == 9625.31
+
+
 class TestInversePower:
     def test_root_non_number(self):
         with pytest.raises(AnsibleFilterError, message='root() can only be used on numbers: a float is required'):

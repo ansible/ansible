@@ -114,6 +114,29 @@ def inversepower(x, base=2):
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
 
+def haversine(measurement, lat1, lon1, lat2, lon2):
+    from math import radians, sin, cos, sqrt, asin
+    diameter = {
+        'm': 7917.5,
+        'km': 12742}
+
+    try:
+        dlat = radians(float(lat2) - float(lat1))
+        dlon = radians(float(lon2) - float(lon1))
+        lat1 = radians(float(lat1))
+        lat2 = radians(float(lat2))
+
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * asin(sqrt(a))
+    except (ValueError, TypeError) as e:
+        raise errors.AnsibleFilterError('haversine() only accepts floats: %s' % str(e))
+
+    if measurement in diameter:
+        return round(diameter[measurement] / 2 * c, 2)
+    else:
+        raise errors.AnsibleFilterError('haversine() can only be called with km or m')
+
+
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
@@ -209,6 +232,9 @@ class FilterModule(object):
             # zip
             'zip': zip,
             'zip_longest': zip_longest,
+
+            # haversine
+            'haversine': haversine,
 
         }
 

@@ -271,6 +271,10 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
+Haversine, great-circle distance between two coordinates::
+
+    {{ 'm'|haversine('35.9914928','-78.907046', '-33.8523063', '151.2085984') }}
+
 Note that jinja2 already provides some like abs() and round().
 
 .. json_query_filter:
