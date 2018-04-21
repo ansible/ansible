@@ -115,7 +115,7 @@ class TestHaversine:
             ms.haversine('m', 'a', 'b', 'c', 'd')
 
         with pytest.raises(AnsibleFilterError, message='haversine() can only be called with km or m'):
-            ms.haversine('z', '35.9914928','-78.907046', '-33.8523063', '151.2085984')
+            ms.haversine('z', '35.9914928', '-78.907046', '-33.8523063', '151.2085984')
 
     def test_km(self):
         assert ms.haversine('km', '35.9914928', '-78.907046', '-33.8523063', '151.2085984') == 15490.46
