@@ -205,6 +205,18 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
+
+# Download (Bottle) package to /my_app/pylibs
+- pip:
+    name: bottle
+    state: downloaded
+    extra_args: "-d /my_app/pylibs"
+
+# Download packages from reqs file to a directory
+- pip:
+    requirements: /my_app/requirements.txt
+    state: downloaded
+    extra_args: "-d /my_app/pylibs"
 '''
 
 RETURN = '''
