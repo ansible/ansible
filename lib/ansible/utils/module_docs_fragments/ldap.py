@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2017-2018 Keller Fuchs (@kellerfuchs) <kellerfuchs@hashbang.sh>
-# Copyright 2016      Peter Sagerson <psagers@ignorare.net>
 # Copyright 2016      Jiri Tyr <jiri.tyr@gmail.com>
+# Copyright 2016      Peter Sagerson <psagers@ignorare.net>
 
 # This file is part of Ansible by Red Hat
 #
