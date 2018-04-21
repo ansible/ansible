@@ -73,11 +73,12 @@ modlist:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ldap import LdapGeneric, gen_specs, HAS_LDAP
+from ansible.module_utils.ldap import LdapGeneric, gen_specs
 from ansible.module_utils._text import to_native
 
 try:
     import ldap
+    HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
 
