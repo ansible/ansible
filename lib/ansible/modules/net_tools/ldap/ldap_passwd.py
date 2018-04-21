@@ -91,18 +91,18 @@ class LdapPasswd(LdapGeneric):
 
     def passwd_check(self):
         try:
-            u_con = ldap.initialize(self.server_uri)
+            tmp_con = ldap.initialize(self.server_uri)
         except ldap.LDAPError as e:
             self.fail("Cannot initialize LDAP connection", e)
 
         if self.start_tls:
             try:
-                u_con.start_tls_s()
+                tmp_con.start_tls_s()
             except ldap.LDAPError as e:
                 self.fail("Cannot start TLS.", e)
 
         try:
-            u_con.simple_bind_s(self.dn, self.passwd)
+            tmp_con.simple_bind_s(self.dn, self.passwd)
         except ldap.INVALID_CREDENTIALS:
             return True
         except ldap.LDAPError as e:
@@ -110,7 +110,7 @@ class LdapPasswd(LdapGeneric):
         else:
             return False
         finally:
-            u_con.unbind()
+            tmp_con.unbind()
 
     def passwd_set(self):
         # Exit early if the password is already valid
