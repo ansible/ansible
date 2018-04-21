@@ -57,9 +57,11 @@ class LdapGeneric(object):
         self.connection = self._connect_to_ldap()
 
     def fail(self, msg, exn):
-        self.module.fail_json(msg=msg,
-                              details=to_native(exn),
-                              exception=traceback.format_exc())
+        self.module.fail_json(
+            msg=msg,
+            details=to_native(exn),
+            exception=traceback.format_exc()
+        )
 
     def _connect_to_ldap(self):
         if not self.verify_cert:
