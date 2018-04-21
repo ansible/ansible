@@ -124,7 +124,7 @@ class LdapPasswd(LdapGeneric):
         except ldap.LDAPError as e:
             self.fail("Unable to set password", e)
 
-        # We successfully changed the password  \o/
+        # Password successfully changed
         return True
 
 
