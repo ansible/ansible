@@ -789,7 +789,7 @@ def main():
             if not force or not interfaces:
                 for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
-                    for key in interface.keys():
+                    for key in tuple(interface.keys()):
                         if key in ['interfaceid', 'hostid', 'bulk']:
                             interface.pop(key, None)
 
