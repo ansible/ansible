@@ -82,7 +82,7 @@ If(-not $forest) {
             $install_forest_args.SysvolPath = $sysvol_path
         }
 	if ($domain_netbios_name) {
-        $install_forest_args.DomainNetBiosName = $domain_netbios_name
+            $install_forest_args.DomainNetBiosName = $domain_netbios_name
         }
         
         $iaf = Install-ADDSForest @install_forest_args
