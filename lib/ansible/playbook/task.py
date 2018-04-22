@@ -228,7 +228,7 @@ class Task(Base, Conditional, Taggable, Become):
                 # as we will remove this at some point in the future.
                 if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
                 elif k in self._valid_attrs:
