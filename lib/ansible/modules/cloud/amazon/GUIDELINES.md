@@ -158,7 +158,7 @@ connection = boto3_conn(module, conn_type='client', resource='ec2', region=regio
 
 ### Common Documentation Fragments for Connection Parameters
 
-There are two [common documentation fragments](http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+There are two [common documentation fragments](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
 that should be included into almost all AWS modules:
 
 * `aws` - contains the common boto connection parameters
@@ -518,8 +518,8 @@ affect the module are detected. At a minimum this should cover the key API calls
 documented return values are present in the module result.
 
 For general information on running the integration tests see the [Integration Tests page of the
-Module Development Guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
-Particularly the [cloud test configuration section](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+Module Development Guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
 
 The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
 
@@ -567,7 +567,7 @@ for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2
 
 ### AWS Permissions for Integration Tests
 
-As explained in the [Integration Test guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+As explained in the [Integration Test guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
 there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
 to run the AWS integration test.
 
