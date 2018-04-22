@@ -189,7 +189,7 @@ class Default(FactsBase):
 
         data = self.responses[2]
         self.facts['hostname'] = self.parse_hostname(data)
-        
+
         data = self.responses[3]
         self.facts['stack'] = self.parse_stack(data)
 
@@ -215,7 +215,7 @@ class Default(FactsBase):
         match = re.search(r'image file is "(.+)"', data)
         if match:
             return match.group(1)
-    
+  
     def parse_stack(self, data):
         match = re.search(r'^Topology:\s*(.+)', data, re.M)
         if match:
@@ -230,8 +230,7 @@ class Default(FactsBase):
         match = re.findall(r'\s+\S+\s+\S+\s+(\w{14})\s+\S+', data, re.M)
         if match:
             self.facts['stack_serialnums'] = match
-
-
+            
     def parse_serialnum(self, data):
         for line in data.split('\n'):
             if line.startswith('*'):
@@ -239,7 +238,7 @@ class Default(FactsBase):
                     r'\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)', line, re.M)
                 if match:
                     return match.group(3)
-
+                  
                   
 class Hardware(FactsBase):
 
