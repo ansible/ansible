@@ -48,6 +48,8 @@ options:
   enabled:
     description:
       - Interface link status.
+    default: True
+    type: bool
   speed:
     description:
       - Interface link speed.
