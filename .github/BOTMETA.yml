@@ -870,7 +870,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/vmware:
+  $module_utils/vmware_common:
     maintainers: $team_vmware
     labels: vmware
     support: community

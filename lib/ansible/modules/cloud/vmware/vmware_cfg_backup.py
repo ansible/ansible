@@ -87,7 +87,8 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.vmware import vmware_argument_spec, get_all_objs, wait_for_task, PyVmomi
+from ansible.module_utils.vmware_common.vmware import (vmware_argument_spec, get_all_objs,
+                                                       wait_for_task, PyVmomi)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError

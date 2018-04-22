@@ -100,7 +100,8 @@ except ImportError:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_datacenter_by_name, find_cluster_by_name
+from ansible.module_utils.vmware_common.vmware import (PyVmomi, vmware_argument_spec,
+                                                       find_datacenter_by_name, find_cluster_by_name)
 
 
 class VmwreClusterFactsManager(PyVmomi):

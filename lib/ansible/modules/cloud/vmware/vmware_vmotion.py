@@ -69,8 +69,9 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (connect_to_api, find_hostsystem_by_name, find_vm_by_name,
-                                         vmware_argument_spec, wait_for_task)
+from ansible.module_utils.vmware_common.vmware import (connect_to_api, find_hostsystem_by_name,
+                                                       find_vm_by_name, vmware_argument_spec,
+                                                       wait_for_task)
 
 
 def migrate_vm(vm_object, host_object):

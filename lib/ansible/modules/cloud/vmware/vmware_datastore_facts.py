@@ -100,8 +100,9 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec, get_all_objs,
-                                         find_cluster_by_name, get_parent_datacenter)
+from ansible.module_utils.vmware_common.vmware import (PyVmomi, vmware_argument_spec,
+                                                       get_all_objs, find_cluster_by_name,
+                                                       get_parent_datacenter)
 
 
 class PyVmomiCache(object):

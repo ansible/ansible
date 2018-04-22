@@ -422,9 +422,10 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
-                                         compile_folder_path_for_object, serialize_spec,
-                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
+from ansible.module_utils.vmware_common.vmware import (find_obj, gather_vm_facts,
+                                                       get_all_objs, compile_folder_path_for_object,
+                                                       serialize_spec, vmware_argument_spec,
+                                                       set_vm_power_state, PyVmomi)
 
 
 class PyVmomiDeviceHelper(object):

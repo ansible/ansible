@@ -137,8 +137,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec, wait_for_task,
-                                         find_vm_by_id, find_cluster_by_name)
+from ansible.module_utils.vmware_common.vmware import (PyVmomi, vmware_argument_spec,
+                                                       wait_for_task, find_vm_by_id, find_cluster_by_name)
 
 
 class VmwareDrs(PyVmomi):

@@ -112,7 +112,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
+from ansible.module_utils.vmware_common.vmware import vmware_argument_spec, PyVmomi
 from ansible.module_utils._text import to_native
 
 

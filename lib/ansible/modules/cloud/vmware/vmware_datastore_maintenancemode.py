@@ -103,8 +103,9 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec, wait_for_task,
-                                         find_cluster_by_name, get_all_objs)
+from ansible.module_utils.vmware_common.vmware import (PyVmomi, vmware_argument_spec,
+                                                       wait_for_task, find_cluster_by_name,
+                                                       get_all_objs)
 from ansible.module_utils._text import to_native
 
 

@@ -129,8 +129,10 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
-from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_argument_spec, find_datacenter_by_name, \
-    find_cluster_by_name, wait_for_task, find_host_by_cluster_datacenter
+from ansible.module_utils.vmware_common.vmware import (get_all_objs, connect_to_api,
+                                                       vmware_argument_spec, find_datacenter_by_name,
+                                                       find_cluster_by_name, wait_for_task,
+                                                       find_host_by_cluster_datacenter)
 from ansible.module_utils.basic import AnsibleModule
 
 

@@ -108,7 +108,7 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, get_all_objs
+from ansible.module_utils.vmware_common.vmware import PyVmomi, vmware_argument_spec, get_all_objs
 try:
     from pyVmomi import vim, vmodl
 except ImportError:

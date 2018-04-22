@@ -79,8 +79,9 @@ except ImportError as e:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (PyVmomi, find_dvs_by_name, find_hostsystem_by_name,
-                                         vmware_argument_spec, wait_for_task)
+from ansible.module_utils.vmware_common.vmware import (PyVmomi, find_dvs_by_name,
+                                                       find_hostsystem_by_name, vmware_argument_spec,
+                                                       wait_for_task)
 from ansible.module_utils._text import to_native
 
 
