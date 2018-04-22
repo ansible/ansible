@@ -59,7 +59,7 @@ class ActionModule(_ActionModule):
 
             if provider['transport'] == 'cli' and self._task.action not in CLI_SUPPORTED_MODULES:
                 return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
-                                               "Please see http://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
+                                               "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (provider['transport'], self._task.action)}
 
             if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
@@ -93,7 +93,7 @@ class ActionModule(_ActionModule):
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
                     (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
-                                               "Please see http://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
+                                               "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, self._task.action)}
 
         if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':

@@ -1,7 +1,7 @@
 Homepage and documentation source for Ansible
 =============================================
 
-This project hosts the source behind [docs.ansible.com](http://docs.ansible.com/)
+This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/)
 
 Contributions to the documentation are welcome. To make changes, submit a pull request that changes the reStructuredText files in the `rst/` directory only, and the core team can do a docs build and push the static files.
 
@@ -18,4 +18,4 @@ Note that module documentation can actually be [generated from a DOCUMENTATION d
 To install sphinx and the required theme, install pip and then "pip install sphinx sphinx_rtd_theme"
 
 [file issues]: https://github.com/ansible/ansible/issues
-[module-docs]: http://docs.ansible.com/developing_modules.html#documenting-your-module
+[module-docs]: https://docs.ansible.com/developing_modules.html#documenting-your-module
