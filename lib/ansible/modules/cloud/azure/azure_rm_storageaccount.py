@@ -147,7 +147,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -167,8 +167,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in self.storage_models.SkuName:
-            self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+        if HAS_AZURE:
+            for key in self.storage_models.SkuName:
+                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,
