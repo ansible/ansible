@@ -17,7 +17,8 @@ short_description: Manages public IP address associations on Apache CloudStack b
 description:
     - Acquires and associates a public IP to an account or project.
     - Due to API limitations this is not an idempotent call, so be sure to only
-      conditionally call this when C(state=present)
+      conditionally call this when C(state=present).
+    - Tagging the IP address can also make the call idempotent.
 version_added: '2.0'
 author:
     - "Darren Worrall (@dazworrall)"
@@ -26,7 +27,7 @@ options:
   ip_address:
     description:
       - Public IP address.
-      - Required if C(state=absent)
+      - Required if C(state=absent) and C(tags) is not set
   domain:
     description:
       - Domain the IP address is related to.
@@ -52,6 +53,13 @@ options:
       - State of the IP address.
     default: present
     choices: [ present, absent ]
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - Tags can be used as an unique identifier for the IP Addresses.
+      - In this case, at least one of them must be unique to ensure idempontency.
+    aliases: [ 'tag' ]
+    version_added: "2.6"
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -73,6 +81,23 @@ EXAMPLES = '''
     module: cs_ip_address
     ip_address: 1.2.3.4
     state: absent
+
+- name: Associate an IP address with tags
+  local_action:
+    module: cs_ip_address
+    network: My Network
+    tags:
+      - key: myCustomID
+      - value: 5510c31a-416e-11e8-9013-02000a6b00bf
+  register: ip_address
+
+- name: Disassociate an IP address with tags
+  local_action:
+    module: cs_ip_address
+    state: absent
+    tags:
+      - key: myCustomID
+      - value: 5510c31a-416e-11e8-9013-02000a6b00bf
 '''
 
 RETURN = '''
@@ -107,6 +132,12 @@ domain:
   returned: success
   type: string
   sample: example domain
+tags:
+  description: List of resource tags associated with the IP address.
+  returned: success
+  type: dict
+  sample: '[ { "key": "myCustomID", "value": "5510c31a-416e-11e8-9013-02000a6b00bf" } ]'
+  version_added: "2.6"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,10 +169,27 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if ip_addresses:
-            self.ip_address = ip_addresses['publicipaddress'][0]
+            tags = self.module.params.get('tags')
+            for ip_addr in ip_addresses['publicipaddress']:
+                if ip_addr['ipaddress'] == args['ipaddress'] != '':
+                    self.ip_address = ip_addresses['publicipaddress'][0]
+                elif tags:
+                    if sorted([tag for tag in tags if tag in ip_addr['tags']]) == sorted(tags):
+                        self.ip_address = ip_addr
         return self._get_by_key(key, self.ip_address)
 
-    def associate_ip_address(self):
+    def present_ip_address(self):
+        ip_address = self.get_ip_address()
+
+        if not ip_address:
+            ip_address = self.associate_ip_address(ip_address)
+
+        if ip_address:
+            ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
+
+        return ip_address
+
+    def associate_ip_address(self, ip_address):
         self.result['changed'] = True
         args = {
             'account': self.get_account(key='name'),
@@ -169,6 +217,9 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
         self.result['changed'] = True
         if not self.module.check_mode:
+            self.module.params['tags'] = []
+            ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
+
             res = self.cs.disassociateIpAddress(id=ip_address['id'])
 
             poll_async = self.module.params.get('poll_async')
@@ -188,6 +239,7 @@ def main():
         domain=dict(),
         account=dict(),
         project=dict(),
+        tags=dict(type='list', aliases=['tag']),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -195,7 +247,7 @@ def main():
         argument_spec=argument_spec,
         required_together=cs_required_together(),
         required_if=[
-            ('state', 'absent', ['ip_address']),
+            ('state', 'absent', ['ip_address', 'tags'], True),
         ],
         supports_check_mode=True
     )
@@ -206,7 +258,7 @@ def main():
     if state in ['absent']:
         ip_address = acs_ip_address.disassociate_ip_address()
     else:
-        ip_address = acs_ip_address.associate_ip_address()
+        ip_address = acs_ip_address.present_ip_address()
 
     result = acs_ip_address.get_result(ip_address)
     module.exit_json(**result)
