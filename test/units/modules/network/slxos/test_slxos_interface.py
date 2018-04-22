@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import json
 
 from ansible.compat.tests.mock import patch
@@ -57,27 +58,7 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         self._get_config.return_value = load_fixture(config_file)
         self._load_config.return_value = None
 
-    def load_fixtures_old(self, commands=None):
-
-        def load_from_file(*args, **kwargs):
-            module, commands = args
-            output = list()
-
-            for item in commands:
-                try:
-                    obj = json.loads(item['command'])
-                    command = obj['command']
-                except ValueError:
-                    command = item['command']
-                filename = str(command).replace(' ', '_')
-                output.append(load_fixture(filename))
-            return output
-
-        self._exec_command.side_effect = load_from_file
-        self._load_config.side_effect = load_from_file
-
     def test_slxos_interface_description(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/2',
             description='show version'
@@ -95,7 +76,6 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         )
 
     def test_slxos_interface_speed(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/2',
             speed=1000
@@ -113,7 +93,6 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         )
 
     def test_slxos_interface_mtu(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/2',
             mtu=1548
@@ -131,7 +110,6 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         )
 
     def test_slxos_interface_mtu_out_of_range(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/2',
             mtu=15000
@@ -146,7 +124,6 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         )
 
     def test_slxos_interface_enabled(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/1',
             enabled=True
@@ -164,19 +141,16 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         )
 
     def test_slxos_interface_invalid_argument(self, *args, **kwargs):
-        load_fixture('slxos_config_config.cfg')
         set_module_args(dict(
             name='Ethernet 0/1',
             shawshank='Redemption'
         ))
         result = self.execute_module(failed=True)
-        self.assertEqual(
-            result,
-            {
-                'msg': 'Unsupported parameters for (basic.pyc) module: '
-                       'shawshank Supported parameters include: aggregate, '
-                       'delay, description, enabled, mtu, name, neighbors, '
-                       'rx_rate, speed, state, tx_rate',
-                'failed': True
-            }
-        )
+        self.assertEqual(result['failed'], True)
+        self.assertTrue(re.match(
+            r'Unsupported parameters for \((basic.py|basic.pyc)\) module: '
+            'shawshank Supported parameters include: aggregate, '
+            'delay, description, enabled, mtu, name, neighbors, '
+            'rx_rate, speed, state, tx_rate',
+            result['msg']
+        ))
