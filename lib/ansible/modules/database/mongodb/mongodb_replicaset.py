@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-from collections import OrderedDict
 from copy import deepcopy
 
 ANSIBLE_METADATA = {'metadata_version': '0.1',
@@ -343,6 +342,14 @@ def replicaset_find(client):
 
 
 def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
+
+    try:
+        from collections import OrderedDict
+    except ImportError:
+        try:
+            from ordereddict import OrderedDict
+        except ImportError:
+            module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict;: %s' % to_native(e), exception=traceback.format_exc())
 
     members_dict_list = []
     index = 0
