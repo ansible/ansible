@@ -32,6 +32,7 @@ options:
         description:
         - Create or modify an organization
         choices: ['present', 'query']
+        required: true
     clone:
         description:
         - Organization to clone to a new organization.
@@ -97,7 +98,7 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['present', 'query']),
+                         state=dict(type='str', choices=['present', 'query'], required=True),
                          )
 
     # seed the result dict in the object
@@ -169,12 +170,20 @@ def main():
         if meraki.params['clone'] is not None:  # Cloning
             payload = {'name': meraki.params['name']}
             # meraki.fail_json(msg=meraki.construct_path('clone', org_name=meraki.params['clone']))
-            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('clone', org_name=meraki.params['clone']),
-                                                                  payload=json.dumps(payload),
-                                                                  method='POST'))
+            meraki.result['response'] = json.loads(
+                meraki.request(
+                    meraki.construct_path(
+                        'clone',
+                        org_name=meraki.params['clone']
+                    ),
+                    payload=json.dumps(payload),
+                    method='POST'))
         elif meraki.params['org_id'] is None and meraki.params['name'] is not None:  # Create new organization
             payload = {'name': meraki.params['name']}
-            meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('create'), payload=json.dumps(payload)))
+            meraki.result['response'] = json.loads(
+                meraki.request(
+                    meraki.construct_path('create'),
+                    payload=json.dumps(payload)))
         elif meraki.params['org_id'] is not None and meraki.params['name'] is not None:  # Update an existing organization
             payload = {'name': meraki.params['name'],
                        'id': meraki.params['org_id'],
@@ -185,8 +194,8 @@ def main():
                         'update',
                         org_id=meraki.params['org_id']
                     ),
-                    payload=json.dumps(payload),
-                    method='PUT'))
+                    method='PUT',
+                    payload=json.dumps(payload)))
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

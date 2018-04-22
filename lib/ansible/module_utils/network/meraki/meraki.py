@@ -42,7 +42,6 @@ def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
                 name=dict(type='str'),
-                state=dict(type='str', choices=['present', 'absent', 'query']),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
@@ -274,6 +273,8 @@ class MerakiModule(object):
         # if self.define_method() is -1:  # No changes are needed to existing object
         #     return
 
+        if method is not None:
+            self.method = method
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
         if payload is None:
             resp, info = fetch_url(self.module, self.url,
