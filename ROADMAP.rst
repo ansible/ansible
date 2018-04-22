@@ -14,4 +14,4 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
 - AnsibleFest conferences.
 - IRC Freenode channel: #ansible-devel (this one may have things lost in lots of conversation, so a caution).
 
-Ansible Roadmaps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
+Ansible Roadmaps can be found `here <https://docs.ansible.com/ansible/devel/roadmap/>`_.
