@@ -1,4 +1,3 @@
-lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/k8s/k8s_raw.py
 lib/ansible/modules/clustering/k8s/k8s_scale.py
