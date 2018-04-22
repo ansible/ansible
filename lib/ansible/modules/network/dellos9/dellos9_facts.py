@@ -87,6 +87,18 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: string
+ansible_net_stack:
+  description: Current system status and stack connection type
+  returned: always
+  type: string
+ansible_net_system_members:
+  description: Current system members (required to view amount of switches if stack configured)
+  returned: always
+  type: list
+ansible_net_stack_serialnums:
+  description: Serial numbers of each switch configured in given stack
+  returned: always
+  type: list
 
 # hardware
 ansible_net_filesystems:
@@ -159,7 +171,9 @@ class Default(FactsBase):
     COMMANDS = [
         'show version',
         'show inventory',
-        'show running-config | grep hostname'
+        'show running-config | grep hostname',
+        'show system stack-ports status | grep Topology',
+        'show system brief'
     ]
 
     def populate(self):
@@ -171,9 +185,16 @@ class Default(FactsBase):
 
         data = self.responses[1]
         self.facts['serialnum'] = self.parse_serialnum(data)
+        self.parse_stack_serialnums(data)
 
         data = self.responses[2]
         self.facts['hostname'] = self.parse_hostname(data)
+        
+        data = self.responses[3]
+        self.facts['stack'] = self.parse_stack(data)
+
+        data = self.responses[4]
+        self.parse_system_members(data)
 
     def parse_version(self, data):
         match = re.search(r'Software Version:\s*(.+)', data)
@@ -194,6 +215,22 @@ class Default(FactsBase):
         match = re.search(r'image file is "(.+)"', data)
         if match:
             return match.group(1)
+    
+    def parse_stack(self, data):
+        match = re.search(r'^Topology:\s*(.+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_system_members(self, data):
+        match = re.findall(r'(^(?!.*Member.*)^\s+\d+\s+[A-a,Z-z]+\s+\S+\s+\S+)', data, re.M)
+        if match:
+            self.facts['system_members'] = match
+
+    def parse_stack_serialnums(self, data):
+        match = re.findall(r'\s+\S+\s+\S+\s+(\w{14})\s+\S+', data, re.M)
+        if match:
+            self.facts['stack_serialnums'] = match
+
 
     def parse_serialnum(self, data):
         for line in data.split('\n'):
@@ -203,7 +240,7 @@ class Default(FactsBase):
                 if match:
                     return match.group(3)
 
-
+                  
 class Hardware(FactsBase):
 
     COMMANDS = [
