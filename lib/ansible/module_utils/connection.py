@@ -111,7 +111,7 @@ class Connection(object):
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
 
-        troubleshoot = 'http://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#category-socket-path-issue'
+        troubleshoot = 'https://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#category-socket-path-issue'
 
         if not os.path.exists(self.socket_path):
             raise ConnectionError('socket_path does not exist or cannot be found. Please check %s' % troubleshoot)
