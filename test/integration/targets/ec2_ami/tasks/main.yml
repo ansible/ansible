@@ -178,6 +178,7 @@
 
     - name: create an image from the snapshot
       ec2_ami:
+        name: '{{ ec2_ami_name }}_ami'
         description: '{{ ec2_ami_description }}'
         state: present
         launch_permissions:
