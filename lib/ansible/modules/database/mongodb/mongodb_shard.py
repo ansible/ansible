@@ -226,6 +226,8 @@ def shard_find(client, shard):
     """
     if '/' in shard:
         s = shard.split('/')[0]
+    else:
+        s = shard
     for shard in client["config"].shards.find({ "_id": s }):
                 return shard
     return False
