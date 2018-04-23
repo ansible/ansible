@@ -216,6 +216,12 @@ def check_compatibility(module, client):
     loose_srv_version = LooseVersion(client.server_info()['version'])
     loose_driver_version = LooseVersion(PyMongoVersion)
 
+    if loose_srv_version >= LooseVersion('3.6') and loose_driver_version < LooseVersion('3.6'):
+        module.fail_json(msg=' (Note: you must use pymongo 3.6+ with MongoDB >= 3.6)')
+
+    if loose_srv_version >= LooseVersion('3.4') and loose_driver_version < LooseVersion('3.4'):
+        module.fail_json(msg=' (Note: you must use pymongo 3.4+ with MongoDB >= 3.4)')
+
     if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
         module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
 
