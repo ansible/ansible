@@ -753,7 +753,15 @@ files:
     - cloud
     - aws
     notify: ryansb s-hertel willthames
-  contrib/inventory/vmware:
+  contrib/inventory/vmware.py:
+    keywords:
+    - vmware inventory
+    - vmware dynamic inventory script
+    labels:
+    - cloud
+    - vmware
+    maintainers: $team_vmware
+  contrib/inventory/vmware_inventory.py:
     keywords:
     - vmware inventory
     - vmware dynamic inventory script
