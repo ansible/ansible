@@ -9,7 +9,7 @@
     process_username: '{{psexec_username}}'
   delegate_to: localhost
   register: fail_no_process_pass
-  failed_when: 'fail_no_process_pass.msg != "parameters are required together: process_username, process_password"'
+  failed_when: 'fail_no_process_pass.msg != "parameters are required together when not running as System: process_username, process_password"'
 
 - name: get current host
   win_command: hostname.exe
@@ -198,7 +198,7 @@
     connection_password: '{{psexec_password}}'
     encrypt: '{{psexec_encrypt}}'
     executable: whoami.exe
-    use_system: yes
+    process_username: System
   delegate_to: localhost
   register: psexec_process_system
 
