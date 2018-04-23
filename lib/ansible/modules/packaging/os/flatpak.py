@@ -49,8 +49,6 @@ options:
     description:
     - The repository to install the flatpak from
     default: flathub
-    required: false
-
 '''
 
 EXAMPLES = r'''
@@ -88,16 +86,6 @@ reason:
   returned: failed
   type: string
   sample: error while installing...
-name:
-  description: Name of flatpak given for the operation
-  returned: always
-  type: string
-  sample: https://git.gnome.org/.../gnome-apps/gedit.flatpakref
-remote:
-  description: Remote of flatpak given for the operation
-  returned: always
-  type: string
-  sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -197,7 +185,7 @@ def main():
 
     # When executable was provided and binary not found, warn user !
     if module.params['executable'] is not None and not binary:
-        module.warn("Executable '%s' is not found on the system." % executable)
+        module.fail_json("Executable '%s' is not found on the system." % executable)
 
     if state == 'present':
         result = install_flat(module, binary, repo, name)
