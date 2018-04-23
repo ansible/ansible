@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import os
 import requests
 import json
@@ -25,6 +28,7 @@ from distutils.version import LooseVersion
 from datetime import datetime
 
 HEADERS = {'content-type': 'application/json'}
+
 
 class RedfishUtils(object):
 
@@ -47,14 +51,13 @@ class RedfishUtils(object):
         except:
             raise
         return response
- 
+
     def send_post_request(self, uri, pyld, hdrs, fileName=None):
         headers = {}
         if 'token' in self.creds:
             headers = {"X-Auth-Token": self.creds['token']}
         try:
-            response = requests.post(uri, data=json.dumps(pyld), headers=hdrs, files=fileName,
-                               verify=False, auth=(self.creds['user'], self.creds['pswd']))
+            response = requests.post(uri, data=json.dumps(pyld), headers=hdrs, files=fileName, verify=False, auth=(self.creds['user'], self.creds['pswd']))
         except:
             raise
         return response
@@ -64,8 +67,7 @@ class RedfishUtils(object):
         if 'token' in self.creds:
             headers = {"X-Auth-Token": self.creds['token']}
         try:
-            response = requests.patch(uri, data=json.dumps(pyld), headers=hdrs,
-                               verify=False, auth=(self.creds['user'], self.creds['pswd']))
+            response = requests.patch(uri, data=json.dumps(pyld), headers=hdrs, verify=False, auth=(self.creds['user'], self.creds['pswd']))
         except:
             raise
         return response
@@ -87,7 +89,7 @@ class RedfishUtils(object):
         response = self.send_get_request(self.root_uri + uri)
         data = response.json()
         if 'AccountService' not in data:
-            return {'ret':False, 'msg':"AccountService resource not found"}
+            return {'ret': False, 'msg': "AccountService resource not found"}
         else:
             account_service = data["AccountService"]["@odata.id"]
             response = self.send_get_request(self.root_uri + account_service)
@@ -221,8 +223,7 @@ class RedfishUtils(object):
             # Check to make sure option is available, otherwise error is ugly
             if "Actions" in _data:
                 if "#LogService.ClearLog" in _data[u"Actions"]:
-                    self.send_post_request(self.root_uri +
-                         _data[u"Actions"]["#LogService.ClearLog"]["target"], {}, HEADERS)
+                    self.send_post_request(self.root_uri + _data[u"Actions"]["#LogService.ClearLog"]["target"], {}, HEADERS)
         result['ret'] = True		# assume we're successful
         return result
 
@@ -255,7 +256,7 @@ class RedfishUtils(object):
                     data = response.json()
 
                     controller = {}
-                    controller['Name'] = data[u'Name']	# Name of storage controller
+                    controller['Name'] = data[u'Name']      # Name of storage controller
                     controller['Health'] = data[u'Status'][u'Health']
                     controllers_details.append(controller)
                 else:
@@ -297,7 +298,7 @@ class RedfishUtils(object):
 
                     for device in data[u'Devices']:
                         disk = {}
-                        disk['Controller'] = data[u'Name']	# Name of storage controller
+                        disk['Controller'] = data[u'Name']  # Name of storage controller
                         disk['Name'] = device[u'Name']
                         disk['Manufacturer'] = device[u'Manufacturer']
                         disk['Model'] = device[u'Model']
@@ -336,38 +337,38 @@ class RedfishUtils(object):
         elif command == "PowerGracefulRestart":
             payload = {'ResetType': 'GracefulRestart'}
             response = self.send_post_request(self.root_uri + self.systems_uri + uri, payload, HEADERS)
- 
+
         elif command == "PowerGracefulShutdown":
             payload = {'ResetType': 'GracefulShutdown'}
             response = self.send_post_request(self.root_uri + self.systems_uri + uri, payload, HEADERS)
- 
+
         else:
             result = {'ret': False, 'msg': 'Invalid Command'}
 
         if response.status_code == 204:		# success
             result['ret'] = True
         elif response.status_code == 400:
-            result = {'ret':False, 'msg':'Not supported on this platform'}
+            result = {'ret': False, 'msg': 'Not supported on this platform'}
         elif response.status_code == 405:
-            result = {'ret':False, 'msg':"Resource not supported"}
+            result = {'ret': False, 'msg': "Resource not supported"}
         elif response.status_code == 409:		# verify this
-            result = {'ret':False, 'msg':"Action already implemented"}
+            result = {'ret': False, 'msg': "Action already implemented"}
         else:
-            result = {'ret':False, 'msg':"Error code %s" % response.status_code}
+            result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
- 
+
     def list_users(self, user):
         result = {}
         allusers = []
         allusers_details = []
 
         response = self.send_get_request(self.root_uri + self.accounts_uri)
-        if response.status_code == 200:		# success
+        if response.status_code == 200:                # success
             result['ret'] = True
             data = response.json()
             for users in data[u'Members']:
-                allusers.append(users[u'@odata.id'])	# Here user_list[] are URIs
-    
+                allusers.append(users[u'@odata.id'])   # Here user_list[] are URIs
+
             # for each user, get details
             for uri in allusers:
                 response = self.send_get_request(self.root_uri + uri)
@@ -375,7 +376,7 @@ class RedfishUtils(object):
 
                 # check status_code again?
                 data = response.json()
-                if not data[u'UserName'] == "": # only care if name is not empty
+                if not data[u'UserName'] == "":        # only care if name is not empty
                     user = {}
                     user['Id'] = data[u'Id']
                     user['Name'] = data[u'Name']
@@ -394,12 +395,12 @@ class RedfishUtils(object):
         pswd = {'Password': user['userpswd']}
         roleid = {'RoleId': user['userrole']}
         enabled = {'Enabled': True}
-        for payload in username,pswd,roleid,enabled:
+        for payload in username, pswd, roleid, enabled:
             response = self.send_patch_request(uri, payload, HEADERS)
             if response.status_code == 200:		# success
                 result['ret'] = True
             else:
-                result = {'ret': False, 'msg':"Error code %s" % response.status_code}
+                result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
 
     def enable_user(self, user):
@@ -460,19 +461,18 @@ class RedfishUtils(object):
     def get_firmware_inventory(self):
         result = {}
         devices = []
- 
         response = self.send_get_request(self.root_uri + self.firmware_uri)
         if response.status_code == 200:		# success
             result['ret'] = True
             data = response.json()
             for device in data[u'Members']:
                 d = device[u'@odata.id']
-                d = d.replace(self.firmware_uri, "")	# leave just device name
+                d = d.replace(self.firmware_uri, "")    # leave just device name
                 if "Installed" in d:
                     # Get details for each device that is relevant
                     uri = self.root_uri + self.firmware_uri + d
                     response = self.send_get_request(uri)
-                    if response.status_code == 200:	# success
+                    if response.status_code == 200:     # success
                         data = response.json()
                         result[data[u'Name']] = data[u'Version']
 
@@ -481,9 +481,8 @@ class RedfishUtils(object):
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
- 
         return result
- 
+
     def get_manager_attributes(self, uri):
         result = {}
         response = self.send_get_request(self.root_uri + self.manager_uri + uri)
@@ -497,9 +496,8 @@ class RedfishUtils(object):
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
- 
         return result
- 
+
     def get_bios_attributes(self, uri):
         result = {}
         response = self.send_get_request(self.root_uri + self.systems_uri + uri)
@@ -513,9 +511,8 @@ class RedfishUtils(object):
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
- 
         return result
- 
+
     def get_bios_boot_order(self, uri1, uri2):
         # Get boot mode first as it will determine what attribute to read
         result = {}
@@ -539,9 +536,8 @@ class RedfishUtils(object):
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
- 
         return result
- 
+
     def get_fan_inventory(self, uri):
         result = {}
         fan_details = []
@@ -549,7 +545,6 @@ class RedfishUtils(object):
         if response.status_code == 200:             # success
             result['ret'] = True
             data = response.json()
- 
             for device in data[u'Fans']:
                 # There is more information available but this is most important
                 fan = {}
@@ -559,14 +554,13 @@ class RedfishUtils(object):
                 fan['Health'] = device[u'Status'][u'Health']
                 fan_details.append(fan)
             result["entries"] = fan_details
- 
+
         elif response.status_code == 400:
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
- 
         return result
- 
+
     def set_bios_default_settings(self, uri):
         result = {}
         payload = {}
@@ -578,7 +572,7 @@ class RedfishUtils(object):
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
- 
+
     def set_one_time_boot_device(self, bootdevice, uri):
         result = {}
         response = self.send_get_request(self.root_uri + self.systems_uri + uri)
@@ -586,7 +580,7 @@ class RedfishUtils(object):
             data = response.json()
             boot_mode = data[u'Attributes']["BootMode"]
             if boot_mode == "Uefi":
-                payload = {"Boot": {"BootSourceOverrideTarget": "UefiTarget","UefiTargetBootSourceOverride": bootdevice}}
+                payload = {"Boot": {"BootSourceOverrideTarget": "UefiTarget", "UefiTargetBootSourceOverride": bootdevice}}
             else:
                 payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
         else:
@@ -599,7 +593,7 @@ class RedfishUtils(object):
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
- 
+
     def set_manager_attributes(self, uri, attributes):
         result = {}
         # Example: manager_attributes = {\"name\":\"value\"}
@@ -609,7 +603,7 @@ class RedfishUtils(object):
         else:
             manager_attributes = '{{ "{}": "{}" }}'.format(attributes['mgr_attr_name'], attributes['mgr_attr_value'])
 
-        payload = {"Attributes": json.loads(manager_attributes) }
+        payload = {"Attributes": json.loads(manager_attributes)}
         response = self.send_patch_request(self.root_uri + self.manager_uri + uri, payload, HEADERS)
         if response.status_code == 200:
             result = {'ret': True, 'msg': 'Manager attributes set as pending values'}
@@ -624,7 +618,7 @@ class RedfishUtils(object):
         result = {}
         # Example: bios_attributes = {\"name\":\"value\"}
         bios_attributes = "{\"" + attributes['bios_attr_name'] + "\":\"" + attributes['bios_attr_value'] + "\"}"
-        payload = {"Attributes": json.loads(bios_attributes) }
+        payload = {"Attributes": json.loads(bios_attributes)}
         response = self.send_patch_request(self.root_uri + self.systems_uri + uri, payload, HEADERS)
         if response.status_code == 200:
             result = {'ret': True, 'msg': 'BIOS Attributes set as pending values'}
@@ -635,16 +629,16 @@ class RedfishUtils(object):
         else:
             result = {'ret': False, 'msg': "Error code %s" % str(response.status_code)}
         return result
- 
+
     def create_bios_config_job(self, uri1, uri2):
         payload = {"TargetSettingsURI": self.systems_uri + uri1, "RebootJobType": "PowerCycle"}
         response = self.send_post_request(self.root_uri + self.manager_uri + uri2, payload, HEADERS)
         if response.status_code == 200:
-            convert_to_string=str(response.__dict__)
-            jobid_search=re.search("JID_.+?,", convert_to_string).group()
-            job_id=re.sub("[,']","",jobid_search)
+            convert_to_string = str(response.__dict__)
+            jobid_search = re.search("JID_.+?,", convert_to_string).group()
+            job_id = re.sub("[,']", "", jobid_search)
 
-            result = {'ret': True, 'msg': 'Config job created','job_id': job_id}
+            result = {'ret': True, 'msg': 'Config job created', 'job_id': job_id}
         elif response.status_code == 400:
             result = {'ret': False, 'msg': 'Not supported on this platform'}
         elif response.status_code == 405:
@@ -652,60 +646,59 @@ class RedfishUtils(object):
         else:
             result = {'ret': False, 'msg': "Error code %s" % str(response.status_code)}
         return result
- 
+
     def get_cpu_inventory(self, uri):
         result = {}
         cpu_details = []
- 
+
         # Get a list of all CPUs and build respective URIs
         cpu_list = []
         response = self.send_get_request(self.root_uri + self.systems_uri + uri)
         if response.status_code == 200:		# success
             result['ret'] = True
             data = response.json()
- 
+
             for cpu in data[u'Members']:
                 cpu_list.append(cpu[u'@odata.id'])
- 
             for c in cpu_list:
                 uri = self.root_uri + c
                 response = self.send_get_request(uri)
                 if response.status_code == 200:             # success
                     data = response.json()
                     cpu = {}
-                    cpu['Name']         = data[u'Id']
+                    cpu['Name'] = data[u'Id']
                     cpu['Manufacturer'] = data[u'Manufacturer']
-                    cpu['Model']        = data[u'Model']
-                    cpu['MaxSpeedMHz']  = data[u'MaxSpeedMHz']
-                    cpu['TotalCores']   = data[u'TotalCores']
+                    cpu['Model'] = data[u'Model']
+                    cpu['MaxSpeedMHz'] = data[u'MaxSpeedMHz']
+                    cpu['TotalCores'] = data[u'TotalCores']
                     cpu['TotalThreads'] = data[u'TotalThreads']
-                    cpu['State']        = data[u'Status'][u'State']
-                    cpu['Health']       = data[u'Status'][u'Health']
+                    cpu['State'] = data[u'Status'][u'State']
+                    cpu['Health'] = data[u'Status'][u'Health']
                     cpu_details.append(cpu)
- 
+
                 else:
                     result = {'ret': False, 'msg': "Error code %s" % response.status_code}
                     return result           # no need to go through the whole loop
- 
+
             result["entries"] = cpu_details
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
- 
+
     def get_nic_inventory(self, uri):
         result = {}
         nic_details = []
- 
+
         # Get a list of all network controllers and build respective URIs
         nic_list = []
         response = self.send_get_request(self.root_uri + self.systems_uri + uri)
         if response.status_code == 200:		# success
             result['ret'] = True
             data = response.json()
- 
+
             for nic in data[u'Members']:
                 nic_list.append(nic[u'@odata.id'])
- 
+
             for n in nic_list:
                 uri = self.root_uri + n
                 response = self.send_get_request(uri)
@@ -730,20 +723,19 @@ class RedfishUtils(object):
                         nic['Health'] = data[u'Status'][u'Health']
                         nic['State'] = data[u'Status'][u'State']
                     nic_details.append(nic)
- 
                 else:
                     result = {'ret': False, 'msg': "Error code %s" % response.status_code}
                     return result           # no need to go through the whole loop
- 
+
             result["entries"] = nic_details
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
         return result
- 
+
     def get_psu_inventory(self):
         result = {}
         psu_details = []
- 
+
         # Get a list of all PSUs and build respective URIs
         psu_list = []
         response = self.send_get_request(self.root_uri + self.systems_uri)
@@ -759,7 +751,6 @@ class RedfishUtils(object):
                 response = self.send_get_request(uri)
                 if response.status_code == 200:             # success
                     data = response.json()
- 
                     psu = {}
                     psu['Name'] = data[u'Name']
                     psu['Model'] = data[u'Model']
@@ -773,11 +764,9 @@ class RedfishUtils(object):
                     psu['Status'] = data[u'Status'][u'State']
                     psu['Health'] = data[u'Status'][u'Health']
                     psu_details.append(psu)
- 
                 else:
                     result = {'ret': False, 'msg': "Error code %s" % response.status_code}
                     return result           # no need to go through the whole loop
- 
             result["entries"] = psu_details
         else:
             result = {'ret': False, 'msg': "Error code %s" % response.status_code}
@@ -791,22 +780,22 @@ class RedfishUtils(object):
             data = response.json()
 
             # There could be more information to extract
-            result['Status']       = data[u'Status'][u'Health']
-            result['HostName']     = data[u'HostName']
-            result['PowerState']   = data[u'PowerState']
-            result['Model']        = data[u'Model']
+            result['Status'] = data[u'Status'][u'Health']
+            result['HostName'] = data[u'HostName']
+            result['PowerState'] = data[u'PowerState']
+            result['Model'] = data[u'Model']
             result['Manufacturer'] = data[u'Manufacturer']
-            result['PartNumber']   = data[u'PartNumber']
-            result['SystemType']   = data[u'SystemType']
-            result['AssetTag']     = data[u'AssetTag']
-            result['ServiceTag']   = data[u'SKU']
+            result['PartNumber'] = data[u'PartNumber']
+            result['SystemType'] = data[u'SystemType']
+            result['AssetTag'] = data[u'AssetTag']
+            result['ServiceTag'] = data[u'SKU']
             result['SerialNumber'] = data[u'SerialNumber']
-            result['BiosVersion']  = data[u'BiosVersion']
-            result['MemoryTotal']  = data[u'MemorySummary'][u'TotalSystemMemoryGiB']
+            result['BiosVersion'] = data[u'BiosVersion']
+            result['MemoryTotal'] = data[u'MemorySummary'][u'TotalSystemMemoryGiB']
             result['MemoryHealth'] = data[u'MemorySummary'][u'Status'][u'Health']
-            result['CpuCount']     = data[u'ProcessorSummary'][u'Count']
-            result['CpuModel']     = data[u'ProcessorSummary'][u'Model']
-            result['CpuHealth']    = data[u'ProcessorSummary'][u'Status'][u'Health']
+            result['CpuCount'] = data[u'ProcessorSummary'][u'Count']
+            result['CpuModel'] = data[u'ProcessorSummary'][u'Model']
+            result['CpuHealth'] = data[u'ProcessorSummary'][u'Status'][u'Health']
 
             datadict = data[u'Boot']
             if 'BootSourceOverrideMode' in datadict.keys():
