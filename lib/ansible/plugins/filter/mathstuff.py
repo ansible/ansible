@@ -116,25 +116,34 @@ def inversepower(x, base=2):
 
 def haversine(measurement, lat1, lon1, lat2, lon2):
     from math import radians, sin, cos, sqrt, asin
+
+    if measurement not in ["m", "km"]:
+        raise errors.AnsibleFilterError('haversine() can only be called with km or m')
+
     diameter = {
         'm': 7917.5,
         'km': 12742}
 
     try:
-        dlat = radians(float(lat2) - float(lat1))
-        dlon = radians(float(lon2) - float(lon1))
-        lat1 = radians(float(lat1))
-        lat2 = radians(float(lat2))
+        lat1 = float(lat1)
+        lon1 = float(lon1)
+        lat2 = float(lat2)
+        lon2 = float(lon2)
+    except ValueError as e:
+        raise errors.AnsibleFilterError('haversine() only accepts floats: %s' % str(e))
+
+    try:
+        dlat = radians(lat2 - lat1)
+        dlon = radians(lon2 - lon1)
+        lat1 = radians(lat1)
+        lat2 = radians(lat2)
 
         a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
         c = 2 * asin(sqrt(a))
-    except (ValueError, TypeError) as e:
-        raise errors.AnsibleFilterError('haversine() only accepts floats: %s' % str(e))
+    except Exception as e:
+        raise errors.AnsibleFilterError('haversine() something went wrong: %s' % str(e))
 
-    if measurement in diameter:
-        return round(diameter[measurement] / 2 * c, 2)
-    else:
-        raise errors.AnsibleFilterError('haversine() can only be called with km or m')
+    return round(diameter[measurement] / 2 * c, 2)
 
 
 def human_readable(size, isbits=False, unit=None):
