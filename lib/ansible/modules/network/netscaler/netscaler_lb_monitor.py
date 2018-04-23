@@ -1148,18 +1148,19 @@ def main():
     # Fallthrough to rest of execution
     client = get_nitro_client(module)
 
-    try:
-        client.login()
-    except nitro_exception as e:
-        msg = "nitro exception during login. errorcode=%s, message=%s" % (str(e.errorcode), e.message)
-        module.fail_json(msg=msg)
-    except Exception as e:
-        if str(type(e)) == "<class 'requests.exceptions.ConnectionError'>":
-            module.fail_json(msg='Connection error %s' % str(e))
-        elif str(type(e)) == "<class 'requests.exceptions.SSLError'>":
-            module.fail_json(msg='SSL Error %s' % str(e))
-        else:
-            module.fail_json(msg='Unexpected error during login %s' % str(e))
+    if not module.params['mas_proxy_call']:
+        try:
+            client.login()
+        except nitro_exception as e:
+            msg = "nitro exception during login. errorcode=%s, message=%s" % (str(e.errorcode), e.message)
+            module.fail_json(msg=msg)
+        except Exception as e:
+            if str(type(e)) == "<class 'requests.exceptions.ConnectionError'>":
+                module.fail_json(msg='Connection error %s' % str(e))
+            elif str(type(e)) == "<class 'requests.exceptions.SSLError'>":
+                module.fail_json(msg='SSL Error %s' % str(e))
+            else:
+                module.fail_json(msg='Unexpected error during login %s' % str(e))
 
     # Instantiate lb monitor object
     readwrite_attrs = [
@@ -1371,7 +1372,8 @@ def main():
         msg = "nitro exception errorcode=%s, message=%s" % (str(e.errorcode), e.message)
         module.fail_json(msg=msg, **module_result)
 
-    client.logout()
+    if not module.params['mas_proxy_call']:
+        client.logout()
 
     module.exit_json(**module_result)
 
