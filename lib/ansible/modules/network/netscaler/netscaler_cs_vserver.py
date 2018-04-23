@@ -609,7 +609,7 @@ def cs_vserver_identical(client, module, csvserver_proxy):
 
 
 def get_configured_policybindings(client, module):
-    log('Getting configured policy bindigs')
+    log('Getting configured policy bindings')
     bindings = {}
     if module.params['policybindings'] is None:
         return bindings
@@ -641,9 +641,15 @@ def get_configured_policybindings(client, module):
 def get_default_lb_vserver(client, module):
     try:
         default_lb_vserver = csvserver_lbvserver_binding.get(client, module.params['name'])
-        return default_lb_vserver[0]
+        if default_lb_vserver[0].name is None or default_lb_vserver[0].name == '':
+            log('Got invalid default lb vserver')
+            return None
+        else:
+            log('Got default lb vserver with name %s' % default_lb_vserver[0].name)
+            return default_lb_vserver[0]
     except nitro_exception as e:
         if e.errorcode == 258:
+            log('Returning on nitro_exception 258')
             return csvserver_lbvserver_binding()
         else:
             raise
@@ -663,11 +669,11 @@ def default_lb_vserver_identical(client, module):
             'lbvserver': module.params['lbvserver'],
         }
     )
-    log('default lb vserver %s' % ((d.name, d.lbvserver),))
-    if d.name is None and module.params['lbvserver'] is None:
+
+    if d is None and module.params['lbvserver'] is None:
         log('Default lb vserver identical missing')
         return True
-    elif d.name is not None and module.params['lbvserver'] is None:
+    elif d is not None and module.params['lbvserver'] is None:
         log('Default lb vserver needs removing')
         return False
     elif configured.has_equal_attributes(d):
@@ -695,20 +701,20 @@ def sync_default_lb_vserver(client, module):
             }
         )
 
-        if not configured.has_equal_attributes(d):
-            if d.name is not None:
-                log('Deleting default lb vserver %s' % d.lbvserver)
-                csvserver_lbvserver_binding.delete(client, d)
-            log('Adding default lb vserver %s' % configured.lbvserver)
-            configured.add()
-    else:
-        if d.name is not None:
+        if d is not None and not configured.has_equal_attributes(d):
             log('Deleting default lb vserver %s' % d.lbvserver)
+            csvserver_lbvserver_binding.delete(client, d)
+
+        log('Adding default lb vserver %s' % configured.lbvserver)
+        configured.add()
+    else:
+        if d is not None:
+            log('Deleting default lb vserver %s' % d.name)
             csvserver_lbvserver_binding.delete(client, d)
 
 
 def get_actual_policybindings(client, module):
-    log('Getting actual policy bindigs')
+    log('Getting actual policy bindings')
     bindings = {}
     try:
         count = csvserver_cspolicy_binding.count(client, name=module.params['name'])
