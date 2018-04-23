@@ -16,8 +16,12 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+try:
+    import requests
+except ImportError:
+    module.fail_json(msg="Python module requests not found.")
+
 import os
-import requests
 import json
 import re
 import xml.etree.ElementTree as ET

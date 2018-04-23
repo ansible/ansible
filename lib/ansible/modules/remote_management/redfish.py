@@ -156,8 +156,12 @@ result:
     sample: BIOS Attributes set as pending values
 '''
 
+try:
+    import requests
+except ImportError:
+    module.fail_json(msg="Python module requests not found.")
+
 import os
-import requests
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
