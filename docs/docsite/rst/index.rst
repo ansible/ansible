@@ -95,8 +95,4 @@ Ansible releases a new major release of Ansible approximately every two months. 
    :maxdepth: 2
    :caption: Roadmaps
 
-   roadmap/ROADMAP_2_1.rst
-   roadmap/ROADMAP_2_2.rst
-   roadmap/ROADMAP_2_3.rst
-   roadmap/ROADMAP_2_4.rst
-   roadmap/ROADMAP_2_5.rst
+   roadmap/index.rst
