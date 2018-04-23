@@ -40,7 +40,7 @@ options:
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, interfaces and neighbors.  Can specify a list of
+        all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
@@ -133,8 +133,6 @@ ansible_net_interfaces:
   description: A hash of all interfaces running on the system
   returned: when interfaces is configured
   type: dict
-
-# neighbors
 ansible_net_neighbors:
   description: The list of LLDP neighbors from the remote device
   returned: when interfaces is configured
@@ -257,7 +255,8 @@ class Interfaces(FactsBase):
     COMMANDS = [
         'show interfaces',
         'show ip interface',
-        'show ipv6 interface'
+        'show ipv6 interface',
+        'show lldp'
     ]
 
     def populate(self):
@@ -280,6 +279,12 @@ class Interfaces(FactsBase):
         if data:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
+
+        data = self.responses[3]
+        if data:
+            neighbors = self.run(['show lldp neighbors detail'])
+            if neighbors:
+                self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -333,6 +338,20 @@ class Interfaces(FactsBase):
             self.facts['all_ipv4_addresses'].append(address)
         else:
             self.facts['all_ipv6_addresses'].append(address)
+
+    def parse_neighbors(self, neighbors):
+        facts = dict()
+        for entry in neighbors.split('------------------------------------------------'):
+            if entry == '':
+                continue
+            intf = self.parse_lldp_intf(entry)
+            if intf not in facts:
+                facts[intf] = list()
+            fact = dict()
+            fact['host'] = self.parse_lldp_host(entry)
+            fact['port'] = self.parse_lldp_port(entry)
+            facts[intf].append(fact)
+        return facts
 
     def parse_interfaces(self, data):
         parsed = dict()
@@ -400,36 +419,6 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
-
-class Neighbors(FactsBase):
-
-    COMMANDS = [
-        'show lldp'
-    ]
-
-    def populate(self):
-        super(Neighbors, self).populate()
-
-        data = self.responses[0]
-        if data:
-            neighbors = self.run(['show lldp neighbors detail'])
-            if neighbors:
-                self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
-
-    def parse_neighbors(self, neighbors):
-        facts = dict()
-        for entry in neighbors.split('------------------------------------------------'):
-            if entry == '':
-                continue
-            intf = self.parse_lldp_intf(entry)
-            if intf not in facts:
-                facts[intf] = list()
-            fact = dict()
-            fact['host'] = self.parse_lldp_host(entry)
-            fact['port'] = self.parse_lldp_port(entry)
-            facts[intf].append(fact)
-        return facts
-
     def parse_lldp_intf(self, data):
         match = re.search(r'^Local Intf: (.+)$', data, re.M)
         if match:
@@ -451,7 +440,6 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
-    neighbors=Neighbors,
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
