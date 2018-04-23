@@ -212,7 +212,8 @@ class K8sInventoryHelper(object):
             ports = [{'name': port.name,
                       'port': port.port,
                       'protocol': port.protocol,
-                      'targetPort': port.target_port} for port in service.spec.ports]
+                      'targetPort': port.target_port,
+                      'nodePort': port.node_port} for port in service.spec.ports]
 
             # add hostvars
             self.inventory.set_variable(service_name, 'object_type', 'service')
