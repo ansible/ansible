@@ -55,7 +55,10 @@ def remove_omit(task_args, omit_token):
         if i[1] == omit_token:
             continue
         elif isinstance(i[1], (dict, list)):
-            new_args[i[0]] = remove_omit(i[1], omit_token)
+            try:
+                new_args[i[0]] = remove_omit(i[1], omit_token)
+            except IndexError:
+                new_args.append(remove_omit(i[1], omit_token))
         else:
             try:
                 new_args[i[0]] = i[1]
