@@ -27,23 +27,31 @@ except ImportError:
 class F5Client(F5BaseClient):
     @property
     def api(self):
+        exc = None
         if self._client:
             return self._client
-        for x in range(0, 10):
+        for x in range(0, 3):
             try:
+                server = self.params['provider']['server'] or self.params['server']
+                user = self.params['provider']['user'] or self.params['user']
+                password = self.params['provider']['password'] or self.params['password']
+                server_port = self.params['provider']['server_port'] or self.params['server_port'] or 443
+                validate_certs = self.params['provider']['validate_certs'] or self.params['validate_certs']
+
                 result = ManagementRoot(
-                    self.params['server'],
-                    self.params['user'],
-                    self.params['password'],
-                    port=self.params['server_port'],
-                    verify=self.params['validate_certs'],
+                    server,
+                    user,
+                    password,
+                    port=server_port,
+                    verify=validate_certs,
                     token='local'
                 )
                 self._client = result
                 return self._client
-            except Exception:
+            except Exception as ex:
+                exc = ex
                 time.sleep(3)
-        raise F5ModuleError(
-            'Unable to connect to {0} on port {1}. '
-            'Is "validate_certs" preventing this?'.format(self.params['server'], self.params['server_port'])
-        )
+        error = 'Unable to connect to {0} on port {1}.'.format(self.params['server'], self.params['server_port'])
+        if exc is not None:
+            error += ' The reported error was "{0}".'.format(str(exc))
+        raise F5ModuleError(error)
