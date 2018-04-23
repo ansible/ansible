@@ -1,0 +1,2 @@
+minor_changes:
+- Return virtual_facts after VMware platform detection, otherwise we're falling back to 'NA' for virtualization type and virtualization role.
