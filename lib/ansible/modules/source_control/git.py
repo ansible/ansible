@@ -56,7 +56,7 @@ options:
         version_added: "1.5"
     key_file:
         description:
-            - Specify an optional private key file to use for the checkout.
+            - Specify an optional private key file path, on the target host, to use for the checkout.
         version_added: "1.5"
     reference:
         description:
