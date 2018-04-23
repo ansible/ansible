@@ -142,7 +142,7 @@ def main():
         pass
 
     if meraki.params['auth_key'] is None:
-        module.fail_json(msg='Meraki Dashboard API key not set')
+        meraki.fail_json(msg='Meraki Dashboard API key not set')
 
     payload = None
 
@@ -150,7 +150,7 @@ def main():
     # want to make any changes to the environment, just return the current
     # state with no modifications
     if module.check_mode:
-        return result
+        return meraki.result
 
     # execute checks for argument completeness
 
@@ -199,7 +199,7 @@ def main():
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    meraki.exit_json(**result)
+    meraki.exit_json(**meraki.result)
 
 
 if __name__ == '__main__':
