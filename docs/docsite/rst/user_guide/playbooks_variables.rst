@@ -7,15 +7,15 @@ Variables
 
 While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
 
-On some systems you may want to set some behavior or configuration that is slightly different from others. 
+On some systems you may want to set some behavior or configuration that is slightly different from others.
 
-Also, some of the observed behavior or state 
+Also, some of the observed behavior or state
 of remote systems might need to influence how you configure those systems.  (Such as you might need to find out the IP
 address of a system and even use it as a configuration value on another system).
 
-You might have some templates for configuration files that are mostly the same, but slightly different based on those variables.  
+You might have some templates for configuration files that are mostly the same, but slightly different based on those variables.
 
-Variables in Ansible are how we deal with differences between systems.  
+Variables in Ansible are how we deal with differences between systems.
 
 To understand variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the **group_by** module
@@ -34,7 +34,7 @@ Before we start using variables it's important to know what are valid variable n
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
-``foo_port`` is a great variable.  ``foo5`` is fine too.  
+``foo_port`` is a great variable.  ``foo5`` is fine too.
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
@@ -173,7 +173,7 @@ There are other places where variables can come from, but these are a type of va
 
 Facts are information derived from speaking with your remote systems.
 
-An example of this might be the IP address of the remote host, or what the operating system is. 
+An example of this might be the IP address of the remote host, or what the operating system is.
 
 To see what information is available, try the following::
 
@@ -453,7 +453,7 @@ As discussed in the playbooks chapter, Ansible facts are a way of getting data a
 
 Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
-provided data for use in Ansible variables, without writing a fact module?  
+provided data for use in Ansible variables, without writing a fact module?
 
 For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
 
@@ -766,7 +766,7 @@ Passing Variables On The Command Line
 
 In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
-a single quoted string (containing one or more variables) using one of the formats below 
+a single quoted string (containing one or more variables) using one of the formats below
 
 key=value format::
 
@@ -810,7 +810,7 @@ Escaping quotes and other special characters:
 
 .. versionadded:: 1.2
 
-Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
+Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for
 the shell you're operating in.::
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
@@ -819,7 +819,7 @@ the shell you're operating in.::
 
 .. versionadded:: 1.3
 
-In these cases, it's probably best to use a JSON or YAML file containing the variable 
+In these cases, it's probably best to use a JSON or YAML file containing the variable
 definitions.
 
 .. _ansible_variable_precedence:
@@ -922,6 +922,9 @@ Ansible has three main scopes:
  * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
  * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
+.. include:: ../shared_snippets/variable_evaluation.rst
+
+
 .. _variable_examples:
 
 Variable Examples
@@ -959,10 +962,10 @@ Remember:  Child groups override parent groups, and hosts always override their 
 Next up: learning about role variable precedence.
 
 We'll pretty much assume you are using roles at this point.  You should be using roles for sure.  Roles are great.  You are using
-roles aren't you?  Hint hint.  
+roles aren't you?  Hint hint.
 
 If you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
-the role will bring along a default value but ANYTHING in Ansible will override it. 
+the role will bring along a default value but ANYTHING in Ansible will override it.
 See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---

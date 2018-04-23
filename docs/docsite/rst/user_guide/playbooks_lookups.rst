@@ -38,6 +38,8 @@ One way of using lookups is to populate variables. These macros are evaluated ea
       - debug:
           msg: "motd value is {{ motd_value }}"
 
+.. include:: ../shared_snippets/variable_evaluation.rst
+
 For more details and a complete list of lookup plugins available, please see :ref:`plugins_lookup`.
 
 .. seealso::
