@@ -55,6 +55,8 @@ __metaclass__ = type
 
 import json
 
+from collections import Sequence, Mapping
+
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_text
 
@@ -94,7 +96,7 @@ class AnsibleJSONUnsafeEncoder(json.JSONEncoder):
 class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
     def decode(self, obj):
         value = super(AnsibleJSONUnsafeDecoder, self).decode(obj)
-        if isinstance(value, dict) and '__ansible_unsafe' in value:
+        if isinstance(value, Mapping) and value.get('__ansible_unsafe', False):
             return UnsafeProxy(value.get('value', ''))
         else:
             return value
@@ -115,9 +117,9 @@ def _wrap_list(v):
 
 
 def wrap_var(v):
-    if isinstance(v, dict):
+    if isinstance(v, Mapping):
         v = _wrap_dict(v)
-    elif isinstance(v, list):
+    elif isinstance(v, Sequence):
         v = _wrap_list(v)
     else:
         if v is not None and not isinstance(v, AnsibleUnsafe):
