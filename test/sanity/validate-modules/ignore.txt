@@ -1172,10 +1172,7 @@ lib/ansible/modules/network/f5/bigip_static_route.py E325
 lib/ansible/modules/network/f5/bigip_sys_global.py E326
 lib/ansible/modules/network/f5/bigip_ucs.py E325
 lib/ansible/modules/network/f5/bigip_ucs.py E326
-lib/ansible/modules/network/f5/bigip_user.py E324
-lib/ansible/modules/network/f5/bigip_vcmp_guest.py E325
 lib/ansible/modules/network/f5/bigip_virtual_server.py E326
-lib/ansible/modules/network/f5/bigip_vlan.py E326
 lib/ansible/modules/network/f5/bigiq_regkey_license.py E325
 lib/ansible/modules/network/fortimanager/fmgr_script.py E324
 lib/ansible/modules/network/fortios/fortios_address.py E324
