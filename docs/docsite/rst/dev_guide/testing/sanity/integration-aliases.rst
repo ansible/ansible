@@ -2,14 +2,14 @@ Sanity Tests » integration-aliases
 ==================================
 
 Integration tests are executed by ``ansible-test`` and reside in directories under ``test/integration/targets/``.
-Each test must have an ``aliases`` file to control test execution.
+Each test MUST have an ``aliases`` file to control test execution.
 
 Aliases are explained in the following sections. Each alias must be on a separate line in an ``aliases`` file.
 
 Groups
 ------
 
-Tests must be configured to run in a specific group. This is done by adding the appropriate group to the ``aliases`` file.
+Tests must be configured to run in exactly one group. This is done by adding the appropriate group to the ``aliases`` file.
 
 The following are examples of some of the available groups:
 
@@ -22,6 +22,7 @@ Groups are used to balance tests across multiple CI jobs to minimize test run ti
 They also improve efficiency by keeping tests with similar requirements running together.
 
 When selecting a group for a new test, use the same group as existing tests similar to the one being added.
+If more than one group is available, select one randomly.
 
 Requirements
 ------------
@@ -35,16 +36,23 @@ Aliases can be used to express some test requirements:
 Skipping
 --------
 
-Aliases can be used to skip platforms:
+Aliases can be used to skip platforms using one of the following:
 
 - ``skip/freebsd`` - Skip tests on FreeBSD.
 - ``skip/osx`` - Skip tests on macOS / OS X.
 - ``skip/rhel`` - Skip tests on RHEL.
 
-Aliases can be used to skip Python major versions:
+Aliases can be used to skip Python major versions using one of the following:
 
 - ``skip/python2`` - Skip tests on Python 2.x.
 - ``skip/python3`` - Skip tests on Python 3.x.
+
+For more fine grained skipping, use conditionals in integration test playbooks, such as:
+
+.. code-block:: yaml
+
+   when: ansible_distribution in ('Ubuntu')
+
 
 Unstable
 --------
@@ -109,4 +117,4 @@ Every module and plugin should have integration tests, even if the tests cannot 
 Questions
 ---------
 
-For questions about integration tests reach out to @mattclay or @gundalow on GitHub or #ansible-devel on IRC.
+For questions about integration tests reach out to @mattclay or @gundalow on GitHub or ``#ansible-devel`` on IRC.
