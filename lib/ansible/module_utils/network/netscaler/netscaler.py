@@ -205,25 +205,56 @@ def ensure_feature_is_enabled(client, feature_str):
 def get_nitro_client(module):
     from nssrc.com.citrix.netscaler.nitro.service.nitro_service import nitro_service
 
-    client = nitro_service(module.params['nsip'], module.params['nitro_protocol'])
-    client.set_credential(module.params['nitro_user'], module.params['nitro_pass'])
+    if module.params['mas_proxy_call']:
+
+        try:
+            from nssrc.com.citrix.netscaler.nitro.service.MasContext import MasContext
+        except ImportError as e:
+            module.fail_json(msg='The currently installed nitro python SDK does not support MAS proxied calls')
+
+        if module.params['mas_auth_token'] is None:
+            module.fail_json(msg='You must provide a mas authentication token to proxy a call trough MAS')
+        if module.params['instance_ip'] is None:
+            module.fail_json(msg='You must provide  the target NS instance ip to proxy a call trough MAS')
+
+        masCtx = MasContext(
+            module.params['mas_ip'],
+            module.params['mas_auth_token'],
+            module.params['instance_ip'],
+        )
+
+        client = nitro_service(masCtx, module.params['nitro_protocol'])
+    else:
+        if module.params['nitro_user'] is None:
+            module.fail_json(msg='You must provide a valid nitro user name')
+
+        if module.params['nitro_pass'] is None:
+            module.fail_json(msg='You must provide a valid nitro password')
+
+        client = nitro_service(module.params['nsip'], module.params['nitro_protocol'])
+        client.set_credential(module.params['nitro_user'], module.params['nitro_pass'])
+
     client.timeout = float(module.params['nitro_timeout'])
     client.certvalidation = module.params['validate_certs']
+
     return client
 
 
 netscaler_common_arguments = dict(
     nsip=dict(
         required=True,
+        aliases=['mas_ip'],
         fallback=(env_fallback, ['NETSCALER_NSIP']),
     ),
     nitro_user=dict(
-        required=True,
+        required=False,
+        aliases=['mas_user'],
         fallback=(env_fallback, ['NETSCALER_NITRO_USER']),
         no_log=True
     ),
     nitro_pass=dict(
-        required=True,
+        required=False,
+        aliases=['mas_pass'],
         fallback=(env_fallback, ['NETSCALER_NITRO_PASS']),
         no_log=True
     ),
@@ -248,8 +279,20 @@ netscaler_common_arguments = dict(
         type='bool',
         default=True,
     ),
-)
 
+    mas_proxy_call=dict(
+        default=False,
+        type='bool'
+    ),
+    nitro_auth_token=dict(
+        type='str',
+        aliases=['mas_auth_token'],
+        nolog=True,
+    ),
+    instance_ip=dict(
+        type='str'
+    ),
+)
 
 loglines = []
 
