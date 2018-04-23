@@ -121,6 +121,11 @@ EXAMPLES = '''
         options:
           awslogs-group: ecs
           awslogs-region: us-west-2
+      environment:
+         -  name: "FAASOS_ENV"
+            value: "dev"
+         -  name: "VERSION"
+            value: "1.5"
     - name: busybox
       command:
         - >
