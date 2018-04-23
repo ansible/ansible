@@ -79,7 +79,8 @@ class TestNetscalerNitroRequestModule(TestModule):
             call.fail_json(
                 changed=False,
                 failed=True,
-                msg='Cannot define both authentication token and username/password'
+                msg='Cannot define both authentication token and username/password',
+                headers={'Cookie': 'NITRO_AUTH_TOKEN=##DDASKLFDJ', 'X-NITRO-PASS': 'nsroot', 'Content-Type': 'application/json', 'X-NITRO-USER': 'nsroot'}
             )
         ]
         module_mock = Mock(return_value=mock_module_instance)
