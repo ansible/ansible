@@ -149,14 +149,14 @@ options:
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     choices: [ all, main, repoid ]
-    version_added: "2.5"
+    version_added: "2.6"
   disable_includes:
     description:
       - Disable the includes defined in YUM config files.
       - If set to C(all), disables all includes.
       - If set to C(repoid), disable includes defined for given repo id.
     choices: [ all, repoid ]
-    version_added: "2.5"
+    version_added: "2.6"
 
 notes:
   - When used with a `loop:` each package will be processed individually,
@@ -1309,7 +1309,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         yum_basecmd.extend(['--disableexcludes', disable_excludes])
 
     if disable_includes != '':
-        yum_basecmd.extend(['--disableincludes', disable_includes])
+        if yum.__version_info__ >= (3, 4):
+            yum_basecmd.extend(['--disableincludes', disable_includes])
+        else:
+            module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
 
     if installroot != '/':
         # do not setup installroot by default, because of error
