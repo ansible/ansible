@@ -302,12 +302,15 @@ class NitroAPICaller(object):
     _argument_spec = dict(
         nsip=dict(
             fallback=(env_fallback, ['NETSCALER_NSIP']),
+            aliases=['mas_ip'],
         ),
         nitro_user=dict(
             fallback=(env_fallback, ['NETSCALER_NITRO_USER']),
+            aliases=['mas_user'],
         ),
         nitro_pass=dict(
             fallback=(env_fallback, ['NETSCALER_NITRO_PASS']),
+            aliases=['mas_pass'],
             no_log=True
         ),
         nitro_protocol=dict(
@@ -321,6 +324,7 @@ class NitroAPICaller(object):
         ),
         nitro_auth_token=dict(
             type='str',
+            aliases=['mas_auth_token'],
             no_log=True
         ),
         resource=dict(type='str'),
@@ -458,6 +462,7 @@ class NitroAPICaller(object):
         self._module_result['changed'] = False
         self._module_result.update(kwargs)
         self._module_result['msg'] = msg
+        self._module_result['headers'] = self._headers
         self._module.fail_json(**self._module_result)
 
     def main(self):
