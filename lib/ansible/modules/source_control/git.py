@@ -590,7 +590,7 @@ def is_local_branch(git_path, module, dest, branch):
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
     for branch in branches:
-        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch):
+        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch or 'detached at' in branch):
             return True
     return False
 
