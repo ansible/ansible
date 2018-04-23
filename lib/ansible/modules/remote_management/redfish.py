@@ -139,31 +139,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-{
-    "changed": false,
-    "failed": false,
-    "result": {
-        "AssetTag": "",
-        "BiosVersion": "2.5.4",
-        "BootSourceOverrideMode": "Not available",
-        "CpuCount": 2,
-        "CpuHealth": "OK",
-        "CpuModel": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
-        "HostName": "webserver1",
-        "Manufacturer": "Contoso Inc.",
-        "MemoryHealth": "OK",
-        "MemoryTotal": 64.0,
-        "Model": "Contoso X1",
-        "PartNumber": "0XXXYFA00",
-        "PowerState": "On",
-        "SerialNumber": "CN1234561Y00KY",
-        "ServiceTag": "8YYNXXX",
-        "Status": "OK",
-        "SystemType": "Physical",
-        "TPMInterfaceType": "Not available",
-        "TPMStatus": "Not available"
-    }
-}
+changed:
+    description: Indicates if any changes were made
+    returned: always
+    type: boolean
+    sample: false
+invocation:
+    description: module arguments passed
+    returned: always
+    type: string
+    sample: module_args
+result:
+    description: different results depending on task
+    returned: always
+    type: string
+    sample: BIOS Attributes set as pending values
 '''
 
 import os
