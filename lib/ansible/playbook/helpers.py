@@ -129,7 +129,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 if e._obj:
                     raise
                 # But if it wasn't, we can add the yaml object now to get more detail
-                raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
+                raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
 
             if action in ('include', 'import_tasks', 'include_tasks'):
 
