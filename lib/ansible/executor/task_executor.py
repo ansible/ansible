@@ -41,15 +41,26 @@ def remove_omit(task_args, omit_token):
     Remove args with a value equal to the ``omit_token`` recursively
     to align with now having suboptions in the argument_spec
     '''
-    new_args = {}
 
-    for i in iteritems(task_args):
+    if isinstance(task_args, dict):
+        loop = iteritems(task_args)
+        new_args = {}
+    elif isinstance(task_args, list):
+        loop = enumerate(task_args)
+        new_args = []
+    else:
+        raise TypeError('unsupported type (%r)' % type(task_args))
+
+    for i in loop:
         if i[1] == omit_token:
             continue
-        elif isinstance(i[1], dict):
+        elif isinstance(i[1], (dict, list)):
             new_args[i[0]] = remove_omit(i[1], omit_token)
         else:
-            new_args[i[0]] = i[1]
+            try:
+                new_args[i[0]] = i[1]
+            except IndexError:
+                new_args.append(i[1])
 
     return new_args
 
