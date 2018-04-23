@@ -1,0 +1,62 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+      region: '{{ aws_region }}'
+    no_log: yes
+
+- name: get image ID to create an instance
+  ec2_ami_facts:
+    filters:
+      architecture: x86_64
+      owner-id: '125523088429'
+      virtualization-type: hvm
+      root-device-type: ebs
+      name: 'Fedora-Atomic-27*'
+    <<: *aws_connection_info
+  register: fedora_images
+
+- set_fact:
+    image_id: '{{ fedora_images.images.0.image_id }}'
+
+- name: create a VPC to work in
+  ec2_vpc_net:
+    cidr_block: 10.10.0.0/24
+    state: present
+    name: '{{ resource_prefix }}_setup'
+    resource_tags:
+      Name: '{{ resource_prefix }}_setup'
+    <<: *aws_connection_info
+  register: setup_vpc
+
+- set_fact:
+    vpc_id: '{{ setup_vpc.vpc.id }}'
+
+- name: create a subnet to use for creating an ec2 instance
+  ec2_vpc_subnet:
+    az: '{{ aws_region }}a'
+    tags: '{{ resource_prefix }}_setup'
+    vpc_id: '{{ setup_vpc.vpc.id }}'
+    cidr: 10.10.0.0/24
+    state: present
+    resource_tags:
+      Name: '{{ resource_prefix }}_setup'
+    <<: *aws_connection_info
+  register: setup_subnet
+
+- set_fact:
+    subnet_id: '{{ setup_subnet.subnet.id }}'
+
+- name: create a security group to use for creating an ec2 instance
+  ec2_group:
+    name: '{{ resource_prefix }}_setup'
+    description: 'created by Ansible integration tests'
+    state: present
+    vpc_id: '{{ setup_vpc.vpc.id }}'
+    <<: *aws_connection_info
+  register: setup_sg
+
+- set_fact:
+    sg_id: '{{ setup_sg.group_id }}'
