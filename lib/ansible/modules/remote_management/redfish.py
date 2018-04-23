@@ -158,8 +158,9 @@ result:
 
 try:
     import requests
+    HAS_REQUESTS = True
 except ImportError:
-    module.fail_json(msg="Python module requests not found.")
+    HAS_REQUESTS = False
 
 import os
 import json
@@ -188,6 +189,9 @@ def main():
         ),
         supports_check_mode=False
     )
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg="Module requests not found.")
 
     category = module.params['category']
     command = module.params['command']
