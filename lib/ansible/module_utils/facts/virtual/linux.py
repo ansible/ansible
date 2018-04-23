@@ -245,6 +245,7 @@ class LinuxVirtual(Virtual):
                 if vendor_name.startwith('VMware'):
                     virtual_facts['virtualization_type'] = 'VMware'
                     virtual_facts['virtualization_role'] = 'guest'
+                    return virtual_facts
 
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.
