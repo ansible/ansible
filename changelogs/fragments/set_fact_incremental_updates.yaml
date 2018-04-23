@@ -1,0 +1,2 @@
+bugfixes:
+- set_fact/include_vars - allow incremental update for vars in loop (https://github.com/ansible/ansible/pull/38302)
