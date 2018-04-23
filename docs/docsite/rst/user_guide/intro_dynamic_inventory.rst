@@ -10,7 +10,7 @@ Often a user of a configuration management system will want to keep inventory
 in a different software system.  Ansible provides a basic text-based system as described in
 :ref:`inventory` but what if you want to use something else?
 
-Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <http://cobbler.github.com>`_,
+Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <https://cobbler.github.io>`_,
 or a piece of expensive enterprisey CMDB software.
 
 Ansible easily supports all of these options via an external inventory system.  The contrib/inventory directory contains some of these already -- including options for EC2/Eucalyptus, Rackspace Cloud, and OpenStack, examples of some of which will be detailed below.
@@ -25,7 +25,7 @@ For information about writing your own dynamic inventory source, see :ref:`devel
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <http://cobbler.github.com>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
+It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <https://cobbler.github.io>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
