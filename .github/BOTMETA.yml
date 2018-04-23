@@ -456,6 +456,7 @@ files:
   $modules/network/edgeos/: samdoran
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: privateip trishnaguha
+  $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel
     maintainers: caphrim007
@@ -829,6 +830,9 @@ files:
   $module_utils/network/enos:
     maintainers: amuraleedhar
     labels: networking
+  $module_utils/network/exos:
+    maintainers: rdvencioneck
+    labels: networking
   $module_utils/f5_utils.py:
     maintainers: caphrim007
     labels:
@@ -957,6 +961,9 @@ files:
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/cliconf/exos.py:
+    maintainers: rdvencioneck
+    labels: networking
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
@@ -1040,6 +1047,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/eos.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/exos.py:
+    maintainers: rdvencioneck
     labels: networking
   lib/ansible/plugins/terminal/ios.py:
     maintainers: $team_networking
