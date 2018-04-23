@@ -472,7 +472,7 @@ def main():
     fields = {
         "host": {"required": True, "type": "str"},
         "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "webfilter_url": {
             "required": False, "type": "dict",
