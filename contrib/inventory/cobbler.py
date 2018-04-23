@@ -13,7 +13,7 @@ This, more or less, allows you to keep one central database containing
 info about all of your managed instances.
 
 This script is an example of sourcing that data from Cobbler
-(http://cobbler.github.com).  With cobbler each --mgmt-class in cobbler
+(https://cobbler.github.io).  With cobbler each --mgmt-class in cobbler
 will correspond to a group in Ansible, and --ks-meta variables will be
 passed down for use in templates or even in argument lines.
 
@@ -24,8 +24,6 @@ ansible talking to it twice.  The first one found will be used. If no
 --dns-name is set the system will NOT be visible to ansible.  We do
 not add cobbler system names because there is no requirement in cobbler
 that those correspond to addresses.
-
-See http://ansible.github.com/api.html for more info
 
 Tested with Cobbler 2.0.11.
 
@@ -56,7 +54,7 @@ Changelog:
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 ######################################################################
 
