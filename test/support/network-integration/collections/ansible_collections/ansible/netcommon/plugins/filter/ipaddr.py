@@ -1112,6 +1112,8 @@ def hwaddr(value, query="", alias="hwaddr"):
 
     try:
         v = netaddr.EUI(value)
+    except netaddr.AddrFormatError:
+        return False
     except Exception:
         if query and query != "bool":
             raise errors.AnsibleFilterError(
