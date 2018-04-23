@@ -272,17 +272,19 @@ static_setup_params = dict(
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities',
     ],
+    console_scripts=[
+            'ansible=ansible.__main__:main',
+            'ansible-config=ansible.__main__:main',
+            'ansible-console=ansible.__main__:main',
+            'ansible-doc=ansible.__main__:main',
+            'ansible-galaxyc=ansible.__main__:main',
+            'ansible-inventory=ansible.__main__:main',
+            'ansible-playbook=ansible.__main__:main',
+            'ansible-pull=ansible.__main__:main',
+            'ansible-vault=ansible.__main__:main'
+    ],
     scripts=[
-        'bin/ansible',
-        'bin/ansible-playbook',
-        'bin/ansible-pull',
-        'bin/ansible-doc',
-        'bin/ansible-galaxy',
-        'bin/ansible-console',
         'bin/ansible-connection',
-        'bin/ansible-vault',
-        'bin/ansible-config',
-        'bin/ansible-inventory',
     ],
     data_files=[],
     # Installing as zip files would break due to references to __file__
