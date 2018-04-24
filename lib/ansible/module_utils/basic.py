@@ -229,7 +229,7 @@ FILE_COMMON_ARGUMENTS = dict(
 
     # The following are not about perms and should not be in a rewritten file_common_args
     src=dict(),  # Maybe dest or path would be appropriate but src is not
-    follow=dict(type='bool', default=False), # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
+    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
     force=dict(type='bool'),
 
     # not taken by the file module, but other action plugins call the file module so this ignores
