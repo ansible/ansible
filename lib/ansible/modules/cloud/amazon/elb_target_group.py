@@ -78,7 +78,7 @@ options:
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   state:
     description:
       - Create or destroy the target group.
@@ -87,7 +87,7 @@ options:
   stickiness_enabled:
     description:
       - Indicates whether sticky sessions are enabled.
-    choices: [ 'yes', 'no' ]
+    type: bool
   stickiness_lb_cookie_duration:
     description:
       - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load

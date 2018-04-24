@@ -51,7 +51,7 @@ options:
         argument to False.
     required: false
     default: yes
-    choices: ['yes', 'no']
+    type: bool
     aliases: ['enable_http']
   https_port:
     description:
@@ -70,7 +70,7 @@ options:
         argument to True.
     required: false
     default: no
-    choices: ['yes', 'no']
+    type: bool
     aliases: ['enable_https']
   sandbox:
     description:
@@ -82,7 +82,7 @@ options:
         sandbox URL is unavailable. This is supported on NX-OS 7K series.
     required: false
     default: no
-    choices: ['yes', 'no']
+    type: bool
     aliases: ['enable_sandbox']
   state:
     description:

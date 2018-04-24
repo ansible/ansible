@@ -65,7 +65,7 @@ options:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   use_min:
     description:
@@ -73,7 +73,7 @@ options:
         If the specified value is inferior to the value in the file, file content is replaced with the new value,
         else content is not modified.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   use_max:
     description:
@@ -81,7 +81,7 @@ options:
         If the specified value is superior to the value in the file, file content is replaced with the new value,
         else content is not modified.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   dest:
     description:

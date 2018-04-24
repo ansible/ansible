@@ -41,7 +41,7 @@ options:
             - enables or disables the local syslog facility for this module
         required: false
         default: false
-        choices: [ 'true', 'false', 'yes', 'no' ]
+        type: bool
     state:
         description:
             - describe the desired state of the user to be managed
