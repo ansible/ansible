@@ -362,7 +362,7 @@ class Connection(ConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device")
+            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
             if self._ssh_shell:
                 display.debug("firing event: on_close_shell()")
                 self._terminal.on_close_shell()
