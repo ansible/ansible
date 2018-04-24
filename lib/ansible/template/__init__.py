@@ -171,7 +171,7 @@ def tests_as_filters_warning(name, func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         display.deprecated(
-            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` use '
             '`result is %(name)s`' % dict(name=name),
             version='2.9'
         )
@@ -632,7 +632,7 @@ class Templar:
                     if errors == 'warn':
                         display.warning(msg)
                     elif errors == 'ignore':
-                        display.log(msg)
+                        display.display(msg, log_only=True)
                     else:
                         raise AnsibleError(to_native(msg))
                 ran = None

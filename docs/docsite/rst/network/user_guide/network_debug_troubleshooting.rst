@@ -95,7 +95,7 @@ From the log notice:
    If the log reports the port as ``None`` this means that the default port is being used.
    A future Ansible release will improve this message so that the port is always logged.
 
-Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ```pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
+Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
 
   grep "p=28990" $ANSIBLE_LOG_PATH
 
@@ -396,8 +396,9 @@ For example:
 
 Suggestions to resolve:
 
-Increase value of presistent connection idle timeout.
-.. code-block:: yaml
+Increase value of persistent connection idle timeout:
+
+.. code-block:: sh
 
    export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=60
 

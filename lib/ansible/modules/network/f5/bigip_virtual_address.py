@@ -18,14 +18,20 @@ module: bigip_virtual_address
 short_description: Manage LTM virtual addresses on a BIG-IP
 description:
   - Manage LTM virtual addresses on a BIG-IP.
-version_added: "2.4"
+version_added: 2.4
 options:
+  name:
+    description:
+      - Name of the virtual address.
+      - If this parameter is not provided, then the value of C(address) will
+        be used.
+    version_added: 2.6
   address:
     description:
       - Virtual address. This value cannot be modified after it is set.
-    required: True
-    aliases:
-      - name
+      - If you never created a virtual address, but did create virtual servers, then
+        a virtual address for each virtual server was created automatically. The name
+        of this virtual address is its IP address value.
   netmask:
     description:
       - Netmask of the provided virtual address. This value cannot be
@@ -192,30 +198,25 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -243,23 +244,18 @@ class Parameters(AnsibleF5Parameters):
 
     updatables = [
         'use_route_advertisement', 'auto_delete', 'icmp_echo', 'connection_limit',
-        'arp_state', 'enabled', 'advertise_route', 'traffic_group'
+        'arp_state', 'enabled', 'advertise_route', 'traffic_group', 'address'
     ]
 
     returnables = [
         'use_route_advertisement', 'auto_delete', 'icmp_echo', 'connection_limit',
-        'netmask', 'arp_state', 'address', 'state'
+        'netmask', 'arp_state', 'address', 'state', 'traffic_group'
     ]
 
     api_attributes = [
         'routeAdvertisement', 'autoDelete', 'icmpEcho', 'connectionLimit',
         'advertiseRoute', 'arp', 'mask', 'enabled', 'serverScope', 'trafficGroup'
     ]
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
     @property
     def advertise_route(self):
@@ -351,7 +347,7 @@ class Parameters(AnsibleF5Parameters):
         if self._values['traffic_group'] is None:
             return None
         else:
-            result = self._fqdn_name(self._values['traffic_group'])
+            result = fq_name(self.partition, self._values['traffic_group'])
         if result.startswith('/Common/'):
             return result
         else:
@@ -367,7 +363,27 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    @property
+    def name(self):
+        if self._values['name'] is None:
+            return str(self.address)
+        return self._values['name']
+
+
 class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
     pass
 
 
@@ -403,8 +419,8 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(client=self.client, params=self.module.params)
-        self.changes = Changes()
+        self.want = ModuleParameters(client=self.client, params=self.module.params)
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -412,7 +428,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -428,7 +444,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -470,15 +486,15 @@ class ModuleManager(object):
 
     def read_current_from_device(self):
         resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=self.want.address,
+            name=self.want.name,
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(params=result)
+        return ApiParameters(params=result)
 
     def exists(self):
         result = self.client.api.tm.ltm.virtual_address_s.virtual_address.exists(
-            name=self.want.address,
+            name=self.want.name,
             partition=self.want.partition
         )
         return result
@@ -505,9 +521,9 @@ class ModuleManager(object):
         return True
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=self.want.address,
+            name=self.want.name,
             partition=self.want.partition
         )
         resource.modify(**params)
@@ -525,9 +541,9 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to create the virtual address")
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         self.client.api.tm.ltm.virtual_address_s.virtual_address.create(
-            name=self.want.address,
+            name=self.want.name,
             partition=self.want.partition,
             address=self.want.address,
             **params
@@ -543,7 +559,7 @@ class ModuleManager(object):
 
     def remove_from_device(self):
         resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=self.want.address,
+            name=self.want.name,
             partition=self.want.partition
         )
         resource.delete()
@@ -557,11 +573,8 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['present', 'absent', 'disabled', 'enabled']
             ),
-            address=dict(
-                type='str',
-                required=True,
-                aliases=['name']
-            ),
+            name=dict(),
+            address=dict(),
             netmask=dict(
                 type='str',
                 default='255.255.255.255',
@@ -593,6 +606,9 @@ class ArgumentSpec(object):
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
         self.argument_spec.update(argument_spec)
+        self.required_one_of = [
+            ['name', 'address']
+        ]
 
 
 def main():

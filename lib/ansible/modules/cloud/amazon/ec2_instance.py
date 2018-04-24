@@ -630,7 +630,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
 import ansible.module_utils.ec2 as ec2_utils
@@ -671,7 +671,7 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
             if p not in tower_conf:
                 module.fail_json(msg="Incomplete tower_callback configuration. tower_callback.{0} not set.".format(p))
 
-        if isinstance(tower_conf['job_template_id'], text_type):
+        if isinstance(tower_conf['job_template_id'], string_types):
             tower_conf['job_template_id'] = urlparse.quote(tower_conf['job_template_id'])
         tpl = string.Template(textwrap.dedent("""#!/bin/bash
         set -x
@@ -735,6 +735,47 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
+
+
+def add_or_update_instance_profile(instance, desired_profile_name):
+    instance_profile_setting = instance.get('IamInstanceProfile')
+    if instance_profile_setting and desired_profile_name:
+        if desired_profile_name in (instance_profile_setting.get('Name'), instance_profile_setting.get('Arn')):
+            # great, the profile we asked for is what's there
+            return False
+        else:
+            desired_arn = determine_iam_role(desired_profile_name)
+            if instance_profile_setting.get('Arn') == desired_arn:
+                return False
+        # update association
+        ec2 = module.client('ec2')
+        try:
+            association = ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
+        except botocore.exceptions.ClientError as e:
+            # check for InvalidAssociationID.NotFound
+            module.fail_json_aws(e, "Could not find instance profile association")
+        try:
+            resp = ec2.replace_iam_instance_profile_association(
+                AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)}
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate instance profile")
+
+    if not instance_profile_setting and desired_profile_name:
+        # create association
+        ec2 = module.client('ec2')
+        try:
+            resp = ec2.associate_iam_instance_profile(
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)},
+                InstanceId=instance['InstanceId']
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate new instance profile")
+
+    return False
 
 
 def build_network_spec(params, ec2=None):
@@ -811,7 +852,7 @@ def build_network_spec(params, ec2=None):
             'DeviceIndex': idx,
         }
 
-        if isinstance(interface_params, text_type):
+        if isinstance(interface_params, string_types):
             # naive case where user gave
             # network_interfaces: [eni-1234, eni-4567, ....]
             # put into normal data structure so we don't dupe code
@@ -1104,7 +1145,7 @@ def change_network_attachments(instance, params, ec2):
         for inty in params.get('network').get('interfaces'):
             if isinstance(inty, dict) and 'id' in inty:
                 new_ids.append(inty['id'])
-            elif isinstance(inty, text_type):
+            elif isinstance(inty, string_types):
                 new_ids.append(inty)
         # network.interfaces can create the need to attach new interfaces
         old_ids = [inty['NetworkInterfaceId'] for inty in instance['NetworkInterfaces']]
@@ -1292,9 +1333,9 @@ def pretty_instance(i):
 def determine_iam_role(name_or_arn):
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
-    iam = module.client('iam')
+    iam = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
     try:
-        role = iam.get_instance_profile(InstanceProfileName=name_or_arn)
+        role = iam.get_instance_profile(InstanceProfileName=name_or_arn, aws_retry=True)
         return role['InstanceProfile']['Arn']
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
@@ -1313,6 +1354,8 @@ def handle_existing(existing_matches, changed, ec2, state):
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
         ec2.modify_instance_attribute(**c)
+    changed |= bool(changes)
+    changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
     altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
     module.exit_json(
@@ -1427,7 +1470,7 @@ def main():
             # only need to change instances that aren't already stopped
             filters['instance-state-name'] = ['stopping', 'pending', 'running']
 
-        if isinstance(module.params.get('instance_ids'), text_type):
+        if isinstance(module.params.get('instance_ids'), string_types):
             filters['instance-id'] = [module.params.get('instance_ids')]
         elif isinstance(module.params.get('instance_ids'), list) and len(module.params.get('instance_ids')):
             filters['instance-id'] = module.params.get('instance_ids')

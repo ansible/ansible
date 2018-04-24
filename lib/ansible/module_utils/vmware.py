@@ -103,7 +103,7 @@ def find_entity_child_by_path(content, entityRootFolder, path):
 
         if entity.name == paths[-1]:
             return entity
-    except:
+    except BaseException:
         pass
 
     return None
@@ -307,8 +307,14 @@ def gather_vm_facts(content, vm):
 
     # facts that may or may not exist
     if vm.summary.runtime.host:
-        host = vm.summary.runtime.host
-        facts['hw_esxi_host'] = host.summary.config.name
+        try:
+            host = vm.summary.runtime.host
+            facts['hw_esxi_host'] = host.summary.config.name
+        except vim.fault.NoPermission:
+            # User does not have read permission for the host system,
+            # proceed without this value. This value does not contribute or hamper
+            # provisioning or power management operations.
+            pass
     if vm.summary.runtime.dasVmProtection:
         facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
 
@@ -331,7 +337,7 @@ def gather_vm_facts(content, vm):
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except:
+    except BaseException:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -374,6 +380,14 @@ def gather_vm_facts(content, vm):
         else:
             mac_addr = mac_addr_dash = None
 
+        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and
+                hasattr(entry.backing.port, 'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
+            port_group_key = entry.backing.port.portgroupKey
+            port_key = entry.backing.port.portKey
+        else:
+            port_group_key = None
+            port_key = None
+
         factname = 'hw_eth' + str(ethernet_idx)
         facts[factname] = {
             'addresstype': entry.addressType,
@@ -382,6 +396,8 @@ def gather_vm_facts(content, vm):
             'ipaddresses': net_dict.get(entry.macAddress, None),
             'macaddress_dash': mac_addr_dash,
             'summary': entry.deviceInfo.summary,
+            'portgroup_portkey': port_key,
+            'portgroup_key': port_group_key,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))
         ethernet_idx += 1
@@ -1042,7 +1058,7 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except:
+                except BaseException:
                     break
             folder_name = '/' + folder_name
         return folder_name

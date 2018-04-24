@@ -44,7 +44,7 @@ Documentation for each module can be accessed from the command line with the ans
 
     ansible-doc yum
 
-For a list of all available modules, see :doc:`modules_by_category`, or run the following at a command prompt::
+For a list of all available modules, see :doc:`../modules/modules_by_category`, or run the following at a command prompt::
 
     ansible-doc -l
 

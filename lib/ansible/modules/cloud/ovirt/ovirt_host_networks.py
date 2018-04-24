@@ -433,16 +433,26 @@ def main():
                 ] if networks else None,
             )
         elif state == 'absent' and nic:
+            attachments = []
             nic_service = nics_service.nic_service(nic.id)
 
-            attachments_service = nic_service.network_attachments_service()
-            attachments = attachments_service.list()
             attached_labels = set([str(lbl.id) for lbl in nic_service.network_labels_service().list()])
             if networks:
+                attachments_service = nic_service.network_attachments_service()
+                attachments = attachments_service.list()
                 attachments = [
                     attachment for attachment in attachments
                     if get_link_name(connection, attachment.network) in network_names
                 ]
+
+            # Remove unmanaged networks:
+            unmanaged_networks_service = host_service.unmanaged_networks_service()
+            unmanaged_networks = [(u.id, u.name) for u in unmanaged_networks_service.list()]
+            for net_id, net_name in unmanaged_networks:
+                if net_name in network_names:
+                    if not module.check_mode:
+                        unmanaged_networks_service.unmanaged_network_service(net_id).remove()
+                    host_networks_module.changed = True
 
             # Need to check if there are any labels to be removed, as backend fail
             # if we try to send remove non existing label, for bond and attachments it's OK:
@@ -460,7 +470,7 @@ def main():
                     removed_labels=[
                         otypes.NetworkLabel(id=str(name)) for name in labels
                     ] if labels else None,
-                    removed_network_attachments=list(attachments),
+                    removed_network_attachments=attachments if attachments else None,
                 )
 
         nic = search_by_name(nics_service, nic_name)
