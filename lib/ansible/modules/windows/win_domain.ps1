@@ -38,6 +38,7 @@ Function Ensure-Prereqs {
 $parsed_args = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -default $false
 $dns_domain_name = Get-AnsibleParam $parsed_args "dns_domain_name" -failifempty $true
+$domain_netbios_name = Get-AnsibleParam $parsed_args "domain_netbios_name"
 $safe_mode_admin_password = Get-AnsibleParam $parsed_args "safe_mode_password" -failifempty $true
 $database_path = Get-AnsibleParam $parsed_args "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam $parsed_args "sysvol_path" -type "path"
@@ -80,7 +81,10 @@ If(-not $forest) {
         if ($sysvol_path) {
             $install_forest_args.SysvolPath = $sysvol_path
         }
-
+        if ($domain_netbios_name) {
+            $install_forest_args.DomainNetBiosName = $domain_netbios_name
+        }
+        
         $iaf = Install-ADDSForest @install_forest_args
 
         $result.reboot_required = $iaf.RebootRequired
