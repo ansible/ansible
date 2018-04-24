@@ -352,7 +352,7 @@ def find_vgw(client, module, vpn_gateway_id=None):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    return sorted(response['VpnGateways'])
+    return sorted(response['VpnGateways'], key=lambda k: k['VpnGatewayId'])
 
 
 def ensure_vgw_present(client, module):
