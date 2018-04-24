@@ -122,7 +122,7 @@ Python and most of them do not work on Windows.
 
 Because of this, there are dedicated Windows modules that are written in
 PowerShell and are meant to be run on Windows hosts. A list of these modules
-can be found :ref:`here <list_of_windows_modules>`.
+can be found :ref:`here <windows_modules>`.
 
 In addition, the following Ansible Core modules/action-plugins work with Windows:
 
