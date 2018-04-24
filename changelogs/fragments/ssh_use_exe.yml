@@ -1,0 +1,2 @@
+- bugfix:
+    - Actually use the configured ssh executable for comparissions and not assume its 'ssh' always
