@@ -69,10 +69,10 @@ def safe_wrap(msg, columns, drop_whitespace=False):
         if len(msg[current:]) < LIMIT:
             wrapped += textwrap.wrap(msg[current:], columns, drop_whitespace=drop_whitespace)
         else:
-            wrapped += textwrap.wrap(msg[current:LIMIT], columns , drop_whitespace=drop_whitespace)
+            wrapped += textwrap.wrap(msg[current:LIMIT], columns, drop_whitespace=drop_whitespace)
             current += LIMIT
 
-        if CUTTOFF and current >= CUTOFF:
+        if CUTOFF and current >= CUTOFF:
             break
 
     return wrapped
