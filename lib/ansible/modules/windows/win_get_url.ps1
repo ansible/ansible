@@ -71,7 +71,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $result.msg = $webResponse.StatusDescription
     $webResponse.Close()
 
-    if ($webLastMod -and ((Get-Date -Date $webLastMod) -lt $fileLastMod)) {
+    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -lt $fileLastMod)) {
         return $false
     } else {
         return $true
