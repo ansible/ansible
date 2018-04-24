@@ -184,14 +184,21 @@
     expires: 2529881062
   register: user_test_expires2
 
-- name: Get expiration date for ansibulluser
-  shell: 'getent shadow ansibulluser | cut -d: -f8'
-  changed_when: no
-  register: user_test_expires3
-
-- name: Ensure that tests pass
+- name: Ensure that account was expiration was set and did not change on subsequent run
   assert:
     that:
       - user_test_expires1 is changed
       - user_test_expires2 is not changed
-      - user_test_expires3.stdout == '29281'
+
+- name: Verify expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][6] == '29281'
+  when: ansible_os_family in ['RedHat', 'Debian', 'FreeBSD', 'Suse']
