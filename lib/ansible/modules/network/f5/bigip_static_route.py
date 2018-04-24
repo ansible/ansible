@@ -57,6 +57,7 @@ options:
   reject:
     description:
       - Specifies that the system drops packets sent to the destination.
+    type: bool
   mtu:
     description:
       - Specifies a specific maximum transmission unit (MTU).
@@ -67,9 +68,8 @@ options:
       - This value cannot be changed once it is set.
   state:
     description:
-      - When C(present), ensures that the cloud connector exists. When
-        C(absent), ensures that the cloud connector does not exist.
-    required: False
+      - When C(present), ensures that the static route exists.
+      - When C(absent), ensures that the static does not exist.
     default: present
     choices:
       - present
@@ -146,31 +146,28 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -224,7 +221,7 @@ class ModuleParameters(Parameters):
     def vlan(self):
         if self._values['vlan'] is None:
             return None
-        return fqdn_name(self.partition, self._values['vlan'])
+        return fq_name(self.partition, self._values['vlan'])
 
     @property
     def gateway_address(self):
@@ -251,6 +248,8 @@ class ModuleParameters(Parameters):
             return None
         if self._values['destination'] == 'default':
             self._values['destination'] = '0.0.0.0/0'
+        if self._values['destination'] == 'default-inet6':
+            self._values['destination'] = '::/::'
         try:
             ip = netaddr.IPNetwork(self.destination_ip)
             if self.route_domain:
@@ -315,6 +314,8 @@ class ApiParameters(Parameters):
             return None
         if self._values['destination'] == 'default':
             self._values['destination'] = '0.0.0.0/0'
+        if self._values['destination'] == 'default-inet6':
+            self._values['destination'] = '::/::'
         try:
             pattern = r'(?P<rd>%[0-9]+)'
             addr = re.sub(pattern, '', self._values['destination'])
