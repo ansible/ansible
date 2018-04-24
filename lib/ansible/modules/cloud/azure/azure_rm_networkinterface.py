@@ -283,7 +283,7 @@ state:
 '''
 
 try:
-    from msrestazure.tools import parse_resource_id, resource_id
+    from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
@@ -361,7 +361,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
-            has_security_group=dict(type='bool', default=True),
             security_group_name=dict(type='str', aliases=['security_group']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
@@ -384,7 +383,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.has_security_group = None
         self.security_group_name = None
         self.private_ip_address = None
         self.private_ip_allocation_method = None
@@ -533,7 +531,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                                         self.location,
                                                         self.security_group_name,
                                                         self.os_type,
-                                                        self.open_ports) if self.has_security_group else None
+                                                        self.open_ports)
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
