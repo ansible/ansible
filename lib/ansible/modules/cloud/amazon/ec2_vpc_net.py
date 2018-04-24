@@ -396,8 +396,12 @@ def main():
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Failed to update tags")
 
-        current_dns_enabled = connection.describe_vpc_attribute(Attribute='enableDnsSupport', VpcId=vpc_id)['EnableDnsSupport']['Value']
-        current_dns_hostnames = connection.describe_vpc_attribute(Attribute='enableDnsHostnames', VpcId=vpc_id)['EnableDnsHostnames']['Value']
+        current_dns_enabled = AWSRetry.jittered_backoff(
+            retries=8, delay=3, catch_extra_error_codes=['InvalidVpcID.NotFound']
+        )(connection.describe_vpc_attribute)(Attribute='enableDnsSupport', VpcId=vpc_id)['EnableDnsSupport']['Value']
+        current_dns_hostnames = AWSRetry.jittered_backoff(
+            retries=8, delay=3, catch_extra_error_codes=['InvalidVpcID.NotFound']
+        )(connection.describe_vpc_attribute)(Attribute='enableDnsHostnames', VpcId=vpc_id)['EnableDnsHostnames']['Value']
         if current_dns_enabled != dns_support:
             changed = True
             if not module.check_mode:
