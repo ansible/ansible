@@ -1,0 +1,2 @@
+bugfixes:
+    - filter was removed ... docs shoudl be too https://github.com/ansible/ansible/pull/37946
