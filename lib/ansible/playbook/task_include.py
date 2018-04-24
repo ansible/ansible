@@ -58,7 +58,9 @@ class TaskInclude(Task):
             task.args['_raw_params'] = task.args.pop('file')
 
         apply_attrs = task.args.pop('apply', {})
-        if apply_attrs:
+        if apply_attrs and task.action != 'include_tasks':
+            raise AnsibleParserError('Invalid options for %s: apply' % task.action)
+        elif apply_attrs:
             apply_attrs['block'] = []
             p_block = Block.load(
                 apply_attrs,
