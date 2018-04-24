@@ -149,10 +149,6 @@
           public_ip_allocation_method: Static
         - name: ipconfig1
           public_ip_name: testnic003
-          load_balancer_backend_address_pools:
-          - "{{ lb.state.backend_address_pools[0].id }}"
-          - name: backendaddrpool1
-            load_balancer: lbtestfromansible
   register: output
 
 - assert:
@@ -177,10 +173,6 @@
           public_ip_allocation_method: Static
         - name: ipconfig1
           public_ip_name: testnic003
-          load_balancer_backend_address_pools:
-          - "{{ lb.state.backend_address_pools[0].id }}"
-          - name: backendaddrpool1
-            load_balancer: lbtestfromansible
   register: output
 
 - assert:
@@ -197,10 +189,6 @@
       ip_configurations:
         - name: ipconfig1
           public_ip_name: testnic003
-          load_balancer_backend_address_pools:
-          - "{{ lb.state.backend_address_pools[0].id }}"
-          - name: backendaddrpool1
-            load_balancer: lbtestfromansible
         - name: default
           public_ip_name: testnic001
           public_ip_allocation_method: Static
@@ -212,11 +200,10 @@
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 2
 
-- name: IP configuration without public IP and NSG
+- name: IP configuration without public IP
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001noip
-      has_security_group: False
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -227,7 +214,6 @@
 - assert:
     that:
       - output.state.ip_configurations[0].public_ip_address == None
-      - output.state.network_security_group == None
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:

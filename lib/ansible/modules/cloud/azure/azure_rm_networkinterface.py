@@ -151,24 +151,12 @@ options:
                     - Dynamic
                     - Static
                 default: Dynamic
-            load_balancer_backend_address_pools:
-                description:
-                    - List of an existing load-balancer backend address pool id to associate with the network interface.
-                    - It can be write as a resource id.
-                    - Also can be a dict of I(name) and I(load_balancer).
-                version_added: 2.6
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
                 type: bool
                 default: 'no'
         version_added: 2.5
-    has_security_group:
-        description:
-            - Whether need the NIC created with a security group
-        type: bool
-        version_added: 2.6
-        default: True
     security_group_name:
         description:
             - Name of an existing security group with which to associate the network interface. If not provided, a
@@ -323,8 +311,6 @@ def nic_to_dict(nic):
             private_ip_allocation_method=config.private_ip_allocation_method,
             subnet=subnet_to_dict(config.subnet),
             primary=config.primary,
-            load_balancer_backend_address_pools=([item.id for item in config.load_balancer_backend_address_pools]
-                                                 if config.load_balancer_backend_address_pools else None),
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
@@ -363,7 +349,6 @@ ip_configuration_spec = dict(
     private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
     public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
     public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
-    load_balancer_backend_address_pools=dict(type='list'),
     primary=dict(type='bool', default=False)
 )
 
@@ -482,15 +467,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.has_security_group != bool(results.get('network_security_group')):
-                    self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
+                nsg = self.get_security_group(self.security_group_name)
+                if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
+                    self.log("CHANGED: network interface {0} network security group".format(self.name))
                     changed = True
-
-                if not changed:
-                    nsg = self.get_security_group(self.security_group_name)
-                    if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
-                        self.log("CHANGED: network interface {0} network security group".format(self.name))
-                        changed = True
 
                 if results['ip_configurations'][0]['subnet']['virtual_network_name'] != virtual_network_name:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
@@ -545,9 +525,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         name=ip_config.get('name'),
                         subnet=subnet,
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
-                        load_balancer_backend_address_pools=([self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id))
-                                                              for bap_id in ip_config.get('load_balancer_backend_address_pools')]
-                                                             if ip_config.get('load_balancer_backend_address_pools') else None),
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
@@ -623,29 +600,12 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         except Exception as exc:
             return None
 
-    def backend_addr_pool_id(self, val):
-        if isinstance(val, dict):
-            lb = val.get('load_balancer', None)
-            name = val.get('name', None)
-            if lb and name:
-                return resource_id(subscription=self.subscription_id,
-                                   resource_group=self.resource_group,
-                                   namespace='Microsoft.Network',
-                                   type='loadBalancers',
-                                   name=lb,
-                                   child_type_1='backendAddressPools',
-                                   child_name_1=name)
-        return val
-
     def construct_ip_configuration_set(self, raw):
         configurations = [str(dict(
             private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
             public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
                                     if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
             primary=item.get('primary'),
-            load_balancer_backend_address_pools=(set([to_native(self.backend_addr_pool_id(id))
-                                                      for id in item.get('load_balancer_backend_address_pools')])
-                                                 if item.get('load_balancer_backend_address_pools') else None),
             name=to_native(item.get('name'))
         )) for item in raw]
         return set(configurations)
