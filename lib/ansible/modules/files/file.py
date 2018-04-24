@@ -128,10 +128,12 @@ import os
 import shutil
 import time
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
+
+
+# There will only be a single AnsibleModule object per module
+module = None
 
 
 def get_state(b_path):
@@ -183,34 +185,36 @@ def recursive_set_attributes(module, b_path, follow, file_args):
 
 def main():
 
+    global module
+
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
-            force=dict(required=False, default=False, type='bool'),
-            follow=dict(required=False, default=True, type='bool'),
-            diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
-            validate=dict(required=False, default=None),  # Internal use only, for template and copy
-            src=dict(required=False, default=None, type='path'),
+            force=dict(required=False, default=False, type='bool'),  # Note: Should not be in file_common_args in future
+            follow=dict(required=False, default=True, type='bool'),  # Note: Different default than file_common_args
+            _diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
+            src=dict(required=False, default=None, type='path'),  # Note: Should not be in file_common_args in future
         ),
         add_file_common_args=True,
         supports_check_mode=True
     )
 
     params = module.params
+
     state = params['state']
     recurse = params['recurse']
     force = params['force']
-    diff_peek = params['diff_peek']
-    src = params['src']
-    b_src = to_bytes(src, errors='surrogate_or_strict')
+    diff_peek = params['_diff_peek']
     follow = params['follow']
 
-    # modify source as we later reload and pass, specially relevant when used by other modules.
+    # modify paths as we later reload and pass, specially relevant when used by other modules.
     path = params['path']
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    src = params['src']
+    b_src = to_bytes(src, errors='surrogate_or_strict', nonstring='passthru')
 
     # short-circuit for diff_peek
     if diff_peek is not None:
@@ -219,16 +223,16 @@ def main():
             f = open(b_path, 'rb')
             head = f.read(8192)
             f.close()
-            if b("\x00") in head:
+            if b"\x00" in head:
                 appears_binary = True
         except:
             pass
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
+    # state should default to file, but since that creates many conflicts,
+    # default state to 'current' when it exists.
     prev_state = get_state(b_path)
 
-    # state should default to file, but since that creates many conflicts,
-    # default to 'current' when it exists.
     if state is None:
         if prev_state != 'absent':
             state = prev_state
