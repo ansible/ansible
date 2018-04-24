@@ -33,10 +33,11 @@ options:
     default: scp
     choices: ['scp', 'sftp']
     required: no
-  dest_dir:
+  dest:
     description:
-      - directory path where file will be copied on net device
-    default: home directory of user
+      - destination file name with absolute path 
+    default: filename from src and at default directory of user shell on
+             network_os
     required: no
 
 Requirements:

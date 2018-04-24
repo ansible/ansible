@@ -42,10 +42,12 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
-        if play_context.connection is not 'network_cli':
-            # It is supported only with network_cli 
+        if play_context.connection != 'network_cli':
+            # It is supported only with network_cli
+            q(play_context.connection )
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type')
+            result['msg'] = ('please use network_cli connection type for net_file_put module')
+            return result
 
         src_file_path_name = self._task.args.get('src')
 
@@ -59,6 +61,10 @@ class ActionModule(ActionBase):
         except KeyError as exc:
             return {'failed': True, 'msg': 'missing required argument: %s' % exc}
 
+        # Get destination file if specified
+        dest = self._task.args.get('dest')
+        sock_timeout = play_context.timeout
+
         # Now src has resolved file write to disk n current diectory for scp
         output_file = '/tmp/tmp_ansible_0'
         with open(output_file, 'w') as f:
@@ -68,9 +74,10 @@ class ActionModule(ActionBase):
            socket_path = self._connection.socket_path
  
         conn = Connection(socket_path)
-        dest = '/misc/scratch/' + src_file_path_name
-        q(dest)
-        out = conn.copy_file(source=output_file, destination=dest)
+        if dest is None:
+            dest = src_file_path_name
+
+        out = conn.copy_file(source=output_file, destination=dest, timeout=sock_timeout)
 
         return result
 
