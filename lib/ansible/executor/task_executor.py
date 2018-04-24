@@ -403,7 +403,7 @@ class TaskExecutor:
                                 'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
                                 'Instead of using a loop to supply multiple items and specifying `%s: %s`, '
                                 'please use `%s: %r` and remove the loop' % (self._task.action, found, name, found, self._task.loop),
-                                version='2.10'
+                                version='2.11'
                             )
                             for item in items:
                                 variables[loop_var] = item

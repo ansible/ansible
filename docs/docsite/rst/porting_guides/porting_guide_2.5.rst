@@ -135,11 +135,11 @@ Additionally, a script was created to assist in the conversion for tests using f
 Using a loop on a package module via squash_actions
 ---------------------------------------------------
 
-The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.9.
+The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.11.
 
 Instead of relying on implicit squashing, tasks should instead supply the list directly to the ``name``, ``pkg`` or ``package`` parameter of the module. This functionality has been supported in most modules since Ansible 2.3.
 
-**OLD** In Ansible 2.4 (and earlier) the following task would invoke the "yum" module only 1 time to install multiple packages
+**OLD** In Ansible 2.6 (and earlier) the following task would invoke the "yum" module only 1 time to install multiple packages
 
 .. code-block:: yaml
 
@@ -149,7 +149,7 @@ Instead of relying on implicit squashing, tasks should instead supply the list d
         state: present
       with_items: "{{ packages }}"
 
-**NEW** In Ansible 2.5 it should be changed to look like this:
+**NEW** In Ansible 2.7 it should be changed to look like this:
 
 .. code-block:: yaml
 
