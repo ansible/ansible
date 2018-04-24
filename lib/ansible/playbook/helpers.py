@@ -138,9 +138,26 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     include_class = TaskInclude
 
+                apply_attrs = task_ds.pop('apply', {})
+
+                if apply_attrs:
+                    apply_attrs['block'] = []
+                    p_block = Block.load(
+                        apply_attrs,
+                        play=play,
+                        parent_block=block,
+                        role=role,
+                        task_include=task_include,
+                        use_handlers=use_handlers,
+                        variable_manager=variable_manager,
+                        loader=loader,
+                    )
+                else:
+                    p_block = block
+
                 t = include_class.load(
                     task_ds,
-                    block=block,
+                    block=p_block,
                     role=role,
                     task_include=None,
                     variable_manager=variable_manager,
@@ -306,9 +323,26 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     task_list.append(t)
 
             elif action in ('include_role', 'import_role'):
+                apply_attrs = task_ds.pop('apply', {})
+
+                if apply_attrs:
+                    apply_attrs['block'] = []
+                    p_block = Block.load(
+                        apply_attrs,
+                        play=play,
+                        parent_block=block,
+                        role=role,
+                        task_include=task_include,
+                        use_handlers=use_handlers,
+                        variable_manager=variable_manager,
+                        loader=loader,
+                    )
+                else:
+                    p_block = block
+
                 ir = IncludeRole.load(
                     task_ds,
-                    block=block,
+                    block=p_block,
                     role=role,
                     task_include=None,
                     variable_manager=variable_manager,
