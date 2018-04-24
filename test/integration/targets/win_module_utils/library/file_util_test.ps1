@@ -62,6 +62,7 @@ Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath Normal file
 $actual = Test-AnsiblePath -Path C:\Windows\System32\kernel32.dll
+Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath fails with wildcard
 $failed = $false
@@ -72,6 +73,18 @@ try {
     Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
 }
 Assert-Equals -actual $failed -expected $true
+
+# Test-AnsiblePath on non file PS Provider object
+$actual = Test-AnsiblePath -Path Cert:\LocalMachine\My
+Assert-Equals -actual $actual -expected $true
+
+# Test-AnsiblePath on environment variable
+$actual = Test-AnsiblePath -Path env:SystemDrive
+Assert-Equals -actual $actual -expected $true
+
+# Test-AnsiblePath on environment variable that does not exist
+$actual = Test-AnsiblePath -Path env:FakeEnvValue
+Assert-Equals -actual $actual -expected $false
 
 # Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param
 $actual = Get-AnsibleItem -Path C:\fakefile -ErrorAction SilentlyContinue
