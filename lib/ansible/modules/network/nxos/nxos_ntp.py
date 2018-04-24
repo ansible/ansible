@@ -275,7 +275,7 @@ def config_ntp(delta, existing):
 
     ntp_cmds = []
     if peer_type:
-        if existing:
+        if existing.get('peer_type') and existing.get('address'):
             ntp_cmds.append('no ntp {0} {1}'.format(existing.get('peer_type'),
                                                     existing.get('address')))
         ntp_cmds.append(set_ntp_server_peer(
@@ -286,7 +286,7 @@ def config_ntp(delta, existing):
         if existing_source_type and source_type != existing_source_type:
             ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
         if source == 'default':
-            if existing_source:
+            if existing_source_type and existing_source:
                 ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
         else:
             ntp_cmds.append('ntp {0} {1}'.format(source_type, source))
