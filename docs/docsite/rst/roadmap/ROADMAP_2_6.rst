@@ -55,6 +55,7 @@ Modules
 * New ``cli_config`` - platform agnostic module for sending text based config over network_cli
 * New ``cli_command`` - platform agnostic command module
 * New ``netconf_get`` - implements the standard netconf get rpc
+* New ``netconf_config`` - implements the standard netconf edit/configure rpc 
 * New ``netconf_rpc`` - calls any playbook defined rpc on the remote device and returns the results
 * New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
 * New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
