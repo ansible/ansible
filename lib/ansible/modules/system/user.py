@@ -271,6 +271,7 @@ class User(object):
     platform = 'Generic'
     distribution = None
     SHADOWFILE = '/etc/shadow'
+    SHADOWFILE_INDEX = 7
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
@@ -650,7 +651,7 @@ class User(object):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
-                        expires = line.split(':')[7]
+                        expires = line.split(':')[self.SHADOWFILE_INDEX]
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -784,6 +785,7 @@ class FreeBsdUser(User):
     platform = 'FreeBSD'
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
+    SHADOWFILE_INDEX = 6
 
     def remove_user(self):
         cmd = [
@@ -949,8 +951,11 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires:
-            cmd.append('-e')
-            cmd.append(str(int(time.mktime(self.expires))))
+            current_expires = time.gmtime(int(self.user_password()[1]))
+
+            if current_expires != self.expires:
+                cmd.append('-e')
+                cmd.append(str(int(time.mktime(self.expires))))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
