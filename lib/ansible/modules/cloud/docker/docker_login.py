@@ -82,7 +82,6 @@ requirements:
 author:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
-    - "James Tanner (@jctanner)"
 '''
 
 EXAMPLES = '''

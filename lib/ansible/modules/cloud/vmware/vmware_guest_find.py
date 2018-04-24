@@ -19,7 +19,6 @@ description:
     - Find the folder path(s) for a virtual machine by name or UUID
 version_added: 2.4
 author:
-    - James Tanner <tanner.jc@gmail.com>
     - Abhijeet Kasurde <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.5

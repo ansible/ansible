@@ -402,7 +402,6 @@ author:
     - "Thomas Steinbach (@ThomasSteinbach)"
     - "Philippe Jandot (@zfil)"
     - "Daan Oosterveld (@dusdanig)"
-    - "James Tanner (@jctanner)"
     - "Chris Houseknecht (@chouseknecht)"
     - "Kassian Sun (@kassiansun)"
 
