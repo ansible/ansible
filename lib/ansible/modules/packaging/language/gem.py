@@ -39,7 +39,7 @@ options:
     description:
       - Whether to include dependencies or not.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "yes"
   repository:
     description:
@@ -50,7 +50,7 @@ options:
     description:
       - Install gem in user's local gems cache or for all users
     required: false
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
     version_added: "1.3"
   executable:

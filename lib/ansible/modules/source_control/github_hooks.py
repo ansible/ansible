@@ -50,7 +50,7 @@ options:
         on personally controlled sites using self-signed certificates.
     required: false
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
   content_type:
     description:
       - Content type to use for requests made to the webhook

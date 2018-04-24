@@ -100,7 +100,7 @@ options:
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
 
 extends_documentation_fragment:
     - aws
