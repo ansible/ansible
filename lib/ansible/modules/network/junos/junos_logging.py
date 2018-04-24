@@ -49,7 +49,7 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
   rotate_frequency:
     description:
       - Rotate log frequency in minutes, this is applicable if value

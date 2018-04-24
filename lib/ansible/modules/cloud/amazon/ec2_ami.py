@@ -44,7 +44,7 @@ options:
     description:
       - Wait for the AMI to be in state 'available' before returning.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
@@ -62,7 +62,7 @@ options:
       - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the
         responsibility of maintaining file system integrity is left to the owner of the instance.
     default: no
-    choices: [ "yes", "no" ]
+    type: bool
   image_id:
     description:
       - Image ID to be deregistered.
@@ -77,7 +77,7 @@ options:
     description:
       - Delete snapshots when deregistering the AMI.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   tags:
     description:
       - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'

@@ -35,7 +35,7 @@ options:
     description:
       - Remove CIDRs that are associated with the VPC and are not specified in C(cidr_block).
     default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
     version_added: '2.5'
   tenancy:
     description:
@@ -46,12 +46,12 @@ options:
     description:
       - Whether to enable AWS DNS support.
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   dns_hostnames:
     description:
       - Whether to enable AWS hostname support.
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   dhcp_opts_id:
     description:
       - the id of the DHCP options to use for this vpc

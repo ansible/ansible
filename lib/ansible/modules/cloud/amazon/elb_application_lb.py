@@ -32,7 +32,7 @@ options:
     description:
       - "Whether or not to enable access logs. When true, I(access_logs_s3_bucket) must be set."
     required: false
-    choices: [ 'yes', 'no' ]
+    type: bool
   access_logs_s3_bucket:
     description:
       - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same
@@ -47,7 +47,7 @@ options:
       - Indicates whether deletion protection for the ELB is enabled.
     required: false
     default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
@@ -68,14 +68,14 @@ options:
       - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
         not set then listeners will not be modified
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   subnets:
     description:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from

@@ -70,7 +70,7 @@ options:
         description: Whether or not to override values of minimum and/or maximum tasks if it's already set.
         required: no
         default: no
-        choices: [ 'yes', 'no' ]
+        type: bool
         version_added: "2.6"
 extends_documentation_fragment:
     - aws

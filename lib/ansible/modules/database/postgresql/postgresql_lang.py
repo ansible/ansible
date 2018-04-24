@@ -41,7 +41,6 @@ options:
       - make this language trusted for the selected db
     type: bool
     default: 'no'
-    choices: [ "yes", "no" ]
   db:
     description:
       - name of database where the language will be added, removed or changed

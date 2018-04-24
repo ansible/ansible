@@ -45,7 +45,7 @@ options:
             - update the package database first
         required: false
         default: false
-        choices: [ true, false ]
+        type: bool
 
 author: Kim Nørgaard (@KimNorgaard)
 requirements: [ "Slackware >= 12.2" ]

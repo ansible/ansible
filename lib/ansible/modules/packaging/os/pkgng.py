@@ -39,7 +39,7 @@ options:
     cached:
         description:
             - Use local package base instead of fetching an updated one.
-        choices: [ 'yes', 'no' ]
+        type: bool
         required: false
         default: no
     annotation:
@@ -81,7 +81,7 @@ options:
         description:
             - Remove automatically installed packages which are no longer needed.
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         default: no
 author: "bleader (@bleader)"
 notes:

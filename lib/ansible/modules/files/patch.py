@@ -46,7 +46,7 @@ options:
     description:
       - If C(no), it will search for src at originating/master machine, if C(yes) it will
         go to the remote/target machine for the C(src).
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'no'
   strip:
     description:
@@ -59,7 +59,7 @@ options:
     description:
       - Passes C(--backup --version-control=numbered) to patch,
         producing numbered backup copies.
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'no'
   binary:
     version_added: "2.0"
@@ -67,7 +67,7 @@ options:
       - Setting to C(yes) will disable patch's heuristic for transforming CRLF
         line endings into LF. Line endings of src and dest must match. If set to
         C(no), C(patch) will replace CRLF in C(src) files on POSIX.
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'no'
 notes:
   - This module requires GNU I(patch) utility to be installed on the remote host.
