@@ -630,10 +630,6 @@ lib/ansible/modules/clustering/k8s/_kubernetes.py E322
 lib/ansible/modules/clustering/k8s/_kubernetes.py E323
 lib/ansible/modules/clustering/k8s/_kubernetes.py E324
 lib/ansible/modules/clustering/k8s/_kubernetes.py E325
-lib/ansible/modules/clustering/k8s/k8s_raw.py E321
-lib/ansible/modules/clustering/k8s/k8s_scale.py E321
-lib/ansible/modules/clustering/openshift/openshift_raw.py E321
-lib/ansible/modules/clustering/openshift/openshift_scale.py E321
 lib/ansible/modules/clustering/znode.py E326
 lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
@@ -1090,12 +1086,8 @@ lib/ansible/modules/network/f5/bigip_qkview.py E324
 lib/ansible/modules/network/f5/bigip_qkview.py E326
 lib/ansible/modules/network/f5/bigip_routedomain.py E326
 lib/ansible/modules/network/f5/bigip_selfip.py E324
-lib/ansible/modules/network/f5/bigip_static_route.py E325
 lib/ansible/modules/network/f5/bigip_sys_global.py E326
-lib/ansible/modules/network/f5/bigip_user.py E324
-lib/ansible/modules/network/f5/bigip_vcmp_guest.py E325
 lib/ansible/modules/network/f5/bigip_virtual_server.py E326
-lib/ansible/modules/network/f5/bigip_vlan.py E326
 lib/ansible/modules/network/f5/bigiq_regkey_license.py E325
 lib/ansible/modules/network/fortimanager/fmgr_script.py E324
 lib/ansible/modules/network/fortios/fortios_address.py E324
