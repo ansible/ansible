@@ -499,7 +499,7 @@ class TestTaskExecutor(unittest.TestCase):
                     'remove': 'POPCORN',
                     'keep': 'not_popcorn',
                 },
-                'a_list': ['POPCORN'],
+                'a_list': ['POPCORN', 'not_popcorn'],
             },
             'a_list': ['POPCORN'],
         }
@@ -513,9 +513,12 @@ class TestTaskExecutor(unittest.TestCase):
                 'subsubdict': {
                     'keep': 'not_popcorn',
                 },
-                'a_list': ['POPCORN'],
+                'a_list': ['not_popcorn'],
             },
-            'a_list': ['POPCORN'],
+            'a_list': [],
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)
+
+        with self.assertRaises(TypeError):
+            remove_omit(True, omit_token)
