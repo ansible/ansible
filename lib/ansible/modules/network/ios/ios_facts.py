@@ -133,7 +133,7 @@ ansible_net_interfaces:
   description: A hash of all interfaces running on the system
   returned: when interfaces is configured
   type: dict
-  
+
 # neighbors
 ansible_net_neighbors:
   description: The list of LLDP neighbors from the remote device
@@ -399,23 +399,23 @@ class Interfaces(FactsBase):
         match = re.search(r'^(?:.+) is (.+),', data, re.M)
         if match:
             return match.group(1)
-        
-        
+
+
 class Neighbors(FactsBase):
 
     COMMANDS = [
         'show lldp'
     ]
-    
+
     def populate(self):
         super(Neighbors, self).populate()
-        
+
         data = self.responses[0]
         if data:
             neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
                 self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
-                
+
     def parse_neighbors(self, neighbors):
         facts = dict()
         for entry in neighbors.split('------------------------------------------------'):
