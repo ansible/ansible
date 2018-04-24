@@ -67,6 +67,9 @@ There are two ways to run unstable tests manually:
 - Use the ``--allow-unstable`` option for ``ansible-test``
 - Prefix the test name with ``unstable/`` when passing it to ``ansible-test``.
 
+Tests will be marked as unstable by a member of the Ansible Core Team.
+GitHub issues_ will be created to track each unstable test.
+
 Disabled
 --------
 
@@ -78,6 +81,9 @@ There are two ways to run disabled tests manually:
 
 - Use the ``--allow-disabled`` option for ``ansible-test``
 - Prefix the test name with ``disabled/`` when passing it to ``ansible-test``.
+
+Tests will be marked as disabled by a member of the Ansible Core Team.
+GitHub issues_ will be created to track each disabled test.
 
 Unsupported
 -----------
@@ -91,6 +97,8 @@ There are two ways to run unsupported tests manually:
 
 * Use the ``--allow-unsupported`` option for ``ansible-test``
 * Prefix the test name with ``unsupported/`` when passing it to ``ansible-test``.
+
+Tests will be marked as unsupported by the contributor of the test.
 
 Cloud
 -----
@@ -113,6 +121,17 @@ Untested
 --------
 
 Every module and plugin should have integration tests, even if the tests cannot be run in CI.
+
+Issues
+------
+
+Tests that are marked as unstable_ or disabled_ will have an issue created to track the status of the test.
+Each issue will be assigned to one of the following projects:
+
+- `AWS <https://github.com/ansible/ansible/projects/21>`_
+- `Azure <https://github.com/ansible/ansible/projects/22>`_
+- `Windows <https://github.com/ansible/ansible/projects/23>`_
+- `General <https://github.com/ansible/ansible/projects/25>`_
 
 Questions
 ---------
