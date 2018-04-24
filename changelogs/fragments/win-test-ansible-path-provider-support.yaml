@@ -1,0 +1,2 @@
+bugfixes:
+- Ansible.ModuleUtils.FileUtil - support using Test-AnsiblePath with non file system providers (https://github.com/ansible/ansible/pull/39200)
