@@ -6,8 +6,8 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Ansible Networking Team
-    connection: netapi
-    short_description: Use netapi to run command on Arista EOS devices using netapi
+    connection: httpapi
+    short_description: Use httpapi to run command on Arista EOS devices using httpapi
     description:
         - This plugin actually forces use of 'local' execution but using paramiko to establish a remote ssh shell on the appliance.
         - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to
@@ -19,12 +19,12 @@ DOCUMENTATION = """
             - Secret used to authenticate
         vars:
             - name: ansible_password
-            - name: ansible_netapi_pass
-      protocol:
+            - name: ansible_httpapi_pass
+      use_ssl:
         description:
-            - Protocol to connect to netapit with (eg, 'http' or 'https')
+            - Whether to connect using SSL (HTTPS) or not (HTTP)
         vars:
-            - name: ansible_netapi_protocol
+            - name: ansible_httpapi_use_ssl
       timeout:
         type: int
         description:
@@ -32,18 +32,16 @@ DOCUMENTATION = """
         default: 120
 """
 
-import json
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import cliconf_loader, connection_loader
+from ansible.plugins.loader import cliconf_loader, connection_loader, httpapi_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath
 
@@ -57,7 +55,7 @@ except ImportError:
 class Connection(ConnectionBase):
     '''Network API connection'''
 
-    transport = 'netapi'
+    transport = 'httpapi'
     has_pipelining = True
     force_persistence = True
 
@@ -83,13 +81,16 @@ class Connection(ConnectionBase):
                 'manually configure ansible_network_os value for this host'
             )
 
-        self._request_builder = getattr(self, '_request_builder_%s' % network_os)
-        self._handle_response = getattr(self, '_handle_response_%s' % network_os)
-        protocol = getattr(play_context, 'protocol', 'http')
-        if network_os == 'eos':
-            self._url = '%s://%s:%s/command-api' % (protocol, play_context.remote_addr, play_context.port or 80)
-        elif network_os == 'nxos':
-            self._url = '%s://%s:%s/ins' % (protocol, play_context.remote_addr, play_context.port or 80)
+        self._httpapi = httpapi_loader.get(network_os, self)
+        if self._httpapi:
+            display.vvvv('loaded API plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
+        else:
+            display.vvvv('unable to load API plugin for network_os %s' % network_os)
+
+        protocol = 'https' if getattr(play_context, 'use_ssl', True) else 'http'
+        port = play_context.port or 443 if protocol == 'https' else 80
+        self._url = '%s://%s:%s' % (protocol, play_context.remote_addr, port)
+        self._auth = None
 
         # reconstruct the socket_path and set instance values accordingly
         self._update_connection_state()
@@ -98,72 +99,12 @@ class Connection(ConnectionBase):
         try:
             return self.__dict__[name]
         except KeyError:
-            if name.startswith('_'):
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-            return getattr(self._cliconf, name)
-
-    def _request_builder_eos(self, commands, output, reqid=None):
-        params = dict(version=1, cmds=commands, format=output)
-        headers = {'Content-Type': 'application/json-rpc'}
-
-        return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params), headers
-
-    def _request_builder_nxos(self, commands, output, version='1.0', chunk='0', sid=None):
-        """Encodes a NXAPI JSON request message
-        """
-        output_to_command_type = {
-            'text': 'cli_show_ascii',
-            'json': 'cli_show',
-            'bash': 'bash',
-            'config': 'cli_conf'
-        }
-
-        maybe_output = commands[0].split('|')[-1].strip()
-        if maybe_output in output_to_command_type:
-            command_type = output_to_command_type[maybe_output]
-            commands = [command.split('|')[0].strip() for command in commands]
-        else:
-            try:
-                command_type = output_to_command_type[output]
-            except KeyError:
-                msg = 'invalid format, received %s, expected one of %s' % \
-                    (output, ','.join(output_to_command_type.keys()))
-                self._error(msg=msg)
-
-        if isinstance(commands, (list, set, tuple)):
-            commands = ' ;'.join(commands)
-
-        msg = {
-            'version': version,
-            'type': command_type,
-            'chunk': chunk,
-            'sid': sid,
-            'input': commands,
-            'output_format': 'json'
-        }
-        headers = {'Content-Type': 'application/json'}
-
-        return dict(ins_api=msg), headers
-
-    def _handle_response_eos(self, response):
-        if 'error' in response:
-            raise AnsibleConnectionFailure(response['error'])
-
-        result = response['result'][0]
-        if 'messages' in result:
-            result = result['messages'][0]
-        else:
-            result = json.dumps(result)
-        return result.strip()
-
-    def _handle_response_nxos(self, response):
-        if response['ins_api'].get('outputs'):
-            output = response['ins_api']['outputs']['output']
-            if output['code'] != '200':
-                raise AnsibleConnectionFailure('%s: %s' % (output['input'], output['msg']))
-            elif 'body' in output:
-                return json.dumps(output['body']).strip()
-
+            if not name.startswith('_'):
+                for plugin in (self._httpapi, self._cliconf):
+                    method = getattr(plugin, name, None)
+                    if method:
+                        return method
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         return self._local.exec_command(cmd, in_data, sudoable)
@@ -209,8 +150,6 @@ class Connection(ConnectionBase):
 
         self._connected = True
 
-        return self
-
     def _update_connection_state(self):
         '''
         Reconstruct the connection socket_path and check if it exists
@@ -247,34 +186,13 @@ class Connection(ConnectionBase):
         if self._connected:
             self._connected = False
 
-    def send(self, command, **kwargs):
+    def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
         '''
-        if self._play_context.become and self._play_context.become_method == 'enable':
-            display.vvvv('firing event: on_become', host=self._play_context.remote_addr)
-            auth_pass = self._play_context.become_pass
-            #TODO ??? self._terminal.on_become(passwd=auth_pass)
-
-        command = to_text(command)
-        try:
-            command = json.loads(command)
-            output = cmd['output']
-        except ValueError:
-            output = 'json'
-        request, headers = self._request_builder(to_list(command), output)
-        data = json.dumps(request)
-
-        response = open_url(
-            self._url, data=data, headers=headers, method='POST',
-            url_username=self._play_context.remote_user, url_password=self._play_context.password
-        )
+        url_kwargs = dict(url_username=self._play_context.remote_user, url_password=self._play_context.password)
+        url_kwargs.update(kwargs)
+        response = open_url(self._url + path, data=data, **url_kwargs)
         self._auth = response.info().get('Set-Cookie')
 
-        try:
-            data = to_text(response.read())
-            response = json.loads(data)
-        except ValueError:
-            raise
-
-        return self._handle_response(response)
+        return response

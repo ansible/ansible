@@ -47,7 +47,7 @@ class ActionModule(_ActionModule):
                 and self._task.action == 'nxos_nxapi':
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
 
-        if self._play_context.connection in ('network_cli', 'netapi'):
+        if self._play_context.connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')

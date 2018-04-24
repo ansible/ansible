@@ -43,7 +43,7 @@ class ActionModule(_ActionModule):
 
         socket_path = None
 
-        if self._play_context.connection in ('network_cli', 'netapi'):
+        if self._play_context.connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
