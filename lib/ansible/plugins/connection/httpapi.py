@@ -85,7 +85,7 @@ class Connection(ConnectionBase):
         if self._httpapi:
             display.vvvv('loaded API plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
         else:
-            display.vvvv('unable to load API plugin for network_os %s' % network_os)
+            raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % network_os)
 
         protocol = 'https' if getattr(play_context, 'use_ssl', True) else 'http'
         port = play_context.port or 443 if protocol == 'https' else 80
