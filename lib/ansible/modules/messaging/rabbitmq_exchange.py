@@ -64,7 +64,7 @@ options:
         description:
             - whether exchange is durable or not
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         default: yes
     exchange_type:
         description:
@@ -77,13 +77,13 @@ options:
         description:
             - if the exchange should delete itself after all queues/exchanges unbound from it
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         default: no
     internal:
         description:
             - exchange is available only for other exchanges
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         default: no
     arguments:
         description:

@@ -32,26 +32,20 @@ options:
         device to other members of the device group. In this case, the device
         will do a "push" to all the other devices in the group. This option
         is mutually exclusive with the C(sync_group_to_device) option.
-    choices:
-      - yes
-      - no
+    type: bool
   sync_most_recent_to_device:
     description:
       - Specifies that the system synchronizes configuration data from the
         device with the most recent configuration. In this case, the device
         will do a "pull" from the most recently updated device. This option
         is mutually exclusive with the C(sync_device_to_group) options.
-    choices:
-      - yes
-      - no
+    type: bool
   overwrite_config:
     description:
       - Indicates that the sync operation overwrites the configuration on
         the target.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
 notes:
   - Requires the objectpath Python package on the host. This is as easy as
     C(pip install objectpath).

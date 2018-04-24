@@ -60,7 +60,7 @@ options:
     description:
     - If yes, create this alarm, but leave it in an inactive state. Defaults to
       no.
-    choices: [ "yes", "no" ]
+    type: bool
   metadata:
     description:
     - Arbitrary key/value pairs to accompany the alarm. Must be a hash of String

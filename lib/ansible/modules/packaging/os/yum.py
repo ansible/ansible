@@ -101,8 +101,7 @@ options:
       - Has an effect only if state is I(latest)
     required: false
     default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
     version_added: "2.5"
 
   installroot:

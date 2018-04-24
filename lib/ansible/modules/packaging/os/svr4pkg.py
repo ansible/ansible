@@ -64,7 +64,7 @@ options:
     description:
       - Install/Remove category instead of a single package.
     required: false
-    choices: ["true", "false"]
+    type: bool
     version_added: "1.6"
 '''
 

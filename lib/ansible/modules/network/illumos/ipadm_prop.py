@@ -40,7 +40,7 @@ options:
               property values do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Set or reset the property value.

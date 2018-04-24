@@ -45,7 +45,7 @@ options:
   wait:
     description:
       - Whether to wait for the tasks to finish before returning.
-    choices: [ True, False ]
+    type: bool
     default: True
     required: False
 requirements:
