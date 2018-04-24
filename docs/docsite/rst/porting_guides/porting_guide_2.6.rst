@@ -46,11 +46,11 @@ The following modules will be removed in Ansible 2.10. Please update your playbo
 Noteworthy module changes
 -------------------------
 
-* The ``upgrade`` module option for ``win_chocolatey`` has been removed, use ``state: latest`` instead.
-* The ``reboot`` module option for ``win_feature`` has been removed, use the ``win_reboot`` action plugin instead
-* The ``win_iis_webapppool`` module no longer accepts a string for the ``atributes`` module option, use the free form dictionary value instead
-* The ``name`` module option for ``win_package`` has been removed, this is not used anywhere and should just be removed from your playbooks
-* The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``, use ``HKCC`` as this is the correct hive path
+* The ``upgrade`` module option for ``win_chocolatey`` has been removed; use ``state: latest`` instead.
+* The ``reboot`` module option for ``win_feature`` has been removed; use the ``win_reboot`` action plugin instead
+* The ``win_iis_webapppool`` module no longer accepts a string for the ``atributes`` module option; use the free form dictionary value instead
+* The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks
+* The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path
 
 Plugins
 =======
