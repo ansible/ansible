@@ -46,6 +46,7 @@
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
     name: lbtestfromansible
+    sku: Standard
     public_ip_address: ansiblepip3
     probe_protocol: Tcp
     probe_port: 80
@@ -64,7 +65,9 @@
 
 - name: assert complex load balancer created
   assert:
-    that: output.changed
+    that:
+    - output.changed
+    - output.state.sku == Standard
 
 - name: delete load balancer
   azure_rm_loadbalancer:

@@ -43,6 +43,13 @@ options:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
+    sku:
+        description:
+            The load balancer SKU.
+        choices:
+            - Basic
+            - Standard
+        version_added: 2.6
     frontend_ip_configurations:
         description: List of frontend IPs to be used
         suboptions:
@@ -495,6 +502,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
+            sku=dict(
+                type='str',
+                choices=['Basic', 'Standard']
+            ),
             frontend_ip_configurations=dict(
                 type='list',
                 elements='dict',
@@ -577,6 +588,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
+        self.sku = None
         self.frontend_ip_configurations = None
         self.backend_address_pools = None
         self.probes = None
@@ -747,6 +759,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
             param = self.network_models.LoadBalancer(
+                sku=self.network_models.LoadBalancerSku(self.sku) if self.sku else None,
                 location=self.location,
                 frontend_ip_configurations=frontend_ip_configurations_param,
                 backend_address_pools=backend_address_pools_param,
@@ -803,6 +816,7 @@ def load_balancer_to_dict(load_balancer):
         id=load_balancer.id,
         name=load_balancer.name,
         location=load_balancer.location,
+        sku=load_balancer.sku.name,
         tags=load_balancer.tags,
         provisioning_state=load_balancer.provisioning_state,
         etag=load_balancer.etag,
