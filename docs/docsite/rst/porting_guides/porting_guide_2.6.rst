@@ -22,8 +22,7 @@ No notable changes.
 Deprecated
 ==========
 
-* In the :ref:`nxos_igmp_interface <nxos_igmp_interface>` module, `oif_prefix` and `oif_source` properties are deprecated. Use
-  `ois_ps` parameter with a dictionary of prefix and source to values instead.
+* In the :ref:`nxos_igmp_interface module<nxos_igmp_interface_module>`, ``oif_prefix`` and ``oif_source`` properties are deprecated. Use ``ois_ps`` parameter with a dictionary of prefix and source to values instead.
 
 Modules
 =======

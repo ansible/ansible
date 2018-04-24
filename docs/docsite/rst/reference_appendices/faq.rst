@@ -19,6 +19,7 @@ Setting environment variables can be done with the `environment` keyword. It can
 
 .. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
 
+.. _faq_setting_users_and_ports:
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
