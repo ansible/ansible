@@ -49,7 +49,7 @@ options:
               Modify was added in version 2.1
     autostart:
         required: false
-        choices: ["yes", "no"]
+        type: bool
         description:
             - Specify if a given network should be started automatically on system boot.
     uri:

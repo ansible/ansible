@@ -65,7 +65,7 @@ options:
         description:
             - Defines if a copy pair will be created if it does not exist.
             - If set to True destination_volume_id and source_volume_id are required.
-        choices: [True, False]
+        type: bool
         default: True
     start_stop_copy:
         description:

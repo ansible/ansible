@@ -32,7 +32,6 @@ options:
         description:
             - state of the package
         choices: [ 'present', 'absent' ]
-        required: false
         default: present
     force:
         description:
@@ -49,16 +48,13 @@ options:
             - "remove"
             - "checksum"
             - "removal-of-dependent-packages"
-        required: false
         default: absent
         version_added: "2.0"
     update_cache:
         description:
             - update the package db first
-        required: false
         default: "no"
-        choices: [ "yes", "no" ]
-notes:  []
+        type: bool
 requirements:
     - opkg
     - python

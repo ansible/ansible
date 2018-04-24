@@ -50,9 +50,7 @@ options:
         C(multicast_interface), C(multicast_address) and C(multicast_port) are
         the defaults specified in each option's description. When C(no), ensures
         that Failover Multicast configuration is disabled.
-    choices:
-      - yes
-      - no
+    type: bool
   multicast_interface:
     description:
       - Interface over which the system sends multicast messages associated

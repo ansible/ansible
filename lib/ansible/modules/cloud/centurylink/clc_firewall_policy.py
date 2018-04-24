@@ -59,7 +59,7 @@ options:
   enabled:
     description:
       - Whether the firewall policy is enabled or disabled
-    type: bool
+    choices: [True, False]
     default: 'yes'
 requirements:
     - python = 2.7

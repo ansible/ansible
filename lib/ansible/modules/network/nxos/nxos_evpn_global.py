@@ -36,7 +36,7 @@ options:
     description:
       - EVPN control plane.
     required: true
-    choices: ['true', 'false']
+    type: bool
 '''
 
 EXAMPLES = '''

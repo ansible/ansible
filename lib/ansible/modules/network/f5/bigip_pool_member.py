@@ -91,11 +91,9 @@ options:
     description:
       - When state is absent and the pool member is no longer referenced
         in other pools, the default behavior removes the unused node
-        o bject. Setting this to 'yes' disables this behavior.
+        object. Setting this to 'yes' disables this behavior.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
     version_added: 2.1
   priority_group:
     description:

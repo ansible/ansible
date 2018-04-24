@@ -51,38 +51,38 @@ options:
         version_added: "2.4"
         description:
             - Runs the specified command globally.
-        choices: [ true, false]
+        type: bool
         default: false
         aliases: [ global-command ]
     prefer_source:
         description:
             - Forces installation from package sources when possible (see --prefer-source).
         default: false
-        choices: [ true, false]
+        type: bool
         aliases: [ prefer-source ]
     prefer_dist:
         description:
             - Forces installation from package dist even for dev versions (see --prefer-dist).
         default: false
-        choices: [ true, false]
+        type: bool
         aliases: [ prefer-dist ]
     no_dev:
         description:
             - Disables installation of require-dev packages (see --no-dev).
         default: true
-        choices: [ true, false]
+        type: bool
         aliases: [ no-dev ]
     no_scripts:
         description:
             - Skips the execution of all scripts defined in composer.json (see --no-scripts).
         default: false
-        choices: [ true, false]
+        type: bool
         aliases: [ no-scripts ]
     no_plugins:
         description:
             - Disables all plugins ( see --no-plugins ).
         default: false
-        choices: [ true, false]
+        type: bool
         aliases: [ no-plugins ]
     optimize_autoloader:
         description:
@@ -90,14 +90,14 @@ options:
             - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
             - Recommended especially for production, but can take a bit of time to run.
         default: true
-        choices: [ true, false]
+        type: bool
         aliases: [ optimize-autoloader ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
             - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
         default: false
-        choices: [ true, false]
+        type: bool
         aliases: [ ignore-platform-reqs ]
 requirements:
     - php

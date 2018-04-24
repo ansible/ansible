@@ -19,7 +19,7 @@ options:
     description:
       - The default behaviour for targets that are unused is to leave them registered. If instead you would like to remove them
         set I(deregister_unused) to yes.
-    choices: [ 'yes', 'no' ]
+    type: bool
   target_az:
     description:
       - An Availability Zone or all. This determines whether the target receives traffic from the load balancer nodes in the specified

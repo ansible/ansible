@@ -64,6 +64,7 @@ options:
         won't change
     default: 'yes'
     version_added: 2.2
+    type: bool
   force_detach:
     description:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id

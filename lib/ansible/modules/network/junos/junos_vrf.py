@@ -54,6 +54,7 @@ options:
       - Causes JUNOS to allocate a VPN label per VRF rather than per VPN FEC.
         This allows for forwarding of traffic to directly connected subnets, COS
         Egress filtering etc.
+    type: bool
   aggregate:
     description:
       - The set of VRF definition objects to be configured on the remote
@@ -73,7 +74,7 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
 notes:

@@ -54,7 +54,7 @@ options:
         on personally controlled sites using self-signed certificates.
     required: false
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 
 requirements: []
 '''
