@@ -1,0 +1,16 @@
+{
+    "kind": "tm:cm:traffic-group:traffic-groupstate",
+    "name": "asd",
+    "partition": "Common",
+    "fullPath": "/Common/asd",
+    "generation": 176,
+    "selfLink": "https://localhost/mgmt/tm/cm/traffic-group/~Common~asd?ver=13.0.0",
+    "autoFailbackEnabled": "false",
+    "autoFailbackTime": 60,
+    "failoverMethod": "ha-order",
+    "haLoadFactor": 1,
+    "isFloating": "true",
+    "mac": "00:00:00:00:00:02",
+    "monitor": {},
+    "unitId": 2
+}
