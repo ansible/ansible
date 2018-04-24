@@ -1,0 +1,9 @@
+{
+    "kind": "tm:net:timer-policy:timer-policystate",
+    "name": "timer1",
+    "partition": "Common",
+    "fullPath": "/Common/timer1",
+    "generation": 148,
+    "selfLink": "https://localhost/mgmt/tm/net/timer-policy/~Common~timer1?ver=13.1.0.4",
+    "description": "my description"
+}
