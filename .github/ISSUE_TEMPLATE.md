@@ -1,7 +1,9 @@
 <!---
 Verify first that your issue/request is not already reported on GitHub.
+THIS FORM WILL BE READ BY A MACHINE, COMPLETE ALL SECTIONS AS DESCRIBED.
 Also test if the latest release, and devel branch are affected too.
-Always add information AFTER of these html comments. -->
+ALWAYS add information AFTER (OUTSIDE) these html comments.
+Otherwise it may end up being automatically closed by our bot. -->
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest -->
