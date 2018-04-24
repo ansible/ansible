@@ -21,22 +21,22 @@ from ansible.compat.tests.mock import DEFAULT
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_snmp_trap import NetworkedParameters
-    from library.bigip_snmp_trap import NonNetworkedParameters
-    from library.bigip_snmp_trap import ModuleManager
-    from library.bigip_snmp_trap import NetworkedManager
-    from library.bigip_snmp_trap import NonNetworkedManager
-    from library.bigip_snmp_trap import ArgumentSpec
+    from library.modules.bigip_snmp_trap import V2Parameters
+    from library.modules.bigip_snmp_trap import V1Parameters
+    from library.modules.bigip_snmp_trap import ModuleManager
+    from library.modules.bigip_snmp_trap import V2Manager
+    from library.modules.bigip_snmp_trap import V1Manager
+    from library.modules.bigip_snmp_trap import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedParameters
-        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedParameters
+        from ansible.modules.network.f5.bigip_snmp_trap import V2Parameters
+        from ansible.modules.network.f5.bigip_snmp_trap import V1Parameters
         from ansible.modules.network.f5.bigip_snmp_trap import ModuleManager
-        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedManager
-        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedManager
+        from ansible.modules.network.f5.bigip_snmp_trap import V2Manager
+        from ansible.modules.network.f5.bigip_snmp_trap import V1Manager
         from ansible.modules.network.f5.bigip_snmp_trap import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -79,7 +79,7 @@ class TestParameters(unittest.TestCase):
             server='localhost',
             user='admin'
         )
-        p = NetworkedParameters(params=args)
+        p = V2Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -99,7 +99,7 @@ class TestParameters(unittest.TestCase):
             server='localhost',
             user='admin'
         )
-        p = NonNetworkedParameters(params=args)
+        p = V1Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -116,7 +116,7 @@ class TestParameters(unittest.TestCase):
             version=1,
             port=1000
         )
-        p = NetworkedParameters(params=args)
+        p = V2Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -149,17 +149,18 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(module=module)
-        mm.is_version_non_networked = Mock(return_value=False)
+        m0 = ModuleManager(module=module)
+        m0.is_version_without_network = Mock(return_value=False)
+        m0.is_version_with_default_network = Mock(return_value=True)
 
         patches = dict(
             create_on_device=DEFAULT,
             exists=DEFAULT
         )
-        with patch.multiple(NetworkedManager, **patches) as mo:
+        with patch.multiple(V2Manager, **patches) as mo:
             mo['create_on_device'].side_effect = Mock(return_value=True)
             mo['exists'].side_effect = Mock(return_value=False)
-            results = mm.exec_module()
+            results = m0.exec_module()
 
         assert results['changed'] is True
         assert results['port'] == 1000
@@ -183,17 +184,17 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(module=module)
-        mm.is_version_non_networked = Mock(return_value=True)
+        m0 = ModuleManager(module=module)
+        m0.is_version_without_network = Mock(return_value=True)
 
         patches = dict(
             create_on_device=DEFAULT,
             exists=DEFAULT
         )
-        with patch.multiple(NonNetworkedManager, **patches) as mo:
+        with patch.multiple(V1Manager, **patches) as mo:
             mo['create_on_device'].side_effect = Mock(return_value=True)
             mo['exists'].side_effect = Mock(return_value=False)
-            results = mm.exec_module()
+            results = m0.exec_module()
 
         assert results['changed'] is True
         assert results['port'] == 1000
