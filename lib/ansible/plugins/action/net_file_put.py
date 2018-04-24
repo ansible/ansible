@@ -63,6 +63,10 @@ class ActionModule(ActionBase):
 
         # Get destination file if specified
         dest = self._task.args.get('dest')
+
+        #Get proto
+        proto = self._task.args.get('protocol')
+
         sock_timeout = play_context.timeout
 
         # Now src has resolved file write to disk n current diectory for scp
@@ -77,7 +81,7 @@ class ActionModule(ActionBase):
         if dest is None:
             dest = src_file_path_name
 
-        out = conn.copy_file(source=output_file, destination=dest, timeout=sock_timeout)
+        out = conn.copy_file(source=output_file, destination=dest, proto=proto, timeout=sock_timeout)
 
         return result
 
