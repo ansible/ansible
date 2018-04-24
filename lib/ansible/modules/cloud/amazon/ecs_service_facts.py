@@ -27,13 +27,13 @@ options:
             - Set this to true if you want detailed information about the services.
         required: false
         default: 'false'
-        choices: ['true', 'false']
+        type: bool
     events:
         description:
             - Whether to return ECS service events. Only has an effect if C(details) is true.
         required: false
         default: 'true'
-        choices: ['true', 'false']
+        type: bool
         version_added: "2.6"
     cluster:
         description:
