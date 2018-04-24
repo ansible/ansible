@@ -20,7 +20,6 @@ description:
     - All parameters and VMware object names are case sensitive.
 version_added: 2.3
 author:
-    - James Tanner (@jctanner) <tanner.jc@gmail.com>
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:
     - Tested on vSphere 5.5, 6.0 and 6.5
