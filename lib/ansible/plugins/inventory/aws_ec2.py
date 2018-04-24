@@ -94,6 +94,9 @@ keyed_groups:
   # create a group for each value of the Application tag
   - key: tag.Application
     separator: ''
+  # create a group per region e.g. aws_region_us_east_2
+  - key: placement.region
+    prefix: aws_region
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -421,6 +424,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
             host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
+
+            # Allow easier grouping by region
+            host['placement']['region'] = host['placement']['availability_zone'][:-1]
 
             if not hostname:
                 continue
