@@ -38,8 +38,9 @@ __all__ = ['TaskExecutor']
 
 def remove_omit(task_args, omit_token):
     '''
-    Remove args with a value equal to the ``omit_token`` recursively
-    to align with now having suboptions in the argument_spec
+    Recursively remove arguments with a value equal to the ``omit_token``
+
+    This function handles both dicts and lists
     '''
 
     if isinstance(task_args, dict):
@@ -51,19 +52,17 @@ def remove_omit(task_args, omit_token):
     else:
         raise TypeError('unsupported type (%r)' % type(task_args))
 
-    for i in loop:
-        if i[1] == omit_token:
+    for i, value in loop:
+        if value == omit_token:
             continue
-        elif isinstance(i[1], (dict, list)):
-            try:
-                new_args[i[0]] = remove_omit(i[1], omit_token)
-            except IndexError:
-                new_args.append(remove_omit(i[1], omit_token))
-        else:
-            try:
-                new_args[i[0]] = i[1]
-            except IndexError:
-                new_args.append(i[1])
+        elif isinstance(value, (dict, list)):
+            value = remove_omit(value, omit_token)
+
+        try:
+            new_args[i] = value
+        except IndexError:
+            # new_args is a list, likely empty, not supporting direct item assignment
+            new_args.append(value)
 
     return new_args
 
