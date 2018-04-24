@@ -20,10 +20,10 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_static_route import ApiParameters
-    from library.bigip_static_route import ModuleParameters
-    from library.bigip_static_route import ModuleManager
-    from library.bigip_static_route import ArgumentSpec
+    from library.modules.bigip_static_route import ApiParameters
+    from library.modules.bigip_static_route import ModuleParameters
+    from library.modules.bigip_static_route import ModuleManager
+    from library.modules.bigip_static_route import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
