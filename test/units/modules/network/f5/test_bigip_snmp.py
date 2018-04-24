@@ -20,15 +20,17 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_snmp import Parameters
-    from library.bigip_snmp import ModuleManager
-    from library.bigip_snmp import ArgumentSpec
+    from library.modules.bigip_snmp import ApiParameters
+    from library.modules.bigip_snmp import ModuleParameters
+    from library.modules.bigip_snmp import ModuleManager
+    from library.modules.bigip_snmp import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_snmp import Parameters
+        from ansible.modules.network.f5.bigip_snmp import ApiParameters
+        from ansible.modules.network.f5.bigip_snmp import ModuleParameters
         from ansible.modules.network.f5.bigip_snmp import ModuleManager
         from ansible.modules.network.f5.bigip_snmp import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -71,7 +73,7 @@ class TestParameters(unittest.TestCase):
             server='localhost',
             user='admin'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'enabled'
         assert p.agent_authentication_traps == 'enabled'
         assert p.device_warning_traps == 'enabled'
@@ -87,7 +89,7 @@ class TestParameters(unittest.TestCase):
             server='localhost',
             user='admin'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'disabled'
         assert p.agent_authentication_traps == 'disabled'
         assert p.device_warning_traps == 'disabled'
@@ -100,7 +102,7 @@ class TestParameters(unittest.TestCase):
             sysLocation='Lunar orbit',
             sysContact='Alice@foo.org',
         )
-        p = Parameters(params=args)
+        p = ApiParameters(params=args)
         assert p.agent_status_traps == 'enabled'
         assert p.agent_authentication_traps == 'enabled'
         assert p.device_warning_traps == 'enabled'
@@ -113,7 +115,7 @@ class TestParameters(unittest.TestCase):
             authTrap='disabled',
             bigipTraps='disabled',
         )
-        p = Parameters(params=args)
+        p = ApiParameters(params=args)
         assert p.agent_status_traps == 'disabled'
         assert p.agent_authentication_traps == 'disabled'
         assert p.device_warning_traps == 'disabled'
@@ -134,7 +136,7 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(
+        current = ApiParameters(
             params=dict(
                 agent_status_traps='disabled'
             )
@@ -154,3 +156,108 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['agent_status_traps'] == 'enabled'
+
+    def test_update_allowed_addresses(self, *args):
+        set_module_args(dict(
+            allowed_addresses=[
+                '127.0.0.0/8',
+                '10.10.10.10',
+                'foo',
+                'baz.foo.com'
+            ],
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        # Configure the parameters that would be returned by querying the
+        # remote device
+        current = ApiParameters(
+            params=dict(
+                allowed_addresses=['127.0.0.0/8']
+            )
+        )
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert len(results['allowed_addresses']) == 4
+        assert results['allowed_addresses'] == [
+            '10.10.10.10', '127.0.0.0/8', 'baz.foo.com', 'foo'
+        ]
+
+    def test_update_allowed_addresses_default(self, *args):
+        set_module_args(dict(
+            allowed_addresses=[
+                'default'
+            ],
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        # Configure the parameters that would be returned by querying the
+        # remote device
+        current = ApiParameters(
+            params=dict(
+                allowed_addresses=['10.0.0.0']
+            )
+        )
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert len(results['allowed_addresses']) == 1
+        assert results['allowed_addresses'] == ['127.0.0.0/8']
+
+    def test_update_allowed_addresses_empty(self, *args):
+        set_module_args(dict(
+            allowed_addresses=[''],
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        # Configure the parameters that would be returned by querying the
+        # remote device
+        current = ApiParameters(
+            params=dict(
+                allowed_addresses=['10.0.0.0']
+            )
+        )
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert len(results['allowed_addresses']) == 1
+        assert results['allowed_addresses'] == ['127.0.0.0/8']
