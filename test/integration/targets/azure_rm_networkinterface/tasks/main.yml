@@ -11,38 +11,11 @@
       name: testnic001
       address_prefix: "10.10.0.0/24"
       virtual_network: testnic001
+
 - name: create public ip
   azure_rm_publicipaddress:
     name: ansiblepip3
     resource_group: '{{ resource_group }}'
-- name: create load balancer with multiple parameters
-  azure_rm_loadbalancer:
-    resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
-    frontend_ip_configurations:
-      - name: frontendipconf0
-        public_ip_address: ansiblepip3
-    backend_address_pools:
-      - name: backendaddrpool0
-      - name: backendaddrpool1
-    probes:
-      - name: prob0
-        port: 80
-    inbound_nat_pools:
-      - name: inboundnatpool0
-        frontend_ip_configuration_name: frontendipconf0
-        protocol: Tcp
-        frontend_port_range_start: 80
-        frontend_port_range_end: 81
-        backend_port: 8080
-    load_balancing_rules:
-      - name: lbrbalancingrule0
-        frontend_ip_configuration: frontendipconf0
-        backend_address_pool: backendaddrpool0
-        frontend_port: 80
-        backend_port: 80
-        probe: prob0
-  register: lb
 
 - name: Create NIC (check mode)
   azure_rm_networkinterface:
