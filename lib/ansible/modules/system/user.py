@@ -233,7 +233,6 @@ EXAMPLES = '''
     expires: 1422403387
 '''
 
-import datetime
 import grp
 import os
 import platform
@@ -537,7 +536,8 @@ class User(object):
             current_expires = self.user_password()[1]
 
             # Convert days since Epoch to seconds since Epoch as struct_time
-            current_expires = time.gmtime(datetime.timedelta(days=current_expires).total_seconds())
+            total_seconds = int(current_expires) * 86400
+            current_expires = time.gmtime(total_seconds)
 
             # Drop hours, minutes, and seconds from the specified expiration time in order to compare
             # to current expiration time
