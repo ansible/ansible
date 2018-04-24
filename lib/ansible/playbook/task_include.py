@@ -40,6 +40,10 @@ class TaskInclude(Task):
     circumstances related to the `- include: ...` task.
     """
 
+    BASE = frozenset(('file', '_raw_params'))  # directly assigned
+    OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
+    VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
+
     # =================================================================================
     # ATTRIBUTES
 
@@ -53,6 +57,14 @@ class TaskInclude(Task):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         ti = TaskInclude(block=block, role=role, task_include=task_include)
         task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
+
+        # Validate options
+        my_arg_names = frozenset(task.args.keys())
+
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
+        if bad_opts and task.action in ('include_tasks', 'import_tasks'):
+            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))))
 
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file')
