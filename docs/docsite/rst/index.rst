@@ -63,6 +63,12 @@ Ansible releases a new major release of Ansible approximately every two months. 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Ansible for VMWare
+
+   vmware/index
+
+.. toctree::
+   :maxdepth: 2
    :caption: Ansible for Network Automation
 
    network/index
