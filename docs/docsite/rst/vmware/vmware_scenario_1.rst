@@ -1,7 +1,7 @@
 .. _vmware_scenario_1:
 
 **********************************
-Sample Scenario for Ansible VMWare
+Sample Scenario for Ansible VMware
 **********************************
 
 Introductory paragraph.

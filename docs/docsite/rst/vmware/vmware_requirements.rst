@@ -1,7 +1,7 @@
 .. _vmware_requirements:
 
-*************
-Prerequisites
-*************
+********************
+VMware Prerequisites
+********************
 
 This is what you'll need to get started...

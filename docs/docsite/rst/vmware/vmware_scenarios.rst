@@ -1,7 +1,7 @@
 .. _vmware_scenarios:
 
 ****************************
-Ansible for VMWare Scenarios
+Ansible for VMware Scenarios
 ****************************
 
 Welcome to the Ansible for VMWare Guide!

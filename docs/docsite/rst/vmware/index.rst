@@ -1,12 +1,12 @@
 .. _vmware_ansible:
 
 ******************
-Ansible for VMWare
+Ansible for VMW\ware
 ******************
 
-Welcome to the Ansible for VMWare Guide!
+Welcome to the Ansible for VMware Guide! This is a set of placeholder docs to be filled in.
 
-The purpose of this guide is to teach you everything you need to know about using Ansible with VMWare.
+The purpose of this guide is to teach you everything you need to know about using Ansible with VMware.
 
 To get started, please select one of the following topics.
 

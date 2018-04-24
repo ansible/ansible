@@ -1,7 +1,7 @@
 .. _vmware_ansible_intro:
 
 **********************************
-Introduction to Ansible for VMWare
+Introduction to Ansible for VMware
 **********************************
 
 Make the case. What does it do?

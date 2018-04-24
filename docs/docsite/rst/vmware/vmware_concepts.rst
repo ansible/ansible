@@ -1,7 +1,7 @@
 .. _vmware_concepts:
 
 ***************************
-Ansible for VMWare Concepts
+Ansible for VMware Concepts
 ***************************
 
 Introduction...blah blah
