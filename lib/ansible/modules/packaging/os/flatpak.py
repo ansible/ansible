@@ -167,7 +167,7 @@ def main():
             repo=dict(type='str', default='flathub'),
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
-            executable=dict(type='path'),  # No default on purpose
+            executable=dict(type='path', default='flatpak')
         ),
         supports_check_mode=True,
     )
