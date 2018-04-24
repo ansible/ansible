@@ -11,7 +11,7 @@ Before using:
 
 - Dependencies: it depends on google-api-python-client and docoptcfg. To
   install them, run:
-        $ pip install google-api-python-client docoptcfg
+        $ pip install google-api-python-client docoptcfg pycrypto
 
 All parameters can be set in the following 3 different ways (in the order of
 precedence, least to higher):
@@ -128,7 +128,8 @@ class GCloudAPI(object):
         if service_name not in self.services:
             self.services[service_name] = discovery.build(serviceName=service_name,
                                                           version=self.api_version,
-                                                          credentials=self.credentials)
+                                                          credentials=self.credentials,
+                                                          cache_discovery=False)
 
         return self.services[service_name]
 
