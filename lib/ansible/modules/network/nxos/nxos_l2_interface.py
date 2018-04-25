@@ -97,6 +97,13 @@ EXAMPLES = """
     mode: trunk
     trunk_vlans: 51-4094
     state: absent
+
+-  name: Aggregate Configure interfaces for access_vlan with aggregate
+   nxos_l2_interface:
+     aggregate:
+       - { name: "Ethernet1/2", access_vlan: 6 }
+       - { name: "Ethernet1/7", access_vlan: 15 }
+     mode: access
 """
 
 RETURN = """
