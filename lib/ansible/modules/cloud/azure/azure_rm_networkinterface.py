@@ -531,6 +531,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
+                if not nsg and self.security_group_name:
+                    nsg = self.get_security_group(self.security_group_name)
+
                 nsg = nsg or self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type, self.open_ports)
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
