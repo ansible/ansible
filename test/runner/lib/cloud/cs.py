@@ -53,7 +53,7 @@ class CsCloudProvider(CloudProvider):
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'ansible/ansible:cloudstack-simulator@sha256:885aedb7f34ce7114eaa383a2541ede93c4f8cb543c05edf90b694def67b1a6a'
+        self.image = 'quay.io/ansible/cloudstack-test-container:1.0.0'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
