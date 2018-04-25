@@ -1081,10 +1081,6 @@ lib/ansible/modules/network/f5/bigip_monitor_snmp_dca.py E326
 lib/ansible/modules/network/f5/bigip_policy.py E324
 lib/ansible/modules/network/f5/bigip_pool.py E326
 lib/ansible/modules/network/f5/bigip_profile_client_ssl.py E324
-lib/ansible/modules/network/f5/bigip_provision.py E326
-lib/ansible/modules/network/f5/bigip_qkview.py E324
-lib/ansible/modules/network/f5/bigip_qkview.py E326
-lib/ansible/modules/network/f5/bigip_routedomain.py E326
 lib/ansible/modules/network/f5/bigip_selfip.py E324
 lib/ansible/modules/network/f5/bigip_sys_global.py E326
 lib/ansible/modules/network/f5/bigip_virtual_server.py E326
