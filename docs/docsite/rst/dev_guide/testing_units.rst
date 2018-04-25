@@ -164,7 +164,7 @@ See `eos_banner test
 for a practical example.
 
 If you are simulating APIs you may find that python placebo is useful.  See
-doc:`testing_units_modules` for more information.
+:ref:`testing_units_modules` for more information.
 
 
 Code Coverage For New or Updated Unit Tests
@@ -189,13 +189,13 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage xml`` - XML report.
 
 To clear data between test runs, use the ``ansible-test coverage erase`` command.  See
-:doc:`testing_units_running_locally` for more information about generating coverage
+:ref:`testing_running_locally` for more information about generating coverage
 reports.
 
 
 .. seealso::
 
-   :doc:`testing_units_modules`
+   :ref:`testing_units_modules`
        Special considerations for unit testing modules
    :doc:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data

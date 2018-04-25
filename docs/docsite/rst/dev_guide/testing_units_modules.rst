@@ -1,3 +1,5 @@
+.. _testing_units_modules:
+
 ****************************
 Unit Testing Ansible Modules
 ****************************
