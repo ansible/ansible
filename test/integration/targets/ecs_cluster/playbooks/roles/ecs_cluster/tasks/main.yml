@@ -17,7 +17,7 @@
         name: ecsInstanceRole
         assume_role_policy_document: "{{ lookup('file','ec2-trust-policy.json') }}"
         state: present
-        create_instance_profile: no
+        create_instance_profile: yes
         managed_policy:
         - AmazonEC2ContainerServiceforEC2Role
         <<: *aws_connection_info
@@ -31,6 +31,20 @@
         managed_policy:
         - AmazonEC2ContainerServiceRole
         <<: *aws_connection_info
+
+    - name: ensure AWSServiceRoleForECS role exists
+      iam_role_facts:
+        name: AWSServiceRoleForECS
+        <<: *aws_connection_info
+      register: iam_role_result
+
+      # FIXME: come up with a way to automate this
+    - name: fail if AWSServiceRoleForECS role does not exist
+      fail:
+        msg: >
+          Run `aws iam create-service-linked-role --aws-service-name=ecs.amazonaws.com ` to create
+          a linked role for AWS VPC load balancer management
+      when: not iam_role_result.iam_roles
 
     - name: create an ECS cluster
       ecs_cluster:
@@ -122,20 +136,32 @@
           Name: '{{ resource_prefix }}_ecs_agent'
         group_id: '{{ setup_sg.group_id }}'
         vpc_subnet_id: '{{ setup_subnet.results[0].subnet.id }}'
-        assign_public_ip: yes  # public IP address assigned to avoid need for NAT GW.
         <<: *aws_connection_info
       register: setup_instance
 
     - name: create target group
       elb_target_group:
-        name: "{{ ecs_target_group_name }}"
+        name: "{{ ecs_target_group_name }}1"
         state: present
         protocol: HTTP
         port: 8080
         modify_targets: no
         vpc_id: '{{ setup_vpc.vpc.id }}'
+        target_type: instance
         <<: *aws_connection_info
-      register: elb_target_group
+      register: elb_target_group_instance
+
+    - name: create second target group to use ip target_type
+      elb_target_group:
+        name: "{{ ecs_target_group_name }}2"
+        state: present
+        protocol: HTTP
+        port: 8080
+        modify_targets: no
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        target_type: ip
+        <<: *aws_connection_info
+      register: elb_target_group_ip
 
     - name: create load balancer
       elb_application_lb:
@@ -149,7 +175,12 @@
             Port: 80
             DefaultActions:
               - Type: forward
-                TargetGroupName: "{{ ecs_target_group_name }}"
+                TargetGroupName: "{{ ecs_target_group_name }}1"
+          - Protocol: HTTP
+            Port: 81
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ ecs_target_group_name }}2"
         <<: *aws_connection_info
 
     - name: create task definition
@@ -190,7 +221,7 @@
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         role: "ecsServiceRole"
@@ -212,7 +243,7 @@
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         role: "ecsServiceRole"
@@ -237,7 +268,7 @@
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port|int + 1 }}"
         role: "ecsServiceRole"
@@ -248,10 +279,175 @@
     - name: assert that updating ECS load balancer failed with helpful message
       assert:
         that:
-          - update_ecs_service.failed
+          - update_ecs_service is failed
+          - "'error' not in update_ecs_service"
           - "'msg' in update_ecs_service"
-      # FIXME: fixed in #32876
+
+
+    - name: attempt to use ECS network configuration on task definition without awsvpc network_mode
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}3"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+        <<: *aws_connection_info
+      register: ecs_service_network_without_awsvpc_task
       ignore_errors: yes
+
+    - name: assert that using ECS network configuration with non AWSVPC task definition fails
+      assert:
+        that:
+          - ecs_service_network_without_awsvpc_task is failed
+
+    - name: scale down ECS service
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 0
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      register: ecs_service_scale_down
+
+    - name: pause to allow service to scale down
+      pause:
+        seconds: 60
+
+    - name: delete ECS service definition
+      ecs_service:
+        state: absent
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+      register: delete_ecs_service
+
+    - name: assert that deleting ECS service worked
+      assert:
+        that:
+          - delete_ecs_service.changed
+
+    - name: create VPC-networked task definition with host port set to 0 (expected to fail)
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        state: present
+        network_mode: awsvpc
+        <<: *aws_connection_info
+      register: ecs_task_definition_vpc_no_host_port
+      ignore_errors: yes
+
+    - name: check that awsvpc task definition with host port 0 fails gracefully
+      assert:
+        that:
+          - ecs_task_definition_vpc_no_host_port is failed
+          - "'error' not in ecs_task_definition_vpc_no_host_port"
+
+    - name: create VPC-networked task definition with host port set to 8080
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        network_mode: awsvpc
+        state: present
+        <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
+      register: ecs_task_definition_vpc_with_host_port
+
+    - name: obtain ECS task definition facts
+      ecs_taskdefinition_facts:
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
+        <<: *aws_connection_info
+      register: ecs_taskdefinition_facts
+
+    - name: assert that network mode is awsvpc
+      assert:
+        that:
+          - "ecs_taskdefinition_facts.network_mode == 'awsvpc'"
+
+
+    - name: create ECS service definition with network configuration
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}2"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_ip.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+        <<: *aws_connection_info
+      register: create_ecs_service_with_vpc
+
+    - name: assert that network configuration is correct
+      assert:
+        that:
+          - "'networkConfiguration' in create_ecs_service_with_vpc.service"
+          - "'awsvpcConfiguration' in create_ecs_service_with_vpc.service.networkConfiguration"
+          - "create_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.subnets|length == 2"
+          - "create_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.securityGroups|length == 1"
+
+    - name: create dummy group to update ECS service with
+      ec2_group:
+        name: "{{ resource_prefix }}-ecs-vpc-test-sg"
+        description: "Test security group for ECS with VPC"
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        state: present
+        <<: *aws_connection_info
+
+    - name: update ECS service definition with new network configuration
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}2"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_ip.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - "{{ resource_prefix }}-ecs-vpc-test-sg"
+        <<: *aws_connection_info
+      register: update_ecs_service_with_vpc
+
+    - name: check that ECS service changed
+      assert:
+        that:
+          - update_ecs_service_with_vpc.changed
+          - "'networkConfiguration' in update_ecs_service_with_vpc.service"
+          - "'awsvpcConfiguration' in update_ecs_service_with_vpc.service.networkConfiguration"
+          - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.subnets|length == 2"
+          - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.securityGroups|length == 1"
+
 
     - name: obtain facts for all ECS services in the cluster
       ecs_service_facts:
@@ -297,44 +493,99 @@
         that:
           - "ecs_service_facts.services_not_running[0].reason == 'MISSING'"
 
+    - name: obtain specific ECS service facts
+      ecs_service_facts:
+        service: "{{ ecs_service_name }}2"
+        cluster: "{{ ecs_cluster_name }}"
+        details: yes
+        <<: *aws_connection_info
+      register: ecs_service_facts
+
+    - name: check that facts contain network configuration
+      assert:
+        that:
+          - "'networkConfiguration' in ecs_service_facts.ansible_facts.services[0]"
+
     - name: attempt to get facts from missing task definition
       ecs_taskdefinition_facts:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
   always:
-
     # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
     - name: Announce teardown start
       debug:
         msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: obtain ECS service facts
+      ecs_service_facts:
+        service: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        details: yes
+        <<: *aws_connection_info
+      register: ecs_service_facts
 
     - name: scale down ECS service
       ecs_service:
         state: present
         name: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        task_definition: "{{ ecs_service_facts.ansible_facts.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+          - targetGroupArn: "{{ ecs_service_facts.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
-        role: "ecsServiceRole"
         <<: *aws_connection_info
       ignore_errors: yes
+      register: ecs_service_scale_down
 
-    - name: pause to allow service to scale down
+    - name: obtain second ECS service facts
+      ecs_service_facts:
+        service: "{{ ecs_service_name }}2"
+        cluster: "{{ ecs_cluster_name }}"
+        details: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_service_facts
+
+    - name: scale down second ECS service
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}2"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_service_facts.ansible_facts.services[0].taskDefinition }}"
+        desired_count: 0
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ ecs_service_facts.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_service_scale_down
+
+    - name: pause to allow services to scale down
       pause:
         seconds: 60
+      when: ecs_service_scale_down is not failed
 
     - name: remove ecs service
       ecs_service:
         state: absent
         cluster: "{{ ecs_cluster_name }}"
         name: "{{ ecs_service_name }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove second ecs service
+      ecs_service:
+        state: absent
+        cluster: "{{ ecs_cluster_name }}"
+        name: "{{ ecs_service_name }}2"
         <<: *aws_connection_info
       ignore_errors: yes
 
@@ -345,6 +596,19 @@
         revision: "{{ ecs_task_definition.taskdefinition.revision }}"
         state: absent
         <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
+      ignore_errors: yes
+
+    - name: remove second ecs task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        revision: "{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
       ignore_errors: yes
 
     - name: remove load balancer
@@ -354,16 +618,21 @@
         wait: yes
         <<: *aws_connection_info
       ignore_errors: yes
+      register: elb_application_lb_remove
 
     - name: pause to allow target group to be disassociated
       pause:
         seconds: 30
+      when: not elb_application_lb_remove is failed
 
-    - name: remove target group
+    - name: remove target groups
       elb_target_group:
-        name: "{{ ecs_target_group_name }}"
+        name: "{{ item }}"
         state: absent
         <<: *aws_connection_info
+      with_items:
+        - "{{ ecs_target_group_name }}1"
+        - "{{ ecs_target_group_name }}2"
       ignore_errors: yes
 
     - name: remove setup ec2 instance
@@ -381,13 +650,16 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
-    - name: remove setup security group
+    - name: remove security groups
       ec2_group:
-        name: '{{ resource_prefix }}_ecs_cluster-sg'
+        name: '{{ item }}'
         description: 'created by Ansible integration tests'
         state: absent
         vpc_id: '{{ setup_vpc.vpc.id }}'
         <<: *aws_connection_info
+      with_items:
+        - "{{ resource_prefix }}-ecs-vpc-test-sg"
+        - '{{ resource_prefix }}_ecs_cluster-sg'
       ignore_errors: yes
 
     - name: remove IGW
