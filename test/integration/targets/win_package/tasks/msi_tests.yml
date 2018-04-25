@@ -29,7 +29,6 @@
   win_package:
     path: '{{test_win_package_path}}\good.msi'
     state: present
-    expected_return_code: "" # historical, an empty string means 0, 3010
   register: install_local_msi
 
 - name: get result of install local msi

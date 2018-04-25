@@ -32,13 +32,6 @@ options:
       - State of the features or roles on the system.
     choices: [ absent, present ]
     default: present
-  restart:
-    description:
-      - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
-      - DEPRECATED in Ansible 2.4, as unmanaged reboots cause numerous issues under Ansible. Check the C(reboot_required) return value
-        from this module to determine if a reboot is necessary, and if so, use the M(win_reboot) action to perform it.
-    type: bool
-    default: 'no'
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature.
