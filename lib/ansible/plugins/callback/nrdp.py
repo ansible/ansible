@@ -155,8 +155,8 @@ class CallbackModule(CallbackBase):
             stat = stats.summarize(host)
             gstats += "'%s_ok'=%d '%s_changed'=%d \
                        '%s_unreachable'=%d '%s_failed'=%d " % \
-                        (host, stat['ok'], host, stat['changed'],
-                         host, stat['unreachable'], host, stat['failures'])
+                (host, stat['ok'], host, stat['changed'],
+                 host, stat['unreachable'], host, stat['failures'])
             # Critical when failed tasks or unreachable host
             critical += stat['failures']
             critical += stat['unreachable']
