@@ -1,7 +1,9 @@
-# Copyright (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
-# Copyright (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
-# Copyright (c) 2018, Ansible Project
+# -*- coding: utf-8 -*-
+# (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
+# (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
+# (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -12,15 +14,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
     lookup: onepassword
     author:
-      -  Scott Buchanan <sbuchanan@ri.pn>
-      -  Andrew Zenk <azenk@umn.edu>
+      - Scott Buchanan <sbuchanan@ri.pn>
+      - Andrew Zenk <azenk@umn.edu>
     version_added: "2.6"
     requirements:
-      - op (1Password command line utility: https://support.1password.com/command-line/)
-      - must have already logged into 1Password using op CLI
+      - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
+      - must have already logged into 1Password using C(op) CLI
     short_description: fetch field values from 1Password
     description:
-      - onepassword wraps the op command line utility to fetch specific field values from 1Password
+      - onepassword wraps the C(op) command line utility to fetch specific field values from 1Password
     options:
       _terms:
         description: identifier(s) (UUID, name or domain; case-insensitive) of item(s) to retrieve
@@ -38,13 +40,16 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: "retrieve password for KITT"
-  debug: password="{{ lookup('onepassword', 'KITT') }}"
+  debug:
+    msg: "{{ lookup('onepassword', 'KITT') }}"
 
 - name: "retrieve password for Wintermute"
-  debug: password="{{ lookup('onepassword', 'Tessier-Ashpool', section='Wintermute') }}"
+  debug:
+    msg: "{{ lookup('onepassword', 'Tessier-Ashpool', section='Wintermute') }}"
 
 - name: "retrieve username for HAL"
-  debug: password="{{ lookup('onepassword', 'HAL 9000', field='username', vault='Discovery') }}"
+  debug:
+    msg: "{{ lookup('onepassword', 'HAL 9000', field='username', vault='Discovery') }}"
 """
 
 RETURN = """
@@ -52,65 +57,8 @@ RETURN = """
     description: field data requested
 """
 
-import json
-import errno
-from subprocess import Popen, PIPE
-
-from ansible.errors import AnsibleLookupError
+from ansible.module_utils.onepassword import OnePass
 from ansible.plugins.lookup import LookupBase
-
-
-class OnePass(object):
-
-    def __init__(self, path='op'):
-        self._cli_path = path
-
-    @property
-    def cli_path(self):
-        return self._cli_path
-
-    def assert_logged_in(self):
-        try:
-            self._run(["get", "account"])
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                raise AnsibleLookupError("1Password CLI tool not installed in path on control machine")
-            raise e
-        except AnsibleLookupError:
-            raise AnsibleLookupError("Not logged into 1Password: please run 'op signin' first")
-
-    def get_raw(self, item_id, vault=None):
-        args = ["get", "item", item_id]
-        if vault is not None:
-            args += ['--vault={0}'.format(vault)]
-        output, dummy = self._run(args)
-        return output
-
-    def get_field(self, item_id, field, section=None, vault=None):
-        output = self.get_raw(item_id, vault)
-        return self._parse_field(output, field, section) if output != '' else ''
-
-    def _run(self, args, expected_rc=0):
-        p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        out, err = p.communicate()
-        rc = p.wait()
-        if rc != expected_rc:
-            raise AnsibleLookupError(err)
-        return out, err
-
-    def _parse_field(self, data_json, field_name, section_title=None):
-        data = json.loads(data_json)
-        if section_title is None:
-            for field_data in data['details'].get('fields', []):
-                if field_data.get('name').lower() == field_name.lower():
-                    return field_data.get('value', '')
-        for section_data in data['details'].get('sections', []):
-            if section_title is not None and section_title.lower() != section_data['title'].lower():
-                continue
-            for field_data in section_data.get('fields', []):
-                if field_data.get('t').lower() == field_name.lower():
-                    return field_data.get('v', '')
-        return ''
 
 
 class LookupModule(LookupBase):
