@@ -203,7 +203,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                     self.log("CHANGED: allocation_method")
                     changed = True
                     results['public_ip_allocation_method'] = self.allocation_method
-                
+
                 if self.sku and self.sku != results['sku']:
                     self.log("CHANGED: sku")
                     changed = True
