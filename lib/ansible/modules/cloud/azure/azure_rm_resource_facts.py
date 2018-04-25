@@ -86,12 +86,12 @@ response:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from msrestazure.tools import resource_id, is_valid_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure import AzureConfiguration
     from msrest.service_client import ServiceClient
+    from msrestazure.tools import resource_id, is_valid_resource_id
     import json
 
 except ImportError:

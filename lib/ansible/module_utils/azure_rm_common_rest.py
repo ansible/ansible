@@ -2,10 +2,14 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from msrestazure.azure_exceptions import CloudError
-from msrestazure import AzureConfiguration
-from msrest.service_client import ServiceClient
-import json
+try:
+    from msrestazure.azure_exceptions import CloudError
+    from msrestazure import AzureConfiguration
+    from msrest.service_client import ServiceClient
+    import json
+except ImportError:
+    # This is handled in azure_rm_common
+    pass
 
 class GenericRestClientConfiguration(AzureConfiguration):
 
