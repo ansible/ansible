@@ -47,7 +47,7 @@ New module development
 ----------------------
 
 Please read 
-`link <http://docs.ansible.com/ansible/dev_guide/developing_modules.html#how-to-develop-a-module>`__,
+`link <https://docs.ansible.com/ansible/dev_guide/developing_modules.html#how-to-develop-a-module>`__,
 first to know what common properties, functions and features every module must
 have.
 

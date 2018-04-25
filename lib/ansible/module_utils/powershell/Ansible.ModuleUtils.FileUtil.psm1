@@ -19,6 +19,10 @@ Function Test-AnsiblePath {
         $file_attributes = [System.IO.File]::GetAttributes($Path)
     } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
         return $false
+    } catch [NotSupportedException] {
+        # When testing a path like Cert:\LocalMachine\My, System.IO.File will
+        # not work, we just revert back to using Test-Path for this
+        return Test-Path -Path $Path
     }
 
     if ([Int32]$file_attributes -eq -1) {

@@ -43,7 +43,7 @@ options:
   no_root_squash:
     description:
       - Don't squash root user to anonymous. Will be set to "no" on creation if not specified explicitly.
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
     required: false
   export:

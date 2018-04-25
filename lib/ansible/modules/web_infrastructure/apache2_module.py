@@ -40,7 +40,7 @@ options:
      description:
         - Force disabling of default modules and override Debian warnings.
      required: false
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.1"
    state:
@@ -51,7 +51,7 @@ options:
    ignore_configcheck:
      description:
         - Ignore configuration checks about inconsistent module configuration. Especially for mpm_* modules.
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.3"
 requirements: ["a2enmod","a2dismod"]

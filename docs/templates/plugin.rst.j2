@@ -1,5 +1,10 @@
 :source: @{ source }@
 
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+{% if plugin_type == 'module' %}
+:orphan:
+{% endif %}
+
 .. _@{ module }@_@{ plugin_type }@:
 {% for alias in aliases %}
 .. _@{ alias }@:
@@ -407,5 +412,5 @@ Author
 {%   if plugin_type == 'module' %}
     If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
 {% else %}
-    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@_` to improve it.
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@>`_ to improve it.
 {% endif %}

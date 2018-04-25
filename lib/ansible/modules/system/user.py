@@ -88,7 +88,7 @@ options:
         description:
             - Optionally set the user's password to this crypted value.
             - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
-            - See U(http://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
     state:
         description:
