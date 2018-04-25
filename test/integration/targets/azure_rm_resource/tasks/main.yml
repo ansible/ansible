@@ -1,0 +1,97 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create security group
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    api_version: "2018-01-01"
+    body:
+      location: eastus
+      properties:
+        securityRules:
+        - name: firstsecurityrule
+          properties:
+            protocol: "*"
+            sourceAddressPrefix: "10.0.0.0/8"
+            destinationAddressPrefix: "11.0.0.0/8"
+            access: "Deny"
+            destinationPortRange: "8080"
+            sourcePortRange: "*"
+            priority: 100
+            direction: "Outbound"
+
+- name: Query instance of security rule
+  azure_rm_resource_facts:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    subresource:
+      - type: securityrules
+        name: firstsecurityrule
+    api_version: "2018-01-01"
+  register: output
+
+- name: Create security rule
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    subresource:
+      - type: securityrules
+        name: mysecurityrule
+    api_version: "2018-01-01"
+    body:
+      properties:
+        protocol: "*"
+        sourceAddressPrefix: "10.0.0.0/8"
+        destinationAddressPrefix: "11.0.0.0/8"
+        access: "Deny"
+        destinationPortRange: "8080"
+        sourcePortRange: "*"
+        priority: 200
+        direction: "Inbound"
+
+- name: Query instance of security rule
+  azure_rm_resource_facts:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    subresource:
+      - type: securityrules
+        name: mysecurityrule
+    api_version: "2018-01-01"
+
+- name: Delete security group
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    api_version: "2018-01-01"
+    state: absent
+  register: output
+
+- assert:
+    that: output.changed
+
+
+- name: Delete unexisting security group
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    api_version: "2018-01-01"
+    state: absent
+  register: output
+
+- assert:
+    that: not output.changed
