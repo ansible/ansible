@@ -19,7 +19,7 @@ short_description: Manage address lists on BIG-IP AFM
 description:
   - Manages the AFM address lists on a BIG-IP. This module can be used to add
     and remove address list entries.
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
@@ -54,6 +54,7 @@ options:
       - Individual addresses that you want to add to the list. These addresses differ
         from ranges, and lists of lists such as what can be used in C(address_ranges)
         and C(address_lists) respectively.
+      - This list can also include networks that have CIDR notation.
   address_ranges:
     description:
       - A list of address ranges where the range starts with a port number, is followed
@@ -152,30 +153,25 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -218,11 +214,6 @@ class Parameters(AnsibleF5Parameters):
         except Exception:
             pass
         return result
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
 
 class ApiParameters(Parameters):
@@ -538,8 +529,15 @@ class ModuleParameters(Parameters):
                 netaddr.IPAddress(x)
             except netaddr.core.AddrFormatError:
                 raise F5ModuleError(
-                    "Address {0} must be either an IPv4 or IPv6 address".format(x)
+                    "Address {0} must be either an IPv4 or IPv6 address or network.".format(x)
                 )
+            except ValueError:
+                try:
+                    netaddr.IPNetwork(x)
+                except netaddr.core.AddrFormatError:
+                    raise F5ModuleError(
+                        "Address {0} must be either an IPv4 or IPv6 address or network.".format(x)
+                    )
         result = [str(x) for x in self._values['addresses']]
         result = sorted(result)
         return result
@@ -573,7 +571,7 @@ class ModuleParameters(Parameters):
             return None
         result = []
         for x in self._values['address_lists']:
-            item = self._fqdn_name(x)
+            item = fq_name(self.partition, x)
             result.append(item)
         result = sorted(result)
         return result
