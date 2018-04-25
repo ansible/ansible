@@ -375,7 +375,7 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
-    for dummy in range(0, 12):
+    for dummy in range(0, 24):
         try:
             versioning_status = get_bucket_versioning(s3_client, bucket_name)
         except (BotoCoreError, ClientError) as e:
