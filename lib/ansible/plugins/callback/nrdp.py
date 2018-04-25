@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# (c) 2018 Remi Verchere <remi@verchere.fr>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -49,6 +51,7 @@ except ImportError:
 
 from ansible.plugins.callback import CallbackBase
 
+
 class CallbackModule(CallbackBase):
     '''
     send ansible-playbook to Nagios server using nrdp protocol
@@ -84,9 +87,10 @@ class CallbackModule(CallbackBase):
         if (self.url or self.token or self.hostname or
                 self.servicename) is None:
             self._display.warning("NRDP callback wants the NRDP_URL,"
-                " NRDP_TOKEN, NRDP_ANSIBLE_HOSTNAME, NRDP_ANSIBLE_SERVICENAME"
-                " environment variables'."
-                " The NRDP callback plugin is disabled.")
+                                  " NRDP_TOKEN, NRDP_ANSIBLE_HOSTNAME,"
+                                  " NRDP_ANSIBLE_SERVICENAME"
+                                  " environment variables'."
+                                  " The NRDP callback plugin is disabled.")
             self.disabled = True
 
         self.play = None
@@ -150,7 +154,7 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             stat = stats.summarize(host)
             gstats += "'%s_ok'=%d '%s_changed'=%d \
-                      '%s_unreachable'=%d '%s_failed'=%d " % \
+                       '%s_unreachable'=%d '%s_failed'=%d " % \
                         (host, stat['ok'], host, stat['changed'],
                          host, stat['unreachable'], host, stat['failures'])
             # Critical when failed tasks or unreachable host
