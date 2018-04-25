@@ -1,3 +1,5 @@
+.. _common_return_values:
+
 Return Values
 -------------
 
@@ -10,8 +12,6 @@ This document covers return values common to all modules.
 
 .. note:: Some of these keys might be set by Ansible itself once it processes the module's return information.
 
-
-.. _common_return_values:
 
 Common
 ^^^^^^
