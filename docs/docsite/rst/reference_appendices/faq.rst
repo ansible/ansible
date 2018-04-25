@@ -19,6 +19,7 @@ Setting environment variables can be done with the `environment` keyword. It can
 
 .. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
 
+.. _faq_setting_users_and_ports:
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -185,12 +186,12 @@ By default, Solaris 10 and earlier run a non-POSIX shell which does not correctl
 tmp directory Ansible uses ( :file:`~/.ansible/tmp`). If you see module failures on Solaris machines, this
 is likely the problem. There are several workarounds:
 
-* You can set :ref:`remote_tmp` to a path that will expand correctly with the Solaris shell.  For
+* You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`, and :ref:`Powershell<powershell_shell>`).  For
   example, in the ansible config file you can set::
 
     remote_tmp=$HOME/.ansible/tmp
 
-  In Ansible 2.5 and later, you can also set it per-host like this::
+  In Ansible 2.5 and later, you can also set it per-host in inventory like this::
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 

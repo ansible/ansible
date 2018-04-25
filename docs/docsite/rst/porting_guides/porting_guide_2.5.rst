@@ -111,7 +111,7 @@ In addition to the deprecation warnings, many new tests have been introduced tha
 
     when: result is successful
 
-See :ref:`playbook_tests` for more information.
+See :ref:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
@@ -140,7 +140,7 @@ The following modules no longer exist:
 * :ref:`cl_license <cl_license_module>` use :ref:`nclu <nclu_module>` instead
 * :ref:`cl_interface <cl_interface_module>` use :ref:`nclu <nclu_module>` instead
 * :ref:`cl_bond <cl_bond_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`ec2_vpc <ec2_vpc_module>` use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
+* :ref:`ec2_vpc <ec2_vpc_module>` use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
 * :ref:`ec2_ami_search <ec2_ami_search_module>` use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
 * :ref:`docker <docker_module>` use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
 
