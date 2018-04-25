@@ -484,11 +484,12 @@ class Connection(ConnectionBase):
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
-        self._add_args(
-            b_command,
-            (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
-            u"ANSIBLE_TIMEOUT/timeout set"
-        )
+        if 'ConnectTimeout' not in self._play_context.ssh_args:
+            self._add_args(
+                b_command,
+                (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
+                u"ANSIBLE_TIMEOUT/timeout set"
+            )
 
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
