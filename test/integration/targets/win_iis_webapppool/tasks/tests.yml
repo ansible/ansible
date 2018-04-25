@@ -93,49 +93,6 @@
     - change_pool_attributes_again is not changed
     - change_pool_attributes_again.info == change_pool_attributes.info
 
-- name: change attributes of pool (old style) check
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:0|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated_check
-  check_mode: yes
-
-- name: assert change attributes of pool (old style) check
-  assert:
-    that:
-    - change_pool_attributes_deprecated_check is changed
-    - change_pool_attributes_deprecated_check.info == change_pool_attributes_again.info
-
-- name: change attributes of pool (old style)
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:10|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated
-
-- name: assert change attributes of pool (old style)
-  assert:
-    that:
-    - change_pool_attributes_deprecated is changed
-    - change_pool_attributes_deprecated.info.attributes.managedPipelineMode == 'Integrated'
-    - change_pool_attributes_deprecated.info.attributes.startMode == 'OnDemand'
-    - change_pool_attributes_deprecated.info.cpu.limit == 10
-    - change_pool_attributes_deprecated.info.processModel.identityType == 'NetworkService'
-
-- name: change attributes of pool (old style) again
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:10|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated_again
-
-- name: assert change attributes of pool (old style) again
-  assert:
-    that:
-    - change_pool_attributes_deprecated_again is not changed
-    - change_pool_attributes_deprecated_again.info == change_pool_attributes_deprecated.info
-
 - name: change more complex variables check
   win_iis_webapppool:
     name: '{{test_iis_webapppool_name}}'
@@ -152,7 +109,7 @@
   assert:
     that:
     - change_complex_attributes_check is changed
-    - change_complex_attributes_check.info == change_pool_attributes_deprecated_again.info
+    - change_complex_attributes_check.info == change_pool_attributes_again.info
 
 - name: change more complex variables
   win_iis_webapppool:
