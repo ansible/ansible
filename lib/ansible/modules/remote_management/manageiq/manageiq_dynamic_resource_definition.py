@@ -116,7 +116,7 @@ class ManageIQDynamicResourceDefinition(object):
         self.client = self.manageiq.client
 
     def dynamic_resource_definition(self, name):
-        """ Search for dynamic resource definition by name name.
+        """ Search for dynamic resource definition by name.
 
         Returns:
             the dynamic resource definition, or None if not found.
@@ -127,7 +127,7 @@ class ManageIQDynamicResourceDefinition(object):
         """ Creates the dynamic resource definition in manageiq.
 
         Returns:
-            a dictionary with changed and msg.
+            a dictionary with changes and msg.
         """
         url = '%s/generic_object_definitions' % (self.api_url)
 
@@ -152,7 +152,7 @@ class ManageIQDynamicResourceDefinition(object):
         """ Edit the dynamic resource definition in manageiq.
 
         Returns:
-            a dictionary with the changed and msg.
+            a dictionary with the changes and msg.
         """
         # Check if properties has the following keys,
         # These keys are returned from the API response even if they are empty
@@ -248,7 +248,7 @@ def main():
         else:
             res_args = dict(
                 changed=False,
-                msg="dynamic resource definition  %s: does not exist in manageiq" % (dynamic_resource_definition))
+                msg="dynamic resource definition  %s: does not exist in manageiq" % (name))
 
     # definition shoult exist
     if state == "present":
