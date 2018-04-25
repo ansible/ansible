@@ -48,8 +48,7 @@ options:
             - Group to which the community belongs.
     acl:
         description:
-            - ACL name to filter snmp requests.
-        default: 1
+            - ACL name to filter snmp requests or keyword 'default'.
     state:
         description:
             - Manage the state of the resource.
@@ -150,7 +149,8 @@ def get_snmp_community(module, name):
 def config_snmp_community(delta, community):
     CMDS = {
         'group': 'snmp-server community {0} group {group}',
-        'acl': 'snmp-server community {0} use-acl {acl}'
+        'acl': 'snmp-server community {0} use-acl {acl}',
+        'no_acl': 'no snmp-server community {0} use-acl {no_acl}'
     }
     commands = []
     for k, v in delta.items():
@@ -203,6 +203,10 @@ def main():
     args = dict(group=group, acl=acl)
     proposed = dict((k, v) for k, v in args.items() if v is not None)
     delta = dict(set(proposed.items()).difference(existing.items()))
+    if delta.get('acl') == 'default':
+        delta.pop('acl')
+        if existing.get('acl'):
+            delta['no_acl'] = existing.get('acl')
 
     commands = []
 
