@@ -173,6 +173,8 @@ def get_ntp_peer(module):
 
             split_ntp = ntp.splitlines()
             for peer_line in split_ntp:
+                if 'access-group' in peer_line:
+                    continue
                 ntp_peer = {}
                 try:
                     peer_address = None
