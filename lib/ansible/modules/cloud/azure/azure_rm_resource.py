@@ -63,8 +63,8 @@ options:
   method:
     description:
       - The HTTP method of the request or response. It MUST be uppercase.
-        choices: [ "GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE" ]
-        default: "PUT"
+    choices: [ "GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE" ]
+    default: "PUT"
   status_code:
     description:
       - A valid, numeric, HTTP status code that signifies success of the
