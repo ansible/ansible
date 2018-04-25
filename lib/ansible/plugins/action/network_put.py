@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
             # It is supported only with network_cli
             q(play_context.connection )
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type for net_file_put module')
+            result['msg'] = ('please use network_cli connection type for network_put module')
             return result
 
         src_file_path_name = self._task.args.get('src')
@@ -66,6 +66,8 @@ class ActionModule(ActionBase):
 
         #Get proto
         proto = self._task.args.get('protocol')
+        if proto is None:
+            proto = 'scp'
 
         sock_timeout = play_context.timeout
 

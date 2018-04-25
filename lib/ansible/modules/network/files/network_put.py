@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: net_file_put
+module: network_put
 version_added: "2.6"
 author: "Deepak Agrawal (@dagrawal)"
 short_description: copy files from ansibe controller to  network devices
@@ -42,7 +42,6 @@ options:
 
 Requirements:
     - scp
-    - sftp (If protocol used is sftp)
 
 notes:
    - Some devices need specific configurations to be enabled before scp can work
@@ -55,14 +54,14 @@ notes:
 
 EXAMPLES = """
 - name: copy file from ansible controller to ios device
-  net_file_put:
+  network_put:
     src: running_cfg_ios1.txt
 
 - name: copy file at root dir of flash in slot 3 of sw1(ios) 
-  net_file_put:
+  network_put:
     src: running_cfg_sw1.txt
     protocol: sftp
-    dest_dir: flash3:/
+    dest : flash3:/running_cfg_sw1.txt
 """
 
 RETURN = """
