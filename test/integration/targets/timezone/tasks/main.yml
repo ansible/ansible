@@ -1,9 +1,9 @@
-- block:
-    - name: Set timezone to Etc/UTC
-      timezone:
-        name: Etc/UTC
-      register: original_timezone
+- name: Set timezone to Etc/UTC
+  timezone:
+    name: Etc/UTC
+  register: original_timezone
 
+- block:
     - name: Set timezone to Australia/Brisbane
       timezone:
         name: Australia/Brisbane
