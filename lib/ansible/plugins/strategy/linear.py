@@ -31,7 +31,7 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
@@ -56,14 +56,14 @@ class StrategyModule(StrategyBase):
 
     def _replace_with_noop(self, target):
         if self.noop_task is None:
-            raise AssertionError('strategy.linear.StrategyModule.noop_task is None, need Task()')
+            raise AnsibleAssertionError('strategy.linear.StrategyModule.noop_task is None, need Task()')
 
         result = []
         for el in target:
             if isinstance(el, Task):
                 result.append(self.noop_task)
             elif isinstance(el, Block):
-                result.append(self._create_noop_block_from(el, el))
+                result.append(self._create_noop_block_from(el, el._parrent))
         return result
 
     def _create_noop_block_from(self, original_block, parent):
