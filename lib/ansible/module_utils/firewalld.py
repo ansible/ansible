@@ -307,5 +307,6 @@ class FirewallTransaction(object):
 
         if import_failure:
             module.fail_json(
-                msg='Python Module not found: firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+                msg='Python Module not found: firewalld and its python module are required for this module, \
+                        version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
             )
