@@ -169,11 +169,27 @@ class AnsibleAWSModule(object):
         except AttributeError:
             response = None
 
+        boto3_version, botocore_version = self._gather_versions()
         if response is None:
-            self._module.fail_json(msg=message, exception=last_traceback)
+            self._module.fail_json(msg=message, exception=last_traceback,
+                                   boto3_version=boto3_version,
+                                   botocore_version=botocore_version)
         else:
             self._module.fail_json(msg=message, exception=last_traceback,
+                                   boto3_version=boto3_version,
+                                   botocore_version=botocore_version,
                                    **camel_dict_to_snake_dict(response))
+
+    def _gather_versions(self):
+        """Gather AWS SDK dependency versions
+
+        Returns (str, str) of boto3 and botocore versions
+        Returns ('NaN', 'NaN') if neither are installed
+        """
+        if not HAS_BOTO3:
+            return 'NaN', 'NaN'
+        import boto3, botocore
+        return boto3.__version__, botocore.__version__
 
 
 class _RetryingBotoClientWrapper(object):
