@@ -2,6 +2,7 @@
   azure_rm_publicipaddress:
     name: ansiblepipstandard
     sku: Standard
+    allocation_method: Static
     resource_group: '{{ resource_group }}'
 
 - name: create public ip
