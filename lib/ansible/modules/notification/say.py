@@ -21,7 +21,7 @@ short_description: Makes a computer to speak.
 description:
    - makes a computer speak! Amuse your friends, annoy your coworkers!
 notes:
-   - In 2.5, this module has been renamed from M(osx_say) into M(say).
+   - In 2.5, this module has been renamed from C(osx_say) to M(say).
    - If you like this module, you may also be interested in the osx_say callback plugin.
 options:
   msg:
