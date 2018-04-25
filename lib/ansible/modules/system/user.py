@@ -270,7 +270,7 @@ class User(object):
     platform = 'Generic'
     distribution = None
     SHADOWFILE = '/etc/shadow'
-    SHADOWFILE_INDEX = 7
+    SHADOWFILE_EXPIRE_INDEX = 7
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
@@ -651,7 +651,7 @@ class User(object):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
-                        expires = line.split(':')[self.SHADOWFILE_INDEX]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX]
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -785,7 +785,7 @@ class FreeBsdUser(User):
     platform = 'FreeBSD'
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
-    SHADOWFILE_INDEX = 6
+    SHADOWFILE_EXPIRE_INDEX = 6
 
     def remove_user(self):
         cmd = [

@@ -20,9 +20,10 @@
   shell: python -c 'import jinja2; print(jinja2.__version__)'
   register: jinja2_version
   delegate_to: localhost
+  changed_when: no
 
 - debug:
-    var: jinja2_version.stdout
+    msg: "Jinja version: {{ jinja2_version.stdout }}, Python version: {{ ansible_python_version }}"
 
 
 ## user add
@@ -184,7 +185,7 @@
     expires: 2529881062
   register: user_test_expires2
 
-- name: Ensure that account was expiration was set and did not change on subsequent run
+- name: Ensure that account with expiration was created and did not change on subsequent run
   assert:
     that:
       - user_test_expires1 is changed
@@ -201,4 +202,18 @@
       assert:
         that:
           - getent_shadow['ansibulluser'][6] == '29281'
-  when: ansible_os_family in ['RedHat', 'Debian', 'FreeBSD', 'Suse']
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        that:
+          - bsd_account_expiration.stdout == '2529881062'
+  when: ansible_os_family == 'FreeBSD'
