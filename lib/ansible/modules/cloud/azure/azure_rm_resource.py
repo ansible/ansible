@@ -46,7 +46,6 @@ options:
   subresource:
     description:
       - List of subresources
-    type: list
     suboptions:
       namespace:
         description:
