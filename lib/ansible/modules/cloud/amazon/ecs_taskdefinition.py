@@ -58,9 +58,10 @@ options:
     network_mode:
         description:
             - The Docker networking mode to use for the containers in the task.
+            - C(awsvpc) mode was added in Ansible 2.5
         required: false
         default: bridge
-        choices: [ 'bridge', 'host', 'none' ]
+        choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
         version_added: 2.3
     task_role_arn:
         description:
@@ -166,6 +167,10 @@ class EcsTaskManager:
                     for port in ('hostPort', 'containerPort'):
                         if port in port_mapping:
                             port_mapping[port] = int(port_mapping[port])
+                    if network_mode == 'awsvpc' and 'hostPort' in port_mapping:
+                        if port_mapping['hostPort'] != port_mapping.get('containerPort'):
+                            self.module.fail_json(msg="In awsvpc network mode, host port must be set to the same as "
+                                                  "container port or not be set")
 
             validated_containers.append(container)
 
@@ -227,7 +232,7 @@ def main():
         revision=dict(required=False, type='int'),
         force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list')))
 
@@ -389,6 +394,7 @@ def main():
                 results['changed'] = True
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()
