@@ -146,9 +146,6 @@ except ImportError:
     # duplicate that here
     pass
 
-# globals
-module = None
-
 
 class ServiceTransaction(FirewallTransaction):
     """
@@ -332,7 +329,7 @@ class InterfaceTransaction(FirewallTransaction):
             if len(iface_zone_objs) > 1:
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
-                module.fail_json(
+                self.module.fail_json(
                     msg='ERROR: interface {} is in {} zone XML file, can only be in one'.format(
                         interface,
                         len(iface_zone_objs)
@@ -485,7 +482,7 @@ class ZoneTransaction(FirewallTransaction):
             "Make sure you didn't set the 'permanent' flag to 'false' or the 'immediate' flag to 'true'."
 
     def get_enabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def get_enabled_permanent(self):
         if self.zone in self.fw.config().getZoneNames():
@@ -494,13 +491,13 @@ class ZoneTransaction(FirewallTransaction):
             return False
 
     def set_enabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_enabled_permanent(self):
         self.fw.config().addZone(self.zone, FirewallClientZoneSettings())
 
     def set_disabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_disabled_permanent(self):
         zone_obj = self.fw.config().getZoneByName(self.zone)
@@ -509,7 +506,6 @@ class ZoneTransaction(FirewallTransaction):
 
 def main():
 
-    global module
     module = AnsibleModule(
         argument_spec=dict(
             service=dict(required=False, default=None),

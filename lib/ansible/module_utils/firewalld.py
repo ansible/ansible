@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# (c) 2018, Adam Miller (maxamillion@fedoraproject.org)
+# (c) 2013-2018, Adam Miller (maxamillion@fedoraproject.org)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Imports and info for sanity checking
+from distutils.version import LooseVersion
+
 FW_VERSION = None
 fw = None
 fw_offline = None
@@ -288,12 +290,12 @@ class FirewallTransaction(object):
 
         if FW_VERSION and fw_offline:
             # Pre-run version checking
-            if FW_VERSION < "0.3.9":
-                module.fail_json(msg='unsupported version of firewalld, offline operations require >= 0.3.9')
+            if LooseVersion(FW_VERSION) < LooseVersion("0.3.9"):
+                module.fail_json(msg='unsupported version of firewalld, offline operations require >= 0.3.9 - found: {}'.format(FW_VERSION))
         elif FW_VERSION and not fw_offline:
             # Pre-run version checking
-            if FW_VERSION < "0.2.11":
-                module.fail_json(msg='unsupported version of firewalld, requires >= 0.2.11')
+            if LooseVersion(FW_VERSION) < LooseVersion("0.2.11"):
+                module.fail_json(msg='unsupported version of firewalld, requires >= 0.2.11 - found: {}'.format(FW_VERSION))
 
             # Check for firewalld running
             try:
@@ -305,5 +307,5 @@ class FirewallTransaction(object):
 
         if import_failure:
             module.fail_json(
-                msg='firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+                msg='Python Module not found: firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
             )
