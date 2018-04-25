@@ -291,11 +291,11 @@ class FirewallTransaction(object):
         if FW_VERSION and fw_offline:
             # Pre-run version checking
             if LooseVersion(FW_VERSION) < LooseVersion("0.3.9"):
-                module.fail_json(msg='unsupported version of firewalld, offline operations require >= 0.3.9 - found: {}'.format(FW_VERSION))
+                module.fail_json(msg='unsupported version of firewalld, offline operations require >= 0.3.9 - found: {0}'.format(FW_VERSION))
         elif FW_VERSION and not fw_offline:
             # Pre-run version checking
             if LooseVersion(FW_VERSION) < LooseVersion("0.2.11"):
-                module.fail_json(msg='unsupported version of firewalld, requires >= 0.2.11 - found: {}'.format(FW_VERSION))
+                module.fail_json(msg='unsupported version of firewalld, requires >= 0.2.11 - found: {0}'.format(FW_VERSION))
 
             # Check for firewalld running
             try:
