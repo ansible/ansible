@@ -68,7 +68,7 @@ later).
 
    * If you have SELinux enabled on remote nodes, you will also want to install
      libselinux-python on them before using any copy/file/template related functions in Ansible. You
-     can use the :ref:`yum` or :ref`dnf` module in Ansible to install this package on remote systems
+     can use the :ref:`yum module<yum_module>` or :ref:`dnf module<dnf_module>` in Ansible to install this package on remote systems
      that do not have it.
 
    * By default, Ansible uses the python interpreter located at :file:`/usr/bin/python` to run its
@@ -77,14 +77,14 @@ later).
 
         "module_stdout": "/bin/sh: /usr/bin/python: No such file or directory\r\n"
 
-     you can either set the :ref:`ansible_python_interpreter` inventory variable (see
+     you can either set the :ref:`ansible_python_interpreter<ansible_python_interpreter>` inventory variable (see
      :ref:`inventory`) to point at your interpreter or you can install a Python 2 interpreter for
-     modules to use. You will still need to set :ref:`ansible_python_interpreter` if the Python
+     modules to use. You will still need to set :ref:`ansible_python_interpreter<ansible_python_interpreter>` if the Python
      2 interpreter is not installed to :command:`/usr/bin/python`.
 
    * Ansible's "raw" module (for executing commands in a quick and dirty way) and the script module
      don't even need Python installed.  So technically, you can use Ansible to install a compatible
-     version of Python using the :ref:`raw` module, which then allows you to use everything else.
+     version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else.
      For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it
      via
 
