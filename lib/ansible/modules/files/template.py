@@ -23,8 +23,8 @@ description:
        C(ansible_managed) (configurable via the C(defaults) section of C(ansible.cfg)) contains a string which can be used to
           describe the template name, host, modification time of the template file and the owner uid.
        C(template_host) contains the node name of the template's machine.
-       C(template_uid) the numeric user id of the owner.
-       C(template_path) the path of the template.
+       C(template_uid) is the numeric user id of the owner.
+       C(template_path) is the path of the template.
        C(template_fullpath) is the absolute path of the template.
        C(template_run_date) is the date that the template was rendered."
 options:
@@ -96,7 +96,7 @@ options:
     default: 'no'
     version_added: "2.4"
 notes:
-  - For Windows you can use M(win_template) which uses '\r\n' as C(newline_sequence).
+  - For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
   - "Also, you can override jinja2 settings by adding a special header to template file.
