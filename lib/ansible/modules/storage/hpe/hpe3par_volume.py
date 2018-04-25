@@ -145,18 +145,6 @@ options:
       - "Whether the specified Volume should exist or not. State also provides
        actions to modify volume properties.\n"
     required: true
-  storage_system_ip:
-    description:
-      - "The storage system IP address."
-    required: true
-  storage_system_password:
-    description:
-      - "The storage system password."
-    required: true
-  storage_system_username:
-    description:
-      - "The storage system user name."
-    required: true
   type:
     choices:
       - thin
@@ -190,11 +178,7 @@ options:
        operation, for ex convert type ends.\n"
     required: false
     type: bool
-requirements:
-  - "3PAR OS - 3.2.2 MU6, 3.3.1 MU1"
-  - "Ansible - 2.4"
-  - "hpe3par_sdk 1.0.0"
-  - "WSAPI service should be enabled on the 3PAR storage array."
+extends_documentation_fragment: hpe3par
 short_description: "Manage HPE 3PAR Volume"
 version_added: "2.4"
 '''

@@ -50,27 +50,11 @@ options:
       - "Whether the specified Volume Set should exist or not. State also
        provides actions to add or remove volumes from volume set\n"
     required: true
-  storage_system_ip:
-    description:
-      - "The storage system IP address."
-    required: true
-  storage_system_password:
-    description:
-      - "The storage system password."
-    required: true
-  storage_system_username:
-    description:
-      - "The storage system user name."
-    required: true
   volumeset_name:
     description:
       - "Name of the volume set to be created."
     required: true
-requirements:
-  - "3PAR OS - 3.2.2 MU6, 3.3.1 MU1"
-  - "Ansible - 2.4"
-  - "hpe3par_sdk 1.0.0"
-  - "WSAPI service should be enabled on the 3PAR storage array."
+extends_documentation_fragment: hpe3par
 short_description: "Manage HPE 3PAR Volume Set"
 version_added: "2.4"
 '''
