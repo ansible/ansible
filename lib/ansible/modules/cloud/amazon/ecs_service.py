@@ -97,6 +97,12 @@ options:
           - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
         required: false
         version_added: 2.4
+    health_check_grace_period_seconds:
+        description:
+          - Seconds to wait before health checking the freshly added/updated services.
+        required: false
+        default: 30
+        version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
