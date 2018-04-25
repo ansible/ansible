@@ -56,7 +56,7 @@ options:
         version_added: "1.5"
     key_file:
         description:
-            - Specify an optional private key file to use for the checkout.
+            - Specify an optional private key file path, on the target host, to use for the checkout.
         version_added: "1.5"
     reference:
         description:
@@ -590,7 +590,7 @@ def is_local_branch(git_path, module, dest, branch):
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
     for branch in branches:
-        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch):
+        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch or 'detached at' in branch):
             return True
     return False
 

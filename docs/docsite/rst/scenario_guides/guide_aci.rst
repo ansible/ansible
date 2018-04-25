@@ -65,7 +65,7 @@ For instance ensuring that a specific tenant exists, is done using the following
         description: Customer XYZ
         state: present
 
-A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+A complete list of existing ACI modules is available for the latest stable release on the :ref:`list of network modules <network_modules>`. You can also view the `current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
 
 Querying ACI configuration
 ..........................

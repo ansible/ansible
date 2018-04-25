@@ -24,7 +24,7 @@ author: Jasper Lievisse Adriaanse (@jasperla)
 options:
     force:
         required: false
-        choices: [ yes, no ]
+        type: bool
         description:
           - Force a given operation (where supported by imgadm(1M)).
     pool:

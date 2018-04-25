@@ -21,7 +21,6 @@ description:
 - Modify, rename or remove a virtual machine.
 version_added: '2.2'
 author:
-- James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>

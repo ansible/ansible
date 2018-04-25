@@ -483,7 +483,7 @@ guides for Windows modules differ substantially from those for standard standard
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

@@ -53,8 +53,9 @@ options:
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept absolute,
-        relative and nonexisting paths. Relative paths are not expanded.
+      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
+        absolute, relative and nonexisting paths. Relative paths are relative to the file being
+        created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
       - recursively set the specified file attributes (applies only to directories)
@@ -182,7 +183,7 @@ def main():
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
-            follow=dict(required=False, default=False, type='bool'),
+            follow=dict(required=False, default=True, type='bool'),
             diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
             validate=dict(required=False, default=None),  # Internal use only, for template and copy
             src=dict(required=False, default=None, type='path'),

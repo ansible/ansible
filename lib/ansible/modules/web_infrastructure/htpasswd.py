@@ -53,7 +53,7 @@ options:
       - Whether the user entry should be present or not
   create:
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "yes"
     description:
       - Used with C(state=present). If specified, the file will be created
