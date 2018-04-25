@@ -247,11 +247,16 @@ class GalaxyCLI(CLI):
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
+                    if os.path.islink(os.path.join(root, f)):
+                        os.symlink(os.readlink(os.path.join(root, f)), os.path.join(role_path, f_rel_path))
+                    else:
+                        shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
 
             for d in dirs:
                 dir_path = os.path.join(role_path, rel_root, d)
-                if not os.path.exists(dir_path):
+                if os.path.islink(os.path.join(root, d)):
+                    os.symlink(os.readlink(os.path.join(root, d)), os.path.join(dir_path))
+                elif not os.path.exists(dir_path):
                     os.makedirs(dir_path)
 
         display.display("- %s was created successfully" % role_name)
