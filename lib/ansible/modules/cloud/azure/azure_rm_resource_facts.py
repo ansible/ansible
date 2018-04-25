@@ -38,6 +38,10 @@ options:
   resource_type:
     description:
       - Resource type.
+  api_version:
+    description:
+      - Specific API version to be used.
+    required: yes
   resource_name:
     description:
       - Resource name.
@@ -125,7 +129,8 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 default=[]
             ),
             api_version=dict(
-                type='str'
+                type='str',
+                required=True
             )
         )
         # store the results of the module operation
