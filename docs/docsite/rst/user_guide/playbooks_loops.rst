@@ -90,9 +90,26 @@ For example, using the 'nested' lookup, you can combine lists::
         priv: "{{ item[1] }}.*:ALL"
         append_privs: yes
         password: "foo"
-      loop: "{{ lookup('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
+      loop: "{{ query('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
 
 .. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
+
+
+Using lookup vs query with loop
+```````````````````````````````
+
+In Ansible 2.5 a new jinja2 function was introduced named :ref:`query`, that offers several benefits over ``lookup`` when using the new ``loop`` keyword.
+
+This is described more in the lookup documentation, however, ``query`` provides a more simple interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
+
+In certain situations the ``lookup`` function may not return a list which ``loop`` requires.
+
+The following invocations are equivalent, using ``wantlist=True`` with ``lookup`` to ensure a return type of a list::
+
+    loop: "{{ query('nested', ['alice', 'bob'], ['clientdb', 'employeedb', 'providerdb']) }}"
+
+    loop: "{{ lookup('nested', ['alice', 'bob'], ['clientdb', 'employeedb', 'providerdb'], wantlist=True) }}"
+
 
 .. _do_until_loops:
 
@@ -209,12 +226,12 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
     # show all the hosts in the inventory
     - debug:
         msg: "{{ item }}"
-      loop: "{{ lookup('inventory_hostnames', 'all') }}"
+      loop: "{{ query('inventory_hostnames', 'all') }}"
 
     # show all the hosts matching the pattern, ie all but the group www
     - debug:
         msg: "{{ item }}"
-      loop: "{{ lookup('inventory_hostnames', 'all!www') }}"
+      loop: "{{ query('inventory_hostnames', 'all!www') }}"
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
