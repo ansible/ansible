@@ -560,6 +560,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                                         self.security_group_name,
                                                         self.os_type,
                                                         self.open_ports) if self.has_security_group else None
+
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
