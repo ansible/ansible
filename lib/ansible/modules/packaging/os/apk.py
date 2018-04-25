@@ -61,8 +61,8 @@ options:
   root:
     description:
       - Install the packages to the specified directory
-        type: str
-        default: ""
+    type: str
+    default: ""
     version_added: "2.5"
 notes:
   - '"name" and "upgrade" are mutually exclusive.'
