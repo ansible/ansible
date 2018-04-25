@@ -17,7 +17,6 @@ try:
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
     from firewall.errors import FirewallError
-    fw = None
     fw_offline = False
     import_failure = False
 
@@ -156,7 +155,7 @@ class FirewallTransaction(object):
         """
         run
 
-        This fuction contains the "transaction logic" where as all operations
+        This function contains the "transaction logic" where as all operations
         follow a similar pattern in order to perform their action but simply
         call different functions to carry that action out.
         """
