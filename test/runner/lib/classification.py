@@ -296,6 +296,9 @@ class PathMapper(object):
                 'units': 'test/units/contrib/'
             }
 
+        if path.startswith('changelogs/'):
+            return minimal
+
         if path.startswith('docs/'):
             return minimal
 
