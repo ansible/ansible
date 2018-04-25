@@ -140,7 +140,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         self.resource_type = None
         self.resource_name = None
         self.subresource = []
-        super(AzureRMResourceFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMResourceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
