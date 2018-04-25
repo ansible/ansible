@@ -333,9 +333,9 @@ def main():
     if p['repository']:
         for r in p['repository']:
             APK_PATH = "%s --repository %s --repositories-file /dev/null" % (APK_PATH, r)
-            
+
     if p['root']:
-      APK_PATH = "%s --root %s" % (APK_PATH, p['root'])
+        APK_PATH = "%s --root %s" % (APK_PATH, p['root'])
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
