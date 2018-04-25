@@ -60,11 +60,6 @@ options:
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
     default: [0, 3010]
-  name:
-    description:
-    - Name of the package, if name isn't specified the path will be used for
-      log messages.
-    - As of Ansible 2.4 this is deprecated and no longer required.
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.

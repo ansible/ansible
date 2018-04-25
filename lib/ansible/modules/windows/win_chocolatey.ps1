@@ -4,8 +4,7 @@
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -19,7 +18,6 @@ $verbosity = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int
 
 $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-$upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
@@ -38,15 +36,6 @@ $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "st
 
 $result = @{
     changed = $false 
-}
-
-if ($upgrade)
-{
-    Add-DeprecationWarning -obj $result -message "Parameter upgrade=yes is replaced with state=latest" -version 2.6
-    if ($state -eq "present")
-    {
-        $state = "latest"
-    }
 }
 
 Function Chocolatey-Install-Upgrade
@@ -78,8 +67,6 @@ Function Chocolatey-Install-Upgrade
         $result.rc = $LastExitCode
         $result.stdout = $install_output | Out-String
         if ($result.rc -ne 0) {
-            # Deprecated below result output in v2.4, remove in v2.6
-            $result.choco_bootstrap_output = $install_output
             Fail-Json -obj $result -message "Chocolatey bootstrap installation failed."
         }
         $result.changed = $true
@@ -163,9 +150,6 @@ Function Choco-IsInstalled
         $result.rc = $LastExitCode
         $result.command =  "$script:executable list $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error checking installation status for $package 'package'"
     }
 
@@ -295,9 +279,6 @@ Function Choco-Upgrade
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable upgrade $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error upgrading package '$package'"
     }
 
@@ -442,9 +423,6 @@ Function Choco-Install
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable install $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error installing package '$package'"
     }
 
@@ -513,9 +491,6 @@ Function Choco-Uninstall
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable uninstall $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error uninstalling package '$package'"
     }
 
