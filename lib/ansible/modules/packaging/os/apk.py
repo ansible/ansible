@@ -134,8 +134,8 @@ EXAMPLES = '''
 
 # Install package to directory
 - apk:
-  name: foo
-  root: /tmp
+      name: foo
+      root: /tmp
 '''
 
 RETURN = '''
