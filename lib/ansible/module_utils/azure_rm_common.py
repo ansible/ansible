@@ -814,8 +814,15 @@ class AzureRMModuleBase(object):
                 priority += 1
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                                     destination_port_range=str(port), priority=priority, name=rule_name)
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     source_port_range='*',
+                                                     destination_port_range=str(port),
+                                                     priority=priority,
+                                                     name=rule_name)
                 )
 
         self.log('Creating default security group {0}'.format(security_group_name))
