@@ -58,6 +58,12 @@ options:
       - Upgrade all installed packages to their latest version.
     type: bool
     default: 'no'
+  root:
+    description:
+      - Install the packages to the specified directory
+        type: str
+        default: ""
+    version_added: "2.5"
 notes:
   - '"name" and "upgrade" are mutually exclusive.'
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -125,6 +131,11 @@ EXAMPLES = '''
     state: latest
     update_cache: yes
     repository: http://dl-3.alpinelinux.org/alpine/edge/main
+
+# Install package to directory
+- apk:
+  name: foo
+  root: /tmp
 '''
 
 RETURN = '''
@@ -303,6 +314,7 @@ def main():
             update_cache=dict(default='no', type='bool'),
             upgrade=dict(default='no', type='bool'),
             available=dict(default='no', type='bool'),
+            root=dict(default="", type='str')
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
         mutually_exclusive=[['name', 'upgrade']],
@@ -321,6 +333,9 @@ def main():
     if p['repository']:
         for r in p['repository']:
             APK_PATH = "%s --repository %s --repositories-file /dev/null" % (APK_PATH, r)
+            
+    if p['root']:
+      APK_PATH = "%s --root %s" % (APK_PATH, p['root'])
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
