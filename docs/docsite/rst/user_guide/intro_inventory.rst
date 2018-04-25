@@ -388,9 +388,11 @@ ansible_become_flags
 
 Remote host environment parameters:
 
+.. _ansible_shell_type:
+
 ansible_shell_type
     The shell type of the target system. You should not use this setting unless you have set the
-    :ref:`ansible_shell_executable` to a non-Bourne (sh) compatible shell.  By default commands are
+    :ref:`ansible_shell_executable<ansible_shell_executable>` to a non-Bourne (sh) compatible shell.  By default commands are
     formatted using ``sh``-style syntax.  Setting this to ``csh`` or ``fish`` will cause commands
     executed on target systems to follow those shell's syntax instead.
 
@@ -404,7 +406,7 @@ ansible_python_interpreter
     be named something like :program:`python2.6`.
 
 ansible_*_interpreter
-    Works for anything such as ruby or perl and works just like :ref:`ansible_python_interpreter`.
+    Works for anything such as ruby or perl and works just like :ref:`ansible_python_interpreter<ansible_python_interpreter>`.
     This replaces shebang of modules which will run on that host.
 
 .. versionadded:: 2.1
