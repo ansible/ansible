@@ -153,7 +153,7 @@ class AzureRMResource(AzureRMModuleBase):
             method=dict(
                 type='str',
                 default='PUT',
-                choices=[ "GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE" ]
+                choices=["GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE"]
             ),
             body=dict(
                 type='raw'
@@ -212,9 +212,9 @@ class AzureRMResource(AzureRMModuleBase):
                 rargs['child_namespace_' + str(i + 1)] = self.subresource[i].get('namespace', None)
                 rargs['child_type_' + str(i + 1)] = self.subresource[i].get('type', None)
                 rargs['child_name_' + str(i + 1)] = self.subresource[i].get('name', None)
-                
+
             self.url = resource_id(**rargs)
-            
+
         query_parameters = {}
         query_parameters['api-version'] = self.api_version
 
@@ -238,5 +238,7 @@ class AzureRMResource(AzureRMModuleBase):
 
 def main():
     AzureRMResource()
+
+
 if __name__ == '__main__':
     main()

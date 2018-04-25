@@ -38,7 +38,6 @@ options:
     description:
       - Resource group to be used.
       - Required if URL is not specified.
-      
   resource_type:
     description:
       - Resource type.
@@ -168,7 +167,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 rargs['child_namespace_' + str(i + 1)] = self.subresource[i].get('namespace', None)
                 rargs['child_type_' + str(i + 1)] = self.subresource[i].get('type', None)
                 rargs['child_name_' + str(i + 1)] = self.subresource[i].get('name', None)
-                
+
             self.url = resource_id(**rargs)
 
             # this is to fix a problem with resource_id implementation, when resource_name is not specified
@@ -190,7 +189,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
             if response is list:
                 self.results['response'] = response
             else:
-                self.results['response'] = [ response ]
+                self.results['response'] = [response]
         except:
             self.results['response'] = []
 
@@ -199,5 +198,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
 def main():
     AzureRMResourceFacts()
+
+
 if __name__ == '__main__':
     main()

@@ -11,6 +11,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 class GenericRestClientConfiguration(AzureConfiguration):
 
     def __init__(self, credentials, subscription_id, base_url=None):
@@ -44,19 +45,19 @@ class GenericRestClient(object):
 
         request = None
 
-        if method=='GET':
+        if method == 'GET':
             request = self._client.get(url, query_parameters)
-        elif method=='PUT':
+        elif method == 'PUT':
             request = self._client.put(url, query_parameters)
-        elif method=='POST':
+        elif method == 'POST':
             request = self._client.post(url, query_parameters)
-        elif method=='HEAD':
+        elif method == 'HEAD':
             request = self._client.head(url, query_parameters)
-        elif method=='PATCH':
+        elif method == 'PATCH':
             request = self._client.patch(url, query_parameters)
-        elif method=='DELETE':
+        elif method == 'DELETE':
             request = self._client.delete(url, query_parameters)
-        elif method=='MERGE':
+        elif method == 'MERGE':
             request = self._client.merge(url, query_parameters)
 
         response = self._client.send(request, header_parameters, body, **operation_config)
