@@ -27,6 +27,10 @@ options:
   url:
     description:
       - Azure RM Resource URL.
+  api_version:
+    description:
+      - Specific API version to be used.
+    required: yes
   provider:
     description:
       - Provider type.
