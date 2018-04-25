@@ -4,7 +4,7 @@ Shell Plugins
 -------------
 
 Shell plugins work to ensure that the basic commands Ansible runs are properly formatted to work with
-the target machine and allow the user to configure certain behaviours related to how Ansible executes tasks.
+the target machine and allow the user to configure certain behaviors related to how Ansible executes tasks.
 
 .. _enabling_shell:
 
@@ -23,8 +23,8 @@ Using Shell Plugins
 +++++++++++++++++++
 
 In addition to the default configuration settings in :ref:`ansible_configuration_settings`, you can use
-a 'connection variable' :ref:`ansible_shell_type` to select the plugin to use.
-In this case, you will also want to update the :ref:`ansible_executable` to match.
+the connection variable :ref:`ansible_shell_type <ansible_shell_type>` to select the plugin to use.
+In this case, you will also want to update the :ref:`ansible_shell_executable <ansible_shell_executable>` to match.
 
 You can further control the settings for each plugin via other configuration options
 detailed in the plugin themselves (linked below).
