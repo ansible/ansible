@@ -134,7 +134,7 @@ If you need to skip the whole task depending on the loop variable being defined,
 If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          loop: "{{ lookup('dict', mydict|default({})) }}"
+          loop: "{{ query('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -250,7 +250,7 @@ The following example shows how to template out a configuration file that was ve
       template:
           src: "{{ item }}"
           dest: /etc/myapp/foo.conf
-      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      loop: "{{ query('first_found', { 'files': myfiles, 'paths': mypaths}) }}"
       vars:
         myfiles:
           - "{{ansible_distribution}}.conf"
