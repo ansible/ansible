@@ -30,6 +30,14 @@
     provider: "{{ cli }}"
   ignore_errors: yes
 
+- name: Setup - Ensure interfaces are layer3
+  nxos_interface:
+    aggregate:
+      - name: "{{ testint2 }}"
+      - name: "{{ testint3 }}"
+    mode: layer3
+    provider: "{{ cli }}"
+
 - name: Configure ipv4 address to interface
   nxos_l3_interface: &conf
     name: "{{ testint2 }}"
