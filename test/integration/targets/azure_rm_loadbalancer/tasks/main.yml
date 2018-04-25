@@ -74,7 +74,7 @@
   assert:
     that:
     - output.changed
-    - output.state.sku == Standard
+    - output.state.sku == 'Standard'
 
 - name: delete load balancer
   azure_rm_loadbalancer:
