@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: ecs_service
 short_description: create, terminate, start or stop a service in ecs
 description:
-  - Creates or terminates ecs services.
+  - Creates or terminates ecs services. Needs boto3 >= 1.6.0.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
   - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
@@ -322,7 +322,7 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy):
+                       placement_constraints, placement_strategy, health_check_grace_period_seconds):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -333,17 +333,19 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy,
+            healthCheckGracePeriodSeconds=health_check_grace_period_seconds)
         return response['service']
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration):
+                       desired_count, deployment_configuration, health_check_grace_period_seconds):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+            healthCheckGracePeriodSeconds=health_check_grace_period_seconds)
         return response['service']
 
     def delete_service(self, service, cluster=None):
@@ -365,7 +367,8 @@ def main():
         repeat=dict(required=False, type='int', default=10),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
-        placement_strategy=dict(required=False, default=[], type='list')
+        placement_strategy=dict(required=False, default=[], type='list'),
+        health_check_grace_period_seconds=dict(required=False, type='int', default=30)
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -418,7 +421,8 @@ def main():
                                                           module.params['cluster'],
                                                           module.params['task_definition'],
                                                           module.params['desired_count'],
-                                                          deploymentConfiguration)
+                                                          deploymentConfiguration,
+                                                          module.params['health_check_grace_period_seconds'])
                 else:
                     for loadBalancer in loadBalancers:
                         if 'containerPort' in loadBalancer:
@@ -433,7 +437,8 @@ def main():
                                                           role,
                                                           deploymentConfiguration,
                                                           module.params['placement_constraints'],
-                                                          module.params['placement_strategy'])
+                                                          module.params['placement_strategy'],
+                                                          module.params['health_check_grace_period_seconds'])
 
                 results['service'] = response
 
