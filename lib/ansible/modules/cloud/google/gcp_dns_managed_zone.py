@@ -62,7 +62,7 @@ options:
     name:
         description:
             - User assigned name for this resource.
-              Must be unique within the project.
+            - Must be unique within the project.
         required: true
     name_server_set:
         description:
@@ -74,7 +74,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: Create a Managed Zone
+- name: create a managed zone
   gcp_dns_managed_zone:
       name: testObject
       dns_name: test.somewild2.example.com.
@@ -84,25 +84,50 @@ EXAMPLES = '''
       service_account_file: /tmp/auth.pem
       scopes:
         - https://www.googleapis.com/auth/ndev.clouddns.readwrite
-      state: 'present'
+      state: present
 '''
 
 RETURN = '''
+    description:
+        description:
+            - A mutable string of at most 1024 characters associated with this
+              resource for the user's convenience. Has no effect on the managed
+              zone's function.
+        returned: success
+        type: str
+    dns_name:
+        description:
+            - The DNS name of this managed zone, for instance "example.com.".
+        returned: success
+        type: str
     id:
         description:
             - Unique identifier for the resource; defined by the server.
         returned: success
         type: int
+    name:
+        description:
+            - User assigned name for this resource.
+            - Must be unique within the project.
+        returned: success
+        type: str
     name_servers:
         description:
-            - Delegate your managed_zone to these virtual name servers;
-              defined by the server
+            - Delegate your managed_zone to these virtual name servers; defined
+              by the server.
+        returned: success
+        type: list
+    name_server_set:
+        description:
+            - Optionally specifies the NameServerSet for this ManagedZone. A
+              NameServerSet is a set of DNS name servers that all host the same
+              ManagedZones. Most users will leave this field unset.
         returned: success
         type: list
     creation_time:
         description:
             - The time that this resource was created on the server.
-              This is in RFC3339 text format.
+            - This is in RFC3339 text format.
         returned: success
         type: str
 '''
@@ -111,7 +136,7 @@ RETURN = '''
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequestException
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
 
 ################################################################################
@@ -128,7 +153,7 @@ def main():
             description=dict(type='str'),
             dns_name=dict(type='str'),
             name=dict(required=True, type='str'),
-            name_server_set=dict(type='list'),
+            name_server_set=dict(type='list', elements='str')
         )
     )
 
@@ -142,6 +167,7 @@ def main():
         if state == 'present':
             if is_different(module, fetch):
                 fetch = update(module, self_link(module), kind)
+                changed = True
         else:
             delete(module, self_link(module), kind)
             fetch = {}
@@ -150,17 +176,16 @@ def main():
         if state == 'present':
             fetch = create(module, collection(module), kind)
             changed = True
+        else:
+            fetch = {}
 
-    if fetch:
-        fetch.update({'changed': changed})
-    else:
-        fetch = {'changed': changed}
+    fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
 
 
 def create(module, link, kind):
-    auth = GcpSession(module, 'g')
+    auth = GcpSession(module, 'dns')
     return return_if_object(module, auth.post(link, resource_to_request(module)), kind)
 
 
@@ -169,17 +194,17 @@ def update(module, link, kind):
 
 
 def delete(module, link, kind):
-    auth = GcpSession(module, 'g')
+    auth = GcpSession(module, 'dns')
     return return_if_object(module, auth.delete(link), kind)
 
 
 def resource_to_request(module):
     request = {
         u'kind': 'dns#managedZone',
-        u'description': module.params['description'],
-        u'dnsName': module.params['dns_name'],
-        u'name': module.params['name'],
-        u'nameServerSet': module.params['name_server_set'],
+        u'description': module.params.get('description'),
+        u'dnsName': module.params.get('dns_name'),
+        u'name': module.params.get('name'),
+        u'nameServerSet': module.params.get('name_server_set')
     }
     return_vals = {}
     for k, v in request.items():
@@ -190,7 +215,7 @@ def resource_to_request(module):
 
 
 def fetch_resource(module, link, kind):
-    auth = GcpSession(module, 'g')
+    auth = GcpSession(module, 'dns')
     return return_if_object(module, auth.get(link), kind)
 
 
@@ -212,12 +237,10 @@ def return_if_object(module, response, kind):
         return None
 
     try:
-        response.raise_for_status
+        module.raise_for_status(response)
         result = response.json()
     except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
         module.fail_json(msg="Invalid JSON response with error: %s" % inst)
-    except GcpRequestException as inst:
-        module.fail_json(msg="Network error: %s" % inst)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -229,14 +252,34 @@ def return_if_object(module, response, kind):
 
 def is_different(module, response):
     request = resource_to_request(module)
+    response = response_to_hash(module, response)
 
     # Remove all output-only from response.
-    return_vals = {}
+    response_vals = {}
     for k, v in response.items():
         if k in request:
-            return_vals[k] = v
+            response_vals[k] = v
 
-    return request != return_vals
+    request_vals = {}
+    for k, v in request.items():
+        if k in response:
+            request_vals[k] = v
+
+    return GcpRequest(request_vals) != GcpRequest(response_vals)
+
+
+# Remove unnecessary properties from the response.
+# This is for doing comparisons with Ansible's current parameters.
+def response_to_hash(module, response):
+    return {
+        u'description': response.get(u'description'),
+        u'dnsName': response.get(u'dnsName'),
+        u'id': response.get(u'id'),
+        u'name': response.get(u'name'),
+        u'nameServers': response.get(u'nameServers'),
+        u'nameServerSet': response.get(u'nameServerSet'),
+        u'creationTime': response.get(u'creationTime')
+    }
 
 if __name__ == '__main__':
     main()
