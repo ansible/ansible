@@ -60,5 +60,6 @@ class LookupModule(LookupBase):
 
         values = []
         for term in terms:
-            values.append(op.get_raw(term, vault))
+            data = json.loads(op.get_raw(term, vault))
+            values.append(data)
         return values
