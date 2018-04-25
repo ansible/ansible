@@ -63,7 +63,7 @@ class StrategyModule(StrategyBase):
             if isinstance(el, Task):
                 result.append(self.noop_task)
             elif isinstance(el, Block):
-                result.append(self._create_noop_block_from(el, el._parrent))
+                result.append(self._create_noop_block_from(el, el._parent))
         return result
 
     def _create_noop_block_from(self, original_block, parent):
