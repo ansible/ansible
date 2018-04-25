@@ -41,6 +41,7 @@
 
 - debug:
     var: user_test0
+    verbosity: 2
 
 - name: make a list of users
   script: userlist.sh {{ ansible_distribution }}
@@ -48,6 +49,7 @@
 
 - debug:
     var: user_names
+    verbosity: 2
 
 - name: validate results for testcase 0
   assert:
@@ -68,6 +70,7 @@
 
 - debug:
     var: user_test1
+    verbosity: 2
 
 - name: validate results for testcase 1
   assert:
@@ -82,14 +85,14 @@
       - user_test1.results | map(attribute='state') | unique | list == ['present']
   when: jinja2_version.stdout is version('2.6', '>=')
 
-- name: validate changed results for testcase 1 (jinja >= 2.6)
+- name: validate changed results for testcase 1 (jinja < 2.6)
   assert:
     that:
-      - "not user_test1.results[0]['changed']"
-      - "not user_test1.results[1]['changed']"
-      - "not user_test1.results[2]['changed']"
-      - "not user_test1.results[3]['changed']"
-      - "not user_test1.results[4]['changed']"
+      - "user_test1.results[0] is not changed"
+      - "user_test1.results[1] is not changed"
+      - "user_test1.results[2] is not changed"
+      - "user_test1.results[3] is not changed"
+      - "user_test1.results[4] is not changed"
       - "user_test1.results[0]['state'] == 'present'"
       - "user_test1.results[1]['state'] == 'present'"
       - "user_test1.results[2]['state'] == 'present'"
@@ -113,6 +116,7 @@
 
 - debug:
     var: user_names2
+    verbosity: 2
 
 - name: validate results for testcase 2
   assert:
