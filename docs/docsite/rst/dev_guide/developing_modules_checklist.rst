@@ -119,8 +119,8 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
   fields of a dictionary and return the dictionary.
 * When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
   rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
-* facts modules must return facts in the ansible_facts field of the result
-  dictionary.
+* facts modules must return facts in the ansible_facts field of the :ref:`result
+  dictionary<common_return_values>`.
 * modules that are purely about fact gathering need to implement check_mode.
   they should not cause any changes anyway so it should be as simple as adding
   check_mode=True when instantiating AnsibleModule.  (The reason is that
