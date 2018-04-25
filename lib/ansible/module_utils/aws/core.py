@@ -188,7 +188,8 @@ class AnsibleAWSModule(object):
         """
         if not HAS_BOTO3:
             return 'NaN', 'NaN'
-        import boto3, botocore
+        import boto3
+        import botocore
         return boto3.__version__, botocore.__version__
 
 
