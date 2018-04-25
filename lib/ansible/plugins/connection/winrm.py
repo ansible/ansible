@@ -228,7 +228,8 @@ class Connection(ConnectionBase):
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
 
         if unsupported_transports:
-            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
+            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' %
+                               to_native(list(unsupported_transports), nonstring='simplerepr'))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
         kinit_mode = self.get_option('kerberos_mode')
@@ -311,7 +312,7 @@ class Connection(ConnectionBase):
             rc = p.returncode != 0
 
         if rc != 0:
-            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
+            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % to_native(stderr.strip()))
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
@@ -407,7 +408,6 @@ class Connection(ConnectionBase):
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
 
             except Exception as ex:
-                from traceback import format_exc
                 display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
                 stdin_push_failed = True
 
@@ -432,7 +432,7 @@ class Connection(ConnectionBase):
                 if self.is_clixml(stderr):
                     stderr = self.parse_clixml_stream(stderr)
 
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, stderr))
+                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
 
             return response
         finally:
@@ -442,9 +442,9 @@ class Connection(ConnectionBase):
     def _connect(self):
 
         if not HAS_WINRM:
-            raise AnsibleError("winrm or requests is not installed: %s" % to_text(WINRM_IMPORT_ERR))
+            raise AnsibleError("winrm or requests is not installed: %s" % to_native(WINRM_IMPORT_ERR))
         elif not HAS_XMLTODICT:
-            raise AnsibleError("xmltodict is not installed: %s" % to_text(XMLTODICT_IMPORT_ERR))
+            raise AnsibleError("xmltodict is not installed: %s" % to_native(XMLTODICT_IMPORT_ERR))
 
         super(Connection, self)._connect()
         if not self.protocol:
@@ -499,7 +499,7 @@ class Connection(ConnectionBase):
         if self.is_clixml(result.std_err):
             try:
                 result.std_err = self.parse_clixml_stream(result.std_err)
-            except:
+            except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
@@ -532,7 +532,7 @@ class Connection(ConnectionBase):
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception:
             traceback.print_exc()
-            raise AnsibleConnectionFailure("failed to exec cmd %s" % cmd)
+            raise AnsibleConnectionFailure("failed to exec cmd %s" % to_native(cmd))
         result.std_out = to_bytes(result.std_out)
         result.std_err = to_bytes(result.std_err)
 
@@ -540,7 +540,7 @@ class Connection(ConnectionBase):
         if self.is_clixml(result.std_err):
             try:
                 result.std_err = self.parse_clixml_stream(result.std_err)
-            except:
+            except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
@@ -577,7 +577,7 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
+            raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
         script_template = u'''
             begin {{
@@ -691,7 +691,7 @@ class Connection(ConnectionBase):
                         offset += len(data)
                 except Exception:
                     traceback.print_exc()
-                    raise AnsibleError('failed to transfer file to "%s"' % out_path)
+                    raise AnsibleError('failed to transfer file to "%s"' % to_native(out_path))
         finally:
             if out_file:
                 out_file.close()
