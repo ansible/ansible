@@ -394,6 +394,7 @@ files:
     labels: gitlab
     maintainers: $team_gitlab
     notified: jlozadad
+  $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/:
@@ -781,10 +782,10 @@ files:
   $module_utils/vmware: *vmware
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
-      maintainers: bvitnik
-
-###############################
-# playbook
+    maintainers: bvitnik
+  $module_utils/storage/hpe3par/hpe3par.py: &hpe3par
+    maintainers: farhan7500 gautamphegde
+    support: community
   lib/ansible/playbook/handler.py:
     keywords:
       - handlers
@@ -1251,6 +1252,25 @@ files:
     keywords:
       - jinja
       - jinja2
+  lib/ansible/utils/module_docs_fragments/:
+    support: community
+  lib/ansible/utils/module_docs_fragments/aci.py: *aci
+  lib/ansible/utils/module_docs_fragments/acme.py:
+    maintainers: resmo felixfontein
+  lib/ansible/utils/module_docs_fragments/docker.py:
+    support: community
+    maintainers: $team_docker
+    supershipit: felixfontein
+  lib/ansible/utils/module_docs_fragments/mso.py: *aci
+  lib/ansible/utils/module_docs_fragments/xenserver.py:
+    maintainers: bvitnik
+  lib/ansible/utils/module_docs_fragments/cloudstack.py:
+    maintainers: $team_cloudstack
+    labels: cloudstack
+  lib/ansible/utils/module_docs_fragments/vultr.py:
+    maintainers: $team_vultr
+    labels: cloud
+  lib/ansible/utils/module_docs_fragments/hpe3par.py: *hpe3par
   test/sanity/validate-modules:
     notified:
       - mattclay
@@ -1338,7 +1358,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
-  test/units/modules/cloud/xenserver/: bvitnik
+  test/units/modules/storage/hpe3par: *hpe3par
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
