@@ -217,3 +217,27 @@
         that:
           - bsd_account_expiration.stdout == '2529881062'
   when: ansible_os_family == 'FreeBSD'
+
+- name: Change timezone
+  timezone:
+    name: America/Denver
+  register: original_timezone
+
+- name: Change system timezone to make sure expiration comparison works properly
+  block:
+    - name: Create user with expiration again to ensure no change is made in a new timezone
+      user:
+        name: ansibulluser
+        state: present
+        expires: 2529881062
+      register: user_test_different_tz
+
+    - name: Ensure that no change was reported
+      assert:
+        that:
+          - user_test_different_tz is not changed
+
+  always:
+    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"

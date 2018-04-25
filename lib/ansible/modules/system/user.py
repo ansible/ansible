@@ -233,6 +233,7 @@ EXAMPLES = '''
     expires: 1422403387
 '''
 
+import calendar
 import grp
 import os
 import platform
@@ -541,7 +542,7 @@ class User(object):
 
             # Drop hours, minutes, and seconds from the specified expiration time in order to compare
             # to current expiration time
-            expiration_day = time.mktime((self.expires.tm_year, self.expires.tm_mon, self.expires.tm_mday, 0, 0, 0, 0, 0, 0))
+            expiration_day = calendar.timegm((self.expires.tm_year, self.expires.tm_mon, self.expires.tm_mday, 0, 0, 0, 0, 0, 0))
             desired_expires = time.gmtime(expiration_day)
 
             if current_expires != desired_expires:
