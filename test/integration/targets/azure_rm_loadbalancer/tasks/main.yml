@@ -1,5 +1,11 @@
 - name: create public ip
   azure_rm_publicipaddress:
+    name: ansiblepipstandard
+    sku: Standard
+    resource_group: '{{ resource_group }}'
+
+- name: create public ip
+  azure_rm_publicipaddress:
     name: ansiblepip3
     resource_group: '{{ resource_group }}'
 
@@ -47,7 +53,7 @@
     resource_group: '{{ resource_group }}'
     name: lbtestfromansible
     sku: Standard
-    public_ip_address: ansiblepip3
+    public_ip_address: ansiblepipstandard
     probe_protocol: Tcp
     probe_port: 80
     probe_interval: 10
@@ -169,9 +175,12 @@
 
 - name: cleanup public ip
   azure_rm_publicipaddress:
-    name: ansiblepip3
+    name: "{{ item }}"
     resource_group: '{{ resource_group }}'
     state: absent
+  with_items:
+  - ansiblepip3
+  - ansiblepipstandard
 
 - name: cleanup subnet
   azure_rm_subnet:
