@@ -23,8 +23,8 @@ from ansible.module_utils._text import to_native
 try:
     import ldap
     import ldap.sasl
-    HAS_LDAP = True
 
+    HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
 
