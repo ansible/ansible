@@ -131,8 +131,8 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
   module_utils.urls.fetch_url().  If you use those you may find you also want
   to fallback on environment variables for default values.  If you do that,
   be sure to use non-generic environment variables (like
-  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
-  like :envvar:`API_USERNAME` would conflict between modules.
+  :code:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :code:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 =========================
