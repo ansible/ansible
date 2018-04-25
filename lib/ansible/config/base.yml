@@ -485,7 +485,11 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
 DEFAULT_DEBUG:
   name: Debug mode
   default: False
-  description: Toggles debug output in Ansible, VERY verbose and can hinder multiprocessing.
+  description:
+    - "Toggles debug output in Ansible. This is *very* verbose and can hinder
+      multiprocessing.  Debug output can also include secret information
+      despite no_log settings being enabled, which means debug mode should not be used in 
+      production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
   - {key: debug, section: defaults}
