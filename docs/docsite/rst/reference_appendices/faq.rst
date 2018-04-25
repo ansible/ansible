@@ -186,7 +186,7 @@ By default, Solaris 10 and earlier run a non-POSIX shell which does not correctl
 tmp directory Ansible uses ( :file:`~/.ansible/tmp`). If you see module failures on Solaris machines, this
 is likely the problem. There are several workarounds:
 
-* You can set ``remote_tmp`` to a path that will expand correctly with the Solaris shell.  For
+* You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`, and :ref:`Powershell<powershell_shell>`).  For
   example, in the ansible config file you can set::
 
     remote_tmp=$HOME/.ansible/tmp
