@@ -1472,12 +1472,10 @@ class PyVmomiHelper(PyVmomi):
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
 
-            # which datastore?
-            if expected_disk_spec.get('datastore'):
-                # TODO: This is already handled by the relocation spec,
-                # but it needs to eventually be handled for all the
-                # other disks defined
-                pass
+            (datastore, datastore_name) = self.select_datastore(vm_obj, disk_index)
+            if diskspec.device.backing.datastore != datastore:
+                diskspec.device.backing.datastore = datastore
+                disk_modified = True
 
             # increment index for next disk search
             disk_index += 1
@@ -1560,13 +1558,18 @@ class PyVmomiHelper(PyVmomi):
             return datastore.name
         return None
 
-    def select_datastore(self, vm_obj=None):
+    def select_datastore(self, vm_obj=None, disk_index=0):
         datastore = None
         datastore_name = None
 
-        if len(self.params['disk']) != 0:
+        params_index = disk_index
+        if params_index >= 7:
+            # index 7 is reserved to SCSI controller, so params will be off by one
+            params_index -= 1
+
+        if len(self.params['disk']) > params_index:
             # TODO: really use the datastore for newly created disks
-            if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
+            if 'autoselect_datastore' in self.params['disk'][params_index] and self.params['disk'][params_index]['autoselect_datastore']:
                 datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
                 datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
@@ -1576,17 +1579,17 @@ class PyVmomiHelper(PyVmomi):
                 for ds in datastores:
                     if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
-                        if 'datastore' in self.params['disk'][0] and \
-                                isinstance(self.params['disk'][0]['datastore'], str) and \
-                                ds.name.find(self.params['disk'][0]['datastore']) < 0:
+                        if 'datastore' in self.params['disk'][params_index] and \
+                                isinstance(self.params['disk'][params_index]['datastore'], str) and \
+                                ds.name.find(self.params['disk'][params_index]['datastore']) < 0:
                             continue
 
                         datastore = ds
                         datastore_name = datastore.name
                         datastore_freespace = ds.summary.freeSpace
 
-            elif 'datastore' in self.params['disk'][0]:
-                datastore_name = self.params['disk'][0]['datastore']
+            elif 'datastore' in self.params['disk'][params_index]:
+                datastore_name = self.params['disk'][params_index]['datastore']
                 # Check if user has provided datastore cluster first
                 datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
                 if datastore_cluster:
@@ -1597,11 +1600,11 @@ class PyVmomiHelper(PyVmomi):
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
 
-        if not datastore and self.params['template']:
+        if not datastore and vm_obj:
             # use the template's existing DS
             disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
-            if disks:
-                datastore = disks[0].backing.datastore
+            if len(disks) > disk_index:
+                datastore = disks[disk_index].backing.datastore
                 datastore_name = datastore.name
             # validation
             if datastore:
