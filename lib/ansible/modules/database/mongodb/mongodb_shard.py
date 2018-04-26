@@ -55,7 +55,7 @@ options:
         default: 27017
     state:
         description:
-            - Whether the state should be present or absent from the Cluster
+            - Whether the shard should be present or absent from the Cluster
         required: false
         default: present
 
@@ -235,6 +235,7 @@ def shard_find(client, shard):
 
 def shard_add(client, shard):
     try:
+        client.write_concern = {'w': 1, 'wtimeout': 10000}
         sh = client["admin"].command('addShard', shard)
     except Exception as excep:
         raise excep
