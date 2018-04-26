@@ -278,7 +278,7 @@ def main():
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             shard=dict(default=None),
             state=dict(required=False, default="present", choices=["present", "absent"]),
-            wc_w=dict(required=False, default=0, type='int'),
+            wc_w=dict(required=False, default=1, type='int'),
             wc_wtimeout=dict(required=False, default=10, type='int')
         ),
     supports_check_mode=True
