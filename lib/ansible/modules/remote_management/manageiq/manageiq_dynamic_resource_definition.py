@@ -31,7 +31,10 @@ options:
     default: 'present'
   name:
     description:
-      - The dynamic resource definition's name.
+      - The dynamic resource definition's name
+  description:
+    description:
+      - The dynamic resource definition's description.
   properties:
     description:
       - The dynamic resource definition's properties.
@@ -48,6 +51,7 @@ EXAMPLES = '''
 - name: Create a new dynamic resource definition in ManageIQ
   manageiq_dynamic_resource_definition:
     name: 'my_custom_definition'
+    description: 'This is my custom definition.'
     state: 'present'
     properties:
          attributes:
@@ -68,6 +72,7 @@ EXAMPLES = '''
 - name: Edit a dynamic resource definition in ManageIQ
   manageiq_dynamic_resource_definition:
     name: 'my_edited_custom_definition'
+    description: 'This is my edited custom definition.'
     state: 'present'
     properties:
          attributes:
@@ -123,7 +128,7 @@ class ManageIQDynamicResourceDefinition(object):
         """
         return self.manageiq.find_collection_resource_by('generic_object_definitions', name=name)
 
-    def create_definition(self, dynamic_resource_definition, name, properties):
+    def create_definition(self, dynamic_resource_definition, name, description, properties):
         """ Creates the dynamic resource definition in manageiq.
 
         Returns:
@@ -133,6 +138,7 @@ class ManageIQDynamicResourceDefinition(object):
 
         resource = {
             'name': name,
+            'description': description,
             'properties': properties,
         }
 
@@ -148,7 +154,7 @@ class ManageIQDynamicResourceDefinition(object):
             msg="successfully created the dynamic resource definition %s: %s" % (name, result['results'])
         )
 
-    def edit_definition(self, dynamic_resource_definition, name, properties):
+    def edit_definition(self, dynamic_resource_definition, name, description, properties):
         """ Edit the dynamic resource definition in manageiq.
 
         Returns:
@@ -159,8 +165,10 @@ class ManageIQDynamicResourceDefinition(object):
         # So we remove them to compare accuratley
         current_properties = dynamic_resource_definition.get('properties', {})
         current_name = dynamic_resource_definition.get('name')
+        current_description = dynamic_resource_definition.get('description')
         if (
             current_name == name and
+            current_description == description and
             current_properties.get('attributes', {}) == properties.get('attributes', {}) and
             current_properties.get('associations', {}) == properties.get('associations', {}) and
             current_properties.get('methods', []) == properties.get('methods', [])
@@ -174,6 +182,7 @@ class ManageIQDynamicResourceDefinition(object):
 
         resource = {
             'name': name,
+            'description': description,
             'properties': properties,
         }
 
@@ -213,6 +222,7 @@ class ManageIQDynamicResourceDefinition(object):
 def main():
     argument_spec = dict(
         name=dict(required=True, type='str'),
+        description=dict(type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
         properties=dict(type='dict')
     )
@@ -226,6 +236,7 @@ def main():
     )
 
     name = module.params['name']
+    description = module.params['description']
     state = module.params['state']
     properties = module.params['properties']
 
@@ -255,12 +266,12 @@ def main():
         # if we have a definition, edit it
         if dynamic_resource_definition:
             res_args = manageiq_dynamic_resource_definition.edit_definition(
-                dynamic_resource_definition, name, properties
+                dynamic_resource_definition, name, description, properties
             )
         # if we do not have a definition, create it
         else:
             res_args = manageiq_dynamic_resource_definition.create_definition(
-                dynamic_resource_definition, name, properties
+                dynamic_resource_definition, name, description, properties
             )
 
     module.exit_json(**res_args)
