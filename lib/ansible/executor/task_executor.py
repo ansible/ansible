@@ -794,7 +794,7 @@ class TaskExecutor:
 
         conn_type = self._play_context.connection
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin, ansible_playbook_pid=to_text(os.getppid()))
+        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin, task=self._task, ansible_playbook_pid=to_text(os.getppid()))
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
