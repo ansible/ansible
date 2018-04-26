@@ -819,7 +819,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if set(current_nics) != set(network_interfaces):
                         self.log('CHANGED: virtual machine {0} - network interfaces are different.'.format(self.name))
                         differences.append('Network Interfaces')
-                        updated_nics = [dict(id=id) for id in network_interfaces]
+                        updated_nics = [dict(id=id, primary=(i is 0))
+                                        for i, id in enumerate(network_interfaces)]
                         vm_dict['properties']['networkProfile']['networkInterfaces'] = updated_nics
                         changed = True
 
@@ -928,7 +929,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    nics = [self.compute_models.NetworkInterfaceReference(id=id) for id in network_interfaces]
+                    nics = [self.compute_models.NetworkInterfaceReference(id=id, primary=(i is 0))
+                            for i, id in enumerate(network_interfaces)]
 
                     # os disk
                     if self.managed_disk_type:
@@ -1057,9 +1059,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     self.log("Update virtual machine {0}".format(self.name))
                     self.results['actions'].append('Updated VM {0}'.format(self.name))
-
-                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'])
-                            for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
+                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'], primary=(i is 0))
+                            for i, interface in enumerate(vm_dict['properties']['networkProfile']['networkInterfaces'])]
 
                     # os disk
                     if not vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'):
