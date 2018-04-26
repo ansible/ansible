@@ -19,13 +19,13 @@ __metaclass__ = type
 
 import copy
 import os
+import time
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-import q
 
 try:
     from __main__ import display
@@ -44,7 +44,6 @@ class ActionModule(ActionBase):
 
         if play_context.connection != 'network_cli':
             # It is supported only with network_cli
-            q(play_context.connection )
             result['failed'] = True
             result['msg'] = ('please use network_cli connection type for network_put module')
             return result
@@ -71,8 +70,11 @@ class ActionModule(ActionBase):
 
         sock_timeout = play_context.timeout
 
-        # Now src has resolved file write to disk n current diectory for scp
-        output_file = '/tmp/tmp_ansible_0'
+        # Now src has resolved file write to disk in current diectory for scp
+        tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
+        filename = 'tmp_confg.%s' % tstamp
+        cwd = self._loader.get_basedir()
+        output_file = cwd + filename
         with open(output_file, 'w') as f:
             f.write(src)
      
@@ -83,8 +85,21 @@ class ActionModule(ActionBase):
         if dest is None:
             dest = src_file_path_name
 
-        out = conn.copy_file(source=output_file, destination=dest, proto=proto, timeout=sock_timeout)
-
+        try:
+            out = conn.copy_file(source=output_file, destination=dest,
+                    proto=proto, timeout=sock_timeout)
+        except Exception as exc:
+            if to_text(exc) == "No response from server":
+                if play_context.network_os == 'iosxr':
+                   # IOSXR sometimes closes socket prematurely after completion
+                   # of file transfer
+                   result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
+            else:
+                result['failed'] = True
+                result['msg'] = ('Exception received : %s' % exc)
+        
+        # Cleanup tmp file expanded wih ansible vars
+        os.remove(output_file)
         return result
 
     def _get_working_path(self):
@@ -143,4 +158,7 @@ class ActionModule(ActionBase):
             raise AnsibleError('ansible_network_os must be specified on this host to use platform agnostic modules')
 
         return network_os
+
+    def _progress_transfer(filename, size, file_pos):
+        display.vvvv('file transferred = {}: {}, {}'.format(filename, size, file_pos))
 
