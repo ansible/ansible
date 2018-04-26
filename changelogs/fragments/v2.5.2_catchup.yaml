@@ -1,0 +1,7 @@
+bugfixes:
+- cloudfront_distribution - support missing protocol versions (https://github.com/ansible/ansible/pull/38990)
+- slice filter - removed Ansible-provided impl in favor of Jinja builtin (https://github.com/ansible/ansible/pull/37944)
+- ovirt_host_networks - fix removing of network attachments (https://github.com/ansible/ansible/pull/38816)
+- ovirt_disk - support removing unmanaged networks (https://github.com/ansible/ansible/pull/38726)
+- ovirt_disk - FCP storage domains don't have to have target (https://github.com/ansible/ansible/pull/38882)
+

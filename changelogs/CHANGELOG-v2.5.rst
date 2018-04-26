@@ -2,6 +2,56 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+v2.5.2
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-04-26
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- Return virtual_facts after VMware platform detection, otherwise we're falling back to 'NA' for virtualization type and virtualization role.
+
+
+Bugfixes
+--------
+
+- copy - fixed copy to only follow symlinks for files in the non-recursive case
+
+- file - fixed the default follow behaviour of file to be true
+
+- docker modules - Error with useful message is both docker and docker-py are found to both be installed (https://github.com/ansible/ansible/pull/38884)
+
+- dynamic includes - Improved performance by fixing re-parenting on copy (https://github.com/ansible/ansible/pull/38747)
+
+- dynamic includes - Fix IncludedFile comparison for free strategy (https://github.com/ansible/ansible/pull/37083)
+
+- dynamic includes - Allow inheriting attributes from static parents (https://github.com/ansible/ansible/pull/38827)
+
+- Fix ios and iosxr terminal prompt regex (https://github.com/ansible/ansible/pull/39063)
+
+- set_fact/include_vars - allow incremental update for vars in loop (https://github.com/ansible/ansible/pull/38302)
+
+- cloudfront_distribution - support missing protocol versions (https://github.com/ansible/ansible/pull/38990)
+
+- slice filter - removed Ansible-provided impl in favor of Jinja builtin (https://github.com/ansible/ansible/pull/37944)
+
+- ovirt_host_networks - fix removing of network attachments (https://github.com/ansible/ansible/pull/38816)
+
+- ovirt_disk - support removing unmanaged networks (https://github.com/ansible/ansible/pull/38726)
+
+- ovirt_disk - FCP storage domains don't have to have target (https://github.com/ansible/ansible/pull/38882)
+
+- Ansible.ModuleUtils.FileUtil - support using Test-AnsiblePath with non file system providers (https://github.com/ansible/ansible/pull/39200)
+
+- win_get_url - Compare the UTC time of the web file to the local UTC time (https://github.com/ansible/ansible/pull/39152)
+
+
 v2.5.1
 ======
 
@@ -208,6 +258,12 @@ Bugfixes
 
 v2.5.0
 ======
+
+Release Summary
+---------------
+
+| Release Date: 2018-03-22
+
 
 Major Changes
 -------------

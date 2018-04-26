@@ -4,6 +4,7 @@ versions:
     releases:
     - "0": "03-22-2018"
     - "1": "04-18-2018"
+    - "2": "04-26-2018"
 - "2.4":
     code_name: "Dancing Days"
     releases:
