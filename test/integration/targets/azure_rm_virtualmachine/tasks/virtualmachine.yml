@@ -179,10 +179,6 @@
           - output.changed
 
 - name: Should be idempotent with a single NIC
-  vars:
-    niclist:
-      - testvm001
-      - testvm002
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -194,7 +190,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: "{{ niclist }}"
+      network_interfaces: testvm001
       image:
         offer: UbuntuServer
         publisher: Canonical
