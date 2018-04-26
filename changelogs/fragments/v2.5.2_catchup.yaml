@@ -4,4 +4,3 @@ bugfixes:
 - ovirt_host_networks - fix removing of network attachments (https://github.com/ansible/ansible/pull/38816)
 - ovirt_disk - support removing unmanaged networks (https://github.com/ansible/ansible/pull/38726)
 - ovirt_disk - FCP storage domains don't have to have target (https://github.com/ansible/ansible/pull/38882)
-
