@@ -312,7 +312,8 @@ class Connection(ConnectionBase):
         else:
             display.vvvv('unable to load cliconf for network_os %s' % network_os)
 
-        self.receive()
+        self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
+                     newline=self._terminal.terminal_inital_prompt_newline)
 
         display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
         self._terminal.on_open_shell()
