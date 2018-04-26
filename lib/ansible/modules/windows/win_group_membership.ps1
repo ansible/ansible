@@ -133,7 +133,7 @@ function Get-GroupMember {
         $rootless_adspath = $current_member.Replace("WinNT://", "")
         $split_adspath = $rootless_adspath.Split("/")
 
-        if ($split_adspath -match $env:COMPUTERNAME) {
+        if ($split_adspath -match "^$env:COMPUTERNAME$") {
             # Local
             $parsed_member.domain = $env:COMPUTERNAME
             $parsed_member.username = $split_adspath[-1]
