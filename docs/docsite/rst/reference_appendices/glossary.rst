@@ -478,8 +478,8 @@ when a term comes up on the mailing list.
     Variable Expansion
         In general, Ansible expands any variables in playbook content at the last
         possible second, which means that if you define a data structure that data
-        structure itself can define variable values within it, and everything “just
-        works” as you would expect. This also means variable strings can include other
+        structure itself can define variable values within it, and everything "just
+        works" as you would expect. This also means variable strings can include other
         variables inside of those strings. This is known as Lazy Evaluation (defined
         above), which allows for variables to be defined out of order so long as they
         are defined before usage.
