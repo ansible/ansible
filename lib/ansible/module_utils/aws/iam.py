@@ -29,7 +29,7 @@ def get_aws_account_id(module):
             account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
-                except_msg = to_native(e.message)
+                except_msg = to_native(e)
                 # don't match on `arn:aws` because of China region `arn:aws-cn` and similar
                 account_id = except_msg.search(r"arn:\w+:iam::([0-9]{12,32}):\w+/").group(1)
             if account_id is None:
