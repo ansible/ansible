@@ -305,7 +305,7 @@ def main():
             "host": login_host,
             "port": int(login_port),
             "w": wc_w,
-            "wc": wc_wtimeout
+            "wtimeout": wc_wtimeout
         }
 
         if ssl:
