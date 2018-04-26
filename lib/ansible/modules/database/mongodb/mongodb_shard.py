@@ -235,7 +235,7 @@ def shard_find(client, shard):
 
 def shard_add(client, shard):
     try:
-        client.write_concern = {'w': 1, 'wtimeout': 10000}
+        client.write_concern = {'w': 1, 'wtimeout': 120}
         sh = client["admin"].command('addShard', shard)
     except Exception as excep:
         raise excep
