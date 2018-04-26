@@ -517,7 +517,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     elif 'ip_prefix' in rule:
         return 'ip_prefix', rule['ip_prefix'], False
 
-    module.fail_json(msg="Could not match target for rule {}".format(rule), failed_rule=rule)
+    module.fail_json(msg="Could not match target for rule {0}".format(rule), failed_rule=rule)
 
 
 def ports_expand(ports):
