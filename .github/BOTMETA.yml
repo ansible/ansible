@@ -434,6 +434,11 @@ files:
   $modules/net_tools/nios/:
     labels: networking
     maintainers: $team_networking
+  $modules/net_tools/:
+    maintainers: $team_networking brampling
+    labels:
+      - networking
+      - infoblox
   $modules/net_tools/nmcli.py: alcamie101
   $modules/net_tools/nsupdate.py: nerzhul
   $modules/net_tools/omapi_host.py: nerzhul
@@ -776,8 +781,10 @@ files:
     - inventory
     - inventory parsing
   $module_utils/net_tools/nios/:
-    labels: networking
-    maintainers: $team_networking
+    labels:
+      - networking
+      - infoblox
+    maintainers: $team_networking brampling
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
     labels: networking
@@ -1010,8 +1017,10 @@ files:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/lookup/nios.py:
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_networking brampling
+    labels:
+      - networking
+      - infoblox
   lib/ansible/plugins/lookup/nios_next_ip.py:
     maintainers: $team_networking
     labels: networking
