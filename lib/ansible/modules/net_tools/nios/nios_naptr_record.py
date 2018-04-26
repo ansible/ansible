@@ -41,41 +41,41 @@ options:
     description:
       - Configures the order (0-65535) for this NAPTR record. This parameter
         specifies the order in which the NAPTR rules are applied when
-	multiple rules are present.
-    required: true
+        multiple rules are present.
+        required: true
     aliases:
       - mx
   preference:
     description:
       - Configures the preference (0-65535) for this NAPTR record. The
         preference field determines the order NAPTR records are processed
-	when multiple records with the same order parameter are present. 
+        when multiple records with the same order parameter are present.
     required: true
   replacement:
     description:
       - Configures the replacement field for this NAPTR record.
-        For nonterminal NAPTR records, this field specifies the 
-	next domain name to look up.
+        For nonterminal NAPTR records, this field specifies the
+        next domain name to look up.
     required: true
   services:
     description:
       - Configures the services field (128 characters maximum) for this
         NAPTR record. The services field contains protocol and service
-	identifiers, such as “http+E2U” or “SIPS+D2T”.
+        identifiers, such as “http+E2U” or “SIPS+D2T”.
     required: false
   flags:
     description:
       - Configures the flags field for this NAPTR record. These control the
         interpretation of the fields for an NAPTR record object. Supported
-	values for the flags field are “U”, “S”, “P” and “A”.
+        values for the flags field are “U”, “S”, “P” and “A”.
     required: false
   regexp:
     description:
       - Configures the regexp field for this NAPTR record. This is the
         regular expression-based rewriting rule of the NAPTR record. This
-	should be a POSIX compliant regular expression, including the
-	substitution rule and flags. Refer to RFC 2915 for the field syntax
-	details.
+        should be a POSIX compliant regular expression, including the
+        substitution rule and flags. Refer to RFC 2915 for the field syntax
+        details.
     required: false
   ttl:
     description:
@@ -106,7 +106,7 @@ EXAMPLES = '''
 - name: configure a NAPTR record
   nios_naptr_record:
     name: '*.subscriber-100.ansiblezone.com'
-    order: 1000 
+    order: 1000
     preference: 10
     replacement: replacement1.network.ansiblezone.com
     state: present
@@ -119,7 +119,7 @@ EXAMPLES = '''
 - name: add a comment to an existing NAPTR record
   nios_naptr_record:
     name: '*.subscriber-100.ansiblezone.com'
-    order: 1000 
+    order: 1000
     preference: 10
     replacement: replacement1.network.ansiblezone.com
     comment: this is a test comment
@@ -133,7 +133,7 @@ EXAMPLES = '''
 - name: remove a NAPTR record from the system
   nios_naptr_record:
     name: '*.subscriber-100.ansiblezone.com'
-    order: 1000 
+    order: 1000
     preference: 10
     replacement: replacement1.network.ansiblezone.com
     state: absent
@@ -149,6 +149,7 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+
 
 def main():
     ''' Main entry point for module execution
