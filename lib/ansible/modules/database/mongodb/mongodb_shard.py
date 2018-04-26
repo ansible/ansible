@@ -278,8 +278,8 @@ def main():
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             shard=dict(default=None),
             state=dict(required=False, default="present", choices=["present", "absent"]),
-            wc_write=dict(required=False, default=0, type='int'),
-            wc_timeout=dict(required=False, default=10, type='int')
+            wc_w=dict(required=False, default=0, type='int'),
+            wc_wtimeout=dict(required=False, default=10, type='int')
         ),
     supports_check_mode=True
 )
@@ -297,13 +297,15 @@ def main():
     shard = module.params['shard']
     state = module.params['state']
 
-    wc_write = module.params['wc_write']
-    wc_timeout = module.params['wc_timeout']
+    wc_w = module.params['wc_w']
+    wc_wtimeout = module.params['wc_timeout']
 
     try:
         connection_params = {
             "host": login_host,
             "port": int(login_port),
+            "w": wc_c,
+            "wc_wtimeout": wc_wtimeout
         }
 
         if ssl:
@@ -311,7 +313,6 @@ def main():
             connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
 
         client = MongoClient(**connection_params)
-        client.setWriteConcern(new WriteConcern(wc_write, wc_timeout));
 
         # NOTE: this check must be done ASAP.
         # We don't need to be authenticated.
