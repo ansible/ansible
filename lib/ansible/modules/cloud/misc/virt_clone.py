@@ -41,23 +41,23 @@ options:
     description:
         - The VM to create
     required: true
-  sysprep:
-    default: false
-    description:
-      - Uses virt-sysprep to reset VMs SSH host keys and etc.
-      - Will also define the VMs hostname
-     required: false
-  template:
-    aliases: [ "src" ]
-    description:
-        - The VM to use as the source (template)
-    required: true
   state:
     choices: [ "present", "started" ]
     default: present
     description:
         - If the clone should be present or started - default present
     required: false
+  sysprep:
+    default: false
+    description:
+      - Uses virt-sysprep to reset VMs SSH host keys and etc.
+      - Will also define the VMs hostname
+    required: false
+  template:
+    aliases: [ "src" ]
+    description:
+        - The VM to use as the source (template)
+    required: true
   uuid:
     description:
         - Allows a static UUID to be defined for the VM when cloning
