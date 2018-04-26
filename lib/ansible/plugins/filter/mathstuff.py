@@ -123,10 +123,9 @@ def haversine(coordinates):
 
     if isinstance(coordinates, list):
         if (len(coordinates) == 4):
-            lat1 = coordinates[0]
-            lon1 = coordinates[1]
-            lat2 = coordinates[2]
-            lon2 = coordinates[3]
+            lat1, lon1, lat2, lon2 = coordinates
+        elif (len(coordinates) == 5):
+            lat1, lon1, lat2, lon2, unit = coordinates
         else:
             raise errors.AnsibleFilterError('haversine() supplied list should contain 4 elements [lat1, lon1, lat2, lon2]. %s supplied.' % len(coordinates))
     elif isinstance(coordinates, dict):
@@ -135,8 +134,9 @@ def haversine(coordinates):
             lon1 = coordinates.get('lon1')
             lat2 = coordinates.get('lat2')
             lon2 = coordinates.get('lon2')
+            unit = coordinates.get('unit')
         else:
-            raise errors.AnsibleFilterError('haversine() supplied dicts should contain 4 keys: lat1, lon1, lat2 and lon2')
+            raise errors.AnsibleFilterError('haversine() supplied dicts must contain 4 keys (unit optional): lat1, lon1, lat2 and lon2')
     else:
         raise errors.AnsibleFilterError('haversine() only accepts a list or dict of coordinates.')
 
@@ -149,6 +149,12 @@ def haversine(coordinates):
         raise errors.AnsibleFilterError('haversine() only accepts floats: %s' % str(e))
 
     try:
+        if ('unit' in locals() and unit is not None):
+            assert unit in ['m', 'km']
+    except AssertionError:
+        raise errors.AnsibleFilterError('haversine() unit must be m or km if defined')
+
+    try:
         dlat = radians(lat2 - lat1)
         dlon = radians(lon2 - lon1)
         lat1 = radians(lat1)
@@ -159,10 +165,13 @@ def haversine(coordinates):
     except Exception as e:
         raise errors.AnsibleFilterError('haversine() something went wrong: %s' % str(e))
 
-    return {
-        'km': round(diameter['km'] / 2 * c, 2),
-        'm': round(diameter['m'] / 2 * c, 2)
-    }
+    if ('unit' in locals() and unit is not None):
+        return round(diameter[unit] / 2 * c, 2)
+    else:
+        return {
+            'km': round(diameter['km'] / 2 * c, 2),
+            'm': round(diameter['m'] / 2 * c, 2)
+        }
 
 
 def human_readable(size, isbits=False, unit=None):

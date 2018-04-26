@@ -123,8 +123,17 @@ class TestHaversine:
         with pytest.raises(AnsibleFilterError, message='haversine() supplied dicts should contain 4 keys: lat1, lon1, lat2 and lon2'):
             ms.haversine({'lon1': '-78.907046', 'lat1': '35.9914928'})
 
+        with pytest.raises(AnsibleFilterError, message='haversine() unit must be m or km if defined'):
+            ms.haversine(['35.9914928', '-78.907046', '-33.8523063', '151.2085984', 'z'])
+
+        with pytest.raises(AnsibleFilterError, message='haversine() unit must be m or km if defined'):
+            ms.haversine({'lon2': '151.2085984', 'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063', 'unit': 'z'})
+
     def test_km(self):
         assert ms.haversine(['35.9914928', '-78.907046', '-33.8523063', '151.2085984']).get('km') == 15490.46
+
+    def test_only_km(self):
+        assert ms.haversine(['35.9914928', '-78.907046', '-33.8523063', '151.2085984', 'km']) == 15490.46
 
     def test_m(self):
         assert ms.haversine({'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063', 'lon2': '151.2085984'}).get('m') == 9625.31
