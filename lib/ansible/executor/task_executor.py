@@ -798,7 +798,7 @@ class TaskExecutor:
             conn_type,
             self._play_context,
             self._new_stdin,
-            task=self._task,
+            task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
 
