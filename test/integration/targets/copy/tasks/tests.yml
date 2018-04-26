@@ -406,6 +406,27 @@
        - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0547'"
 
+- name: Test copy with mode=preserve and remote_src=True
+  copy:
+    src: '{{ remote_dir }}/copy-foo.txt'
+    dest: '{{ remote_dir }}/copy-foo2.txt'
+    mode: 'preserve'
+    remote_src: True
+  register: copy_results2
+
+- name: Check the stat results of the file
+  stat:
+    path: '{{ remote_dir }}/copy-foo2.txt'
+  register: stat_results2
+
+- name: Assert that the file has changed and has correct mode
+  assert:
+     that:
+       - "copy_results2 is changed"
+       - "copy_results2.mode == '0547'"
+       - "stat_results2.stat.checksum == ('foo.txt\n'|hash('sha1'))"
+       - "stat_results2.stat.mode == '0547'"
+
 #
 # test recursive copy local_follow=False, no trailing slash
 #
