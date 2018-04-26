@@ -42,9 +42,7 @@ options:
       - Configures the order (0-65535) for this NAPTR record. This parameter
         specifies the order in which the NAPTR rules are applied when
         multiple rules are present.
-        required: true
-    aliases:
-      - mx
+    required: true
   preference:
     description:
       - Configures the preference (0-65535) for this NAPTR record. The
@@ -61,13 +59,13 @@ options:
     description:
       - Configures the services field (128 characters maximum) for this
         NAPTR record. The services field contains protocol and service
-        identifiers, such as “http+E2U” or “SIPS+D2T”.
+        identifiers, such as "http+E2U" or "SIPS+D2T".
     required: false
   flags:
     description:
       - Configures the flags field for this NAPTR record. These control the
         interpretation of the fields for an NAPTR record object. Supported
-        values for the flags field are “U”, “S”, “P” and “A”.
+        values for the flags field are "U", "S", "P" and "A".
     required: false
   regexp:
     description:
