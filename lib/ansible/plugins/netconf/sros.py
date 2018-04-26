@@ -41,7 +41,7 @@ try:
 except ImportError:
     raise AnsibleError("lxml is not installed")
 
-    
+
 class Netconf(NetconfBase):
 
     def get_text(self, ele, tag):
