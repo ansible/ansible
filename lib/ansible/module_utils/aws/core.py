@@ -177,6 +177,11 @@ class AnsibleAWSModule(object):
 
 
 class _RetryingBotoClientWrapper(object):
+    __never_wait = (
+        'get_paginator', 'can_paginate',
+        'get_waiter', 'generate_presigned_url',
+    )
+
     def __init__(self, client, retry):
         self.client = client
         self.retry = retry
@@ -194,7 +199,9 @@ class _RetryingBotoClientWrapper(object):
 
     def __getattr__(self, name):
         unwrapped = getattr(self.client, name)
-        if callable(unwrapped):
+        if name in self.__never_wait:
+            return unwrapped
+        elif callable(unwrapped):
             wrapped = self._create_optional_retry_wrapper_function(unwrapped)
             setattr(self, name, wrapped)
             return wrapped
