@@ -41,8 +41,7 @@ try:
 except ImportError:
     raise AnsibleError("lxml is not installed")
 
-
-
+    
 class Netconf(NetconfBase):
 
     def get_text(self, ele, tag):
@@ -68,7 +67,6 @@ class Netconf(NetconfBase):
         # device_info['network_os_image'] = 'unknown'
 
         return device_info
-
 
     @staticmethod
     def guess_network_os(obj):
