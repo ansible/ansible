@@ -59,3 +59,7 @@ rm -f tasks/hello/*.yml
 # Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
 # https://github.com/ansible/ansible/pull/38827
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i ../../inventory "$@"
+
+# undefined_var
+ANSIBLE_STRATEGY='linear' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
