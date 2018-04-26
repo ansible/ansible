@@ -54,7 +54,7 @@ class TerminalModule(TerminalBase):
         if self._get_prompt().endswith(b'enable#'):
             return
 
-        rc, out, err = self._exec_cli_command(b'show privilege')
+        out = self._exec_cli_command(b'show privilege')
         out = to_text(out, errors='surrogate_then_replace').strip()
         if 'Disabled' in out:
             raise AnsibleConnectionFailure('Feature privilege is not enabled')
@@ -72,7 +72,7 @@ class TerminalModule(TerminalBase):
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
             prompt = self._get_prompt()
-            if prompt is None or not prompt.endswith(b'enable#'):
+            if prompt is None or not prompt.strip().endswith(b'enable#'):
                 raise AnsibleConnectionFailure('failed to elevate privilege to enable mode still at prompt [%s]' % prompt)
         except AnsibleConnectionFailure as e:
             prompt = self._get_prompt()
