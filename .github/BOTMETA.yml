@@ -434,7 +434,7 @@ files:
   $modules/net_tools/nios/:
     labels: networking
     maintainers: $team_networking
-  $modules/net_tools/:
+  $modules/net_tools/nios/:
     maintainers: $team_networking brampling
     labels:
       - networking
