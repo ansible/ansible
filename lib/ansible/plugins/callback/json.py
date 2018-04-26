@@ -64,7 +64,9 @@ class CallbackModule(CallbackBase):
                 'id': str(task._uuid)
             },
             'hosts': {},
-            'start': '%sZ' % datetime.datetime.utcnow().isoformat()
+            'duration': {
+                'start': '%sZ' % datetime.datetime.utcnow().isoformat()
+            }
         }
 
     def v2_playbook_on_play_start(self, play):
@@ -113,7 +115,7 @@ class CallbackModule(CallbackBase):
         task_result['action'] = task.action
         self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
         end_time = '%sZ' % datetime.datetime.utcnow().isoformat()
-        self.results[-1]['tasks'][-1]['end'] = end_time
+        self.results[-1]['tasks'][-1]['duration']['end'] = end_time
 
     def __getattribute__(self, name):
         """Return ``_record_task_result`` partial with a dict containing skipped/failed if necessary"""
