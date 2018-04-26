@@ -51,6 +51,24 @@
     that:
       - "template_result.changed == true"
 
+# Basic template with non-ascii names
+- name: Check that non-ascii source and dest work
+  template:
+    src: 'café.j2'
+    dest: '{{ output_dir }}/café.txt'
+  register: template_results
+
+- name: Check that the resulting file exists
+  stat:
+    path: '{{ output_dir }}/café.txt'
+  register: stat_results
+
+- name: Check that template created the right file
+  assert:
+    that:
+      - 'template_results is changed'
+      - 'stat_results.stat["exists"]'
+
 # test for import with context on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import with context ala issue 20494
   template: src=import_with_context.j2 dest={{output_dir}}/import_with_context.templated mode=0644
