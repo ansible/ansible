@@ -53,7 +53,7 @@ def keycloak_argument_spec():
     """
     return dict(
         auth_keycloak_url=dict(type='str', aliases=['url'], required=True),
-        auth_client_id=dict(type='str'),
+        auth_client_id=dict(type='str', default='admin-cli'),
         auth_realm=dict(type='str', required=True),
         auth_client_secret=dict(type='str', default=None),
         auth_username=dict(type='str', aliases=['username'], required=True),

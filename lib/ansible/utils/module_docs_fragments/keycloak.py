@@ -31,6 +31,7 @@ options:
     auth_client_id:
         description:
             - OpenID Connect I(client_id) to authenticate to the API with.
+        default: admin-cli
         required: true
 
     auth_realm:
