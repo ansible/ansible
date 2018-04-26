@@ -28,3 +28,6 @@ pyfmg
 
 # requirement for aci_rest module
 xmljson
+
+# requirement for memory_usage callback module
+psutil
