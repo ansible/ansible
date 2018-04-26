@@ -57,7 +57,7 @@ class TaskInclude(Task):
         new_me.statically_loaded = self.statically_loaded
         return new_me
 
-    def get_vars(self):
+    def get_vars(self, include_params=True):
         '''
         We override the parent Task() classes get_vars here because
         we need to include the args of the include into the vars as
@@ -70,8 +70,9 @@ class TaskInclude(Task):
             if self._parent:
                 all_vars.update(self._parent.get_vars())
 
-            all_vars.update(self.vars)
-            all_vars.update(self.args)
+            if include_params:
+                all_vars.update(self.vars)
+                all_vars.update(self.args)
 
             if 'tags' in all_vars:
                 del all_vars['tags']
