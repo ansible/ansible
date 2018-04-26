@@ -168,7 +168,10 @@ def _create_stack(module, stack, cloud, shade):
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=str(e), response=e.response.json())
+        else:
+            module.fail_json(msg=str(e))
 
 
 def _update_stack(module, stack, cloud, shade):
@@ -188,7 +191,10 @@ def _update_stack(module, stack, cloud, shade):
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=str(e), response=e.response.json())
+        else:
+            module.fail_json(msg=str(e))
 
 
 def _system_state_change(module, stack, cloud):
