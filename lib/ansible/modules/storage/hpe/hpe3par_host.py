@@ -667,8 +667,6 @@ def main():
         "storage_system_ip": {
             "required": True,
             "type": "str"},
-        "storage_system_name": {
-            "type": "str"},
         "storage_system_username": {
             "required": True,
             "type": "str",

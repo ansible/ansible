@@ -158,8 +158,7 @@ EXAMPLES = r'''
         state=restore_online
         snapshot_name="{{ snapshot_name }}"
 
-    - name: Modify/rename snasphot my_ansible_snapshot to
-    my_ansible_snapshot_renamed
+    - name: Modify/rename snasphot my_ansible_snapshot to my_ansible_snapshot_renamed
       hpe3par_snapshot:
         storage_system_ip="{{ storage_system_ip }}"
         storage_system_username="{{ storage_system_username }}"
@@ -425,9 +424,6 @@ def main():
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {

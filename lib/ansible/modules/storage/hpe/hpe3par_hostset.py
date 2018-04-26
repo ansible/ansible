@@ -47,8 +47,9 @@ options:
   state:
     description:
       - "Whether the specified Host Set should exist or not. State also
-       provides actions to add or remove hosts from host set choices:
-       ['present', 'absent', 'add_hosts', 'remove_hosts']\n"
+       provides actions to add or remove hosts from host set"
+    choices:
+      ['present', 'absent', 'add_hosts', 'remove_hosts']
     required: true
 extends_documentation_fragment: hpe3par
 short_description: "Manage HPE 3PAR Host Set"
@@ -286,9 +287,6 @@ def main():
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {

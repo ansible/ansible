@@ -62,7 +62,7 @@ options:
       - "Sets the number of hours to retain the volume."
     required: false
   rm_exp_time:
-    default: 0
+    default: false
     description:
       - "Enables false or disables true resetting the expiration time. If
        false, and expiration time value is a positive. number, then set.\n"
@@ -195,8 +195,7 @@ EXAMPLES = r'''
         size="{{ size }}"
         snap_cpg="{{ snap_cpg }}"
 
-    - name: Change provisioning type of Volume "{{ volume_name }}" to
-    "{{ type }}"
+    - name: Change provisioning type of Volume "{{ volume_name }}" to "{{ type }}"
       hpe3par_volume:
         storage_system_ip="{{ storage_system_ip }}"
         storage_system_username="{{ storage_system_username }}"
@@ -751,9 +750,6 @@ def main():
             "required": True,
             "type": "str"
         },
-        "storage_system_name": {
-            "type": "str"
-        },
         "storage_system_username": {
             "required": True,
             "type": "str",
@@ -843,6 +839,7 @@ def main():
         "type": {
             "choices": ['thin', 'thin_dedupe', 'full'],
             "type": "str",
+            "default": "thin"
         },
         "keep_vv": {
             "type": "str",

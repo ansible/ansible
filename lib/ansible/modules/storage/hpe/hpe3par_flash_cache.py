@@ -31,10 +31,6 @@ description: "On HPE 3PAR - Create Flash Cache
  - Delete Flash Cache."
 module: hpe3par_flash_cache
 options:
-  domain:
-    description:
-      - "The domain in which the VV set or host set will be created."
-    required: false
   size_in_gib:
     description:
       - "Specifies the node pair size of the Flash Cache on
@@ -142,9 +138,6 @@ def main():
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {
