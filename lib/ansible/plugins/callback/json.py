@@ -39,6 +39,10 @@ from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
 
+def current_time():
+    return '%sZ' % datetime.datetime.utcnow().isoformat()
+
+
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
@@ -52,7 +56,10 @@ class CallbackModule(CallbackBase):
         return {
             'play': {
                 'name': play.get_name(),
-                'id': str(play._uuid)
+                'id': str(play._uuid),
+                'duration': {
+                    'start': current_time()
+                }
             },
             'tasks': []
         }
@@ -61,12 +68,12 @@ class CallbackModule(CallbackBase):
         return {
             'task': {
                 'name': task.get_name(),
-                'id': str(task._uuid)
+                'id': str(task._uuid),
+                'duration': {
+                    'start': current_time()
+                }
             },
-            'hosts': {},
-            'duration': {
-                'start': '%sZ' % datetime.datetime.utcnow().isoformat()
-            }
+            'hosts': {}
         }
 
     def v2_playbook_on_play_start(self, play):
@@ -114,8 +121,9 @@ class CallbackModule(CallbackBase):
         task_result.update(on_info)
         task_result['action'] = task.action
         self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
-        end_time = '%sZ' % datetime.datetime.utcnow().isoformat()
-        self.results[-1]['tasks'][-1]['duration']['end'] = end_time
+        end_time = current_time()
+        self.results[-1]['tasks'][-1]['task']['duration']['end'] = end_time
+        self.results[-1]['play']['duration']['end'] = end_time
 
     def __getattribute__(self, name):
         """Return ``_record_task_result`` partial with a dict containing skipped/failed if necessary"""
