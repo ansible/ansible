@@ -4,6 +4,15 @@
     msg: '{{ role_path|basename }}'
 - import_tasks: setup.yml
 
+- include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - 'default.yml'
+      paths:
+        - '../vars/'
+
 - include_tasks: create_fs.yml
   vars:
     dev: '{{ ansible_user_dir }}/ansible_testing/img'
