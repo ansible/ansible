@@ -271,9 +271,15 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
-Haversine, great-circle distance between two coordinates::
+Haversine, great-circle distance between two coordinates using a list::
 
-    {{ 'm'|haversine('35.9914928','-78.907046', '-33.8523063', '151.2085984') }}
+    # Returns a dict with distances m & km
+    {{ ['35.9914928','-78.907046','-33.8523063','151.2085984']|haversine }}
+
+Haversine, great-circle distance between two coordinates using a dict::
+
+    # Returns a dict with distances m & km
+    {{ { 'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063', 'lon2': '151.2085984'}|haversine }}
 
 Note that jinja2 already provides some like abs() and round().
 

@@ -109,19 +109,32 @@ class TestPower:
 class TestHaversine:
     def test_haversine_non_number(self):
         with pytest.raises(AnsibleFilterError, message='haversine() only accepts floats'):
-            ms.haversine('km', 'a', 'b', 'c', 'd')
+            ms.haversine(['a', 'b', 'c', 'd'])
 
         with pytest.raises(AnsibleFilterError, message='haversine() only accepts floats'):
-            ms.haversine('m', 'a', 'b', 'c', 'd')
+            ms.haversine({'lon1': 'a', 'lat1': 'b', 'lon2': 'c', 'lat2': 'd'})
 
-        with pytest.raises(AnsibleFilterError, message='haversine() can only be called with km or m'):
-            ms.haversine('z', '35.9914928', '-78.907046', '-33.8523063', '151.2085984')
+        with pytest.raises(AnsibleFilterError, message='haversine() supplied list should contain 4 elements for lat1, lon1, lat2 and lon2.'):
+            ms.haversine(['35.9914928', '-78.907046', '-33.8523063'])
+
+        with pytest.raises(AnsibleFilterError, message='haversine() supplied list should contain 4 elements for lat1, lon1, lat2 and lon2.'):
+            ms.haversine(['11.44', '43.44', '35.9914928', '-78.907046', '-33.8523063'])
+
+        with pytest.raises(AnsibleFilterError, message='haversine() supplied dicts should contain 4 keys: lat1, lon1, lat2 and lon2'):
+            ms.haversine({'lon1': '-78.907046', 'lat1': '35.9914928'})
 
     def test_km(self):
-        assert ms.haversine('km', '35.9914928', '-78.907046', '-33.8523063', '151.2085984') == 15490.46
+        assert ms.haversine(['35.9914928', '-78.907046', '-33.8523063', '151.2085984']).get('km') == 15490.46
 
     def test_m(self):
-        assert ms.haversine('m', '35.9914928', '-78.907046', '-33.8523063', '151.2085984') == 9625.31
+        assert ms.haversine({'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063', 'lon2': '151.2085984'}).get('m') == 9625.31
+
+    def test_order(self):
+        assert ms.haversine({'lon2': '151.2085984', 'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063'}).get('m') == 9625.31
+
+    def test_compare_both(self):
+        assert (ms.haversine({'lat1': '-78.907046', 'lon1': '35.9914928', 'lon2': '-33.8523063', 'lat2': '151.2085984'}).get('m') ==
+                ms.haversine(['-78.907046', '35.9914928', '151.2085984', '-33.8523063']).get('m'))
 
 
 class TestInversePower:

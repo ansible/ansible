@@ -114,15 +114,31 @@ def inversepower(x, base=2):
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
 
-def haversine(measurement, lat1, lon1, lat2, lon2):
+def haversine(coordinates):
     from math import radians, sin, cos, sqrt, asin
-
-    if measurement not in ["m", "km"]:
-        raise errors.AnsibleFilterError('haversine() can only be called with km or m')
 
     diameter = {
         'm': 7917.5,
         'km': 12742}
+
+    if isinstance(coordinates, list):
+        if (len(coordinates) == 4):
+            lat1 = coordinates[0]
+            lon1 = coordinates[1]
+            lat2 = coordinates[2]
+            lon2 = coordinates[3]
+        else:
+            raise errors.AnsibleFilterError('haversine() supplied list should contain 4 elements [lat1, lon1, lat2, lon2]. %s supplied.' % len(coordinates))
+    elif isinstance(coordinates, dict):
+        if all(k in coordinates for k in ('lat1', 'lon1', 'lat2', 'lon2')):
+            lat1 = coordinates.get('lat1')
+            lon1 = coordinates.get('lon1')
+            lat2 = coordinates.get('lat2')
+            lon2 = coordinates.get('lon2')
+        else:
+            raise errors.AnsibleFilterError('haversine() supplied dicts should contain 4 keys: lat1, lon1, lat2 and lon2')
+    else:
+        raise errors.AnsibleFilterError('haversine() only accepts a list or dict of coordinates.')
 
     try:
         lat1 = float(lat1)
@@ -143,7 +159,10 @@ def haversine(measurement, lat1, lon1, lat2, lon2):
     except Exception as e:
         raise errors.AnsibleFilterError('haversine() something went wrong: %s' % str(e))
 
-    return round(diameter[measurement] / 2 * c, 2)
+    return {
+        'km': round(diameter['km'] / 2 * c, 2),
+        'm': round(diameter['m'] / 2 * c, 2)
+    }
 
 
 def human_readable(size, isbits=False, unit=None):
