@@ -25,11 +25,15 @@ module: virt_clone
 short_description: Clones VMs from templates
 description:
   - "This module creates clones for libvirt."
-version_added: "2.5"
+version_added: "2.6"
 options:
   auto:
+    default: true
     description:
         - Generates a new guest name, and paths for new storage - default true
+  mac:
+    description:
+        - Allows a pre-defined MAC address to be assigned to the cloned VM
   name:
     aliases: [ "dest", "guest" ]
     description:
@@ -42,6 +46,7 @@ options:
     required: true
   state:
     choices: [ "present", "started" ]
+    default: present
     description:
         - If the clone should be present or started - default present
     required: false
@@ -94,7 +99,7 @@ def main():
             mac=dict(type='str'),
             name=dict(type='str', aliases=['dest', 'guest'], required=True),
             state=dict(type='str', choices=[
-                'absent', 'present', 'started'], default='present'),
+                'present', 'started'], default='present'),
             template=dict(type='str', aliases=['src'], required=True),
             uuid=dict(type='str')
         ),
