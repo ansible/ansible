@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # encoding: utf-8
 
 # (c) 2015, Jose Armesto <jose@armesto.net>
