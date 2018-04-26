@@ -298,7 +298,7 @@ def main():
     state = module.params['state']
 
     wc_w = module.params['wc_w']
-    wc_wtimeout = module.params['wc_timeout']
+    wc_wtimeout = module.params['wc_wtimeout']
 
     try:
         connection_params = {
