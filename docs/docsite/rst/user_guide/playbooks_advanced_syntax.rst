@@ -1,3 +1,5 @@
+.. _playbooks_advanced_syntax:
+
 Advanced Syntax
 ===============
 
@@ -51,7 +53,7 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
 
 .. seealso::
 
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

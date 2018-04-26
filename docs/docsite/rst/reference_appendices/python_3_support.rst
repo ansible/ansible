@@ -88,5 +88,5 @@ If you find a bug running under Python 3 you can submit a bug report on `Ansible
 that the right people look at it.
 
 If you would like to fix the code and submit a pull request on github, you can
-refer to :ref:`developing_python_3` for information on how we fix
+refer to :ref:`developing_python3` for information on how we fix
 common Python3 compatibility issues in the Ansible codebase.

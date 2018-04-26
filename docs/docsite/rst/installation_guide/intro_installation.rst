@@ -1,5 +1,5 @@
 .. _installation_guide:
-.. _intro_installation_guide:
+.. _intro_installation:
 
 Installation Guide
 ==================
@@ -387,7 +387,7 @@ bugs and feature ideas.
 
    :ref:`intro_adhoc`
        Examples of basic commands
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        Learning ansible's configuration management language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

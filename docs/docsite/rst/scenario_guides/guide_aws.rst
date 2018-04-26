@@ -243,7 +243,7 @@ documentation for a full list with examples.
 
    :ref:`all_modules`
        All the documentation for Ansible modules
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_delegation`
        Delegation, useful for working with loud balancers, clouds, and locally executed steps.

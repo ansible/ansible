@@ -55,7 +55,7 @@ Example::
 Running single tasks with ``check_mode: yes`` can be useful to write tests for
 ansible modules, either to test the module itself or to the conditions under
 which a module would make changes. 
-With ``register`` (see :doc:`playbooks_conditionals`) you can check the
+With ``register`` (see :ref:`playbooks_conditionals`) you can check the
 potential changes.
 
 Information about check mode in variables

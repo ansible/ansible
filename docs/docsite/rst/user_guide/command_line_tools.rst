@@ -1,3 +1,5 @@
+.. _command_line_tools:
+
 Working with Command Line Tools
 ===============================
 

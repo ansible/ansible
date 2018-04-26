@@ -77,7 +77,7 @@ as push updates to all of the servers::
 
 .. note::
 
-   If you're not familiar with terms like playbooks and plays, you should review :ref:`working_with_playbooks`.
+   If you're not familiar with terms like playbooks and plays, you should review :ref:`playbooks_intro`.
 
 In this playbook we have 5 plays. The first one targets ``all`` hosts and applies the ``common`` role to all of the hosts. 
 This is for site-wide things like yum repository configuration, firewall configuration, and anything else that needs to apply to all of the servers.
@@ -290,7 +290,7 @@ This should give you a good idea of how to structure a multi-tier application wi
 
    `lamp_haproxy example <https://github.com/ansible/ansible-examples/tree/master/lamp_haproxy>`_
        The lamp_haproxy example discussed here.
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_reuse_roles`
        An introduction to playbook roles

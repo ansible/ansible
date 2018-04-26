@@ -73,23 +73,23 @@ How To Develop A Module
 
 The following topics will discuss how to develop and work with modules:
 
-:doc:`developing_program_flow_modules`
+:ref:`developing_program_flow_modules`
     A description of Ansible's module architecture.
-:doc:`developing_modules_general`
+:ref:`developing_modules_general`
     A general overview of how to develop, debug, and test modules.
-:doc:`developing_modules_general_windows`
+:ref:`developing_modules_general_windows`
     A general overview of how to develop, debug and test Windows modules.
-:doc:`developing_modules_documenting`
+:ref:`developing_modules_documenting`
     How to include in-line documentation in your module.
-:doc:`developing_modules_best_practices`
+:ref:`developing_modules_best_practices`
     Best practices, recommendations, and things to avoid.
-:doc:`developing_modules_checklist`
+:ref:`developing_modules_checklist`
      Checklist for contributing your module to Ansible.
-:doc:`testing`
+:ref:`testing`
     Developing unit and integration tests.
-:doc:`developing_python3`
+:ref:`developing_python3`
     Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
-:doc:`developing_modules_in_groups`
+:ref:`developing_modules_in_groups`
     A guide for partners wanting to submit multiple modules.
 
 
@@ -97,9 +97,9 @@ The following topics will discuss how to develop and work with modules:
 
    :ref:`all_modules`
        Learn about available modules
-   :doc:`developing_plugins`
+   :ref:`developing_plugins`
        Learn about developing plugins
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for playbook and task execution
    `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_
        Browse module source code

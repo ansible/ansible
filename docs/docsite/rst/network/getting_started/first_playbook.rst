@@ -19,7 +19,7 @@ Before you work through this tutorial you need:
 Install Ansible
 ==================================================
 
-Install Ansible using your preferred method. See :doc:`../../installation_guide/intro_installation`. Then return to this tutorial.
+Install Ansible using your preferred method. See :ref:`intro_installation`. Then return to this tutorial.
 
 Confirm the version of Ansible (must be >= 2.5):
 

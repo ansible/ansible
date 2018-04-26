@@ -11,7 +11,7 @@ We use YAML because it is easier for humans to read and write than other common
 data formats like XML or JSON.  Further, there are libraries available in most
 programming languages for working with YAML.
 
-You may also wish to read :ref:`working_with_playbooks` at the same time to see how this
+You may also wish to read :ref:`playbooks_intro` at the same time to see how this
 is used in practice.
 
 

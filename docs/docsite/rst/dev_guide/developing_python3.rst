@@ -1,4 +1,4 @@
-.. _developing_python_3:
+.. _developing_python3:
 
 ====================
 Ansible and Python 3

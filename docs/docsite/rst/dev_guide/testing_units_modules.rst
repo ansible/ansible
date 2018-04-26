@@ -14,7 +14,7 @@ Introduction
 This document explains why, how and when you should use unit tests for Ansible modules.
 The document doesn't apply to other parts of Ansible for which the recommendations are
 normally closer to the Python standard.  There is basic documentation for Ansible unit
-tests in the developer guide :doc:`testing_units`.  This document should
+tests in the developer guide :ref:`testing_units`.  This document should
 be readable for a new Ansible module author. If you find it incomplete or confusing, 
 please open a bug or ask for help on Ansible IRC.
 
@@ -533,11 +533,11 @@ the code in Ansible to trigger that failure.
 
 .. seealso::
 
-   :doc:`testing_units`
+   :ref:`testing_units`
        Ansible unit tests documentation
-   :doc:`testing_running_locally`
+   :ref:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data
-   :doc:`developing_modules`
+   :ref:`developing_modules`
        How to develop modules
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the unittest framework in python 3 

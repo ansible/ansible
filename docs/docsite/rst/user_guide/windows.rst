@@ -1,3 +1,5 @@
+.. _windows:
+
 Windows Guides
 ``````````````
 

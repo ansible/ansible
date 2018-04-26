@@ -36,7 +36,7 @@ If you believe you have found a bug in a module and are already running the late
 
 Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <../community/index>`, :doc:`Testing Ansible <../dev_guide/testing>`, and :doc:`Developing Modules <../dev_guide/developing_modules>`.
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :ref:`Community Information & Contributing <ansible_community_guide>`, :ref:`Testing Ansible <testing>`, and :ref:`Developing Modules <developing_modules>`.
 
 The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
@@ -50,15 +50,15 @@ please refer to the following `knowledgebase article <https://access.redhat.com/
 
 .. seealso::
 
-   :doc:`../modules/modules_by_category`
+   :ref:`modules_by_category`
        A complete list of all available modules.
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`../dev_guide/developing_modules`
+   :ref:`developing_modules`
        How to write your own modules
-   :doc:`../dev_guide/developing_api`
+   :ref:`developing_api`
        Examples of using modules with the Python API
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

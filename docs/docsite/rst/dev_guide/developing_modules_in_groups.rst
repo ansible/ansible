@@ -1,3 +1,5 @@
+.. _developing_modules_in_groups:
+
 Information for submitting a group of modules
 =============================================
 
@@ -18,15 +20,15 @@ Before you start coding
 
 Although it's tempting to get straight into coding, there are a few things to be aware of first. This list of prerequisites is designed to help ensure that you develop high-quality modules that flow easily through the review process and get into Ansible more quickly.
 
-* Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
-* For new modules going into Ansible 2.4 we are raising the bar so they must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
+* Read though all the pages linked off :ref:`developing_modules`; paying particular focus to the :ref:`developing_modules_checklist`.
+* For new modules going into Ansible 2.4 we are raising the bar so they must be PEP 8 compliant. See :ref:`testing_pep8` for more information.
 * Starting with Ansible version 2.4, all new modules must support Python 2.6 and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
-* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
   * Starting with Ansible 2.4 all :ref:`network_modules` MUST have unit tests.
 
 
@@ -91,9 +93,9 @@ The first PR should include the following files:
 
 And that's it.
 
-Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
+Before pushing your PR to GitHub it's a good idea to review the :ref:`developing_modules_checklist` again.
 
-After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :ref:`yaml_syntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :ref:`developing_python_3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :ref:`yaml_syntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :ref:`developing_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
 If you need further advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
 

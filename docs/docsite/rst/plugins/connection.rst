@@ -1,5 +1,7 @@
 .. contents:: Topics
 
+.. _connection_plugins:
+
 Connection Plugins
 ------------------
 
@@ -29,8 +31,9 @@ into the ``connection_plugins`` directory.
 Using Connection Plugins
 ++++++++++++++++++++++++
 
-The transport can be changed via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbooks_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
-For example, for Windows machines you might want to use the :doc:`winrm<connection/winrm>` plugin.
+The transport can be changed via :ref:`configuration<ansible_configuration_settings>`, in the command line (``-c``, ``--connection``), as a :ref:`keyword<playbooks_keywords>`)
+in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
+For example, for Windows machines you might want to use the :ref:`winrm<winrm_connection>` plugin.
 
 Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory hostname<inventory_hostnames_lookup>` and defaults to find the target host.
 
@@ -64,7 +67,7 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
 
    :ref:`Working with Playbooks<working_with_playbooks>`
        An introduction to playbooks
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
    :ref:`Filters<playbooks_filters>`
        Jinja2 filter plugins
@@ -72,7 +75,7 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
        Jinja2 test plugins
    :ref:`Lookups<playbooks_lookups>`
        Jinja2 lookup plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible vars plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

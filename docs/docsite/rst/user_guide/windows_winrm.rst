@@ -1,3 +1,5 @@
+.. _windows_winrm:
+
 Windows Remote Management
 =========================
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
@@ -761,11 +763,11 @@ Some of these limitations can be mitigated by doing one of the following:
 
 .. seealso::
 
-   :doc:`index`
+   :ref:`ansible_documentation`
        The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

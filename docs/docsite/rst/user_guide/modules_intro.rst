@@ -44,7 +44,7 @@ Documentation for each module can be accessed from the command line with the ans
 
     ansible-doc yum
 
-For a list of all available modules, see :doc:`../modules/modules_by_category`, or run the following at a command prompt::
+For a list of all available modules, see :ref:`modules_by_category`, or run the following at a command prompt::
 
     ansible-doc -l
 
@@ -53,7 +53,7 @@ For a list of all available modules, see :doc:`../modules/modules_by_category`, 
 
    :ref:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        Examples of using modules with /usr/bin/ansible-playbook
    :ref:`developing_modules`
        How to write your own modules

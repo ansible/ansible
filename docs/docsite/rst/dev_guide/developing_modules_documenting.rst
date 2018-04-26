@@ -1,4 +1,4 @@
-.. _module_documenting:
+.. _developing_modules_documenting:
 
 Documenting Your Module
 =======================
@@ -461,4 +461,4 @@ To test your documentation against your ``argument_spec`` you can use ``validate
    If you're having a problem with the syntax of your YAML you can
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
-For more information in testing, including how to add unit and integration tests, see :doc:`testing`.
+For more information in testing, including how to add unit and integration tests, see :ref:`testing`.

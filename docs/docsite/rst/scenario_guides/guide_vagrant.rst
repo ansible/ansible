@@ -149,6 +149,6 @@ The "Tips and Tricks" chapter of the `Ansible Provisioner documentation
         The Vagrant documentation for the Ansible provisioner
     `Vagrant Issue Tracker <https://github.com/mitchellh/vagrant/issues?q=is%3Aopen+is%3Aissue+label%3Aprovisioners%2Fansible>`_
         The open issues for the Ansible provisioner in the Vagrant project
-    :ref:`working_with_playbooks`
+    :ref:`playbooks_intro`
         An introduction to playbooks
 

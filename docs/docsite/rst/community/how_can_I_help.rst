@@ -1,3 +1,5 @@
+.. _how_to_help:
+
 How To Help
 ===========
 
@@ -54,7 +56,7 @@ Become a module maintainer
 
 Once you've learned about the development process and have contributed code to a particular module, we encourage you to become a maintainer of that module. There are hundreds of different modules in Ansible, and the vast majority of them are written and maintained entirely by members of the Ansible community.
 
-To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`module maintainer guidelines <maintainers>`.
+To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`module maintainer guidelines <module_maintainer_guidelines>`.
 
 Join a working group
 --------------------

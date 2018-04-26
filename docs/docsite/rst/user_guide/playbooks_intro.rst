@@ -1,3 +1,5 @@
+.. _playbooks_intro:
+
 Intro to Playbooks
 ==================
 
@@ -41,7 +43,7 @@ Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module (see :doc:`modules`).
+to an ansible module (see :ref:`modules`).
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -132,7 +134,7 @@ For each play in a playbook, you get to choose which machines in your infrastruc
 to target and what remote user to complete the steps (called tasks) as.
 
 The ``hosts`` line is a list of one or more groups or host patterns,
-separated by colons, as described in the :doc:`intro_patterns`
+separated by colons, as described in the :ref:`intro_patterns`
 documentation.  The ``remote_user`` is just the name of the user account::
 
     ---
@@ -153,7 +155,7 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-Support for running things as another user is also available (see :doc:`become`)::
+Support for running things as another user is also available (see :ref:`become`)::
 
     ---
     - hosts: webservers
@@ -328,7 +330,7 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks as described in :doc:`playbooks_reuse`.
+make more sense to break up tasks as described in :ref:`playbooks_reuse`.
 
 .. _action_shorthand:
 

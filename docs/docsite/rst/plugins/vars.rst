@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _vars_plugins:
 
 Vars Plugins
 ------------
@@ -9,7 +10,6 @@ Vars plugins inject additional variable data into Ansible runs that did not come
 Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
 
 The :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible enables reading variables from :ref:`host_variables` and :ref:`group_variables`.
-
 
 .. _enable_vars:
 
@@ -43,19 +43,19 @@ Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific docume
 
 .. seealso::
 
-   :doc:`action`
+   :ref:`action_plugins`
        Ansible Action plugins
-   :doc:`cache`
+   :ref:`cache_plugins`
        Ansible Cache plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
