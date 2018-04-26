@@ -1,9 +1,14 @@
-- name: Delete virtual machine
+- name: Delete virtual machines
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vms }}"
       state: absent
       vm_size: Standard_A0
+  loop:
+    - testvm002
+    - testvm003
+  loop_control:
+    loop_var: vms
   register: output
 
 - name: Create storage account name
@@ -59,7 +64,7 @@
           priority: 110
           direction: Inbound
 
-- name: Create NIC
+- name: Create NIC for single nic VM
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testvm001
@@ -68,7 +73,7 @@
       public_ip_name: testvm001
       security_group: testvm001
 
-- name: Create virtual machine
+- name: Create virtual machine with a single NIC
   register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
@@ -173,7 +178,7 @@
           - "azure_vm.powerstate in ['starting', 'running']"
           - output.changed
 
-- name: Should be idempotent
+- name: Should be idempotent with a single NIC
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -250,6 +255,82 @@
       name: testvmnoip
       state: absent
       vm_size: Standard_A0
+
+- name: Create NICs for dual nic VM
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ item }}"
+      virtual_network: testvm001
+      subnet: testvm001
+      security_group: testvm001
+  loop:
+    - testvm011
+    - testvm012
+
+- name: Create virtual machine with two NICs
+  register: output
+  vars:
+    niclist:
+      - testvm011
+      - testvm012
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm003
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
+      storage_container: testvm001
+      storage_blob: testvm003.vhd
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      network_interfaces: "{{ niclist }}"
+      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+
+- assert:
+      that:
+        - azure_vm.properties.availabilitySet.id
+
+- name: Should be idempotent with a dual NICs
+  vars:
+    niclist:
+      - testvm011
+      - testvm012
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm003
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
+      storage_container: testvm001
+      storage_blob: testvm003.vhd
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      network_interfaces: "{{ niclist }}"
+      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- assert:
+      that: not output.changed
+
+- name: Delete dual NIC VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm003
+      state: absent
+      vm_size: Standard_A0
+  register: output
 
 # TODO: Until we have a module to create/delete images this is the best tests
 # I can do
