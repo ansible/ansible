@@ -172,14 +172,10 @@ class StrategyModule(StrategyBase):
                 if last_host == starting_host:
                     break
 
-            display.debug('_process_pending_results start')
             results = self._process_pending_results(iterator)
-            display.debug('_process_pending_results finished')
             host_results.extend(results)
 
-            display.debug('update_active_connections start')
             self.update_active_connections(results)
-            display.debug('update_active_connections finished')
 
             try:
                 included_files = IncludedFile.process_include_results(
@@ -230,9 +226,7 @@ class StrategyModule(StrategyBase):
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         # collect all the final results
-        display.debug('_wait_on_pending_results start')
         results = self._wait_on_pending_results(iterator)
-        display.debug('_wait_on_pending_results finished')
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
