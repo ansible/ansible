@@ -235,7 +235,6 @@ def shard_find(client, shard):
 
 def shard_add(client, shard):
     try:
-        client.write_concern = {'w': 1, 'wtimeout': 120}
         sh = client["admin"].command('addShard', shard)
     except Exception as excep:
         raise excep
@@ -278,9 +277,7 @@ def main():
             ssl=dict(default=False, type='bool'),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             shard=dict(default=None),
-            state=dict(required=False, default="present", choices=["present", "absent"]),
-            wc_w=dict(required=False, default=1, type='int'),
-            wc_wtimeout=dict(required=False, default=10, type='int')
+            state=dict(required=False, default="present", choices=["present", "absent"])
         ),
     supports_check_mode=True
 )
@@ -298,15 +295,10 @@ def main():
     shard = module.params['shard']
     state = module.params['state']
 
-    wc_w = module.params['wc_w']
-    wc_wtimeout = module.params['wc_wtimeout']
-
     try:
         connection_params = {
             "host": login_host,
-            "port": int(login_port),
-            "w": wc_w,
-            "wtimeout": wc_wtimeout
+            "port": int(login_port)
         }
 
         if ssl:
