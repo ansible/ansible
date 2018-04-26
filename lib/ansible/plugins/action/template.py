@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import os
 import shutil
+import stat
 import tempfile
 
 from ansible import constants as C
@@ -105,6 +106,10 @@ class ActionModule(ActionBase):
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_text(e))
 
+            mode = self._task.args.get('mode', None)
+            if mode == 'preserve':
+                mode = '0%03o' % stat.S_IMODE(os.stat(source).st_mode)
+
             # Get vault decrypted tmp file
             try:
                 tmp_source = self._loader.get_real_file(source)
@@ -157,6 +162,9 @@ class ActionModule(ActionBase):
                 self._loader.cleanup_tmp_file(tmp_source)
 
             new_task = self._task.copy()
+            # mode is either the mode from task.args or the mode of the source file if the task.args
+            # mode == 'preserve'
+            new_task.args['mode'] = mode
             new_task.args.pop('newline_sequence', None)
             new_task.args.pop('block_start_string', None)
             new_task.args.pop('block_end_string', None)
