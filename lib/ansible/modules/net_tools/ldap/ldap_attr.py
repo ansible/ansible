@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
-# (c) 2016, Peter Sagerson <psagers@ignorare.net>
-#
+# Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
+# Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
 ---
 module: ldap_attr
 short_description: Add or remove LDAP attribute values.
@@ -66,7 +66,7 @@ extends_documentation_fragment: ldap.documentation
 """
 
 
-EXAMPLES = """
+EXAMPLES = r"""
 - name: Configure directory number 1 for example.com
   ldap_attr:
     dn: olcDatabase={1}hdb,cn=config
@@ -139,7 +139,7 @@ EXAMPLES = """
 """
 
 
-RETURN = """
+RETURN = r"""
 modlist:
   description: list of modified parameters
   returned: success

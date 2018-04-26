@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
+# Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
+# Copyright: (c) 2017-2018 Keller Fuchs (@kellerfuchs) <kellerfuchs@hashbang.sh>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Copyright 2017-2018 Keller Fuchs (@kellerfuchs) <kellerfuchs@hashbang.sh>
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import traceback
 from ansible.module_utils._text import to_native
@@ -59,7 +63,7 @@ class LdapGeneric(object):
             try:
                 connection.start_tls_s()
             except ldap.LDAPError as e:
-                self.module.fail("Cannot start TLS.", e)
+                self.fail("Cannot start TLS.", e)
 
         try:
             if self.bind_dn is not None:
@@ -67,8 +71,6 @@ class LdapGeneric(object):
             else:
                 connection.sasl_interactive_bind_s('', ldap.sasl.external())
         except ldap.LDAPError as e:
-            self.module.fail_json(
-                msg="Cannot bind to the server.", details=to_native(e),
-                exception=traceback.format_exc())
+            self.fail("Cannot bind to the server.", e)
 
         return connection
