@@ -61,10 +61,7 @@ class Netconf(NetconfBase):
         device_info['network_os_hostname'] = reply.findtext('.//{%s}state/{*}system/{*}lldp/{*}system-name' % xmlns)
         device_info['network_os_version'] = reply.findtext('.//{%s}state/{*}system/{*}version/{*}version-number' % xmlns)
         device_info['network_os_model'] = reply.findtext('.//{%s}state/{*}system/{*}platform' % xmlns)
-
-        # device_info['network_os_platform'] = 'unknown'
-        # device_info['network_os_package'] = 'unknown'
-        # device_info['network_os_image'] = 'unknown'
+        device_info['network_os_platform'] = 'Nokia 7x50'
 
         return device_info
 
