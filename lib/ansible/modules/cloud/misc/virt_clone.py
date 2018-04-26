@@ -53,6 +53,7 @@ options:
         - Uses virt-sysprep to reset VMs SSH host keys and etc.
         - Will also define the VMs hostname
     required: false
+    type: bool
   template:
     aliases: [ "src" ]
     description:
