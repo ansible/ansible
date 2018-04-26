@@ -304,7 +304,7 @@ def main():
         connection_params = {
             "host": login_host,
             "port": int(login_port),
-            "w": wc_c,
+            "w": wc_w,
             "wc_wtimeout": wc_wtimeout
         }
 
