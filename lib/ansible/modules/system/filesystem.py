@@ -230,6 +230,7 @@ class Btrfs(Filesystem):
 
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
+    MKFS_FORCE_FLAGS = '-Fx'
 
 
 class VFAT(Filesystem):
