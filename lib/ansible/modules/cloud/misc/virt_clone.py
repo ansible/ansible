@@ -50,8 +50,8 @@ options:
   sysprep:
     default: false
     description:
-      - Uses virt-sysprep to reset VMs SSH host keys and etc.
-      - Will also define the VMs hostname
+        - Uses virt-sysprep to reset VMs SSH host keys and etc.
+        - Will also define the VMs hostname
     required: false
   template:
     aliases: [ "src" ]
