@@ -155,6 +155,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 # globals
 module = None
+fw_offline = False
+FW_VERSION = None
 
 # Imports
 try:
@@ -165,7 +167,6 @@ try:
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
     fw = None
-    fw_offline = False
     import_failure = False
 
     try:
