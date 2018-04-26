@@ -144,20 +144,23 @@ class MerakiModule(object):
             self.result['raw'] = rawoutput
             return
 
-    def is_update_required(self):
+    def is_update_required(self, original, proposed):
         ''' Compare original and proposed data to see if an update is needed '''
         is_changed = False
-        for k, v in self.original.items():
+        ignored_keys = ('id')
+        for k, v in original.items():
             try:
-                if v != self.proposed[k]:
-                    is_changed = True
+                if k not in ignored_keys:
+                    if v != proposed[k]:
+                        is_changed = True
             except KeyError:
                 if v != '':
                     is_changed = True
-        for k, v in self.proposed.items():
+        for k, v in proposed.items():
             try:
-                if v != self.original[k]:
-                    is_changed = True
+                if k not in ignored_keys:
+                    if v != original[k]:
+                        is_changed = True
             except KeyError:
                 if v != '':
                     is_changed = True
@@ -251,7 +254,7 @@ class MerakiModule(object):
                 net = self.get_net(org_name, net_name)
                 return net['id']
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
+    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, append=None):
         built_path = None
         if function is None:
             built_path = self.url_catalog[action][self.function]
