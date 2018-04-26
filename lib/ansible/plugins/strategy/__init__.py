@@ -439,12 +439,6 @@ class StrategyBase:
             task_result._host = original_host
             task_result._task = original_task
 
-            # get the correct loop var for use later
-            if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var
-            else:
-                loop_var = 'item'
-
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
                 self._tqm.send_callback('v2_runner_retry', task_result)
@@ -456,7 +450,7 @@ class StrategyBase:
                     self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
                 else:
                     if 'diff' in task_result._result:
-                        if self._diff:
+                        if self._diff or getattr(original_task, 'diff', False):
                             self._tqm.send_callback('v2_on_file_diff', task_result)
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
@@ -630,7 +624,7 @@ class StrategyBase:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
                 if 'diff' in task_result._result:
-                    if self._diff:
+                    if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
