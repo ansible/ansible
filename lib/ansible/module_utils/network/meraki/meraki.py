@@ -145,16 +145,20 @@ class MerakiModule(object):
             return
 
     def is_update_required(self):
-        ''' Check original and proposed data to see if an update is needed '''
-        self.merged = self.original
+        ''' Compare original and proposed data to see if an update is needed '''
         is_changed = False
         for k, v in self.original.items():
             try:
                 if v != self.proposed[k]:
                     is_changed = True
-                    self.merged[k] = self.proposed[k]
             except KeyError:
-                self.merged[k] = ''
+                if v != '':
+                    is_changed = True
+        for k, v in self.proposed.items():
+            try:
+                if v != self.original[k]:
+                    is_changed = True
+            except KeyError:
                 if v != '':
                     is_changed = True
         return is_changed
