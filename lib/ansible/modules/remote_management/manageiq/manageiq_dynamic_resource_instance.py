@@ -171,14 +171,14 @@ class ManageIQDynamicResourceInstance(object):
             },
             'property_attributes': property_attributes,
             'associations': {
-                'service':[
+                'service': [
                     {
-                    'href': service.get('href')
+                        'href': service.get('href')
                     } for service in services
                 ],
-                'provider':[
+                'provider': [
                     {
-                    'href': provider.get('href')
+                        'href': provider.get('href')
                     } for provider in providers
                 ],
             },
@@ -236,7 +236,7 @@ class ManageIQDynamicResourceInstance(object):
         resource = {
             'name': name,
             # API still uses old name
-            'generic_object_definition':{
+            'generic_object_definition': {
                 'href': generic_object_definition_href
             },
             'property_attributes': property_attributes
