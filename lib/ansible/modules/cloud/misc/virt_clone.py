@@ -10,6 +10,8 @@
 # Debian: apt-get install libvirt-python
 # python-virtinst
 # Debian: apt-get install python-virtinst
+# libguestfs-tools
+# Debian: apt-get install libguestfs-tools
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -39,6 +41,12 @@ options:
     description:
         - The VM to create
     required: true
+  sysprep:
+    default: false
+    description:
+      - Uses virt-sysprep to reset VMs SSH host keys and etc.
+      - Will also define the VMs hostname
+     required: false
   template:
     aliases: [ "src" ]
     description:
@@ -79,6 +87,13 @@ EXAMPLES = '''
     template: ubuntu1604-packer-template
     uuid:     c9e58ffc-e1e4-4fc5-a383-818bdceecf4d
   become:     true
+- name:       Cloning a VM and sysprepping system
+  virt_clone:
+    name:     web01
+    state:    started
+    sysprep:  true
+    template: ubuntu1604-packer-template
+  become:     true
 '''
 
 try:
@@ -98,6 +113,7 @@ def main():
             auto=dict(type='str', default=True),
             mac=dict(type='str'),
             name=dict(type='str', aliases=['dest', 'guest'], required=True),
+            sysprep=dict(type='bool', default=False),
             state=dict(type='str', choices=[
                 'present', 'started'], default='present'),
             template=dict(type='str', aliases=['src'], required=True),
@@ -112,6 +128,7 @@ def main():
 
     # changed = False
     virt_clone = module.get_bin_path('virt-clone', True)
+    virt_sysprep = module.get_bin_path('virt-sysprep', True)
     dest = module.params['name']
     src = module.params['template']
 
@@ -143,6 +160,11 @@ def main():
                     '%s --original=%s --name=%s %s' % (
                         virt_clone, src, dest, virt_clone_params),
                     check_rc=True)
+                if module.params['sysprep'] is True:
+                    module.run_command(
+                        '%s -d %s --hostname %s' % (
+                            virt_sysprep, dest, dest),
+                        check_rc=True)
                 if module.params['state'] == 'started':
                     domain = conn.lookupByName(dest)
                     domain.create()
