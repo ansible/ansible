@@ -284,6 +284,7 @@ def gather_vm_facts(content, vm):
         'hw_processor_count': vm.config.hardware.numCPU,
         'hw_cores_per_socket': vm.config.hardware.numCoresPerSocket,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
+        'hw_disks': [],
         'hw_interfaces': [],
         'hw_datastores': [],
         'hw_files': [],
@@ -354,6 +355,26 @@ def gather_vm_facts(content, vm):
                     break
 
         facts['customvalues'][kn] = value_obj.value
+
+    for idx, entry in enumerate(vm.config.hardware.device):
+        if not isinstance(entry, vim.vm.device.VirtualDisk):
+            continue
+
+        disk = {
+            'size_kb': entry.capacityInKB,
+        }
+
+        if entry.backing.thinProvisioned:
+            disk['type'] = 'thin'
+        elif entry.backing.eagerlyScrub:
+            disk['type'] = 'eagerzeroedthick'
+
+        try:
+            disk['datastore'] = entry.backing.datastore.name
+        except BaseException:
+            pass
+
+        facts['hw_disks'].append(disk)
 
     net_dict = {}
     vmnet = _get_vm_prop(vm, ('guest', 'net'))
