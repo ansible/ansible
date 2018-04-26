@@ -63,3 +63,7 @@ ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i .
 # undefined_var
 ANSIBLE_STRATEGY='linear' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
+
+# Include path inheritance using host var for include file path
+ANSIBLE_STRATEGY='linear' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"
