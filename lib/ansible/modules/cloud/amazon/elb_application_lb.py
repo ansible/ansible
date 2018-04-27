@@ -107,7 +107,7 @@ options:
         performed every 15 seconds until a successful state is reached. An error is returned after 40 failed checks.
     required: false
     default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
     version_added: 2.6
 extends_documentation_fragment:
     - aws
