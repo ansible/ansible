@@ -45,7 +45,7 @@ RETURN = """
 
 import json
 
-from ansible.module_utils.onepassword import OnePass
+from ansible.plugins.lookup.onepassword import OnePass
 from ansible.plugins.lookup import LookupBase
 
 

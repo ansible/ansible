@@ -1,5 +1,5 @@
-# Copyright (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
-# Copyright (c) 2016, Andrew Zenk <azenk@umn.edu> (test_lastpass.py used as starting point)
+# (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
+# (c) 2016, Andrew Zenk <azenk@umn.edu> (test_lastpass.py used as starting point)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -14,16 +14,12 @@ except ImportError:
 
 from argparse import ArgumentParser
 
-from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-
 from ansible.errors import AnsibleError
-from ansible.module_utils import six
-
-from ansible.plugins.lookup.onepassword import LookupModule, OnePass
-from ansible.plugins.lookup.onepassword_raw import LookupModule as RawLookupModule
+from ansible.plugins.lookup.onepassword import OnePass, LookupModule
+from ansible.plugins.lookup.onepassword_raw import LookupModule as OnePasswordRawLookup
 
 
 # Intentionally excludes metadata leaf nodes that would exist in real output if not relevant.
@@ -303,13 +299,14 @@ class TestLookupModule(unittest.TestCase):
 
 
 @patch('ansible.plugins.lookup.onepassword.OnePass', MockOnePass)
-class TestRawLookupModule(unittest.TestCase):
+class TestOnePasswordRawLookup(unittest.TestCase):
 
     def test_onepassword_raw_plugin_multiple(self):
-        raw_lookup_plugin = RawLookupModule()
+        raw_lookup_plugin = OnePasswordRawLookup()
 
         entry = MOCK_ENTRIES[0]
         raw_value = json.dumps(entry['output'])
+        raise Exception(raw_value * len(entry['queries']))
 
         self.assertEqual(
             [raw_value] * len(entry['queries']),
