@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - Use custom waiters
+  - Add integration tests for check mode
+  - Fix non-monotonic AWS behavior by waiting until attributes are the correct value before returning the subnet
+  - Don't use custom waiter configs for older versions of botocore
