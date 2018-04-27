@@ -1,0 +1,2 @@
+bugfixes:
+   - Capture correct exception type https://github.com/ansible/ansible/pull/39406
