@@ -141,7 +141,8 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_connect_timeout'), log_only=True)
+        display.display('persistent connection idle timeout triggered, timeout value is %s secs'
+                        % self.connection.get_option('persistent_connect_timeout'), log_only=True)
         self.shutdown()
 
     def command_timeout(self, signum, frame):
