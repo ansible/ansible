@@ -257,7 +257,7 @@ at the same time for qos rules creation",
             client_obj.createQoSRules(
                 qos_target_name,
                 qos_rules,
-                target_type=client.HPE3ParClient.VVSET)
+                getattr(client.HPE3ParClient, type.upper()))
         else:
             return (True, False, "QoS already present", {})
     except Exception as e:

@@ -610,7 +610,7 @@ is null",
         return (
             False,
             False,
-            "Convert volume type failed. Snap CPG is null",
+            "Convert volume type failed. User CPG is null",
             {})
     if type is None:
         return (
