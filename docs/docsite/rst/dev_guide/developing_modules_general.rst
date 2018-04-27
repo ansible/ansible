@@ -1,4 +1,4 @@
-.. _module_dev_tutorial_sample:
+.. _developing_modules_general:
 
 Ansible Module Development Walkthrough
 ======================================
@@ -188,6 +188,7 @@ working on a whole new file. Here is an example:
 
     if __name__ == '__main__':
         main()
+
 
 Local/direct module testing
 ===========================

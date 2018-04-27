@@ -88,7 +88,7 @@ Please feel free to report any issues or incompatibilities you discover with BSD
 
    :ref:`intro_adhoc`
        Examples of basic commands
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        Learning ansible's configuration management language
    :ref:`developing_modules`
        How to write modules

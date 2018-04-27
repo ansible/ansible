@@ -1,5 +1,8 @@
 .. contents:: Topics
 
+.. _shell_plugins:
+
+
 Shell Plugins
 -------------
 
@@ -36,17 +39,15 @@ detailed in the plugin themselves (linked below).
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`../user_guide/playbooks_filters`
+   :ref:`developing_filter_plugins`
        Jinja2 filter plugins
-   :doc:`../user_guide/playbooks_tests`
-       Jinja2 test plugins
-   :doc:`../user_guide/playbooks_lookups`
+   :ref:`lookup_plugins`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _strategy_plugins:
 
 Strategy Plugins
 ----------------
@@ -21,7 +22,7 @@ Using Strategy Plugins
 ++++++++++++++++++++++
 
 Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`linear <strategy/linear>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
+The default is the :ref:`linear <linear>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
 
 .. code-block:: shell
 
@@ -66,15 +67,15 @@ Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific do
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`playbooks_strategies`
+       Playbook strategies
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :ref:`playbooks_filters`
+   :ref:`developing_filter_plugins`
        Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
+   :ref:`lookup_plugins`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -122,7 +122,7 @@ of tasks running concurrently, you can do it this way::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -491,7 +491,7 @@ when a term comes up on the mailing list.
 
    :ref:`ansible_faq`
        Frequently asked questions
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
        Best practices advice

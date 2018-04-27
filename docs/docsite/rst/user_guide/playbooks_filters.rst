@@ -372,7 +372,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -394,75 +394,64 @@ through it, returning JSON output. The YAML spec file defines how to parse the C
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
-will parse the output from the ``show vlan`` command.
+will parse the output from the ``show vlan`` command.::
 
-.. code-block:: yaml
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        enabled: "{{ item.state != 'act/lshut' }}"
+        state: "{{ item.state }}"
 
-   ---
-   vars:
-     vlan:
-       vlan_id: "{{ item.vlan_id }}"
-       name: "{{ item.name }}"
-       enabled: "{{ item.state != 'act/lshut' }}"
-       state: "{{ item.state }}"
-
-   keys:
-     vlans:
-       value: "{{ vlan }}"
-       items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
-     state_static:
-       value: present
-
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
 
 The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values
 directives.  Here is an example of how to parse the output into a hash
-value using the same ``show vlan`` command.
+value using the same ``show vlan`` command.::
 
-.. code-block:: yaml
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+          vlan_id: "{{ item.vlan_id }}"
+          name: "{{ item.name }}"
+          enabled: "{{ item.state != 'act/lshut' }}"
+          state: "{{ item.state }}"
 
-   ---
-   vars:
-     vlan:
-       key: "{{ item.vlan_id }}"
-       values:
-         vlan_id: "{{ item.vlan_id }}"
-         name: "{{ item.name }}"
-         enabled: "{{ item.state != 'act/lshut' }}"
-         state: "{{ item.state }}"
-
-   keys:
-     vlans:
-       value: "{{ vlan }}"
-       items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
-     state_static:
-       value: present
-
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
 
 Another common use case for parsing CLI commands is to break a large command
 into blocks that can be parsed.  This can be done using the ``start_block`` and
-``end_block`` directives to break the command into blocks that can be parsed.
+``end_block`` directives to break the command into blocks that can be parsed.::
 
-.. code-block:: yaml
+    vars:
+      interface:
+        name: "{{ item[0].match[0] }}"
+        state: "{{ item[1].state }}"
+        mode: "{{ item[2].match[0] }}"
 
-   ---
-   vars:
-     interface:
-       name: "{{ item[0].match[0] }}"
-       state: "{{ item[1].state }}"
-       mode: "{{ item[2].match[0] }}"
-
-   keys:
-     interfaces:
-       value: "{{ interface }}"
-       start_block: "^Ethernet.*$"
-       end_block: "^$"
-       items:
-         - "^(?P<name>Ethernet\\d\\/\\d*)"
-         - "admin state is (?P<state>.+),"
-         - "Port mode is (.+)"
+    keys:
+      interfaces:
+        value: "{{ interface }}"
+        start_block: "^Ethernet.*$"
+        end_block: "^$"
+        items:
+          - "^(?P<name>Ethernet\\d\\/\\d*)"
+          - "admin state is (?P<state>.+),"
+          - "Port mode is (.+)"
 
 
 The example above will parse the output of ``show interface`` into a list of
@@ -493,59 +482,52 @@ The spec file should be valid formatted YAML. It defines how to parse the XML
 output and return JSON data.
 
 Below is an example of a valid spec file that
-will parse the output from the ``show vlan | display xml`` command.
+will parse the output from the ``show vlan | display xml`` command.::
 
-.. code-block:: yaml
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        desc: "{{ item.desc }}"
+        enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+        state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
 
-   ---
-   vars:
-     vlan:
-       vlan_id: "{{ item.vlan_id }}"
-       name: "{{ item.name }}"
-       desc: "{{ item.desc }}"
-       enabled: "{{ item.state.get('inactive') != 'inactive' }}"
-       state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
-
-   keys:
-     vlans:
-       value: "{{ vlan }}"
-       top: configuration/vlans/vlan
-       items:
-         vlan_id: vlan-id
-         name: name
-         desc: description
-         state: ".[@inactive='inactive']"
-
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
 
 The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values
 directives.  Here is an example of how to parse the output into a hash
-value using the same ``show vlan | display xml`` command.
+value using the same ``show vlan | display xml`` command.::
 
-.. code-block:: yaml
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+            vlan_id: "{{ item.vlan_id }}"
+            name: "{{ item.name }}"
+            desc: "{{ item.desc }}"
+            enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+            state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
 
-   ---
-   vars:
-     vlan:
-       key: "{{ item.vlan_id }}"
-       values:
-           vlan_id: "{{ item.vlan_id }}"
-           name: "{{ item.name }}"
-           desc: "{{ item.desc }}"
-           enabled: "{{ item.state.get('inactive') != 'inactive' }}"
-           state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
-
-   keys:
-     vlans:
-       value: "{{ vlan }}"
-       top: configuration/vlans/vlan
-       items:
-         vlan_id: vlan-id
-         name: name
-         desc: description
-         state: ".[@inactive='inactive']"
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
 
 
 The value of ``top`` is the XPath relative to the XML root node.
@@ -1048,17 +1030,17 @@ to be added to core so everyone can make use of them.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

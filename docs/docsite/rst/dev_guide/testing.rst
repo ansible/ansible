@@ -1,3 +1,5 @@
+.. _testing:
+
 ***************
 Testing Ansible
 ***************
@@ -19,17 +21,17 @@ Types of tests
 At a high level we have the following classifications of tests:
 
 :compile:
-  * :doc:`testing_compile`
+  * :ref:`testing_compile`
   * Test python code against a variety of Python versions.
 :sanity:
-  * :doc:`testing_sanity`
+  * :ref:`testing_sanity`
   * Sanity tests are made up of scripts and tools used to perform static code analysis.
   * The primary purpose of these tests is to enforce Ansible coding standards and requirements.
 :integration:
-  * :doc:`testing_integration`
+  * :ref:`testing_integration`
   * Functional tests of modules and Ansible core functionality.
 :units:
-  * :doc:`testing_units`
+  * :ref:`testing_units`
   * Tests directly against individual parts of the code base.
 
 
@@ -201,7 +203,7 @@ The code coverage reports only cover the ``devel`` branch of Ansible where new f
 development takes place.  Pull requests and new code will be missing from the codecov.io
 coverage reports so local reporting is needed.  Most ``ansible-test`` commands allow you
 to collect code coverage, this is particularly useful to indicate where to extend
-testing. See :doc:`testing_running_locally` for more information.
+testing. See :ref:`testing_running_locally` for more information.
 
 
 Want to know more about testing?

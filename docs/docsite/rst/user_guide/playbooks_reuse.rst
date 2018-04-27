@@ -69,7 +69,7 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
 
 .. seealso::
 
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        Review the basic Playbook language features
    :ref:`playbooks_variables`
        All about variables in playbooks

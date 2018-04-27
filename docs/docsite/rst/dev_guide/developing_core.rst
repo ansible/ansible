@@ -1,3 +1,5 @@
+.. _developing_core:
+
 Developing the Ansible Core Engine
 ==================================
 
@@ -13,9 +15,9 @@ those pieces work together.
 
 .. seealso::
 
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_plugins`
+   :ref:`developing_plugins`
        Learn about developing plugins
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        The development mailing list

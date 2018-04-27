@@ -289,7 +289,7 @@ Ansible will read all the files in these directories in lexicographical order. A
 
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
-file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
+file starts to be too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables. 
 
 Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
@@ -371,7 +371,7 @@ ansible_ssh_executable (added in version 2.2)
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
 
-Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
+Privilege escalation (see :ref:`Ansible Privilege Escalation<become>` for further details):
 
 ansible_become
     Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation
@@ -482,7 +482,7 @@ Here is an example of how to instantly deploy to created containers::
        Pulling inventory from dynamic sources, such as cloud providers
    :ref:`intro_adhoc`
        Examples of basic commands
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        Learning Ansible's configuration, deployment, and orchestration language.
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

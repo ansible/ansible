@@ -1,3 +1,5 @@
+.. _windows_faq:
+
 Windows Frequently Asked Questions
 ==================================
 
@@ -23,7 +25,7 @@ supported operating system versions are:
 * Windows 10
 
 Ansible also has minimum PowerShell version requirements - please see 
-:doc:`windows_setup` for the latest information.
+:ref:`windows_setup` for the lastest information.
 
 Can I Manage Windows Nano Server?
 `````````````````````````````````
@@ -67,7 +69,7 @@ authentication options. The closet option to SSH keys is to use the certificate
 authentication option which maps an X509 certificate to a local user.
 
 The way that these certificates are generated and mapped to a user is different
-from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
+from the SSH implementation; consult the :ref:`windows_winrm` documentation for 
 more information.
 
 .. _windows_faq_winrm:
@@ -93,7 +95,7 @@ Some ways to bypass these restrictions are to:
 
 * Use ``become``, which runs a command as it would when run locally. This will
   bypass most WinRM restrictions, as Windows is unaware the process is running
-  under WinRM when ``become`` is used. See the :doc:`become` documentation for more 
+  under WinRM when ``become`` is used. See the :ref:`become` documentation for more 
   information.
 
 * Use a scheduled task, which can be created with ``win_scheduled_task``. Like
@@ -107,8 +109,8 @@ Some ways to bypass these restrictions are to:
   authentication option that supports credential delegation can be used. Both
   CredSSP and Kerberos with credential delegation enabled can support this.
 
-See :doc:`become` more info on how to use become. The limitations section at
-:doc:`windows_winrm` has more details around WinRM limitations.
+See :ref:`become` more info on how to use become. The limitations section at
+:ref:`windows_winrm` has more details around WinRM limitations.
 
 This program won't install with Ansible
 ```````````````````````````````````````
@@ -179,7 +181,7 @@ Why are my credentials are being rejected?
 ``````````````````````````````````````````
 This can be due to a myriad of reasons unrelated to incorrect credentials.
 
-See HTTP 401/Credentials Rejected at :doc:`windows_setup` for a more detailed
+See HTTP 401/Credentials Rejected at :ref:`windows_setup` for a more detailed
 guide of this could mean.
 
 Why am I getting an error SSL CERTIFICATE_VERIFY_FAILED?
@@ -196,13 +198,13 @@ host.
 
 .. seealso::
 
-   :doc:`index`
+   :ref:`ansible_documentation`
        The documentation index
-   :doc:`windows`
+   :ref:`windows`
        The Windows documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

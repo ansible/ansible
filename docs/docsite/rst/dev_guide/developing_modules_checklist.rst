@@ -1,4 +1,4 @@
-.. _module_contribution:
+.. _developing_modules_checklist:
 
 ===================================
 Contributing Your Module to Ansible
@@ -23,7 +23,7 @@ The following  checklist items are important guidelines for people who want to c
 
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
 * Modules must be written to support Python 2.6. If this is not possible, required minimum Python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  In Ansible-2.3 the minimum requirement for modules was Python-2.4.
-* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_python3` for help on how to do this.
+* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :ref:`developing_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
   the metadata should look exactly like this:
 
@@ -53,7 +53,7 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
     * Verify that a GPL 3 License header is included.
     * Does module use check_mode? Could it be modified to use it? Document it. Documentation is everyone's friend.
     * Examples--include them whenever possible and make sure they are reproducible.
-    * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
+    * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`developing_modules_documenting` for additional information.
 * Predictable user interface: This is a particularly important section as it is also an area where we need significant improvements.
     * Name consistency across modules (we've gotten better at this, but we still have many deviations).
     * Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
@@ -108,7 +108,7 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :doc:`testing_pep8` for more information.
+* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :ref:`testing_pep8` for more information.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
@@ -137,7 +137,7 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
 Windows modules checklist
 =========================
 
-For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
+For a checklist and details on how to write Windows modules please see :ref:`developing_modules_general_windows`
 
 
 Deprecating and making module aliases

@@ -77,7 +77,7 @@ Ansible releases a new major release of Ansible approximately every two months. 
    reference_appendices/galaxy
    reference_appendices/common_return_values
    reference_appendices/config
-   reference_appendices/YAMLSyntax
+   reference_appendices/yaml_syntax
    reference_appendices/python_3_support
    reference_appendices/release_and_maintenance
    reference_appendices/test_strategies

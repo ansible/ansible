@@ -366,11 +366,11 @@ When shipped as part of a role, the plugin will be available as soon as the role
 
    :ref:`all_modules`
        List of all modules
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_inventory`
+   :ref:`developing_inventory`
        Learn about how to develop dynamic inventory sources
-   :doc:`developing_modules`
+   :ref:`developing_modules`
        Learn about how to write Ansible modules
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        The development mailing list

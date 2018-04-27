@@ -26,13 +26,13 @@ The strategies are implemented as plugins. In the future, new
 execution strategies can be added, either locally by users or to Ansible itself by
 a code contribution.
 
-One example is ``debug`` strategy. See :doc:`playbooks_debugger` for details.
+One example is ``debug`` strategy. See :ref:`playbooks_debugger` for details.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

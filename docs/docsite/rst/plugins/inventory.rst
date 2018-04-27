@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _inventory_plugins:
 
 Inventory Plugins
 -----------------
@@ -56,17 +57,15 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :ref:`playbooks_filters`
+   :ref:`developing_filter_plugins`
        Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
+   :ref:`lookup_plugins`
        Jinja2 lookup plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible vars plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

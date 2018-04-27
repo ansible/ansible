@@ -134,6 +134,7 @@ maintainers will on fixes towards the release candidate.
 Merging new features or fixes that are not related to the release candidate may
 be delayed in order to allow the new release to be shipped as soon as possible.
 
+.. _deprecated:
 
 Deprecation Cycle
 `````````````````

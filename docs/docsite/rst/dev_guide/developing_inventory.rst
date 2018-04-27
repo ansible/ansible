@@ -118,11 +118,11 @@ any other group.  A skeleton example of this JSON object is::
 
 .. seealso::
 
-   :doc:`developing_api`
+   :ref:`developing_api`
        Python API to Playbooks and Ad Hoc Task Execution
-   :doc:`developing_modules`
+   :ref:`developing_modules`
        How to develop modules
-   :doc:`developing_plugins`
+   :ref:`developing_plugins`
        How to develop plugins
    `Ansible Tower <https://ansible.com/ansible-tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory

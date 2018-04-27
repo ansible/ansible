@@ -1,3 +1,5 @@
+.. _playbooks_debugger:
+
 Playbook Debugger
 =================
 
@@ -271,7 +273,7 @@ may cause the rescheduled task to execute after subsequent tasks listed in your 
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

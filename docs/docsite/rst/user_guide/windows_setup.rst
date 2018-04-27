@@ -1,3 +1,5 @@
+.. _windows_setup:
+
 Setting up a Windows Host
 =========================
 This document discusses the setup that is required before Ansible can communicate with a Microsoft Windows host.
@@ -441,11 +443,11 @@ Windows host.
 
 .. seealso::
 
-   :doc:`index`
+   :ref:`ansible_documentation`
        The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

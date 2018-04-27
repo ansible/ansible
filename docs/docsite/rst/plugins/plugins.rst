@@ -1,4 +1,4 @@
-.. _plugins_lookup:
+.. _working_with_plugins:
 
 ********************
 Working With Plugins
@@ -32,7 +32,7 @@ This section covers the various types of plugins that are included with Ansible:
        An introduction to playbooks
    :ref:`ansible_configuration_settings`
        Ansible configuration documentation and settings
-   :doc:`../user_guide/command_line_tools`
+   :ref:`command_line_tools`
        Ansible tools, description and options
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

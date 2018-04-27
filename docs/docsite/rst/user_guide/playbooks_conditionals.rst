@@ -22,7 +22,7 @@ Sometimes you will want to skip a particular step on a particular host.
 This could be something as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible with the `when` clause, which contains a raw Jinja2 expression without double curly braces (see :doc:`playbooks_variables`).
+This is easy to do in Ansible with the `when` clause, which contains a raw Jinja2 expression without double curly braces (see :ref:`playbooks_variables`).
 It's actually pretty simple::
 
     tasks:
@@ -117,7 +117,7 @@ As the examples show, you don't need to use `{{ }}` to use variables inside cond
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with loops (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining `when` with loops (see :ref:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
@@ -173,7 +173,7 @@ Or with a role::
            when: ansible_os_family == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
-Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
+Read up on the 'group_by' module in the :ref:`modules` docs for a more streamlined way to accomplish the same thing.
 
 When used with `include_*` tasks instead of imports, the conditional is applied _only_ to the include task itself and not any other
 tasks within the included file(s). A common situation where this distinction is important is as follows::
@@ -384,7 +384,7 @@ Possible values::
 
 .. seealso::
 
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles

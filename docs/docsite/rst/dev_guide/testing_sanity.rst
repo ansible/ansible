@@ -1,3 +1,5 @@
+.. _testing_sanity:
+
 ************
 Sanity Tests
 ************
@@ -47,7 +49,7 @@ Verifies that ``ansible-doc`` can parse module documentation on all supported py
 pep8
 ~~~~
 
-Python static analysis for PEP 8 style guideline compliance. See :doc:`testing_pep8` for more information.
+Python static analysis for PEP 8 style guideline compliance. See :ref:`testing_pep8` for more information.
 
 pylint
 ~~~~~~
@@ -67,7 +69,7 @@ Static code analysis for shell scripts using the excellent `shellcheck <https://
 validate-modules
 ~~~~~~~~~~~~~~~~
 
-Analyze modules for common issues in code and documentation. See :doc:`testing_validate-modules` for more information.
+Analyze modules for common issues in code and documentation. See :ref:`testing_validate-modules` for more information.
 
 yamllint
 ~~~~~~~~

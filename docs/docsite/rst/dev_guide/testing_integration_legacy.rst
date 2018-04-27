@@ -1,3 +1,5 @@
+.. _testing_integration_legacy:
+
 *******************************************
 Testing using the Legacy Integration system
 *******************************************

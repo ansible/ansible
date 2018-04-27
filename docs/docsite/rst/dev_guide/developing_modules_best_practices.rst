@@ -1,4 +1,4 @@
-.. _module_dev_conventions:
+.. _developing_modules_best_practices:
 
 Conventions, Best Practices, and Pitfalls
 `````````````````````````````````````````

@@ -1,3 +1,5 @@
+.. _getting_started_guide:
+
 **************************************************
 An Introduction to Network Automation with Ansible
 **************************************************

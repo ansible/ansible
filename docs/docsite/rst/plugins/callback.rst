@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _callback_plugins:
 
 Callback Plugins
 ----------------
@@ -13,10 +14,10 @@ but can also be used to add additional output, integrate with other tools and ma
 Example Callback Plugins
 ++++++++++++++++++++++++
 
-The :doc:`_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
-and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
+The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file,
+and the :ref:`mail <mail_callback>` callback sends email on playbook failures.
 
-The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
+The :ref:`osx_say <osx_say_callback>` callback responds with computer synthesized speech on OS X in relation to playbook events.
 
 
 .. _enabling_callbacks:
@@ -87,19 +88,19 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
 
 .. seealso::
 
-   :doc:`action`
+   :ref:`action_plugins`
        Ansible Action plugins
-   :doc:`cache`
-       Ansible cache plugins
-   :doc:`connection`
+   :ref:`cache_plugins`
+       Ansible callback plugins
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -38,11 +38,11 @@ One way of using lookups is to populate variables. These macros are evaluated ea
       - debug:
           msg: "motd value is {{ motd_value }}"
 
-For more details and a complete list of lookup plugins available, please see :ref:`plugins_lookup`.
+For more details and a complete list of lookup plugins available, please see :ref:`lookup_plugins`.
 
 .. seealso::
 
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks

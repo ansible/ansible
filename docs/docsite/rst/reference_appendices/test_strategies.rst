@@ -264,7 +264,7 @@ system.
 
    :ref:`all_modules`
        All the documentation for Ansible modules
-   :ref:`working_with_playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_delegation`
        Delegation, useful for working with load balancers, clouds, and locally executed steps.

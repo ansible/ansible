@@ -72,7 +72,7 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
-Also be aware that when combining :doc:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
+Also be aware that when combining :ref:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
 See :ref:`the_when_statement` for an example.
 
 To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
@@ -248,7 +248,7 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
         msg: "{{ item }}"
       loop: "{{ query('inventory_hostnames', 'all!www') }}"
 
-More information on the patterns can be found on :doc:`intro_patterns`
+More information on the patterns can be found on :ref:`intro_patterns`
 
 .. _loop_control:
 
@@ -334,15 +334,15 @@ If you need to keep track of where you are in a loop, you can use the ``index_va
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _lookup_plugins:
 
 Lookup Plugins
 --------------
@@ -44,7 +45,7 @@ Lookup plugins can be used anywhere you can use templating in Ansible: in a play
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
 Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :doc:`items <lookup/items>` lookup:
+This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items>` lookup:
 
 .. code-block:: yaml
 
@@ -107,15 +108,13 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :ref:`playbooks_filters`
+   :ref:`developing_filter_plugins`
        Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
+   :ref:`lookup_plugins`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

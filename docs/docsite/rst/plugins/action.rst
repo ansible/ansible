@@ -1,3 +1,5 @@
+.. _action_plugins:
+
 Action Plugins
 ==============
 
@@ -32,19 +34,19 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
 
 .. seealso::
 
-   :doc:`cache`
+   :ref:`cache_plugins`
        Ansible Cache plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible Vars plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

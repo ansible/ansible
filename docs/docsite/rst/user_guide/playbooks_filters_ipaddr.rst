@@ -1,5 +1,7 @@
 :orphan:
 
+.. _playbooks_filters_ipaddr:
+
 ipaddr filter
 `````````````
 
@@ -486,19 +488,19 @@ convert it between various formats. Examples::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_filters`
+   :ref:`playbooks_filters`
        Introduction to Jinja2 filters and their uses
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
