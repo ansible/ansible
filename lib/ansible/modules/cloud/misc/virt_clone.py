@@ -33,6 +33,7 @@ options:
     default: true
     description:
         - Generates a new guest name, and paths for new storage - default true
+    type: bool
   mac:
     description:
         - Allows a pre-defined MAC address to be assigned to the cloned VM
@@ -111,7 +112,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            auto=dict(type='str', default=True),
+            auto=dict(type='bool', default=True),
             mac=dict(type='str'),
             name=dict(type='str', aliases=['dest', 'guest'], required=True),
             sysprep=dict(type='bool', default=False),
@@ -149,7 +150,7 @@ def main():
         if dest not in vms:
             if not module.check_mode:
                 virt_clone_params = ""
-                if module.params['auto']:
+                if module.params['auto'] is True:
                     virt_clone_params = virt_clone_params + " --auto-clone"
                 if module.params['mac']:
                     mac = module.params['mac']
