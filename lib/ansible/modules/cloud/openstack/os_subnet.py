@@ -99,7 +99,7 @@ options:
      description:
         - Dictionary with extra key/value pairs passed to the API
      required: false
-     default: None
+     default: {}
      version_added: "2.6"
 requirements:
     - "python >= 2.6"
@@ -237,7 +237,7 @@ def main():
         ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
         ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
         use_default_subnetpool=dict(default=False, type='bool'),
-        extra_specs=dict(required=False, default=None, type='dict'),
+        extra_specs=dict(required=False, default=dict(), type='dict'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)
     )
@@ -263,7 +263,7 @@ def main():
     ipv6_a_mode = module.params['ipv6_address_mode']
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
-    extra_specs = module.params['extra_specs'] or dict()
+    extra_specs = module.params['extra_specs']
 
     min_version = None
     if use_default_subnetpool:
