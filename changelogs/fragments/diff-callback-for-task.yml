@@ -1,0 +1,2 @@
+bugfixes:
+  - fix diff callback only being called when global diff option was set and not honoring task diff (https://github.com/ansible/ansible/issues/31129)
