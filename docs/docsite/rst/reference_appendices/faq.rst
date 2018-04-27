@@ -195,7 +195,7 @@ is likely the problem. There are several workarounds:
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
-* You can set :ref:`ansible_shell_executable` to the path to a POSIX compatible shell.  For
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
   this in inventory like so::
 
