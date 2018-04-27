@@ -1,0 +1,4 @@
+- name: delegated assert handler
+  assert:
+    that:
+      - ansible_delegated_vars is defined
