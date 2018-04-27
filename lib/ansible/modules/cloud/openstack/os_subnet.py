@@ -318,8 +318,10 @@ def main():
                     host_routes=host_routes,
                     ipv6_ra_mode=ipv6_ra_mode,
                     ipv6_address_mode=ipv6_a_mode,
-                    tenant_id=project_id,
-                    **extra_specs)
+                    tenant_id=project_id)
+                if any(spec in kwargs for spec in extra_specs):
+                    raise ValueError('Duplicate key in extra_specs')
+                kwargs = dict(kwargs, **extra_specs)
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
                 subnet = cloud.create_subnet(network_name, cidr, **kwargs)
