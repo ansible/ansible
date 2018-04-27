@@ -172,7 +172,7 @@ class AnsibleCloudStackRolePermission(AnsibleCloudStack):
 
         if self._get_role_perm():
             for _rule in self._get_role_perm():
-                if rule == _rule['rule'] or rule in _rule['id']:
+                if rule == _rule['rule'] or rule == _rule['id']:
                     return _rule
 
         return None
@@ -227,12 +227,6 @@ class AnsibleCloudStackRolePermission(AnsibleCloudStack):
         return rules
 
     def create_or_update_role_perm(self):
-        required_params = [
-            'name',
-            'permission',
-        ]
-        self.module.fail_on_missing_params(required_params=required_params)
-
         role_permission = self._get_rule()
 
         if not role_permission:
