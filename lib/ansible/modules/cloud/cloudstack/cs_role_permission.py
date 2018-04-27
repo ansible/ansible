@@ -30,22 +30,18 @@ options:
     description:
       - The rule permission, allow or deny. Defaulted to deny.
     choices: [ allow, deny ]
-    required: false
     default: deny
   state:
     description:
       - State of the role permission.
     choices: [ present, absent ]
-    required: false
     default: present
   description:
     description:
       - The description of the role permission.
-    required: false
   parent:
     description:
       - The parent role permission uuid. use 0 to move this rule at the top of the list.
-    required: false
 extends_documentation_fragment: cloudstack
 '''
 
@@ -65,14 +61,14 @@ EXAMPLES = '''
     role: "My_Custom_role"
     name: "createVPC"
 
-# Updete a system role permission
+# Update a system role permission
 - local_action:
     module: cs_role_permission
     role: "Domain Admin"
     name: "createVPC"
     permission: "deny"
 
-# Updade rules order. move the rule at the top of list
+# Update rules order. Move the rule at the top of list
 - local_action:
     module: cs_role_permission
     role: "Domain Admin"
