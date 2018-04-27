@@ -236,11 +236,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root', remote_user]  # plugin does not support admin_users
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except KeyError:
+        except AnsibleError:
             remote_tmp = '~/ansible'
 
         # deal with tmpdir creation
@@ -405,7 +405,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users')
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root']  # plugin does not support admin users
 
         if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
