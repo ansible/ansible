@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017-2018, Keller Fuchs <kellerfuchs@hashbang.sh>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,7 +16,7 @@ ANSIBLE_METADATA = {
 }
 
 
-DOCUMENTATION = r"""
+DOCUMENTATION = """
 ---
 module: ldap_passwd
 short_description: Set passwords in LDAP.
@@ -43,7 +45,7 @@ options:
 extends_documentation_fragment: ldap.documentation
 """
 
-EXAMPLES = r"""
+EXAMPLES = """
 - name: Set a password for the admin user
   ldap_passwd:
     dn: cn=admin,dc=example,dc=com
@@ -59,7 +61,7 @@ EXAMPLES = r"""
     admin: "{{ vault_secret }}"
 """
 
-RETURN = r"""
+RETURN = """
 modlist:
   description: list of modified parameters
   returned: success

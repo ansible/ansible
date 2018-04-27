@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,7 +17,7 @@ ANSIBLE_METADATA = {
 }
 
 
-DOCUMENTATION = r"""
+DOCUMENTATION = """
 ---
 module: ldap_entry
 short_description: Add or remove LDAP entries.
@@ -60,7 +62,7 @@ extends_documentation_fragment: ldap.documentation
 """
 
 
-EXAMPLES = r"""
+EXAMPLES = """
 - name: Make sure we have a parent entry for users
   ldap_entry:
     dn: ou=users,dc=example,dc=com
@@ -100,7 +102,7 @@ EXAMPLES = r"""
 """
 
 
-RETURN = r"""
+RETURN = """
 # Default return values
 """
 
@@ -109,11 +111,12 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ldap import LdapGeneric, gen_specs, HAS_LDAP
+from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
 try:
     import ldap.modlist
-    # HAS_LDAP imported from ansible.module_utils.ldap
+
+    HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
 
