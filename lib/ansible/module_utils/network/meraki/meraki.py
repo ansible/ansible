@@ -8,9 +8,6 @@
 # to the complete work.
 
 # Copyright: (c) 2018, Kevin Breit <kevin.breit@kevinbreit.net>
-# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
-# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
-# Copyright: (c) 2017, Swetha Chunduri (@schunduri)
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without modification,
@@ -41,25 +38,24 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
-                name=dict(type='str'),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
-                org_name=dict(type='str'),
+                org_name=dict(type='str', aliases=['organization']),
                 org_id=dict(type='str'),
                 )
 
 
 class MerakiModule(object):
 
-    def __init__(self, module):
+    def __init__(self, module, function=None):
         self.module = module
         self.params = module.params
         self.result = dict(changed=False)
         self.headers = dict()
-        self.function = None
+        self.function = function
 
         if module.params['auth_key'] is None:
             module.fail_json(msg='Meraki API key not specified')
@@ -88,20 +84,23 @@ class MerakiModule(object):
         self.status = None
         self.url = None
 
+        '''
+        If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
+        '''
         self.get_urls = {'organizations': '/organizations',
-                         'networks': '/organizations/replace_org_id/networks',
-                         'admins': '/organizations/replace_org_id/admins',
-                         'configTemplates': '/organizations/replace_org_id/configTemplates',
-                         'samlRoles': '/organizations/replace_org_id/samlRoles',
-                         'ssids': '/networks/replace_net_id/ssids',
-                         'groupPolicies': '/networks/replace_net_id/groupPolicies',
-                         'staticRoutes': '/networks/replace_net_id/staticRoutes',
-                         'vlans': '/networks/replace_net_id/vlans',
-                         'devices': '/networks/replace_net_id/devices',
+                         'networks': '/organizations/{org_id}/networks',
+                         'admins': '/organizations/{org_id}/admins',
+                         'configTemplates': '/organizations/{org_id}/configTemplates',
+                         'samlRoles': '/organizations/{org_id}/samlRoles',
+                         'ssids': '/networks/{net_id}/ssids',
+                         'groupPolicies': '/networks/{net_id}/groupPolicies',
+                         'staticRoutes': '/networks/{net_id}/staticRoutes',
+                         'vlans': '/networks/{net_id}/vlans',
+                         'devices': '/networks/{net_id}/devices',
                          }
 
-        self.get_one_urls = {'organizations': '/organizations/replace_org_id',
-                             'networks': 'networks/replace_net_id',
+        self.get_one_urls = {'organizations': '/organizations/{org_id}',
+                             'networks': '/networks/{net_id}',
                              }
 
         # Module should add URLs which are required by the module
@@ -122,11 +121,13 @@ class MerakiModule(object):
                                    ]
         self.module.mutually_exclusive = [('org_id', 'org_name'),
                                           ]
-        # Validate whether parameters are compatible
-        if self.params['state'] == 'absent':
-            if self.params['org_name'] or self.params['org_id']:
-                module.fail_json('State cannot be absent if specifying org_name or org_id.')
         self.modifiable_methods = ['POST', 'PUT', 'DELETE']
+
+        if self.params['auth_key'] is None:
+            try:
+                self.params['auth_key'] = os.environ['MERAKI_KEY']
+            except KeyError:
+                self.fail_json(msg='Meraki Dashboard API key not set')
 
     def define_protocol(self):
         ''' Set protocol based on use_https parameters '''
@@ -166,41 +167,41 @@ class MerakiModule(object):
                     is_changed = True
         return is_changed
 
-    def is_new(self):
-        ''' Check whether an object is new and should be created '''
-        r = self.get_existing(self.path)
-        for i in r:
-            if self.module.params['name'] == i['name']:
-                return False
-        return True
+    # def is_new(self):
+    #     ''' Check whether an object is new and should be created '''
+    #     r = self.get_existing(self.path)
+    #     for i in r:
+    #         if self.module.params['name'] == i['name']:
+    #             return False
+    #     return True
 
-    def get_existing(self, path):
-        ''' Query existing objects associated to path. May not need to stay. '''
-        self.define_protocol()
-        self.path = path
+    # def get_existing(self, path):
+    #     ''' Query existing objects associated to path. May not need to stay. '''
+    #     self.define_protocol()
+    #     self.path = path
 
-        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'],
-                                                 self.params['host'],
-                                                 self.path.lstrip('/')
-                                                 )
-        resp, info = fetch_url(self.module, self.url,
-                               headers=self.headers,
-                               method='GET',
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'],
-                               )
-        self.response = info['msg']
-        self.status = info['status']
-        response = json.loads(to_native(resp.read()))
+    #     self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'],
+    #                                              self.params['host'],
+    #                                              self.path.lstrip('/')
+    #                                              )
+    #     resp, info = fetch_url(self.module, self.url,
+    #                            headers=self.headers,
+    #                            method='GET',
+    #                            timeout=self.params['timeout'],
+    #                            use_proxy=self.params['use_proxy'],
+    #                            )
+    #     self.response = info['msg']
+    #     self.status = info['status']
+    #     response = json.loads(to_native(resp.read()))
 
-        if self.status >= 300:
-            try:
-                self.error['text'] = self.response_json(info['body'])
-                self.error['code'] = info['status']
-                self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
-            except KeyError:
-                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-        return response
+    #     if self.status >= 300:
+    #         try:
+    #             self.error['text'] = self.response_json(info['body'])
+    #             self.error['code'] = info['status']
+    #             self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
+    #         except KeyError:
+    #             self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
+    #     return response
 
     def get_orgs(self):
         ''' Downloads all organizations '''
@@ -261,16 +262,16 @@ class MerakiModule(object):
         else:
             self.function = function
             built_path = self.url_catalog[action][function]
-        if 'replace_org_id' in built_path:  # TODO: This is a mess, fix it
+        if 'org_id' in built_path:  # TODO: This is a mess, fix it
             if org_id is None:
-                return built_path.replace('replace_org_id', self.get_org_id(org_name))
+                built_path = built_path.format(org_id=self.get_org_id(org_name))
             else:
-                return built_path.replace('replace_org_id', str(org_id))
-        elif 'replace_net_id' in built_path:
+                built_path = built_path.format(org_id=str(org_id))
+        elif 'net_id' in built_path:
             if net_id is None:
-                return built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
+                built_path = built_path.format(net_id=self.get_net_id(self.module.params['net_name']))
             else:
-                return built_path.replace('replace_net_id', str(net_id))
+                built_path = built_path.format(net_id=str(net_id))
         return built_path
 
     def request(self, path, method=None, payload=None):
@@ -283,21 +284,13 @@ class MerakiModule(object):
         if method is not None:
             self.method = method
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
-        if payload is None:
-            resp, info = fetch_url(self.module, self.url,
-                                   headers=self.headers,
-                                   method=self.method,
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'],
-                                   )
-        elif payload:
-            resp, info = fetch_url(self.module, self.url,
-                                   headers=self.headers,
-                                   data=payload,
-                                   method=self.method,
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'],
-                                   )
+        resp, info = fetch_url(self.module, self.url,
+                               headers=self.headers,
+                               data=payload,
+                               method=self.method,
+                               timeout=self.params['timeout'],
+                               use_proxy=self.params['use_proxy'],
+                               )
         self.response = info['msg']
         self.status = info['status']
 
@@ -326,22 +319,21 @@ class MerakiModule(object):
             if self.params['state'] in ('absent', 'present'):
                 if self.params['output_level'] in ('debug', 'info'):
                     self.result['previous'] = self.existing
-
+        self.result['response'] = self.response
+        self.result['status'] = self.status
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
             if 'state' in self.params:
                 self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
             # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
-            self.result['response'] = self.response
-            self.result['status'] = self.status
+
             self.result['url'] = self.url
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
-
         # Return error information, if we have it
         if self.error['code'] is not None and self.error['text'] is not None:
             self.result['error'] = self.error
@@ -350,6 +342,8 @@ class MerakiModule(object):
             if self.params['state'] in ('absent', 'present'):
                 if self.params['output_level'] in ('debug', 'info'):
                     self.result['previous'] = self.existing
+        self.result['response'] = self.response
+        self.result['status'] = self.status
 
         if self.params['output_level'] == 'debug':
             if self.url is not None:
@@ -357,8 +351,6 @@ class MerakiModule(object):
                     self.result['filter_string'] = self.filter_string
                 self.result['method'] = self.method
                 # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
-                self.result['response'] = self.response
-                self.result['status'] = self.status
                 self.result['url'] = self.url
 
         if 'state' in self.params:

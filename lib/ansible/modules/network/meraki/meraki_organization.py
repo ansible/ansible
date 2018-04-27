@@ -13,42 +13,47 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: meraki_organization
 short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
-- Allows for creation, management, and visibility into organizations within Meraki
+- Allows for creation, management, and visibility into organizations within Meraki.
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki
+- Some of the options are likely only used for developers within Meraki.
 options:
-    name:
-        description:
-        - Name of an organization.
-        - If C(clone) is specified, C(name) is the name of the new organization.
     state:
         description:
-        - Create or modify an organization
+        - Create or modify an organization.
         choices: ['present', 'query']
-        required: true
+        default: present
     clone:
         description:
         - Organization to clone to a new organization.
     org_name:
         description:
         - Name of organization.
-        - Used when C(name) should refer to another object.
+        - If C(clone) is specified, C(name) is the name of the new organization.
+        aliases: [ name, organization ]
     org_id:
         description:
-        - ID of organization
+        - ID of organization.
+        aliases: [ id ]
 author:
-    - Kevin Breit (@kbreit)
+- Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
+- name: Create a new organization named YourOrg
+  meraki_organization:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+  delegate_to: localhost
+
 - name: Query information about all organizations associated to the user
   meraki_organization:
     auth_key: abc12345
@@ -58,27 +63,20 @@ EXAMPLES = '''
 - name: Query information about a single organization named YourOrg
   meraki_organization:
     auth_key: abc12345
-    name: YourOrg
+    org_name: YourOrg
     state: query
-  delegate_to: localhost
-
-- name: Create a new organization named YourOrg
-  meraki_organization:
-    auth_key: abc12345
-    name: YourOrg
-    state: present
   delegate_to: localhost
 
 - name: Clone an organization named Org to a new one called ClonedOrg
   meraki_organization:
     auth_key: abc12345
     clone: Org
-    name: ClonedOrg
+    org_name: ClonedOrg
     state: present
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 response:
     description: Data returned from Meraki dashboard.
     type: dict
@@ -98,7 +96,9 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['present', 'query'], required=True),
+                         state=dict(type='str', choices=['present', 'query'], default='present'),
+                         org_name=dict(type='str', aliases=['name', 'organization']),
+                         org_id=dict(type='int', aliases=['id']),
                          )
 
     # seed the result dict in the object
@@ -109,46 +109,34 @@ def main():
     result = dict(
         changed=False,
     )
-
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
-    meraki = MerakiModule(module)
+    meraki = MerakiModule(module, function='organizations')
 
-    meraki.function = 'organizations'
     meraki.params['follow_redirects'] = 'all'
-    meraki.required_if = [['state', 'present', ['name']],
-                          ['clone', ['name']],
-                          ]
 
     create_urls = {'organizations': '/organizations',
                    }
-    update_urls = {'organizations': '/organizations/replace_org_id',
+    update_urls = {'organizations': '/organizations/{org_id}',
                    }
-    clone_urls = {'organizations': '/organizations/replace_org_id/clone',
+    clone_urls = {'organizations': '/organizations/{org_id}/clone',
                   }
 
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
     meraki.url_catalog['clone'] = clone_urls
 
-    try:
-        meraki.params['auth_key'] = os.environ['MERAKI_KEY']
-    except KeyError:
-        pass
-
-    if meraki.params['auth_key'] is None:
-        meraki.fail_json(msg='Meraki Dashboard API key not set')
-
     payload = None
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
+    # FIXME: Work with Meraki so they can implement a check mode
     if module.check_mode:
         return meraki.result
 
@@ -157,20 +145,20 @@ def main():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
     if meraki.params['state'] == 'query':
-        if meraki.params['name'] is None:  # Query all organizations, no matter what
-            orgs = meraki.get_orgs()
-            meraki.result['organization'] = orgs
-        elif meraki.params['name'] is not None:  # Query by organization name
+        if meraki.params['org_name']:  # Query by organization name
             module.warn('All matching organizations will be returned, even if there are duplicate named organizations')
             orgs = meraki.get_orgs()
             for o in orgs:
-                if o['name'] == meraki.params['name']:
-                    meraki.result['organization'] = o
+                if o['name'] == meraki.params['org_name']:
+                    meraki.result['data'] = o
+        else:  # Query all organizations, no matter what
+            orgs = meraki.get_orgs()
+            meraki.result['data'] = orgs
     elif meraki.params['state'] == 'present':
-        if meraki.params['clone'] is not None:  # Cloning
-            payload = {'name': meraki.params['name']}
-            # meraki.fail_json(msg=meraki.construct_path('clone', org_name=meraki.params['clone']))
-            meraki.result['response'] = json.loads(
+        # meraki.fail_json(msg='Create new org')
+        if meraki.params['clone']:  # Cloning
+            payload = {'name': meraki.params['org_name']}
+            meraki.result['data'] = json.loads(
                 meraki.request(
                     meraki.construct_path(
                         'clone',
@@ -178,17 +166,17 @@ def main():
                     ),
                     payload=json.dumps(payload),
                     method='POST'))
-        elif meraki.params['org_id'] is None and meraki.params['name'] is not None:  # Create new organization
-            payload = {'name': meraki.params['name']}
-            meraki.result['response'] = json.loads(
+        elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
+            payload = {'name': meraki.params['org_name']}
+            meraki.result['data'] = json.loads(
                 meraki.request(
                     meraki.construct_path('create'),
                     payload=json.dumps(payload)))
-        elif meraki.params['org_id'] is not None and meraki.params['name'] is not None:  # Update an existing organization
-            payload = {'name': meraki.params['name'],
+        elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
+            payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
                        }
-            meraki.result['response'] = json.loads(
+            meraki.result['data'] = json.loads(
                 meraki.request(
                     meraki.construct_path(
                         'update',
