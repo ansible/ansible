@@ -38,7 +38,6 @@ def main():
 
     ignore_codes = [
         'literal-block-lex-error',
-        'undefined-label',
         'reference-target-not-found',
         'not-in-toc-tree',
     ]
