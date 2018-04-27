@@ -124,6 +124,7 @@ def haversine(coordinates):
     if isinstance(coordinates, list):
         if (len(coordinates) == 4):
             lat1, lon1, lat2, lon2 = coordinates
+            unit = None
         elif (len(coordinates) == 5):
             lat1, lon1, lat2, lon2, unit = coordinates
         else:
@@ -148,11 +149,9 @@ def haversine(coordinates):
     except ValueError as e:
         raise errors.AnsibleFilterError('haversine() only accepts floats: %s' % str(e))
 
-    try:
-        if ('unit' in locals() and unit is not None):
-            assert unit in ['m', 'km']
-    except AssertionError:
-        raise errors.AnsibleFilterError('haversine() unit must be m or km if defined')
+    if (unit is not None):
+        if unit not in ['m', 'km']:
+            raise errors.AnsibleFilterError('haversine() unit must be m or km if defined')
 
     try:
         dlat = radians(lat2 - lat1)
@@ -165,7 +164,7 @@ def haversine(coordinates):
     except Exception as e:
         raise errors.AnsibleFilterError('haversine() something went wrong: %s' % str(e))
 
-    if ('unit' in locals() and unit is not None):
+    if (unit is not None):
         return round(diameter[unit] / 2 * c, 2)
     else:
         return {

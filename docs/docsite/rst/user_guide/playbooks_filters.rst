@@ -281,6 +281,13 @@ Haversine, great-circle distance between two coordinates using a dict::
     # Returns a dict with distances m & km
     {{ { 'lat1': '35.9914928', 'lon1': '-78.907046', 'lat2': '-33.8523063', 'lon2': '151.2085984'}|haversine }}
 
+Haversine distance specifying the unit of measure to return::
+
+    # Returns kilometers (km)
+    {{ ['35.9914928','-78.907046','-33.8523063','151.2085984','km']|haversine }}
+    # Returns miles (m)
+    {{ { 'lat1': '35.99', 'lon1': '-78.90', 'lat2': '-33.85', 'lon2': '151.20', 'unit': 'm'}|haversine }}
+
 Note that jinja2 already provides some like abs() and round().
 
 .. json_query_filter:

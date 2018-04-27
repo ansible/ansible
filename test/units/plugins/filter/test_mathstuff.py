@@ -107,7 +107,7 @@ class TestPower:
 
 
 class TestHaversine:
-    def test_haversine_non_number(self):
+    def test_haversine_errors(self):
         with pytest.raises(AnsibleFilterError, message='haversine() only accepts floats'):
             ms.haversine(['a', 'b', 'c', 'd'])
 
