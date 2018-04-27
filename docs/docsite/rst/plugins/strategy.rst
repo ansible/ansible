@@ -34,7 +34,7 @@ or in the `ansible.cfg` file:
     [defaults]
     strategy=linear
 
-You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbooks_keywords>` in a play::
+You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbook_keywords>` in a play::
 
   - hosts: all
     strategy: debug
