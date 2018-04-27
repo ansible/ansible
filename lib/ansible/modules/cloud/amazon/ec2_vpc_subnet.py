@@ -579,7 +579,7 @@ def main():
         module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
 
     if LooseVersion(botocore.__version__) < "1.7.0":
-        module.warn("boto3 >= 1.4.7 (or botocore >= 1.7.0) is required to use wait_timeout for custom wait times")
+        module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
