@@ -1,4 +1,4 @@
 cloud/aws
 posix/ci/cloud/group4/aws
-disabled
+unstable
 ec2_ami_facts
