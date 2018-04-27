@@ -691,6 +691,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if module_args is None:
             module_args = self._task.args
 
+        if self._connection._shell.tmpdir is None:
+            self._make_tmp_path()
+        tmpdir = self._connection._shell.tmpdir
+
         self._update_module_args(module_name, module_args, task_vars)
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
@@ -699,15 +703,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        tmpdir = self._connection._shell.tmpdir
         remote_module_path = None
-
         if not self._is_pipelining_enabled(module_style, wrap_async):
-            # we might need remote tmp dir
-            if tmpdir is None:
-                self._make_tmp_path()
-                tmpdir = self._connection._shell.tmpdir
-
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmpdir, remote_module_filename)
 
