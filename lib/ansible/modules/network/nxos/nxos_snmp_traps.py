@@ -44,8 +44,8 @@ options:
         required: true
         choices: ['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
           'eigrp', 'entity', 'feature-control', 'generic', 'hsrp', 'license',
-          'link', 'lldp', mmode', 'ospf', 'pim', 'rf', 'rmon', 'snmp',
-          'storm-control', 'stpx', 'switchfabric', syslog', 'sysmgr', 'system',
+          'link', 'lldp', 'mmode', 'ospf', 'pim', 'rf', 'rmon', 'snmp',
+          'storm-control', 'stpx', 'switchfabric', 'syslog', 'sysmgr', 'system',
           'upgrade', 'vtp', 'all']
     state:
         description:
