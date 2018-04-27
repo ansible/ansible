@@ -308,6 +308,7 @@ def main():
         if state == 'present':
             if not subnet:
                 kwargs = dict(
+                    cidr=cidr,
                     ip_version=ip_version,
                     enable_dhcp=enable_dhcp,
                     subnet_name=subnet_name,
@@ -324,7 +325,7 @@ def main():
                 kwargs = dict(kwargs, **extra_specs)
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
-                subnet = cloud.create_subnet(network_name, cidr, **kwargs)
+                subnet = cloud.create_subnet(network_name, **kwargs)
                 changed = True
             else:
                 if _needs_update(subnet, module, cloud):
