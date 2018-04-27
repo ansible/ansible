@@ -29,7 +29,7 @@ into the ``connection_plugins`` directory.
 Using Connection Plugins
 ++++++++++++++++++++++++
 
-The transport can be changed via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbooks_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
+The transport can be changed via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbook_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
 For example, for Windows machines you might want to use the :doc:`winrm<connection/winrm>` plugin.
 
 Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory hostname<inventory_hostnames_lookup>` and defaults to find the target host.
