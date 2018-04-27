@@ -320,8 +320,10 @@ def main():
                     ipv6_ra_mode=ipv6_ra_mode,
                     ipv6_address_mode=ipv6_a_mode,
                     tenant_id=project_id)
-                if any(spec in kwargs for spec in extra_specs):
-                    raise ValueError('Duplicate key in extra_specs')
+                dup_args = set(kwargs.keys()) & set(extra_specs.keys())
+                if dup_args:
+                    raise ValueError('Duplicate key(s) {0} in extra_specs'
+                                     .format(list(dup_args)))
                 kwargs = dict(kwargs, **extra_specs)
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
