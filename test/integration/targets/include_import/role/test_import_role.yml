@@ -136,3 +136,8 @@
         - name: Include role inside always
           import_role:
             name: role3
+
+    - name: Test delegate_to handler is delegated
+      import_role:
+        name: delegated_handler
+      delegate_to: localhost
