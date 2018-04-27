@@ -27,7 +27,7 @@ description:
 options:
   resource_group:
     description:
-      - Name of the resource group containing the virtual machines.
+      - Name of the resource group containing the virtual machines (required when filtering by vm name).
   name:
     description:
       - Name of the virtual machine.
@@ -287,9 +287,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str'),
             name=dict(type='str'),
-            tags=dict(type='list'),
-            auth_source=dict(type='str', choices=['auto', 'cli', 'env', 'credential_file', 'msi'], default='auto'),
-            cloud_environment=dict(type='str', default='AzureCloud')
+            tags=dict(type='list')
         )
 
         self.results = dict(
@@ -326,8 +324,8 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         try:
             item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError:
-            pass
+        except CloudError as err:
+            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
 
         if item and self.has_tags(item.tags, self.tags):
             result = [self.serialize_vm(item)]
