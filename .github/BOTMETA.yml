@@ -36,8 +36,6 @@ automerge: True
 files:
   .github/BOTMETA.yml:
     labels: botmeta
-  $modules/cloud/amazon/:
-    notify: willthames
   $modules/cloud/amazon/aws_api_gateway.py: mikedlr willthames
   $modules/cloud/amazon/aws_direct_connect_connection.py: s-hertel
   $modules/cloud/amazon/aws_direct_connect_link_aggregation_group.py: s-hertel
@@ -102,12 +100,17 @@ files:
     maintainers: brandond willthames
   $modules/cloud/amazon/ec2_vpc_subnet_facts.py: wimnat
   $modules/cloud/amazon/ec2_vpc_vgw.py: naslanidis
-  $modules/cloud/amazon/ec2_vpc_vgw_facts.py: naslanidis willthames
+  $modules/cloud/amazon/ec2_vpc_vgw_facts.py: naslanidis
   $modules/cloud/amazon/ec2_win_password.py: rickmendes
+  $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: leedm777 willthames
   $modules/cloud/amazon/ecs_service.py:
     ignored: simplesteph
-  $modules/cloud/amazon/ecs_service_facts.py: java1guy kaczynskid
+    maintainers: willthames
+  $modules/cloud/amazon/ecs_service_facts.py: java1guy kaczynskid willthames
+  $modules/cloud/amazon/ecs_task.py: willthames
+  $modules/cloud/amazon/ecs_taskdefinition.py: willthames
+  $modules/cloud/amazon/ecs_taskdefinition_facts.py: willthames
   $modules/cloud/amazon/efs.py: akazakov ryansydnor
   $modules/cloud/amazon/efs_facts.py: ryansydnor
   $modules/cloud/amazon/elasticache.py: alachaum jsdalton
@@ -132,7 +135,7 @@ files:
   $modules/cloud/amazon/kinesis_stream.py: linuxdynasty
   $modules/cloud/amazon/lambda.py: steynovich
   $modules/cloud/amazon/lambda_facts.py: pjodouin
-  $modules/cloud/amazon/lightsail.py: nickball willthames
+  $modules/cloud/amazon/lightsail.py: nickball
   $modules/cloud/amazon/rds_param_group.py: scottanderson42 tastychutney
   $modules/cloud/amazon/rds_subnet_group.py: scottanderson42 tastychutney
   $modules/cloud/amazon/redshift.py: j-carl
@@ -148,6 +151,7 @@ files:
   $modules/cloud/amazon/s3_sync.py: tedder
   $modules/cloud/amazon/s3_website.py: wimnat
   $modules/cloud/amazon/sns.py: mjschultz willthames
+  $modules/cloud/amazon/sns_topic.py: willthames
   $modules/cloud/amazon/sqs_queue.py: loia nadirollo nand0p
   $modules/cloud/amazon/sts_assume_role.py: bekelchik
   $modules/cloud/amazon/sts_session_token.py: pwnall
