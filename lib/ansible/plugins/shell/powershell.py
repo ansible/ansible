@@ -21,12 +21,6 @@ DOCUMENTATION = '''
           key: remote_tmp
         vars:
         - name: ansible_remote_tmp
-      admin_users:
-        description:
-        - List of users to be expected to have admin privileges, this is unused
-          in the PowerShell plugin
-        type: list
-        default: []
       set_module_language:
         description:
         - Controls if we set the locale for moduels when executing on the
