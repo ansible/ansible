@@ -16,7 +16,7 @@ Describe the requirements and assumptions for this scenario.
 Example Description
 ===================
 
-Desription and code here.
+Description and code here.
 
 
 Example Output

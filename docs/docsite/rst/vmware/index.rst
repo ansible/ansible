@@ -1,7 +1,7 @@
 .. _vmware_ansible:
 
 ******************
-Ansible for VMW\ware
+Ansible for VMware
 ******************
 
 Welcome to the Ansible for VMware Guide! This is a set of placeholder docs to be filled in.
@@ -21,3 +21,5 @@ To get started, please select one of the following topics.
    vmware_scenarios
    vmware_module_reference
    vmware_troubleshooting
+   vmware_external_doc_links
+   faq

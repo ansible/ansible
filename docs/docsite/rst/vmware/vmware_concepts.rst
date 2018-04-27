@@ -9,7 +9,7 @@ Introduction...blah blah
 Concept 1
 =========
 
-Explanaton goes here.
+Explanation goes here.
 
 Concept 2
 =========
