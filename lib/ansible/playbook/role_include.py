@@ -96,6 +96,8 @@ class IncludeRole(TaskInclude):
 
         # updated available handlers in play
         handlers = actual_role.get_handler_blocks(play=myplay)
+        for h in handlers:
+            h._parent = self
         myplay.handlers = myplay.handlers + handlers
         return blocks, handlers
 

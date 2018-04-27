@@ -333,10 +333,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
-                    t = task_list.extend(blocks)
+                    task_list.extend(blocks)
                 else:
                     # passes task object itself for latter generation of list
-                    t = task_list.append(ir)
+                    task_list.append(ir)
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
