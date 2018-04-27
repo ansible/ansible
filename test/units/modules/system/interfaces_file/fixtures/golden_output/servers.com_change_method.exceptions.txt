@@ -1,0 +1,8 @@
+fail_json message: Error: interface eth0 not found
+options:
+{
+    "iface": "eth0",
+    "option": "method",
+    "state": "present",
+    "value": "manual"
+}
