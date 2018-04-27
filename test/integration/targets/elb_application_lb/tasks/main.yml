@@ -59,9 +59,6 @@
       - cidr: 10.228.231.0/25
         az: "b"
         public: "False"
-      - cidr: 10.228.231.128/25
-        az: "c"
-        public: "True"
     register: subnets
 
   - ec2_vpc_subnet_facts:
