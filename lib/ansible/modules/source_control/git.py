@@ -44,7 +44,7 @@ options:
     accept_hostkey:
         description:
             - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
-              present as an ssh options.
+              present as an ssh option.
         type: bool
         default: 'no'
         version_added: "1.5"
