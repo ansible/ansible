@@ -598,8 +598,13 @@ class PyVmomiCache(object):
         self.esx_hosts = {}
         self.parent_datacenters = {}
 
-    def find_obj(self, content, types, name, confine_to_datacenter=True):
+    def find_obj(self, content, types, name, confine_to_datacenter=True, return_list=False):
         """ Wrapper around find_obj to set datacenter context """
+        if return_list:
+            resource_pool_list = self.get_all_objs(content, types, confine_to_datacenter=True)
+            resource_pool_list = filter(lambda x: x.name == name, resource_pool_list)
+            return resource_pool_list
+
         result = find_obj(content, types, name)
         if result and confine_to_datacenter:
             if self.get_parent_datacenter(result).name != self.dc_name:
@@ -1639,11 +1644,16 @@ class PyVmomiHelper(PyVmomi):
             if current_parent is None:
                 return False
 
-    def select_resource_pool_by_name(self, resource_pool_name):
-        resource_pool = self.cache.find_obj(self.content, [vim.ResourcePool], resource_pool_name)
-        if resource_pool is None:
+    def select_resource_pool_by_name(self, resource_pool_name, cluster=None):
+        resource_pools = self.cache.find_obj(self.content, [vim.ResourcePool], resource_pool_name, return_list=True)
+        if resource_pools is None or len(resource_pools) == 0:
             self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
-        return resource_pool
+        if cluster:
+            for resource_pool in resource_pools:
+                if resource_pool.owner.name == cluster:
+                    return resource_pool
+            self.module.fail_json(msg='Could not find resource_pool "%s" matching cluster' % resource_pool_name)
+        return resource_pools[0]
 
     def select_resource_pool_by_host(self, host):
         resource_pools = self.cache.get_all_objs(self.content, [vim.ResourcePool])
@@ -1714,7 +1724,10 @@ class PyVmomiHelper(PyVmomi):
         resource_pool = None
         # highest priority, resource_pool given.
         if self.params['resource_pool']:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            cluster = None
+            if self.params['cluster']:
+                cluster = self.params['cluster']
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'], cluster=cluster)
         # next priority, esxi hostname given.
         elif self.params['esxi_hostname']:
             host = self.select_host()
