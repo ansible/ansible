@@ -22,9 +22,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
 
