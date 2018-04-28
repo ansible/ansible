@@ -280,8 +280,9 @@ def main():
                 else:
                     try:
                         os.unlink(b_path)
-                    except Exception as e:
-                        module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
+                    except OSError as e:
+                        if e.errno != errno.ENOENT:  # It may already have been removed
+                            module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
             module.exit_json(path=path, changed=True, diff=diff)
         else:
             module.exit_json(path=path, changed=False)
@@ -414,7 +415,11 @@ def main():
                         os.rmdir(b_path)
                     elif prev_state == 'directory' and state == 'hard':
                         if os.path.exists(b_path):
-                            os.remove(b_path)
+                            try:
+                                os.unlink(b_path)
+                            except OSError as e:
+                                if e.errno != errno.ENOENT:  # It may already have been removed
+                                    raise
                     if state == 'hard':
                         os.link(b_src, b_tmppath)
                     else:
