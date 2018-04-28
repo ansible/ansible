@@ -2,68 +2,69 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-  when: "{{ ansible_user_id == 'root' }}"
+# TODO: akasurde: VCSIM does not suport network manager system
+#- name: Make sure pyvmomi is installed
+#  pip:
+#    name: pyvmomi
+#    state: latest
+#  when: "{{ ansible_user_id == 'root' }}"
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: '{{ lookup("env", "vcenter_host") }}'
+#- name: store the vcenter container ip
+#  set_fact:
+#    vcsim: '{{ lookup("env", "vcenter_host") }}'
 
-- debug:
-    var: vcsim
+#- debug:
+#    var: vcsim
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 5000
-    state: started
+#- name: Wait for Flask controller to come up online
+#  wait_for:
+#    host: '{{ vcsim }}'
+#    port: 5000
+#    state: started
 
-- name: Kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+#- name: Kill vcsim
+#  uri:
+#    url: http://{{ vcsim }}:5000/killall
 
-- name: Start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
+#- name: Start vcsim
+#  uri:
+#    url: http://{{ vcsim }}:5000/spawn?cluster=2
+#  register: vcsim_instance
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 443
-    state: started
+#- name: Wait for Flask controller to come up online
+#  wait_for:
+#    host: '{{ vcsim }}'
+#    port: 443
+#    state: started
 
-- debug:
-    var: vcsim_instance
+#- debug:
+#    var: vcsim_instance
 
 # FIXME: Implement check-mode support
-- name: Add a nic to a switch (check-mode)
-  vmware_vswitch: &add_nic
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
-    validate_certs: no
-    switch: vmswitch_0001
-    nics: vnic_1
-    state: present
-  check_mode: yes
-  register: add_nic_check
+#- name: Add a nic to a switch (check-mode)
+#  vmware_vswitch: &add_nic
+#    hostname: '{{ vcsim }}'
+#    username: '{{ vcsim_instance.json.username }}'
+#    password: '{{ vcsim_instance.json.password }}'
+#    validate_certs: no
+#    switch: vmswitch_0001
+#    nics: vnic_1
+#    state: present
+#  check_mode: yes
+#  register: add_nic_check
 
-- assert:
-    that:
+#- assert:
+#    that:
 #    - add_nic_check.changed == true
-    - add_nic_check.skipped == true
+#    - add_nic_check.skipped == true
 
-- name: Add a nic to a switch
-  vmware_vswitch: *add_nic
-  register: add_nic_run
+#- name: Add a nic to a switch
+#  vmware_vswitch: *add_nic
+#  register: add_nic_run
 
-- assert:
-    that:
-    - add_nic_run.changed == true
+#- assert:
+#    that:
+#    - add_nic_run.changed == true
 
 ## FIXME: Implement check-mode support
 #- name: Add a nic to a switch again (check-mode)
@@ -127,30 +128,29 @@
 #    that:
 #    - remove_nic_again_run.changed == false
 
+#- name: get a list of Host Systems from vcsim
+#  uri:
+#    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=H' }}"
+#  register: host_systems
 
-- name: get a list of Host Systems from vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=H' }}"
-  register: host_systems
+#- name: get a host system
+#  set_fact: hs1="{{ host_systems['json'][0] | basename }}"
 
-- name: get a host system
-  set_fact: hs1="{{ host_systems['json'][0] | basename }}"
+#- debug: var=hs1
 
-- debug: var=hs1
+#- name: Add vswitch to a specific host system
+#  vmware_vswitch:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    switch: vmswitch_0002
+#    nics: vnic_1
+#    esxi_hostname: hs1
+#  register: add_vswitch_with_host_system
 
-- name: Add vswitch to a specific host system
-  vmware_vswitch:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    switch: vmswitch_0002
-    nics: vnic_1
-    esxi_hostname: hs1
-  register: add_vswitch_with_host_system
+#- debug: var=add_vswitch_with_host_system
 
-- debug: var=add_vswitch_with_host_system
-
-- assert:
-    that:
-    - add_vswitch_with_host_system.changed == true
+#- assert:
+#    that:
+#    - add_vswitch_with_host_system.changed == true
