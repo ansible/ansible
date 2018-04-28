@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
-
-# (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import atexit
 import os
@@ -32,7 +18,6 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
 from ansible.module_utils.basic import env_fallback
 
@@ -88,23 +73,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
     for pg in portgroups:
         if pg.name == portgroup_name:
             return pg
-
-    return None
-
-
-def find_entity_child_by_path(content, entityRootFolder, path):
-
-    entity = entityRootFolder
-    searchIndex = content.searchIndex
-    paths = path.split("/")
-    try:
-        for path in paths:
-            entity = searchIndex.FindChild(entity, path)
-
-        if entity.name == paths[-1]:
-            return entity
-    except BaseException:
-        pass
 
     return None
 
@@ -361,7 +329,7 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for k, v in iteritems(net_dict):
+    for dummy, v in iteritems(net_dict):
         for ipaddress in v:
             if ipaddress:
                 if '::' in ipaddress:
@@ -370,7 +338,7 @@ def gather_vm_facts(content, vm):
                     facts['ipv4'] = ipaddress
 
     ethernet_idx = 0
-    for idx, entry in enumerate(vm.config.hardware.device):
+    for entry in vm.config.hardware.device:
         if not hasattr(entry, 'macAddress'):
             continue
 
@@ -509,19 +477,19 @@ def connect_to_api(module, disconnect_atexit=True):
     service_instance = None
     try:
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
-    except vim.fault.InvalidLogin as e:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, e.msg))
-    except vim.fault.NoPermission as e:
+    except vim.fault.InvalidLogin as invalid_login:
+        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
+    except vim.fault.NoPermission as no_permission:
         module.fail_json(msg="User %s does not have required permission"
-                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, e.msg))
-    except (requests.ConnectionError, ssl.SSLError) as e:
-        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, e))
-    except vmodl.fault.InvalidRequest as e:
+                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, no_permission.msg))
+    except (requests.ConnectionError, ssl.SSLError) as generic_req_exc:
+        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, generic_req_exc))
+    except vmodl.fault.InvalidRequest as invalid_request:
         # Request is malformed
         module.fail_json(msg="Failed to get a response from server %s:%s as "
-                             "request is malformed: %s" % (hostname, port, e.msg))
-    except Exception as e:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, e))
+                             "request is malformed: %s" % (hostname, port, invalid_request.msg))
+    except Exception as generic_exc:
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, generic_exc))
 
     if service_instance is None:
         module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
@@ -543,103 +511,6 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
-
-
-def fetch_file_from_guest(module, content, vm, username, password, src, dest):
-    """ Use VMWare's filemanager api to fetch a file over http """
-
-    result = {'failed': False}
-
-    tools_status = vm.guest.toolsStatus
-    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-        result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
-        return result
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-    creds = vim.vm.guest.NamePasswordAuthentication(
-        username=username, password=password
-    )
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/FileManager/FileTransferInformation.rst
-    fti = content.guestOperationsManager.fileManager. \
-        InitiateFileTransferFromGuest(vm, creds, src)
-
-    result['size'] = fti.size
-    result['url'] = fti.url
-
-    # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(module, fti.url, use_proxy=False,
-                          force=True, last_mod_time=None,
-                          timeout=10, headers=None)
-
-    # save all of the transfer data
-    for k, v in iteritems(info):
-        result[k] = v
-
-    # exit early if xfer failed
-    if info['status'] != 200:
-        result['failed'] = True
-        return result
-
-    # attempt to read the content and write it
-    try:
-        with open(dest, 'wb') as f:
-            f.write(rsp.read())
-    except Exception as e:
-        result['failed'] = True
-        result['msg'] = str(e)
-
-    return result
-
-
-def push_file_to_guest(module, content, vm, username, password, src, dest, overwrite=True):
-    """ Use VMWare's filemanager api to fetch a file over http """
-
-    result = {'failed': False}
-
-    tools_status = vm.guest.toolsStatus
-    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-        result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
-        return result
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-    creds = vim.vm.guest.NamePasswordAuthentication(
-        username=username, password=password
-    )
-
-    # the api requires a filesize in bytes
-    fdata = None
-    try:
-        # filesize = os.path.getsize(src)
-        filesize = os.stat(src).st_size
-        with open(src, 'rb') as f:
-            fdata = f.read()
-        result['local_filesize'] = filesize
-    except Exception as e:
-        result['failed'] = True
-        result['msg'] = "Unable to read src file: %s" % str(e)
-        return result
-
-    # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.vm.guest.FileManager.html#initiateFileTransferToGuest
-    file_attribute = vim.vm.guest.FileManager.FileAttributes()
-    url = content.guestOperationsManager.fileManager. \
-        InitiateFileTransferToGuest(vm, creds, dest, file_attribute,
-                                    filesize, overwrite)
-
-    # PUT the filedata to the url ...
-    rsp, info = fetch_url(module, url, method="put", data=fdata,
-                          use_proxy=False, force=True, last_mod_time=None,
-                          timeout=10, headers=None)
-
-    result['msg'] = str(rsp.read())
-
-    # save all of the transfer data
-    for k, v in iteritems(info):
-        result[k] = v
-
-    return result
 
 
 def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
