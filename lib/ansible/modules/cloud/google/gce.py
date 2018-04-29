@@ -495,7 +495,8 @@ def create_instances(module, gce, instance_names, number, lc_zone):
                 try:
                     n = gce.ex_get_node(n.name, lc_zone)
                 except ResourceNotFoundError:
-                    pass
+                    module.fail_json(msg='Unexpected error attempting to create ' +
+                                         'instance %s, error: %s' % (instance_names, resp))
             else:
                 # Assure that at least one node has been created to set changed=True
                 changed = True
