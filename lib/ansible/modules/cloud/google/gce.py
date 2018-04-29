@@ -150,15 +150,21 @@ options:
       - The size of the boot disk created for this instance (in GB)
     default: 10
     version_added: "2.3"
+  accelerators:
+    description:
+       - the type and number of accelerators to attach to the instance
+       - (see `gcloud compute accelerator-types list` for available types)
+    version_added: "2.6"
 
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
-      >= 0.20.0 if using preemptible option"
+      >= 0.20.0 if using preemptible option, >= 2.4.0 if using accelerators"
 notes:
   - Either I(instance_names) or I(name) is required.
   - JSON credentials strongly preferred.
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
+contributor: "Bairen Yi <byi@connect.ust.hk>"
 '''
 
 EXAMPLES = '''
@@ -347,6 +353,11 @@ def get_instance_info(inst):
     else:
         public_ip = inst.public_ips[0]
 
+    if 'guestAccelerators' in inst.extra:
+        guestAccelerators = inst.extra['guestAccelerators'][0]
+        accelerators = '{}:{}'.format(
+            guestAccelerators['acceleratorType'], guestAccelerators['acceleratorCount'])
+
     return ({
         'image': inst.image is not None and inst.image.split('/')[-1] or None,
         'disks': disk_names,
@@ -360,6 +371,7 @@ def get_instance_info(inst):
         'status': ('status' in inst.extra) and inst.extra['status'] or None,
         'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
         'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
+        'accelerators': ('guestAccelerators' in inst.extra) and accelerators or None,
     })
 
 
@@ -387,6 +399,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     disks = module.params.get('disks')
+    accelerators = module.params.get('accelerators')
     tags = module.params.get('tags')
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
@@ -482,6 +495,13 @@ def create_instances(module, gce, instance_names, number, lc_zone):
         gce_args['ex_preemptible'] = preemptible
     if subnetwork is not None:
         gce_args['ex_subnetwork'] = subnetwork
+    if accelerators is not None:
+        if (len(accelerators) != 1):
+            module.fail_json(
+                msg='Mixed accelerator types are not supported', changed=False)
+        gce_args['ex_accelerator_type'] = accelerators[0].split(':')[0]
+        gce_args['ex_accelerator_count'] = int(accelerators[0].split(':')[1])
+        gce_args['ex_on_host_maintenance'] = 'TERMINATE'
 
     if isinstance(instance_names, str) and not number:
         instance_names = [instance_names]
@@ -643,6 +663,7 @@ def main():
             disk_auto_delete=dict(type='bool', default=True),
             disk_size=dict(type='int', default=10),
             preemptible=dict(type='bool', default=None),
+            accelerators=dict(type='list'),
         ),
         mutually_exclusive=[('instance_names', 'name')]
     )
@@ -664,6 +685,7 @@ def main():
     state = module.params.get('state')
     zone = module.params.get('zone')
     preemptible = module.params.get('preemptible')
+    accelerators = module.params.get('accelerators')
     changed = False
 
     inames = None
