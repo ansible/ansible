@@ -164,7 +164,6 @@ notes:
   - Either I(instance_names) or I(name) is required.
   - JSON credentials strongly preferred.
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
-contributor: "Bairen Yi <byi@connect.ust.hk>"
 '''
 
 EXAMPLES = '''

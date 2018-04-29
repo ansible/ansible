@@ -151,7 +151,6 @@ requirements:
 notes:
   - JSON credentials strongly preferred.
 author: "Gwenael Pellen (@GwenaelPellenArkeup) <gwenael.pellen@arkeup.com>"
-contributor: "Bairen Yi <byi@connect.ust.hk>"
 '''
 
 EXAMPLES = '''
