@@ -411,7 +411,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.public_ip_allocation_method = None
         self.state = None
         self.tags = None
-        self.security_group_name = None
         self.os_type = None
         self.open_ports = None
         self.ip_configurations = None
@@ -447,9 +446,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if virtual_network_resource_group is None:
             virtual_network_resource_group = self.resource_group
-
-        # if not set the security group name, use nic name for default
-        self.security_group_name = self.security_group_name or self.name
 
         # if not set the security group name, use nic name for default
         self.security_group_name = self.security_group_name or self.name
