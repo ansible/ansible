@@ -451,10 +451,9 @@ def main():
     debug = module.params['debug']
 
     # convert members to python list if it's a commas seperated string
-    if isinstance(members, str) and "," in members:
-        temp = []
-        temp = members.split(",")
-        members = deepcopy(temp)
+    temp = []
+    temp = members.split(",")
+    members = deepcopy(temp)
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
