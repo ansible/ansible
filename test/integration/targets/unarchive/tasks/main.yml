@@ -39,62 +39,19 @@
   register: zip_is_installed
   ignore_errors: yes
 
+- name: check that unzip has option -P (pass password from cli)
+  shell: unzip -P
+  register: unzip_has_modifier_P
+  ignore_errors: yes
+
 - name: Ensure zip & unzup is present to create test archive (pkg)
   pkgng: name=zip,unzip state=present
   when: ansible_pkg_mgr  ==  'pkgng'
 
-- name: create file
-  shell: touch somefile chdir={{output_dir}}
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-- name: create zip with password
-  shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: unarchive file with password
-  unarchive: src={{output_dir}}/test-password.zip dest=/tmp/ password=1234
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: verify that the file was unarchived
-  file: path=/tmp/somefile state=file
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-- name: clean up test artifacts
-  shell: rm {{output_dir}}/test-password.zip /tmp/somefile
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-# negative case unzip with wrong password
-- name: create file
-  shell: touch somefile chdir={{output_dir}}
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: create zip with password
-  shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: unarchive file with password
-  unarchive: src={{output_dir}}/test-password.zip dest=/tmp/ password=wrongpass
-  register: unarchive
-  ignore_errors: yes
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: check that we got error incorrect password
-  assert:
-    that:
-      - '"failed to unpack" in unarchive.msg'
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
-
-- name: clean up test artifacts
-  shell: rm {{output_dir}}/test-password.zip
-  when:
-    - zip_is_installed.failed !=  true and ansible_distribution !=  'FreeBSD'
+# Run tests only in case we have unzip -P (password modifier) and zip is installed
+- name: Run tests with protected zip
+  include: protected_zip_tests.yml
+  when: zip_is_installed.failed != true and 'must give decryption password with -P' in unzip_has_modifier_P.stderr
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
