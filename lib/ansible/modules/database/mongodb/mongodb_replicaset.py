@@ -459,9 +459,9 @@ def main():
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
-            raise Exception # TODO Error properly here
+            raise UserWarning("MongoDB Replicaset validation failed. Invalid number of replicaset members.")
         if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
-            raise Exception # TODO Error properly here
+            raise UserWarning("MongoDB Replicaset validation failed. Invalid arbiter index.")
 
     try:
 
@@ -503,8 +503,7 @@ def main():
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
     if len(replica_set) == 0:
-        module.fail_json(msg='replica_set parameter must not be an empty string') # TODO better validation, i.e. no special chars etc
-
+        module.fail_json(msg='replica_set parameter must not be an empty string')
     try:
         replicaset_created = False
         if module.check_mode:
