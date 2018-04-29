@@ -354,7 +354,7 @@ def get_instance_info(inst):
 
     if 'guestAccelerators' in inst.extra:
         guestAccelerators = inst.extra['guestAccelerators'][0]
-        accelerators = '{}:{}'.format(
+        accelerators = '%s:%d' % (
             guestAccelerators['acceleratorType'], guestAccelerators['acceleratorCount'])
 
     return ({
