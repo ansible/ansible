@@ -15,6 +15,29 @@ except ImportError:
     except ImportError:
         HAS_MD5 = False
 
+S3_EXTRA_ARGS = {
+    'acl': 'ACL',
+    'cachecontrol': 'CacheControl',
+    'contentdisposition': 'ContentDisposition',
+    'contentencoding': 'ContentEncoding',
+    'contentlanguage': 'ContentLanguage',
+    'contenttype': 'ContentType',
+    'expires': 'Expires',
+    'grantfullcontrol': 'GrantFullControl',
+    'grantread': 'GrantRead',
+    'grantreadacp': 'GrantReadACP',
+    'grantwriteacp': 'GrantWriteACP',
+    'metadata': 'Metadata',
+    'requestpayer': 'RequestPayer',
+    'serversideencryption': 'ServerSideEncryption',
+    'storageclass': 'StorageClass',
+    'ssecustomeralgorithm': 'SSECustomerAlgorithm',
+    'ssecustomerkey': 'SSECustomerKey',
+    'ssecustomerkeymd5': 'SSECustomerKeyMD5',
+    'ssekmskeyid': 'SSEKMSKeyId',
+    'websiteredirectlocation': 'WebsiteRedirectLocation'
+}
+
 
 def calculate_etag(module, filename, etag, s3, bucket, obj, version=None):
     if not HAS_MD5:
@@ -45,3 +68,18 @@ def calculate_etag(module, filename, etag, s3, bucket, obj, version=None):
         return '"{0}-{1}"'.format(digest_squared.hexdigest(), len(digests))
     else:  # Compute the MD5 sum normally
         return '"{0}"'.format(module.md5(filename))
+
+
+def dict_to_s3_extra_args(metadata):
+    ret = {}
+
+    for option in metadata:
+        mangled = option.translate(None, '-_').lower()
+        if mangled in S3_EXTRA_ARGS:
+            ret[S3_EXTRA_ARGS[mangled]] = metadata[option]
+        else:
+            if 'Metadata' not in ret:
+                ret['Metadata'] = {}
+            ret['Metadata'][option] = metadata[option]
+
+    return ret
