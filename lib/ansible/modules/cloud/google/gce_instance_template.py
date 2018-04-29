@@ -563,7 +563,8 @@ def main():
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
             subnetwork_region=dict(),
-            disks_gce_struct=dict(type='list')
+            disks_gce_struct=dict(type='list'),
+            accelerators=dict(),
         ),
         mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],

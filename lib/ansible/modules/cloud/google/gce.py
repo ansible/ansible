@@ -662,7 +662,7 @@ def main():
             disk_auto_delete=dict(type='bool', default=True),
             disk_size=dict(type='int', default=10),
             preemptible=dict(type='bool', default=None),
-            accelerators=dict(type='list'),
+            accelerators=dict(),
         ),
         mutually_exclusive=[('instance_names', 'name')]
     )
