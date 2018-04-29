@@ -453,8 +453,7 @@ def main():
     # convert members to python list if it's a commas seperated string
     if isinstance(members, str) and "," in members:
         temp = []
-        for m in members.split(","):
-            temp.append(m)
+        temp = members.split(","):
         members = deepcopy(temp)
 
     if validate:
