@@ -138,13 +138,20 @@ options:
     version_added: "2.4"
     description:
       - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
+  accelerators:
+    description:
+       - the type and number of accelerators to attach to the instance
+       - (see `gcloud compute accelerator-types list` for available types)
+    version_added: "2.6"
+
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
-      >= 0.20.0 if using preemptible option"
+      >= 0.20.0 if using preemptible option, >= 2.4.0 if using accelerators"
 notes:
   - JSON credentials strongly preferred.
 author: "Gwenael Pellen (@GwenaelPellenArkeup) <gwenael.pellen@arkeup.com>"
+contributor: "Bairen Yi <byi@connect.ust.hk>"
 '''
 
 EXAMPLES = '''
@@ -279,6 +286,7 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks_gce_struct = module.params.get('disks_gce_struct')
+    accelerators = module.params.get('accelerators')
     changed = False
 
     # args of ex_create_instancetemplate
@@ -301,7 +309,9 @@ def create_instance_template(module, gce):
         metadata=None,
         description=None,
         disks_gce_struct=None,
-        nic_gce_struct=None
+        nic_gce_struct=None,
+        accelerator_type=None,
+        accelerator_count=None,
     )
 
     gce_args['name'] = name
@@ -403,6 +413,11 @@ def create_instance_template(module, gce):
 
     if description is not None:
         gce_args['description'] = description
+
+    if accelerators is not None:
+        gce_args['accelerator_type'] = accelerators[0].split(':')[0]
+        gce_args['accelerator_count'] = int(accelerators[0].split(':')[1])
+        gce_args['on_host_maintenance'] = 'TERMINATE'
 
     instance = None
     try:
