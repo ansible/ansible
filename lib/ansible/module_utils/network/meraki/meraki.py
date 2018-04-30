@@ -225,9 +225,9 @@ class MerakiModule(object):
                 return self.params['org_id']
         org_count = self.is_org_valid(orgs, org_name=org_name)
         if org_count == 0:
-            self.fail_json(msg='There are no organizations with the name {org_name}'.format(org_nameorg_name))
+            self.fail_json(msg='There are no organizations with the name {org_name}'.format(org_name))
         if org_count > 1:
-            self.fail_json(msg='There are multiple organizations with the name {org_name}'.format(org_nameorg_name))
+            self.fail_json(msg='There are multiple organizations with the name {org_name}'.format(org_name))
         elif org_count == 1:
             for i in orgs:
                 if org_name == i['name']:
@@ -270,8 +270,8 @@ class MerakiModule(object):
         net_only = {'net_id': net_id,
                     }
         org_net = {'org_id': org_id,
-                    'net_id': net_id,
-                    }
+                   'net_id': net_id,
+                   }
         built_path = self.url_catalog[action][self.function]
 
         if org_id and net_id:
