@@ -160,7 +160,7 @@ class IncludedFile:
                                 from_key = from_arg.replace('_from', '')
                                 new_task._from_files[from_key] = templar.template(include_variables[from_arg])
 
-                        inc_file = IncludedFile("role", include_variables, new_task, is_role=True)
+                        inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
 
                     try:
                         pos = included_files.index(inc_file)
