@@ -57,6 +57,34 @@ EXAMPLES = '''
     name: norwegian-blue
 '''
 
+RETURN = '''
+subnet_group:
+    description: Dictionary of DB subnet group values
+    returned: I(state=present)
+    type: complex
+    contains:
+        name:
+            description: The name of the DB subnet group
+            returned: I(state=present)
+            type: string
+        description:
+            description: The description of the DB subnet group
+            returned: I(state=present)
+            type: string
+        vpc_id:
+            description: The VpcId of the DB subnet group
+            returned: I(state=present)
+            type: string
+        subnet_ids:
+            description: Contains a list of Subnet IDs
+            returned: I(state=present)
+            type: array
+        status:
+            description: The status of the DB subnet group
+            returned: I(state=present)
+            type: string
+'''
+
 try:
     import boto.rds
     from boto.exception import BotoServerError
@@ -66,6 +94,28 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
+
+def get_subnet_group_info(subnet_group):
+    return dict(
+        name=subnet_group.name,
+        description=subnet_group.description,
+        vpc_id=subnet_group.vpc_id,
+        subnet_ids=subnet_group.subnet_ids,
+        status=subnet_group.status
+    )
+
+
+def create_result(changed, subnet_group=None):
+    if subnet_group is None:
+        return dict(
+            changed=changed
+        )
+    else:
+        return dict(
+            changed=changed,
+            subnet_group=get_subnet_group_info(subnet_group)
+        )
 
 
 def main():
@@ -108,8 +158,8 @@ def main():
         module.fail_json(msg=e.error_message)
 
     try:
-        changed = False
         exists = False
+        result = create_result(False)
 
         try:
             matching_groups = conn.get_all_db_subnet_groups(group_name, max_records=100)
@@ -121,11 +171,11 @@ def main():
         if state == 'absent':
             if exists:
                 conn.delete_db_subnet_group(group_name)
-                changed = True
+                result = create_result(True)
         else:
             if not exists:
                 new_group = conn.create_db_subnet_group(group_name, desc=group_description, subnet_ids=group_subnets)
-                changed = True
+                result = create_result(True, new_group)
             else:
                 # Sort the subnet groups before we compare them
                 matching_groups[0].subnet_ids.sort()
@@ -134,11 +184,13 @@ def main():
                         matching_groups[0].description != group_description or
                         matching_groups[0].subnet_ids != group_subnets):
                     changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
-                    changed = True
+                    result = create_result(True, changed_group)
+                else:
+                    result = create_result(False, matching_groups[0])
     except BotoServerError as e:
         module.fail_json(msg=e.error_message)
 
-    module.exit_json(changed=changed)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
