@@ -820,7 +820,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None):
+             client_cert=None, client_key=None, cookies=None, auth_realm=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -859,7 +859,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
-            passman.add_password(None, netloc, username, password)
+            passman.add_password(auth_realm, netloc, username, password)
 
             # because we have put None at the start it will always
             # use this username/password combination for  urls
