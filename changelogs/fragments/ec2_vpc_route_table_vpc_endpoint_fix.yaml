@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ec2_vpc_route_table - fix regression by skipping routes without DestinationCidrBlock (https://github.com/ansible/ansible/pull/37010)
