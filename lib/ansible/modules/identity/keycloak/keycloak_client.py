@@ -180,7 +180,7 @@ options:
             - Are direct access grants enabled for this client or not (OpenID connect).
               This is 'directAccessGrantsEnabled' in the Keycloak REST API.
         aliases:
-            - directAccesGrantsEnabled
+            - directAccessGrantsEnabled
 
     service_accounts_enabled:
         description:
