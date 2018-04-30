@@ -242,29 +242,35 @@ class SGWFactsManager(object):
     List file shares attached to AWS storage gateway when in S3 mode.
     """
     def list_gateway_file_shares(self, gateway):
-        response = self.client.list_file_shares(
-            GatewayARN=gateway["gateway_arn"],
-            Limit=100
-        )
-
-        gateway["file_shares"] = []
-        marker = self._read_gateway_fileshare_response(gateway["file_shares"], response)
-
-        while marker is not None:
+        try:
             response = self.client.list_file_shares(
                 GatewayARN=gateway["gateway_arn"],
-                Marker=marker,
                 Limit=100
             )
 
+            gateway["file_shares"] = []
             marker = self._read_gateway_fileshare_response(gateway["file_shares"], response)
+
+            while marker is not None:
+                response = self.client.list_file_shares(
+                    GatewayARN=gateway["gateway_arn"],
+                    Marker=marker,
+                    Limit=100
+                )
+
+                marker = self._read_gateway_fileshare_response(gateway["file_shares"], response)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list gateway file shares")
 
     """
     List storage gateway local disks
     """
     def list_local_disks(self, gateway):
-        gateway['local_disks'] = [camel_dict_to_snake_dict(disk) for disk in
-                                  self.client.list_local_disks(GatewayARN=gateway["gateway_arn"])['Disks']]
+        try:
+            gateway['local_disks'] = [camel_dict_to_snake_dict(disk) for disk in
+                                      self.client.list_local_disks(GatewayARN=gateway["gateway_arn"])['Disks']]
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list storage gateway local disks")
 
     """
     Read tape objects from AWS API response.
@@ -284,42 +290,48 @@ class SGWFactsManager(object):
     List VTL & VTS attached to AWS storage gateway in VTL mode
     """
     def list_gateway_vtl(self, gateway):
-        response = self.client.list_tapes(
-            Limit=100
-        )
-
-        gateway["tapes"] = []
-        marker = self._read_gateway_tape_response(gateway["tapes"], response)
-
-        while marker is not None:
+        try:
             response = self.client.list_tapes(
-                Marker=marker,
                 Limit=100
             )
 
+            gateway["tapes"] = []
             marker = self._read_gateway_tape_response(gateway["tapes"], response)
+
+            while marker is not None:
+                response = self.client.list_tapes(
+                    Marker=marker,
+                    Limit=100
+                )
+
+                marker = self._read_gateway_tape_response(gateway["tapes"], response)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list storage gateway tapes")
 
     """
     List volumes attached to AWS storage gateway in CACHED or STORAGE mode
     """
     def list_gateway_volumes(self, gateway):
-        paginator = self.client.get_paginator('list_volumes')
-        response = paginator.paginate(
-            GatewayARN=gateway["gateway_arn"],
-            PaginationConfig={
-                'PageSize': 100,
-            }
-        ).build_full_result()
+        try:
+            paginator = self.client.get_paginator('list_volumes')
+            response = paginator.paginate(
+                GatewayARN=gateway["gateway_arn"],
+                PaginationConfig={
+                    'PageSize': 100,
+                }
+            ).build_full_result()
 
-        gateway["volumes"] = []
-        for volume in response["VolumeInfos"]:
-            volume_obj = camel_dict_to_snake_dict(volume)
-            if "gateway_arn" in volume_obj:
-                del volume_obj["gateway_arn"]
-            if "gateway_id" in volume_obj:
-                del volume_obj["gateway_id"]
+            gateway["volumes"] = []
+            for volume in response["VolumeInfos"]:
+                volume_obj = camel_dict_to_snake_dict(volume)
+                if "gateway_arn" in volume_obj:
+                    del volume_obj["gateway_arn"]
+                if "gateway_id" in volume_obj:
+                    del volume_obj["gateway_id"]
 
-            gateway["volumes"].append(volume_obj)
+                gateway["volumes"].append(volume_obj)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list storage gateway volumes")
 
 
 def main():
