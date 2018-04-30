@@ -146,7 +146,7 @@ def main():
     # state with no modifications
     # FIXME: Work with Meraki so they can implement a check mode
     if module.check_mode:
-        return meraki.result
+        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 

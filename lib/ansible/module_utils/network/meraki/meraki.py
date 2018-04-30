@@ -116,11 +116,11 @@ class MerakiModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
 
         # TODO: This needs to be tested
-        self.module.required_if = [('state', 'present', ['name']),
-                                   ('state', 'absent', ['name']),
+        self.module.required_if = [('state', 'present', ['org_name']),
+                                   ('state', 'absent', ['org_name']),
                                    ]
-        self.module.mutually_exclusive = [('org_id', 'org_name'),
-                                          ]
+        # self.module.mutually_exclusive = [('org_id', 'org_name'),
+        #                                   ]
         self.modifiable_methods = ['POST', 'PUT', 'DELETE']
 
         if self.params['auth_key'] is None:
@@ -135,15 +135,6 @@ class MerakiModule(object):
             self.params['protocol'] = 'https'
         else:
             self.params['protocol'] = 'http'
-
-    def response_json(self, rawoutput):
-        ''' Handle Dashboard API response output '''
-        try:
-            return json.loads(rawoutput)
-        except Exception as e:
-            self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. {0}".format(e))
-            self.result['raw'] = rawoutput
-            return
 
     def is_update_required(self, original, proposed):
         ''' Compare original and proposed data to see if an update is needed '''
@@ -199,7 +190,7 @@ class MerakiModule(object):
 
     #     if self.status >= 300:
     #         try:
-    #             self.error['text'] = self.response_json(info['body'])
+    #             self.error['text'] = json.loads(info['body'])
     #             self.error['code'] = info['status']
     #             self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
     #         except KeyError:
@@ -234,9 +225,9 @@ class MerakiModule(object):
                 return self.params['org_id']
         org_count = self.is_org_valid(orgs, org_name=org_name)
         if org_count == 0:
-            self.fail_json(msg='There are no organizations with the name {0}'.format(org_name))
+            self.fail_json(msg='There are no organizations with the name {org_name}'.format(org_nameorg_name))
         if org_count > 1:
-            self.fail_json(msg='There are multiple organizations with the name {0}'.format(org_name))
+            self.fail_json(msg='There are multiple organizations with the name {org_name}'.format(org_nameorg_name))
         elif org_count == 1:
             for i in orgs:
                 if org_name == i['name']:
@@ -247,8 +238,8 @@ class MerakiModule(object):
         ''' Return network information '''
         if not data:
             org_id = self.get_org_id(org_name)
-            path = '/organizations/{0}/networks/{1}'.format(org_id)
-            return self.response_json(self.request('GET', path))
+            path = '/organizations/{org_id}/networks/{net_id}'.format(org_id=org_id, net_id=self.get_net_id(org_name=org_name, net_name=net_name, data=data))
+            return json.loads(self.request('GET', path))
         else:
             for n in data:
                 if n['name'] == net_name:
@@ -257,12 +248,11 @@ class MerakiModule(object):
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Return network id from lookup or existing data '''
         if not data:
-            meraki.fail_json(msg='Must implement lookup')
-        else:
-            for n in data:
-                if n['name'] == net_name:
-                    return n['id']
-            self.fail_json(msg='No network found with the name {0}'.format(net_name))
+            self.fail_json(msg='Must implement lookup')
+        for n in data:
+            if n['name'] == net_name:
+                return n['id']
+        self.fail_json(msg='No network found with the name {0}'.format(net_name))
 
     def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, append=None):
         built_path = None
@@ -270,7 +260,7 @@ class MerakiModule(object):
             built_path = self.url_catalog[action][self.function]
         else:
             self.function = function
-            built_path = self.url_catalog[action][function]    
+            built_path = self.url_catalog[action][function]
 
         if org_name:
             org_id = self.get_org_id(org_name)
@@ -340,24 +330,21 @@ class MerakiModule(object):
         self.response = info['msg']
         self.status = info['status']
 
-        if self.status >= 400:
-            try:
-                self.error['text'] = self.response_json(info['body'])
-                self.error['code'] = info['status']
+        try:
+            if self.status >= 400:
+                # self.error['text'] = json.loads(info['body'])
+                # self.error['code'] = info['status']
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
-            except KeyError:
-                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-        elif self.status >= 300:
-            try:
-                self.error['text'] = self.response_json(info['body'])
-                self.error['code'] = info['status']
+            elif self.status >= 300:
+                # self.error['text'] = json.loads(info['body'])
+                # self.error['code'] = info['status']
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
-            except KeyError:
-                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-        if self.status >= 201 and self.status <= 299 and method == 'POST':
-            self.result['changed'] = True
-        if self.status == 200 and method == 'PUT':
-            self.result['changed'] = True
+        except KeyError:
+            self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
+        # if self.status >= 201 and self.status <= 299 and method == 'POST':
+        #     self.result['changed'] = True
+        # if self.status == 200 and method == 'PUT':
+        #     self.result['changed'] = True
         return to_native(resp.read())
 
     def exit_json(self, **kwargs):
@@ -381,8 +368,7 @@ class MerakiModule(object):
 
     def fail_json(self, msg, **kwargs):
         # Return error information, if we have it
-        if self.error['code'] is not None and self.error['text'] is not None:
-            self.result['error'] = self.error
+        self.result['error'] = self.error
 
         if 'state' in self.params:
             if self.params['state'] in ('absent', 'present'):
