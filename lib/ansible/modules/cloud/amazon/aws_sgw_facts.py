@@ -171,11 +171,10 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
-    import botocore
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -221,7 +220,7 @@ class SGWFactsManager(object):
 
             return gateways
 
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Couldn't list storage gateways")
 
     """
@@ -259,7 +258,7 @@ class SGWFactsManager(object):
                 )
 
                 marker = self._read_gateway_fileshare_response(gateway["file_shares"], response)
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Couldn't list gateway file shares")
 
     """
@@ -269,7 +268,7 @@ class SGWFactsManager(object):
         try:
             gateway['local_disks'] = [camel_dict_to_snake_dict(disk) for disk in
                                       self.client.list_local_disks(GatewayARN=gateway["gateway_arn"])['Disks']]
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Couldn't list storage gateway local disks")
 
     """
@@ -305,7 +304,7 @@ class SGWFactsManager(object):
                 )
 
                 marker = self._read_gateway_tape_response(gateway["tapes"], response)
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Couldn't list storage gateway tapes")
 
     """
@@ -330,19 +329,16 @@ class SGWFactsManager(object):
                     del volume_obj["gateway_id"]
 
                 gateway["volumes"].append(volume_obj)
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Couldn't list storage gateway volumes")
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            gather_local_disks=dict(type='bool', default=True),
-            gather_tapes=dict(type='bool', default=True),
-            gather_file_shares=dict(type='bool', default=True),
-            gather_volumes=dict(type='bool', default=True)
-        )
+    argument_spec = dict(
+        gather_local_disks=dict(type='bool', default=True),
+        gather_tapes=dict(type='bool', default=True),
+        gather_file_shares=dict(type='bool', default=True),
+        gather_volumes=dict(type='bool', default=True)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
