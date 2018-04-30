@@ -1,0 +1,32 @@
+{
+    "kind": "tm:sys:log-config:publisher:publisherstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 5400,
+    "selfLink": "https://localhost/mgmt/tm/sys/log-config/publisher/~Common~foo?ver=13.1.0.4",
+    "description": "my description",
+    "destinations": [
+        {
+            "name": "SECURITYLOGSERVERS-LOGGING",
+            "partition": "Common",
+            "nameReference": {
+                "link": "https://localhost/mgmt/tm/sys/log-config/destination/remote-high-speed-log/~Common~SECURITYLOGSERVERS-LOGGING?ver=13.1.0.4"
+            }
+        },
+        {
+            "name": "local-db",
+            "partition": "Common",
+            "nameReference": {
+                "link": "https://localhost/mgmt/tm/sys/log-config/destination/local-database/~Common~local-db?ver=13.1.0.4"
+            }
+        },
+        {
+            "name": "local-syslog",
+            "partition": "Common",
+            "nameReference": {
+                "link": "https://localhost/mgmt/tm/sys/log-config/destination/local-syslog/~Common~local-syslog?ver=13.1.0.4"
+            }
+        }
+    ]
+}
