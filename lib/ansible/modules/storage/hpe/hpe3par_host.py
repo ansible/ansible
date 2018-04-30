@@ -151,8 +151,14 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from hpe3parclient.client import HPE3ParClient
-from hpe3par_sdk import client
+try:
+    from hpe3parclient.client import HPE3ParClient
+except ImportError:
+    HPE3ParClient = None
+try:
+    from hpe3par_sdk import client
+except ImportError:
+    client = None
 
 
 def create_host(
@@ -713,6 +719,11 @@ def main():
             "type": "bool"}}
 
     module = AnsibleModule(argument_spec=fields)
+
+    if client is None:
+        module.fail_json(msg='the python hpe3par_sdk module is required')
+    if HPE3ParClient is None:
+        module.fail_json(msg='the python python-3parclient module is required')
 
     storage_system_ip = module.params["storage_system_ip"]
     storage_system_username = module.params["storage_system_username"]

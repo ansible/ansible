@@ -101,7 +101,10 @@ RETURN = r'''
 
 
 from ansible.module_utils.basic import AnsibleModule
-from hpe3par_sdk import client
+try:
+    from hpe3par_sdk import client
+except ImportError:
+    client = None
 
 
 def create_hostset(
@@ -314,6 +317,9 @@ def main():
         }
     }
     module = AnsibleModule(argument_spec=fields)
+
+    if client is None:
+        module.fail_json(msg='the python hpe3par_sdk module is required')
 
     storage_system_ip = module.params["storage_system_ip"]
     storage_system_username = module.params["storage_system_username"]
