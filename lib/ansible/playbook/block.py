@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import PlaybookBase
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
@@ -29,7 +29,7 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
 
-class Block(Base, Become, Conditional, Taggable):
+class Block(PlaybookBase, Become, Conditional, Taggable):
 
     # main block fields containing the task lists
     _block = FieldAttribute(isa='list', default=[], inherit=False)

@@ -23,7 +23,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import PlaybookBase
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
@@ -41,7 +41,7 @@ except ImportError:
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, Become):
+class Play(PlaybookBase, Taggable, Become):
 
     """
     A play is a language feature that represents a list of roles and/or

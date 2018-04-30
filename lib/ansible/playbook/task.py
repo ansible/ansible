@@ -29,7 +29,7 @@ from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import PlaybookBase
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
@@ -47,7 +47,7 @@ except ImportError:
 __all__ = ['Task']
 
 
-class Task(Base, Conditional, Taggable, Become):
+class Task(PlaybookBase, Conditional, Taggable, Become):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.

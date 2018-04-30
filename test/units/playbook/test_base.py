@@ -31,7 +31,7 @@ from units.mock.loader import DictDataLoader
 
 
 class TestBase(unittest.TestCase):
-    ClassUnderTest = base.Base
+    ClassUnderTest = base.PlaybookBase
 
     def setUp(self):
         self.assorted_vars = {'var_2_key': 'var_2_value',
@@ -59,7 +59,7 @@ class TestBase(unittest.TestCase):
         return bsc
 
     def test(self):
-        self.assertIsInstance(self.b, base.Base)
+        self.assertIsInstance(self.b, base.PlaybookBase)
         self.assertIsInstance(self.b, self.ClassUnderTest)
 
     # dump me doesnt return anything or change anything so not much to assert
@@ -75,7 +75,7 @@ class TestBase(unittest.TestCase):
 
     def _assert_copy(self, orig, copy):
         self.assertIsInstance(copy, self.ClassUnderTest)
-        self.assertIsInstance(copy, base.Base)
+        self.assertIsInstance(copy, base.PlaybookBase)
         self.assertEquals(len(orig._valid_attrs),
                           len(copy._valid_attrs))
 
@@ -249,62 +249,62 @@ class TestExtendValue(unittest.TestCase):
     # _extend_value could be a module or staticmethod but since its
     # not, the test is here.
     def test_extend_value_list_newlist(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(value_list, new_value_list)
         self.assertEquals(value_list + new_value_list, ret)
 
     def test_extend_value_list_newlist_prepend(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret_prepend = b._extend_value(value_list, new_value_list, prepend=True)
         self.assertEquals(new_value_list + value_list, ret_prepend)
 
     def test_extend_value_newlist_list(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list)
         self.assertEquals(new_value_list + value_list, ret)
 
     def test_extend_value_newlist_list_prepend(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list, prepend=True)
         self.assertEquals(value_list + new_value_list, ret)
 
     def test_extend_value_string_newlist(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         some_string = 'some string'
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(some_string, new_value_list)
         self.assertEquals([some_string] + new_value_list, ret)
 
     def test_extend_value_string_newstring(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         some_string = 'some string'
         new_value_string = 'this is the new values'
         ret = b._extend_value(some_string, new_value_string)
         self.assertEquals([some_string, new_value_string], ret)
 
     def test_extend_value_list_newstring(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         value_list = ['first', 'second']
         new_value_string = 'this is the new values'
         ret = b._extend_value(value_list, new_value_string)
         self.assertEquals(value_list + [new_value_string], ret)
 
     def test_extend_value_none_none(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         ret = b._extend_value(None, None)
         self.assertEquals(len(ret), 0)
         self.assertFalse(ret)
 
     def test_extend_value_none_list(self):
-        b = base.Base()
+        b = base.PlaybookBase()
         ret = b._extend_value(None, ['foo'])
         self.assertEquals(ret, ['foo'])
 
@@ -314,7 +314,7 @@ class ExampleException(Exception):
 
 
 # naming fails me...
-class ExampleParentBaseSubClass(base.Base):
+class ExampleParentBaseSubClass(base.PlaybookBase):
     _test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
 
     def __init__(self):
@@ -326,7 +326,7 @@ class ExampleParentBaseSubClass(base.Base):
         return self._dep_chain
 
 
-class ExampleSubClass(base.Base):
+class ExampleSubClass(base.PlaybookBase):
     _test_attr_blip = FieldAttribute(isa='string', default='example sub class test_attr_blip',
                                      inherit=False,
                                      always_post_validate=True)
@@ -341,7 +341,7 @@ class ExampleSubClass(base.Base):
             return None
 
 
-class BaseSubClass(base.Base):
+class BaseSubClass(base.PlaybookBase):
     _name = FieldAttribute(isa='string', default='', always_post_validate=True)
     _test_attr_bool = FieldAttribute(isa='bool', always_post_validate=True)
     _test_attr_int = FieldAttribute(isa='int', always_post_validate=True)

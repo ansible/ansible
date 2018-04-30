@@ -24,7 +24,7 @@ import os
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import PlaybookBase
 from ansible.playbook.helpers import load_list_of_roles
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.requirement import RoleRequirement
@@ -32,7 +32,7 @@ from ansible.playbook.role.requirement import RoleRequirement
 __all__ = ['RoleMetadata']
 
 
-class RoleMetadata(Base):
+class RoleMetadata(PlaybookBase):
     '''
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
