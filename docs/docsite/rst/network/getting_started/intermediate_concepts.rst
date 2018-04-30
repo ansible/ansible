@@ -66,15 +66,10 @@ GitHub Repos
 
 Ansible hosts module code, examples, demonstrations, and other content on GitHub. Anyone with a GitHub account is able to create Pull Requests (PRs) or issues on these repos:
 
-- `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation
+- `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation. Have an idea, some playbooks, or roles to share? Email ansible-network@redhat.com and we will add you as a contributor to the repository.
+
 - `Ansible <https://github.com/ansible/ansible>`_ is the main codebase, including code for network modules
 
-Email
---------
-
-Join the Ansible Network Community email list:
-
-- email ansible-network@redhat.com and we will get you added right away
 
 IRC
 --------
