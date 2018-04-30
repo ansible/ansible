@@ -54,7 +54,7 @@ class Playbook:
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
-    def _load_playbook_data(self, file_name, variable_manager):
+    def _load_playbook_data(self, file_name, variable_manager, vars=None):
 
         if os.path.isabs(file_name):
             self._basedir = os.path.dirname(file_name)
@@ -103,7 +103,7 @@ class Playbook:
                     which = entry.get('import_playbook', entry.get('include', entry))
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader

@@ -486,9 +486,9 @@ class Base(with_metaclass(BaseMeta, object)):
         try:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
-                return ds
+                return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-                all_vars = dict()
+                all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
