@@ -55,3 +55,15 @@ gen_task_files
 ANSIBLE_STRATEGY='linear' ansible-playbook test_copious_include_tasks.yml  -i ../../inventory "$@" --skip-tags never
 ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks.yml  -i ../../inventory "$@" --skip-tags never
 rm -f tasks/hello/*.yml
+
+# Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
+# https://github.com/ansible/ansible/pull/38827
+ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i ../../inventory "$@"
+
+# undefined_var
+ANSIBLE_STRATEGY='linear' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
+
+# Include path inheritance using host var for include file path
+ANSIBLE_STRATEGY='linear' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"

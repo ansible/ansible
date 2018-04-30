@@ -43,6 +43,30 @@ Few other changes are required. One possible issue that you might encounter is t
 does not inherit methods from AnsibleModule by default, but most useful methods
 are included. If you do find an issue, please raise a bug report.
 
+When porting, keep in mind that AnsibleAWSModule also will add the default ec2
+argument spec by default. In pre-port modules, you should see common arguments
+specfied with:
+
+```
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    ))
+    module = AnsibleModule(argument_spec=argument_spec, ...)
+
+# can be replaced with
+def main():
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    )
+    module = AnsibleAWSModule(argument_spec=argument_spec, ...)
+```
+
 ## Bug fixing
 
 Bug fixes to code that relies on boto will still be accepted. When possible, the code should be
@@ -158,7 +182,7 @@ connection = boto3_conn(module, conn_type='client', resource='ec2', region=regio
 
 ### Common Documentation Fragments for Connection Parameters
 
-There are two [common documentation fragments](http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+There are two [common documentation fragments](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
 that should be included into almost all AWS modules:
 
 * `aws` - contains the common boto connection parameters
@@ -350,6 +374,32 @@ def describe_some_resource(client, module):
         module.fail_json_aws(e, msg="Could not describe resource %s" % name)
 ```
 
+To make use of AWSRetry easier, it can now be wrapped around a client returned
+by `AnsibleAWSModule`. any call from a client. To add retries to a client,
+create a client:
+
+```
+module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+```
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+```
+ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+# equivalent with normal AWSRetry
+@AWSRetry.jittered_backoff(retries=10)
+def describe_instances(client, **kwargs):
+    return ec2.describe_instances(**kwargs)
+
+describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
+```
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
+
 ### Returning Values
 
 When you make a call using boto3, you will probably get back some useful information that you
@@ -439,7 +489,7 @@ Ansible format, this function will convert the keys to snake_case.
 keys not to convert (this is usually useful for the `tags` dict, whose child keys should remain with
 case preserved)
 
-Another optional parameter is `reversible`. By default, `HTTPEndpoint` is converted to `http_endpoint`, 
+Another optional parameter is `reversible`. By default, `HTTPEndpoint` is converted to `http_endpoint`,
 which would then be converted by `snake_dict_to_camel_dict` to `HttpEndpoint`.
 Passing `reversible=True` converts HTTPEndpoint to `h_t_t_p_endpoint` which converts back to `HTTPEndpoint`.
 
@@ -518,8 +568,8 @@ affect the module are detected. At a minimum this should cover the key API calls
 documented return values are present in the module result.
 
 For general information on running the integration tests see the [Integration Tests page of the
-Module Development Guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
-Particularly the [cloud test configuration section](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+Module Development Guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
 
 The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
 
@@ -567,7 +617,7 @@ for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2
 
 ### AWS Permissions for Integration Tests
 
-As explained in the [Integration Test guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+As explained in the [Integration Test guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
 there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
 to run the AWS integration test.
 

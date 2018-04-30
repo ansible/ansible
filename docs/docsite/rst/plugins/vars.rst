@@ -8,7 +8,7 @@ Vars plugins inject additional variable data into Ansible runs that did not come
 
 Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
 
-The :doc:`host_group_vars <vars/host_group_vars>` plugin shipped with Ansible enables reading variables from :ref:`host_vars` and :ref:`group_vars`.
+The :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible enables reading variables from :ref:`host_variables` and :ref:`group_variables`.
 
 
 .. _enable_vars:
@@ -16,7 +16,7 @@ The :doc:`host_group_vars <vars/host_group_vars>` plugin shipped with Ansible en
 Enabling Vars Plugins
 +++++++++++++++++++++
 
-You can activate a custom vars plugins by either dropping it into a ``vars_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom vars plugin by either dropping it into a ``vars_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_vars:

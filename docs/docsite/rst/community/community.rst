@@ -1,4 +1,6 @@
+:orphan:
+
 Community Information & Contributing
 ````````````````````````````````````
 
-This page is deprecated. Please see the updated `Ansible Community Guide <http://docs.ansible.com/ansible/latest/community/index.html>`_.
+This page is deprecated. Please see the updated :ref:`Ansible Community Guide <ansible_community_guide>`.

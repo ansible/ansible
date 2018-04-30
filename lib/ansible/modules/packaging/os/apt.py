@@ -41,7 +41,7 @@ options:
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
-        As of Ansible 2.4, this implicitly sets I(update_cache) if set.
+        As of Ansible 2.4, this sets I(update_cache=yes).
     default: 0
   purge:
     description:
@@ -350,20 +350,21 @@ def package_status(m, pkgname, version, cache, state):
                 if provided_packages:
                     is_installed = False
                     upgradable = False
+                    version_ok = False
                     # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
-                        installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
+                        installed, version_ok, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
                         if installed:
                             is_installed = True
-                    return is_installed, upgradable, False
+                    return is_installed, version_ok, upgradable, False
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
                 # mark as upgradable and let apt-get install deal with it
-                return False, True, False
+                return False, False, True, False
         else:
-            return False, False, False
+            return False, False, False, False
     try:
         has_files = len(pkg.installed_files) > 0
     except UnicodeDecodeError:
@@ -381,6 +382,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
+    version_is_installed = package_is_installed
     if version:
         versions = package_versions(pkgname, pkg, cache._cache)
         avail_upgrades = fnmatch.filter(versions, version)
@@ -391,8 +393,8 @@ def package_status(m, pkgname, version, cache, state):
             except AttributeError:
                 installed_version = pkg.installedVersion
 
-            # Only claim the package is installed if the version is matched as well
-            package_is_installed = fnmatch.fnmatch(installed_version, version)
+            # check if the version is matched as well
+            version_is_installed = fnmatch.fnmatch(installed_version, version)
 
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
@@ -409,7 +411,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_upgradable = pkg.isUpgradable
 
-    return package_is_installed, package_is_upgradable, has_files
+    return package_is_installed, version_is_installed, package_is_upgradable, has_files
 
 
 def expand_dpkg_options(dpkg_options_compressed):
@@ -519,10 +521,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         name, version = package_split(package)
         package_names.append(name)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if (not installed and not only_upgrade) or (upgrade and upgradable):
+        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='install')
+        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
-        if installed and upgradable and version:
+        if installed_version and upgradable and version:
             # This happens when the package is installed, a newer version is
             # available, and the version is a wildcard that matches both
             #
@@ -576,7 +578,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             diff = {}
         status = True
-        data = dict(changed=True, stdout=out, stderr=err, diff=diff)
+
+        changed = True
+        if build_dep:
+            changed = APT_GET_ZERO not in out
+
+        data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
@@ -684,8 +691,8 @@ def remove(m, pkgspec, cache, purge=False, force=False,
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='remove')
-        if installed or (has_files and purge):
+        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='remove')
+        if installed_version or (has_files and purge):
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
@@ -1017,8 +1024,10 @@ def main():
                 else:
                     module.fail_json(msg='Failed to update apt cache: %s' % err)
                 cache.open(progress=None)
-                updated_cache = True
-                mtimestamp, updated_cache_time = get_updated_cache_time()
+                mtimestamp, post_cache_update_time = get_updated_cache_time()
+                if updated_cache_time != post_cache_update_time:
+                    updated_cache = True
+                updated_cache_time = post_cache_update_time
 
             # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.

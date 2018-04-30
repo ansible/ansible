@@ -471,9 +471,7 @@ class TaskExecutor:
             # loop error takes precedence
             if self._loop_eval_error is not None:
                 raise self._loop_eval_error  # pylint: disable=raising-bad-type
-            # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
-            if self._task.action not in ['include', 'include_tasks', 'include_role']:
-                raise
+            raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
@@ -794,7 +792,14 @@ class TaskExecutor:
 
         conn_type = self._play_context.connection
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin, ansible_playbook_pid=to_text(os.getppid()))
+        connection = self._shared_loader_obj.connection_loader.get(
+            conn_type,
+            self._play_context,
+            self._new_stdin,
+            task_uuid=self._task._uuid,
+            ansible_playbook_pid=to_text(os.getppid())
+        )
+
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -813,6 +818,9 @@ class TaskExecutor:
 
     def _set_connection_options(self, variables, templar):
 
+        # Keep the pre-delegate values for these keys
+        PRESERVE_ORIG = ('inventory_hostname',)
+
         # create copy with delegation built in
         final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
 
@@ -822,7 +830,9 @@ class TaskExecutor:
         # create dict of 'templated vars'
         options = {'_extras': {}}
         for k in option_vars:
-            if k in final_vars:
+            if k in PRESERVE_ORIG:
+                options[k] = templar.template(variables[k])
+            elif k in final_vars:
                 options[k] = templar.template(final_vars[k])
 
         # add extras if plugin supports them

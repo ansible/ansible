@@ -69,10 +69,15 @@ options:
     description:
       - Enable detached mode to leave the container running in background.
         If disabled, the task will reflect the status of the container run (failed if the command failed).
+    type: bool
+    default: true
   devices:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
+  dns_opts:
+    description:
+      - list of DNS options
   dns_servers:
     description:
       - List of custom DNS servers.
@@ -107,11 +112,14 @@ options:
         need to be exposed again.
     aliases:
       - exposed
+      - expose
   force_kill:
     description:
       - Use the kill command when stopping a running container.
     type: bool
     default: 'no'
+    aliases:
+      - forcekill
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
@@ -175,6 +183,8 @@ options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
+    aliases:
+      - log_opt
   mac_address:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
@@ -182,7 +192,7 @@ options:
     description:
       - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
-    default: 0
+    default: '0'
   memory_reservation:
     description:
       - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
@@ -204,12 +214,7 @@ options:
     required: true
   network_mode:
     description:
-      - Connect the container to a network.
-    choices:
-      - bridge
-      - container:<name|id>
-      - host
-      - none
+      - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
   userns_mode:
      description:
        - User namespace to use
@@ -293,11 +298,10 @@ options:
     description:
       - Container restart policy. Place quotes around I(no) option.
     choices:
-      - always
-      - no
-      - on-failure
-      - unless-stopped
-    default: on-failure
+      - 'no'
+      - 'on-failure'
+      - 'always'
+      - 'unless-stopped'
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.
@@ -398,7 +402,6 @@ author:
     - "Thomas Steinbach (@ThomasSteinbach)"
     - "Philippe Jandot (@zfil)"
     - "Daan Oosterveld (@dusdanig)"
-    - "James Tanner (@jctanner)"
     - "Chris Houseknecht (@chouseknecht)"
     - "Kassian Sun (@kassiansun)"
 

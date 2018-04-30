@@ -6,7 +6,7 @@ their answers.
 
 .. note:: This document covers questions about managing Microsoft Windows servers with Ansible.
     For questions about Ansible Core, please see the
-    `FAQ page <http://docs.ansible.com/ansible/latest/faq.html>`_.
+    :ref:`FAQ page <ansible_faq>`.
 
 Does Ansible work with Windows XP or Server 2003?
 ``````````````````````````````````````````````````
@@ -23,7 +23,7 @@ supported operating system versions are:
 * Windows 10
 
 Ansible also has minimum PowerShell version requirements - please see 
-:doc:`windows_setup` for the lastest information.
+:doc:`windows_setup` for the latest information.
 
 Can I Manage Windows Nano Server?
 `````````````````````````````````
@@ -45,7 +45,7 @@ can be run in the bash terminal:
 .. code-block:: shell
 
     sudo apt-get update
-    sudo apt-get install python-pyp git libffi-dev libssl-dev -y
+    sudo apt-get install python-pip git libffi-dev libssl-dev -y
     pip install ansible pywinrm
 
 To run Ansible from source instead of a release on the WSL, simply uninstall the pip
@@ -69,6 +69,8 @@ authentication option which maps an X509 certificate to a local user.
 The way that these certificates are generated and mapped to a user is different
 from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
 more information.
+
+.. _windows_faq_winrm:
 
 Why can I run a command locally that does not work under Ansible?
 `````````````````````````````````````````````````````````````````
@@ -110,7 +112,7 @@ See :doc:`become` more info on how to use become. The limitations section at
 
 This program won't install with Ansible
 ```````````````````````````````````````
-See `the question <http://docs.ansible.com/ansible/latest/windows_faq.html#i-can-run-this-command-locally-but-it-does-not-work-under-ansible>`_ for more information about WinRM limitations.
+See :ref:`this question <windows_faq_winrm>` for more information about WinRM limitations.
 
 What modules are available?
 ```````````````````````````
@@ -119,8 +121,8 @@ Linux/Unix machines and arbitrary web services. These modules are written in
 Python and most of them do not work on Windows.
 
 Because of this, there are dedicated Windows modules that are written in
-PowerShell and are meant to be run on Windows hosts. A list of this modules
-can be found `here <http://docs.ansible.com/list_of_windows_modules.html>`_.
+PowerShell and are meant to be run on Windows hosts. A list of these modules
+can be found :ref:`here <windows_modules>`.
 
 In addition, the following Ansible Core modules/action-plugins work with Windows:
 

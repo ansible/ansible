@@ -48,8 +48,6 @@ class IncludeRole(TaskInclude):
     OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
-    _inheritable = False
-
     # =================================================================================
     # ATTRIBUTES
 
@@ -98,6 +96,8 @@ class IncludeRole(TaskInclude):
 
         # updated available handlers in play
         handlers = actual_role.get_handler_blocks(play=myplay)
+        for h in handlers:
+            h._parent = self
         myplay.handlers = myplay.handlers + handlers
         return blocks, handlers
 

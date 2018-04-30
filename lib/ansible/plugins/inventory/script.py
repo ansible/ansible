@@ -104,7 +104,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
-                err = to_native(stderr or "") + "\n"
+                err = to_native(stderr or "")
+
+                if err and not err.endswith('\n'):
+                    err += '\n'
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -121,7 +124,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
                 # if no other errors happened and you want to force displaying stderr, do so now
-                if err and self.get_option('always_show_stderr'):
+                if stderr and self.get_option('always_show_stderr'):
                     self.display.error(msg=to_text(err))
 
             processed = self._cache[cache_key]

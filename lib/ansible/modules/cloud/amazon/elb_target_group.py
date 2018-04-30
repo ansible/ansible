@@ -78,7 +78,7 @@ options:
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   state:
     description:
       - Create or destroy the target group.
@@ -87,7 +87,7 @@ options:
   stickiness_enabled:
     description:
       - Indicates whether sticky sessions are enabled.
-    choices: [ 'yes', 'no' ]
+    type: bool
   stickiness_lb_cookie_duration:
     description:
       - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load
@@ -502,7 +502,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': int(target['Port'])})
+                            instances_to_add.append({'Id': target['Id'], 'Port': int(target.get('Port', module.params.get('port')))})
 
                     changed = True
                     try:

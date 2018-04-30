@@ -37,7 +37,7 @@ options:
     use_packages:
         description:
             - use packages instead of ports whenever available
-        choices: [ 'yes', 'no' ]
+        type: bool
         required: false
         default: yes
 author: "berenddeboer (@berenddeboer)"

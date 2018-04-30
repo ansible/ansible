@@ -12,12 +12,15 @@ Function Convert-FromSID($sid) {
     } catch {
         Fail-Json -obj @{} -message "failed to convert sid '$sid' to a logon name: $($_.Exception.Message)"
     }
-    
+
     return $nt_account.Value
 }
 
-Function Convert-ToSID($account_name) {
+Function Convert-ToSID {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingEmptyCatchBlock", "", Justification="We don't care if converting to a SID fails, just that it failed or not")]
+    param($account_name)
     # Converts an account name to a SID, it can take in the following forms
+    # SID: Will just return the SID value that was passed in
     # UPN:
     #   principal@domain (Domain users only)
     # Down-Level Login Name
@@ -27,6 +30,11 @@ Function Convert-ToSID($account_name) {
     #   NT AUTHORITY\SYSTEM (Local Service Accounts)
     # Login Name
     #   principal (Local/Local Service Accounts)
+
+    try {
+        $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $account_name
+        return $sid.Value
+    } catch {}
 
     if ($account_name -like "*\*") {
         $account_name_split = $account_name -split "\\"

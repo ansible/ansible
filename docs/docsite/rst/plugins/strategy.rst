@@ -12,7 +12,7 @@ Enabling Strategy Plugins
 +++++++++++++++++++++++++
 
 Strategy plugins shipped with Ansible are enabled by default. You can enable a custom strategy plugin by
-putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
+putting it in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_strategy:
@@ -21,7 +21,7 @@ Using Strategy Plugins
 ++++++++++++++++++++++
 
 Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`linear <strategy/linear>` plugin. You can change this default in Ansible :doc:`configuration <../config>` using an environment variable:
+The default is the :doc:`linear <strategy/linear>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
 
 .. code-block:: shell
 
@@ -34,7 +34,7 @@ or in the `ansible.cfg` file:
     [defaults]
     strategy=linear
 
-You can also specify the strategy plugin in the play via the :ref:`strategy` keyword::
+You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbook_keywords>` in a play::
 
   - hosts: all
     strategy: debug
@@ -64,17 +64,17 @@ Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific do
 
 .. seealso::
 
-   :doc:`../playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :doc:`inventory`
        Ansible inventory plugins
    :doc:`callback`
        Ansible callback plugins
-   :doc:`../playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filter plugins
-   :doc:`../playbooks_tests`
+   :ref:`playbooks_tests`
        Jinja2 test plugins
-   :doc:`../playbooks_lookups`
+   :ref:`playbooks_lookups`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

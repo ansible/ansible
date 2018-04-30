@@ -83,6 +83,8 @@
       - "guest_facts_0001['instance']['hw_folder'] is defined"
       - "guest_facts_0001['instance']['guest_question'] is defined"
       - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
+      - "'portgroup_portkey' in guest_facts_0001['instance']['hw_eth0']"
+      - "'portgroup_key' in guest_facts_0001['instance']['hw_eth0']"
 
 - set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
 

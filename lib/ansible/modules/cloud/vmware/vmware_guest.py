@@ -21,7 +21,6 @@ description:
 - Modify, rename or remove a virtual machine.
 version_added: '2.2'
 author:
-- James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
@@ -218,7 +217,7 @@ options:
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
     - ' - C(mac) (string): Customize MAC address.'
     - 'Optional parameters per entry (used for OS customization):'
-    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
+    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
     - ' - C(netmask) (string): Static netmask required for C(ip).'
     - ' - C(gateway) (string): Static gateway.'
@@ -700,7 +699,8 @@ class PyVmomiHelper(PyVmomi):
         if vm_creation and self.params['guest_id'] is None:
             self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
 
-        if self.params['guest_id'] and (vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId):
+        if self.params['guest_id'] and \
+                (vm_obj is None or self.params['guest_id'].lower() != vm_obj.summary.config.guestId.lower()):
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
 
@@ -1019,6 +1019,9 @@ class PyVmomiHelper(PyVmomi):
                 # network type as 'static'
                 if 'ip' in network or 'netmask' in network:
                     network['type'] = 'static'
+                else:
+                    # User wants network type as 'dhcp'
+                    network['type'] = 'dhcp'
 
             if network.get('type') == 'static':
                 if 'ip' in network and 'netmask' not in network:
@@ -1719,6 +1722,8 @@ class PyVmomiHelper(PyVmomi):
         # next priority, cluster given, take the root of the pool
         elif self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
             resource_pool = cluster.resourcePool
         # fallback, pick any RP
         else:

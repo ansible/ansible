@@ -38,7 +38,6 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
-    default: Dockerfile
     required: false
     version_added: "2.0"
   force:
@@ -156,10 +155,10 @@ options:
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that the server's certificate is valid for the
         server. NOTE: If you specify this option, it will set the value of the tls or tls_verify parameters."
     choices:
-      - no
-      - encrypt
-      - verify
-    default: no
+      - 'no'
+      - 'encrypt'
+      - 'verify'
+    default: 'no'
     required: false
     version_added: "2.0"
 
@@ -174,7 +173,6 @@ requirements:
 author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jctanner)
 
 '''
 
@@ -338,8 +336,8 @@ class ImageManager(DockerBaseClass):
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
-                    if image and image == self.results['image']:
+                    self.results['image'], already_latest = self.client.pull_image(self.name, tag=self.tag)
+                    if already_latest:
                         self.results['changed'] = False
 
         if self.archive_path:

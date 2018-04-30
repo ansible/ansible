@@ -73,7 +73,7 @@ options:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
     default: yes
-    choices: ["yes", "no"]
+    type: bool
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to remove instances.
@@ -91,7 +91,7 @@ options:
       - wait for the datacenter to be created before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

@@ -5,6 +5,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.SID
+
 $ErrorActionPreference = 'Stop'
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -264,78 +266,6 @@ namespace Ansible
 }
 "@
 
-Function Get-Username($sid) {
-    # converts the SID (if it is one) to a username
-
-    $object = New-Object System.Security.Principal.SecurityIdentifier($sid)
-    $user = $object.Translate([System.Security.Principal.NTAccount])
-    return $user.Value
-}
-
-Function Get-SID($account_name) {
-    # Can take in the following account name forms and convert to a SID
-    # UPN:
-    #   username@domain (Domain)
-    # Down-Level Login Name
-    #   domain\username (Domain)
-    #   computername\username (Local)
-    #   .\username (Local)
-    # Login Name
-    #   username (Local)
-
-    if ($account_name -like "*\*") {
-        $account_name_split = $account_name -split "\\"
-        if ($account_name_split[0] -eq ".") {
-            $domain = $env:COMPUTERNAME
-        } else {
-            $domain = $account_name_split[0]
-        }
-        $username = $account_name_split[1]
-    } elseif ($account_name -like "*@*") {
-        $account_name_split = $account_name -split "@"
-        $domain = $account_name_split[1]
-        $username = $account_name_split[0]
-    } else {
-        $domain = $null
-        $username = $account_name
-    }
-
-    if ($domain) {
-        # searching for a local group with the servername prefixed will fail,
-        # need to check for this situation and only use NTAccount(String)
-        if ($domain -eq $env:COMPUTERNAME) {
-            $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
-            $group = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "group" } | Where-Object { $_.Name -eq $username }
-        } else {
-            $group = $null
-        }
-        if ($group) {
-            $account = New-Object System.Security.Principal.NTAccount($username)
-        } else {
-            $account = New-Object System.Security.Principal.NTAccount($domain, $username)
-        }
-    } else {
-        # when in a domain NTAccount(String) will favour domain lookups check
-        # if username is a local user and explictly search on the localhost for
-        # that account
-        $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
-        $user = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "user" } | Where-Object { $_.Name -eq $username }
-        if ($user) {
-            $account = New-Object System.Security.Principal.NTAccount($env:COMPUTERNAME, $username)
-        } else {
-            $account = New-Object System.Security.Principal.NTAccount($username)
-        }
-    }
-    
-    try {
-        $account_sid = $account.Translate([System.Security.Principal.SecurityIdentifier])
-    } catch {
-        Fail-Json $result "Account Name: $account_name is not a valid account, cannot get SID: $($_.Exception.Message)"
-    }
-    
-    return $account_sid.Value
-}
-
 Function Compare-UserList($existing_users, $new_users) {  
     $added_users = [String[]]@()
     $removed_users = [String[]]@()
@@ -361,7 +291,7 @@ $lsa_helper = New-Object -TypeName Ansible.LsaRightHelper
 
 $new_users = [System.Collections.ArrayList]@()
 foreach ($user in $users) {
-    $new_users.Add((Get-SID -account_name $user))
+    $new_users.Add((Convert-ToSID -account_name $user))
 }
 $new_users = [String[]]$new_users.ToArray()
 try {
@@ -383,7 +313,7 @@ if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0
         if (-not $check_mode) {
             $lsa_helper.RemovePrivilege($user, $name)
         }
-        $user_name = Get-Username -sid $user
+        $user_name = Convert-FromSID -sid $user
         $result.removed += $user_name
         $diff_text += "-$user_name`n"
         $new_user_list.Remove($user)
@@ -392,7 +322,7 @@ if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0
         if (-not $check_mode) {
             $lsa_helper.AddPrivilege($user, $name)
         }
-        $user_name = Get-Username -sid $user
+        $user_name = Convert-FromSID -sid $user
         $result.added += $user_name
         $diff_text += "+$user_name`n"
         $new_user_list.Add($user)
