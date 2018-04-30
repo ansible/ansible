@@ -14,3 +14,7 @@
   when: include_next_playbook
 
 - import_playbook: validate34.yml
+
+- import_playbook: playbook_needing_vars.yml
+  vars:
+    import_playbook_role_name: import_playbook_role
