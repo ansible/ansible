@@ -19,7 +19,7 @@
     name: '{{test_win_user_right_name}}'
     users: FakeUser
   register: fail_invalid_user
-  failed_when: "'Account Name: FakeUser is not a valid account, cannot get SID' not in fail_invalid_user.msg"
+  failed_when: "'account_name FakeUser is not a valid account, cannot get SID' not in fail_invalid_user.msg"
 
 - name: remove from empty right check
   win_user_right:
