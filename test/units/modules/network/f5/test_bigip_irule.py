@@ -22,11 +22,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY3
 
 try:
-    from library.bigip_irule import Parameters
-    from library.bigip_irule import ModuleManager
-    from library.bigip_irule import ArgumentSpec
-    from library.bigip_irule import GtmManager
-    from library.bigip_irule import LtmManager
+    from library.modules.bigip_irule import Parameters
+    from library.modules.bigip_irule import ModuleManager
+    from library.modules.bigip_irule import ArgumentSpec
+    from library.modules.bigip_irule import GtmManager
+    from library.modules.bigip_irule import LtmManager
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
