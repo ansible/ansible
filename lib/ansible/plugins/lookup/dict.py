@@ -22,7 +22,7 @@ EXAMPLES = """
 tasks:
   - name: show dictionary
     debug: msg="{{item.key}}: {{item.value}}"
-    with_dict: {a: 1, b: 2, c: 3}a
+    with_dict: {a: 1, b: 2, c: 3}
 
 # with predefined vars
 vars:
