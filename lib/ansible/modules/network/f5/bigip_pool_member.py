@@ -340,15 +340,29 @@ class Parameters(AnsibleF5Parameters):
 class ModuleParameters(Parameters):
     @property
     def full_name(self):
+        delimiter = ':'
+        try:
+            addr = netaddr.IPAddress(self.full_name_dict['name'])
+            if addr.version == 6:
+                delimiter = '.'
+        except netaddr.AddrFormatError:
+            pass
+        return '{0}{1}{2}'.format(self.full_name_dict['name'], delimiter, self.port)
+
+    @property
+    def full_name_dict(self):
         if self._values['name'] is None:
             name = self._values['address'] if self._values['address'] else self._values['fqdn']
         else:
             name = self._values['name']
-        return '{0}:{1}'.format(name, self.port)
+        return dict(
+            name=name,
+            port=self.port
+        )
 
     @property
     def node_name(self):
-        return self.full_name.split(':')[0]
+        return self.full_name_dict['name']
 
     @property
     def fqdn_name(self):
@@ -848,8 +862,14 @@ class ArgumentSpec(object):
 
             # Deprecated params
             # TODO(Remove in 2.7)
-            session_state=dict(choices=['enabled', 'disabled']),
-            monitor_state=dict(choices=['enabled', 'disabled']),
+            session_state=dict(
+                choices=['enabled', 'disabled'],
+                removed_in_version=2.7,
+            ),
+            monitor_state=dict(
+                choices=['enabled', 'disabled'],
+                removed_in_version=2.7,
+            ),
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
