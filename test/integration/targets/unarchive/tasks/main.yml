@@ -44,10 +44,6 @@
   register: unzip_has_modifier_P
   ignore_errors: yes
 
-- name: Ensure zip & unzup is present to create test archive (pkg)
-  pkgng: name=zip,unzip state=present
-  when: ansible_pkg_mgr  ==  'pkgng'
-
 # Run tests only in case we have unzip -P (password modifier) and zip is installed
 - name: Run tests with protected zip
   include: protected_zip_tests.yml
