@@ -538,7 +538,7 @@ options:
             - "Assign graphical console to the virtual machine."
             - "Graphical console is a dictionary which can have following values:"
             - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
-            - "C(protocol) - Graphical protocol, one of I(VNC), I(SPICE), or both."
+            - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
         version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -809,6 +809,16 @@ EXAMPLES = '''
     usb_support: True
     serial_console: True
     quota_id: "{{ ovirt_quotas[0]['id'] }}"
+
+- name: Create a VM that has the console configured for both Spice and VNC
+  ovirt_vms:
+    name: myvm
+    template: mytemplate
+    cluster: mycluster
+    graphical_console:
+      protocol:
+        - spice
+        - vnc
 '''
 
 
