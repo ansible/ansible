@@ -1,0 +1,2 @@
+- bufgixes:
+    - Allow aliases and update corner cases for hidden fields https://github.com/ansible/ansible/pull/39506
