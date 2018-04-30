@@ -178,36 +178,28 @@ class SGWFactsManager(object):
         self.module.exit_json(gateways=gateways)
 
     """
-    Reads the storage gateway object API response.
-    """
-    @staticmethod
-    def _read_gatewaylist_reponse(gateway_list, aws_response):
-        for gw in aws_response["Gateways"]:
-            gateway_list.append(camel_dict_to_snake_dict(gw))
-        return aws_response["Marker"] if "Marker" in aws_response else None
-
-    """
     List all storage gateways for the AWS endpoint.
     """
     def list_gateways(self):
-        response = self.client.list_gateways(
-            Limit=100
-        )
+        try:
+            paginator = self.client.get_paginator('list_gateways')
+            response = paginator.paginate(
+                PaginationConfig={
+                    'PageSize': 100,
+                }
+            ).build_full_result()
 
-        gateways = []
-        marker = self._read_gatewaylist_reponse(gateways, response)
+            gateways = []
+            for gw in response["Gateways"]:
+                gateways.append(camel_dict_to_snake_dict(gw))
 
-        while marker is not None:
-            response = self.client.list_gateways(
-                Limit=100,
-                Marker=marker
-            )
-            marker = self._read_gatewaylist_reponse(gateways, response)
+            return gateways
 
-        return gateways
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list storage gateways")
 
     """
-    Read fileshare objects from AWS API response.
+    Read file share objects from AWS API response.
     Drop the gateway_arn attribute from response, as it will be duplicate with parent object.
     """
     @staticmethod
@@ -282,42 +274,26 @@ class SGWFactsManager(object):
             marker = self._read_gateway_tape_response(gateway["tapes"], response)
 
     """
-    Read tape objects from AWS API response.
-    Drop the gateway_arn & gateway_id attribute from response, as it will be duplicate
-    with parent object.
+    List volumes attached to AWS storage gateway in CACHED or STORAGE mode
     """
-    @staticmethod
-    def _read_gateway_volumes(volumes, aws_response):
-        for volume in aws_response["VolumeInfos"]:
+    def list_gateway_volumes(self, gateway):
+        paginator = self.client.get_paginator('list_volumes')
+        response = paginator.paginate(
+            GatewayARN=gateway["gateway_arn"],
+            PaginationConfig={
+                'PageSize': 100,
+            }
+        )
+
+        gateway["volumes"] = []
+        for volume in response["VolumeInfos"]:
             volume_obj = camel_dict_to_snake_dict(volume)
             if "gateway_arn" in volume_obj:
                 del volume_obj["gateway_arn"]
             if "gateway_id" in volume_obj:
                 del volume_obj["gateway_id"]
 
-            volume.append(volume_obj)
-        return aws_response["Marker"] if "Marker" in aws_response else None
-
-    """
-    List volumes attached to AWS storage gateway in CACHED or STORAGE mode
-    """
-    def list_gateway_volumes(self, gateway):
-        response = self.client.list_volumes(
-            GatewayARN=gateway["gateway_arn"],
-            Limit=100
-        )
-
-        gateway["volumes"] = []
-        marker = self._read_gateway_volumes(gateway["volumes"], response)
-
-        while marker is not None:
-            response = self.client.list_volumes(
-                GatewayARN=gateway["gateway_arn"],
-                Marker=marker,
-                Limit=100
-            )
-
-            marker = self._read_gateway_volumes(gateway["volumes"], response)
+            gateway["volumes"].append(volume_obj)
 
 
 def main():
