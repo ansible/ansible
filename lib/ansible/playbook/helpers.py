@@ -40,8 +40,6 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
-    from ansible.playbook.task_include import TaskInclude
-    from ansible.playbook.role_include import IncludeRole
 
     if not isinstance(ds, (list, type(None))):
         raise AnsibleAssertionError('%s should be a list or None but is %s' % (ds, type(ds)))
