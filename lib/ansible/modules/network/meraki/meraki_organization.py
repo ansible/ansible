@@ -35,7 +35,7 @@ options:
     org_name:
         description:
         - Name of organization.
-        - If C(clone) is specified, C(name) is the name of the new organization.
+        - If C(clone) is specified, C(org_name) is the name of the new organization.
         aliases: [ name, organization ]
     org_id:
         description:
@@ -65,6 +65,14 @@ EXAMPLES = r'''
     auth_key: abc12345
     org_name: YourOrg
     state: query
+  delegate_to: localhost
+
+- name: Rename an organization to RenamedOrg
+  meraki_organization:
+    auth_key: abc12345
+    org_id: 987654321
+    org_name: RenamedOrg
+    state: present
   delegate_to: localhost
 
 - name: Clone an organization named Org to a new one called ClonedOrg

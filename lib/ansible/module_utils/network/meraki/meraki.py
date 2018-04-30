@@ -148,7 +148,10 @@ class MerakiModule(object):
     def is_update_required(self, original, proposed):
         ''' Compare original and proposed data to see if an update is needed '''
         is_changed = False
-        ignored_keys = ('id')
+        ignored_keys = ('id', 'organizationId')
+
+        # self.fail_json(msg="Update required check", original=original, proposed=proposed)
+
         for k, v in original.items():
             try:
                 if k not in ignored_keys:
@@ -240,20 +243,26 @@ class MerakiModule(object):
                     # self.fail_json(msg=i['id'])
                     return str(i['id'])
 
-    def get_net(self, org_name, net_name):
+    def get_net(self, org_name, net_name, data=None):
         ''' Return network information '''
-        org_id = self.get_org_id(org_name)
-        path = '/organizations/{0}/networks'.format(org_id)
-        return self.response_json(self.request('GET', path))
+        if not data:
+            org_id = self.get_org_id(org_name)
+            path = '/organizations/{0}/networks/{1}'.format(org_id)
+            return self.response_json(self.request('GET', path))
+        else:
+            for n in data:
+                if n['name'] == net_name:
+                    return n
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Return network id from lookup or existing data '''
-        if data is not None:
-            return net['id']
+        if not data:
+            meraki.fail_json(msg='Must implement lookup')
         else:
-            if org_name is not None and net_name is not None:
-                net = self.get_net(org_name, net_name)
-                return net['id']
+            for n in data:
+                if n['name'] == net_name:
+                    return n['id']
+            self.fail_json(msg='No network found with the name {0}'.format(net_name))
 
     def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, append=None):
         built_path = None
@@ -261,18 +270,55 @@ class MerakiModule(object):
             built_path = self.url_catalog[action][self.function]
         else:
             self.function = function
-            built_path = self.url_catalog[action][function]
-        if 'org_id' in built_path:  # TODO: This is a mess, fix it
-            if org_id is None:
-                built_path = built_path.format(org_id=self.get_org_id(org_name))
-            else:
-                built_path = built_path.format(org_id=str(org_id))
-        elif 'net_id' in built_path:
-            if net_id is None:
-                built_path = built_path.format(net_id=self.get_net_id(self.module.params['net_name']))
-            else:
-                built_path = built_path.format(net_id=str(net_id))
+            built_path = self.url_catalog[action][function]    
+
+        if org_name:
+            org_id = self.get_org_id(org_name)
+
+        org_only = {'org_id': org_id,
+                    }
+        net_only = {'net_id': net_id,
+                    }
+        org_net = {'org_id': org_id,
+                    'net_id': net_id,
+                    }
+        built_path = self.url_catalog[action][self.function]
+
+        if org_id and net_id:
+            built_path = built_path.format(**org_net)
+        elif org_id and not net_id:
+            built_path = built_path.format(**org_only)
+        elif not org_id and net_id:
+            built_path = built_path.format(**net_only)
+        # self.fail_json(msg=built_path)
         return built_path
+
+    # def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, append=None):
+    #     org_only = {'org_id': org_id,
+    #                 }
+    #     net_only = {'net_id': net_id,
+    #                 }
+    #     org_net = {'org_id': org_id,
+    #                 'net_id': net_id,
+    #                 }
+
+    #     built_path = None
+    #     if function is None:
+    #         built_path = self.url_catalog[action][self.function]
+    #     else:
+    #         self.function = function
+    #         built_path = self.url_catalog[action][function]
+    #     if 'org_id' in built_path:  # TODO: This is a mess, fix it
+    #         if org_id is None:
+    #             built_path = built_path.format(org_id=self.get_org_id(org_name))
+    #         else:
+    #             built_path = built_path.format(org_id=str(org_id), net_id=None)
+    #     if 'net_id' in built_path:
+    #         if net_id is None:
+    #             built_path = built_path.format(net_id=self.get_net_id(self.module.params['net_name']))
+    #         else:
+    #             built_path = built_path.format(net_id=net_id)
+    #     return built_path
 
     def request(self, path, method=None, payload=None):
         ''' Generic HTTP method for Meraki requests '''
