@@ -16,6 +16,27 @@ description:
 version_added: "2.6"
 requirements: [ boto3 ]
 author: "Loic Blot <loic.blot@unix-experience.fr>"
+options:
+  gather_local_disks:
+    description:
+      - Gather local disks attached to the storage gateway.
+    required: false
+    default: true
+  gather_tapes:
+    description:
+      - Gather tape information for storage gateways in tape mode.
+    required: false
+    default: true
+  gather_file_shares:
+    description:
+      - Gather file share information for storage gateways in s3 mode.
+    required: false
+    default: true
+  gather_volumes:
+    description:
+      - Gather volume information for storage gateways in iSCSI (cached & stored) modes.
+    required: false
+    default: true
 extends_documentation_fragment:
     - aws
     - ec2
@@ -164,15 +185,16 @@ class SGWFactsManager(object):
     def fetch(self):
         gateways = self.list_gateways()
         for gateway in gateways:
-            self.list_local_disks(gateway)
+            if self.module.params.get('gather_local_disks'):
+                self.list_local_disks(gateway)
             # File share gateway
-            if gateway["gateway_type"] == "FILE_S3":
+            if gateway["gateway_type"] == "FILE_S3" and self.module.params.get('gather_file_shares'):
                 self.list_gateway_file_shares(gateway)
             # Volume tape gateway
-            elif gateway["gateway_type"] == "VTL":
+            elif gateway["gateway_type"] == "VTL" and self.module.params.get('gather_tapes'):
                 self.list_gateway_vtl(gateway)
             # iSCSI gateway
-            elif gateway["gateway_type"] in ["CACHED", "STORED"]:
+            elif gateway["gateway_type"] in ["CACHED", "STORED"] and self.module.params.get('gather_volumes'):
                 self.list_gateway_volumes(gateway)
 
         self.module.exit_json(gateways=gateways)
@@ -283,7 +305,7 @@ class SGWFactsManager(object):
             PaginationConfig={
                 'PageSize': 100,
             }
-        )
+        ).build_full_result()
 
         gateway["volumes"] = []
         for volume in response["VolumeInfos"]:
@@ -298,6 +320,14 @@ class SGWFactsManager(object):
 
 def main():
     argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            gather_local_disks=dict(type='bool', default=True),
+            gather_tapes=dict(type='bool', default=True),
+            gather_file_shares=dict(type='bool', default=True),
+            gather_volumes=dict(type='bool', default=True)
+        )
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
     client = module.client('storagegateway')
