@@ -564,10 +564,8 @@ def main():
         ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
-    try:
+    if 'location' in uresp:
         uresp['location'] = absolute_location(url, uresp['location'])
-    except KeyError:
-        pass
 
     # Default content_encoding to try
     content_encoding = 'utf-8'
