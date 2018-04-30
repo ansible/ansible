@@ -24,7 +24,7 @@ import unittest
 
 class TestHpe3parhostset(unittest.TestCase):
        
-    PARAMS_FOR_PRESENT = {'state':'present','storage_system_username':'USER','storage_system_name':'3PAR','storage_system_ip':'192.168.0.1','storage_system_password':'PASS', 'hostset_name':'hostset',
+    PARAMS_FOR_PRESENT = {'state':'present','storage_system_username':'USER','storage_system_ip':'192.168.0.1','storage_system_password':'PASS', 'hostset_name':'hostset',
                            'domain':'domain', 'setmembers':'new'}
 
     fields = {
@@ -35,9 +35,6 @@ class TestHpe3parhostset(unittest.TestCase):
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {

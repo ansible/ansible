@@ -23,7 +23,7 @@ import unittest
 
 class TestHpe3parQos(unittest.TestCase):
     
-    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1', 'storage_system_name':'3PAR', 'storage_system_username':'USER',
+    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1','storage_system_username':'USER',
                            'storage_system_password':'PASS', 'qos_target_name':'target', 'type':'vvset', 'state': 'present',
                            'priority':'LOW', 'bwmin_goal_kb':1, 'bwmax_limit_kb':1, 'iomin_goal':1, 'iomax_limit':1, 'bwmin_goal_op':'ZERO',
                            'bwmax_limit_op':'ZERO', 'iomin_goal_op':'ZERO', 'iomax_limit_op':'ZERO', 'latency_goal':1, 'default_latency':False,
@@ -37,9 +37,6 @@ class TestHpe3parQos(unittest.TestCase):
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {
@@ -239,7 +236,7 @@ class TestHpe3parQos(unittest.TestCase):
         """  
         mock_client.qosRuleExists.return_value = False
         mock_client.return_value = mock_client
-        result = qos.create_qos_rule(mock_client,"user","password",'qos_tgt_name',None,None,None,None,None,None,None,None,None,None,None,None,None,None) 
+        result = qos.create_qos_rule(mock_client,"user","password",'qos_tgt_name','vvset',None,None,None,None,None,None,None,None,None,None,None,None,None) 
         self.assertEqual(result, (True, True, "Created QoS successfully.", {})) 
         
     @mock.patch('ansible.modules.storage.hpe.hpe3par_qos.client.HPE3ParClient')

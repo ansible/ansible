@@ -35,14 +35,11 @@ class TestHpe3parSnapshot(unittest.TestCase):
                         'change_user_cpg',
                         'convert_type',
                         'set_snap_cpg'
-                       ],
+                        ],
             "type": 'str'
         },
         "storage_system_ip": {
             "required": True,
-            "type": "str"
-        },
-        "storage_system_name": {
             "type": "str"
         },
         "storage_system_username": {
@@ -134,6 +131,7 @@ class TestHpe3parSnapshot(unittest.TestCase):
         "type": {
             "choices": ['thin', 'thin_dedupe', 'full'],
             "type": "str",
+            "default": "thin"
         },
         "keep_vv": {
             "type": "str",
@@ -148,7 +146,6 @@ class TestHpe3parSnapshot(unittest.TestCase):
         """
         PARAMS_FOR_PRESENT = {
             'storage_system_ip':'192.168.0.1',
-            'storage_system_name':'3PAR',
             'storage_system_username':'USER',
             'storage_system_password':'PASS',
             'volume_name':'test_volume',
@@ -867,7 +864,7 @@ class TestHpe3parSnapshot(unittest.TestCase):
                             True,
                             'keep_vv',
                             True
-                        ), (False, False, "Convert volume type failed. Snap CPG is null", {}))
+                        ), (False, False, "Convert volume type failed. User CPG is null", {}))
                         
         self.assertEqual(hpe3par_volume.convert_type(mock_HPE3ParClient,
                             'USER',

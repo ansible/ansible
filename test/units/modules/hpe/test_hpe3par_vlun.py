@@ -23,7 +23,7 @@ import unittest
 
 class TestHpe3parVlun(unittest.TestCase):
 
-    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1', 'storage_system_name':'3PAR', 'storage_system_username':'USER',
+    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1','storage_system_username':'USER',
                            'storage_system_password':'PASS', 'state':'export_volume_to_host' ,'volume_name':'test_vol_name', 'volume_set_name':'test_volset_name', 'lunid':12,'autolun':True,'host_name':'test_host_name','host_set_name':'test_hostset_name','node_val':3,'slot':2,'card_port':1}
 
     fields = {
@@ -41,8 +41,6 @@ class TestHpe3parVlun(unittest.TestCase):
             "type": 'str'},
         "storage_system_ip": {
             "required": True,
-            "type": "str"},
-        "storage_system_name": {
             "type": "str"},
         "storage_system_username": {
             "required": True,

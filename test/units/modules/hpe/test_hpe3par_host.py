@@ -23,7 +23,7 @@ import unittest
 
 class TestHpe3parHost(unittest.TestCase):
     
-    PARAMS_FOR_PRESENT = {'state':'present','storage_system_ip':'192.168.0.1', 'storage_system_name':'3PAR', 'storage_system_username':'USER',
+    PARAMS_FOR_PRESENT = {'state':'present','storage_system_ip':'192.168.0.1',                       'storage_system_username':'USER',
                            'storage_system_password':'PASS', 'host_name':'host', 'host_domain':'domain', 'host_new_name': 'new',
                            'host_fc_wwns':['PASS'], 'host_iscsi_names':['host'], 'host_persona':'GENERIC', 'force_path_removal':'true',
                            'chap_name':'chap', 'chap_secret':'secret', 'chap_secret_hex':'true'}
@@ -46,8 +46,6 @@ class TestHpe3parHost(unittest.TestCase):
             "type": 'str'},
         "storage_system_ip": {
             "required": True,
-            "type": "str"},
-        "storage_system_name": {
             "type": "str"},
         "storage_system_username": {
             "required": True,

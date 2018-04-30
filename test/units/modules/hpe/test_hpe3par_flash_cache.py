@@ -23,7 +23,7 @@ import unittest
 
 class TestHpe3parFlashCache(unittest.TestCase):
     
-    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1', 'storage_system_name':'3PAR', 'storage_system_username':'USER',
+    PARAMS_FOR_PRESENT = {'storage_system_ip':'192.168.0.1', 'storage_system_username':'USER',
                            'storage_system_password':'PASS', 'size_in_gib':1024, 'mode':1, 'state': 'present'}
     
     fields = {
@@ -34,9 +34,6 @@ class TestHpe3parFlashCache(unittest.TestCase):
          },
          "storage_system_ip": {
              "required": True,
-             "type": "str"
-         },
-         "storage_system_name": {
              "type": "str"
          },
          "storage_system_username": {
