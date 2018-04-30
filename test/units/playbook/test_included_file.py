@@ -77,12 +77,13 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
 
-    res = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
+    res, hosts_per_file = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
     assert isinstance(res, list)
     assert len(res) == 1
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[0]._hosts == ['testhost1', 'testhost2']
     assert res[0]._args == {}
+    assert hosts_per_file == {os.path.join(os.getcwd(), 'include_test.yml'): ['testhost1', 'testhost2']}
 
 
 def test_process_include_diff_files(mock_iterator, mock_variable_manager):
@@ -109,7 +110,7 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
     fake_loader = DictDataLoader({'include_test.yml': "",
                                   'other_include_test.yml': ""})
 
-    res = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
+    res, hosts_per_file = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
     assert isinstance(res, list)
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[1]._filename == os.path.join(os.getcwd(), 'other_include_test.yml')
@@ -119,6 +120,11 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
 
     assert res[0]._args == {}
     assert res[1]._args == {}
+
+    assert hosts_per_file == {
+        os.path.join(os.getcwd(), 'include_test.yml'): ['testhost1'],
+        os.path.join(os.getcwd(), 'other_include_test.yml'): ['testhost2']
+    }
 
 
 def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
@@ -141,7 +147,7 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
 
-    res = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
+    res, hosts_per_file = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
     assert isinstance(res, list)
     assert len(res) == 2
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')

@@ -329,7 +329,7 @@ class StrategyModule(StrategyBase):
                 self.update_active_connections(results)
 
                 try:
-                    included_files = IncludedFile.process_include_results(
+                    included_files, hosts_per_included_file = IncludedFile.process_include_results(
                         host_results,
                         iterator=iterator,
                         loader=self._loader,
@@ -346,7 +346,7 @@ class StrategyModule(StrategyBase):
                     display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
-                    for included_file in included_files:
+                    for included_file in sorted(included_files, key=lambda inc_f: getattr(inc_f, '_filename', None)):
                         display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
@@ -376,10 +376,15 @@ class StrategyModule(StrategyBase):
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
 
                                 for host in hosts_left:
+                                    included_filename = getattr(included_file, '_filename', None)
+
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
-                                    else:
+                                    elif host not in hosts_per_included_file[included_filename]:
                                         all_blocks[host].append(noop_block)
+                                        # Ensure we only insert the extra blocks once
+                                        # We could insert them multiple times if hosts were excluded due to when statements
+                                        hosts_per_included_file[included_filename].append(host)
                             display.debug("done iterating over new_blocks loaded from include file")
 
                         except AnsibleError as e:

@@ -56,6 +56,7 @@ class IncludedFile:
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
+        hosts_per_file = {}
         task_vars_cache = {}
 
         for res in results:
@@ -186,4 +187,9 @@ class IncludedFile:
                         else:
                             break
 
-        return included_files
+                    try:
+                        hosts_per_file[inc_file._filename].append(original_host)
+                    except KeyError:
+                        hosts_per_file[inc_file._filename] = [original_host]
+
+        return included_files, hosts_per_file

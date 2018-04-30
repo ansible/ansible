@@ -178,7 +178,7 @@ class StrategyModule(StrategyBase):
             self.update_active_connections(results)
 
             try:
-                included_files = IncludedFile.process_include_results(
+                included_files, dummy = IncludedFile.process_include_results(
                     host_results,
                     iterator=iterator,
                     loader=self._loader,

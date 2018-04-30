@@ -886,7 +886,7 @@ class StrategyBase:
         host_results = self._wait_on_pending_results(iterator)
 
         try:
-            included_files = IncludedFile.process_include_results(
+            included_files, dummy = IncludedFile.process_include_results(
                 host_results,
                 iterator=iterator,
                 loader=self._loader,
