@@ -4,7 +4,7 @@
   "description" : "Ansible Inventory for the script inventory plugin",
   "type": "object",
   "patternProperties": {
-	"^\w$":{
+	"^\\w$":{
 		"type": "object",
 		"properties": {
 			"hosts": {
@@ -16,7 +16,7 @@
 				"type": "object",
 				"description": "Variables to assign to hosts that are part of this group" ,
 				"patternProperties": {
-					"^\w$":{ "type": "object", "description" : "Vars for this hosts in this group" }
+					"^\\w$":{ "type": "object", "description" : "Vars for this hosts in this group" }
 				}
 			},
 			"children": {
@@ -35,11 +35,11 @@
 				"type": "object",
 				"description" : "Each key is a hostname and the value is a dictionary of the variables for that host",
 				"patternProperties": {
-					"^\w$":{
+					"^\\w$":{
 						"type": "object",
 						"description" : "Hosts with their associated vars",
 						"patternProperties": {
-							"^\w$":{ "type": "object", "description" : "Vars for this host" }
+							"^\\w$":{ "type": "object", "description" : "Vars for this host" }
 						}
 					}
 				}
