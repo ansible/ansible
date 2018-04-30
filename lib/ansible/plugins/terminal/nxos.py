@@ -54,7 +54,7 @@ class TerminalModule(TerminalBase):
         if self._get_prompt().endswith(b'enable#'):
             return
 
-        out = self._exec_cli_command(b'show privilege')
+        out = self._exec_cli_command('show privilege')
         out = to_text(out, errors='surrogate_then_replace').strip()
         if 'Disabled' in out:
             raise AnsibleConnectionFailure('Feature privilege is not enabled')
@@ -85,15 +85,15 @@ class TerminalModule(TerminalBase):
             return
 
         if b'(config' in prompt:
-            self._exec_cli_command(b'end')
-            self._exec_cli_command(b'exit')
+            self._exec_cli_command('end')
+            self._exec_cli_command('exit')
 
         elif prompt.endswith(b'enable#'):
-            self._exec_cli_command(b'exit')
+            self._exec_cli_command('exit')
 
     def on_open_shell(self):
         try:
-            for cmd in (b'terminal length 0', b'terminal width 511'):
+            for cmd in ('terminal length 0', 'terminal width 511'):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
