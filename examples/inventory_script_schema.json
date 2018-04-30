@@ -24,7 +24,8 @@
 				"type": "array",
 				"items": { "type": "string" }
 			}
-		}
+		},
+		"additionalProperties": false
 	},
 	"_meta":{
 		"type": "object",
@@ -44,7 +45,9 @@
 					}
 				}
 			}
-		}
-	}
-  }
+		},
+		"additionalProperties": false
+     }
+  },
+  "additionalProperties": false
 }
