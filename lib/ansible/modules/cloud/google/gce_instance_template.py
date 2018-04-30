@@ -414,8 +414,8 @@ def create_instance_template(module, gce):
         gce_args['description'] = description
 
     if accelerators is not None:
-        gce_args['accelerator_type'] = accelerators[0].split(':')[0]
-        gce_args['accelerator_count'] = int(accelerators[0].split(':')[1])
+        gce_args['accelerator_type'] = accelerators.split(':')[0]
+        gce_args['accelerator_count'] = int(accelerators.split(':')[1])
         gce_args['on_host_maintenance'] = 'TERMINATE'
 
     instance = None

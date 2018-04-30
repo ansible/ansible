@@ -495,11 +495,8 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     if subnetwork is not None:
         gce_args['ex_subnetwork'] = subnetwork
     if accelerators is not None:
-        if (len(accelerators) != 1):
-            module.fail_json(
-                msg='Mixed accelerator types are not supported', changed=False)
-        gce_args['ex_accelerator_type'] = accelerators[0].split(':')[0]
-        gce_args['ex_accelerator_count'] = int(accelerators[0].split(':')[1])
+        gce_args['ex_accelerator_type'] = accelerators.split(':')[0]
+        gce_args['ex_accelerator_count'] = int(accelerators.split(':')[1])
         gce_args['ex_on_host_maintenance'] = 'TERMINATE'
 
     if isinstance(instance_names, str) and not number:
