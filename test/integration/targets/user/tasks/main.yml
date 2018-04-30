@@ -175,6 +175,7 @@
 
 
 ## user expires
+# Date is March 3, 2050
 - name: Create user with expiration
   user:
     name: ansibulluser
@@ -219,7 +220,7 @@
     - name: BSD | Ensure proper expiration date was set
       assert:
         that:
-          - bsd_account_expiration.stdout == '2529881062'
+          - bsd_account_expiration.stdout == '2529878400'
   when: ansible_os_family == 'FreeBSD'
 
 - name: Change timezone

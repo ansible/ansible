@@ -233,7 +233,6 @@ EXAMPLES = '''
     expires: 1422403387
 '''
 
-import calendar
 import grp
 import os
 import platform
@@ -540,12 +539,8 @@ class User(object):
             total_seconds = int(current_expires) * 86400
             current_expires = time.gmtime(total_seconds)
 
-            # Drop hours, minutes, and seconds from the specified expiration time in order to compare
-            # to current expiration time
-            expiration_day = calendar.timegm((self.expires.tm_year, self.expires.tm_mon, self.expires.tm_mday, 0, 0, 0, 0, 0, 0))
-            desired_expires = time.gmtime(expiration_day)
-
-            if current_expires != desired_expires:
+            # Compare year, month, and day only
+            if current_expires[:3] != self.expires[:3]:
                 cmd.append('-e')
                 cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -787,6 +782,7 @@ class FreeBsdUser(User):
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
     SHADOWFILE_EXPIRE_INDEX = 6
+    DATE_FORMAT = '%d-%b-%Y'
 
     def remove_user(self):
         cmd = [
@@ -850,9 +846,8 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -954,9 +949,10 @@ class FreeBsdUser(User):
         if self.expires:
             current_expires = time.gmtime(int(self.user_password()[1]))
 
-            if current_expires != self.expires:
+            # Compare year, month, and day only
+            if current_expires[:3] != self.expires[:3]:
                 cmd.append('-e')
-                cmd.append(str(int(time.mktime(self.expires))))
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
