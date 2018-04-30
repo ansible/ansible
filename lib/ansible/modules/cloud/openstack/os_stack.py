@@ -149,6 +149,7 @@ stack:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils._text import to_native
 
 
 def _create_stack(module, stack, cloud, shade):
@@ -168,7 +169,10 @@ def _create_stack(module, stack, cloud, shade):
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _update_stack(module, stack, cloud, shade):
@@ -188,7 +192,10 @@ def _update_stack(module, stack, cloud, shade):
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _system_state_change(module, stack, cloud):
@@ -260,7 +267,7 @@ def main():
                     module.fail_json(msg='delete stack failed for stack: %s' % name)
             module.exit_json(changed=changed)
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':
