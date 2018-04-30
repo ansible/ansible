@@ -146,8 +146,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
-                                      compare_aws_tags, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import (ec2_argument_spec, camel_dict_to_snake_dict)
 
 try:
     import botocore
@@ -157,8 +156,8 @@ except ImportError:
 
 
 class SGWFactsManager(object):
-    def __init__(self, connection, module):
-        self.connection = connection
+    def __init__(self, client, module):
+        self.client = client
         self.module = module
         self.name = self.module.params.get('name')
 
@@ -191,7 +190,7 @@ class SGWFactsManager(object):
     List all storage gateways for the AWS endpoint.
     """
     def list_gateways(self):
-        response = self.connection.list_gateways(
+        response = self.client.list_gateways(
             Limit=100
         )
 
@@ -199,7 +198,7 @@ class SGWFactsManager(object):
         marker = self._read_gatewaylist_reponse(gateways, response)
 
         while marker is not None:
-            response = self.connection.list_gateways(
+            response = self.client.list_gateways(
                 Limit=100,
                 Marker=marker
             )
@@ -225,7 +224,7 @@ class SGWFactsManager(object):
     List file shares attached to AWS storage gateway when in S3 mode.
     """
     def list_gateway_file_shares(self, gateway):
-        response = self.connection.list_file_shares(
+        response = self.client.list_file_shares(
             GatewayARN=gateway["gateway_arn"],
             Limit=100
         )
@@ -234,7 +233,7 @@ class SGWFactsManager(object):
         marker = self._read_gateway_fileshare_response(gateway["file_shares"], response)
 
         while marker is not None:
-            response = self.connection.list_file_shares(
+            response = self.client.list_file_shares(
                 GatewayARN=gateway["gateway_arn"],
                 Marker=marker,
                 Limit=100
@@ -247,7 +246,7 @@ class SGWFactsManager(object):
     """
     def list_local_disks(self, gateway):
         gateway['local_disks'] = [camel_dict_to_snake_dict(disk) for disk in
-                                  self.connection.list_local_dists(GatewayARN=gateway["gateway_arn"])]
+                                  self.client.list_local_disks(GatewayARN=gateway["gateway_arn"])['Disks']]
 
     """
     Read tape objects from AWS API response.
@@ -267,7 +266,7 @@ class SGWFactsManager(object):
     List VTL & VTS attached to AWS storage gateway in VTL mode
     """
     def list_gateway_vtl(self, gateway):
-        response = self.connection.list_tapes(
+        response = self.client.list_tapes(
             Limit=100
         )
 
@@ -275,7 +274,7 @@ class SGWFactsManager(object):
         marker = self._read_gateway_tape_response(gateway["tapes"], response)
 
         while marker is not None:
-            response = self.connection.list_tapes(
+            response = self.client.list_tapes(
                 Marker=marker,
                 Limit=100
             )
@@ -303,7 +302,7 @@ class SGWFactsManager(object):
     List volumes attached to AWS storage gateway in CACHED or STORAGE mode
     """
     def list_gateway_volumes(self, gateway):
-        response = self.connection.list_volumes(
+        response = self.client.list_volumes(
             GatewayARN=gateway["gateway_arn"],
             Limit=100
         )
@@ -312,7 +311,7 @@ class SGWFactsManager(object):
         marker = self._read_gateway_volumes(gateway["volumes"], response)
 
         while marker is not None:
-            response = self.connection.list_volumes(
+            response = self.client.list_volumes(
                 GatewayARN=gateway["gateway_arn"],
                 Marker=marker,
                 Limit=100
@@ -325,12 +324,12 @@ def main():
     argument_spec = ec2_argument_spec()
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
-    connection = module.client('storagegateway')
+    client = module.client('storagegateway')
 
-    if connection is None:  # this should never happen
-        module.fail_json(msg='Unknown error, failed to create glacier connection, no information from boto.')
+    if client is None:  # this should never happen
+        module.fail_json(msg='Unknown error, failed to create storagegateway client, no information from boto.')
 
-    SGWFactsManager(connection, module).fetch()
+    SGWFactsManager(client, module).fetch()
 
 
 if __name__ == '__main__':
