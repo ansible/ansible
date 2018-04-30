@@ -766,6 +766,6 @@ inventory_loader = PluginLoader(
 httpapi_loader = PluginLoader(
     'HttpApi',
     'ansible.plugins.httpapi',
-    C.DEFAULT_CLICONF_PLUGIN_PATH,
+    C.DEFAULT_HTTPAPI_PLUGIN_PATH,
     'httpapi_plugins',
 )

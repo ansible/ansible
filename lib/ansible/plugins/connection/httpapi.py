@@ -26,7 +26,6 @@ options:
     description:
       - Specifies the port on the remote device to listening for connections
         when establishing the SSH connection.
-    default: 443
     ini:
       - section: defaults
         key: remote_port
@@ -63,7 +62,7 @@ options:
   use_ssl:
     description:
       - Whether to connect using SSL (HTTPS) or not (HTTP)
-    default: True
+    default: False
     vars:
       - name: ansible_httpapi_use_ssl
   timeout:
@@ -188,9 +187,7 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % network_os)
 
-        protocol = 'https' if getattr(play_context, 'use_ssl', True) else 'http'
-        port = play_context.port or 443 if protocol == 'https' else 80
-        self._url = '%s://%s:%s' % (protocol, play_context.remote_addr, port)
+        self._url = None
         self._auth = None
 
         # reconstruct the socket_path and set instance values accordingly
@@ -242,6 +239,11 @@ class Connection(ConnectionBase):
         if self.connected:
             return
         network_os = self._play_context.network_os
+
+        protocol = 'https' if self.get_option('use_ssl') else 'http'
+        host = self._play_context.remote_addr
+        port = self._play_context.port or 443 if protocol == 'https' else 80
+        self._url = '%s://%s:%s' % (protocol, host, port)
 
         self._cliconf = cliconf_loader.get(network_os, self)
         if self._cliconf:
