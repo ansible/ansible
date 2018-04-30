@@ -410,28 +410,6 @@
       that:
         - alb.changed
         - alb.listeners|length == 1
-        - alb.availability_zones|length == 3
-
-  - name: test removing a subnet
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets:
-        - "{{ alb_subnets[0] }}"
-        - "{{ alb_subnets[1] }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
         - alb.availability_zones|length == 2
 
   - name: destroy ALB with listener
