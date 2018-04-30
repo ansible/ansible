@@ -39,7 +39,7 @@ class PslintTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open(PSLINT_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()

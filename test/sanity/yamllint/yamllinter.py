@@ -14,7 +14,7 @@ from yamllint.config import YamlLintConfig
 
 def main():
     """Main program body."""
-    paths = sys.argv[1:]
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     checker = YamlChecker()
     checker.check(paths)
@@ -120,6 +120,9 @@ class YamlChecker(object):
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
             for target in statement.targets:
+                if isinstance(target, ast.Tuple):
+                    continue
+
                 if doc_types and target.id not in doc_types:
                     continue
 
