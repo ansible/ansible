@@ -554,6 +554,8 @@ def main():
 
         if state == 'absent':
             changed = 'Successfully uninstalled' in out_pip
+        elif state == 'downloaded':
+            changed = "Saved" in out_pip
         else:
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
