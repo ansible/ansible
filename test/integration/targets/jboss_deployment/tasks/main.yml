@@ -1,0 +1,25 @@
+---
+- name: Download hawt.io
+  get_url:
+    url: http://central.maven.org/maven2/io/hawt/hawtio-web/1.5.0/hawtio-web-1.5.0.war
+    dest: /opt/hawtio.war
+    mode: 0655
+    checksum: sha256:fddd0f2320d79ad16a29b557e30fc94bba0ec4f3e51ee2377dd42d9ff0cfb78f
+
+- name: Deploy hawt.io
+  jboss_deployment:
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio.war
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_PORT: 9990
+  register: result
+
+- name: assert output message that hawtio was deployed
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.msg == 'Deployed hawtio.war'"

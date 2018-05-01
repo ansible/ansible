@@ -1,0 +1,25 @@
+---
+- name: Configure datasource
+  jboss_resource:
+    name: "/subsystem=datasources/data-source=DemoDS"
+    state: present
+    attributes:
+      driver-name: h2
+      connection-url: "jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+      jndi-name: "java:jboss/datasources/DemoDS"
+      user-name: sa
+      password: sa
+      min-pool-size: 12
+      max-pool-size: 25
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_PORT: 9990
+  register: result
+
+- name: assert output message that hawtio was deployed
+  assert:
+    that:
+       - "result.changed == true"
+       - "'Added /subsystem=datasources/data-source=DemoDS' in result.msg"

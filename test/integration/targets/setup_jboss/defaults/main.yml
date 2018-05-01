@@ -1,0 +1,7 @@
+---
+jboss_home: /opt/wildfly
+jboss_user: wildfly
+jboss_group: wildfly
+jboss_install_src: http://download.jboss.org/wildfly/10.1.0.Final/wildfly-10.1.0.Final.tar.gz
+jboss_mgmt_user: ansible
+jboss_mgmt_password: ansible
