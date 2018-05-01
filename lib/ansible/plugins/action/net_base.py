@@ -96,6 +96,7 @@ class ActionModule(ActionBase):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using connection=%s and will be ignored' % play_context.connection)
+                del self._task.args['provider']
 
         if play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
