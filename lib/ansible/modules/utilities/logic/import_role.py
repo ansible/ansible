@@ -53,6 +53,7 @@ options:
       - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
         play.
     type: bool
+    default: 'no'
 notes:
   - Handlers are made available to the whole play.
 '''
