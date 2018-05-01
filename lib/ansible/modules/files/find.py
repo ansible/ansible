@@ -248,14 +248,14 @@ def useridfilter(st, userid):
     if userid is None:
         return True
     elif st.st_uid == userid:
-	return True
+        return True
     return False
 
 def groupidfilter(st, groupid):
     if groupid is None:
         return True
     elif st.st_gid == groupid:
-	return True
+        return True
     return False
 
 def sizefilter(st, size):
@@ -397,23 +397,23 @@ def main():
         userid = None
     else:
         if params['user'].isdigit(): 
-		userid = int(params['user'])
+                userid = int(params['user'])
         else:
-		try:
-			userid = pwd.getpwnam(params['user']).pw_uid 
-		except:
-			userid = -1 #If the user name passed here is not know, put userid to -1 to have no file found
+                try:
+                        userid = pwd.getpwnam(params['user']).pw_uid 
+                except:
+                        userid = -1 #If the user name passed here is not know, put userid to -1 to have no file found
 
     if params['group'] is None:
         groupid = None
     else:
-	if params['group'].isdigit():
-		groupid = int(params['group'])
-	else:
-		try:
-			groupid = grp.getgrpnam(params['group']).gr_uid 
-		except:
-			groupid = -1 #If the group name passed here is not know, put groupid to -1 to have no file found
+        if params['group'].isdigit():
+                groupid = int(params['group'])
+        else:
+                try:
+                        groupid = grp.getgrpnam(params['group']).gr_uid 
+                except:
+                        groupid = -1 #If the group name passed here is not know, put groupid to -1 to have no file found
 
     now = time.time()
     msg = ''
@@ -453,7 +453,7 @@ def main():
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']) and \
-			   useridfilter(st, userid) and groupidfilter(st, groupid):
+                           useridfilter(st, userid) and groupidfilter(st, groupid):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -461,7 +461,7 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-			   useridfilter(st, userid) and groupidfilter(st, groupid) and \
+                           useridfilter(st, userid) and groupidfilter(st, groupid) and \
                            sizefilter(st, size) and contentfilter(fsname, params['contains']):
 
                             r.update(statinfo(st))
