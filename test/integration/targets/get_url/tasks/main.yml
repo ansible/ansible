@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 - name: Determine if python looks like it will support modern ssl features like SNI
   command: "{{ ansible_python.executable }} -c 'from ssl import SSLContext'"
@@ -67,7 +67,7 @@
         - result.failed
 
 - name: test HTTP HEAD request for file in check mode
-  get_url: url="http://{{ httpbin_host }}/get" dest={{ output_dir }}/get_url_check.txt force=yes
+  get_url: url="https://{{ httpbin_host }}/get" dest={{ output_dir }}/get_url_check.txt force=yes
   check_mode: True
   register: result
 
@@ -78,7 +78,7 @@
     - '"OK" in result.msg'
 
 - name: test HTTP HEAD for nonexistent URL in check mode
-  get_url: url="http://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
+  get_url: url="https://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
   check_mode: True
   register: result
   ignore_errors: True
@@ -191,12 +191,12 @@
 
 - name: Test get_url with redirect
   get_url:
-    url: 'http://{{ httpbin_host }}/redirect/6'
+    url: 'https://{{ httpbin_host }}/redirect/6'
     dest: "{{ output_dir }}/redirect.json"
 
 - name: Test that setting file modes work
   get_url:
-    url: 'http://{{ httpbin_host }}/'
+    url: 'https://{{ httpbin_host }}/'
     dest: '{{ output_dir }}/test'
     mode: '0707'
   register: result
@@ -213,7 +213,7 @@
 
 - name: Test that setting file modes on an already downlaoded file work
   get_url:
-    url: 'http://{{ httpbin_host }}/'
+    url: 'https://{{ httpbin_host }}/'
     dest: '{{ output_dir }}/test'
     mode: '0070'
   register: result
