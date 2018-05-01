@@ -270,6 +270,7 @@ class User(object):
     platform = 'Generic'
     distribution = None
     SHADOWFILE = '/etc/shadow'
+    SHADOWFILE_EXPIRE_INDEX = 7
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
@@ -532,8 +533,16 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            current_expires = self.user_password()[1]
+
+            # Convert days since Epoch to seconds since Epoch as struct_time
+            total_seconds = int(current_expires) * 86400
+            current_expires = time.gmtime(total_seconds)
+
+            # Compare year, month, and day only
+            if current_expires[:3] != self.expires[:3]:
+                cmd.append('-e')
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password_lock:
             cmd.append('-L')
@@ -616,25 +625,30 @@ class User(object):
             return False
         info = self.get_pwd_info()
         if len(info[1]) == 1 or len(info[1]) == 0:
-            info[1] = self.user_password()
+            info[1] = self.user_password()[0]
         return info
 
     def user_password(self):
         passwd = ''
+        expires = ''
         if HAVE_SPWD:
             try:
                 passwd = spwd.getspnam(self.name)[1]
+                expires = spwd.getspnam(self.name)[7]
+                return passwd, expires
             except KeyError:
-                return passwd
+                return passwd, expires
+
         if not self.user_exists():
-            return passwd
+            return passwd, expires
         elif self.SHADOWFILE:
             # Read shadow file for user's encrypted password string
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
-        return passwd
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX]
+        return passwd, expires
 
     def get_ssh_key_path(self):
         info = self.user_info()
@@ -767,6 +781,8 @@ class FreeBsdUser(User):
     platform = 'FreeBSD'
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
+    SHADOWFILE_EXPIRE_INDEX = 6
+    DATE_FORMAT = '%d-%b-%Y'
 
     def remove_user(self):
         cmd = [
@@ -830,9 +846,8 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -932,8 +947,12 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires:
-            cmd.append('-e')
-            cmd.append(str(int(time.mktime(self.expires))))
+            current_expires = time.gmtime(int(self.user_password()[1]))
+
+            # Compare year, month, and day only
+            if current_expires[:3] != self.expires[:3]:
+                cmd.append('-e')
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
