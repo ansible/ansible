@@ -72,17 +72,17 @@ azure_virtualmachines:
         "name": "vm",
         "powerstate": "running",
         "properties": {
-            "hardwareProfile": {
-                "vmSize": "Standard_A0"
+            "hardware_profile": {
+                "vm_size": "Standard_A0"
             },
-            "instanceView": {
+            "instance_view": {
                 "disks": [
                     {
                         "name": "vm.vhd",
                         "statuses": [
                             {
                                 "code": "ProvisioningState/succeeded",
-                                "displayStatus": "Provisioning succeeded",
+                                "display_status": "Provisioning succeeded",
                                 "level": "Info",
                                 "time": "2018-04-03T22:22:13.933101Z"
                             }
@@ -95,92 +95,92 @@ azure_virtualmachines:
                         "statuses": [
                             {
                                 "code": "ProvisioningState/succeeded",
-                                "displayStatus": "Provisioning succeeded",
+                                "display_status": "Provisioning succeeded",
                                 "level": "Info",
                                 "message": "Enable succeeded"
                             }
                         ],
                         "type": "Microsoft.EnterpriseCloud.Monitoring.OmsAgentForLinux",
-                        "typeHandlerVersion": "1.4.60.2"
+                        "type_handler_version": "1.4.60.2"
                     }
                 ],
                 "statuses": [
                     {
                         "code": "ProvisioningState/succeeded",
-                        "displayStatus": "Provisioning succeeded",
+                        "display_status": "Provisioning succeeded",
                         "level": "Info",
                         "time": "2018-04-03T22:24:05.21931199999999998Z"
                     },
                     {
                         "code": "PowerState/running",
-                        "displayStatus": "VM running",
+                        "display_status": "VM running",
                         "level": "Info"
                     }
                 ],
-                "vmAgent": {
-                    "extensionHandlers": [
+                "vm_agent": {
+                    "extension_handlers": [
                         {
                             "status": {
                                 "code": "ProvisioningState/succeeded",
-                                "displayStatus": "Ready",
+                                "display_status": "Ready",
                                 "level": "Info",
                                 "message": "Plugin enabled"
                             },
                             "type": "Microsoft.EnterpriseCloud.Monitoring.OmsAgentForLinux",
-                            "typeHandlerVersion": "1.4.60.2"
+                            "type_handler_version": "1.4.60.2"
                         }
                     ],
                     "statuses": [
                         {
                             "code": "ProvisioningState/succeeded",
-                            "displayStatus": "Ready",
+                            "display_status": "Ready",
                             "level": "Info",
                             "message": "Guest Agent is running",
                             "time": "2018-04-04T14:13:41.000Z"
                         }
                     ],
-                    "vmAgentVersion": "2.2.25"
+                    "vm_agent_version": "2.2.25"
                 }
             },
-            "networkProfile": {
-                "networkInterfaces": [{
+            "network_profile": {
+                "network_interfaces": [{
                     "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/vm-nic",
                     "name": "vm-nic",
                     "properties": {
-                        "dnsSettings": {
-                            "appliedDnsServers": [],
-                            "dnsServers": [],
-                            "internalDomainNameSuffix": "yp5qqpscrrgu3kalovpyi1rqoa.nx.internal.cloudapp.net"
+                        "dns_settings": {
+                            "applied_dns_servers": [],
+                            "dns_servers": [],
+                            "internal_domain_name_suffix": "yp5qqpscrrgu3kalovpyi1rqoa.nx.internal.cloudapp.net"
                         },
-                        "enableAcceleratedNetworking": false,
-                        "enableIPForwarding": false,
-                        "ipConfigurations": [{
+                        "enable_accelerated_networking": false,
+                        "enable_ip_forwarding": false,
+                        "ip_configurations": [{
                             "etag": "W/'6d0bd817-d2f8-4b21-98ff-b33abcc9b11b'",
                             "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/vm-nic/ipConfigurations/ipconfig1",
                             "name": "ipconfig1",
                             "properties": {
                                 "primary": true,
-                                "privateIPAddress": "10.0.1.4",
-                                "privateIPAddressVersion": "IPv4",
-                                "privateIPAllocationMethod": "Dynamic",
-                                "provisioningState": "Succeeded",
-                                "publicIPAddress": {
+                                "private_ip_address": "10.0.1.4",
+                                "private_ip_address_version": "IPv4",
+                                "private_ip_allocation_method": "Dynamic",
+                                "provisioning_state": "Succeeded",
+                                "public_ip_address": {
                                     "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/vm-ip",
                                     "name": "vm-ip",
                                     "properties": {
-                                        "dnsSettings": {
-                                            "domainNameLabel": "vm-domain",
+                                        "dns_settings": {
+                                            "domain_name_label": "vm-domain",
                                             "fqdn": "vm-domain.brazilsouth.cloudapp.azure.com"
                                         },
-                                        "idleTimeoutInMinutes": 4,
-                                        "ipAddress": "191.232.165.120",
-                                        "ipConfiguration": {
+                                        "idle_timeout_in_minutes": 4,
+                                        "ip_address": "191.232.165.120",
+                                        "ip_configuration": {
                                             "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Micro.../nInterfaces/vm-nic/ipConfigurations/ipconfig1"
                                         },
-                                        "provisioningState": "Succeeded",
-                                        "publicIPAddressVersion": "IPv4",
-                                        "publicIPAllocationMethod": "Dynamic",
-                                        "resourceGuid": "4ac0bc74-3a5d-4ea1-8ceb-db5aaa1725d7"
+                                        "provisioning_state": "Succeeded",
+                                        "public_ip_address_version": "IPv4",
+                                        "public_ip_allocation_method": "Dynamic",
+                                        "resource_guid": "4ac0bc74-3a5d-4ea1-8ceb-db5aaa1725d7"
                                     }
                                 },
                                 "subnet": {
@@ -188,28 +188,28 @@ azure_virtualmachines:
                                 }
                             }
                         }],
-                        "macAddress": "00-0D-3A-C1-57-96",
-                        "networkSecurityGroup": {
+                        "mac_address": "00-0D-3A-C1-57-96",
+                        "network_security_group": {
                             "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/vm-nsg"
                         },
                         "primary": true,
-                        "provisioningState": "Succeeded",
-                        "resourceGuid": "7212cde7-8c8e-40a2-81fd-9c0fe5777300",
-                        "virtualMachine": {
+                        "provisioning_state": "Succeeded",
+                        "resource_guid": "7212cde7-8c8e-40a2-81fd-9c0fe5777300",
+                        "virtual_machine": {
                             "id": "/subscriptions/XXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/vm"
                         }
                     }
                 }]
             },
-            "osProfile": {
-                "adminUsername": "ubuntu",
-                "computerName": "vm",
-                "linuxConfiguration": {
-                    "disablePasswordAuthentication": true,
+            "os_profile": {
+                "admin_username": "ubuntu",
+                "computer_name": "vm",
+                "linux_configuration": {
+                    "disable_password_authentication": true,
                     "ssh": {
-                        "publicKeys": [
+                        "public_keys": [
                             {
-                                "keyData": "ssh-rsa XXXXX",
+                                "key_data": "ssh-rsa XXXXX",
                                 "path": "/home/ubuntu/.ssh/authorized_keys"
                             }
                         ]
@@ -217,27 +217,27 @@ azure_virtualmachines:
                 },
                 "secrets": []
             },
-            "provisioningState": "Succeeded",
-            "storageProfile": {
-                "dataDisks": [],
-                "imageReference": {
+            "provisioning_state": "Succeeded",
+            "storage_profile": {
+                "data_disks": [],
+                "image_reference": {
                     "offer": "UbuntuServer",
                     "publisher": "Canonical",
                     "sku": "16.04-LTS",
                     "version": "16.04.201801220"
                 },
-                "osDisk": {
+                "os_disk": {
                     "caching": "ReadOnly",
-                    "createOption": "FromImage",
-                    "diskSizeGB": 30,
+                    "create_option": "FromImage",
+                    "disk_size_gb": 30,
                     "name": "vm.vhd",
-                    "osType": "Linux",
+                    "os_type": "Linux",
                     "vhd": {
                         "uri": "https://ubuntu1842.blob.core.windows.net/vhds/vm.vhd"
                     }
                 }
             },
-            "vmId": "77f0006c-0874-42ca-9ec9-e920b36263cf"
+            "vm_id": "77f0006c-0874-42ca-9ec9-e920b36263cf"
         },
         "resources": [
             {
@@ -245,16 +245,16 @@ azure_virtualmachines:
                 "location": "brazilsouth",
                 "name": "OmsAgentForLinux",
                 "properties": {
-                    "autoUpgradeMinorVersion": true,
-                    "provisioningState": "Succeeded",
+                    "auto_upgrade_minor_version": true,
+                    "provisioning_state": "Succeeded",
                     "publisher": "Microsoft.EnterpriseCloud.Monitoring",
                     "settings": {
-                        "azureResourceId": "/subscriptions/XXXXX/resourcegroups/Testing/providers/microsoft.compute/virtualmachines/vm",
-                        "stopOnMultipleConnections": true,
-                        "workspaceId": "43ac2095-42c7-4488-924f-bc4cbca63f8d"
+                        "azure_resource_id": "/subscriptions/XXXXX/resourcegroups/Testing/providers/microsoft.compute/virtualmachines/vm",
+                        "stop_on_multiple_connections": true,
+                        "workspace_id": "43ac2095-42c7-4488-924f-bc4cbca63f8d"
                     },
                     "type": "OmsAgentForLinux",
-                    "typeHandlerVersion": "1.0"
+                    "type_handler_version": "1.0"
                 },
                 "type": "Microsoft.Compute/virtualMachines/extensions"
             }
@@ -273,6 +273,7 @@ except:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -402,8 +403,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                     config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                     config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
 
-        self.log(result, pretty_print=True)
-        return result
+        snake_dict = camel_dict_to_snake_dict(result)
+        self.log(snake_dict, pretty_print=True)
+        return snake_dict
 
     def get_network_interface(self, name):
         try:
