@@ -293,8 +293,7 @@ def main():
             protocolVersion=dict(required=False, default=1, type='int', choices=[ 0, 1 ]),
             chainingAllowed=dict(required=False, default=True, type='bool'),
             heartbeatTimeoutSecs=dict(required=False, default=10, type='int'),
-            electionTimeoutMillis=dict(required=False, default=10000, type='int'),
-            debug=dict(required=False, default=False, type='bool')
+            electionTimeoutMillis=dict(required=False, default=10000, type='int')
         ),
         supports_check_mode=True
     )
@@ -316,7 +315,6 @@ def main():
     chainingAllowed = module.params['chainingAllowed']
     heartbeatTimeoutSecs = int(module.params['heartbeatTimeoutSecs'])
     electionTimeoutMillis = int(module.params['electionTimeoutMillis'])
-    debug = module.params['debug']
 
     # convert members to python list if it's a commas seperated string
     temp = []
