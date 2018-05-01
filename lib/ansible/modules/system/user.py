@@ -176,7 +176,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
+              Pass "never" to disable expiry time. Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     password_lock:
         description:
@@ -240,7 +240,7 @@ import pwd
 import shutil
 import socket
 import time
-
+import calendar
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 
@@ -310,11 +310,14 @@ class User(object):
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
 
-        if module.params['expires']:
-            try:
-                self.expires = time.gmtime(module.params['expires'])
-            except Exception as e:
-                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, to_native(e)))
+        if module.params['expires'] is not None:
+            if module.params['expires'] == 'never':
+                self.expires = module.params['expires']
+            else:
+                try:
+                    self.expires = time.gmtime(float(module.params['expires']))
+                except Exception as e:
+                    module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, e))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -408,7 +411,7 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires:
+        if self.expires and self.expires != 'never':
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -532,8 +535,17 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            current_expires = self.user_expires()
+            expires = self.expires
+            if expires != 'never':
+                # convert given epoch time to days since epoch
+                expires = calendar.timegm(expires) // 86400
+            if expires != current_expires:
+                cmd.append('-e')
+                if expires == 'never':
+                    cmd.append('')
+                else:
+                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password_lock:
             cmd.append('-L')
@@ -749,8 +761,38 @@ class User(object):
         except OSError as e:
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
+    def user_expires(self):
+        expires = None
+        if not self.user_exists():
+            return expires
+        if HAVE_SPWD:
+            try:
+                expires = spwd.getspnam(self.name).sp_expire
+            except KeyError:
+                # user exists but not in shadow file
+                expires = 'never'
+        elif self.SHADOWFILE and os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            for line in open(self.SHADOWFILE).readlines():
+                if line.startswith('%s:' % self.name):
+                    expires = line.split(':')[7]
+            if expires is None:
+                expires = 'never'
+        if expires is not None and expires != 'never':
+            try:
+                expires = int(expires)
+            except ValueError:
+                expires = 'never'
+            if expires == -1:
+                expires = 'never'
+        # If expires is None, the OS probably does not support it
+        return expires
 
-# ===========================================
+    def user_expires_timestamp(self):
+        expires = self.user_expires()
+        if expires is not None and expires != 'never':
+            expires *= 86400
+        return expires
+
 
 class FreeBsdUser(User):
     """
@@ -829,10 +871,9 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.expires:
-            days = (time.mktime(self.expires) - time.time()) // 86400
+        if self.expires and self.expires != 'never':
             cmd.append('-e')
-            cmd.append(str(int(days)))
+            cmd.append(str(int(calendar.timegm(self.expires))))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -932,8 +973,16 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires:
-            cmd.append('-e')
-            cmd.append(str(int(time.mktime(self.expires))))
+            current_expires = self.user_expires()
+            expires = self.expires
+            if expires != 'never':
+                expires = int(calendar.timegm(expires))
+            if expires != current_expires:
+                cmd.append('-e')
+                if expires == 'never':
+                    cmd.append('0')
+                else:
+                    cmd.append(str(expires))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -977,6 +1026,35 @@ class FreeBsdUser(User):
                 cmd.append(self.uid)
             return self.execute_command(cmd)
         return (rc, out, err)
+
+    def user_expires(self):
+        expires = None
+        if not self.user_exists():
+            return expires
+        if HAVE_SPWD:
+            try:
+                expires = spwd.getspnam(self.name).sp_expire
+            except KeyError:
+                # user exists but not in shadow file
+                expires = 'never'
+        elif self.SHADOWFILE and os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            for line in open(self.SHADOWFILE).readlines():
+                if line.startswith('%s:' % self.name):
+                    expires = line.split(':')[6]
+            if expires is None:
+                expires = 'never'
+        if expires is not None and expires != 'never':
+            try:
+                expires = int(expires)
+            except ValueError:
+                expires = 'never'
+            if not expires or expires == -1:
+                expires = 'never'
+        # If expires is None, the OS probably does not support it
+        return expires
+
+    def user_expires_timestamp(self):
+        return self.user_expires()
 
 
 class DragonFlyBsdUser(FreeBsdUser):
@@ -2224,7 +2302,7 @@ def main():
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
             update_password=dict(type='str', default='always', choices=['always', 'on_create']),
-            expires=dict(type='float'),
+            expires=dict(type='str'),
             password_lock=dict(type='bool'),
             local=dict(type='bool'),
         ),
@@ -2319,6 +2397,10 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
+
+        expires = user.user_expires_timestamp()
+        if expires:
+            result['expires'] = expires
 
     module.exit_json(**result)
 
