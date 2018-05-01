@@ -133,6 +133,17 @@ EXAMPLES = '''
     zone: custom
     state: present
     permanent: true
+
+- name: Redirect port 443 to 8443 with Rich Rule
+  firewalld:
+    rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
+    zone:      public
+    permanent: true
+    immediate: true
+    state:     enabled
+  with_items:
+    - ipv4
+    - ipv6
 '''
 
 from ansible.module_utils.basic import AnsibleModule
