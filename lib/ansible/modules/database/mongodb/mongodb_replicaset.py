@@ -72,7 +72,7 @@ options:
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     arbiter_at_index:
-        description: Identifies the position of the member in the array that is an arbiter
+        description: Identifies the position of the member in the array that is an arbiter.
         required: false
         default: None
     chainingAllowed:
@@ -80,11 +80,11 @@ options:
         default: true
         required: false
     heartbeatTimeoutSecs:
-        description: Number of seconds that the replica set members wait for a successful heartbeat from each other. If a member does not respond in time, other members mark the delinquent member as inaccessible. The setting only applies when using protocolVersion: 0. When using protocolVersion: 1 the relevant setting is settings.electionTimeoutMillis.
+        description: Number of seconds that the replica set members wait for a successful heartbeat from each other. If a member does not respond in time, other members mark the delinquent member as inaccessible. The setting only applies when using protocolVersion 0. When using protocolVersion 1 the relevant setting is settings.electionTimeoutMillis.
         default: 10
         required: false
     electionTimeoutMillis:
-        description: The time limit in milliseconds for detecting when a replica set's primary is unreachable:
+        description: The time limit in milliseconds for detecting when a replica set's primary is unreachable.
         default: 10000
         required: false
     protocolVersion:
@@ -134,7 +134,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-replica_set:
+mongodb_replicaset:
     description: The name of the replicaset that has been created.
     returned: success
     type: string
@@ -218,7 +218,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
         try:
             from ordereddict import OrderedDict
         except ImportError as excep:
-            module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict;: %s' % to_native(excep), exception=traceback.format_exc())
+            module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict: %s' % to_native(excep), exception=traceback.format_exc())
 
     members_dict_list = []
     index = 0
