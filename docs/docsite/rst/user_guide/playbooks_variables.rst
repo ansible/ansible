@@ -5,23 +5,15 @@ Variables
 
 .. contents:: Topics
 
-While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
+While automation exists to make it easier to make things repeatable, all systems are not exactly alike; some may require configuration that is slightly different from others. In some instances, the observed behavior or state of one system might influence how you configure other systems. For example, you might need to find out the IP address of a system and use it as a configuration value on another system.
 
-On some systems you may want to set some behavior or configuration that is slightly different from others.
+Ansible uses *variables* to help deal with differences between systems.
 
-Also, some of the observed behavior or state
-of remote systems might need to influence how you configure those systems.  (Such as you might need to find out the IP
-address of a system and even use it as a configuration value on another system).
-
-You might have some templates for configuration files that are mostly the same, but slightly different based on those variables.
-
-Variables in Ansible are how we deal with differences between systems.
-
-To understand variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+To understand variables you'll also want to read :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the **group_by** module
 and the ``when`` conditional can also be used with variables, and to help manage differences between systems.
 
-It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
+The ansible-examples github repository contains many examples of how variables are used in Ansible.
 
 For advice on best practices, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
 
