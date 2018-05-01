@@ -17,12 +17,12 @@
 
 - name: Create the mount point
   file:
-    state: "directory"
+    state: directory
     path: "{{ output_dir }}/mount_dest"
 
 - name: Create a directory to bind mount
   file:
-    state: "directory"
+    state: directory
     path: "{{ output_dir }}/mount_source"
 
 - name: Put something in the directory so we see that it worked
@@ -36,9 +36,9 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "None"
-    opts: "bind"
+    state: mounted
+    fstype: None
+    opts: bind
   when: ansible_system == 'Linux'
   register: bind_result_linux
 
@@ -47,18 +47,18 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "nullfs"
+    state: mounted
+    fstype: nullfs
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
-- name: get checksum for bind mounted file
+- name: Get checksum for bind mounted file
   stat:
     path: "{{ output_dir }}/mount_dest/test_file"
   when: ansible_system in ('FreeBSD', 'Linux')
   register: dest_stat
 
-- name: assert the bind mount was successful
+- name: Assert the bind mount was successful
   assert:
     that:
       - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
@@ -71,9 +71,9 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "None"
-    opts: "bind"
+    state: mounted
+    fstype: None
+    opts: bind
   when: ansible_system == 'Linux'
   register: bind_result_linux
 
@@ -82,8 +82,8 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "nullfs"
+    state: mounted
+    fstype: nullfs
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
@@ -98,9 +98,9 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "None"
-    opts: "bind,ro"
+    state: mounted
+    fstype: None
+    opts: bind,ro
   when: ansible_system == 'Linux'
   register: bind_result_linux
 
@@ -109,9 +109,9 @@
   mount:
     src: "{{ output_dir }}/mount_source"
     name: "{{ output_dir }}/mount_dest"
-    state: "mounted"
-    fstype: "nullfs"
-    opts: "ro"
+    state: mounted
+    fstype: nullfs
+    opts: ro
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
@@ -119,20 +119,63 @@
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
   register: remount_options
 
-- debug: var=remount_options
+- debug:
+    var: remount_options
 
 - name: Make sure the filesystem now has the new opts
   assert:
     that:
       - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
       - "'1' in remount_options.stdout"
-      - "1 == remount_options.stdout_lines | length"
+      - "remount_options.stdout | trim == '1'"
   when: ansible_system in ('FreeBSD', 'Linux')
+
+- name: Remove fstab record
+  mount:
+    name: "{{ output_dir }}/mount_dest"
+    force_unmount: no
+    state: absent
+  when: ansible_system == 'Linux'
+  register: absent_result
+
+- name: Try to get the fstab record
+  shell: grep mount_dest /etc/fstab | wc -l
+  register: absent_result_check
+  when: ansible_system == 'Linux'
+
+- name: Check that the fstab record is gone
+  assert:
+    that:
+      - "absent_result['changed']"
+      - "absent_result_check.stdout | trim == '0'"
+  when: ansible_system == 'Linux'
+
+- name: Add fstab record
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    path: "{{ output_dir }}/mount_dest"
+    fstype: None
+    opts: bind,ro
+    state: present
+  register: present_result
+  when: ansible_system == 'Linux'
+
+- name: Get the fstab record
+  shell: grep mount_dest /etc/fstab | wc -l
+  register: present_result_check
+  when: ansible_system == 'Linux'
+
+- name: Check that the fstab record is present
+  assert:
+    that:
+      - "present_result['changed']"
+      - "present_result_check.stdout | trim == '1'"
+  when: ansible_system == 'Linux'
 
 - name: Unmount the bind mount
   mount:
     name: "{{ output_dir }}/mount_dest"
-    state: "absent"
+    state: unmounted
   when: ansible_system in ('Linux', 'FreeBSD')
   register: unmount_result
 

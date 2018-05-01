@@ -9,9 +9,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
 
 DOCUMENTATION = '''
 ---
@@ -24,6 +26,56 @@ author:
   - Seth Vidal
 version_added: "0.6"
 options:
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    type: bool
+    default: "no"
+    version_added: '2.5'
+  boot:
+    description:
+      - Determines if the filesystem should be mounted on boot.
+      - Only applies to Solaris systems.
+    type: bool
+    default: 'yes'
+    version_added: '2.2'
+  dump:
+    description:
+      - Dump (see fstab(5)). Note that if set to C(null) and I(state) set to
+        C(present), it will cease to work and duplicate entries will be made
+        with subsequent runs.
+      - Has no effect on Solaris systems.
+    default: 0
+  force_unmount:
+    description:
+      - Unmount and remove the mount point when I(state) is set to C(absent).
+    type: bool
+    default: 'yes'
+    version_added: '2.6'
+  fstab:
+    description:
+      - File to use instead of C(/etc/fstab). You shouldn't use this option
+        unless you really know what you are doing. This might be useful if
+        you need to configure mountpoints in a chroot environment.  OpenBSD
+        does not allow specifying alternate fstab files with mount so do not
+        use this on OpenBSD with any state that operates on the live
+        filesystem.
+    default: /etc/fstab (/etc/vfstab on Solaris)
+  fstype:
+    description:
+      - Filesystem type. Required when I(state) is C(present) or C(mounted).
+  opts:
+    description:
+      - Mount options (see fstab(5), or vfstab(4) on Solaris).
+  passno:
+    description:
+      - Passno (see fstab(5)). Note that if set to C(null) and I(state) set to
+        C(present), it will cease to work and duplicate entries will be made
+        with subsequent runs.
+      - Deprecated on Solaris systems.
+    default: 0
   path:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
@@ -35,26 +87,6 @@ options:
     description:
       - Device to be mounted on I(path). Required when I(state) set to
         C(present) or C(mounted).
-  fstype:
-    description:
-      - Filesystem type. Required when I(state) is C(present) or C(mounted).
-  opts:
-    description:
-      - Mount options (see fstab(5), or vfstab(4) on Solaris).
-  dump:
-    description:
-      - Dump (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
-        with subsequent runs.
-      - Has no effect on Solaris systems.
-    default: 0
-  passno:
-    description:
-      - Passno (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
-        with subsequent runs.
-      - Deprecated on Solaris systems.
-    default: 0
   state:
     description:
       - If C(mounted), the device will be actively mounted and appropriately
@@ -64,63 +96,53 @@ options:
       - C(present) only specifies that the device is to be configured in
         I(fstab) and does not trigger or require a mount.
       - C(absent) specifies that the device mount's entry will be removed from
-        I(fstab) and will also unmount the device and remove the mount
-        point.
+        I(fstab) and does not trigger umount nor removes the mount point.
     required: true
     choices: [ absent, mounted, present, unmounted ]
-  fstab:
-    description:
-      - File to use instead of C(/etc/fstab). You shouldn't use this option
-        unless you really know what you are doing. This might be useful if
-        you need to configure mountpoints in a chroot environment.  OpenBSD
-        does not allow specifying alternate fstab files with mount so do not
-        use this on OpenBSD with any state that operates on the live
-        filesystem.
-    default: /etc/fstab (/etc/vfstab on Solaris)
-  boot:
-    description:
-      - Determines if the filesystem should be mounted on boot.
-      - Only applies to Solaris systems.
-    type: bool
-    default: 'yes'
-    version_added: '2.2'
-  backup:
-    description:
-      - Create a backup file including the timestamp information so you can get
-        the original file back if you somehow clobbered it incorrectly.
-    required: false
-    type: bool
-    default: "no"
-    version_added: '2.5'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
 '''
 
 EXAMPLES = '''
-# Before 2.3, option 'name' was used instead of 'path'
-- name: Mount DVD read-only
+- name: Add fstab record and mount DVD in read-only mode
   mount:
-    path: /mnt/dvd
     src: /dev/sr0
+    path: /mnt/dvd
     fstype: iso9660
     opts: ro,noauto
-    state: present
+    state: mounted
 
-- name: Mount up device by label
+- name: Add fstab record and mount the device specified by its label
   mount:
-    path: /srv/disk
     src: LABEL=SOME_LABEL
+    path: /srv/disk
     fstype: ext4
-    state: present
+    state: mounted
 
-- name: Mount up device by UUID
+- name: Add fstab record for a device specified by UUID but do not mount it
   mount:
-    path: /home
     src: UUID=b3e48f45-f933-4c8e-a700-22a159ec9077
+    path: /home
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Unmount the device but leave the fstab record untouched
+  mount:
+    path: /mnt/dvd
+    state: unmounted
+
+- name: Remove the fstab record and unmount and remove the mount point
+  mount:
+    path: /srv/disk
+    state: absent
+
+- name: Remove the fstab record but do not try to unmount it
+  mount:
+    path: /home
+    force_unmount: no
+    state: absent
 '''
 
 
@@ -407,7 +429,7 @@ def remount(module, args):
             rc = 1
         else:
             rc, out, err = module.run_command(cmd)
-    except:
+    except Exception:
         rc = 1
 
     msg = ''
@@ -550,16 +572,17 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            backup=dict(default=False, type='bool'),
             boot=dict(type='bool', default=True),
             dump=dict(type='str'),
+            force_unmount=dict(default=True, type='bool'),
             fstab=dict(type='str'),
             fstype=dict(type='str'),
-            path=dict(type='path', required=True, aliases=['name']),
             opts=dict(type='str'),
             passno=dict(type='str'),
+            path=dict(type='path', required=True, aliases=['name']),
             src=dict(type='path'),
-            backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['mounted', 'unmounted', 'present', 'absent']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -624,47 +647,25 @@ def main():
 
         open(args['fstab'], 'a').close()
 
-    # absent:
-    #   Remove from fstab and unmounted.
-    # unmounted:
-    #   Do not change fstab state, but unmount.
-    # present:
-    #   Add to fstab, do not change mount state.
     # mounted:
-    #   Add to fstab if not there and make sure it is mounted. If it has
-    #   changed in fstab then remount it.
+    #   Add fstab record and mount it. If the fstab record has been changed
+    #   then remount it.
+    # unmounted:
+    #   Do not change fstab record, but only unmount.
+    # present:
+    #   Only add the fstab record but do not change the mount state.
+    # absent:
+    #   Only remove the fstab record, but do not unmount nor remove the mount
+    #   point unless force_unmount is set.
 
-    state = module.params['state']
+    # Shortcuts
+    force_unmount = module.params['force_unmount']
     name = module.params['path']
+    state = module.params['state']
+
     changed = False
 
-    if state == 'absent':
-        name, changed = unset_mount(module, args)
-
-        if changed and not module.check_mode:
-            if ismount(name) or is_bind_mounted(module, linux_mounts, name):
-                res, msg = umount(module, name)
-
-                if res:
-                    module.fail_json(
-                        msg="Error unmounting %s: %s" % (name, msg))
-
-            if os.path.exists(name):
-                try:
-                    os.rmdir(name)
-                except (OSError, IOError) as e:
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
-    elif state == 'unmounted':
-        if ismount(name) or is_bind_mounted(module, linux_mounts, name):
-            if not module.check_mode:
-                res, msg = umount(module, name)
-
-                if res:
-                    module.fail_json(
-                        msg="Error unmounting %s: %s" % (name, msg))
-
-            changed = True
-    elif state == 'mounted':
+    if state == 'mounted':
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
@@ -690,10 +691,34 @@ def main():
 
         if res:
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
+    elif state == 'unmounted':
+        if ismount(name) or is_bind_mounted(module, linux_mounts, name):
+            if not module.check_mode:
+                res, msg = umount(module, name)
+
+                if res:
+                    module.fail_json(
+                        msg="Error unmounting %s: %s" % (name, msg))
+
+            changed = True
     elif state == 'present':
         name, changed = set_mount(module, args)
-    else:
-        module.fail_json(msg='Unexpected position reached')
+    elif state == 'absent':
+        name, changed = unset_mount(module, args)
+
+        if force_unmount and changed and not module.check_mode:
+            if ismount(name) or is_bind_mounted(module, linux_mounts, name):
+                res, msg = umount(module, name)
+
+                if res:
+                    module.fail_json(
+                        msg="Error unmounting %s: %s" % (name, msg))
+
+            if os.path.exists(name):
+                try:
+                    os.rmdir(name)
+                except (OSError, IOError) as e:
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
 
     module.exit_json(changed=changed, **args)
 
