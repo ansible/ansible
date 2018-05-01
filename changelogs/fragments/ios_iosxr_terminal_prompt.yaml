@@ -1,0 +1,2 @@
+bugfixes:
+- ios_iosxr_terminal - fixed issue with ios and iosxr terminal prompt regex 
