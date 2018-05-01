@@ -2,17 +2,22 @@
 Ansible 2.6
 ===========
 
-**Core Engine Freeze:** Mid May 2018
-
-**Core and Curated Module Freeze:** Mid May 2018
-
-**Community Module Freeze:** Late May 2018
-
-**Release Candidate:** Mid June 2018
-
-**Target:** June/July 2018
-
 .. contents:: Topics
+
+Release Schedule
+----------------
+
+Proposed
+========
+
+- 2018-05-17 Core Freeze (Core Engine and Non-Community Modules)
+- 2018-05-17 Alpha Release 1
+- 2018-05-24 Alpha Release 2
+- 2018-05-25 Community Freeze (Community Modules)
+- 2018-05-31 Release Candidate 1
+- 2018-06-07 Release Candidate 2
+- 2018-06-14 Release Candidate 3
+- 2018-06-28 Final Release
 
 Engine improvements
 -------------------
