@@ -381,6 +381,10 @@ def update_feedback_forwarding(connection, module, identity, identity_notificati
         # information existing feedback forwarding must be on.
         current = True
     elif 'ForwardingEnabled' in identity_notifications:
+        if ('BounceTopic' and 'ComplaintTopic') not in identity_notifications:
+            if module.params.get('feedback_forwarding') is False:
+                module.fail_json(msg="Invalid Parameter Value 'False' for 'feedback_forwarding'. AWS requires "
+                                 "feedback forwarding to be enabled unless bounces and complaints are handled by SNS topics")
         current = identity_notifications['ForwardingEnabled']
     else:
         # If there is information on the notifications setup but no information on the
@@ -409,6 +413,7 @@ def update_identity_notifications(connection, module):
     for notification_type in ('Bounce', 'Complaint', 'Delivery'):
         changed |= update_notification_topic(connection, module, identity, identity_notifications, notification_type)
         changed |= update_notification_topic_headers(connection, module, identity, identity_notifications, notification_type)
+        identity_notifications = get_identity_notifications(connection, module, identity)
 
     changed |= update_feedback_forwarding(connection, module, identity, identity_notifications)
 
