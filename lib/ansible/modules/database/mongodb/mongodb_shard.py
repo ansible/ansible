@@ -51,6 +51,16 @@ options:
             - The port to login to.
         required: false
         default: 27017
+    ssl:
+        description:
+            - Whether to use an SSL connection when connecting to the database
+        default: False
+    ssl_cert_reqs:
+        description:
+            - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
+        required: false
+        default: "CERT_REQUIRED"
+        choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     state:
         description:
             - Whether the shard should be present or absent from the Cluster
@@ -241,7 +251,6 @@ def main():
     login_host = module.params['login_host']
     login_port = module.params['login_port']
     ssl = module.params['ssl']
-
     shard = module.params['shard']
     state = module.params['state']
 
