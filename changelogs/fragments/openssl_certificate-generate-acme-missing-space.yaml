@@ -1,0 +1,2 @@
+bugfixes:
+  - openssl-certificate - Add space between arguments for acme-tiny (https://github.com/ansible/ansible/pull/36739)

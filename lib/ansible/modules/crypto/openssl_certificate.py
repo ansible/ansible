@@ -771,7 +771,7 @@ class AcmeCertificate(Certificate):
                 chain = '--chain'
 
             try:
-                crt = module.run_command("%s %s --account-key %s --csr %s"
+                crt = module.run_command("%s %s --account-key %s --csr %s "
                                          "--acme-dir %s" % (acme_tiny_path, chain,
                                                             self.accountkey_path,
                                                             self.csr_path,
