@@ -55,7 +55,7 @@ fi
 
 if [ "${IS_PULL_REQUEST:-}" == "true" ]; then
     # run unstable tests which are targeted by focused changes on PRs
-    export UNSTABLE=""
+    export UNSTABLE="--allow-unstable-changed"
 else
     # do not run unstable tests outside PRs
     export UNSTABLE=""
