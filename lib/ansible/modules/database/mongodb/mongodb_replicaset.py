@@ -11,15 +11,15 @@ ANSIBLE_METADATA = {'metadata_version': '0.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: mongodb_replicaset
 short_description: Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
+author: Rhys Campbell (@rhysmeister)
 description:
     - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
     - Validation takes the form of; replicaset name validation only at present.
-    - This may change in the future to involve adding  and removing members
+    - This may change in the future to involve adding  and removing members.
 options:
     login_user:
         description:
