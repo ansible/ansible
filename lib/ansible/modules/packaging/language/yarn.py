@@ -167,16 +167,16 @@ class Yarn(object):
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
 
-        # Specify a version of package if version arg passed in
-        self.name_version = None
+        self.name_version = self.name
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
         else:
             self.executable = [module.get_bin_path('yarn', True)]
 
+        # Append a version of package if version arg passed in
         if kwargs['version'] and self.name is not None:
-            self.name_version = self.name + '@' + str(self.version)
+            self.name_version += '@' + str(self.version)
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
