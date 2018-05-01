@@ -15,11 +15,11 @@ DOCUMENTATION = '''
 ---
 module: mongodb_replicaset
 short_description: Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
-author: Rhys Campbell (@rhysmeister)
 description:
     - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
     - Validation takes the form of; replicaset name validation only at present.
     - This may change in the future to involve adding  and removing members.
+author: Rhys Campbell (@rhysmeister)
 options:
     login_user:
         description:
