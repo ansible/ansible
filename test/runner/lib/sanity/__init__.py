@@ -3,8 +3,10 @@ from __future__ import absolute_import, print_function
 
 import abc
 import glob
+import json
 import os
 import re
+import sys
 
 from lib.util import (
     ApplicationError,
@@ -13,7 +15,9 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
+    parse_to_dict,
     ABC,
+    is_binary_file,
 )
 
 from lib.ansible_util import (
@@ -94,7 +98,7 @@ def command_sanity(args):
             options = ''
 
             if isinstance(test, SanityCodeSmellTest):
-                result = test.test(args)
+                result = test.test(args, targets)
             elif isinstance(test, SanityMultipleVersion):
                 result = test.test(args, targets, python_version=version)
                 options = ' --python %s' % version
@@ -205,26 +209,99 @@ class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
     def __init__(self, path):
         name = os.path.splitext(os.path.basename(path))[0]
+        config = os.path.splitext(path)[0] + '.json'
 
         self.path = path
+        self.config = config if os.path.exists(config) else None
 
         super(SanityCodeSmellTest, self).__init__(name)
 
-    def test(self, args):
+    def test(self, args, targets):
         """
         :type args: SanityConfig
-        :rtype: SanityResult
+        :type targets: SanityTargets
+        :rtype: TestResult
         """
-        cmd = [self.path]
+        if self.path.endswith('.py'):
+            cmd = [args.python_executable, self.path]
+        else:
+            cmd = [self.path]
+
         env = ansible_environment(args, color=False)
 
+        pattern = None
+        data = None
+
+        if self.config:
+            with open(self.config, 'r') as config_fd:
+                config = json.load(config_fd)
+
+            output = config.get('output')
+            extensions = config.get('extensions')
+            prefixes = config.get('prefixes')
+            files = config.get('files')
+            always = config.get('always')
+            text = config.get('text')
+
+            if output == 'path-line-column-message':
+                pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+            elif output == 'path-message':
+                pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
+            else:
+                pattern = ApplicationError('Unsupported output type: %s' % output)
+
+            paths = sorted(i.path for i in targets.include)
+
+            if always:
+                paths = []
+
+            # short-term work-around for paths being str instead of unicode on python 2.x
+            if sys.version_info[0] == 2:
+                paths = [p.decode('utf-8') for p in paths]
+
+            if text is not None:
+                if text:
+                    paths = [p for p in paths if not is_binary_file(p)]
+                else:
+                    paths = [p for p in paths if is_binary_file(p)]
+
+            if extensions:
+                paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
+
+            if prefixes:
+                paths = [p for p in paths if any(p.startswith(pre) for pre in prefixes)]
+
+            if files:
+                paths = [p for p in paths if os.path.basename(p) in files]
+
+            if not paths and not always:
+                return SanitySkipped(self.name)
+
+            data = '\n'.join(paths)
+
+            if data:
+                display.info(data, verbosity=4)
+
         try:
-            stdout, stderr = run_command(args, cmd, env=env, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
             stderr = ex.stderr
             status = ex.status
+
+        if stdout and not stderr:
+            if pattern:
+                matches = [parse_to_dict(pattern, line) for line in stdout.splitlines()]
+
+                messages = [SanityMessage(
+                    message=m['message'],
+                    path=m['path'],
+                    line=int(m.get('line', 0)),
+                    column=int(m.get('column', 0)),
+                ) for m in matches]
+
+                return SanityFailure(self.name, messages=messages)
 
         if stderr or status:
             summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
@@ -250,7 +327,7 @@ class SanitySingleVersion(SanityFunc):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
@@ -263,7 +340,7 @@ class SanityMultipleVersion(SanityFunc):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
