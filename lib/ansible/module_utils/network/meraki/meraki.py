@@ -77,9 +77,7 @@ class MerakiModule(object):
         self.status = None
         self.url = None
 
-        '''
-        If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
-        '''
+        # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
         self.get_urls = {'organizations': '/organizations',
                          'networks': '/organizations/{org_id}/networks',
                          'admins': '/organizations/{org_id}/admins',
@@ -125,7 +123,6 @@ class MerakiModule(object):
         self.headers = {'Content-Type': 'application/json',
                         'X-Cisco-Meraki-API-Key': module.params['auth_key'],
                         }
-
 
     def define_protocol(self):
         ''' Set protocol based on use_https parameters '''
