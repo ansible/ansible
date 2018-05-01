@@ -84,6 +84,22 @@ EXAMPLES = '''
     login_password: admin
     shard: rs1
     state: absent
+
+# Single node shard running on localhost
+- name: Ensure shard rs0 exists
+  mongodb_shard:
+    login_user: admin
+    login_password: secret
+    shard: "rs0/localhost:3001"
+    state: present
+
+# Single node shard running on localhost
+- name: Ensure shard rs1 exists
+  mongodb_shard:
+    login_user: admin
+    login_password: secret
+    shard: "rs1/localhost:3002"
+    state: present
 '''
 
 RETURN = '''
