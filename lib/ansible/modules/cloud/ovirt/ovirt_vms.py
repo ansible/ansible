@@ -1111,7 +1111,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
-            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
             equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
