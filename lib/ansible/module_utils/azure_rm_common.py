@@ -874,6 +874,7 @@ class AzureRMModuleBase(object):
         if not base_url:
             # most things are resource_manager, don't make everyone specify
             base_url = self._cloud_environment.endpoints.resource_manager
+            client_kwargs['base_url'] = base_url
 
         # unversioned clients won't accept profile; only send it if necessary
         # clients without a version specified in the profile will use the default
