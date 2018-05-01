@@ -736,6 +736,12 @@ class AzureInventory(object):
                     self._inventory[safe_value] = []
                 self._inventory[safe_key].append(host_name)
                 self._inventory[safe_value].append(host_name)
+                if re.search(r',', values):
+                    for value in values.split(","):
+                        safe_value = safe_key + '_' + self._to_safe(value)
+                        if not self._inventory.get(safe_value):
+                            self._inventory[safe_value] = []
+                        self._inventory[safe_value].append(host_name)
 
     def _json_format_dict(self, pretty=False):
         # convert inventory to json
@@ -834,6 +840,8 @@ class AzureInventory(object):
             if arg_value and tag_obj.get(arg_key, None) == arg_value:
                 matches += 1
             elif not arg_value and tag_obj.get(arg_key, None) is not None:
+                matches += 1
+            elif arg_value and arg_value in tag_obj.get(arg_key, "").split(","):
                 matches += 1
         if matches == len(tag_args):
             return True
