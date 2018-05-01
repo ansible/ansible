@@ -9,6 +9,7 @@ DOCUMENTATION = '''
     plugin_type: inventory
     authors:
       - Chris Houseknecht <@chouseknecht>
+      - Fabian von Feilitzsch <@fabianvf>
 
     short_description: Kubernetes (K8s) inventory source
 

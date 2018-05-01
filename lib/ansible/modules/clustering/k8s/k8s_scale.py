@@ -21,7 +21,9 @@ short_description: Set a new size for a Deployment, ReplicaSet, Replication Cont
 
 version_added: "2.5"
 
-author: "Chris Houseknecht (@chouseknecht)"
+author:
+    - "Chris Houseknecht (@chouseknecht)"
+    - "Fabian von Feilitzsch (@fabianvf)"
 
 description:
   - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicatSet,

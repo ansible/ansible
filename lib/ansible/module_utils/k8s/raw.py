@@ -19,20 +19,25 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import urllib3
 
-from ansible.module_utils.k8s.helper import COMMON_ARG_SPEC, AUTH_ARG_SPEC, OPENSHIFT_ARG_SPEC
-from ansible.module_utils.k8s.common import KubernetesAnsibleModule, OpenShiftAnsibleModuleMixin, to_snake
+from ansible.module_utils.k8s.common import KubernetesAnsibleModule
+
 
 try:
-    from openshift.helper.exceptions import KubernetesException
+    from kubernetes.client.rest import ApiException
 except ImportError:
     # Exception handled in common
     pass
+
+urllib3.disable_warnings()
 
 
 class KubernetesRawModule(KubernetesAnsibleModule):
 
     def __init__(self, *args, **kwargs):
+        self.client = None
+
         mutually_exclusive = [
             ('resource_definition', 'src'),
         ]
@@ -42,170 +47,127 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                          supports_check_mode=True,
                                          **kwargs)
 
-        self.kind = self.params.pop('kind')
-        self.api_version = self.params.pop('api_version')
-        self.resource_definition = self.params.pop('resource_definition')
-        self.src = self.params.pop('src')
-        if self.src:
-            self.resource_definition = self.load_resource_definition(self.src)
+        kind = self.params.pop('kind')
+        api_version = self.params.pop('api_version')
+        name = self.params.pop('name')
+        namespace = self.params.pop('namespace')
+        resource_definition = self.params.pop('resource_definition')
+        if resource_definition:
+            self.resource_definitions = [resource_definition]
+        src = self.params.pop('src')
+        if src:
+            self.resource_definitions = self.load_resource_definitions(src)
 
-        if self.resource_definition:
-            self.api_version = self.resource_definition.get('apiVersion')
-            self.kind = self.resource_definition.get('kind')
-
-        self.api_version = self.api_version.lower()
-        self.kind = to_snake(self.kind)
-
-        if not self.api_version:
-            self.fail_json(
-                msg=("Error: no api_version specified. Use the api_version parameter, or provide it as part of a ",
-                     "resource_definition.")
-            )
-        if not self.kind:
-            self.fail_json(
-                msg="Error: no kind specified. Use the kind parameter, or provide it as part of a resource_definition"
-            )
-
-        self.helper = self.get_helper(self.api_version, self.kind)
-
-    @property
-    def argspec(self):
-        argspec = copy.deepcopy(COMMON_ARG_SPEC)
-        argspec.update(copy.deepcopy(AUTH_ARG_SPEC))
-        return argspec
+        if not resource_definition and not src:
+            self.resource_definitions = [{
+                'kind': kind,
+                'apiVersion': api_version,
+                'metadata': {
+                    'name': name,
+                    'namespace': namespace
+                }
+            }]
 
     def execute_module(self):
-        if self.resource_definition:
-            resource_params = self.resource_to_parameters(self.resource_definition)
-            self.params.update(resource_params)
+        changed = False
+        results = []
+        self.client = self.get_api_client()
+        for definition in self.resource_definitions:
+            kind = definition.get('kind')
+            api_version = definition.get('apiVersion')
+            try:
+                resource = self.client.resources.get(kind=kind, api_version=api_version)
+            except Exception as e:
+                self.fail_json(msg='Failed to find resource {}.{}: {}'.format(
+                    api_version, kind, e
+                ))
+            result = self.perform_action(resource, definition)
+            changed = changed or result['changed']
+            results.append(result)
 
-        self.authenticate()
+        if len(results) == 1:
+            self.exit_json(**results[0])
 
+        self.exit_json(**{
+            'changed': changed,
+            'result': {
+                'results': results
+            }
+        })
+
+    def perform_action(self, resource, definition):
+        result = {'changed': False, 'result': {}}
         state = self.params.pop('state', None)
         force = self.params.pop('force', False)
-        name = self.params.get('name')
-        namespace = self.params.get('namespace')
+        name = definition.get('metadata', {}).get('name')
+        namespace = definition.get('metadata', {}).get('namespace')
         existing = None
 
         self.remove_aliases()
 
-        return_attributes = dict(changed=False, result=dict())
-
-        if self.helper.base_model_name_snake.endswith('list'):
-            k8s_obj = self._read(name, namespace)
-            return_attributes['result'] = k8s_obj.to_dict()
-            self.exit_json(**return_attributes)
+        if definition['kind'].endswith('list'):
+            result['result'] = resource.list(namespace=namespace).to_dict()
+            result['changed'] = False
+            result['method'] = 'get'
+            return result
 
         try:
-            existing = self.helper.get_object(name, namespace)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.message),
-                           error=exc.value.get('status'))
+            existing = resource.get(name=name, namespace=namespace)
+        except ApiException as exc:
+            if exc.status != 404:
+                self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
+                            error=exc.status)
 
         if state == 'absent':
+            result['method'] = "delete"
             if not existing:
                 # The object already does not exist
-                self.exit_json(**return_attributes)
+                return result
             else:
                 # Delete the object
                 if not self.check_mode:
                     try:
-                        self.helper.delete_object(name, namespace)
-                    except KubernetesException as exc:
-                        self.fail_json(msg="Failed to delete object: {0}".format(exc.message),
-                                       error=exc.value.get('status'))
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
+                        k8s_obj = resource.delete(name, namespace=namespace)
+                        result['result'] = k8s_obj.to_dict()
+                    except ApiException as exc:
+                        self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
+                                       error=exc.status)
+                result['changed'] = True
+                return result
         else:
             if not existing:
-                k8s_obj = self._create(namespace)
-                return_attributes['result'] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
+                if not self.check_mode:
+                    k8s_obj = resource.create(definition, namespace=namespace)
+                    result['result'] = k8s_obj.to_dict()
+                result['changed'] = True
+                result['method'] = 'create'
+                return result
 
             if existing and force:
-                k8s_obj = None
-                request_body = self.helper.request_body_from_params(self.params)
                 if not self.check_mode:
                     try:
-                        k8s_obj = self.helper.replace_object(name, namespace, body=request_body)
-                    except KubernetesException as exc:
-                        self.fail_json(msg="Failed to replace object: {0}".format(exc.message),
-                                       error=exc.value.get('status'))
-                return_attributes['result'] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
+                        k8s_obj = resource.replace(definition, name=name, namespace=namespace)
+                        result['result'] = k8s_obj.to_dict()
+                    except ApiException as exc:
+                        self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
+                                       error=exc.status)
+                result['changed'] = True
+                result['method'] = 'replace'
+                return result
 
-            # Check if existing object should be patched
-            k8s_obj = copy.deepcopy(existing)
-            try:
-                self.helper.object_from_params(self.params, obj=k8s_obj)
-            except KubernetesException as exc:
-                self.fail_json(msg="Failed to patch object: {0}".format(exc.message))
-            match, diff = self.helper.objects_match(self.helper.fix_serialization(existing), k8s_obj)
+            match, diffs = self.diff_objects(existing.to_dict(), definition)
+
             if match:
-                return_attributes['result'] = existing.to_dict()
-                self.exit_json(**return_attributes)
+                result['result'] = existing.to_dict()
+                return result
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
-                    k8s_obj = self.helper.patch_object(name, namespace, k8s_obj)
-                except KubernetesException as exc:
-                    self.fail_json(msg="Failed to patch object: {0}".format(exc.message))
-            return_attributes['result'] = k8s_obj.to_dict()
-            return_attributes['changed'] = True
-            self.exit_json(**return_attributes)
-
-    def _create(self, namespace):
-        request_body = None
-        k8s_obj = None
-        try:
-            request_body = self.helper.request_body_from_params(self.params)
-        except KubernetesException as exc:
-            self.fail_json(msg="Failed to create object: {0}".format(exc.message))
-        if not self.check_mode:
-            try:
-                k8s_obj = self.helper.create_object(namespace, body=request_body)
-            except KubernetesException as exc:
-                self.fail_json(msg="Failed to create object: {0}".format(exc.message),
-                               error=exc.value.get('status'))
-        return k8s_obj
-
-    def _read(self, name, namespace):
-        k8s_obj = None
-        try:
-            k8s_obj = self.helper.get_object(name, namespace)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object',
-                           error=exc.value.get('status'))
-        return k8s_obj
-
-
-class OpenShiftRawModule(OpenShiftAnsibleModuleMixin, KubernetesRawModule):
-
-    @property
-    def argspec(self):
-        args = super(OpenShiftRawModule, self).argspec
-        args.update(copy.deepcopy(OPENSHIFT_ARG_SPEC))
-        return args
-
-    def _create(self, namespace):
-        if self.kind.lower() == 'project':
-            return self._create_project()
-        return KubernetesRawModule._create(self, namespace)
-
-    def _create_project(self):
-        new_obj = None
-        k8s_obj = None
-        try:
-            new_obj = self.helper.object_from_params(self.params)
-        except KubernetesException as exc:
-            self.fail_json(msg="Failed to create object: {0}".format(exc.message))
-        try:
-            k8s_obj = self.helper.create_project(metadata=new_obj.metadata,
-                                                 display_name=self.params.get('display_name'),
-                                                 description=self.params.get('description'))
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object',
-                           error=exc.value.get('status'))
-        return k8s_obj
+                    k8s_obj = resource.update(definition, name=name, namespace=namespace)
+                    result['result'] = k8s_obj.to_dict()
+                except ApiException as exc:
+                    self.fail_json(msg="Failed to patch object: {0}".format(exc.body))
+            result['changed'] = True
+            result['method'] = 'patch'
+            result['diff'] = diffs
+            return result
