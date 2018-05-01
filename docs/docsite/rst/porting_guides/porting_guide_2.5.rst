@@ -75,6 +75,21 @@ Included file:
 
 The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
 
+Fixed handling of keywords and inline variables
+-----------------------------------------------
+
+Several fixes to how we handle keywords and 'inline variables' help avoid conflating ones with the others, sadly this has broken a common usage of 'name', as it always was a reserved keyword but freely used as a variable when calling roles::
+
+    roles:
+        - { role: myrole, name: Justin, othervar: othervalue, become: True}
+
+As you see above we have both keywords (``role`', ``become``) and variables (``name``, ``othervar``) mixed in the same bag, this created issues with what was intended as a variable overriding a keyword and a keyword being available as a variable in the roles. Now all the keywords get removed from the variables available to the role, which would remove the above ``name`` as it is itself a keyword and can cause ``Undefined`` errors in the role if it expects it.
+
+The workaround is to use ``vars:`` to explicitly declare variables for the role and avoid the confusion::
+
+    roles:
+        - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
+
 
 Deprecated
 ==========
