@@ -546,7 +546,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.client.config.long_running_operation_timeout = 3
         self.nsg_models = self.client.network_security_groups.models
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags', 'append_tags']:
             setattr(self, key, kwargs[key])
 
         changed = False
