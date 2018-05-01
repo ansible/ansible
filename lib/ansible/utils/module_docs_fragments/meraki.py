@@ -46,4 +46,11 @@ options:
         - Whether to validate HTTP certificates.
         type: bool
         default: 'yes'
+    org_name:
+        description:
+        - Name of organization.
+        aliases: [ organization ]
+    org_id:
+        description:
+        - ID of organization.
 '''

@@ -57,13 +57,6 @@ class MerakiModule(object):
         self.headers = dict()
         self.function = function
 
-        if module.params['auth_key'] is None:
-            module.fail_json(msg='Meraki API key not specified')
-        else:
-            self.headers = {'Content-Type': 'application/json',
-                            'X-Cisco-Meraki-API-Key': module.params['auth_key'],
-                            }
-
         # error output
         self.error = dict(code=None, text=None)
 
@@ -129,6 +122,11 @@ class MerakiModule(object):
             except KeyError:
                 self.fail_json(msg='Meraki Dashboard API key not set')
 
+        self.headers = {'Content-Type': 'application/json',
+                        'X-Cisco-Meraki-API-Key': module.params['auth_key'],
+                        }
+
+
     def define_protocol(self):
         ''' Set protocol based on use_https parameters '''
         if self.params['use_https'] is True:
@@ -161,42 +159,6 @@ class MerakiModule(object):
                     is_changed = True
         return is_changed
 
-    # def is_new(self):
-    #     ''' Check whether an object is new and should be created '''
-    #     r = self.get_existing(self.path)
-    #     for i in r:
-    #         if self.module.params['name'] == i['name']:
-    #             return False
-    #     return True
-
-    # def get_existing(self, path):
-    #     ''' Query existing objects associated to path. May not need to stay. '''
-    #     self.define_protocol()
-    #     self.path = path
-
-    #     self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'],
-    #                                              self.params['host'],
-    #                                              self.path.lstrip('/')
-    #                                              )
-    #     resp, info = fetch_url(self.module, self.url,
-    #                            headers=self.headers,
-    #                            method='GET',
-    #                            timeout=self.params['timeout'],
-    #                            use_proxy=self.params['use_proxy'],
-    #                            )
-    #     self.response = info['msg']
-    #     self.status = info['status']
-    #     response = json.loads(to_native(resp.read()))
-
-    #     if self.status >= 300:
-    #         try:
-    #             self.error['text'] = json.loads(info['body'])
-    #             self.error['code'] = info['status']
-    #             self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
-    #         except KeyError:
-    #             self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-    #     return response
-
     def get_orgs(self):
         ''' Downloads all organizations '''
         return json.loads(self.request('/organizations', method='GET'))
@@ -225,9 +187,9 @@ class MerakiModule(object):
                 return self.params['org_id']
         org_count = self.is_org_valid(orgs, org_name=org_name)
         if org_count == 0:
-            self.fail_json(msg='There are no organizations with the name {org_name}'.format(org_name))
+            self.fail_json(msg='There are no organizations with the name {org_name}'.format(org_name=org_name))
         if org_count > 1:
-            self.fail_json(msg='There are multiple organizations with the name {org_name}'.format(org_name))
+            self.fail_json(msg='There are multiple organizations with the name {org_name}'.format(org_name=org_name))
         elif org_count == 1:
             for i in orgs:
                 if org_name == i['name']:
