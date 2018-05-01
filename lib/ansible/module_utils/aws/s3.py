@@ -74,7 +74,9 @@ def dict_to_s3_extra_args(metadata):
     ret = {}
 
     for option in metadata:
-        mangled = option.translate(None, '-_').lower()
+        mangled = option.lower()
+        mangled = mangled.replace('-', '')
+        mangled = mangled.replace('_', '')
         if mangled in S3_EXTRA_ARGS:
             ret[S3_EXTRA_ARGS[mangled]] = metadata[option]
         else:

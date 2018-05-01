@@ -1,0 +1,302 @@
+- name: Set up s3 connection info
+  set_fact:
+    s3_connection_info: &s3_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+      bucket: "{{ bucket_name }}"
+  no_log: yes
+
+- block:
+    - name: Create test bucket
+      aws_s3:
+        mode: create
+        <<: *s3_connection_info
+
+    - name: Create temporary directory
+      tempfile:
+        state: directory
+      register: tmp1
+
+    - name: Create content and indices
+      set_fact:
+          content: "{{ lookup('password', '/dev/null chars=ascii_letters,digits,hexdigits,punctuation') }}"
+          indices: "{{ range(11) | list }}"
+
+    - name: Create temporary files
+      copy:
+        content: "{{ content * item }}"
+        dest: "{{ tmp1.path }}/file-{{ item }}.txt"
+      loop: "{{ indices }}"
+
+
+    # Test upload
+    - name: Test push
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        overwrite: always
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check push result
+      assert:
+        that:
+          - result is changed
+          - (result.objects | length) == (indices | length)
+
+    - name: Test push when objects already exist
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        <<: *s3_connection_info
+
+      register: result
+
+    - name: Check push result
+      assert:
+        that:
+          - result is not changed
+          - (result.objects | length) == (indices | length)
+          - "'e_tag' in result.objects.0.s3"
+          - "'last_modified' in result.objects.0.s3"
+          - "'size' in result.objects.0.s3"
+          - "'storage_class' in result.objects.0.s3"
+
+    # Test download
+    - name: Create a second temporary directory
+      tempfile:
+        state: directory
+      register: tmp2
+
+    - name: Test that pull works
+      aws_s3_sync:
+        direction: pull
+        path: "{{ tmp2.path }}"
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check pull result
+      assert:
+        that:
+          - result is changed
+          - (result.objects | selectattr('state', 'match', 'added') | list | length) == (indices | length)
+
+    - name: Check pull when files already exist
+      aws_s3_sync:
+        direction: pull
+        path: "{{ tmp2.path }}"
+        <<: *s3_connection_info
+      register: result
+
+    - name: Pull did nothing
+      assert:
+        that:
+          - result is not changed
+
+    # Make sure everything synced properly
+    - name: Stat the files in the first tmpdir
+      stat:
+        path: "{{ tmp1.path }}/file-{{ item }}.txt"
+        get_checksum: true
+      loop: "{{ indices }}"
+      register: tmp1stat
+
+    - name: Stat the files in the second tmpdir
+      stat:
+        path: "{{ tmp2.path }}/file-{{ item }}.txt"
+        get_checksum: true
+      loop: "{{ indices }}"
+      register: tmp2stat
+
+    - name: Make sure the checksums match
+      assert:
+        that:
+          - tmp1stat.results[item].stat.checksum == tmp2stat.results[item].stat.checksum
+      loop: "{{ indices }}"
+
+    # Test all the sync strategies
+    - name: Update one of the temporary files
+      copy:
+        content: "{{ content * 10 }}"
+        dest: "{{ tmp1.path }}/file-0.txt"
+
+    - name: Test the never strategy
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        overwrite: never
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check result of never
+      assert:
+        that:
+          - result is not changed
+
+    - name: Test the always strategy
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        overwrite: always
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check result of always
+      assert:
+        that:
+          - result is changed
+          - (result.objects | selectattr('state', 'match', 'synced') | list | length) == (indices | length)
+
+    - name: Update one of the temporary files
+      copy:
+        content: "{{ content }}"
+        dest: "{{ tmp1.path }}/file-0.txt"
+
+    - name: Test the different strategy
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        overwrite: different
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check result of different
+      assert:
+        that:
+          - result is changed
+          - result.objects | selectattr('state', 'match', 'synced') | list | length == 1
+
+    - name: Make sure the timestamp will be newer
+      pause:
+        seconds: 2
+
+    - name: Touch one of the temporary files
+      file:
+        path: "{{ tmp1.path }}/file-0.txt"
+        state: touch
+
+    - name: Test the newer strategy
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        overwrite: newer
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check result of newer
+      assert:
+        that:
+          - result is changed
+          - result.objects | selectattr('state', 'match', 'synced') | list | length == 1
+
+    # Test includes and excludes
+    - name: Test include pattern
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        pattern: "*-0.*"
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check include results
+      assert:
+        that:
+          - result.objects | length == 1
+          - result.objects.0.key == 'file-0.txt'
+
+    - name: Test exclude
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        excludes:
+          - "*-0.*"
+          - "*-1.*"
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check exclude results
+      assert:
+        that:
+          - (result.objects | length) == (indices | length) - 2
+          - result.objects | selectattr('key', 'match', 'file-0.txt') | list | length == 0
+
+    - name: Test regex pattern
+      aws_s3_sync:
+        direction: push
+        path: "{{ tmp1.path }}"
+        use_regex: true
+        patterns: '[life]{4}-[01]\.'
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check regex results
+      assert:
+        that:
+          - result.objects | length == 2
+          - result.objects | map(attribute='key') | list | symmetric_difference(['file-0.txt', 'file-1.txt']) | length == 0
+
+    # Test MIME functionality
+    - name: Test MIME detection
+      aws_s3_sync:
+        direction: pull
+        path: "{{ tmp1.path }}"
+        patterns: file-0.txt
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check MIME detection
+      assert:
+        that:
+          - result.objects.0.local.content_type == 'text/plain'
+
+    - name: Test customized MIME detection
+      aws_s3_sync:
+        direction: pull
+        path: "{{ tmp1.path }}"
+        patterns: file-0.txt
+        mime_types_map:
+          ".txt": x-ansible/testfile
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check MIME detection
+      assert:
+        that:
+          - result.objects.0.local.content_type == 'x-ansible/testfile'
+
+    - name: Test MIME override
+      aws_s3_sync:
+        direction: pull
+        path: "{{ tmp1.path }}"
+        patterns: file-0.txt
+        mime_types_map:
+          ".text": x-ansible/testfile
+        mime_override: true
+        <<: *s3_connection_info
+      register: result
+
+    - name: Check MIME override
+      assert:
+        that:
+          - result.objects.0.local.content_type == 'application/octet-stream'
+
+  always:
+    - name: Delete test bucket
+      aws_s3:
+        mode: delete
+        <<: *s3_connection_info
+      retries: 3
+      delay: 3
+      register: result
+      until: result is changed
+      ignore_errors: true
+
+    - name: Delete temporary directories
+      file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - "{{ tmp1.path }}"
+        - "{{ tmp2.path }}"
