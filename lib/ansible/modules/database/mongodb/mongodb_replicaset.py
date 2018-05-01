@@ -19,7 +19,7 @@ module: mongodb_replicaset
 short_description: Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
 description:
     - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
-    - Validation takes the form of... replicaset name validation
+    - Validation takes the form of; replicaset name validation only at present.
     - This may change in the future to involve adding  and removing members
 options:
     login_user:
@@ -37,6 +37,16 @@ options:
             - The database where login credentials are stored
         required: false
         default: null
+    login_host:
+        description:
+            - The MongoDB hostname to login to
+        required: false
+        default: "localhost"
+    login_port:
+        description:
+            - The MongoDB port to login to
+        required: false
+        default: 27017
     replica_set:
         description:
             - Replicaset name
@@ -45,7 +55,6 @@ options:
     members:
         description:
             - An comma sepaeated list consisting of the replicaset members.
-            - By default play_hosts is assumed to be the rs members with the port 27017
             - Supply as a simple csv string
                 mongodb1:27017,mongodb2:27017,mongodb3:27017
     validate:
@@ -64,7 +73,7 @@ options:
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     arbiter_at_index:
-        description: Identifies the position of the member array that is an arbiter
+        description: Identifies the position of the member in the array that is an arbiter
         required: false
         default: None
     chainingAllowed:
@@ -95,14 +104,33 @@ EXAMPLES = '''
 - mongodb_replicaset:
     login_user: admin
     login_password: admin
+    login_host: "localhost"
     replica_set: rs0
     members: mongodb1:27017,mongodb2:27017,mongodb3:27017
+  when: groups.mongod.index(inventory_hostname) == 0
 
- Create a replicaset called 'mongo_replset' with the members of the play_hosts ansible variable
-- mongodb_replicaset:
+# Create two single-node replicasets on the localhost for testing
+- name: Ensure replicaset rs0 exists
+  mongodb_replicaset:
     login_user: admin
-    login_password: admin
-    replica_set: mongo_replset
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "rs0"
+    members: "localhost:3001"
+  validate: no
+
+- name: Ensure replicaset rs1 exists
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3002
+    login_database: "admin"
+    replica_set: "rs1"
+    members: "localhost:3002"
+  validate: no
 '''
 
 RETURN = '''
@@ -279,7 +307,6 @@ def main():
     login_database = module.params['login_database']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-
     replica_set = module.params['replica_set']
     members = module.params['members']
     arbiter_at_index = module.params['arbiter_at_index']
