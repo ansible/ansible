@@ -1,0 +1,2 @@
+- bugfixes:
+    - disambiguate keywords from variables in include_role https://github.com/ansible/ansible/pull/38968
