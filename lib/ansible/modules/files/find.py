@@ -244,6 +244,7 @@ def agefilter(st, now, age, timestamp):
         return True
     return False
 
+
 def useridfilter(st, userid):
     if userid is None:
         return True
@@ -251,12 +252,14 @@ def useridfilter(st, userid):
         return True
     return False
 
+
 def groupidfilter(st, groupid):
     if groupid is None:
         return True
     elif st.st_gid == groupid:
         return True
     return False
+
 
 def sizefilter(st, size):
     '''filter files greater than size'''
@@ -396,13 +399,13 @@ def main():
     if params['user'] is None:
         userid = None
     else:
-        if params['user'].isdigit(): 
+        if params['user'].isdigit():
                 userid = int(params['user'])
         else:
                 try:
-                        userid = pwd.getpwnam(params['user']).pw_uid 
+                        userid = pwd.getpwnam(params['user']).pw_uid
                 except:
-                        userid = -1 #If the user name passed here is not know, put userid to -1 to have no file found
+                        userid = -1  # If the user name passed here is not know, put userid to -1 to have no file found
 
     if params['group'] is None:
         groupid = None
@@ -411,9 +414,9 @@ def main():
                 groupid = int(params['group'])
         else:
                 try:
-                        groupid = grp.getgrpnam(params['group']).gr_uid 
+                        groupid = grp.getgrpnam(params['group']).gr_uid
                 except:
-                        groupid = -1 #If the group name passed here is not know, put groupid to -1 to have no file found
+                        groupid = -1  # If the group name passed here is not know, put groupid to -1 to have no file found
 
     now = time.time()
     msg = ''
