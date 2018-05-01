@@ -310,7 +310,6 @@ def nic_to_dict(nic):
             private_ip_address=config.private_ip_address,
             private_ip_allocation_method=config.private_ip_allocation_method,
             subnet=subnet_to_dict(config.subnet),
-            primary=config.primary,
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
