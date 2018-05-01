@@ -100,7 +100,8 @@ requirements: [ "pymongo" ]
 
 EXAMPLES = '''
 # Create a replicaset called 'rs0' with the 3 provided members
-- mongodb_replicaset:
+- name: Ensure replicaset rs0 exists
+  mongodb_replicaset:
     login_user: admin
     login_password: admin
     login_host: "localhost"
@@ -134,7 +135,7 @@ EXAMPLES = '''
 
 RETURN = '''
 replica_set:
-    description: The name of the replicaset to create.
+    description: The name of the replicaset that has been created.
     returned: success
     type: string
 '''
