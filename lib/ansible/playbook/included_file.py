@@ -104,13 +104,16 @@ class IncludedFile:
                                 parent_include = original_task._parent
                                 cumulative_path = None
                                 while parent_include is not None:
-                                    if not isinstance(parent_include, TaskInclude):
+                                    _from_dyn_task_include = getattr(parent_include, '_from_dyn_task_include', False)
+                                    if not isinstance(parent_include, TaskInclude) and not _from_dyn_task_include:
                                         parent_include = parent_include._parent
                                         continue
                                     if isinstance(parent_include, IncludeRole):
                                         parent_include_dir = parent_include._role_path
                                     else:
-                                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                                        # Depending on how we got here, a task includes args may have been merged into vars
+                                        args_or_vars = getattr(parent_include, 'args', {}) or getattr(parent_include, 'vars', {})
+                                        parent_include_dir = os.path.dirname(templar.template(args_or_vars.get('_raw_params')))
                                     if cumulative_path is not None and not os.path.isabs(cumulative_path):
                                         cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                     else:

@@ -476,6 +476,10 @@ class Base(with_metaclass(BaseMeta, object)):
         Vars in a play can be specified either as a dictionary directly, or
         as a list of dictionaries. If the later, this method will turn the
         list into a single dictionary.
+
+        We start with the value of ``self.vars`` in case vars were set before
+        ``preprocess_data``, combining on top to keep precedence. This is
+        specifically the case with blocks as a part of dynamic includes
         '''
 
         def _validate_variable_keys(ds):

@@ -55,12 +55,27 @@ class Block(Base, Become, Conditional, Taggable):
         # end of role flag
         self._eor = False
 
+        # This tracks whether the blocks came from a flattened task include
+        self._from_dyn_task_include = False
+
+        _ti_vars = {}
         if task_include:
-            self._parent = task_include
+            if not getattr(task_include, 'statically_loaded', True):
+                # Flatten the blocks, placing the new block in place of the task_include
+                _ti_vars = task_include.vars.copy()
+                _ti_vars.update(task_include.args)
+                self._parent = task_include._parent
+                self._from_dyn_task_include = True
+            else:
+                self._parent = task_include
+
         elif parent_block:
             self._parent = parent_block
 
         super(Block, self).__init__()
+
+        # Set initial vars from task include out of band of ds preprocessing to happen later
+        self.vars.update(_ti_vars)
 
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
