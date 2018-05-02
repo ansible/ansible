@@ -42,8 +42,7 @@ options:
         required: true
     version:
         description:
-            - SNMP version.
-        default: v1
+            - SNMP version. If this is not specified, v1 is used.
         choices: ['v1', 'v2c', 'v3']
     v3:
         description:
@@ -58,8 +57,8 @@ options:
         default: 162
     snmp_type:
         description:
-            - type of message to send to host.
-        default: trap
+            - type of message to send to host. If this is not
+              specified, trap type is used.
         choices: ['trap', 'inform']
     vrf:
         description:
