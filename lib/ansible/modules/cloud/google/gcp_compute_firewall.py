@@ -93,7 +93,7 @@ options:
               used: global/networks/default If you choose to specify this
               property, you can specify the network as a full or partial URL.
               For example, the following are all valid URLs:
-              https://www.googleapis.com/compute/v1/projects/myproject/global/
+              U(https://www.googleapis.com/compute/v1/projects/myproject/global/)
               networks/my-network projects/myproject/global/networks/my-network
               global/networks/default .'
         required: false
@@ -204,7 +204,7 @@ RETURN = '''
               used: global/networks/default If you choose to specify this
               property, you can specify the network as a full or partial URL.
               For example, the following are all valid URLs:
-              https://www.googleapis.com/compute/v1/projects/myproject/global/
+              U(https://www.googleapis.com/compute/v1/projects/myproject/global/)
               networks/my-network projects/myproject/global/networks/my-network
               global/networks/default .'
         returned: success
