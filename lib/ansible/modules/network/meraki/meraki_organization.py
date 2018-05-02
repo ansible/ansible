@@ -162,7 +162,7 @@ def main():
         elif meraki.params['org_id']:
             for o in orgs:
                 if o['id'] == meraki.params['org_id']:
-                    meraki.result['data'] = o            
+                    meraki.result['data'] = o
         else:  # Query all organizations, no matter what
             orgs = meraki.get_orgs()
             meraki.result['data'] = orgs
