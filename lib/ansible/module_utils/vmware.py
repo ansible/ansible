@@ -10,6 +10,7 @@ import atexit
 import os
 import ssl
 import time
+from random import randint
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -29,20 +30,41 @@ class TaskError(Exception):
     pass
 
 
-def wait_for_task(task):
+def wait_for_task(task, max_backoff=64, timeout=3600):
+    """Function to wait for given task using exponential back-off algorithm.
+
+    Args:
+        task: VMware task object
+        max_backoff: Maximum amount of sleep time in seconds
+        timeout: Timeout for the given task in seconds
+
+    Returns: TaskError for failure or True with result for successful task.
+    """
+    failure_counter = 0
+    start_time = time.time()
+
+    # List of generic errors
+    gen_errors = (
+        vim.fault.CannotAccessVmConfig,
+        vmodl.fault.InvalidArgument,
+    )
 
     while True:
+        if time.time() - start_time >= timeout:
+            raise TaskError("Timeout")
         if task.info.state == vim.TaskInfo.State.success:
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             try:
+                if isinstance(task.info.error, gen_errors):
+                    raise TaskError(task.info.error.msg)
                 raise TaskError(task.info.error)
             except AttributeError:
                 raise TaskError("An unknown error has occurred")
-        if task.info.state == vim.TaskInfo.State.running:
-            time.sleep(15)
-        if task.info.state == vim.TaskInfo.State.queued:
-            time.sleep(15)
+        if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
+            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            time.sleep(sleep_time)
+            failure_counter += 1
 
 
 def wait_for_vm_ip(content, vm, timeout=300):
