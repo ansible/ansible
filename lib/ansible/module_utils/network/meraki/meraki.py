@@ -214,11 +214,7 @@ class MerakiModule(object):
         if org_name:
             org_id = self.get_org_id(org_name)
 
-        ids = {'org_id': org_id,
-               'net_id': net_id,
-               }
-
-        built_path = built_path.format(**ids)
+        built_path = built_path.format(org_id=org_id, net_id=net_id)
         return built_path
 
     def request(self, path, method=None, payload=None):
@@ -228,7 +224,7 @@ class MerakiModule(object):
 
         if method is not None:
             self.method = method
-        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
+        self.url = '{protocol}://{host}/api/v0/{path}'.format(path=self.path.lstrip('/'), **self.params)
         resp, info = fetch_url(self.module, self.url,
                                headers=self.headers,
                                data=payload,
