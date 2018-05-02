@@ -56,7 +56,7 @@ class IncludedFile:
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
-        hosts_per_file = {}
+        hosts_per_file = {}  # Used later to squash noop blocks for identical files
         task_vars_cache = {}
 
         for res in results:

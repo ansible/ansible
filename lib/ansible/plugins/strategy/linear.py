@@ -346,6 +346,7 @@ class StrategyModule(StrategyBase):
                     display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
+                    # Loop sorted files, so we can ensure they are grouped
                     for included_file in sorted(included_files, key=lambda inc_f: inc_f._filename):
                         display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
