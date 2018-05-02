@@ -92,7 +92,7 @@
 
 - assert:
       that:
-          - output.state.tags | length == 3
+          - output.state.tags | length == 4
           - output.state.tags.delete == 'never'
 
 - name: Purge tags
@@ -102,6 +102,7 @@
       tags:
           testing: testing
           delete: on-exit
+      append_tags: false
   register: output
 
 - assert:

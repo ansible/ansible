@@ -80,7 +80,7 @@
 
  - assert:
        that:
-           - "output.state.tags | length == 3"
+           - "output.state.tags | length == 4"
            - "output.state.tags.galaxy == 'no'"
 
  - name: Update account tags
@@ -90,6 +90,7 @@
        tags:
            testing: testing
            delete: never
+        append_tags: false
    register: output
 
  - assert:

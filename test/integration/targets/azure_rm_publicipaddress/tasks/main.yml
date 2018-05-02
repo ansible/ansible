@@ -70,6 +70,7 @@
       resource_group: "{{ resource_group }}"
       name: testing01
       tags: {}
+      append_tags: false
   register: output
 
 - assert:
