@@ -56,12 +56,14 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
+
+        if not flags:
+            flags = []
+
         if source == 'running':
             cmd = 'show running-config '
-            if not flags:
-                flags = ['all']
         else:
-            cmd = 'show startup-config'
+            cmd = 'show startup-config '
 
         cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
