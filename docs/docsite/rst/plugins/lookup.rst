@@ -65,6 +65,46 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
         - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
         - ['a', 'c', 'd', 'c']
 
+.. versionadded:: 2.5
+
+All lookups now have an option to handle how errors behave, by default they produce fatal errors for the task, but now the user can control this via the ``errors`` option.
+
+You can ignore it::
+
+    - name: file doesnt exist, but i dont care .. file plugin itself warns anyways ...
+      debug: msg="{{ lookup('file', '/idontexist', errors='ignore') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    ok: [localhost] => {
+        "msg": ""
+    }
+
+
+You can ask it to warn::
+
+    - name: file doesnt exist, let me know, but continue
+      debug: msg="{{ lookup('file', '/idontexist', errors='warn') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist
+
+    ok: [localhost] => {
+        "msg": ""
+    }
+
+
+Or fail hard::
+
+    - name: file doesnt exist, FAIL (this is the default)
+      debug: msg="{{ lookup('file', '/idontexist', errors='strict') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    fatal: [localhost]: FAILED! => {"msg": "An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist"}
+
+
 .. _query:
 
 query
