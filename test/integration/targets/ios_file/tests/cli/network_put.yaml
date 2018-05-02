@@ -4,9 +4,6 @@
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
 
-# Note - ansible_ssh_user should have privileage level 15 on ios box
-# to run this playbook
-
 - name: setup
   ios_config:
     lines:
@@ -18,6 +15,16 @@
 - name: copy file from controller to ios + scp (Default)
   network_put:
     src : ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: copy file from controller to ios + dest specified
+  network_put:
+    src : ios1.cfg
+    dest: ios.cfg
   register: result
 
 - assert:
