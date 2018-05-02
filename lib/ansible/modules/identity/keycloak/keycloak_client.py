@@ -734,7 +734,7 @@ def main():
         # Unfortunately, the ansible argument spec checker introduces variables with null values when
         # they are not specified
         if client_param == 'protocol_mappers':
-            new_param_value = map(lambda x: {k: v for (k, v) in x.items() if x[k] is not None}, new_param_value)
+            new_param_value = map(lambda x: dict((k, v) for (k, v) in x.items() if x[k] is not None), new_param_value)
 
         changeset[camel(client_param)] = new_param_value
 
