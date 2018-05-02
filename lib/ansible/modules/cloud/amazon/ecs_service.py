@@ -375,13 +375,14 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration, network_configuration):
+                       desired_count, deployment_configuration, network_configuration,force_new_deployment=False):
         params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+            forceNewDeployment=force_new_deployment)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         response = self.ecs.update_service(**params)
