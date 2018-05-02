@@ -636,6 +636,9 @@
 - name: create a symlink to the directory
   file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
 
+- name: create a symlink to a nonexistent file
+  file: path={{output_dir}}/test_follow_rec/nonexistent state=link src=does_not_exist force=True
+
 - name: try to change permissions without following symlinks
   file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
 
