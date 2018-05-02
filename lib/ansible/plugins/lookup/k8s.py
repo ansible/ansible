@@ -119,7 +119,7 @@ DOCUMENTATION = """
 
     requirements:
       - "python >= 2.7"
-      - "openshift >= 0.3"
+      - "openshift >= 0.6"
       - "PyYAML >= 3.11"
 
     notes:
