@@ -45,5 +45,5 @@ except ImportError:
 class StrategyModule(FreeStrategyModule):
 
     def __init__(self, tqm):
-        super(StrategyModule, self).__init__(self, tqm)
+        super(StrategyModule, self).__init__(tqm)
         self._atomic_per_host = True

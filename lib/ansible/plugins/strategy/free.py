@@ -50,7 +50,7 @@ except ImportError:
 class StrategyModule(StrategyBase):
 
     def __init__(self, tqm):
-        super(StrategyModule, self).__init__(self, tqm)
+        super(StrategyModule, self).__init__(tqm)
         self._atomic_per_host = False
 
     def run(self, iterator, play_context):
