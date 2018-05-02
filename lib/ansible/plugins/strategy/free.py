@@ -49,6 +49,10 @@ except ImportError:
 
 class StrategyModule(StrategyBase):
 
+    def __init__(self, tqm):
+        super(StrategyModule, self).__init__(self, tqm)
+        self._atomic_per_host = False
+
     def run(self, iterator, play_context):
         '''
         The "free" strategy is a bit more complex, in that it allows tasks to
@@ -169,7 +173,7 @@ class StrategyModule(StrategyBase):
 
                 # all workers have tasks to do (and the current host isn't done with the play).
                 # loop back to starting host and break out
-                if workers_free == 0 and work_to_do:
+                if self._atomic_per_host and workers_free == 0 and work_to_do:
                     last_host = starting_host
                     break
 
