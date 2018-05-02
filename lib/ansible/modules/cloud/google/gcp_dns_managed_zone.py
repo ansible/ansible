@@ -32,9 +32,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_dns_managed_zone
 description:
-    - A zone is a subtree of the DNS namespace under one administrative
-      responsibility. A ManagedZone is a resource that represents a DNS zone
-      hosted by the Cloud DNS service.
+    - A zone is a subtree of the DNS namespace under one administrative responsibility.
+      A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
 short_description: Creates a GCP ManagedZone
 version_added: 2.5
 author: Google Inc. (@googlecloudplatform)
@@ -51,9 +50,8 @@ options:
         default: 'present'
     description:
         description:
-            - A mutable string of at most 1024 characters associated with this
-              resource for the user's convenience. Has no effect on the managed
-              zone's function.
+            - A mutable string of at most 1024 characters associated with this resource for the
+              user's convenience. Has no effect on the managed zone's function.
         required: false
     dns_name:
         description:
@@ -66,9 +64,9 @@ options:
         required: true
     name_server_set:
         description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A
-              NameServerSet is a set of DNS name servers that all host the same
-              ManagedZones. Most users will leave this field unset.
+            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
+              a set of DNS name servers that all host the same ManagedZones. Most users will leave
+              this field unset.
         required: false
 extends_documentation_fragment: gcp
 '''
@@ -90,9 +88,8 @@ EXAMPLES = '''
 RETURN = '''
     description:
         description:
-            - A mutable string of at most 1024 characters associated with this
-              resource for the user's convenience. Has no effect on the managed
-              zone's function.
+            - A mutable string of at most 1024 characters associated with this resource for the
+              user's convenience. Has no effect on the managed zone's function.
         returned: success
         type: str
     dns_name:
@@ -113,15 +110,15 @@ RETURN = '''
         type: str
     name_servers:
         description:
-            - Delegate your managed_zone to these virtual name servers; defined
-              by the server.
+            - Delegate your managed_zone to these virtual name servers; defined by the server
+              .
         returned: success
         type: list
     name_server_set:
         description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A
-              NameServerSet is a set of DNS name servers that all host the same
-              ManagedZones. Most users will leave this field unset.
+            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
+              a set of DNS name servers that all host the same ManagedZones. Most users will leave
+              this field unset.
         returned: success
         type: list
     creation_time:
