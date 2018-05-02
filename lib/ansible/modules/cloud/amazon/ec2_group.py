@@ -294,7 +294,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
@@ -409,10 +409,14 @@ def get_security_groups_with_backoff(connection, **kwargs):
 def sg_exists_with_backoff(connection, **kwargs):
     try:
         return connection.describe_security_groups(**kwargs)
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'InvalidGroup.NotFound':
-            return {'SecurityGroups': []}
-        raise e
+    except connection.exceptions.from_code('InvalidGroup.NotFound') as e:
+        return {'SecurityGroups': []}
+
+
+@AWSRetry.backoff(tries=10, delay=2, backoff=1.1, catch_extra_error_codes=['InvalidGroup.NotFound'])
+def describe_sg_retried(connection, **kwargs):
+    """Return a group based on filter or ID parameters, retrying if that group does not exist"""
+    return connection.describe_security_groups(**kwargs)['SecurityGroups'][0]
 
 
 def deduplicate_rules_args(rules):
@@ -493,18 +497,32 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
             # is bad, so we have to create a new SG because no compatible group
             # exists
             if not rule.get('group_desc', '').strip():
-                module.fail_json(msg="group %s will be automatically created by rule %s and "
+                module.fail_json(msg="group %s will be automatically created by rule %s but "
                                      "no description was provided" % (group_name, rule))
             if not module.check_mode:
                 params = dict(GroupName=group_name, Description=rule['group_desc'])
                 if vpc_id:
                     params['VpcId'] = vpc_id
-                auto_group = client.create_security_group(**params)
-                get_waiter(
-                    client, 'security_group_exists',
-                ).wait(
-                    GroupIds=[auto_group['GroupId']],
-                )
+                try:
+                    auto_group = client.create_security_group(**params)
+                    get_waiter(
+                        client, 'security_group_exists',
+                    ).wait(
+                        GroupIds=[auto_group['GroupId']],
+                    )
+                except client.exceptions.from_code('InvalidGroup.Duplicate') as e:
+                    # The group exists, but didn't show up in any of our describe-security-groups calls
+                    # Try searching on a filter for the name, and allow a retry window for AWS to update
+                    # the model on their end.
+                    filters = {'group-name': group_name}
+                    if vpc_id:
+                        filters['vpc-id'] = vpc_id
+                    try:
+                        auto_group = describe_sg_retried(client, Filters=ansible_dict_to_boto3_filter_list(filters))
+                    except ClientError as e:
+                        module.fail_json_aws(
+                            e,
+                            msg="Could not create or use existing group '{0}' in rule. Make sure the group exists".format(group_name))
                 group_id = auto_group['GroupId']
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
