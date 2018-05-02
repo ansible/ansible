@@ -100,6 +100,7 @@ class ActionModule(ActionBase):
         
         # Cleanup tmp file expanded wih ansible vars
         os.remove(output_file)
+        result['changed'] = True
         return result
 
     def _get_working_path(self):
