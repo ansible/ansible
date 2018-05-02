@@ -290,9 +290,9 @@ In particular, metaclasses are probably not appropriate, however entertaining th
 Git Practices
 =============
 
-Pull requests cannot be accepted that contain merge commits.
+Pull requests cannot be accepted if they contain merge commits.
 
-Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge".
+Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge". See [rebasing a pull request](https://docs.ansible.com/ansible/latest/dev_guide/developing_rebasing.html) for more information.
 
 Always create a new branch for each pull request to avoid intermingling different features or fixes on the same branch.
 
