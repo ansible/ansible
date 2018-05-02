@@ -18,6 +18,12 @@
 
 # FIXME: replace the python test package
 
+- name: install git, needed for repo installs
+  package:
+    name: git
+    state: present
+  when: ansible_distribution != "MacOSX"
+
 # first some tests installed system-wide
 # verify things were not installed to start with
 
