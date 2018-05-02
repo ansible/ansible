@@ -90,7 +90,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
             if not self.check_mode:
                 if self.kind == 'job':
                     existing.spec.parallelism = replicas
-                    k8s_obj = resource.update(existing.to_dict())
+                    k8s_obj = resource.patch(existing.to_dict())
                 else:
                     k8s_obj = self.scale(resource, existing, replicas, wait, wait_time)
                 return_attributes['result'] = k8s_obj.to_dict()
@@ -124,7 +124,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
             w, stream = self._create_stream(resource, namespace, wait_time)
 
         try:
-            resource.scale.update(body=scale_obj)
+            resource.scale.patch(body=scale_obj)
         except Exception as exc:
             self.fail_json(
                 msg="Scale request failed: {0}".format(exc.message)
