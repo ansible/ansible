@@ -1197,6 +1197,7 @@ lib/ansible/modules/network/nxos/nxos_pim_interface.py E326
 lib/ansible/modules/network/nxos/nxos_pim_rp_address.py E326
 lib/ansible/modules/network/nxos/nxos_reboot.py E325
 lib/ansible/modules/network/nxos/nxos_smu.py E324
+lib/ansible/modules/network/nxos/nxos_snmp_host.py E324
 lib/ansible/modules/network/nxos/nxos_system.py E325
 lib/ansible/modules/network/nxos/nxos_vpc.py E324
 lib/ansible/modules/network/nxos/nxos_vpc_interface.py E325
