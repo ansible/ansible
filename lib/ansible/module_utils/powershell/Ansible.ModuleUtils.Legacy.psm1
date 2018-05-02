@@ -53,7 +53,7 @@ Function Exit-Json($obj)
         Set-Attr $obj "changed" $false
     }
 
-    Write-Output $obj | ConvertTo-Json -Compress -Depth 99# Example: Exit-Json $result
+    Write-Output $obj | ConvertTo-Json -Compress -Depth 99
     Exit
 }
 
