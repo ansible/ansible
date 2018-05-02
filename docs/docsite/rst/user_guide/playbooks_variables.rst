@@ -23,14 +23,14 @@ and the ``when`` conditional can also be used with variables, and to help manage
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
-For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
+For advice on best practices, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
 
 .. _valid_variable_names:
 
 What Makes A Valid Variable Name
 ````````````````````````````````
 
-Before we start using variables it's important to know what are valid variable names.
+Before we start using variables, it's important to know what are valid variable names.
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
@@ -102,11 +102,9 @@ Using Variables: About Jinja2
 
 It's nice enough to know about how to define variables, but how do you use them?
 
-Ansible allows you to
-reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
-things in Jinja, only the basics are things you really need to learn at first.
+Ansible allows you to reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex things in Jinja, only the basics are things you really need to learn at first.
 
-For instance, in a simple template, you can do something like::
+For example, in a simple template, you can do something like::
 
     My amp goes to {{ max_amp_value }}
 
@@ -451,11 +449,9 @@ Local Facts (Facts.d)
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
 
-Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described
-in the API guide.  However, what if you want to have a simple way to provide system or user
-provided data for use in Ansible variables, without writing a fact module?  
+Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described in the API guide.  However, what if you want to have a simple way to provide system or user provided data for use in Ansible variables, without writing a fact module?
 
-For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+"Facts.d" is one mechanism for users to control some aspect of how their systems are managed.
 
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
@@ -463,7 +459,7 @@ If a remotely managed system has an ``/etc/ansible/facts.d`` directory, any file
 ending in ``.fact``, can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 An alternate directory can be specified using the ``fact_path`` play keyword.
 
-For instance assume a ``/etc/ansible/facts.d/preferences.fact``::
+For example, assume ``/etc/ansible/facts.d/preferences.fact`` contains::
 
     [general]
     asdf=1
@@ -489,8 +485,7 @@ And this data can be accessed in a ``template/playbook`` as::
 
      {{ ansible_local.preferences.general.asdf }}
 
-The local namespace prevents any user supplied fact from overriding system facts
-or variables defined elsewhere in the playbook.
+The local namespace prevents any user supplied fact from overriding system facts or variables defined elsewhere in the playbook.
 
 .. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
 
@@ -547,12 +542,10 @@ current play, or another play up higher in the playbook.  This is the default co
 To avoid this, Ansible 1.8 allows the ability to save facts between playbook runs, but this feature must be manually
 enabled.  Why might this be useful?
 
-Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
-configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
+With a very large infrastructure with thousands of hosts, fact caching could be configured to run nightly. Configuration of a small set of servers could run ad-hoc or periodically throughout the day. With fact caching enabled, it would
 not be necessary to "hit" all servers to reference variables and information about them.
 
-With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
-the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
+With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
 
 To benefit from cached facts, you will want to change the ``gathering`` setting to ``smart`` or ``explicit`` or set ``gather_facts`` to ``False`` in most plays.
 
@@ -625,7 +618,7 @@ When using ``register`` with a loop the data structure placed in the variable du
 Accessing Complex Variable Data
 ````````````````````````````````
 
-We already talked about facts a little higher up in the documentation.
+We already described facts a little higher up in the documentation.
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple ``{{ foo }}`` is not sufficient, but it is still easy to do.   Here's how we get an IP address::
