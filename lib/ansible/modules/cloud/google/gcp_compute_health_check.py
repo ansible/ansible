@@ -51,6 +51,7 @@ options:
         description:
             - How often (in seconds) to send a health check. The default value is 5 seconds.
         required: false
+        default: 5
     description:
         description:
             - An optional description of this resource. Provide this property when you create
@@ -76,12 +77,14 @@ options:
             - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
               than checkIntervalSec.
         required: false
+        default: 5
         aliases: [timeout_seconds]
     unhealthy_threshold:
         description:
             - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
               The default value is 2.
         required: false
+        default: 2
     type:
         description:
             - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not specified,
@@ -471,12 +474,12 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            check_interval_sec=dict(type='int'),
+            check_interval_sec=dict(default=5, type='int'),
             description=dict(type='str'),
             healthy_threshold=dict(type='int'),
             name=dict(type='str'),
-            timeout_sec=dict(type='int', aliases=['timeout_seconds']),
-            unhealthy_threshold=dict(type='int'),
+            timeout_sec=dict(default=5, type='int', aliases=['timeout_seconds']),
+            unhealthy_threshold=dict(default=2, type='int'),
             type=dict(type='str', choices=['TCP', 'SSL', 'HTTP']),
             http_health_check=dict(type='dict', options=dict(
                 host=dict(type='str'),
