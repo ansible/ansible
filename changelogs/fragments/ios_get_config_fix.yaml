@@ -1,0 +1,2 @@
+bugfixes:
+- ios_config - Fix ios get_config to fetch config without defaults (https://github.com/ansible/ansible/pull/39475)
