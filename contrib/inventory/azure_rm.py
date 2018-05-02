@@ -234,6 +234,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
 AZURE_CONFIG_SETTINGS = dict(
     resource_groups='AZURE_RESOURCE_GROUPS',
     tags='AZURE_TAGS',
+    destination_ip='AZURE_DESTINATION_IP',
     locations='AZURE_LOCATIONS',
     include_powerstate='AZURE_INCLUDE_POWERSTATE',
     group_by_resource_group='AZURE_GROUP_BY_RESOURCE_GROUP',
@@ -468,6 +469,7 @@ class AzureInventory(object):
         self.resource_groups = []
         self.tags = None
         self.locations = None
+        self.destination_ip = None
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
@@ -647,6 +649,8 @@ class AzureInventory(object):
                     host_vars['network_interface_id'] = network_interface.id
                     host_vars['mac_address'] = network_interface.mac_address
                     for ip_config in network_interface.ip_configurations:
+                        if self.destination_ip is not None and self.destination_ip == 'private':
+                            host_vars['ansible_host'] = ip_config.private_ip_address
                         host_vars['private_ip'] = ip_config.private_ip_address
                         host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
                         if ip_config.public_ip_address:
@@ -654,7 +658,8 @@ class AzureInventory(object):
                             public_ip_address = self._network_client.public_ip_addresses.get(
                                 public_ip_reference['resourceGroups'],
                                 public_ip_reference['publicIPAddresses'])
-                            host_vars['ansible_host'] = public_ip_address.ip_address
+                            if host_vars['ansible_host'] is None:
+                                host_vars['ansible_host'] = public_ip_address.ip_address
                             host_vars['public_ip'] = public_ip_address.ip_address
                             host_vars['public_ip_name'] = public_ip_address.name
                             host_vars['public_ip_alloc_method'] = public_ip_address.public_ip_allocation_method
@@ -754,6 +759,8 @@ class AzureInventory(object):
                     values = file_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
+                elif key == 'destination_ip' and file_settings.get(key):
+                    setattr(self, key, file_settings.get(key))
                 elif file_settings.get(key):
                     val = self._to_boolean(file_settings[key])
                     setattr(self, key, val)
@@ -764,6 +771,8 @@ class AzureInventory(object):
                     values = env_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
+                elif key == 'destination_ip' and env_settings.get(key):
+                    setattr(self, key, env_settings.get(key))
                 elif env_settings.get(key, None) is not None:
                     val = self._to_boolean(env_settings[key])
                     setattr(self, key, val)
