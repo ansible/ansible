@@ -8,6 +8,7 @@ __metaclass__ = type
 import ast
 import yaml
 
+from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 
@@ -61,7 +62,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                             else:
                                 # not yaml, should be a simple string
-                                data[varkey] = child.value.s
+                                data[varkey] = to_text(child.value.s)
                         display.debug('assigned :%s' % varkey)
 
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
