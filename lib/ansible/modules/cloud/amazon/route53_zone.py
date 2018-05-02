@@ -245,7 +245,9 @@ def create_or_update_public(module, client, matching_zones, record):
     zone_details, zone_delegation_set_details = None, {}
     for matching_zone in matching_zones:
         try:
-            zone_details = client.get_hosted_zone(Id=matching_zone['Id'])['HostedZone']
+            zone = client.get_hosted_zone(Id=matching_zone['Id'])
+            zone_details = zone['HostedZone']
+            zone_delegation_set_details = zone.get('DelegationSet', {})
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Could not get details about hosted zone %s" % matching_zone['Id'])
         if 'Comment' in zone_details['Config'] and zone_details['Config']['Comment'] != record['comment']:
