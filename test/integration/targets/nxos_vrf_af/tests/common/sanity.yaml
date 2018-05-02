@@ -156,5 +156,6 @@
       feature: bgp
       state: disabled
       provider: "{{ connection }}"
+    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrf_af sanity test"
