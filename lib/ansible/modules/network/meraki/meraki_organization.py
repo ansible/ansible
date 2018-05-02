@@ -152,18 +152,21 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
+    orgs = meraki.get_orgs()
     if meraki.params['state'] == 'query':
         if meraki.params['org_name']:  # Query by organization name
             module.warn('All matching organizations will be returned, even if there are duplicate named organizations')
-            orgs = meraki.get_orgs()
             for o in orgs:
                 if o['name'] == meraki.params['org_name']:
                     meraki.result['data'] = o
+        elif meraki.params['org_id']:
+            for o in orgs:
+                if o['id'] == meraki.params['org_id']:
+                    meraki.result['data'] = o            
         else:  # Query all organizations, no matter what
             orgs = meraki.get_orgs()
             meraki.result['data'] = orgs
     elif meraki.params['state'] == 'present':
-        # meraki.fail_json(msg='Create new org')
         if meraki.params['clone']:  # Cloning
             payload = {'name': meraki.params['org_name']}
             meraki.result['data'] = json.loads(
@@ -179,6 +182,7 @@ def main():
             meraki.result['data'] = json.loads(
                 meraki.request(
                     meraki.construct_path('create'),
+                    method='POST',
                     payload=json.dumps(payload)))
         elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
             payload = {'name': meraki.params['org_name'],
