@@ -512,6 +512,21 @@ options:
             - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
                based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
         version_added: "2.5"
+    numa_tune_mode:
+        description:
+            - "Set how the memory allocation for NUMA nodes of this VM is applied (relevant if NUMA nodes are set for this VM)."
+            - "It can be one of the following: I(interleave), I(preferred) or I(strict)."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+        version_added: "2.6"
+    numa_nodes:
+        description:
+            - "List of vNUMA Nodes to set for this VM and pin them to assigned host's physical NUMA node."
+            - "Each vNUMA node is described by following dictionary:"
+            - "C(index) -  The index of this NUMA node (mandatory)."
+            - "C(memory) - Memory size of the NUMA node in MiB (mandatory)."
+            - "C(cores) -  list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
+            - "C(numa_node_pins) - list of physical NUMA node indexes to pin this virtual NUMA node to."
+        version_added: "2.6"
     rng_device:
         description:
             - "Random number generator (RNG). You can choose of one the following devices I(urandom), I(random) or I(hwrng)."
@@ -759,6 +774,32 @@ EXAMPLES = '''
   ovirt_vms:
     name: myvm
     memory: 4GiB
+
+# Create/update a VM to run with two vNUMA nodes and pin them to physical NUMA nodes as follows:
+# vnuma index 0-> numa index 0, vnuma index 1-> numa index 1
+- name: Create a VM to run with two vNUMA nodes
+  ovirt_vms:
+    name: myvm
+    cluster: mycluster
+    numa_tune_mode: "interleave"
+    numa_nodes:
+    - index: 0
+      cores: [0]
+      memory: 20
+      numa_node_pins: [0]
+    - index: 1
+      cores: [1]
+      memory: 30
+      numa_node_pins: [1]
+
+- name: Update an existing VM to run without previously created vNUMA nodes (i.e. remove all vNUMA nodes+NUMA pinning setting)
+  ovirt_vms:
+    name: myvm
+    cluster: mycluster
+    state: "present"
+    numa_tune_mode: "interleave"
+    numa_nodes:
+    - index: -1
 
 # When change on the VM needs restart of the VM, use next_run state,
 # The VM will be updated and rebooted if there are any changes.
@@ -1050,6 +1091,9 @@ class VmsModule(BaseModule):
             io=otypes.Io(
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
+            numa_tune_mode=otypes.NumaTuneMode(
+                self.param('numa_tune_mode')
+            ) if self.param('numa_tune_mode') else None,
             rng_device=otypes.RngDevice(
                 source=otypes.RngSource(self.param('rng_device')),
             ) if self.param('rng_device') else None,
@@ -1127,6 +1171,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None) and
+            equal(self.param('numa_tune_mode'), str(entity.numa_tune_mode)) and
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None)
         )
 
@@ -1143,6 +1188,7 @@ class VmsModule(BaseModule):
         entity = self._service.service(entity_id).get()
         self.changed = self.__attach_disks(entity)
         self.changed = self.__attach_nics(entity)
+        self.changed = self.__attach_numa_nodes(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
 
@@ -1402,6 +1448,41 @@ class VmsModule(BaseModule):
                     self.param('cluster')
                 )
             )
+
+    def __attach_numa_nodes(self, entity):
+        numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
+
+        if len(self.param('numa_nodes')) > 0:
+            # Remove all existing virtual numa nodes before adding new ones
+            existed_numa_nodes = numa_nodes_service.list()
+            existed_numa_nodes.sort(reverse=len(existed_numa_nodes) > 1 and existed_numa_nodes[1].index > existed_numa_nodes[0].index)
+            for current_numa_node in existed_numa_nodes:
+                numa_nodes_service.node_service(current_numa_node.id).remove()
+
+        for numa_node in self.param('numa_nodes'):
+            if numa_node is None or numa_node.get('index') is None or numa_node.get('cores') is None or numa_node.get('memory') is None:
+                return False
+
+            numa_nodes_service.add(
+                otypes.VirtualNumaNode(
+                    index=numa_node.get('index'),
+                    memory=numa_node.get('memory'),
+                    cpu=otypes.Cpu(
+                        cores=[
+                            otypes.Core(
+                                index=core
+                            ) for core in numa_node.get('cores')
+                        ],
+                    ),
+                    numa_node_pins=[
+                        otypes.NumaNodePin(
+                            index=pin
+                        ) for pin in numa_node.get('numa_node_pins')
+                    ] if numa_node.get('numa_node_pins') is not None else None,
+                )
+            )
+
+        return True
 
     def __attach_watchdog(self, entity):
         watchdogs_service = self._service.service(entity.id).watchdogs_service()
@@ -1813,6 +1894,8 @@ def main():
         io_threads=dict(type='int', default=None),
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
+        numa_tune_mode=dict(type='str', choices=['interleave', 'preferred', 'strict']),
+        numa_nodes=dict(type='list', default=[]),
         custom_properties=dict(type='list'),
         watchdog=dict(type='dict'),
         graphical_console=dict(type='dict'),
