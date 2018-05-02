@@ -181,7 +181,6 @@ import re
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
-    HAS_BOTO3,
     ansible_dict_to_boto3_tag_list,
     boto3_tag_list_to_ansible_dict,
     camel_dict_to_snake_dict,
@@ -191,7 +190,7 @@ from ansible.module_utils.ec2 import (
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass
 
 
 def _check_subs(module, subs):
@@ -462,9 +461,6 @@ def main():
         required_if=required_if,
         supports_check_mode=False,
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module')
 
     attributes = module.params.get('attributes')
     duration = module.params.get('duration')

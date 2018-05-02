@@ -172,20 +172,20 @@
         name: "{{ aws_inspector_scan_name }}"
         state: absent
         <<: *aws_connection_info
-      register: templete_delete
+      register: template_delete
 
     - name: Delete AWS Inspector Template (Verify)
       aws_inspector_template:
         name: "{{ aws_inspector_scan_name }}"
         state: absent
         <<: *aws_connection_info
-      register: templete_delete_verify
+      register: template_delete_verify
 
-    - name: Assert Successful AWS Inspector Target Group Deletion
+    - name: Assert Successful AWS Inspector Template Deletion
       assert:
         that:
-          - templete_delete is changed
-          - templete_delete_verify is not changed
+          - template_delete is changed
+          - template_delete_verify is not changed
 
     - name: Delete AWS Inspector Target Group
       aws_inspector_target:
