@@ -27,7 +27,7 @@ description:
     in the device configuration.
   - "This is a network module and requires the C(connection: network_cli) in order
     to work properly."
-  - For more information please see the L(Network Guide, ../network/getting_started/index.html).
+  - For more information please see the L(Network Guide,../network/getting_started/index.html).
 notes:
   - Tested against EdgeOS 1.9.7
   - Setting C(ANSIBLE_PERSISTENT_COMMAND_TIMEOUT) to 30 is recommended since
