@@ -389,16 +389,26 @@ def delete(module, client, matching_zones):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         zone=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         vpc_id=dict(default=None),
         vpc_region=dict(default=None),
         comment=dict(default=''),
         hosted_zone_id=dict(),
-        delegation_set_id=dict()))
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+        delegation_set_id=dict(),
+    )
+
+    mutually_exclusive = [
+        ['delegation_set_id', 'vpc_id'],
+        ['delegation_set_id', 'vpc_region'],
+    ]
+
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
+    )
 
     zone_in = module.params.get('zone').lower()
     state = module.params.get('state').lower()
