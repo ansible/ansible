@@ -81,7 +81,7 @@ options:
       - Timeout in seconds for URL request.
       - This only applies if remote_src option is set to C(yes) and C(src) contains C(://).
     default: 10
-    version_added: "2.5"
+    version_added: "2.6"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
