@@ -736,9 +736,9 @@ class AzureInventory(object):
                     self._inventory[safe_value] = []
                 self._inventory[safe_key].append(host_name)
                 self._inventory[safe_value].append(host_name)
-                if re.search(r',', values):
-                    for value in values.split(","):
-                        safe_value = safe_key + '_' + self._to_safe(value)
+                if re.search(r',', value):
+                    for token in value.split(","):
+                        safe_value = safe_key + '_' + self._to_safe(token)
                         if not self._inventory.get(safe_value):
                             self._inventory[safe_value] = []
                         self._inventory[safe_value].append(host_name)
