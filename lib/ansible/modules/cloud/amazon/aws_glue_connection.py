@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, Rob White (@wimnat)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -20,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: glue_connection
+module: aws_glue_connection
 short_description: Manage an AWS Glue connection
 description:
     - Manage an AWS Glue connection. See U(https://aws.amazon.com/glue/) for details.
@@ -77,7 +66,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Create an AWS Glue connection
-- glue_connection:
+- aws_glue_connection:
     name: my-glue-connection
     connection_properties:
       JDBC_CONNECTION_URL: jdbc:mysql://mydb:3306/databasename
@@ -86,7 +75,7 @@ EXAMPLES = '''
     state: present
 
 # Delete an AWS Glue connection
-- glue_connection:
+- aws_glue_connection:
     name: my-glue-connection
     state: absent
 
@@ -137,7 +126,7 @@ physical_connection_requirements:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names
 
 # Non-ansible imports
 import copy
@@ -216,7 +205,7 @@ def _compare_glue_connection_params(user_params, current_params):
     return False
 
 
-def create_or_update_glue_connection(connection, module, glue_connection):
+def create_or_update_glue_connection(connection, connection_ec2, module, glue_connection):
     """
     Create or update an AWS Glue connection
 
@@ -241,7 +230,9 @@ def create_or_update_glue_connection(connection, module, glue_connection):
     if module.params.get("security_groups") is not None or module.params.get("subnet_id") is not None:
         params['ConnectionInput']['PhysicalConnectionRequirements'] = dict()
     if module.params.get("security_groups") is not None:
-        params['ConnectionInput']['PhysicalConnectionRequirements']['SecurityGroupIdList'] = module.params.get("security_groups")
+        # Get security group IDs from names
+        security_group_ids = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), connection_ec2, boto3=True)
+        params['ConnectionInput']['PhysicalConnectionRequirements']['SecurityGroupIdList'] = security_group_ids
     if module.params.get("subnet_id") is not None:
         params['ConnectionInput']['PhysicalConnectionRequirements']['SubnetId'] = module.params.get("subnet_id")
 
@@ -298,8 +289,7 @@ def delete_glue_connection(connection, module, glue_connection):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = (
         dict(
             catalog_id=dict(type='str'),
             connection_properties=dict(type='dict'),
@@ -319,14 +309,15 @@ def main():
                               ]
                               )
 
-    connection = module.client('glue')
+    connection_glue = module.client('glue')
+    connection_ec2 = module.client('ec2')
 
-    glue_connection = _get_glue_connection(connection, module)
+    glue_connection = _get_glue_connection(connection_glue, module)
 
     if module.params.get("state") == 'present':
-        create_or_update_glue_connection(connection, module, glue_connection)
+        create_or_update_glue_connection(connection_glue, connection_ec2, module, glue_connection)
     else:
-        delete_glue_connection(connection, module, glue_connection)
+        delete_glue_connection(connection_glue, module, glue_connection)
 
 if __name__ == '__main__':
     main()
