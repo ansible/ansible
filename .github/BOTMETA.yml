@@ -1099,7 +1099,6 @@ files:
     - validate-modules
   docs/:
     labels: docs
-    notify: dharmabumstead
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
