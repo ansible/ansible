@@ -12,14 +12,14 @@ class ModuleDocFragment(object):
 options:
     ip_address:
         description:
-            - IP address (or hostname) of PAN-OS device
+            - IP address (or hostname) of PAN-OS device.
         required: true
     password:
         description:
-            - password for authentication
+            - Password for authentication.
         required: true
     username:
         description:
-            - username for authentication
+            - Username for authentication.
         default: "admin"
 '''
