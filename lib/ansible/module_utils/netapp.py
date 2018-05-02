@@ -1,31 +1,21 @@
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
 #
-# Copyright (c) 2017, Sumit Kumar <sumit4@netapp.com>
-# Copyright (c) 2017, Michael Price <michael.price@netapp.com>
-# All rights reserved.
+# (c) 2016, Sumit Kumar <sumit4@netapp.com>
+# (c) 2016, Michael Price <michael.price@netapp.com>
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# This file is part of Ansible
 #
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
     import json
@@ -86,6 +76,7 @@ def ontap_sf_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
+        https=dict(required=False, type='str')
     )
 
 
@@ -108,6 +99,8 @@ def setup_ontap_zapi(module, vserver=None):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
+    https = module.params['https']
+
 
     if HAS_NETAPP_LIB:
         # set up zapi
@@ -118,9 +111,14 @@ def setup_ontap_zapi(module, vserver=None):
             server.set_vserver(vserver)
         # Todo : Replace hard-coded values with configurable parameters.
         server.set_api_version(major=1, minor=21)
-        server.set_port(80)
+        #default is HTTPS
+        if https == 'False':
+            server.set_port(80)
+            server.set_transport_type('HTTP')
+        else:
+            server.set_port(443)
+            server.set_transport_type('HTTPS')
         server.set_server_type('FILER')
-        server.set_transport_type('HTTP')
         return server
     else:
         module.fail_json(msg="the python NetApp-Lib module is required")
@@ -176,3 +174,37 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         raise Exception(resp_code, data)
     else:
         return resp_code, data
+
+def ems_log_event(source, server, name = "Ansible", id = "12345", version = "1.1",
+                category = "Information", event = "setup", autosupport = "false"):
+    ems_log = zapi.NaElement('ems-autosupport-log')
+    # Host name invoking the API.
+    ems_log.add_new_child("computer-name", name)
+    # ID of event. A user defined event-id, range [0..2^32-2].
+    ems_log.add_new_child("event-id", id )
+    # Name of the application invoking the API.
+    ems_log.add_new_child("event-source", source)
+    # Version of application invoking the API.
+    ems_log.add_new_child("app-version", version)
+    # Application defined category of the event.
+    ems_log.add_new_child("category", category)
+    # Description of event to log. An application defined message to log.
+    ems_log.add_new_child("event-description", event)
+    ems_log.add_new_child("log-level", "6")
+    ems_log.add_new_child("auto-support", autosupport)
+    server.invoke_successfully(ems_log, True)
+
+def get_cserver(server):
+    vserver_info = zapi.NaElement('vserver-get-iter')
+    query_details = zapi.NaElement.create_node_with_children(
+    'vserver-info', **{'vserver-type': 'admin'})
+    query = zapi.NaElement('query')
+    query.add_child_elem(query_details)
+    vserver_info.add_child_elem(query)
+    result = server.invoke_successfully(vserver_info,
+                                         enable_tunneling=False)
+    attribute_list = result.get_child_by_name('attributes-list')
+    vserver_list = attribute_list.get_child_by_name('vserver-info')
+    return vserver_list.get_child_content('vserver-name')
+
+
