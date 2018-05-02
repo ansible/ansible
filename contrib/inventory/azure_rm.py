@@ -143,6 +143,21 @@ AZURE_TAGS=key1:value1,key2:value2
 If you don't need the powerstate, you can improve performance by turning off powerstate fetching:
 AZURE_INCLUDE_POWERSTATE=no
 
+Naming
+-------
+
+By default hosts are named by their unqualified resource name in Azure. You may override this behavior 
+if it leads to name collisions - because you use the same resource name in multiple resource groups -  
+or if you find other names more convenient. 
+
+To use the private computer name of a VM as inventory host name:
+AZURE_INVENTORY_NAME_FORMAT={computer_name}
+
+To use a qualified name that is guaranteed to be unique in the subscription:
+AZURE_INVENTORY_NAME_FORMAT={resource_group}_{name}
+
+Specify any Python format string containing host variables provided by this inventory.
+
 azure_rm.ini
 ------------
 As mentioned above, you can control execution using environment variables or a .ini file. A sample
@@ -239,7 +254,8 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_resource_group='AZURE_GROUP_BY_RESOURCE_GROUP',
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
-    group_by_tag='AZURE_GROUP_BY_TAG'
+    group_by_tag='AZURE_GROUP_BY_TAG',
+    id_format='AZURE_INVENTORY_NAME_FORMAT'
 )
 
 AZURE_MIN_VERSION = "2.0.0"
@@ -474,6 +490,7 @@ class AzureInventory(object):
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
+        self.id_format = '{name}'
 
         self._inventory = dict(
             _meta=dict(
@@ -702,7 +719,7 @@ class AzureInventory(object):
 
     def _add_host(self, vars):
 
-        host_name = self._to_safe(vars['name'])
+        host_name = self._to_safe(self.id_format.format(**vars))
         resource_group = self._to_safe(vars['resource_group'])
         security_group = None
         if vars.get('security_group'):
@@ -747,26 +764,19 @@ class AzureInventory(object):
     def _get_settings(self):
         # Load settings from the .ini, if it exists. Otherwise,
         # look for environment values.
-        file_settings = self._load_settings()
-        if file_settings:
-            for key in AZURE_CONFIG_SETTINGS:
-                if key in ('resource_groups', 'tags', 'locations') and file_settings.get(key):
-                    values = file_settings.get(key).split(',')
-                    if len(values) > 0:
-                        setattr(self, key, values)
-                elif file_settings.get(key):
-                    val = self._to_boolean(file_settings[key])
-                    setattr(self, key, val)
-        else:
-            env_settings = self._get_env_settings()
-            for key in AZURE_CONFIG_SETTINGS:
-                if key in('resource_groups', 'tags', 'locations') and env_settings.get(key):
-                    values = env_settings.get(key).split(',')
-                    if len(values) > 0:
-                        setattr(self, key, values)
-                elif env_settings.get(key, None) is not None:
-                    val = self._to_boolean(env_settings[key])
-                    setattr(self, key, val)
+        settings = self._load_settings() or self._get_env_settings()
+
+        for key in AZURE_CONFIG_SETTINGS:
+            if key in ('resource_groups', 'tags', 'locations') and settings.get(key):
+                values = settings.get(key).split(',')
+                if len(values) > 0:
+                    setattr(self, key, values)
+            elif key in ('id_format') and settings.get(key):
+                val = settings[key]
+                setattr(self, key, val)
+            elif settings.get(key, None) is not None:
+                val = self._to_boolean(settings[key])
+                setattr(self, key, val)
 
     def _parse_ref_id(self, reference):
         response = {}
