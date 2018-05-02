@@ -15,9 +15,9 @@ DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
-short_description: Fetches a file from a given URL
+short_description: Fetches a file from a given URL or FTP
 description:
-- Fetches a file from a URL and saves it locally.
+- Fetches a file from a URL or FTP and saves it locally.
 - For non-Windows targets, use the M(get_url) module instead.
 author:
 - Paul Durivage (@angstwad)
@@ -124,6 +124,14 @@ EXAMPLES = r'''
     proxy_url: http://10.0.0.1:8080
     proxy_username: username
     proxy_password: password
+
+# Attention here: MS doesn't allow format ftp://username:password@ftp.yourserver.com/earthrise.jpg
+- name: Download earthrise.jpg from FTP server to specified path
+  win_get_url:
+    url: ftp://ftp.yourserver.com/earthrise.jpg
+    dest: C:\earthrise.jpg
+    url_username: username
+    url_password: password
 '''
 
 RETURN = r'''
