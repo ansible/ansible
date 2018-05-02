@@ -20,7 +20,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
@@ -48,6 +48,9 @@ class ActionModule(ActionBase):
                 if not self._remote_file_exists(source):
                     try:
                         source = self._loader.get_real_file(self._find_needle('files', source))
+                        new_module_args['src'] = source
+                    except AnsibleFileNotFound as e:
+                        # module handles error message for nonexistent files
                         new_module_args['src'] = source
                     except AnsibleError as e:
                         raise AnsibleActionFail(to_text(e))
