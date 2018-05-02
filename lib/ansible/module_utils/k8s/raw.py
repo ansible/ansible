@@ -163,7 +163,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
-                    k8s_obj = resource.update(definition, name=name, namespace=namespace)
+                    k8s_obj = resource.patch(definition, name=name, namespace=namespace)
                     result['result'] = k8s_obj.to_dict()
                 except ApiException as exc:
                     self.fail_json(msg="Failed to patch object: {0}".format(exc.body))
