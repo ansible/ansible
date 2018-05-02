@@ -581,29 +581,30 @@ class BaseModule(object):
                 self.post_create(entity)
             self.changed = True
 
-        # Wait for the entity to be created and to be in the defined state:
-        entity_service = self._service.service(entity.id)
-
-        def state_condition(entity):
-            return entity
-
-        if result_state:
+        if not self._module.check_mode:
+            # Wait for the entity to be created and to be in the defined state:
+            entity_service = self._service.service(entity.id)
 
             def state_condition(entity):
-                return entity and entity.status == result_state
+                return entity
 
-        wait(
-            service=entity_service,
-            condition=state_condition,
-            fail_condition=fail_condition,
-            wait=self._module.params['wait'],
-            timeout=self._module.params['timeout'],
-            poll_interval=self._module.params['poll_interval'],
-        )
+            if result_state:
+
+                def state_condition(entity):
+                    return entity and entity.status == result_state
+
+            wait(
+                service=entity_service,
+                condition=state_condition,
+                fail_condition=fail_condition,
+                wait=self._module.params['wait'],
+                timeout=self._module.params['timeout'],
+                poll_interval=self._module.params['poll_interval'],
+            )
 
         return {
             'changed': self.changed,
-            'id': entity.id,
+            'id': getattr(entity, 'id', None),
             type(entity).__name__.lower(): get_dict_of_struct(
                 struct=entity,
                 connection=self._connection,

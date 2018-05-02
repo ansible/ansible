@@ -1933,8 +1933,11 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            vms_module.post_present(ret['id'])
+            # If VM is going to be created and check_mode is on, return now:
+            if module.check_mode and ret.get('id') is None:
+                module.exit_json(**ret)
 
+            vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
                 initialization = vms_module.get_initialization()
