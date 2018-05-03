@@ -89,13 +89,7 @@ class Cliconf(CliconfBase):
     def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
-    def check_commit_ready_prompt(self):
-        prompt = self._connection.get_prompt()
-        if not to_text(prompt, errors='surrogate_or_strict').strip().endswith('config)#'):
-            self.send_command(b'end')
-
     def commit(self, comment=None):
-        self.check_commit_ready_prompt()
         if comment:
             command = 'commit comment {0}'.format(comment)
         else:
