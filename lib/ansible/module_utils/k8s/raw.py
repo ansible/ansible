@@ -25,7 +25,7 @@ from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
 
 try:
-    from kubernetes.client.rest import ApiException
+    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError
 except ImportError:
     # Exception handled in common
     pass
@@ -74,12 +74,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.client = self.get_api_client()
         for definition in self.resource_definitions:
             kind = definition.get('kind')
+            search_kind = kind
+            if kind.lower().endswith('list'):
+                search_kind = kind[:-4]
             api_version = definition.get('apiVersion')
             try:
-                resource = self.client.resources.get(kind=kind, api_version=api_version)
+                resource = self.client.resources.get(kind=search_kind, api_version=api_version)
             except Exception as e:
                 self.fail_json(msg='Failed to find resource {}.{}: {}'.format(
-                    api_version, kind, e
+                    api_version, search_kind, e
                 ))
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
@@ -106,17 +109,18 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.remove_aliases()
 
         if definition['kind'].endswith('list'):
-            result['result'] = resource.list(namespace=namespace).to_dict()
+            result['result'] = resource.get(namespace=namespace).to_dict()
             result['changed'] = False
             result['method'] = 'get'
             return result
 
         try:
             existing = resource.get(name=name, namespace=namespace)
-        except ApiException as exc:
-            if exc.status != 404:
-                self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
-                            error=exc.status)
+        except NotFoundError:
+            pass
+        except DynamicApiError as exc:
+            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
+                        error=exc.status)
 
         if state == 'absent':
             result['method'] = "delete"
@@ -129,7 +133,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     try:
                         k8s_obj = resource.delete(name, namespace=namespace)
                         result['result'] = k8s_obj.to_dict()
-                    except ApiException as exc:
+                    except DynamicApiError as exc:
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
                                        error=exc.status)
                 result['changed'] = True
@@ -137,7 +141,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         else:
             if not existing:
                 if not self.check_mode:
-                    k8s_obj = resource.create(definition, namespace=namespace)
+                    try:
+                        k8s_obj = resource.create(definition, namespace=namespace)
+                    except ConflictError:
+                        # Some resources, like ProjectRequests, can't be created multiple times,
+                        # because the resources that they create don't match their kind
+                        # In this case we'll mark it as unchanged and warn the user
+                        self.warn("{} was not found, but creating it returned a 409 Conflict error. This can happen " +
+                                  "if the resource you are creating does not directly create a resource of the same kind.")
+                        return result
                     result['result'] = k8s_obj.to_dict()
                 result['changed'] = True
                 result['method'] = 'create'
@@ -148,7 +160,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     try:
                         k8s_obj = resource.replace(definition, name=name, namespace=namespace)
                         result['result'] = k8s_obj.to_dict()
-                    except ApiException as exc:
+                    except DynamicApiError as exc:
                         self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
                                        error=exc.status)
                 result['changed'] = True
@@ -165,7 +177,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 try:
                     k8s_obj = resource.patch(definition, name=name, namespace=namespace)
                     result['result'] = k8s_obj.to_dict()
-                except ApiException as exc:
+                except DynamicApiError as exc:
                     self.fail_json(msg="Failed to patch object: {0}".format(exc.body))
             result['changed'] = True
             result['method'] = 'patch'

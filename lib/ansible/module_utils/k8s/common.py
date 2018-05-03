@@ -21,7 +21,6 @@ from __future__ import absolute_import, division, print_function
 import os
 import copy
 
-from dictdiffer import diff
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
@@ -38,6 +37,12 @@ try:
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
+
+try:
+    import dictdiffer
+    HAS_DICTDIFFER = True
+except ImportError:
+    HAS_DICTDIFFER = False
 
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
@@ -187,6 +192,8 @@ class K8sAnsibleMixin(object):
 
     @staticmethod
     def diff_objects(existing, new):
+        if not HAS_DICTDIFFER:
+            return False, []
 
         def get_shared_attrs(o1, o2):
             shared_attrs = {}
@@ -197,7 +204,7 @@ class K8sAnsibleMixin(object):
                     shared_attrs[k] = o1.get(k)
             return shared_attrs
 
-        diffs = list(diff(new, get_shared_attrs(existing, new)))
+        diffs = list(dictdiffer.diff(new, get_shared_attrs(existing, new)))
         match = len(diffs) == 0
         return match, diffs
 
