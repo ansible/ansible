@@ -68,6 +68,7 @@
 - assert:
     that:
       - "result is changed"
+<<<<<<< HEAD
 
 - name: Create a Job Template with extra_vars
   tower_job_template:
@@ -84,3 +85,5 @@
 - assert:
     that:
       - "result is changed"
+=======
+>>>>>>> fca7edcbf876551c843fd6339b40b50ecd15fe3f
