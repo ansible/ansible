@@ -25,7 +25,7 @@ import os
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import PlaybookBase
+from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
@@ -91,7 +91,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(PlaybookBase, Become, Conditional, Taggable):
+class Role(Base, Become, Conditional, Taggable):
 
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)

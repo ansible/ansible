@@ -26,13 +26,13 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import PlaybookBase
+from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 
 
-class PlaybookInclude(PlaybookBase, Conditional, Taggable):
+class PlaybookInclude(Base, Conditional, Taggable):
 
     _import_playbook = FieldAttribute(isa='string')
     _vars = FieldAttribute(isa='dict', default=dict())

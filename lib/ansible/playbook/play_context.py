@@ -35,7 +35,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import PlaybookBase
+from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.ssh_functions import check_for_controlpersist
 
@@ -119,7 +119,7 @@ OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'f
                 'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
 
 
-class PlayContext(PlaybookBase):
+class PlayContext(Base):
 
     '''
     This class is used to consolidate the connection information for

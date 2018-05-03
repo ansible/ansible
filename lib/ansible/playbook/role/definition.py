@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.playbook.base import PlaybookBase
+from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
@@ -43,7 +43,7 @@ except ImportError:
 __all__ = ['RoleDefinition']
 
 
-class RoleDefinition(PlaybookBase, Become, Conditional, Taggable):
+class RoleDefinition(Base, Become, Conditional, Taggable):
 
     _role = FieldAttribute(isa='string')
 

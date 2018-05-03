@@ -140,7 +140,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class Base(with_metaclass(BaseMeta, object)):
+class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def __init__(self):
 
@@ -560,7 +560,7 @@ class Base(with_metaclass(BaseMeta, object)):
         self._squashed = data.get('squashed', False)
 
 
-class PlaybookBase(Base):
+class Base(FieldAttributeBase):
 
     _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
 
