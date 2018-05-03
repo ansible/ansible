@@ -556,6 +556,15 @@
 
     - block:
       - include_role:
+          name: nxos_snmp_traps
+        when: "limit_to in ['*', 'nxos_snmp_traps']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_snmp_traps' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_snmp_host
         when: "limit_to in ['*', 'nxos_snmp_host']"
       rescue:
