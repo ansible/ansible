@@ -22,28 +22,28 @@ DOCUMENTATION = """
         description: location of the password store
         default: '~/.password-store'
       directory:
-        description: directory of the password store
+        description: The directory of the password store.
         env:
           - name: PASSWORD_STORE_DIR
       create:
-        description: flag to create the password
+        description: Create the password if it does not already exist.
         type: bool
         default: 'no'
       overwrite:
-        description: flag to overwrite the password
+        description: Override the password if it does already exist.
         type: bool
         default: 'no'
       returnall:
-        description: flag to return all the contents of the password store
+        description: Return all the content of the password, not only the first line.
         type: bool
         default: 'no'
       subkey:
-        description: subkey to return
+        description: Return a specific subkey of the password.
         default: password
       userpass:
-        description: user password
+        description: Specify a password to save, instead of a generated one.
       length:
-        description: password length
+        description: The length of the generated password
         type: integer
         default: 16
       backup:
