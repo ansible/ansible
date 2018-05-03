@@ -160,14 +160,15 @@ def options(module):
     return options
 
 def check_ip_addr_type(ip):
-    """this function will check if the argument ip is type v4/v6 and return appropriate infoblox network type"""
+    '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox network type
+    '''
     check_ip = ip.split('/')
     try:
         if (socket.inet_aton(check_ip[0])):
             return 'network'
     except socket.error:
         #if (socket.inet_pton(socket.AF_INET6, check_ip[0])):
-            return 'ipv6network'
+        return 'ipv6network'
 
 def main():
     ''' Main entry point for module execution
