@@ -14,7 +14,7 @@
 
 - name: Should we run lldp tests?
   set_fact:
-  t  run_lldp_tests: "'PortDescr:    eth0' in neighbors_out.stdout[0]"
+    run_lldp_tests: "'PortDescr:    eth0' in neighbors_out.stdout[0]"
 
 - name: Enable LLDP service
   vyos_lldp:
