@@ -163,16 +163,16 @@ options:
                 type: bool
                 default: 'no'
         version_added: 2.5
-    has_security_group:
+    create_with_security_group:
         description:
-            - Whether need the NIC created with a security group
+            - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
         type: bool
         version_added: 2.6
         default: True
     security_group_name:
         description:
             - Name of an existing security group with which to associate the network interface. If not provided, a
-              default security group will be created.
+              default security group will be created when C(create_with_security_group) is true.
         aliases:
             - security_group
     open_ports:
@@ -376,7 +376,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
-            has_security_group=dict(type='bool', default=True),
+            create_with_security_group=dict(type='bool', default=True),
             security_group_name=dict(type='str', aliases=['security_group']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
@@ -399,7 +399,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.has_security_group = None
+        self.create_with_security_group = None
         self.security_group_name = None
         self.private_ip_address = None
         self.private_ip_allocation_method = None
@@ -481,7 +481,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.has_security_group != bool(results.get('network_security_group')):
+                if self.create_with_security_group != bool(results.get('network_security_group')):
                     self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
 
@@ -555,7 +555,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                                         self.location,
                                                         self.security_group_name,
                                                         self.os_type,
-                                                        self.open_ports) if self.has_security_group else None
+                                                        self.open_ports) if self.create_with_security_group else None
 
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
