@@ -1,4 +1,4 @@
-.. _vmware_ansible:
+.. _vmware_ansible_getting_started:
 
 ***************************************
 Getting Started with Ansible for VMware
