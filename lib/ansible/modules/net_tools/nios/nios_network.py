@@ -130,6 +130,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
 
+
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
 
