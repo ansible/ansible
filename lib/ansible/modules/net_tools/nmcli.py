@@ -68,6 +68,7 @@ options:
     ip4_method:
         description:
             - 'The IPv4 method to this interface using this format ie: "manual"'
+        version_added: 2.6
     gw4:
         description:
             - 'The IPv4 gateway for this interface using this format ie: "192.0.2.1"'
@@ -84,6 +85,7 @@ options:
     ip6_method:
         description:
             - 'The IPv6 method to this interface using this format ie: "manual"'
+        version_added: 2.6
     gw6:
         description:
             - 'The IPv6 gateway for this interface using this format ie: "2001:db8::1"'
