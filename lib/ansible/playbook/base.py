@@ -140,39 +140,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class Base(with_metaclass(BaseMeta, object)):
-
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
-
-    # connection/transport
-    _connection = FieldAttribute(isa='string')
-    _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string')
-
-    # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
-
-    # module default params
-    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
-
-    # flags and misc. settings
-    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
-    _no_log = FieldAttribute(isa='bool')
-    _always_run = FieldAttribute(isa='bool')
-    _run_once = FieldAttribute(isa='bool')
-    _ignore_errors = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool')
-    _diff = FieldAttribute(isa='bool')
-    _any_errors_fatal = FieldAttribute(isa='bool')
-
-    # explicitly invoke a debugger on tasks
-    _debugger = FieldAttribute(isa='string')
-
-    # param names which have been deprecated/removed
-    DEPRECATED_ATTRIBUTES = [
-        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
-        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
-    ]
+class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def __init__(self):
 
@@ -590,3 +558,38 @@ class Base(with_metaclass(BaseMeta, object)):
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
+
+
+class Base(FieldAttributeBase):
+
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+
+    # connection/transport
+    _connection = FieldAttribute(isa='string')
+    _port = FieldAttribute(isa='int')
+    _remote_user = FieldAttribute(isa='string')
+
+    # variables
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+
+    # module default params
+    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+
+    # flags and misc. settings
+    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _no_log = FieldAttribute(isa='bool')
+    _always_run = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool')
+    _diff = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool')
+
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='string')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
