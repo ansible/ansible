@@ -496,7 +496,7 @@ def deregister_image(module, connection):
     snapshots = []
     if 'BlockDeviceMappings' in image:
         for mapping in image.get('BlockDeviceMappings'):
-            snapshot_id = mapping.get('SnapshotId')
+            snapshot_id = mapping.get('Ebs', {}).get('SnapshotId')
             if snapshot_id is not None:
                 snapshots.append(snapshot_id)
 
