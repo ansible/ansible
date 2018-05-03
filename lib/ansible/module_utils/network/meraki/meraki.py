@@ -240,44 +240,24 @@ class MerakiModule(object):
         return to_native(resp.read())
 
     def exit_json(self, **kwargs):
-        if 'state' in self.params:
-            if self.params['state'] in ('absent', 'present'):
-                if self.params['output_level'] in ('debug', 'info'):
-                    self.result['previous'] = self.existing
         self.result['response'] = self.response
         self.result['status'] = self.status
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
-            if 'state' in self.params:
-                self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
-            # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
-
             self.result['url'] = self.url
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
-        if 'state' in self.params:
-            if self.params['state'] in ('absent', 'present'):
-                if self.params['output_level'] in ('debug', 'info'):
-                    self.result['previous'] = self.existing
         self.result['response'] = self.response
         self.result['status'] = self.status
 
         if self.params['output_level'] == 'debug':
             if self.url is not None:
-                if 'state' in self.params:
-                    self.result['filter_string'] = self.filter_string
                 self.result['method'] = self.method
-                # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
                 self.result['url'] = self.url
-
-        if 'state' in self.params:
-            if self.params['output_level'] in ('debug', 'info'):
-                self.result['sent'] = self.config
-                self.result['proposed'] = self.proposed
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
