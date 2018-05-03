@@ -298,14 +298,14 @@ class TestLookupModule(unittest.TestCase):
         self.assertEqual([field_value], lookup_plugin.run([query]))
 
 
-@patch('ansible.plugins.lookup.onepassword.OnePass', MockOnePass)
+@patch('ansible.plugins.lookup.onepassword_raw.OnePass', MockOnePass)
 class TestOnePasswordRawLookup(unittest.TestCase):
 
     def test_onepassword_raw_plugin_multiple(self):
         raw_lookup_plugin = OnePasswordRawLookup()
 
         entry = MOCK_ENTRIES[0]
-        raw_value = json.dumps(entry['output'])
+        raw_value = entry['output']
 
         self.assertEqual(
             [raw_value] * len(entry['queries']),
