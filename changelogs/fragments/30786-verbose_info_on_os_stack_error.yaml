@@ -1,0 +1,2 @@
+bugfixes:
+- openstack.os_stack - extend failure message with the server response (https://github.com/ansible/ansible/pull/39660).
