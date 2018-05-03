@@ -306,7 +306,6 @@ class TestOnePasswordRawLookup(unittest.TestCase):
 
         entry = MOCK_ENTRIES[0]
         raw_value = json.dumps(entry['output'])
-        raise Exception(raw_value * len(entry['queries']))
 
         self.assertEqual(
             [raw_value] * len(entry['queries']),
