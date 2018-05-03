@@ -26,14 +26,9 @@
       register: vpc_result
       loop: [1, 2]
 
-    - debug: var=vpc_result
-
-    - name: set fact for vpc id 1
+    - name: use set fact for vpc ids
       set_fact:
         vpc_id_1: '{{ vpc_result.results.0.vpc.id }}'
-
-    - name: set fact for vpc id 2
-      set_fact:
         vpc_id_2: '{{ vpc_result.results.1.vpc.id }}'
 
     # ============================================================

@@ -386,7 +386,7 @@ def ensure_vgw_present(client, module):
             current_vpc_attachments = existing_vgw[0]['VpcAttachments']
 
             if current_vpc_attachments != [] and current_vpc_attachments[0]['State'] == 'attached':
-                if not (current_vpc_attachments[0]['VpcId'] == params['VpcId'] and current_vpc_attachments[0]['State'] == 'attached'):
+                if current_vpc_attachments[0]['VpcId'] != params['VpcId'] or current_vpc_attachments[0]['State'] != 'attached':
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
