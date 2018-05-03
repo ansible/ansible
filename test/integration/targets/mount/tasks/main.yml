@@ -186,5 +186,3 @@
     that:
       - "(ansible_system == 'Linux' or ansible_system == 'FreeBSD') and swap_unmount_result['changed']"
   when: ansible_system in ('FreeBSD', 'Linux')
-
-
