@@ -25,7 +25,7 @@
       state: present
       tags:
         Public: "{{ item.public|string }}"
-        Name: "{{ item.public|ternary('public', 'private') }}-{{ item.az }}"
+        Name: "{{ (item.public|bool)|ternary('public', 'private') }}-{{ item.az }}"
       <<: *aws_connection_info
     with_items:
       - cidr: 10.228.228.0/24
@@ -336,6 +336,78 @@
     assert:
       that:
         - check_mode_results.changed
+
+  - name: add subnets by cidr to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].cidr_block') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_cidr
+
+  - name: assert route table contains subnets added by cidr
+    assert:
+      that:
+        - add_subnets_cidr.changed
+        - add_subnets_cidr.route_table.associations|length == 2
+
+  - name: purge subnets added by cidr
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_cidr
+
+  - name: assert purge subnets added by cidr worked
+    assert:
+      that:
+        - purge_subnets_cidr.changed
+        - purge_subnets_cidr.route_table.associations|length == 0
+
+  - name: add subnets by name to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].tags.Name') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_name
+
+  - name: assert route table contains subnets added by name
+    assert:
+      that:
+        - add_subnets_name.changed
+        - add_subnets_name.route_table.associations|length == 2
+
+  - name: purge subnets added by name
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_name
+
+  - name: assert purge subnets added by name worked
+    assert:
+      that:
+        - purge_subnets_name.changed
+        - purge_subnets_name.route_table.associations|length == 0
 
   - name: purge routes
     ec2_vpc_route_table:
