@@ -130,4 +130,3 @@
         <<: *aws_connection_info
       ignore_errors: yes
       with_items: [1, 2, 3, 4, 5]
-
