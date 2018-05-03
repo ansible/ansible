@@ -99,7 +99,7 @@ commands:
   type: list
   sample:
     - interface Ethernet 0/2
-    - ip address 192.168.0.1 255.255.255.0
+    - ip address 192.168.0.1/24
     - ipv6 address fd5d:12c9:2201:1::1/64
 """
 import re
