@@ -22,7 +22,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER
 
 try:
-    from kubernetes.client.rest import ApiException
+    from openshift.dynamic.exceptions import DynamicApiError
 except ImportError:
     pass
 
@@ -87,7 +87,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         v1_namespace = client.resources.get(api_version='v1', kind='Namespace')
         try:
             obj = v1_namespace.get()
-        except ApiException as exc:
+        except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Namespace list: {0}'.format(exc.message))
         return [namespace.metadata.name for namespace in obj.items]
 
@@ -95,7 +95,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         v1_pod = client.resources.get(api_version='v1', kind='Pod')
         try:
             obj = v1_pod.get(namespace=namespace)
-        except ApiException as exc:
+        except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Pod list: {0}'.format(exc.message))
 
         namespace_group = 'namespace_{}'.format(namespace)
@@ -163,7 +163,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         v1_service = client.resources.get(api_version='v1', kind='Service')
         try:
             obj = v1_service.get(namespace=namespace)
-        except ApiException as exc:
+        except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Service list: {0}'.format(exc.message))
 
         namespace_group = 'namespace_{}'.format(namespace)
@@ -263,7 +263,7 @@ class OpenShiftInventoryHelper(K8sInventoryHelper):
         v1_route = client.resources.get(api_version='v1', kind='Route')
         try:
             obj = v1_route.get(namespace=namespace)
-        except ApiException as exc:
+        except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Routes list: {0}'.format(exc.message))
 
         namespace_group = 'namespace_{}'.format(namespace)

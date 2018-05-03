@@ -200,8 +200,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.k8s.common import K8sAnsibleMixin
 
 try:
-    import kubernetes
     from openshift.dynamic import DynamicClient
+    from openshift.dynamic.exceptions import NotFoundError
     HAS_K8S_MODULE_HELPER = True
 except ImportError as exc:
     HAS_K8S_MODULE_HELPER = False
@@ -275,10 +275,9 @@ class KubernetesLookup(K8sAnsibleMixin):
         resource = self.client.resources.get(kind=self.kind, api_version=self.api_version)
         try:
             k8s_obj = resource.get(name=self.name, namespace=self.namespace, label_selector=self.label_selector, field_selector=self.field_selector)
-        except kubernetes.client.rest.ApiException as e:
-            if e.status == 404:
-                return []
-            raise
+        except NotFoundError:
+            return []
+
         if self.name:
             return [k8s_obj.to_dict()]
 
