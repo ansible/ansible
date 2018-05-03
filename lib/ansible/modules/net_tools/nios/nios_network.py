@@ -87,9 +87,9 @@ options:
 '''
 
 EXAMPLES = '''
-- name: configure a network
+- name: configure a networkv4/v6
   nios_network:
-    network: 192.168.10.0/24
+    network: 192.168.10.0/24 or fe80::/64
     comment: this is a test comment
     state: present
     provider:
@@ -98,9 +98,9 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: set dhcp options for a network
+- name: set dhcp options for a networkv4/v6
   nios_network:
-    network: 192.168.10.0/24
+    network: 192.168.10.0/24 or fe80::/64
     comment: this is a test comment
     options:
       - name: domain-name
@@ -112,9 +112,9 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: remove a network
+- name: remove a networkv4/v6
   nios_network:
-    network: 192.168.10.0/24
+    network: 192.168.10.0/24 or fe80::/64
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -125,6 +125,7 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
+import socket
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
@@ -158,6 +159,15 @@ def options(module):
         options.append(opt)
     return options
 
+def check_ip_addr_type(ip):
+    """this function will check if the argument ip is type v4/v6 and return appropriate infoblox network type"""
+    check_ip = ip.split('/')
+    try:
+        if (socket.inet_aton(check_ip[0])):
+            return 'network'
+    except socket.error:
+        #if (socket.inet_pton(socket.AF_INET6, check_ip[0])):
+            return 'ipv6network'
 
 def main():
     ''' Main entry point for module execution
@@ -194,8 +204,12 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    # to get the argument ipaddr
+    obj_filter = dict([(k, module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
+    network_type = check_ip_addr_type(obj_filter['network'])
+
     wapi = WapiModule(module)
-    result = wapi.run('network', ib_spec)
+    result = wapi.run(network_type, ib_spec)
 
     module.exit_json(**result)
 
