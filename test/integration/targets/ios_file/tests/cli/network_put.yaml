@@ -14,7 +14,7 @@
 
 - name: copy file from controller to ios + scp (Default)
   network_put:
-    src : ios1.cfg
+    src: ios1.cfg
   register: result
 
 - assert:
@@ -23,7 +23,7 @@
 
 - name: copy file from controller to ios + dest specified
   network_put:
-    src : ios1.cfg
+    src: ios1.cfg
     dest: ios.cfg
   register: result
 

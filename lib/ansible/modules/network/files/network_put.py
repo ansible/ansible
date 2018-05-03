@@ -21,7 +21,7 @@ author: "Deepak Agrawal (@dagrawal)"
 short_description: copy files from ansibe controller to  network devices
 description:
   - This module provides functionlity to copy file from controller to
-    network devices. file will be copied at remote filesystem 
+    network devices. file will be copied at remote filesystem
 options:
   src:
     description:
@@ -35,13 +35,13 @@ options:
     required: no
   dest:
     description:
-      - destination file name with absolute path 
+      - destination file name with absolute path
     default: filename from src and at default directory of user shell on
              network_os
     required: no
 
-Requirements:
-    - scp
+requirements:
+    - "scp"
 
 notes:
    - Some devices need specific configurations to be enabled before scp can work
@@ -57,7 +57,7 @@ EXAMPLES = """
   network_put:
     src: running_cfg_ios1.txt
 
-- name: copy file at root dir of flash in slot 3 of sw1(ios) 
+- name: copy file at root dir of flash in slot 3 of sw1(ios)
   network_put:
     src: running_cfg_sw1.txt
     protocol: sftp

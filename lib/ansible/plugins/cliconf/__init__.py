@@ -27,7 +27,6 @@ from functools import wraps
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
-import q
 
 try:
     from scp import SCPClient
@@ -187,7 +186,6 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
             with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                 out = scp.put(source, destination)
-                q(out)
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.put(source, destination)

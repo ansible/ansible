@@ -33,6 +33,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
@@ -51,10 +52,10 @@ class ActionModule(ActionBase):
         src_file_path_name = self._task.args.get('src')
 
         try:
-           self._handle_template()
+            self._handle_template()
         except ValueError as exc:
-           return dict(failed=True, msg=to_text(exc)) 
-     
+            return dict(failed=True, msg=to_text(exc))
+
         try:
             src = self._task.args.get('src')
         except KeyError as exc:
@@ -63,7 +64,7 @@ class ActionModule(ActionBase):
         # Get destination file if specified
         dest = self._task.args.get('dest')
 
-        #Get proto
+        # Get proto
         proto = self._task.args.get('protocol')
         if proto is None:
             proto = 'scp'
@@ -77,27 +78,29 @@ class ActionModule(ActionBase):
         output_file = cwd + filename
         with open(output_file, 'w') as f:
             f.write(src)
-     
+
         if socket_path is None:
-           socket_path = self._connection.socket_path
- 
+            socket_path = self._connection.socket_path
+
         conn = Connection(socket_path)
         if dest is None:
             dest = src_file_path_name
 
         try:
-            out = conn.copy_file(source=output_file, destination=dest,
-                    proto=proto, timeout=sock_timeout)
+            out = conn.copy_file(
+                source=output_file, destination=dest,
+                proto=proto, timeout=sock_timeout
+            )
         except Exception as exc:
             if to_text(exc) == "No response from server":
                 if play_context.network_os == 'iosxr':
-                   # IOSXR sometimes closes socket prematurely after completion
-                   # of file transfer
-                   result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
+                    # IOSXR sometimes closes socket prematurely after completion
+                    # of file transfer
+                    result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
             else:
                 result['failed'] = True
                 result['msg'] = ('Exception received : %s' % exc)
-        
+
         # Cleanup tmp file expanded wih ansible vars
         os.remove(output_file)
         result['changed'] = True
@@ -131,7 +134,7 @@ class ActionModule(ActionBase):
 
         # Create a template search path in the following order:
         # [working_path, self_role_path, dependent_role_paths, dirname(source)]
-        searchpath = [working_path]   
+        searchpath = [working_path]
         if self._task._role is not None:
             searchpath.append(self._task._role._role_path)
             if hasattr(self._task, "_block:"):
@@ -141,9 +144,12 @@ class ActionModule(ActionBase):
                         searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
-        self._task.args['src'] = self._templar.template(template_data,
-                convert_data=False)   
+        self._task.args['src'] = self._templar.template(
+            template_data,
+            convert_data=False
+        )
 
+        return dict(failed=False, msg='successfully loaded file')
 
     def _get_network_os(self, task_vars):
         if 'network_os' in self._task.args and self._task.args['network_os']:
@@ -159,7 +165,3 @@ class ActionModule(ActionBase):
             raise AnsibleError('ansible_network_os must be specified on this host to use platform agnostic modules')
 
         return network_os
-
-    def _progress_transfer(filename, size, file_pos):
-        display.vvvv('file transferred = {}: {}, {}'.format(filename, size, file_pos))
-
