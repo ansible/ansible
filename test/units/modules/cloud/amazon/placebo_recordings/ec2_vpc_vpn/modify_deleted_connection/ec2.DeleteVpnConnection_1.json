@@ -1,17 +1,16 @@
 {
-    "status_code": 200, 
     "data": {
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "0c03aa63-a3f8-4112-8d78-a2449d5d86b0", 
+            "HTTPStatusCode": 200,
+            "RequestId": "ba0807f4-446e-471b-ad25-dc627d0917ff",
             "HTTPHeaders": {
-                "transfer-encoding": "chunked", 
-                "vary": "Accept-Encoding", 
-                "server": "AmazonEC2", 
-                "content-type": "text/xml;charset=UTF-8", 
-                "date": "Mon, 12 Jun 2017 20:22:51 GMT"
-            }
+                "content-length": "239",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 13:01:49 GMT"
+            },
+            "RetryAttempts": 0
         }
-    }
+    },
+    "status_code": 200
 }
