@@ -49,6 +49,7 @@ options:
   firewall_active:
     description:
       - Boolean value indicating if the firewall is active.
+    type: bool
     default: null
     version_added: "2.6"
   ips:
