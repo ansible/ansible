@@ -58,7 +58,7 @@ options:
       - present
       - absent
 notes:
-   -  Powershell 5.0 or higer is needed.
+   -  Powershell 5.0 or higher is needed.
 
 author: Daniele Lazzari
 '''
