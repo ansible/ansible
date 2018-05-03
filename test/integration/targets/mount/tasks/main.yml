@@ -25,6 +25,11 @@
     state: "directory"
     path: "{{ output_dir }}/mount_source"
 
+- name: Create a directory to mount a swap
+  file:
+    state: "directory"
+    path: "{{ output_dir }}/swap_on"
+
 - name: Put something in the directory so we see that it worked
   copy:
     content: "Testing\n"
@@ -148,3 +153,38 @@
       - "unmount_result['changed']"
       - "not dest_stat['stat']['exists']"
   when: ansible_system in ('FreeBSD', 'Linux')
+
+# Swap test, swap uses none as name
+- name: Mount a swapfile
+  mount:
+    name: none
+    src: "{{ output_dir }}/swap_on"
+    fstype: swap
+    opts: rw
+    dump: 0
+    passno: 0
+    state: present
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: swap_mount_result
+
+- name: Make sure the swap is mounted
+  assert:
+    that:
+      - "(ansible_system == 'Linux' or ansible_system == 'FreeBSD') and swap_mount_result['changed']"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+- name: Unmount swap
+  mount:
+    name: none
+    fstype: swap
+    state: absent
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: swap_unmount_result
+
+- name: Make sure the swap is unmounted
+  assert:
+    that:
+      - "(ansible_system == 'Linux' or ansible_system == 'FreeBSD') and swap_unmount_result['changed']"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+
