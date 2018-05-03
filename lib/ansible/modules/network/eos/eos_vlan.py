@@ -45,14 +45,14 @@ options:
     required: true
   interfaces:
     description:
-      - List of interfaces that should be associated to the VLAN. The name of interface
-        should be in expanded format and not abbreviated.
+      - List of interfaces that should be associated to the VLAN. The name of interface is
+        case sensitive and should be in expanded format and not abbreviated.
   associated_interfaces:
     description:
       - This is a intent option and checks the operational state of the for given vlan C(name)
-        for associated interfaces. The name of interface should be in expanded format and not abbreviated.
-        If the value in the C(associated_interfaces) does not match with the operational state of vlan
-        interfaces on device it will result in failure.
+        for associated interfaces. The name of interface is case sensitive and should be in
+        expanded format and not abbreviated. If the value in the C(associated_interfaces)
+        does not match with the operational state of vlan interfaces on device it will result in failure.
     version_added: "2.5"
   delay:
     description:
