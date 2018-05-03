@@ -290,6 +290,9 @@ class NetworkConfig(object):
         for item in self.items:
             if item not in other:
                 updates.append(item)
+            # special trailing parents need to be included in diff
+            elif item.line == 'end-policy' or item.line == 'end-set':
+                updates.append(item)
         return updates
 
     def _diff_strict(self, other):
