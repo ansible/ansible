@@ -1,0 +1,60 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Test an API key is provided
+  fail:
+    msg: Please define an API key
+  when: auth_key is not defined
+
+- name: Create a new organization named IntTestOrg
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrg
+    state: present
+    output_level: debug
+  delegate_to: localhost
+  register: new_org
+
+- name: List all organizations
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    state: query
+  delegate_to: localhost
+  register: query_all
+
+- name: Query information about a single organization named IntTestOrg
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrg
+    state: query
+  delegate_to: localhost
+  register: query_org
+
+- name: Query information about IntTestOrg by organization ID
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_id: '{{ query_org.data.id }}'
+    state: query
+  delegate_to: localhost
+  register: query_org_id
+
+- name: Clone IntTestOrg
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    clone: IntTestOrg
+    org_name: IntTestOrgCloned
+    state: present
+  delegate_to: localhost
+  register: cloned_org
+
+- name: Present assertions
+  assert:
+    that:
+      - new_org.data.id is defined
+      - '{{ query_all | length}} > 0'
+      - query_org.data.id is defined
+      - 'query_org.data.name == "IntTestOrg"'
+      - cloned_org.data.id is defined
+      - 'query_org_id.data.id == query_org.data.id'
