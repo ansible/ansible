@@ -1,5 +1,5 @@
 - name: Test include_role
-  hosts: testhost,testhost2
+  hosts: testhost
 
   vars:
     run_role: yes
@@ -85,26 +85,9 @@
       include_role:
         name: "{{ role_name }}"
 
-    - name: wipe role results
-      set_fact:
-        _role2_result: ~
-        _role3_result: ~
-
     - name: Test using a host variable for role name
       include_role:
         name: "{{ host_var_role_name }}"
-
-    - name: assert that host varible for role name calls 2 diff roles
-      assert:
-        that:
-          - _role2_result is not none
-      when: inventory_hostname == 'testhost2'
-
-    - name: assert that host varible for role name calls 2 diff roles
-      assert:
-        that:
-          - _role3_result is not none
-      when: inventory_hostname == 'testhost'
 
     - name: Pass variable to role
       include_role:
@@ -161,3 +144,26 @@
         - name: Include role inside always
           include_role:
             name: role3
+
+- hosts: testhost,testhost2
+  tasks:
+    - name: wipe role results
+      set_fact:
+        _role2_result: ~
+        _role3_result: ~
+
+    - name: Test using a host variable for role name
+      include_role:
+        name: "{{ host_var_role_name }}"
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role2_result is not none
+      when: inventory_hostname == 'testhost2'
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role3_result is not none
+      when: inventory_hostname == 'testhost'
