@@ -1,0 +1,143 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) me@mimiko.me
+
+DOCUMENTATION = '''
+---
+module: zabbix_hostgroup_get
+short_description: Zabbix hostgroup get
+description:
+   - This module allows you to search for Zabbix hostgroup entries.
+version_added: "2.0"
+author:
+    - "(@redwhitemiko)"
+requirements:
+    - "python >= 2.6"
+    - zabbix-api
+options:
+    server_url:
+        description:
+            - Url of Zabbix server, with protocol (http or https).
+        required: true
+        aliases: [ "url" ]
+    login_user:
+        description:
+            - Zabbix user name, used to authenticate against the server.
+        required: true
+    login_password:
+        description:
+            - Zabbix user password.
+        required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+        version_added: "2.1"
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+        version_added: "2.1"
+    host_name:
+        description:
+            - Name of the host in Zabbix.
+            - host_name is the unique identifier used and cannot be updated using this module.
+        required: true
+    timeout:
+        description:
+            - The timeout of API request (seconds).
+        default: 10
+    exact_match:
+        description:
+            - Find the exact match
+        default: false
+'''
+
+EXAMPLES = '''
+- name: Get hostgroup info
+  local_action:
+    module: zabbix_hostgroup_get
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    hostgroup_name: 
+      - ExampleHostgroup
+    timeout: 10
+'''
+
+import logging
+import copy
+
+try:
+    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+
+    # Extend the ZabbixAPI
+    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
+    # it does not support the 'hostinterface' api calls,
+    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
+    class ZabbixAPIExtends(ZabbixAPI):
+        hostinterface = None
+
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
+
+    HAS_ZABBIX_API = True
+except ImportError:
+    HAS_ZABBIX_API = False
+
+class Host(object):
+    def __init__(self, module, zbx):
+        self._module = module
+        self._zapi = zbx
+
+    def get_group_ids_by_group_names(self, group_names):
+        group_list = self._zapi.hostgroup.get({'output': 'extend', 'filter': {'name': group_names}})
+        if len(group_list) < 1:
+            self._module.fail_json(msg="Hostgroup not found: %s" % group_names)
+        return group_list
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            server_url=dict(type='str', required=True, aliases=['url']),
+            login_user=dict(type='str', required=True),
+            login_password=dict(type='str', required=True, no_log=True),
+            hostgroup_name=dict(type='list', required=True),
+            http_login_user=dict(type='str', required=False, default=None),
+            http_login_password=dict(type='str', required=False, default=None, no_log=True),
+            timeout=dict(type='int', default=10)
+        ),
+        supports_check_mode=True
+    )
+
+    if not HAS_ZABBIX_API:
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+
+    server_url = module.params['server_url']
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
+    http_login_user = module.params['http_login_user']
+    http_login_password = module.params['http_login_password']
+    hostgroup_name = module.params['hostgroup_name']
+    timeout = module.params['timeout']
+
+    zbx = None
+    # login to zabbix
+    try:
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx.login(login_user, login_password)
+    except Exception as e:
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
+
+    host = Host(module, zbx)
+    hostgroups = host.get_group_ids_by_group_names(hostgroup_name)
+    module.exit_json(ok=True, hostgroups=hostgroups)
+
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()
