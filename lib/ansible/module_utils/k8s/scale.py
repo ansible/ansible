@@ -112,7 +112,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
 
         if not hasattr(resource, 'scale'):
             self.fail_json(
-                msg="Cannot perform scale on resource of kind {}".format(resource.kind)
+                msg="Cannot perform scale on resource of kind {0}".format(resource.kind)
             )
 
         scale_obj = {'metadata': {'name': name, 'namespace': namespace}, 'spec': {'replicas': replicas}}

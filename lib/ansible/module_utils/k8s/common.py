@@ -98,6 +98,7 @@ AUTH_ARG_SPEC = {
     },
 }
 
+
 class K8sAnsibleMixin(object):
     _argspec_cache = None
 
@@ -123,11 +124,11 @@ class K8sAnsibleMixin(object):
         for key, value in iteritems(auth):
             if key in auth_args and value is not None:
                 if key == 'api_key':
-                    setattr(configuration, key, {'authorization': "Bearer {}".format(value)})
+                    setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:
                     setattr(configuration, key, value)
             elif key in auth_args and value is None:
-                env_value = os.getenv('K8S_AUTH_{}'.format(key.upper()), None)
+                env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
                     setattr(configuration, key, env_value)
 

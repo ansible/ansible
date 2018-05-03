@@ -98,8 +98,8 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Pod list: {0}'.format(exc.message))
 
-        namespace_group = 'namespace_{}'.format(namespace)
-        namespace_pods_group = '{}_pods'.format(namespace_group)
+        namespace_group = 'namespace_{0}'.format(namespace)
+        namespace_pods_group = '{0}_pods'.format(namespace_group)
 
         self.inventory.add_group(name)
         self.inventory.add_group(namespace_group)
@@ -166,8 +166,8 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Service list: {0}'.format(exc.message))
 
-        namespace_group = 'namespace_{}'.format(namespace)
-        namespace_services_group = '{}_services'.format(namespace_group)
+        namespace_group = 'namespace_{0}'.format(namespace)
+        namespace_services_group = '{0}_services'.format(namespace_group)
 
         self.inventory.add_group(name)
         self.inventory.add_group(namespace_group)
@@ -266,8 +266,8 @@ class OpenShiftInventoryHelper(K8sInventoryHelper):
         except DynamicApiError as exc:
             raise K8sInventoryException('Error fetching Routes list: {0}'.format(exc.message))
 
-        namespace_group = 'namespace_{}'.format(namespace)
-        namespace_routes_group = '{}_routes'.format(namespace_group)
+        namespace_group = 'namespace_{0}'.format(namespace)
+        namespace_routes_group = '{0}_routes'.format(namespace_group)
 
         self.inventory.add_group(name)
         self.inventory.add_group(namespace_group)
