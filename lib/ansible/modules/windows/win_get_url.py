@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
-short_description: Downloads file form HTTP, HTTPS, or FTP to node
+short_description: Downloads file from HTTP, HTTPS, or FTP to node
 description:
 - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
   server I(must) have direct access to the remote resource.
