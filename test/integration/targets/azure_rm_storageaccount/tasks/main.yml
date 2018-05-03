@@ -90,7 +90,7 @@
        tags:
            testing: testing
            delete: never
-        append_tags: false
+       append_tags: false
    register: output
 
  - assert:
