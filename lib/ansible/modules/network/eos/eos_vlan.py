@@ -245,10 +245,10 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             if item.get('interfaces'):
-                item['interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('interfaces') if intf]
+                item['interfaces'] = [intf.replace(" ", "") for intf in item.get('interfaces') if intf]
 
             if item.get('associated_interfaces'):
-                item['associated_interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('associated_interfaces') if intf]
+                item['associated_interfaces'] = [intf.replace(" ", "") for intf in item.get('associated_interfaces') if intf]
 
             d = item.copy()
             d['vlan_id'] = str(d['vlan_id'])
@@ -259,8 +259,8 @@ def map_params_to_obj(module):
             'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'state': module.params['state'],
-            'interfaces': [intf.replace(" ", "").lower() for intf in module.params['interfaces']] if module.params['interfaces'] else [],
-            'associated_interfaces': [intf.replace(" ", "").lower() for intf in
+            'interfaces': [intf.replace(" ", "") for intf in module.params['interfaces']] if module.params['interfaces'] else [],
+            'associated_interfaces': [intf.replace(" ", "") for intf in
                                       module.params['associated_interfaces']] if module.params['associated_interfaces'] else []
 
         })
