@@ -17,8 +17,7 @@
 
 - name: Should we run lldp tests?
   set_fact:
-    # run_lldp_tests: "'eth0' in neighbors_out.stdout[0]"
-    run_lldp_tests: False
+    run_lldp_tests: "'Gi0/0' in neighbors_out.stdout[0]"
 
 - name: Enable LLDP service
   vyos_lldp:
@@ -52,7 +51,7 @@
   vyos_interface:
     name: eth0
     neighbors:
-    - port: eth0
+    - port: Gi0/0
   when: run_lldp_tests
   register: result
 
@@ -132,7 +131,7 @@
     aggregate:
     - name: eth0
       neighbors:
-      - port: eth0
+      - port: Gi0/0
   when: run_lldp_tests
   register: result
 
@@ -146,7 +145,7 @@
     aggregate:
     - name: eth0
       neighbors:
-      - port: eth0
+      - port: Gi0/0
       - port: dummy_port
         host: dummy_host
   ignore_errors: yes
