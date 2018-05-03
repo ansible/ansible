@@ -43,7 +43,7 @@ options:
      description:
        - String describing the snapshot
      required: false
-     default: None
+     default: null
      aliases: ['description']
    volume:
      description:
@@ -55,6 +55,7 @@ options:
          is attached to an instance.
      required: false
      default: False
+     type: bool
    state:
      description:
        - Should the resource be present or absent.
