@@ -115,6 +115,24 @@ ec2_data = {
                 },
             ]
         },
+        "VpnGatewayExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeVpnGateways",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(VpnGateways[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidVpnGatewayID.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
     }
 }
 
@@ -196,6 +214,12 @@ waiters_by_name = {
         ec2_model('SubnetDeleted'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
+        )),
+    ('EC2', 'vpn_gateway_exists'): lambda ec2: core_waiter.Waiter(
+        'vpn_gateway_exists',
+        ec2_model('VpnGatewayExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_vpn_gateways
         )),
     ('WAF', 'change_token_in_sync'): lambda waf: core_waiter.Waiter(
         'change_token_in_sync',
