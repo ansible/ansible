@@ -125,11 +125,10 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-import socket
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
-
+from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
@@ -164,10 +163,10 @@ def check_ip_addr_type(ip):
     '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox network type
     '''
     check_ip = ip.split('/')
-    try:
-        if (socket.inet_aton(check_ip[0])):
-            return 'network'
-    except socket.error:
+
+    if validate_ip_address(check_ip[0]):
+        return 'network'
+    elif validate_ip_v6_address(check_ip[0]):
         return 'ipv6network'
 
 
