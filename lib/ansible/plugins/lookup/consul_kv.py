@@ -93,7 +93,7 @@ class LookupModule(LookupBase):
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
                     u = urlparse(url)
-                    consul_api = consul.Consul(host=u.hostname, port=u.port)
+                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme)
                 except KeyError:
                     port = kwargs.get('port', '8500')
                     host = kwargs.get('host', 'localhost')
