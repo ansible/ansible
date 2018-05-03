@@ -66,8 +66,11 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(status) specifies that the device mount's entry will be returned from
+        I(fstab) current contents if I(name) matches as a regexp and potentially
+        also I(fstype) if specified.
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, status ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
@@ -121,10 +124,24 @@ EXAMPLES = '''
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Return all mounted filessystems
+  mount:
+    path: ".*"
+    state: status
+  register: mounts_status
+
+- name: Return all mounted filessystems with xfs type
+  mount:
+    path: ".*"
+    fstype: xfs
+    state: status
+  register: xfs_mount_status
 '''
 
 
 import os
+import re
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.ismount import ismount
@@ -559,7 +576,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'status']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -624,6 +641,8 @@ def main():
 
         open(args['fstab'], 'a').close()
 
+    # status:
+    #   Return current status from fstab.
     # absent:
     #   Remove from fstab and unmounted.
     # unmounted:
@@ -637,6 +656,21 @@ def main():
     state = module.params['state']
     name = module.params['path']
     changed = False
+
+    if state == 'status':
+        ret_mounts = {}
+        for k, v in iteritems(linux_mounts):
+            if re.match(name, v.get('dst', '')):
+                match_found = False
+                fst = module.params.get('fstype')
+                if fst:
+                    if re.match(fst, v.get('fs', '')):
+                        match_found = True
+                else:
+                    match_found = True
+                if match_found:
+                    ret_mounts[k] = v
+        module.exit_json(changed=changed, status=ret_mounts, **args)
 
     if state == 'absent':
         name, changed = unset_mount(module, args)

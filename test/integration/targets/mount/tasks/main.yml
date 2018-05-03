@@ -115,6 +115,16 @@
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
+- name: Get mount points status
+  mount:
+    path: ".*"
+    state: "status"
+  when: ansible_system == 'Linux'
+  register: mounts_status
+
+- debug: var=mounts_status
+  when: ansible_system == 'Linux'
+
 - name: Get mount options
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
   register: remount_options
