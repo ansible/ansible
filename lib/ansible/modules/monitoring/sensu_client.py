@@ -81,6 +81,10 @@ options:
   servicenow:
     description:
       - The servicenow definition scope, used to configure the Sensu Enterprise ServiceNow integration (Sensu Enterprise users only).
+  custom:
+    description:
+      - Add custom attributes to the client definition. This dict will be added to the client definition scope as a JSON hash.
+      type: dict
 notes:
   - Check mode is supported
 '''
@@ -114,6 +118,13 @@ EXAMPLES = '''
       custom:
         - broadcast: irc
       occurrences: 3
+    custom:
+      metric1_graph: "GRAPHITE_URL&target={{ ansible_hostname }}.stat1&i=.png"
+      metric2_graph: "GRAPHITE_URL&target={{ ansible_hostname }}.stat2&i=.png"
+      thresholds:
+        disk:
+          warning: 85
+          critical: 95
   register: client
   notify:
     - Restart sensu-client
@@ -168,7 +179,8 @@ def main():
             ec2=dict(type='dict', required=False),
             chef=dict(type='dict', required=False),
             puppet=dict(type='dict', required=False),
-            servicenow=dict(type='dict', required=False)
+            servicenow=dict(type='dict', required=False),
+            custom=dict(type='dict', required=False)
         ),
         required_if=[
             ['state', 'present', ['subscriptions']]
@@ -201,11 +213,15 @@ def main():
     config = {'client': {}}
     args = ['name', 'address', 'subscriptions', 'safe_mode', 'redact',
             'socket', 'keepalives', 'keepalive', 'registration', 'deregister',
-            'deregistration', 'ec2', 'chef', 'puppet', 'servicenow']
+            'deregistration', 'ec2', 'chef', 'puppet', 'servicenow', 'custom']
 
     for arg in args:
         if arg in module.params and module.params[arg] is not None:
-            config['client'][arg] = module.params[arg]
+            if arg == 'custom':
+                for key, value in module.params[arg].items():
+                    config['client'][key] = value
+            else:
+                config['client'][arg] = module.params[arg]
 
     # Load the current config, if there is one, so we can compare
     current_config = None
