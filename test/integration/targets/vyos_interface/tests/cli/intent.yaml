@@ -9,15 +9,12 @@
 - name: Detect if we have existing lldp neighbors configured
   vyos_command:
     commands:
-      - show lldp neighbors
+      - show lldp neighbors detail
   register: neighbors_out
-
-- debug:
-    var: neighbors_out
 
 - name: Should we run lldp tests?
   set_fact:
-    run_lldp_tests: "'Gi0/0' in neighbors_out.stdout[0]"
+  t  run_lldp_tests: "'PortDescr:    eth0' in neighbors_out.stdout[0]"
 
 - name: Enable LLDP service
   vyos_lldp:
@@ -51,7 +48,7 @@
   vyos_interface:
     name: eth0
     neighbors:
-    - port: Gi0/0
+    - port: eth0
   when: run_lldp_tests
   register: result
 
@@ -131,7 +128,7 @@
     aggregate:
     - name: eth0
       neighbors:
-      - port: Gi0/0
+      - port: eth0
   when: run_lldp_tests
   register: result
 
@@ -145,7 +142,7 @@
     aggregate:
     - name: eth0
       neighbors:
-      - port: Gi0/0
+      - port: eth0
       - port: dummy_port
         host: dummy_host
   ignore_errors: yes
