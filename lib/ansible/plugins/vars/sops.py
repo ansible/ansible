@@ -263,7 +263,7 @@ class VarsModule(BaseVarsPlugin):
         except KeyError:
             return (None, "failed to initialize KMS client")
 
-    def _walk_and_decrypt(self, branch, key, aad=b'', stash=None, digest=None,
+    def _walk_and_decrypt(self, branch, key, aad=rb'', stash=None, digest=None,
                           isRoot=True, unencrypted=False):
         """Walk the branch recursively and decrypt leaves."""
         if isRoot:
@@ -274,7 +274,7 @@ class VarsModule(BaseVarsPlugin):
             unencrypted_branch = unencrypted or k.endswith(UNENCRYPTED_SUFFIX)
             nstash = dict()
             caad = aad
-            caad = aad + k.encode('utf-8') + b':'
+            caad = aad + k.encode('utf-8') + rb':'
             if stash:
                 stash[k] = {'has_stash': True}
                 nstash = stash[k]
@@ -306,7 +306,7 @@ class VarsModule(BaseVarsPlugin):
 
         return branch
 
-    def _walk_list_and_decrypt(self, branch, key, aad=b'', stash=None, digest=None, unencrypted=False):
+    def _walk_list_and_decrypt(self, branch, key, aad=rb'', stash=None, digest=None, unencrypted=False):
         """Walk a list contained in a branch and decrypts its values."""
         nstash = dict()
         kl = []
@@ -327,7 +327,7 @@ class VarsModule(BaseVarsPlugin):
                                         unencrypted=unencrypted))
         return kl
 
-    def _decrypt(self, value, key, aad=b'', stash=None, digest=None, unencrypted=False):
+    def _decrypt(self, value, key, aad=rb'', stash=None, digest=None, unencrypted=False):
         """Return a decrypted value."""
         if unencrypted:
             if digest:
@@ -335,10 +335,10 @@ class VarsModule(BaseVarsPlugin):
                 digest.update(bvalue)
             return value
 
-        valre = b'^ENC\[AES256_GCM,data:(.+),iv:(.+),tag:(.+)'
+        valre = rb'^ENC\[AES256_GCM,data:(.+),iv:(.+),tag:(.+)'
         # extract fields using a regex
-        valre += b',type:(.+)'
-        valre += b'\]'
+        valre += rb',type:(.+)'
+        valre += rb'\]'
         res = re.match(valre, value.encode('utf-8'))
         # if the value isn't in encrypted form, return it as is
         if res is None:
@@ -364,9 +364,9 @@ class VarsModule(BaseVarsPlugin):
         if digest:
             digest.update(cleartext)
 
-        if valtype == b'bytes':
+        if valtype == rb'bytes':
             return cleartext
-        if valtype == b'str':
+        if valtype == rb'str':
             # Welcome to python compatibility hell... :(
             # Python 2 treats everything as str, but python 3 treats bytes and str
             # as different types. So if a file was encrypted by sops with py2, and
@@ -380,12 +380,12 @@ class VarsModule(BaseVarsPlugin):
             except UnicodeDecodeError:
                 return cleartext
             return cv
-        if valtype == b'int':
+        if valtype == rb'int':
             return int(cleartext.decode('utf-8'))
-        if valtype == b'float':
+        if valtype == rb'float':
             return float(cleartext.decode('utf-8'))
-        if valtype == b'bool':
-            if cleartext.lower() == b'true':
+        if valtype == rb'bool':
+            if cleartext.lower() == rb'true':
                 return True
             return False
         self._display.vvv("unknown type " + valtype)
