@@ -229,10 +229,10 @@ class VdirectFile(object):
 
 def main():
 
-    if not HAS_REST_CLIENT:
-        raise ImportError("The python vdirect-client module is required")
-
     module = AnsibleModule(argument_spec=meta_args)
+
+    if not HAS_REST_CLIENT:
+        module.fail_json(msg="The python vdirect-client module is required")
 
     try:
         vdirect_file = VdirectFile(module.params)

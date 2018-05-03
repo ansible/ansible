@@ -309,11 +309,11 @@ class VdirectRunnable(object):
 
 def main():
 
-    if not HAS_REST_CLIENT:
-        raise ImportError("The python vdirect-client module is required")
-
     module = AnsibleModule(argument_spec=meta_args,
                            required_if=[['runnable_type', WORKFLOW_RUNNABLE_TYPE, ['action_name']]])
+
+    if not HAS_REST_CLIENT:
+        module.fail_json(msg="The python vdirect-client module is required")
 
     try:
         vdirect_runnable = VdirectRunnable(module.params)
