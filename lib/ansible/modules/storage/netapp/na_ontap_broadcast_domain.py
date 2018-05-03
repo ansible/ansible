@@ -80,6 +80,7 @@ import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
+
 class NetAppOntapBroadcastDomain(object):
     """
         Create, Modifies and Destroys a Broadcast domain
@@ -137,7 +138,7 @@ class NetAppOntapBroadcastDomain(object):
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) == 1:
             domain_info = result.get_child_by_name('attributes-list').\
-                                get_child_by_name('net-port-broadcast-domain-info')
+                get_child_by_name('net-port-broadcast-domain-info')
             domain_name = domain_info.get_child_content('broadcast-domain')
             domain_mtu = domain_info.get_child_content('mtu')
             domain_ipspace = domain_info.get_child_content('ipspace')
@@ -213,27 +214,28 @@ class NetAppOntapBroadcastDomain(object):
         netapp_utils.ems_log_event("na_ontap_broadcast_domain", cserver)
         if broadcast_domain_details:
             broadcast_domain_exists = True
-            if self.state == 'absent': # delete
+            if self.state == 'absent':  # delete
                 changed = True
-            elif self.state == 'present': # modify
+            elif self.state == 'present':  # modify
                 if (self.mtu and self.mtu != broadcast_domain_details['mtu']) or \
-                    (self.ipspace and self.ipspace != broadcast_domain_details['ipspace']):
+                   (self.ipspace and self.ipspace != broadcast_domain_details['ipspace']):
                     changed = True
         else:
-            if self.state == 'present': # create
+            if self.state == 'present':  # create
                 changed = True
         if changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present': # execute create
+                if self.state == 'present':  # execute create
                     if not broadcast_domain_exists:
                         self.create_broadcast_domain()
-                    else: # execute modify
+                    else:  # execute modify
                         self.modify_broadcast_domain()
-                elif self.state == 'absent': # execute delete
+                elif self.state == 'absent':  # execute delete
                     self.delete_broadcast_domain()
         self.module.exit_json(changed=changed)
+
 
 def main():
     """
