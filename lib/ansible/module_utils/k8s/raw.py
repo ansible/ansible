@@ -18,7 +18,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import urllib3
 
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
@@ -81,7 +80,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             try:
                 resource = self.client.resources.get(kind=search_kind, api_version=api_version)
             except Exception as e:
-                self.fail_json(msg='Failed to find resource {}.{}: {}'.format(
+                self.fail_json(msg='Failed to find resource {0}.{1}: {2}'.format(
                     api_version, search_kind, e
                 ))
             result = self.perform_action(resource, definition)
@@ -120,7 +119,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             pass
         except DynamicApiError as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
-                        error=exc.status)
+                           error=exc.status)
 
         if state == 'absent':
             result['method'] = "delete"
