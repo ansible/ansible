@@ -46,6 +46,10 @@ DOCUMENTATION = """
         description: password length
         type: integer
         default: 16
+      backup:
+        description: Backup the previous password in a subkey
+        type: bool
+        default: 'no'
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
@@ -144,7 +148,7 @@ class LookupModule(LookupBase):
                 raise AnsibleError(e)
             # check and convert values
             try:
-                for key in ['create', 'returnall', 'overwrite']:
+                for key in ['create', 'returnall', 'overwrite', 'backup']:
                     if not isinstance(self.paramvals[key], bool):
                         self.paramvals[key] = util.strtobool(self.paramvals[key])
             except (ValueError, AssertionError) as e:
@@ -197,8 +201,9 @@ class LookupModule(LookupBase):
         # generate new password, insert old lines from current result and return new password
         newpass = self.get_newpass()
         datetime = time.strftime("%d/%m/%Y %H:%M:%S")
-        msg = newpass + '\n' + '\n'.join(self.passoutput[1:])
-        msg += "\nlookup_pass: old password was {0} (Updated on {1})\n".format(self.password, datetime)
+        msg = newpass + '\n' + '\n'.join(self.passoutput[1:]) + '\n'
+        if self.paramvals['backup']:
+            msg += "lookup_pass: old password was {0} (Updated on {1})\n".format(self.password, datetime)
         try:
             check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
         except (subprocess.CalledProcessError) as e:
@@ -238,6 +243,7 @@ class LookupModule(LookupBase):
             'overwrite': False,
             'userpass': '',
             'length': 16,
+            'backup': False,
         }
 
         for term in terms:
