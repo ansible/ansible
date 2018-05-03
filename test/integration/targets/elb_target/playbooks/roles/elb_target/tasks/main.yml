@@ -5,7 +5,6 @@
 
     - name:
       debug: msg="********** Setting up elb_target test dependencies **********"
-
     # ============================================================
 
     - name: set up aws connection info
@@ -16,16 +15,6 @@
           security_token: "{{ security_token }}"
           region: "{{ aws_region }}"
       no_log: yes
-
-    # ============================================================
-
-    - name: create target group name
-      set_fact:
-        tg_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
-
-    - name: create application load balancer name
-      set_fact:
-        lb_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-lb"
 
     # ============================================================
 
