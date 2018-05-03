@@ -55,6 +55,9 @@ options:
     network_credential:
       description:
         - The network_credential to use for the job template.
+    vault_credential:
+      description:
+        - The vault_credential to use for the job template.
     forks:
       description:
         - The number of parallel or simultaneous processes to use while executing the playbook.
@@ -175,6 +178,7 @@ def update_resources(module, p):
         'machine_credential': 'name',
         'network_credential': 'name',
         'cloud_credential': 'name',
+        'vault_credential': 'name',
     }
     for k, v in identity_map.items():
         try:
@@ -199,6 +203,7 @@ def main():
         machine_credential=dict(),
         cloud_credential=dict(),
         network_credential=dict(),
+        vault_credential=dict(),
         forks=dict(type='int'),
         limit=dict(),
         verbosity=dict(choices=['verbose', 'debug']),
