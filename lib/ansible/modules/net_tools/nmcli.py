@@ -65,6 +65,9 @@ options:
     ip4:
         description:
             - 'The IPv4 address to this interface using this format ie: "192.0.2.24/24"'
+    ip4_method:
+        description:
+            - 'The IPv4 method to this interface using this format ie: "manual"'
     gw4:
         description:
             - 'The IPv4 gateway for this interface using this format ie: "192.0.2.1"'
@@ -78,6 +81,9 @@ options:
     ip6:
         description:
             - 'The IPv6 address to this interface using this format ie: "abbe::cafe"'
+    ip6_method:
+        description:
+            - 'The IPv6 method to this interface using this format ie: "manual"'
     gw6:
         description:
             - 'The IPv6 gateway for this interface using this format ie: "2001:db8::1"'
@@ -532,10 +538,12 @@ class Nmcli(object):
         self.ifname = module.params['ifname']
         self.type = module.params['type']
         self.ip4 = module.params['ip4']
+        self.ip4_method = module.params['ip4_method']
         self.gw4 = module.params['gw4']
         self.dns4 = ' '.join(module.params['dns4']) if module.params.get('dns4') else None
         self.dns4_search = ' '.join(module.params['dns4_search']) if module.params.get('dns4_search') else None
         self.ip6 = module.params['ip6']
+        self.ip6_method = module.params['ip6_method']
         self.gw6 = module.params['gw6']
         self.dns6 = module.params['dns6']
         self.dns6_search = ' '.join(module.params['dns6_search']) if module.params.get('dns6_search') else None
@@ -689,8 +697,10 @@ class Nmcli(object):
 
         options = {
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
@@ -708,9 +718,11 @@ class Nmcli(object):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
         options = {
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv4.dns': self.dns4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'ipv6.dns': self.dns6,
             'autoconnect': self.bool_to_string(self.autoconnect),
@@ -765,8 +777,10 @@ class Nmcli(object):
         options = {
             'mode': self.mode,
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
@@ -791,9 +805,11 @@ class Nmcli(object):
 
         options = {
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv4.dns': self.dns4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'ipv6.dns': self.dns6,
             'autoconnect': self.bool_to_string(self.autoconnect),
@@ -858,8 +874,10 @@ class Nmcli(object):
 
         options = {
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
@@ -881,9 +899,11 @@ class Nmcli(object):
         # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
         options = {
             'ipv4.address': self.ip4,
+            'ipv4.method': self.ip4_method,
             'ipv4.gateway': self.gw4,
             'ipv4.dns': self.dns4,
             'ipv6.address': self.ip6,
+            'ipv6.method': self.ip6_method,
             'ipv6.gateway': self.gw6,
             'ipv6.dns': self.dns6,
             'autoconnect': self.bool_to_string(self.autoconnect),
@@ -919,8 +939,10 @@ class Nmcli(object):
 
         options = {
             'ip4': self.ip4,
+            'ipv4.method': self.ip4_method,
             'gw4': self.gw4,
             'ip6': self.ip6,
+            'ipv6.method': self.ip6_method,
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'bridge.ageing-time': self.ageingtime,
@@ -947,8 +969,10 @@ class Nmcli(object):
 
         options = {
             'ip4': self.ip4,
+            'ipv4.method': self.ip4_method,
             'gw4': self.gw4,
             'ip6': self.ip6,
+            'ipv6.method': self.ip6_method,
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'bridge.ageing-time': self.ageingtime,
@@ -1034,8 +1058,10 @@ class Nmcli(object):
         params = {'dev': self.vlandev,
                   'id': self.vlanid,
                   'ip4': self.ip4,
+                  'ipv4.method': self.ip4_method,
                   'gw4': self.gw4,
                   'ip6': self.ip6,
+                  'ipv6.method': self.ip6_method,
                   'gw6': self.gw6,
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
@@ -1053,9 +1079,11 @@ class Nmcli(object):
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
                   'ipv4.address': self.ip4,
+                  'ipv4.method': self.ip4_method,
                   'ipv4.gateway': self.gw4,
                   'ipv4.dns': self.dns4,
                   'ipv6.address': self.ip6,
+                  'ipv6.method': self.ip6_method,
                   'ipv6.gateway': self.gw6,
                   'ipv6.dns': self.dns6,
                   'autoconnect': self.bool_to_string(self.autoconnect)
@@ -1167,11 +1195,13 @@ def main():
                                'vlan', 'generic'],
                       type='str'),
             ip4=dict(required=False, default=None, type='str'),
+            ip4_method=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
             dns4=dict(required=False, default=None, type='list'),
             dns4_search=dict(type='list'),
             dhcp_client_id=dict(required=False, default=None, type='str'),
             ip6=dict(required=False, default=None, type='str'),
+            ip6_method=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
             dns6_search=dict(type='list'),
