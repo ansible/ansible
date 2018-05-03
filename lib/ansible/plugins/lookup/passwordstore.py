@@ -47,7 +47,7 @@ DOCUMENTATION = """
         type: integer
         default: 16
       backup:
-        description: Backup the previous password in a subkey
+        description: Used with C(overwrite=yes). Backup the previous password in a subkey.
         type: bool
         default: 'no'
 """
