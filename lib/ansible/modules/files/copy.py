@@ -276,7 +276,6 @@ def main():
         argument_spec=dict(
             src=dict(type='path'),
             original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
-            content=dict(type='str', no_log=True),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True, aliases=['thirsty']),
