@@ -142,8 +142,7 @@ EXAMPLES = '''
     subnet_id: subnet-xxxxxxxx
     eni_id: eni-yyyyyyyy
     state: present
-    secondary_private_ip_addresses:
-      -
+    secondary_private_ip_address_count: 0
 
 # Destroy an ENI, detaching it from any instance if necessary
 - ec2_eni:
