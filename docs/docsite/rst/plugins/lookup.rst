@@ -65,6 +65,30 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
         - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
         - ['a', 'c', 'd', 'c']
 
+.. _query:
+
+query
++++++
+
+.. versionadded:: 2.5
+
+In Ansible 2.5, a new jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list.
+The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``.
+
+This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibiltiy with other uses of ``lookup``.
+
+The following examples are equivalent::
+
+    lookup('dict', dict_variable, wantlist=True)
+
+    query('dict', dict_variable)
+
+As demonstrated above the behavior of ``wantlist=True`` is implicit when using ``query``.
+
+Additionally, ``q`` was introduced as a shortform of ``query``::
+
+    q('dict', dict_variable)
+
 
 .. _lookup_plugins_list:
 

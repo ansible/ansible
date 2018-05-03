@@ -49,7 +49,7 @@ options:
       - Enable/Disable SSD Cache on Pool
     required: false
     default: yes
-    choices: [ "yes", "no" ]
+    type: bool
 notes:
   - Infinibox Admin level access is required for pool modifications
 extends_documentation_fragment:

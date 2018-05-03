@@ -236,11 +236,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root', remote_user]  # plugin does not support admin_users
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except KeyError:
+        except AnsibleError:
             remote_tmp = '~/ansible'
 
         # deal with tmpdir creation
@@ -405,7 +405,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users')
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root']  # plugin does not support admin users
 
         if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
@@ -567,11 +567,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
 
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
-        else:
-            # use remote user instead, if none set default to current user
-            expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
+        if expand_path == '~':
+            if sudoable and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+            else:
+                # use remote user instead, if none set default to current user
+                expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)

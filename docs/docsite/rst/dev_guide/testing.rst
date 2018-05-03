@@ -190,7 +190,7 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
 Code Coverage Online
 ````````````````````
 
-`The online code coverage reports <https://codecov.io/gh/ansible/ansible>` are a good way
+`The online code coverage reports <https://codecov.io/gh/ansible/ansible>`_ are a good way
 to identify areas for testing improvement in Ansible.  By following red colors you can
 drill down through the reports to find files which have no tests at all.  Adding both
 integration and unit tests which show clearly how code should work, verify important

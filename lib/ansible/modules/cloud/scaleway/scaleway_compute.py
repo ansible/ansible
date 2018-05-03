@@ -160,7 +160,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote
-from ansible.module_utils.scaleway import ScalewayAPI
+from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION
 
 SCALEWAY_COMMERCIAL_TYPES = [
 
@@ -188,13 +188,6 @@ SCALEWAY_COMMERCIAL_TYPES = [
     'X64-60GB',
     'X64-120GB',
 ]
-
-SCALEWAY_LOCATION = {
-    'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
-    'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
-    'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
-    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
-}
 
 SCALEWAY_SERVER_STATES = (
     'stopped',

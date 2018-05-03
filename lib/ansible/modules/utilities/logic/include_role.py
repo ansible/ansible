@@ -52,6 +52,7 @@ options:
       - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
         play.
     type: bool
+    default: 'no'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't

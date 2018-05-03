@@ -353,7 +353,7 @@ def wait_policy_is_applied(module, s3_client, bucket_name, expected_policy, shou
         else:
             return current_policy
     if should_fail:
-        module.fail_json(msg="Bucket policy failed to apply in the excepted time")
+        module.fail_json(msg="Bucket policy failed to apply in the expected time")
     else:
         return None
 
@@ -369,13 +369,13 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         else:
             return requester_pays_status
     if should_fail:
-        module.fail_json(msg="Bucket request payment failed to apply in the excepted time")
+        module.fail_json(msg="Bucket request payment failed to apply in the expected time")
     else:
         return None
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
-    for dummy in range(0, 12):
+    for dummy in range(0, 24):
         try:
             versioning_status = get_bucket_versioning(s3_client, bucket_name)
         except (BotoCoreError, ClientError) as e:
@@ -384,7 +384,7 @@ def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioni
             time.sleep(5)
         else:
             return versioning_status
-    module.fail_json(msg="Bucket versioning failed to apply in the excepted time")
+    module.fail_json(msg="Bucket versioning failed to apply in the expected time")
 
 
 def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
@@ -397,7 +397,7 @@ def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
             time.sleep(5)
         else:
             return
-    module.fail_json(msg="Bucket tags failed to apply in the excepted time")
+    module.fail_json(msg="Bucket tags failed to apply in the expected time")
 
 
 def get_current_bucket_tags_dict(s3_client, bucket_name):

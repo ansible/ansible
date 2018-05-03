@@ -174,12 +174,6 @@ namespace Ansible
 }
 '@
 
-# Fix HCCC:\ PSDrive for pre-2.3 compatibility
-if ($path -match "^HCCC:\\") {
-    Add-DeprecationWarning -obj $result -message "Please use path: HKCC:\... instead of path: $path" -version 2.6
-    $path = $path -replace "HCCC:\\","HKCC:\\"
-}
-
 # fire a warning if the property name isn't specified, the (Default) key ($null) can only be a string
 if ($name -eq $null -and $type -ne "string") {
     Add-Warning -obj $result -message "the data type when name is not specified can only be 'string', the type has automatically been converted"

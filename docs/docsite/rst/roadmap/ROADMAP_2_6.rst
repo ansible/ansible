@@ -2,17 +2,23 @@
 Ansible 2.6
 ===========
 
-**Core Engine Freeze:** Mid May 2018
-
-**Core and Curated Module Freeze:** Mid May 2018
-
-**Community Module Freeze:** Late May 2018
-
-**Release Candidate:** Mid June 2018
-
-**Target:** June/July 2018
-
 .. contents:: Topics
+
+Release Schedule
+----------------
+
+Proposed
+========
+
+- 2018-05-17 Core Freeze (Core Engine and Non-Community Modules)
+- 2018-05-17 Alpha Release 1
+- 2018-05-24 Alpha Release 2
+- 2018-05-25 Community Freeze (Community Modules)
+- 2018-05-31 Branch stable-2.6
+- 2018-05-31 Release Candidate 1
+- 2018-06-07 Release Candidate 2
+- 2018-06-14 Release Candidate 3
+- 2018-06-28 Final Release
 
 Engine improvements
 -------------------
@@ -55,7 +61,10 @@ Modules
 * New ``cli_config`` - platform agnostic module for sending text based config over network_cli
 * New ``cli_command`` - platform agnostic command module
 * New ``netconf_get`` - implements the standard netconf get rpc
+* New ``netconf_config`` - implements the standard netconf edit/configure rpc 
 * New ``netconf_rpc`` - calls any playbook defined rpc on the remote device and returns the results
+* New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
+* New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
 
 Other Features
 ================

@@ -144,10 +144,12 @@ class IncludedFile:
                                 include_file = loader.path_dwim(include_result['include'])
 
                         include_file = templar.template(include_file)
+                        # Update the task args to reflect the expanded/templated path
+                        original_task.args['_raw_params'] = include_file
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
                         # template the included role's name here
-                        role_name = include_variables.get('name', include_variables.get('role', None))
+                        role_name = include_variables.pop('name', include_variables.pop('role', None))
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
@@ -156,9 +158,9 @@ class IncludedFile:
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_variables:
                                 from_key = from_arg.replace('_from', '')
-                                new_task._from_files[from_key] = templar.template(include_variables[from_arg])
+                                new_task._from_files[from_key] = templar.template(include_variables.pop(from_arg))
 
-                        inc_file = IncludedFile("role", include_variables, new_task, is_role=True)
+                        inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
 
                     try:
                         pos = included_files.index(inc_file)

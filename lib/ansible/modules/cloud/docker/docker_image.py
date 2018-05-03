@@ -173,7 +173,6 @@ requirements:
 author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jctanner)
 
 '''
 
@@ -337,8 +336,8 @@ class ImageManager(DockerBaseClass):
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
-                    if image and image == self.results['image']:
+                    self.results['image'], already_latest = self.client.pull_image(self.name, tag=self.tag)
+                    if already_latest:
                         self.results['changed'] = False
 
         if self.archive_path:

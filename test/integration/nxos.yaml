@@ -538,6 +538,15 @@
 
     - block:
       - include_role:
+          name: nxos_snmp_contact
+        when: "limit_to in ['*', 'nxos_snmp_contact']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_snmp_contact' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_snmp_location
         when: "limit_to in ['*', 'nxos_snmp_location']"
       rescue:

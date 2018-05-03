@@ -54,6 +54,12 @@ options:
         description:
             - A value showing who or what started the task (for informational purposes)
         required: False
+    network_configuration:
+        description:
+          - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
+          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
+            a list of group names or group IDs for the task
+        version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -81,6 +87,12 @@ EXAMPLES = '''
       container_instances:
       - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
       started_by: ansible_user
+      network_configuration:
+        subnets:
+        - subnet-abcd1234
+        security_groups:
+        - sg-aaaa1111
+        - my_security_group
   register: task_output
 
 - name: Stop a task
@@ -150,14 +162,13 @@ task:
             type: string
 '''
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_ec2_security_group_ids_from_names
+
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+    pass  # handled by AnsibleAWSModule
 
 
 class EcsExecManager:
@@ -165,9 +176,25 @@ class EcsExecManager:
 
     def __init__(self, module):
         self.module = module
+        self.ecs = module.client('ecs')
+        self.ec2 = module.client('ec2')
 
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    def format_network_configuration(self, network_config):
+        result = dict()
+        if 'subnets' in network_config:
+            result['subnets'] = network_config['subnets']
+        else:
+            self.module.fail_json(msg="Network configuration must include subnets")
+        if 'security_groups' in network_config:
+            groups = network_config['security_groups']
+            if any(not sg.startswith('sg-') for sg in groups):
+                try:
+                    vpc_id = self.ec2.describe_subnets(SubnetIds=[result['subnets'][0]])['Subnets'][0]['VpcId']
+                    groups = get_ec2_security_group_ids_from_names(groups, self.ec2, vpc_id)
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't look up security groups")
+            result['securityGroups'] = groups
+        return dict(awsvpcConfiguration=result)
 
     def list_tasks(self, cluster_name, service_name, status):
         response = self.ecs.list_tasks(
@@ -184,12 +211,14 @@ class EcsExecManager:
     def run_task(self, cluster, task_definition, overrides, count, startedBy):
         if overrides is None:
             overrides = dict()
-        response = self.ecs.run_task(
-            cluster=cluster,
-            taskDefinition=task_definition,
-            overrides=overrides,
-            count=count,
-            startedBy=startedBy)
+        params = dict(cluster=cluster, taskDefinition=task_definition,
+                      overrides=overrides, count=count, startedBy=startedBy)
+        if self.module.params['network_configuration']:
+            params['networkConfiguration'] = self.format_network_configuration(self.module.params['network_configuration'])
+        try:
+            response = self.ecs.run_task(**params)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't run task")
         # include tasks and failures
         return response['tasks']
 
@@ -205,13 +234,25 @@ class EcsExecManager:
             args['containerInstances'] = container_instances
         if startedBy:
             args['startedBy'] = startedBy
-        response = self.ecs.start_task(**args)
+        if self.module.params['network_configuration']:
+            args['networkConfiguration'] = self.format_network_configuration(self.module.params['network_configuration'])
+        try:
+            response = self.ecs.start_task(**args)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't start task")
         # include tasks and failures
         return response['tasks']
 
     def stop_task(self, cluster, task):
         response = self.ecs.stop_task(cluster=cluster, task=task)
         return response['task']
+
+    def ecs_api_handles_network_configuration(self):
+        from distutils.version import LooseVersion
+        # There doesn't seem to be a nice way to inspect botocore to look
+        # for attributes (and networkConfiguration is not an explicit argument
+        # to e.g. ecs.run_task, it's just passed as a keyword argument)
+        return LooseVersion(botocore.__version__) >= LooseVersion('1.7.44')
 
 
 def main():
@@ -224,14 +265,11 @@ def main():
         count=dict(required=False, type='int'),  # R
         task=dict(required=False, type='str'),  # P*
         container_instances=dict(required=False, type='list'),  # S*
-        started_by=dict(required=False, type='str')  # R S
+        started_by=dict(required=False, type='str'),  # R S
+        network_configuration=dict(required=False, type='dict')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    # Validate Requirements
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     # Validate Inputs
     if module.params['operation'] == 'run':
@@ -257,6 +295,8 @@ def main():
         status_type = "STOPPED"
 
     service_mgr = EcsExecManager(module)
+    if module.params['network_configuration'] and not service_mgr.ecs_api_handles_network_configuration():
+        module.fail_json(msg='botocore needs to be version 1.7.44 or higher to use network configuration')
     existing = service_mgr.list_tasks(module.params['cluster'], task_to_list, status_type)
 
     results = dict(changed=False)

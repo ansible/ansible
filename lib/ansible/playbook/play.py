@@ -101,13 +101,15 @@ class Play(Base, Taggable, Become):
         return self._attributes.get('name')
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None):
+    def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
         p = Play()
+        if vars:
+            p.vars = vars.copy()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -169,7 +171,11 @@ class Play(Base, Taggable, Become):
         Bare handlers outside of a block are given an implicit block.
         '''
         try:
-            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+            return self._extend_value(
+                self.handlers,
+                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
+                prepend=True
+            )
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 

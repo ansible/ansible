@@ -955,26 +955,15 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
-.. versionadded:: 2.5
-
-The `slice` filter can be used to extract the values of specific keys from a
-hash::
-
-    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
-
-This will result in::
-
-    [1, 2]
-
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
     # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).total_seconds()  }}
-    
+
     # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2016-08-14 18:00:00"|to_datetime)).seconds  }}
     # This expression evaluates to "12" and not "132". Delta is 2 hours, 12 seconds
-    
+
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
 

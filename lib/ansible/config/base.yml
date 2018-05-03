@@ -321,6 +321,18 @@ COMMAND_WARNINGS:
   - {key: command_warnings, section: defaults}
   type: boolean
   version_added: "1.8"
+LOCALHOST_WARNING:
+  name: Warning when using implicit inventory with only localhost
+  default: True
+  description:
+    - By default Ansible will issue a warning when there are no hosts in the
+      inventory.
+    - These warnings can be silenced by adjusting this setting to False. 
+  env: [{name: ANSIBLE_LOCALHOST_WARNING}]
+  ini:
+  - {key: localhost_warning, section: defaults}
+  type: boolean
+  version_added: "2.6"
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
@@ -493,7 +505,11 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
 DEFAULT_DEBUG:
   name: Debug mode
   default: False
-  description: Toggles debug output in Ansible, VERY verbose and can hinder multiprocessing.
+  description:
+    - "Toggles debug output in Ansible. This is *very* verbose and can hinder
+      multiprocessing.  Debug output can also include secret information
+      despite no_log settings being enabled, which means debug mode should not be used in 
+      production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
   - {key: debug, section: defaults}

@@ -302,7 +302,7 @@ def normalize_interface(name):
     def _get_number(name):
         digits = ''
         for char in name:
-            if char.isdigit() or char == '/':
+            if char.isdigit() or char in '/.':
                 digits += char
         return digits
 
@@ -602,15 +602,17 @@ def map_config_to_obj(want, module):
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
 
-                    if 'speed' in body:
-                        obj['speed'] = re.search(r'speed (\d+)', body).group(1)
-                    else:
+                    speed_match = re.search(r'speed (\d+)', body)
+                    if speed_match is None:
                         obj['speed'] = 'auto'
-
-                    if 'duplex' in body:
-                        obj['duplex'] = re.search(r'duplex (\S+)', body).group(1)
                     else:
+                        obj['speed'] = speed_match.group(1)
+
+                    duplex_match = re.search(r'duplex (\S+)', body)
+                    if duplex_match is None:
                         obj['duplex'] = 'auto'
+                    else:
+                        obj['duplex'] = duplex_match.group(1)
 
                     if 'ip forward' in body:
                         obj['ip_forward'] = 'enable'
