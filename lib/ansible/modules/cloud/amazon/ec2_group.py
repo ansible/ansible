@@ -492,14 +492,26 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
             # both are EC2 classic, this is ok
             group_id = groups[group_name]['GroupId']
         else:
+            auto_group = None
+            filters = {'group-name': group_name}
+            if vpc_id:
+                filters['vpc-id'] = vpc_id
             # if we got here, either the target group does not exist, or there
             # is a mix of EC2 classic + VPC groups. Mixing of EC2 classic + VPC
             # is bad, so we have to create a new SG because no compatible group
             # exists
             if not rule.get('group_desc', '').strip():
-                module.fail_json(msg="group %s will be automatically created by rule %s but "
-                                     "no description was provided" % (group_name, rule))
-            if not module.check_mode:
+                # retry describing the group once
+                try:
+                    described = get_security_groups_with_backoff(client, Filters=ansible_dict_to_boto3_filter_list(filters))
+                    if not len(described['SecurityGroups']):
+                        module.fail_json(msg="group %s will be automatically created by rule %s but "
+                                             "no description was provided" % (group_name, rule))
+                    auto_group = described['SecurityGroups'][0]
+                except client.exceptions.from_code('InvalidGroup.NotFound') as e:
+                    module.fail_json(msg="group %s will be automatically created by rule %s but "
+                                         "no description was provided" % (group_name, rule))
+            elif not module.check_mode:
                 params = dict(GroupName=group_name, Description=rule['group_desc'])
                 if vpc_id:
                     params['VpcId'] = vpc_id
@@ -514,15 +526,13 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                     # The group exists, but didn't show up in any of our describe-security-groups calls
                     # Try searching on a filter for the name, and allow a retry window for AWS to update
                     # the model on their end.
-                    filters = {'group-name': group_name}
-                    if vpc_id:
-                        filters['vpc-id'] = vpc_id
                     try:
                         auto_group = describe_sg_retried(client, Filters=ansible_dict_to_boto3_filter_list(filters))
                     except ClientError as e:
                         module.fail_json_aws(
                             e,
                             msg="Could not create or use existing group '{0}' in rule. Make sure the group exists".format(group_name))
+            if auto_group is not None:
                 group_id = auto_group['GroupId']
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
