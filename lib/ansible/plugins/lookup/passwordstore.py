@@ -201,7 +201,9 @@ class LookupModule(LookupBase):
         # generate new password, insert old lines from current result and return new password
         newpass = self.get_newpass()
         datetime = time.strftime("%d/%m/%Y %H:%M:%S")
-        msg = newpass + '\n' + '\n'.join(self.passoutput[1:]) + '\n'
+        msg = newpass + '\n'
+        if self.passoutput[1:]:
+            msg += '\n'.join(self.passoutput[1:]) + '\n'
         if self.paramvals['backup']:
             msg += "lookup_pass: old password was {0} (Updated on {1})\n".format(self.password, datetime)
         try:
