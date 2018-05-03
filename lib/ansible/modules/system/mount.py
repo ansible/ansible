@@ -229,9 +229,10 @@ def set_mount(module, args):
             ) = line.split()
 
         # Check if we found the correct line
-        if (ld['name'] != escaped_args['name'] or
-                (ld['src'] != escaped_args['src'] and
-                escaped_args['fstype'] == 'swap')):
+        if (
+            ld['name'] != escaped_args['name'] or
+            (ld['src'] != escaped_args['src'] and escaped_args['fstype'] == 'swap')
+        ):
             # added extra validation since swap repeats none as name
             # for the rest would be valid if we use different filesystems
             to_write.append(line)
