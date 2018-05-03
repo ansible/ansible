@@ -13,9 +13,11 @@ description:
   - Retrieve facts for ACM certificates
 version_added: "2.5"
 options:
-  name:
+  domain_name:
     description:
-      - The name of an ACM certificate
+      - The domain name of an ACM certificate to limit the search to
+    aliases:
+      - name
   status:
     description:
       - Status to filter the certificate results
@@ -36,7 +38,7 @@ EXAMPLES = '''
 
 - name: obtain all facts for a single ACM certificate
   aws_acm_facts:
-    name: "*.example_com"
+    domain_name: "*.example_com"
 
 - name: obtain all certificates pending validiation
   aws_acm_facts:
@@ -264,16 +266,16 @@ def list_certificate_tags_with_backoff(client, certificate_arn):
     return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
 
 
-def get_certificates(client, module, name=None, statuses=None):
+def get_certificates(client, module, domain_name=None, statuses=None):
     try:
         all_certificates = list_certificates_with_backoff(client, statuses)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Couldn't obtain certificates",
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
-    if name:
+    if domain_name:
         certificates = [cert for cert in all_certificates
-                        if cert['DomainName'] == name]
+                        if cert['DomainName'] == domain_name]
     else:
         certificates = all_certificates
 
@@ -308,7 +310,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(),
+            domain_name=dict(aliases=['name']),
             statuses=dict(type='list'),
         )
     )
@@ -321,7 +323,7 @@ def main():
     client = boto3_conn(module, conn_type='client', resource='acm',
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    certificates = get_certificates(client, module, name=module.params['name'], statuses=module.params['statuses'])
+    certificates = get_certificates(client, module, domain_name=module.params['domain_name'], statuses=module.params['statuses'])
     module.exit_json(certificates=certificates)
 
 
