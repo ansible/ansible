@@ -1,0 +1,2 @@
+bugfixes:
+- win_get_url - fixed a few bugs around authentication and force no when using an FTP URL
