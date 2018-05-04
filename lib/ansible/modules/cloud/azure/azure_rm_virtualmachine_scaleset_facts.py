@@ -26,9 +26,20 @@ options:
     name:
         description:
             - Limit results to a specific virtual machine scale set
+        required: false
+        default: null
     resource_group:
         description:
             - The resource group to search for the desired virtual machine scale set
+        required: false
+
+    format:
+        description:
+            - What data should be returned?
+        default: 'raw'
+        choices:
+            - 'ansible'
+            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -135,6 +146,7 @@ azure_vmss:
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -155,7 +167,12 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            format=dict(
+                type='str',
+                choices=['ansible',
+                         'raw']
+            ),
         )
 
         self.results = dict(
@@ -167,6 +184,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
 
         self.name = None
         self.resource_group = None
+        self.format = None
         self.tags = None
 
         super(AzureRMVirtualMachineScaleSetFacts, self).__init__(
@@ -186,6 +204,53 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
             self.results['ansible_facts']['azure_vmss'] = self.get_item()
         else:
             self.results['ansible_facts']['azure_vmss'] = self.list_items()
+
+        if self.format == 'ansible':
+            for index in range(len(self.results['ansible_facts']['azure_vmss'])):
+                vmss = self.results['ansible_facts']['azure_vmss'][index]
+                subnet_id = vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]['properties']['ipConfigurations'][0]['properties']['subnet']['id']
+                backend_address_pool_id = vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id']
+                subnet_name = re.sub('.*subnets\\/', '', subnet_id)
+                load_balancer_name =  re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
+                virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
+
+                updated = {}
+                updated['resource_group'] = self.resource_group
+                updated['name'] = vmss['name']
+                updated['state'] = 'present'
+                updated['location'] = vmss['location']
+                updated['vm_size'] = vmss['sku']['name'] 
+                updated['capacity'] = vmss['sku']['capacity']
+                updated['tier'] = vmss['sku']['tier']
+                updated['upgrade_policy'] = vmss['properties']['upgradePolicy']['mode']
+                updated['admin_username'] = vmss['properties']['virtualMachineProfile']['osProfile']['adminUsername']
+                #updated['admin_password']
+                updated['ssh_password_enabled'] = not vmss['properties']['virtualMachineProfile']['osProfile']['linuxConfiguration']['disablePasswordAuthentication']
+                #updated['ssh_public_keys']
+                # image could be a dict, string, 
+                updated['image'] = vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference']
+
+                updated['os_disk_caching'] = vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']
+                updated['os_type'] = 'Linux' #vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']
+                updated['managed_disk_type'] = vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
+
+                data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])
+                
+                for disk_index in range(len(data_disks)):
+                    old_disk = data_disks[disk_index]
+                    new_disk = {}
+                    new_disk['lun'] = old_disk['lun']
+                    new_disk['disk_size_gb'] = old_disk['diskSizeGB']
+                    new_disk['managed_disk_type'] = old_disk['managedDisk']['storageAccountType']
+                    new_disk['caching'] = old_disk['caching']
+                    data_disks[disk_index] = new_disk
+
+                updated['data_disks'] = data_disks
+                updated['virtual_network_name'] = virtual_network_name
+                updated['subnet_name'] = subnet_name
+                updated['load_balancer'] = load_balancer_name
+
+                self.results['ansible_facts']['azure_vmss'][index] = updated
 
         return self.results
 
