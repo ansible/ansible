@@ -39,15 +39,14 @@ options:
         required: true
         aliases:
             - address_prefix
-    security_group_name:
+    security_group:
         description:
-            - Name or id of an existing security group with which to associate the subnet.
+            - Existing security group with which to associate the subnet.
+            - It can be the security group name which is in the same resource group.
+            - It can be the resource Id.
+            - It can be a dict which contains C(name) and C(resource_group) of the security group.
         aliases:
-            - security_group
-    nsg_resource_group:
-        description:
-            - security group's resource group name.
-        version_added: "2.6"
+            - security_group_name
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a subnet and
@@ -157,8 +156,7 @@ class AzureRMSubnet(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
-            security_group_name=dict(type='str', aliases=['security_group']),
-            nsg_resource_group=dict(type='str')
+            security_group=dict(aliases=['security_group_name'])
         )
 
         required_if = [
@@ -175,8 +173,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.state = None
         self.virtual_network_name = None
         self.address_prefix_cidr = None
-        self.security_group_name = None
-        self.nsg_resource_group = None
+        self.security_group = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
@@ -193,7 +190,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         if self.state == 'present' and not CIDR_PATTERN.match(self.address_prefix_cidr):
             self.fail("Invalid address_prefix_cidr value {0}".format(self.address_prefix_cidr))
 
-        if self.security_group_name:
+        if self.security_group:
             nsg = self.parse_nsg()
 
         results = dict()
@@ -286,8 +283,10 @@ class AzureRMSubnet(AzureRMModuleBase):
         return result
 
     def parse_nsg(self):
-        nsg = self.security_group_name
-        resource_group = self.nsg_resource_group or self.resource_group
+        nsg = self.security_group
+        if isinstance(self.security_group, dict):
+            nsg = self.security_group.get('name')
+            resource_group = self.security_group.get('resource_group', self.resource_group)
         id = format_resource_id(val=nsg,
                                 subscription_id=self.subscription_id,
                                 namespace='Microsoft.Network',

@@ -87,8 +87,9 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
-    security_group: secgroupfoo
-    nsg_resource_group: "{{ resource_group_secondary }}"
+    security_group:
+      name: secgroupfoo
+      resource_group: "{{ resource_group_secondary }}"
     tags:
        testing: testing
        delete: on-fini
