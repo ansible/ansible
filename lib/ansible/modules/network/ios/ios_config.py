@@ -417,7 +417,7 @@ def main():
         path = module.params['parents']
 
         candidate = get_candidate_config(module)
-        running = get_running_config(module, contents)
+        running = get_running_config(module, contents, flags=flags)
 
         response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None, path=path, replace=replace)
         diff = json.loads(response)
