@@ -444,9 +444,11 @@ def main():
         # Whenever we create a link to a nonexistent target we know that the nonexistent target
         # cannot have any permissions set on it.  Skip setting those and emit a warning (the user
         # can set follow=False to remove the warning)
-        if not (state == 'link' and params['follow'] and os.path.islink(params['path']) and not
-                os.path.exists(file_args['path'])):
-            module.warn('Cannot set fs attributes on a non-existent symlink target. follow should be set to False to avoid this.')
+        if (state == 'link' and params['follow'] and os.path.islink(params['path']) and
+            not os.path.exists(file_args['path'])):
+            module.warn('Cannot set fs attributes on a non-existent symlink target. follow should be'
+                        ' set to False to avoid this.')
+        else:
             changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
