@@ -97,6 +97,7 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
+
 def get_org(meraki, org_id, data):
     # meraki.fail_json(msg=str(org_id), data=data, oid0=data[0]['id'], oid1=data[1]['id'])
     for o in data:
@@ -104,6 +105,7 @@ def get_org(meraki, org_id, data):
         if o['id'] == org_id:
             return o
     return -1
+
 
 def main():
 
@@ -201,7 +203,7 @@ def main():
                     meraki,
                     meraki.params['org_id'],
                     orgs),
-                payload):
+                    payload):
                 meraki.result['data'] = json.loads(
                     meraki.request(
                         meraki.construct_path(
