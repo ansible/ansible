@@ -136,9 +136,8 @@ options:
         folder in the playbook root directory or role root directory, if
         playbook is part of an ansible role. If the directory does not exist,
         it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
