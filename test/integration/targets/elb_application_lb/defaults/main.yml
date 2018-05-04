@@ -1,0 +1,6 @@
+---
+# load balancer and target group names have to be less than 32 characters
+# the 8 digit identifier at the end of resource_prefix helps determine during which test something
+# was created and allows tests to be run in parallel
+alb_name: "my-alb-{{ resource_prefix | regex_search('([0-9]+)$') }}"
+tg_name: "my-tg-{{ resource_prefix | regex_search('([0-9]+)$') }}"
