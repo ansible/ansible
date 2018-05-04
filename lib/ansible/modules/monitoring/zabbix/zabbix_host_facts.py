@@ -50,13 +50,13 @@ options:
         required: true
     http_login_user:
         description:
-            - Basic Auth login
+            - Basic Auth login.
         required: false
         default: null
         version_added: "2.6"
     http_login_password:
         description:
-            - Basic Auth password
+            - Basic Auth password.
         required: false
         default: null
         version_added: "2.6"
