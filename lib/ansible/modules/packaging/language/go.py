@@ -177,7 +177,7 @@ def uninstall(module):
             shutil.rmtree(install_dir)
         except Exception as e:
             failed_pkgs.append(name)
-            stderr.append('%s: %s' % (install_dir, to_native(e)))
+            stderr.append('Failed to remove %s: %s' % (install_dir, to_native(e)))
             rc = 1
         else:
             changed = True
