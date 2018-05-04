@@ -2,6 +2,20 @@
 # -*- coding: utf-8 -*-
 
 # (c) me@mimiko.me
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+RETURN = '''
+---
+hostgroups:
+  description: List of hostgroups.
+  returned: success
+  type: dict
+  sample: [ { "flags": "0", "groupid": "33", "internal": "0", "name": "Hostgruup A" } ]
+'''
 
 DOCUMENTATION = '''
 ---
@@ -33,27 +47,23 @@ options:
         description:
             - Basic Auth login
         required: false
-        default: None
-        version_added: "2.1"
+        default: null
+        version_added: "2.6"
     http_login_password:
         description:
             - Basic Auth password
         required: false
-        default: None
-        version_added: "2.1"
-    host_name:
+        default: null
+        version_added: "2.6"
+    hostgroup_name:
         description:
-            - Name of the host in Zabbix.
-            - host_name is the unique identifier used and cannot be updated using this module.
+            - Name of the hostgroup in Zabbix.
+            - hostgroup is the unique identifier used and cannot be updated using this module.
         required: true
     timeout:
         description:
             - The timeout of API request (seconds).
         default: 10
-    exact_match:
-        description:
-            - Find the exact match
-        default: false
 '''
 
 EXAMPLES = '''
@@ -70,6 +80,8 @@ EXAMPLES = '''
 
 import logging
 import copy
+
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -136,8 +148,6 @@ def main():
     host = Host(module, zbx)
     hostgroups = host.get_group_ids_by_group_names(hostgroup_name)
     module.exit_json(ok=True, hostgroups=hostgroups)
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
