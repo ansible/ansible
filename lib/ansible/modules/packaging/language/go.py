@@ -68,6 +68,13 @@ EXAMPLES = '''
   go:
     state: latest
     name: gopkg.in/yaml.v2
+
+- name: Install a package in a specific GOPATH
+  go:
+    state: latest
+    name: gopkg.in/yaml.v2
+  environment:
+    GOPATH: /home/user/go
 '''
 
 RETURN = '''#
