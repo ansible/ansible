@@ -155,15 +155,11 @@ FAILED = 'failed'
 NOT_PERFORMED = 'not performed'
 
 meta_args = dict(
-    vdirect_ip=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
-        default=None),
-    vdirect_user=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
-        default=None),
+    vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
+    vdirect_user=dict(required=True, fallback=(env_fallback, ['VDIRECT_USER'])),
     vdirect_password=dict(
         required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
-        default=None, no_log=True, type='str'),
+        no_log=True, type='str'),
     vdirect_secondary_ip=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
         default=None),

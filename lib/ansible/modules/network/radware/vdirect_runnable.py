@@ -86,8 +86,8 @@ options:
   runnable_type:
     description:
      - vDirect runnable type.
-     - May be ConfigurationTemplate, WorkflowTemplate or a Workflow.
     required: true
+    choices: ['ConfigurationTemplate', 'Workflow', 'WorkflowTemplate']
   runnable_name:
     description:
      - vDirect runnable name to run.
@@ -143,15 +143,11 @@ WORKFLOW_CREATION_SUCCESS = 'Workflow created.'
 WORKFLOW_ACTION_SUCCESS = 'Workflow action run completed.'
 
 meta_args = dict(
-    vdirect_ip=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
-        default=None),
-    vdirect_user=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
-        default=None),
+    vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
+    vdirect_user=dict(required=True, fallback=(env_fallback, ['VDIRECT_USER'])),
     vdirect_password=dict(
         required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
-        default=None, no_log=True, type='str'),
+        no_log=True, type='str'),
     vdirect_secondary_ip=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
         default=None),
@@ -176,7 +172,7 @@ meta_args = dict(
     runnable_type=dict(
         required=True,
         choices=[CONFIGURATION_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_TEMPLATE_RUNNABLE_TYPE, WORKFLOW_RUNNABLE_TYPE]),
-    runnable_name=dict(required=True, default=None),
+    runnable_name=dict(required=True),
     action_name=dict(required=False, default=None),
     parameters=dict(required=False, type='dict', default={})
 )
