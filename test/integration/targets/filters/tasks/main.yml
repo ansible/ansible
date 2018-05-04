@@ -189,7 +189,7 @@
 - name: Test base64 filter
   assert:
     that:
-    - '"Ansible" | b64encode == "QW5zaWJsZQ=="'
-    - '"QW5zaWJsZQ==" | b64decode == "Ansible"'
-    - '"Ansible" | b64encode(encoding="utf-16-le") == "QQBuAHMAaQBiAGwAZQA="'
-    - '"QQBuAHMAaQBiAGwAZQA=" | b64decode(encoding="utf-16-le") == "Ansible"'
+    - "'Ansible - くらとみ\n\U0001F4A9' | b64encode == 'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwrwn5Kp'"
+    - "'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwrwn5Kp' | b64decode == 'Ansible - くらとみ\n\U0001F4A9'"
+    - "'Ansible - くらとみ\n\U0001F4A9' | b64encode(encoding='utf-16-le') == 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoAPdip3A=='"
+    - "'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoAPdip3A==' | b64decode(encoding='utf-16-le') == 'Ansible - くらとみ\n\U0001F4A9'"
