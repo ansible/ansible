@@ -284,6 +284,7 @@ class AzureRMSubnet(AzureRMModuleBase):
 
     def parse_nsg(self):
         nsg = self.security_group
+        resource_group = self.resource_group
         if isinstance(self.security_group, dict):
             nsg = self.security_group.get('name')
             resource_group = self.security_group.get('resource_group', self.resource_group)
