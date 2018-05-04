@@ -1,0 +1,2 @@
+bugfixes:
+- async - Ensure that the implicit async_status gets the env from a task with async (https://github.com/ansible/ansible/pull/39764)
