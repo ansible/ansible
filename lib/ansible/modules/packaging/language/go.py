@@ -13,7 +13,11 @@ author: 'Matt Martz (@sivel)'
 description:
     - Manage Go packages
 module: go
-notes: []
+notes:
+    - This module depends on the C(GOPATH) environment variable. Utilize the C(environment) task keyword to affect
+      this module
+    - Similarly to C(GOPATH) use C(environment) to influence Go with any other accepted environment variable
+    - To utilize a C(go) binary in another path, utilize the C(PATH) environment variable via C(environment)
 options:
     name:
         description:
