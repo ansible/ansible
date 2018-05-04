@@ -89,7 +89,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
                             (attr, convert_value(getattr(i, attr)))
                             for attr in attributes if getattr(i, attr, None)
                         )
-                        nested_obj['id'] = getattr(i, 'id', None),
+                        nested_obj['id'] = getattr(i, 'id', None)
                         ret.append(nested_obj)
                 elif isinstance(i, Enum):
                     ret.append(str(i))
