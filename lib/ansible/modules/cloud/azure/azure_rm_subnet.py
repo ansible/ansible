@@ -156,7 +156,7 @@ class AzureRMSubnet(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
-            security_group=dict(aliases=['security_group_name'])
+            security_group=dict(type='raw', aliases=['security_group_name'])
         )
 
         required_if = [
