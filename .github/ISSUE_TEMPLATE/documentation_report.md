@@ -1,5 +1,5 @@
 ---
-name: Documentation Report
+name: 📝 Documentation Report
 about: Ask us about docs
 
 ---
