@@ -1,0 +1,2 @@
+bugfixes:
+  - eos_vlan - Fix eos_vlan associated interface name check (https://github.com/ansible/ansible/pull/39661)
