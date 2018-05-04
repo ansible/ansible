@@ -303,6 +303,15 @@
     that:
       - "file13_result.changed == true"
 
+- name: Prove idempotence of force creation soft link to non existent
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
+  register: file13a_result
+
+- name: verify that the link to nonexistent is idempotent
+  assert:
+    that:
+      - "file13a_result.changed == false"
+
 - name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
   register: file14_result
