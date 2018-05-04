@@ -710,8 +710,9 @@ class PyVmomiHelper(PyVmomi):
         :param vm_obj: VM object in case of reconfigure, None in case of deploy
         :return: None
         """
-        self.configspec.memoryAllocation = vim.ResourceAllocationInfo()
-        self.configspec.cpuAllocation = vim.ResourceAllocationInfo()
+        rai_change_detected = False
+        memory_allocation = vim.ResourceAllocationInfo()
+        cpu_allocation = vim.ResourceAllocationInfo()
 
         if 'hardware' in self.params:
             if 'mem_limit' in self.params['hardware']:
@@ -720,9 +721,9 @@ class PyVmomiHelper(PyVmomi):
                     mem_limit = int(self.params['hardware'].get('mem_limit'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
-                self.configspec.memoryAllocation.limit = mem_limit
-                if vm_obj is None or self.configspec.memoryAllocation.limit != vm_obj.config.memoryAllocation.limit:
-                    self.change_detected = True
+                memory_allocation.limit = mem_limit
+                if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
+                    rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware']:
                 mem_reservation = None
@@ -731,10 +732,10 @@ class PyVmomiHelper(PyVmomi):
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
 
-                self.configspec.memoryAllocation.reservation = mem_reservation
+                memory_allocation.reservation = mem_reservation
                 if vm_obj is None or \
-                        self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
-                    self.change_detected = True
+                        memory_allocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    rai_change_detected = True
 
             if 'cpu_limit' in self.params['hardware']:
                 cpu_limit = None
@@ -742,9 +743,9 @@ class PyVmomiHelper(PyVmomi):
                     cpu_limit = int(self.params['hardware'].get('cpu_limit'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
-                self.configspec.cpuAllocation.limit = cpu_limit
-                if vm_obj is None or self.configspec.cpuAllocation.limit != vm_obj.config.cpuAllocation.limit:
-                    self.change_detected = True
+                cpu_allocation.limit = cpu_limit
+                if vm_obj is None or cpu_allocation.limit != vm_obj.config.cpuAllocation.limit:
+                    rai_change_detected = True
 
             if 'cpu_reservation' in self.params['hardware']:
                 cpu_reservation = None
@@ -752,10 +753,15 @@ class PyVmomiHelper(PyVmomi):
                     cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
-                self.configspec.cpuAllocation.reservation = cpu_reservation
+                cpu_allocation.reservation = cpu_reservation
                 if vm_obj is None or \
-                        self.configspec.cpuAllocation.reservation != vm_obj.config.cpuAllocation.reservation:
-                    self.change_detected = True
+                        cpu_allocation.reservation != vm_obj.config.cpuAllocation.reservation:
+                    rai_change_detected = True
+
+        if rai_change_detected:
+            self.configspec.memoryAllocation = memory_allocation
+            self.configspec.cpuAllocation = cpu_allocation
+            self.change_detected = True
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
