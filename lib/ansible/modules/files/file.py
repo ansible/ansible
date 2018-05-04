@@ -445,7 +445,7 @@ def main():
         # cannot have any permissions set on it.  Skip setting those and emit a warning (the user
         # can set follow=False to remove the warning)
         if (state == 'link' and params['follow'] and os.path.islink(params['path']) and
-            not os.path.exists(file_args['path'])):
+                not os.path.exists(file_args['path'])):
             module.warn('Cannot set fs attributes on a non-existent symlink target. follow should be'
                         ' set to False to avoid this.')
         else:
@@ -482,6 +482,7 @@ def main():
         module.exit_json(dest=path, changed=True, diff=diff)
 
     module.fail_json(path=path, msg='unexpected position reached')
+
 
 if __name__ == '__main__':
     main()
