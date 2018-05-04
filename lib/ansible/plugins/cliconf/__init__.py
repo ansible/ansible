@@ -140,7 +140,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         """ Returns the history file for all commands
 
         This will return a log of all the commands that have been sent to
-        the device and all of the output recevied.  By default, all commands
+        the device and all of the output received.  By default, all commands
         and output will be redacted unless explicitly configured otherwise.
 
         :return: An ordered list of command, output pairs
@@ -158,7 +158,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self.response_logging = True
 
     def disable_response_logging(self):
-        """Enable logging command response"""
+        """Disable logging command response"""
         self.response_logging = False
 
     @abstractmethod
@@ -259,7 +259,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
                 }
             }
-        :return: None
+        :return: capability as json string
         """
         pass
 
