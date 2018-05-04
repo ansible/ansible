@@ -23,11 +23,11 @@ hostgroups:
 
 DOCUMENTATION = '''
 ---
-module: zabbix_hostgroup_get
-short_description: Zabbix hostgroup get
+module: zabbix_hostgroup_facts
+short_description: Gather facts about Zabbix hostgroup
 description:
    - This module allows you to search for Zabbix hostgroup entries.
-version_added: "2.0"
+version_added: "2.6"
 author:
     - "(@redwhitemiko)"
 requirements:
@@ -73,11 +73,11 @@ options:
 EXAMPLES = '''
 - name: Get hostgroup info
   local_action:
-    module: zabbix_hostgroup_get
+    module: zabbix_hostgroup_facts
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
-    hostgroup_name: 
+    hostgroup_name:
       - ExampleHostgroup
     timeout: 10
 '''
@@ -105,6 +105,7 @@ try:
 except ImportError:
     HAS_ZABBIX_API = False
 
+
 class Host(object):
     def __init__(self, module, zbx):
         self._module = module
@@ -115,6 +116,7 @@ class Host(object):
         if len(group_list) < 1:
             self._module.fail_json(msg="Hostgroup not found: %s" % group_names)
         return group_list
+
 
 def main():
     module = AnsibleModule(
