@@ -174,7 +174,7 @@ def main():
 
         cursor = db_connection.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
-         except Exception as e:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
