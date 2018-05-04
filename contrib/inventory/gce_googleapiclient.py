@@ -306,13 +306,14 @@ def get_ssh_host(network_interfaces, looking_public=True):
             return interface['networkIP']
 
         access_configs = interface.get('accessConfigs', [])
+
         for access_config in access_configs:
             if 'natIP' in access_config:
                 # Return the first public IP found
                 return access_config['natIP']
 
     # If no public IP is found return the first private
-    get_ssh_host(network_interfaces, False)
+    return get_ssh_host(network_interfaces, False)
 
 
 def get_boot_image(disks):
@@ -455,8 +456,9 @@ def get_project_zone_instances(params):
             # Map additional data between instances an their disks
             for instance in instance_list:
                 for instance_disk in instance['disks']:
-                    instance_disk['additionalData'] = \
-                        [disk for disk in disks if instance_disk['source'] == disk['selfLink']][0]
+                    if 'source' in instance_disk:
+                        instance_disk['additionalData'] = \
+                            [disk for disk in disks if instance_disk['source'] == disk['selfLink']][0]
 
         except HttpError as exception:
             log.warn('Could not retrieve list of instances of project/zone: %s/%s',
