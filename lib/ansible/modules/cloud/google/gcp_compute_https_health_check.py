@@ -32,8 +32,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_https_health_check
 description:
-    - An HttpsHealthCheck resource. This resource defines a template for how
-      individual VMs should be checked for health, via HTTPS.
+    - An HttpsHealthCheck resource. This resource defines a template for how individual
+      VMs should be checked for health, via HTTPS.
 short_description: Creates a GCP HttpsHealthCheck
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -50,34 +50,32 @@ options:
         default: 'present'
     check_interval_sec:
         description:
-            - How often (in seconds) to send a health check. The default value
-              is 5 seconds.
+            - How often (in seconds) to send a health check. The default value is 5 seconds.
         required: false
     description:
         description:
-            - An optional description of this resource. Provide this property
-              when you create the resource.
+            - An optional description of this resource. Provide this property when you create
+              the resource.
         required: false
     healthy_threshold:
         description:
-            - A so-far unhealthy instance will be marked healthy after this many
-              consecutive successes. The default value is 2.
+            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
+              The default value is 2.
         required: false
     host:
         description:
-            - The value of the host header in the HTTPS health check request. If
-              left empty (default value), the public IP on behalf of which this
-              health check is performed will be used.
+            - The value of the host header in the HTTPS health check request. If left empty (default
+              value), the public IP on behalf of which this health check is performed will be
+              used.
         required: false
     name:
         description:
-            - Name of the resource. Provided by the client when the resource is
-              created. The name must be 1-63 characters long, and comply with
-              RFC1035.  Specifically, the name must be 1-63 characters long and
-              match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which
-              means the first character must be a lowercase letter, and all
-              following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
+            - Name of the resource. Provided by the client when the resource is created. The name
+              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+              which means the first character must be a lowercase letter, and all following characters
+              must be a dash, lowercase letter, or digit, except the last character, which cannot
+              be a dash.
         required: true
     port:
         description:
@@ -92,14 +90,14 @@ options:
     timeout_sec:
         description:
             - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to
-              have greater value than checkIntervalSec.
+            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
+              than checkIntervalSec.
         required: false
         aliases: [timeout_seconds]
     unhealthy_threshold:
         description:
-            - A so-far healthy instance will be marked unhealthy after this many
-              consecutive failures. The default value is 2.
+            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
+              The default value is 2.
         required: false
 extends_documentation_fragment: gcp
 '''
@@ -123,8 +121,7 @@ EXAMPLES = '''
 RETURN = '''
     check_interval_sec:
         description:
-            - How often (in seconds) to send a health check. The default value
-              is 5 seconds.
+            - How often (in seconds) to send a health check. The default value is 5 seconds.
         returned: success
         type: int
     creation_timestamp:
@@ -134,38 +131,36 @@ RETURN = '''
         type: str
     description:
         description:
-            - An optional description of this resource. Provide this property
-              when you create the resource.
+            - An optional description of this resource. Provide this property when you create
+              the resource.
         returned: success
         type: str
     healthy_threshold:
         description:
-            - A so-far unhealthy instance will be marked healthy after this many
-              consecutive successes. The default value is 2.
+            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
+              The default value is 2.
         returned: success
         type: int
     host:
         description:
-            - The value of the host header in the HTTPS health check request. If
-              left empty (default value), the public IP on behalf of which this
-              health check is performed will be used.
+            - The value of the host header in the HTTPS health check request. If left empty (default
+              value), the public IP on behalf of which this health check is performed will be
+              used.
         returned: success
         type: str
     id:
         description:
-            - The unique identifier for the resource. This identifier is defined
-              by the server.
+            - The unique identifier for the resource. This identifier is defined by the server.
         returned: success
         type: int
     name:
         description:
-            - Name of the resource. Provided by the client when the resource is
-              created. The name must be 1-63 characters long, and comply with
-              RFC1035.  Specifically, the name must be 1-63 characters long and
-              match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which
-              means the first character must be a lowercase letter, and all
-              following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
+            - Name of the resource. Provided by the client when the resource is created. The name
+              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+              which means the first character must be a lowercase letter, and all following characters
+              must be a dash, lowercase letter, or digit, except the last character, which cannot
+              be a dash.
         returned: success
         type: str
     port:
@@ -183,14 +178,14 @@ RETURN = '''
     timeout_sec:
         description:
             - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to
-              have greater value than checkIntervalSec.
+            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
+              than checkIntervalSec.
         returned: success
         type: int
     unhealthy_threshold:
         description:
-            - A so-far healthy instance will be marked unhealthy after this many
-              consecutive failures. The default value is 2.
+            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
+              The default value is 2.
         returned: success
         type: int
 '''
@@ -353,7 +348,7 @@ def response_to_hash(module, response):
         u'healthyThreshold': response.get(u'healthyThreshold'),
         u'host': response.get(u'host'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
         u'port': response.get(u'port'),
         u'requestPath': response.get(u'requestPath'),
         u'timeoutSec': response.get(u'timeoutSec'),
