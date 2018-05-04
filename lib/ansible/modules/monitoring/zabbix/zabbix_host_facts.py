@@ -2,14 +2,33 @@
 # -*- coding: utf-8 -*-
 
 # (c) me@mimiko.me
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+RETURN = '''
+---
+hosts:
+  description: List of Zabbix host. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
+  returned: success
+  type: dict
+  sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "errors_from": "0", "flags": "0", "groups": ["1"], "host": "Host A", ...} ]
+'''
 
 DOCUMENTATION = '''
 ---
-module: zabbix_host get
-short_description: Zabbix host get
+module: zabbix_host_facts
+short_description: Gather facts about Zabbix host
 description:
    - This module allows you to search for Zabbix host entries.
-version_added: "2.0"
+version_added: "2.6"
 author:
     - "(@redwhitemiko)"
 requirements:
@@ -34,13 +53,13 @@ options:
             - Basic Auth login
         required: false
         default: None
-        version_added: "2.1"
+        version_added: "2.6"
     http_login_password:
         description:
             - Basic Auth password
         required: false
         default: None
-        version_added: "2.1"
+        version_added: "2.6"
     host_name:
         description:
             - Name of the host in Zabbix.
@@ -71,6 +90,8 @@ EXAMPLES = '''
 
 import logging
 import copy
+
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -211,8 +232,6 @@ def main():
         module.exit_json(ok=True, hosts=extended_hosts)
     else:
         module.exit_json(ok=False, hosts=[], result="No Host present")
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
