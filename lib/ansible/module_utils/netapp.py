@@ -86,7 +86,7 @@ def ontap_sf_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
-        https=dict(required=False, type='str', default='false')
+        https=dict(required=False, type='str', default='False')
     )
 
 
