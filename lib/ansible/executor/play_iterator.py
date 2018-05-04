@@ -169,6 +169,9 @@ class PlayIterator:
             fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
+        # Gathering facts with run_once would copy the facts from one host to
+        # the others.
+        setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
