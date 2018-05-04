@@ -1,0 +1,204 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create VPC
+    ec2_vpc_net:
+      cidr_block: 10.228.228.0/22
+      name: "{{ resource_prefix }}_vpc"
+      state: present
+      <<: *aws_connection_info
+    register: vpc
+
+  - name: create internet gateway
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      tags:
+        Name: "{{ resource_prefix }}"
+      <<: *aws_connection_info
+    register: igw
+
+  - name: create public subnet
+    ec2_vpc_subnet:
+      cidr: "{{ item.cidr }}"
+      az: "{{ aws_region}}{{ item.az }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      tags:
+        Public: "{{ item.public|string }}"
+        Name: "{{ item.public|ternary('public', 'private') }}-{{ item.az }}"
+      <<: *aws_connection_info
+    with_items:
+      - cidr: 10.228.228.0/24
+        az: "a"
+        public: "True"
+      - cidr: 10.228.229.0/24
+        az: "b"
+        public: "True"
+      - cidr: 10.228.230.0/24
+        az: "a"
+        public: "False"
+      - cidr: 10.228.231.0/24
+        az: "b"
+        public: "False"
+    register: subnets
+
+  - ec2_vpc_subnet_facts:
+      filters:
+        vpc-id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_subnets
+
+  - name: create list of subnet ids
+    set_fact:
+      alb_subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      private_subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public != `True`].id') }}"
+
+  - name: create a route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+      tags:
+        Name: igw-route
+        Created: "{{ resource_prefix }}"
+      subnets: "{{ alb_subnets + private_subnets }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+    register: route_table
+
+  - ec2_group:
+      name: "{{ resource_prefix }}"
+      description: "security group for Ansible ALB integration tests"
+      state: present
+      vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          from_port: 1
+          to_port: 65535
+          cidr_ip: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: sec_group
+
+  - name: create a target group for testing
+    elb_target_group:
+      name: "{{ tg_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: tg
+
+  - include_tasks: test_alb_bad_listener_options.yml
+  - include_tasks: test_alb_tags.yml
+  - include_tasks: test_creating_alb.yml
+  - include_tasks: test_alb_with_asg.yml
+  - include_tasks: test_modifying_alb_listeners.yml
+  - include_tasks: test_deleting_alb.yml
+
+  always:
+  #############################################################################
+  # TEAR DOWN STARTS HERE
+  #############################################################################
+    - name: destroy ALB
+      elb_application_lb:
+        name: "{{ alb_name }}"
+        state: absent
+        wait: yes
+        wait_timeout: 600
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: destroy target group if it was created
+      elb_target_group:
+        name: "{{ tg_name }}"
+        protocol: http
+        port: 80
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        wait: yes
+        wait_timeout: 600
+        <<: *aws_connection_info
+      register: remove_tg
+      retries: 5
+      delay: 3
+      until: remove_tg is success
+      when: tg is defined
+      ignore_errors: yes
+
+    - name: destroy sec group
+      ec2_group:
+        name: "{{ sec_group.group_name }}"
+        description: "security group for Ansible ALB integration tests"
+        state: absent
+        vpc_id: "{{ vpc.vpc.id }}"
+        <<: *aws_connection_info
+      register: remove_sg
+      retries: 10
+      delay: 5
+      until: remove_sg is success
+      ignore_errors: yes
+
+    - name: remove route table
+      ec2_vpc_route_table:
+        vpc_id: "{{ vpc.vpc.id }}"
+        route_table_id: "{{ route_table.route_table.route_table_id }}"
+        lookup: id
+        state: absent
+        <<: *aws_connection_info
+      register: remove_rt
+      retries: 10
+      delay: 5
+      until: remove_rt is success
+      ignore_errors: yes
+
+    - name: destroy subnets
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: remove_subnet
+      retries: 10
+      delay: 5
+      until: remove_subnet is success
+      with_items:
+        - cidr: 10.228.228.0/24
+        - cidr: 10.228.229.0/24
+        - cidr: 10.228.230.0/24
+        - cidr: 10.228.231.0/24
+      ignore_errors: yes
+
+    - name: destroy internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ vpc.vpc.id }}"
+        tags:
+          Name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+      register: remove_igw
+      retries: 10
+      delay: 5
+      until: remove_igw is success
+      ignore_errors: yes
+
+    - name: destroy VPC
+      ec2_vpc_net:
+        cidr_block: 10.228.228.0/22
+        name: "{{ resource_prefix }}_vpc"
+        state: absent
+        <<: *aws_connection_info
+      register: remove_vpc
+      retries: 10
+      delay: 5
+      until: remove_vpc is success
+      ignore_errors: yes
