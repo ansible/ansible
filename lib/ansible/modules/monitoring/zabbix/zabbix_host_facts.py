@@ -52,19 +52,23 @@ options:
         description:
             - Basic Auth login
         required: false
-        default: None
+        default: null
         version_added: "2.6"
     http_login_password:
         description:
             - Basic Auth password
         required: false
-        default: None
+        default: null
         version_added: "2.6"
     host_name:
         description:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
         required: true
+    host_ip:
+        description:
+            - Host interface IP of the host in Zabbix.
+        required: false
     timeout:
         description:
             - The timeout of API request (seconds).
@@ -72,7 +76,13 @@ options:
     exact_match:
         description:
             - Find the exact match
-        default: false
+        type: bool
+        default: False
+    remove_duplicate:
+        description:
+            - Remove duplicate host from host result
+        type: bool
+        default: False
 '''
 
 EXAMPLES = '''
@@ -82,7 +92,8 @@ EXAMPLES = '''
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
-    host_name: ExampleHost,
+    host_name: ExampleHost
+    host_ip: 127.0.0.1
     timeout: 10
     exact_match: false
     remove_duplicate: true
@@ -110,6 +121,7 @@ try:
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+
 
 class Host(object):
     def __init__(self, module, zbx):
@@ -155,7 +167,7 @@ class Host(object):
             host[0]['hostinterfaces'] = hostinterface
             host_list.append(host[0])
         return host_list
-    
+
     def delete_duplicate_hosts(self, hosts):
         """ Delete duplicated hosts """
         unique_hosts = []
