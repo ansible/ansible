@@ -94,10 +94,14 @@ from ansible.module_utils.ovirt import (
 def _permissions_service(connection, module):
     if module.params['user_name']:
         service = connection.system_service().users_service()
-        entity = next(iter(service.list(search='usrname={}'.format(
-                    '{}@{}'.format(module.params['user_name'], module.params['authz_name'])
+        entity = next(
+            iter(
+                service.list(
+                    search='usrname={0}'.format(
+                        '{0}@{1}'.format(module.params['user_name'], module.params['authz_name'])
+                    )
                 )
-            )),
+            ),
             None
         )
     else:
