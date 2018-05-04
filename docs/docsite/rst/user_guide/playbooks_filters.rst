@@ -937,6 +937,13 @@ To work with Base64 encoded strings::
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
+As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
+
+    {{ encoded | b64decode(encoding='utf-16-le') }}
+    {{ decoded | b64encode(encoding='utf-16-le') }}
+
+.. versionadded:: 2.6
+
 To create a UUID from a string (new in version 1.9)::
 
     {{ hostname | to_uuid }}

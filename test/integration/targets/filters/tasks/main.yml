@@ -185,3 +185,11 @@
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
+
+- name: Test base64 filter
+  assert:
+    that:
+    - '"Ansible" | b64encode == "QW5zaWJsZQ=="'
+    - '"QW5zaWJsZQ==" | b64decode == "Ansible"'
+    - '"Ansible" | b64encode(encoding="utf-16-le") == "QQBuAHMAaQBiAGwAZQA="'
+    - '"QQBuAHMAaQBiAGwAZQA=" | b64decode(encoding="utf-16-le") == "Ansible"'
