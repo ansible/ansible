@@ -164,7 +164,7 @@ def get_snmp_user(user, module):
         # indexed by 'user'. This is due to a platform bug.
         # Get first element if rt is a list due to the bug
         # or if there is no bug, parse rt directly
-        if type(rt) is list:
+        if isinstance(rt, list):
             resource_table = rt[0]
         else:
             resource_table = rt
@@ -187,7 +187,7 @@ def get_snmp_user(user, module):
             groups.append(str(group_table[grpkey]).strip())
 
         # Now for the platform bug case, get the groups
-        if type(rt) is list:
+        if isinstance(rt, list):
             # remove 1st element from the list as this is parsed already
             rt.pop(0)
             # iterate through other elements indexed by
