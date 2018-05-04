@@ -53,11 +53,6 @@ options:
     description:
       - The number of consecutive health checks successes required before considering an unhealthy target healthy.
     required: false
-  modify_targets:
-    description:
-      - Whether or not to alter existing targets in the group to match what is passed with the module
-    required: false
-    default: no
   name:
     description:
       - The name of the target group.
@@ -79,6 +74,12 @@ options:
     required: false
     default: yes
     type: bool
+  purge_targets:
+    description:
+      - Whether or not to alter existing targets in the group to match what is passed with the module
+    required: false
+    default: yes
+    aliases: ['modify_targets']
   state:
     description:
       - Create or destroy the target group.
@@ -119,7 +120,7 @@ options:
     version_added: 2.5
   targets:
     description:
-      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
+      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'purge_targets' parameter then
         all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail.
     required: false
   unhealthy_threshold_count:
@@ -135,6 +136,7 @@ extends_documentation_fragment:
     - ec2
 notes:
   - Once a target group has been created, only its health check can then be modified using subsequent calls
+  - Setting purge_targets is strongly recommended to prevent unexpected behavior.
 '''
 
 EXAMPLES = '''
@@ -477,8 +479,8 @@ def create_or_update_target_group(connection, module):
                 module.fail_json_aws(e, msg="Couldn't update target group")
 
         # Do we need to modify targets?
-        if module.params.get("modify_targets"):
-            if module.params.get("targets"):
+        if module.params.get("purge_targets"):
+            if module.params.get("targets") == []:
                 params['Targets'] = module.params.get("targets")
 
                 # get list of current target instances. I can't see anything like a describe targets in the doco so
@@ -670,11 +672,11 @@ def main():
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
             healthy_threshold_count=dict(type='int'),
-            modify_targets=dict(default=False, type='bool'),
             name=dict(required=True),
             port=dict(type='int'),
             protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
             purge_tags=dict(default=True, type='bool'),
+            purge_targets=dict(default=True, type='bool', aliases=['modify_targets']),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie'),
             stickiness_lb_cookie_duration=dict(type='int'),
