@@ -64,6 +64,10 @@ class HttpApi:
 
         return responses
 
+    def get_prompt(self):
+        # Hack to keep @enable_mode working
+        return '#'
+
 
 def handle_response(response):
     if 'error' in response:
