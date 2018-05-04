@@ -264,7 +264,7 @@ class VarsModule(BaseVarsPlugin):
         except KeyError:
             return (None, "failed to initialize KMS client")
 
-    def _walk_and_decrypt(self, branch, key, aad=rb'', stash=None, digest=None,
+    def _walk_and_decrypt(self, branch, key, aad=b'', stash=None, digest=None,
                           isRoot=True, unencrypted=False):
         """Walk the branch recursively and decrypt leaves."""
         if isRoot:
