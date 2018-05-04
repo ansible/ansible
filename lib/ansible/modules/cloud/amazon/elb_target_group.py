@@ -480,7 +480,7 @@ def create_or_update_target_group(connection, module):
 
         # Do we need to modify targets?
         if module.params.get("purge_targets"):
-            if module.params.get("targets") == []:
+            if module.params.get("targets"):
                 params['Targets'] = module.params.get("targets")
 
                 # get list of current target instances. I can't see anything like a describe targets in the doco so
