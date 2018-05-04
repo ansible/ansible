@@ -38,18 +38,17 @@ description:
       the same network, you can use an instance's internal IP address. To
       communicate with the Internet and instances outside of the same network,
       you must specify the instance's external IP address.
-    - Internal IP addresses are ephemeral and only belong to an instance for
-      the lifetime of the instance; if the instance is deleted and recreated,
-      the instance is assigned a new internal IP address, either by Compute
-      Engine or by you. External IP addresses can be either ephemeral or
-      static.
+    - Internal IP addresses are ephemeral and only belong to an instance for the
+      lifetime of the instance; if the instance is deleted and recreated, the
+      instance is assigned a new internal IP address, either by Compute Engine
+      or by you. External IP addresses can be either ephemeral or static.
 short_description: Creates a GCP Address
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6.
-    - requests >= 2.18.4.
-    - google-auth >= 1.3.0.
+    - python >= 2.6
+    - requests >= 2.18.4
+    - google-auth >= 1.3.0
 options:
     state:
         description:
@@ -59,8 +58,8 @@ options:
         default: 'present'
     address:
         description:
-            - The static external IP address represented by this
-              resource. Only IPv4 is supported.
+            - The static external IP address represented by this resource. Only
+              IPv4 is supported.
         required: false
     description:
         description:
@@ -69,11 +68,12 @@ options:
     name:
         description:
             - Name of the resource. The name must be 1-63 characters long, and
-              comply with RFC1035. Specifically, the name must be 1-63 characters
-              long and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])?
-              which means the first character must be a lowercase letter, and all
-              following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
+              comply with RFC1035. Specifically, the name must be 1-63
+              characters long and match the regular expression
+              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be
+              a lowercase letter, and all following characters must be a dash,
+              lowercase letter, or digit, except the last character, which
+              cannot be a dash.
         required: false
     region:
         description:
@@ -98,8 +98,8 @@ EXAMPLES = '''
 RETURN = '''
     address:
         description:
-            - The static external IP address represented by this
-              resource. Only IPv4 is supported.
+            - The static external IP address represented by this resource. Only
+              IPv4 is supported.
         returned: success
         type: str
     creation_timestamp:
@@ -120,11 +120,12 @@ RETURN = '''
     name:
         description:
             - Name of the resource. The name must be 1-63 characters long, and
-              comply with RFC1035. Specifically, the name must be 1-63 characters
-              long and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])?
-              which means the first character must be a lowercase letter, and all
-              following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
+              comply with RFC1035. Specifically, the name must be 1-63
+              characters long and match the regular expression
+              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be
+              a lowercase letter, and all following characters must be a dash,
+              lowercase letter, or digit, except the last character, which
+              cannot be a dash.
         returned: success
         type: str
     users:
@@ -143,7 +144,7 @@ RETURN = '''
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequestException
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
 import time
 
@@ -161,7 +162,7 @@ def main():
             address=dict(type='str'),
             description=dict(type='str'),
             name=dict(type='str'),
-            region=dict(required=True, type='str'),
+            region=dict(required=True, type='str')
         )
     )
 
@@ -175,6 +176,7 @@ def main():
         if state == 'present':
             if is_different(module, fetch):
                 fetch = update(module, self_link(module), kind, fetch)
+                changed = True
         else:
             delete(module, self_link(module), kind, fetch)
             fetch = {}
@@ -183,11 +185,10 @@ def main():
         if state == 'present':
             fetch = create(module, collection(module), kind)
             changed = True
+        else:
+            fetch = {}
 
-    if fetch:
-        fetch.update({'changed': changed})
-    else:
-        fetch = {'changed': changed}
+    fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
 
@@ -198,7 +199,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    module.fail_json(msg="Address cannot be edited")
+    auth = GcpSession(module, 'compute')
+    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
 def delete(module, link, kind, fetch):
@@ -209,10 +211,10 @@ def delete(module, link, kind, fetch):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#address',
-        u'region': module.params['region'],
-        u'address': module.params['address'],
-        u'description': module.params['description'],
-        u'name': module.params['name'],
+        u'region': module.params.get('region'),
+        u'address': module.params.get('address'),
+        u'description': module.params.get('description'),
+        u'name': module.params.get('name')
     }
     return_vals = {}
     for k, v in request.items():
@@ -245,12 +247,10 @@ def return_if_object(module, response, kind):
         return None
 
     try:
-        response.raise_for_status
+        module.raise_for_status(response)
         result = response.json()
     except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
         module.fail_json(msg="Invalid JSON response with error: %s" % inst)
-    except GcpRequestException as inst:
-        module.fail_json(msg="Network error: %s" % inst)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -275,19 +275,19 @@ def is_different(module, response):
         if k in response:
             request_vals[k] = v
 
-    return response_vals != request_vals
+    return GcpRequest(request_vals) != GcpRequest(response_vals)
 
 
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        'address': response.get('address'),
-        'creation_timestamp': response.get('creation_timestamp'),
-        'description': response.get('description'),
-        'id': response.get('id'),
-        'name': response.get('name'),
-        'users': response.get('users')
+        u'address': response.get(u'address'),
+        u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'description': response.get(u'description'),
+        u'id': response.get(u'id'),
+        u'name': response.get(u'name'),
+        u'users': response.get(u'users')
     }
 
 

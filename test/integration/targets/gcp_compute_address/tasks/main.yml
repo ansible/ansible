@@ -12,6 +12,17 @@
 #     https://www.github.com/GoogleCloudPlatform/magic-modules
 #
 # ----------------------------------------------------------------------------
+# Pre-test setup
+- name: delete a address
+  gcp_compute_address:
+      name: 'test-address1'
+      region: 'us-west1'
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
+      state: absent
 #----------------------------------------------------------
 - name: create a address
   gcp_compute_address:
@@ -29,6 +40,14 @@
     that:
       - result.changed == true
       - "result.kind == 'compute#address'"
+- name: verify that address was created
+  shell: |
+    gcloud compute addresses describe  --project="{{ gcp_project}}"  --region=us-west1  test-address1
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results.rc == 0
 # ----------------------------------------------------------------------------
 - name: create a address that already exists
   gcp_compute_address:
@@ -63,6 +82,16 @@
     that:
       - result.changed == true
       - result.has_key('kind') == False
+- name: verify that address was deleted
+  shell: |
+    gcloud compute addresses describe  --project="{{ gcp_project}}"  --region=us-west1  test-address1
+  register: results
+  failed_when: results.rc == 0
+- name: verify that command succeeded
+  assert:
+    that:
+      - results.rc == 1
+      - "\"'projects/{{ gcp_project }}/regions/us-west1/addresses/test-address1' was not found\" in results.stderr"
 # ----------------------------------------------------------------------------
 - name: delete a address that does not exist
   gcp_compute_address:
