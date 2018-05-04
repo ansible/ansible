@@ -9,7 +9,8 @@
 # Contributor: Alexis Metaireau <alexis@mozilla.com> [:alexis]
 # Contributor: Rémy Hubscher <natim@mozilla.com> [:natim]
 
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 DOCUMENTATION = '''
     vars: sops
