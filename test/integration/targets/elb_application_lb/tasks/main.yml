@@ -9,18 +9,6 @@
         region: "{{ aws_region }}"
     no_log: yes
 
-  - name: load balancer name has to be less than 32 characters
-    # the 8 digit identifier at the end of resource_prefix helps determine during which test something
-    # was created and allows tests to be run in parallel
-    set_fact:
-      alb_name: "my-alb-{{ item }}"
-    with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
-
-  - name: tg name has to be less than 32 characters
-    set_fact:
-      tg_name: "my-tg-{{ item }}"
-    with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
-
   - name: create VPC
     ec2_vpc_net:
       cidr_block: 10.228.228.0/22
@@ -33,6 +21,8 @@
     ec2_vpc_igw:
       vpc_id: "{{ vpc.vpc.id }}"
       state: present
+      tags:
+        Name: "{{ resource_prefix }}"
       <<: *aws_connection_info
     register: igw
 
@@ -56,7 +46,7 @@
       - cidr: 10.228.230.0/24
         az: "a"
         public: "False"
-      - cidr: 10.228.231.0/25
+      - cidr: 10.228.231.0/24
         az: "b"
         public: "False"
     register: subnets
@@ -70,97 +60,33 @@
   - name: create list of subnet ids
     set_fact:
       alb_subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      private_subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public != `True`].id') }}"
+
+  - name: create a route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+      tags:
+        Name: igw-route
+        Created: "{{ resource_prefix }}"
+      subnets: "{{ alb_subnets + private_subnets }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+    register: route_table
 
   - ec2_group:
       name: "{{ resource_prefix }}"
       description: "security group for Ansible ALB integration tests"
       state: present
       vpc_id: "{{ vpc.vpc.id }}"
+      rules:
+        - proto: tcp
+          from_port: 1
+          to_port: 65535
+          cidr_ip: 0.0.0.0/0
       <<: *aws_connection_info
     register: sec_group
-
-  - name: create ALB with no listeners
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-
-  - name: re-create ALB with no listeners
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - not alb.changed
-
-  - name: add tags to ALB
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      tags:
-        created_by: "ALB test {{ resource_prefix }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - 'alb.tags == {"created_by": "ALB test {{ resource_prefix }}"}'
-
-  - name: remove tags from ALB
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      tags: {}
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - not alb.tags
-
-  - name: test idempotence
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      tags: {}
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - not alb.changed
-        - not alb.tags
-
-  - name: destroy ALB with no listeners
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      state: absent
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
 
   - name: create a target group for testing
     elb_target_group:
@@ -172,268 +98,12 @@
       <<: *aws_connection_info
     register: tg
 
-  - name: test creating an ALB with invalid listener options
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTPS
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    ignore_errors: yes
-    register: alb
-
-  - assert:
-      that:
-        - alb is failed
-        - alb.msg.startswith("'SslPolicy' is a required listener dict key when Protocol = HTTPS")
-
-  - name: test creating an ALB without providing required listener options
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Port: 80
-      <<: *aws_connection_info
-    ignore_errors: yes
-    register: alb
-
-  - assert:
-      that:
-        - alb is failed
-        - '"missing required arguments" in alb.msg'
-        - '"Protocol" in alb.msg'
-        - '"DefaultActions" in alb.msg'
-
-  - name: test creating an ALB providing an invalid listener option type
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: "bad type"
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    ignore_errors: yes
-    register: alb
-
-  - assert:
-      that:
-        - alb is failed
-        - alb.msg.startswith("argument Port is of type <class 'str'> and we were unable to convert to int")
-
-  - name: create ALB with a listener
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 1
-
-  - name: test idempotence creating ALB with a listener
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - not alb.changed
-        - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 1
-
-  - name: add a rule to the listener
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-          Rules:
-            - Conditions:
-                - Field: path-pattern
-                  Values:
-                    - '/test'
-              Priority: '1'
-              Actions:
-                - TargetGroupName: "{{ tg_name }}"
-                  Type: forward
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - alb.listeners[0].rules|length == 2
-
-  - name: test replacing the rule with one with the same priority
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      purge_listeners: true
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-          Rules:
-            - Conditions:
-                - Field: path-pattern
-                  Values:
-                    - '/new'
-              Priority: '1'
-              Actions:
-                - TargetGroupName: "{{ tg_name }}"
-                  Type: forward
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - alb.listeners[0].rules|length == 2
-
-  - name: test the rule will not be removed without purge_listeners
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - not alb.changed
-        - alb.listeners[0].rules|length == 2
-
-  - name: remove the rule
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      purge_listeners: true
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-          Rules: []
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - alb.listeners[0].rules|length == 1
-
-  - name: remove listener from ALB
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners: []
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - not alb.listeners
-
-  - name: add the listener to the ALB
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets: "{{ alb_subnets }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: present
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
-        - alb.listeners|length == 1
-        - alb.availability_zones|length == 2
-
-  - name: destroy ALB with listener
-    elb_application_lb:
-      name: "{{ alb_name }}"
-      subnets:
-        - "{{ alb_subnets[0] }}"
-        - "{{ alb_subnets[1] }}"
-      security_groups: "{{ sec_group.group_id }}"
-      state: absent
-      listeners:
-        - Protocol: HTTP
-          Port: 80
-          DefaultActions:
-            - Type: forward
-              TargetGroupName: "{{ tg_name }}"
-      <<: *aws_connection_info
-      wait: yes
-      wait_timeout: 300
-    register: alb
-
-  - assert:
-      that:
-        - alb.changed
+  - include_tasks: playbooks/test_alb_bad_listener_options.yml
+  - include_tasks: playbooks/test_alb_tags.yml
+  - include_tasks: playbooks/test_creating_alb.yml
+  - include_tasks: playbooks/test_alb_with_asg.yml
+  - include_tasks: playbooks/test_modifying_alb_listeners.yml
+  - include_tasks: playbooks/test_deleting_alb.yml
 
   always:
   #############################################################################
@@ -443,6 +113,8 @@
       elb_application_lb:
         name: "{{ alb_name }}"
         state: absent
+        wait: yes
+        wait_timeout: 600
         <<: *aws_connection_info
       ignore_errors: yes
 
@@ -453,9 +125,12 @@
         port: 80
         vpc_id: "{{ vpc.vpc.id }}"
         state: absent
+        wait: yes
+        wait_timeout: 600
         <<: *aws_connection_info
       register: remove_tg
       retries: 5
+      delay: 3
       until: remove_tg is success
       when: tg is defined
       ignore_errors: yes
@@ -467,6 +142,23 @@
         state: absent
         vpc_id: "{{ vpc.vpc.id }}"
         <<: *aws_connection_info
+      register: remove_sg
+      retries: 10
+      delay: 5
+      until: remove_sg is success
+      ignore_errors: yes
+
+    - name: remove route table
+      ec2_vpc_route_table:
+        vpc_id: "{{ vpc.vpc.id }}"
+        route_table_id: "{{ route_table.route_table.route_table_id }}"
+        lookup: id
+        state: absent
+        <<: *aws_connection_info
+      register: remove_rt
+      retries: 10
+      delay: 5
+      until: remove_rt is success
       ignore_errors: yes
 
     - name: destroy subnets
@@ -475,19 +167,28 @@
         vpc_id: "{{ vpc.vpc.id }}"
         state: absent
         <<: *aws_connection_info
+      register: remove_subnet
+      retries: 10
+      delay: 5
+      until: remove_subnet is success
       with_items:
         - cidr: 10.228.228.0/24
         - cidr: 10.228.229.0/24
         - cidr: 10.228.230.0/24
-        - cidr: 10.228.231.0/25
-        - cidr: 10.228.231.128/25
+        - cidr: 10.228.231.0/24
       ignore_errors: yes
 
     - name: destroy internet gateway
       ec2_vpc_igw:
         vpc_id: "{{ vpc.vpc.id }}"
+        tags:
+          Name: "{{ resource_prefix }}"
         state: absent
         <<: *aws_connection_info
+      register: remove_igw
+      retries: 10
+      delay: 5
+      until: remove_igw is success
       ignore_errors: yes
 
     - name: destroy VPC
@@ -496,4 +197,8 @@
         name: "{{ resource_prefix }}_vpc"
         state: absent
         <<: *aws_connection_info
+      register: remove_vpc
+      retries: 10
+      delay: 5
+      until: remove_vpc is success
       ignore_errors: yes
