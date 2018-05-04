@@ -20,17 +20,18 @@ options:
     required: true
   type:
     description:
-      - slots come in two distinct flavors: physical | logical
+      - slots come in two distinct flavors: physical and logical
     choices: [ "physical", "logical" ]
     required: true  
   db:
     description:
-      - name of the database to add | remove only the logical slot to/from
+      - name of the database to add or remove the logical slot
     required: false, only needed if type = logical
   decoder:
     description:
       - all logical slots must indicate which decoder they're using
-    required: false, but if type = logical, defaults to "test_decoding"
+    required: false
+    default: test_decoding
   login_user:
     description:
       - The username used to authenticate with
