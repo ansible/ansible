@@ -98,12 +98,12 @@
       <<: *aws_connection_info
     register: tg
 
-  - include_tasks: playbooks/test_alb_bad_listener_options.yml
-  - include_tasks: playbooks/test_alb_tags.yml
-  - include_tasks: playbooks/test_creating_alb.yml
-  - include_tasks: playbooks/test_alb_with_asg.yml
-  - include_tasks: playbooks/test_modifying_alb_listeners.yml
-  - include_tasks: playbooks/test_deleting_alb.yml
+  - include_tasks: test_alb_bad_listener_options.yml
+  - include_tasks: test_alb_tags.yml
+  - include_tasks: test_creating_alb.yml
+  - include_tasks: test_alb_with_asg.yml
+  - include_tasks: test_modifying_alb_listeners.yml
+  - include_tasks: test_deleting_alb.yml
 
   always:
   #############################################################################
