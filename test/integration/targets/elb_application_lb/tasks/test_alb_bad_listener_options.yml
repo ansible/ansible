@@ -1,0 +1,71 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: test creating an ALB with invalid listener options
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: alb
+
+  - assert:
+      that:
+        - alb is failed
+        - alb.msg.startswith("'SslPolicy' is a required listener dict key when Protocol = HTTPS")
+
+  - name: test creating an ALB without providing required listener options
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Port: 80
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: alb
+
+  - assert:
+      that:
+        - alb is failed
+        - '"missing required arguments" in alb.msg'
+        - '"Protocol" in alb.msg'
+        - '"DefaultActions" in alb.msg'
+
+  - name: test creating an ALB providing an invalid listener option type
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTP
+          Port: "bad type"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: alb
+
+  - assert:
+      that:
+        - alb is failed
+        - "'unable to convert to int' in alb.msg"
