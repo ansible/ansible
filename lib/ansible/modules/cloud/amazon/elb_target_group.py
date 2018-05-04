@@ -57,7 +57,7 @@ options:
     description:
       - Whether or not to alter existing targets in the group to match what is passed with the module
     required: false
-    default: yes
+    default: no
   name:
     description:
       - The name of the target group.
@@ -670,7 +670,7 @@ def main():
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
             healthy_threshold_count=dict(type='int'),
-            modify_targets=dict(default=True, type='bool'),
+            modify_targets=dict(default=False, type='bool'),
             name=dict(required=True),
             port=dict(type='int'),
             protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
