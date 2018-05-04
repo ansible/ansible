@@ -86,12 +86,14 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+    
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+
 class NotSupportedError(Exception):
     pass
-   
+
 # ===========================================
 # PostgreSQL module specific support methods.
 #
