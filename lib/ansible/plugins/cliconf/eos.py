@@ -95,3 +95,29 @@ class Cliconf(CliconfBase):
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        responses = list()
+
+        for cmd in to_list(commands):
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+
+            out = self.get(command, prompt, answer)
+
+            try:
+                out = json.loads(out)
+            except ValueError:
+                out = str(out).strip()
+
+            responses.append(out)
+
+        return responses

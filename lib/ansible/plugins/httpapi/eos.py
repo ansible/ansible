@@ -26,12 +26,7 @@ class HttpApi:
             display.vvvv('firing event: on_become')
             # TODO ??? self._terminal.on_become(passwd=auth_pass)
 
-        try:
-            command = json.loads(data)
-            output = cmd['output']
-        except ValueError:
-            output = 'json'
-
+        output = message_kwargs.get('output', 'json')
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
@@ -39,17 +34,49 @@ class HttpApi:
         response = json.loads(to_text(response.read()))
         return handle_response(response)
 
+    def run_commands(self, commands, check_rc=True):
+        """Runs list of commands on remote device and returns results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        for item in to_list(commands):
+            if item['command'].endswith('| json'):
+                item['command'] = str(item['command']).replace('| json', '')
+                item['output'] = 'json'
+
+            if output and output != item['output']:
+                responses.extend(self.send_request(queue, output=output))
+                queue = list()
+
+            output = item['output'] or 'json'
+            queue.append(item['command'])
+
+        if queue:
+            responses.extend(self.send_request(queue, output=output))
+
+        for index, item in enumerate(commands):
+            try:
+                responses[index] = responses[index].strip()
+            except KeyError:
+                pass
+
+        return responses
+
 
 def handle_response(response):
     if 'error' in response:
         raise AnsibleConnectionFailure(response['error'])
 
-    result = response['result'][0]
-    if 'messages' in result:
-        result = result['messages'][0]
-    else:
-        result = json.dumps(result)
-    return result.strip()
+    results = []
+    for result in response['result']:
+        if 'messages' in result:
+            results.append(result['messages'][0])
+        else:
+            results.append(json.dumps(result))
+
+    return results
 
 
 def request_builder(commands, output, reqid=None):
