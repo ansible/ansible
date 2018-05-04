@@ -99,7 +99,7 @@ options:
      - Required if I(runnable_type=Workflow).
   parameters:
     description:
-     - Action parameters dictionary. In case of ConfigurationTemplate runnable type,
+     - Action parameters dictionary. In case of C(ConfigurationTemplate) runnable type,
      - the device connection details should always be passed as a parameter.
 
 requirements:
