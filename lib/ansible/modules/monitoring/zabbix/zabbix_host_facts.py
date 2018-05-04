@@ -2,77 +2,75 @@
 # -*- coding: utf-8 -*-
 
 # (c) me@mimiko.me
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-RETURN = '''
----
-hosts:
-  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
-  returned: success
-  type: dict
-  sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
-'''
 
 DOCUMENTATION = '''
 ---
-module: zabbix_host_facts
-short_description: Gather facts about Zabbix host
+module: zabbix_host get
+short_description: Zabbix host get
 description:
    - This module allows you to search for Zabbix host entries.
-version_added: "2.7"
+version_added: "2.0"
 author:
-    - "Michael Miko (@RedWhiteMiko)"
+    - "(@redwhitemiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
 options:
+    server_url:
+        description:
+            - Url of Zabbix server, with protocol (http or https).
+        required: true
+        aliases: [ "url" ]
+    login_user:
+        description:
+            - Zabbix user name, used to authenticate against the server.
+        required: true
+    login_password:
+        description:
+            - Zabbix user password.
+        required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+        version_added: "2.1"
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+        version_added: "2.1"
     host_name:
         description:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
         required: true
-    host_ip:
+    timeout:
         description:
-            - Host interface IP of the host in Zabbix.
-        required: false
+            - The timeout of API request (seconds).
+        default: 10
     exact_match:
         description:
             - Find the exact match
-        type: bool
-        default: no
-    remove_duplicate:
-        description:
-            - Remove duplicate host from host result
-        type: bool
-        default: yes
-extends_documentation_fragment:
-    - zabbix
+        default: false
 '''
 
 EXAMPLES = '''
 - name: Get host info
   local_action:
-    module: zabbix_host_facts
+    module: zabbix_host_get
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
-    host_name: ExampleHost
-    host_ip: 127.0.0.1
+    host_name: ExampleHost,
     timeout: 10
-    exact_match: no
-    remove_duplicate: yes
+    exact_match: false
+    remove_duplicate: true
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import logging
+import copy
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -84,26 +82,33 @@ try:
     class ZabbixAPIExtends(ZabbixAPI):
         hostinterface = None
 
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
             self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
 
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
 
-
 class Host(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+
+    def is_host_exist(self, host_name, exact_match):
+        """ Check host exists """
+        search_key = 'search'
+        if exact_match:
+            search_key = 'filter'
+        result = self._zapi.host.get({search_key: {'host': host_name}})
+        return result
 
     def get_hosts_by_host_name(self, host_name, exact_match):
         """ Get host by host name """
         search_key = 'search'
         if exact_match:
             search_key = 'filter'
-        host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]}})
+        host_list = self._zapi.host.get({'output': 'extend', search_key: {'host': [host_name]}})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -124,13 +129,12 @@ class Host(object):
             host = self._zapi.host.get({
                 'output': 'extend',
                 'selectGroups': 'extend',
-                'selectParentTemplates': ['name'],
                 'hostids': hostinterface['hostid']
             })
             host[0]['hostinterfaces'] = hostinterface
             host_list.append(host[0])
         return host_list
-
+    
     def delete_duplicate_hosts(self, hosts):
         """ Delete duplicated hosts """
         unique_hosts = []
@@ -143,7 +147,6 @@ class Host(object):
             listed_hostnames.append(zabbix_host['name'])
         return unique_hosts
 
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -154,10 +157,9 @@ def main():
             host_ip=dict(type='list', default=[], required=False),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
             exact_match=dict(type='bool', required=False, default=False),
-            remove_duplicate=dict(type='bool', required=False, default=True)
+            remove_duplicate=dict(type='bool', required=False, default=False)
         ),
         supports_check_mode=True
     )
@@ -170,7 +172,6 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
-    validate_certs = module.params['validate_certs']
     host_name = module.params['host_name']
     host_ips = module.params['host_ip']
     timeout = module.params['timeout']
@@ -180,8 +181,7 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -189,17 +189,21 @@ def main():
     host = Host(module, zbx)
 
     if host_name:
-        hosts = host.get_hosts_by_host_name(host_name, exact_match)
-        if is_remove_duplicate:
-            hosts = host.delete_duplicate_hosts(hosts)
-        extended_hosts = []
-        for zabbix_host in hosts:
-            zabbix_host['hostinterfaces'] = host._zapi.hostinterface.get({
-                'output': 'extend', 'hostids': zabbix_host['hostid']
-            })
-            extended_hosts.append(zabbix_host)
-        module.exit_json(ok=True, hosts=extended_hosts)
+        is_host_exist = host.is_host_exist(host_name, exact_match)
 
+        if is_host_exist:
+            hosts = host.get_hosts_by_host_name(host_name, exact_match)
+            if is_remove_duplicate:
+                hosts = host.delete_duplicate_hosts(hosts)
+            extended_hosts = []
+            for zabbix_host in hosts:
+                zabbix_host['hostinterfaces'] = host._zapi.hostinterface.get({
+                    'output': 'extend', 'hostids': zabbix_host['hostid']
+                })
+                extended_hosts.append(zabbix_host)
+            module.exit_json(ok=True, hosts=extended_hosts)
+        else:
+            module.exit_json(ok=False, hosts=[], result="No Host present")
     elif host_ips:
         extended_hosts = host.get_hosts_by_ip(host_ips)
         if is_remove_duplicate:
@@ -208,6 +212,7 @@ def main():
     else:
         module.exit_json(ok=False, hosts=[], result="No Host present")
 
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
