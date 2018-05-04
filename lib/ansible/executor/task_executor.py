@@ -703,7 +703,7 @@ class TaskExecutor:
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
-        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+        async_task = Task().load(dict(action='async_status jid=%s' % async_jid, environment=self._task.environment))
 
         # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
