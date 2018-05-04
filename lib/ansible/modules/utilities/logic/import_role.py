@@ -75,15 +75,6 @@ EXAMPLES = """
       vars:
         rolevar1: value from task
 
-    - name: Apply loop to each task in role
-      import_role:
-        name: myrole
-      with_items:
-        - '{{ roleinput1 }}'
-        - '{{ roleinput2 }}'
-      loop_control:
-        loop_var: roleinputvar
-
     - name: Apply condition to each task in role
       import_role:
         name: myrole
