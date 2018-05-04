@@ -78,6 +78,7 @@
       testing: 'no'
       delete: never
       foo: bar
+    append_tags: True
     resource_group: "{{ resource_group }}"
   register: output
 
@@ -89,7 +90,6 @@
     name: my_test_network
     tags:
       testing: 'always'
-    append_tags: false
     resource_group: "{{ resource_group }}"
   register: output
 

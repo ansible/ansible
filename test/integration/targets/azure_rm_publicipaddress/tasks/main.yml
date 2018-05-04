@@ -45,9 +45,9 @@
       resource_group: "{{ resource_group }}"
       name: testing01
       tags:
-          testing: testing
           delete: never
           foo: bar
+      append_tags: True
   register: output
 
 - assert:
@@ -70,7 +70,6 @@
       resource_group: "{{ resource_group }}"
       name: testing01
       tags: {}
-      append_tags: false
   register: output
 
 - assert:

@@ -33,5 +33,5 @@ options:
             - Use to control if tags field is canonical or just appends to existing tags.
               When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
         type: bool
-        default: 'yes'
+        default: 'no'
     '''

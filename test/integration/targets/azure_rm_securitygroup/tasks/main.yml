@@ -85,9 +85,9 @@
       resource_group: "{{ resource_group }}"
       name: mysecgroup
       tags:
-          testing: testing
           delete: never
           baz: bar
+      append_tags: True
   register: output
 
 - assert:
@@ -102,7 +102,6 @@
       tags:
           testing: testing
           delete: on-exit
-      append_tags: false
   register: output
 
 - assert:

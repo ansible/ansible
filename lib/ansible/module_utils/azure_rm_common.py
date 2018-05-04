@@ -77,7 +77,7 @@ AZURE_API_PROFILES = {
 
 AZURE_TAG_ARGS = dict(
     tags=dict(type='dict'),
-    append_tags=dict(type='bool', default=True),
+    append_tags=dict(type='bool', default=False),
 )
 
 AZURE_COMMON_REQUIRED_IF = [
