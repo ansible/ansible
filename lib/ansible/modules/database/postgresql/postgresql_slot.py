@@ -22,7 +22,7 @@ options:
     description:
       - slots come in two distinct flavors: physical and logical
     choices: [ "physical", "logical" ]
-    required: true  
+    required: true
   db:
     description:
       - name of the database to add or remove the logical slot
