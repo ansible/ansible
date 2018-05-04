@@ -19,7 +19,7 @@ hosts:
   description: List of Zabbix host. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
   returned: success
   type: dict
-  sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "errors_from": "0", "flags": "0", "groups": ["1"], "host": "Host A", ...} ]
+  sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
 '''
 
 DOCUMENTATION = '''
@@ -179,6 +179,7 @@ class Host(object):
             unique_hosts.append(zabbix_host)
             listed_hostnames.append(zabbix_host['name'])
         return unique_hosts
+
 
 def main():
     module = AnsibleModule(
