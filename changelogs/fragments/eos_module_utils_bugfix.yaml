@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix misuse of self in module_utils/network/eos/eos.py (https://github.com/ansible/ansible/pull/39074)
