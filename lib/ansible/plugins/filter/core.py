@@ -303,7 +303,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
         return encrypted
 
-    return None
+    raise AnsibleFilterError("invalid hashtype: '{0}'. Must be one of [{1}]".format(hashtype, ", ".join(["'{0}'".format(key) for key in cryptmethod.keys()])))
 
 
 def to_uuid(string):
