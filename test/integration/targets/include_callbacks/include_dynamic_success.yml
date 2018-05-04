@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: include tasks file that exists
+      include: simple.yml
+      static: no
+      when: yes

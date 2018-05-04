@@ -1,0 +1,2 @@
+- name: show message
+  debug: msg=hello

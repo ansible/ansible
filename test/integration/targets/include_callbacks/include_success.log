@@ -1,0 +1,5 @@
+v2_playbook_on_start filename="test/integration/targets/include_callbacks/include_success.yml"
+v2_playbook_on_play_start play_name="localhost"
+v2_playbook_on_task_start task_uuid=1 task_name="show message" is_conditional=False
+v2_runner_on_ok task_uuid=1 task_name="show message" host_uuid=2 host_name=localhost
+v2_playbook_on_stats hosts=1

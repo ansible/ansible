@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: EXPECTED FAILURE include tasks file that does not exist
+      include: bogus.yml
+      static: no
+      when: yes

@@ -1,0 +1,5 @@
+v2_playbook_on_start filename="test/integration/targets/include_callbacks/include_dynamic_failure.yml"
+v2_playbook_on_play_start play_name="localhost"
+v2_playbook_on_task_start task_uuid=1 task_name="EXPECTED FAILURE include tasks file that does not exist" is_conditional=False
+v2_runner_on_failed task_uuid=1 task_name="EXPECTED FAILURE include tasks file that does not exist" host_uuid=2 host_name=localhost ignore_errors=False
+v2_playbook_on_stats hosts=1

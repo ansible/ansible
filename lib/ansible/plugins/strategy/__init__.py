@@ -632,8 +632,8 @@ class StrategyBase:
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
 
-                # finally, send the ok for this task
-                self._tqm.send_callback('v2_runner_on_ok', task_result)
+                    # finally, send the ok for this task
+                    self._tqm.send_callback('v2_runner_on_ok', task_result)
 
             self._pending_results -= 1
             if original_host.name in self._blocked_hosts:
