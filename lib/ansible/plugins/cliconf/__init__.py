@@ -38,6 +38,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 def enable_mode(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
@@ -185,7 +186,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate, commit=None, replace=None):
+    def edit_config(self, candidate, check_mode=False, replace=None):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -196,12 +197,11 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param candidate: The configuration to load into the device and merge
             with the current running configuration
 
-        :param commit: Boolean value that indicates if the device candidate
-            configuration should be merged (committed) with the active
-            configuration or discarded.
+        :param check_mode: Boolean value that indicates if the device candidate
+            configuration should be  pushed in the running configuration or discarded.
 
-        :param replace: Specifies the provided config value should replace
-            the configuration running on the remote device.  If the device
+        :param replace: Specifies the way in which provided config value should replace
+            the configuration running on the remote device. If the device
             doesn't support config replace, an error is return.
 
         :return: Returns response of executing the configuration command received

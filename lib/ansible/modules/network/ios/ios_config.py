@@ -293,7 +293,7 @@ backup_path:
 """
 import json
 
-from ansible.module_utils.network.ios.ios import run_commands, get_config, load_config
+from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.ios.ios import check_args as ios_check_args
@@ -419,8 +419,7 @@ def main():
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents)
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None,
-                                        path=path, replace=replace)
+        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None, path=path, replace=replace)
         diff = json.loads(response)
         config_diff = diff['config_diff']
         banner_diff = diff['banner_diff']

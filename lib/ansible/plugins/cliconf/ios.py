@@ -52,7 +52,6 @@ class Cliconf(CliconfBase):
 
         return self.send_command(cmd)
 
-    @enable_mode
     def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
         """
         Generate diff between candidate and running configuration. If the
@@ -119,29 +118,28 @@ class Cliconf(CliconfBase):
         return json.dumps(diff)
 
     @enable_mode
-    def edit_config(self, candidate, commit=False, replace=False):
+    def edit_config(self, candidate, check_mode=False, replace=None):
 
         if not candidate:
             raise ValueError('must provide a candidate config to load')
 
-        if replace not in (True, False):
-            raise ValueError('`replace` must be a bool, got %s' % replace)
+        if check_mode not in (True, False):
+            raise ValueError('`check_mode` must be a bool, got %s' % check_mode)
 
-        if commit not in (True, False):
-            raise ValueError('`commit` must be a bool, got %s' % commit)
-
-        if commit is True or replace is True:
-            raise ValueError('commit and/or replace are not supported on this platform')
+        config_capability = self.get_config_capability()
+        if replace and replace not in config_capability['replace']:
+            raise ValueError('`replace` value %s in invalid, valid values are %s' % (replace, config_capability['replace']))
 
         results = []
-        for line in chain(['configure terminal'], to_list(candidate)):
-            if line != 'end' and line[0] != '!':
-                if not isinstance(line, collections.Mapping):
-                    line = {'command': line}
+        if not check_mode:
+            for line in chain(['configure terminal'], to_list(candidate)):
+                if line != 'end' and line[0] != '!':
+                    if not isinstance(line, collections.Mapping):
+                        line = {'command': line}
 
-            results.append(self.send_command(**line))
+                results.append(self.send_command(**line))
 
-        results.append(self.send_command('end'))
+            results.append(self.send_command('end'))
 
         return results[1:-1]
 
@@ -194,22 +192,29 @@ class Cliconf(CliconfBase):
         result['config_capability'] = self.get_config_capability()
         return json.dumps(result)
 
-    def edit_banner(self, banners, multiline_delimiter="@"):
+    def edit_banner(self, banners, multiline_delimiter="@", check_mode=False):
         """
         Edit banner on remote device
         :param banners: Banners to be loaded in json format
         :param multiline_delimiter: Line delimiter for banner
-        :return:
+        :param check_mode: Boolean value that indicates if the device candidate
+               configuration should be  pushed in the running configuration or discarded.
+        :return: Returns response of executing the configuration command received
+             from remote host
         """
         banners_obj = json.loads(banners)
-        for key, value in iteritems(banners_obj):
-            key += ' %s' % multiline_delimiter
-            for cmd in ['config terminal', key, value, multiline_delimiter, 'end']:
-                obj = {'command': cmd, 'sendonly': True}
-                self.send_command(**obj)
+        results = []
+        if not check_mode:
+            for key, value in iteritems(banners_obj):
+                key += ' %s' % multiline_delimiter
+                for cmd in ['config terminal', key, value, multiline_delimiter, 'end']:
+                    obj = {'command': cmd, 'sendonly': True}
+                    results.append(self.send_command(**obj))
 
-            time.sleep(0.1)
-            self.send_command('\n')
+                time.sleep(0.1)
+                results.append(self.send_command('\n'))
+
+        return results[1:-1]
 
     def _extract_banners(self, config):
         banners = {}
