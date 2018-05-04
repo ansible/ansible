@@ -126,62 +126,66 @@ def install(module):
 def uninstall(module):
     changed = False
     go_bin = module.get_bin_path('go', required=True)
-    cmd = [
+
+    clean_cmd = [
         go_bin,
         'clean',
         '-i',
     ]
-    rc = 0
-    stdout = ''
-    stderr = ''
-    failed_pkgs = []
-    found_pkgs = []
-
-    for name in module.params['name']:
-        _rc, _stdout, _stderr = module.run_command(cmd + [name])
-        if _rc == 1 and 'cannot find package' in _stderr:
-            continue
-        else:
-            if _rc != 0:
-                rc = _rc
-                failed_pkgs.append(name)
-            else:
-                found_pkgs.append(name)
-            stdout += _stdout
-            stderr += _stderr
 
     list_cmd = [
         go_bin,
         'list',
         '-json',
+        '-e',
     ]
 
-    for name in found_pkgs:
-        list_rc, list_stdout, list_stderr = module.run_command(list_cmd + [name])
-        if list_rc == 1 and 'no Go files' in list_stderr:
-            continue
-        elif list_rc != 0:
-            failed_pkgs.append(name)
-            stdout += list_stdout
-            stderr += list_stderr
-            rc = 1
-            continue
+    rc = 0
+    stdout = []
+    stderr = []
+    failed_pkgs = []
+    found_pkgs = {}
 
-        data = json.loads(list_stdout)
+    for name in module.params['name']:
+        list_rc, list_stdout, list_stderr = module.run_command(list_cmd + [name])
+        try:
+            data = json.loads(list_stdout)
+        except ValueError:
+            data = {}
+
+        err = data.get('Error', {}).get('Err', '')
+
+        if list_rc != 0 or 'Error' in data:
+            if err.startswith('cannot find package'):
+                continue
+
+            rc = 1
+            failed_pkgs.append(name)
+            stderr.append(err)
+            stderr.append(list_stderr)
+        else:
+            found_pkgs[name] = data['Dir']
+
+    for name, install_dir in found_pkgs.items():
+        clean_rc, clean_stdout, clean_stderr = module.run_command(clean_cmd + [name])
+        if clean_rc != 0:
+            rc = clean_rc
+        stdout.append(clean_stdout)
+        stderr.append(clean_stderr)
 
         try:
-            shutil.rmtree(data['Dir'])
+            shutil.rmtree(install_dir)
         except Exception as e:
             failed_pkgs.append(name)
-            stderr += '%s: %s' % (data['Dir'], to_native(e))
+            stderr.append('%s: %s' % (install_dir, to_native(e)))
             rc = 1
         else:
             changed = True
 
     exit_args = {
         'rc': rc,
-        'stdout': stdout,
-        'stderr': stderr,
+        'stdout': '\n'.join(l for l in stdout if l),
+        'stderr': '\n'.join(l for l in stderr if l),
         'changed': changed,
     }
 
