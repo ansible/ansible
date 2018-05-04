@@ -1,0 +1,104 @@
+# Test code for the netapp_e_host module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test Host module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+    hosts: &hosts
+      1:
+        host_type: 27
+        update_host_type: 28
+        ports:
+          - type: 'iscsi'
+            label: 'I_1'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe'
+          - type: 'iscsi'
+            label: 'I_2'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff'
+        ports2:
+          - type: 'iscsi'
+            label: 'I_1'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe'
+          - type: 'iscsi'
+            label: 'I_2'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff'
+          - type: 'fc'
+            label: 'FC_3'
+            port: '10:00:8C:7C:FF:1A:B9:01'
+      2:
+        host_type: 27
+        update_host_type: 28
+        ports:
+          - type: 'fc'
+            label: 'FC_1'
+            port: '10:00:8C:7C:FF:1A:B9:01'
+          - type: 'fc'
+            label: 'FC_2'
+            port: '10:00:8C:7C:FF:1A:B9:00'
+        ports2:
+          - type: 'fc'
+            label: 'FC_6'
+            port: '10:00:8C:7C:FF:1A:B9:01'
+          - type: 'fc'
+            label: 'FC_4'
+            port: '10:00:8C:7C:FF:1A:B9:00'
+
+- name: set credentials
+  set_fact:
+    credentials: *creds
+
+- name: Show some debug information
+  debug:
+    msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
+
+- name: Remove any existing hosts
+  netapp_e_host:
+    <<: *creds
+    state: absent
+    name: "{{ item.key }}"
+  with_dict: *hosts
+
+- name: Define hosts
+  netapp_e_host:
+    <<: *creds
+    state: present
+    host_type: "{{ item.value.host_type }}"
+    ports: "{{ item.value.ports }}"
+    name: "{{ item.key }}"
+  with_dict: *hosts
+
+- name: Redefine hosts, expecting no changes
+  netapp_e_host:
+    <<: *creds
+    state: present
+    host_type: "{{ item.value.host_type }}"
+    ports: "{{ item.value.ports }}"
+    name: "{{ item.key }}"
+  with_dict: *hosts
+  register: result
+
+- name: Ensure a change occurred
+  assert:
+    msg: "A change was not detected!"
+    that: "not result.changed"
+
+- name: Redefine hosts, expecting changes
+  netapp_e_host:
+    <<: *creds
+    state: present
+    host_type: "{{ item.value.host_type }}"
+    ports: "{{ item.value.ports2 }}"
+    name: "{{ item.key }}"
+    force_port: yes
+  with_dict: *hosts
+  register: result
