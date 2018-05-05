@@ -49,7 +49,6 @@ def tower_auth_config(module):
     '''
     config_file = module.params.pop('tower_config_file', None)
     if config_file:
-        config_file = os.path.expanduser(config_file)
         if not os.path.exists(config_file):
             module.fail_json(msg='file not found: %s' % config_file)
         if os.path.isdir(config_file):
