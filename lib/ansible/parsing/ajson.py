@@ -15,6 +15,7 @@ from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from ansible.parsing.vault import VaultLib
 
+
 class AnsibleJSONDecoder(json.JSONDecoder):
 
     _vaults = {}
