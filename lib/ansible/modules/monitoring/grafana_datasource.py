@@ -34,7 +34,7 @@ options:
     description:
      - The type of the datasource.
     required: true
-    choices: [ elasticsearch, graphite, influxdb, mysql, opentsdb, postgres, prometheus ]
+    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, alexanderzobnin-zabbix-datasource]
   url:
     description:
       - The URL of the datasource.
@@ -151,6 +151,12 @@ options:
     description:
       - SSL mode for C(postgres) datasoure type.
     choices: [ disable, require, verify-ca, verify-full ]
+  trends:
+    required: false
+    description:
+      - Use trends or not for zabbix datasource type
+    type: bool
+    version_added: 2.6
   validate_certs:
     description:
       - Whether to validate the Grafana certificate.
@@ -356,6 +362,10 @@ def grafana_create_datasource(module, data):
     if data['ds_type'] == 'postgres':
         json_data['sslmode'] = data['sslmode']
 
+    if data['ds_type'] == 'alexanderzobnin-zabbix-datasource':
+        if data.get('trends'):
+            json_data['trends'] = True
+
     payload['jsonData'] = json_data
 
     # define http header
@@ -465,7 +475,8 @@ def main():
                                   'influxdb',
                                   'opentsdb',
                                   'mysql',
-                                  'postgres']),
+                                  'postgres',
+                                  'alexanderzobnin-zabbix-datasource']),
             url=dict(required=True, type='str'),
             access=dict(default='proxy', choices=['proxy', 'direct']),
             grafana_user=dict(default='admin'),
@@ -491,6 +502,7 @@ def main():
             tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
             tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
             sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
+            trends=dict(default=False, type='bool'),
             validate_certs=dict(type='bool', default=True)
         ),
         supports_check_mode=False,
