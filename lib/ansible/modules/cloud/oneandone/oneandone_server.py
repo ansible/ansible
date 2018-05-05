@@ -110,6 +110,9 @@ options:
       - The type of server to be built.
     default: "cloud"
     choices: [ "cloud", "baremetal", "k8s_node" ]
+  execution_group:
+    description:
+      - Physical location where the servers will be located.
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
@@ -253,7 +256,7 @@ def _create_server(module, oneandone_conn, hostname, description,
                    fixed_instance_size_id, vcore, cores_per_processor, ram,
                    hdds, datacenter_id, appliance_id, ssh_key,
                    private_network_id, firewall_policy_id, load_balancer_id,
-                   monitoring_policy_id, server_type, wait, wait_timeout,
+                   monitoring_policy_id, server_type, execution_group, wait, wait_timeout,
                    wait_interval):
 
     try:
@@ -282,7 +285,8 @@ def _create_server(module, oneandone_conn, hostname, description,
                 firewall_policy_id=firewall_policy_id,
                 load_balancer_id=load_balancer_id,
                 monitoring_policy_id=monitoring_policy_id,
-                server_type=server_type,), hdds)
+                server_type=server_type,
+                execution_group=execution_group), hdds)
 
         if wait:
             wait_for_resource_creation_completion(
@@ -335,6 +339,7 @@ def create_server(module, oneandone_conn):
     firewall_policy = module.params.get('firewall_policy')
     load_balancer = module.params.get('load_balancer')
     server_type = module.params.get('server_type')
+    execution_group = module.params.get('execution_group')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
     wait_interval = module.params.get('wait_interval')
@@ -436,6 +441,7 @@ def create_server(module, oneandone_conn):
             firewall_policy_id=firewall_policy_id,
             load_balancer_id=load_balancer_id,
             server_type=server_type,
+            execution_group=execution_group,
             wait=wait,
             wait_timeout=wait_timeout,
             wait_interval=wait_interval)
@@ -632,6 +638,7 @@ def main():
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
             server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'k8s_node']),
+            execution_group=dict(type='str'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             wait_interval=dict(type='int', default=5),
