@@ -95,6 +95,14 @@ class TowerModule(AnsibleModule):
         )
         args.update(argument_spec)
 
+        mutually_exclusive = kwargs.get('mutually_exclusive', [])
+        kwargs['mutually_exclusive'] = mutually_exclusive.extend((
+            ('tower_config_file', 'tower_host'),
+            ('tower_config_file', 'tower_username'),
+            ('tower_config_file', 'tower_password'),
+            ('tower_config_file', 'tower_verify_ssl'),
+        ))
+
         super(TowerModule, self).__init__(argument_spec=args, **kwargs)
 
         if not HAS_TOWER_CLI:
