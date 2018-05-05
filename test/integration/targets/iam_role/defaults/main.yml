@@ -1,0 +1,27 @@
+---
+# defaults file for iam_role
+iam_role_name: '{{resource_prefix}}-iam-role'
+safe_assume_role_policy_document:
+  Version: 2008-10-17
+  Statement:
+    - Effect: Allow
+      Principal:
+        Service: ec2.amazonaws.com
+      Action: sts:AssumeRole
+safe_managed_policy:
+  arn:aws:iam::aws:policy/PowerUserAccess
+safe_added_managed_policy:
+  arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
+
+test_description: ansible test description
+test_path: '/ansible/test/path/'
+
+invalid_assume_role_policy_document:
+  Version: 2008-10-17
+  Statement:
+    - Effect: Allow
+      Principal:
+        Service: ansible.test.invalid.policy.example.com
+      Action: sts:AssumeRole
+invalid_managed_policy:
+  arn:aws:iam::aws:policy/InvalidAnsibleTestManagedPolicy

@@ -1,0 +1,400 @@
+- block:
+
+    # ============================================================
+    - name: test with no name
+      iam_role:
+        state: present
+      ignore_errors: true
+      register: result
+
+    - name: assert failure when called with no name
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    - name: test with no name in check mode
+      iam_role:
+        state: present
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert failure when called with no name in check mode
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no assume role policy document
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no assume role policy document
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("state is present but all of the following are missing: assume_role_policy_document")'
+
+    - name: test with no assume role policy document in check mode
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert failure when called with no assume role policy document in check mode
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("state is present but all of the following are missing: assume_role_policy_document")'
+
+    # ============================================================
+    - name: test credentials from environment
+      iam_role:
+        name: '{{ iam_role_name }}'
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+      environment:
+        EC2_ACCESS_KEY: bogus_access_key
+        EC2_SECRET_KEY: bogus_secret_key
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with invalid credential
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Unable to get role")'
+
+    - name: test credentials from environment in check mode
+      iam_role:
+        name: '{{ iam_role_name }}'
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+      environment:
+        EC2_ACCESS_KEY: bogus_access_key
+        EC2_SECRET_KEY: bogus_secret_key
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert failure when called with invalid credential in check mode
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Unable to get role")'
+
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+    - name: test with invalid assume role document
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+        assume_role_policy_document: "{{ invalid_assume_role_policy_document | to_json }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with invalid document
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Unable to create role: An error occurred (MalformedPolicyDocument)")'
+
+    # ============================================================
+    - name: test with invalid assume role document in check mode
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+        assume_role_policy_document: "{{ invalid_assume_role_policy_document | to_json }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: "assert failure when called with invalid document in check mode (caution: The MalformedPolicyDocument check does not work in change mode)."
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: test with invalid managed policy
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        managed_policy: "{{ invalid_managed_policy }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with invalid managed policy
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Unable to attach policy arn:aws:iam::aws:policy/InvalidAnsibleTestManagedPolicy")'
+
+    - name: test with invalid managed policy in check mode
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        managed_policy: "{{ invalid_managed_policy }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: "assert failure when called with invalid managed policy in check mode (caution: The existence check of the managed policy does not work in change mode)."
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: create a iam role
+      iam_role:
+        name: '{{ iam_role_name }}-1'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-1" in result.role_name'
+
+    - name: create a iam role in check mode
+      iam_role:
+        name: '{{ iam_role_name }}-1-checkmode'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert a change would be made in check mode
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: create a iam role with managed policy
+      iam_role:
+        name: '{{ iam_role_name }}-2'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        managed_policy: "{{ safe_managed_policy }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-2" in result.role_name'
+          - '"{{ safe_managed_policy }}" in result.attached_policies | map(attribute="policy_arn") | list'
+
+    - name: do not purge the policy as it is
+      iam_role:
+        name: '{{ iam_role_name }}-2'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        managed_policy: "{{ safe_added_managed_policy }}"
+        purge_policies: no
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made without instance profile
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-2" in result.role_name'
+          - '"{{ safe_managed_policy }}" in result.attached_policies | map(attribute="policy_arn") | list'
+          - '"{{ safe_added_managed_policy }}" in result.attached_policies | map(attribute="policy_arn") | list'
+
+    - name: create a iam role with managed policy in check mode
+      iam_role:
+        name: '{{ iam_role_name }}-2-checkmode'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        managed_policy: "{{ safe_managed_policy }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert a change would be made in check mode
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: create a iam role without instance profile
+      iam_role:
+        name: '{{ iam_role_name }}-3'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        create_instance_profile: no
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made without instance profile
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-3" in result.role_name'
+
+    - name: create a iam role without instance profile in check mode
+      iam_role:
+        name: '{{ iam_role_name }}-3-checkmode'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        create_instance_profile: no
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert a change would be made without instance profile in check mode
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: create a iam role with description
+      iam_role:
+        name: '{{ iam_role_name }}-4'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        description: "{{ test_description }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made without instance profile
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-4" in result.role_name'
+          - '"{{ test_description }}" in result.description'
+
+    - name: create a iam role with description
+      iam_role:
+        name: '{{ iam_role_name }}-4-checkmode'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        description: "{{ test_description }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert a change would be made without instance profile
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+    - name: create a iam role with path
+      iam_role:
+        name: '{{ iam_role_name }}-5'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        path: "{{ test_path }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: assert a change would be made with path
+      assert:
+        that:
+          - 'result.changed'
+          - '"{{ iam_role_name }}-5" in result.role_name'
+          - '"{{ test_path }}" in result.path'
+
+    - name: create a iam role with path in check mode
+      iam_role:
+        name: '{{ iam_role_name }}-5-checkmode'
+        state: present
+        assume_role_policy_document: "{{ safe_assume_role_policy_document | to_json }}"
+        path: "{{ test_path }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+      check_mode: yes
+
+    - name: assert a change would be made with path in check mode
+      assert:
+        that:
+          - 'result.changed'
+
+  always:
+
+    # ============================================================
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}-1'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}-2'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}-3'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}-4'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: tidy up iam role
+      iam_role:
+        name: '{{ iam_role_name }}-5'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
