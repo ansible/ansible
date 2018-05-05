@@ -69,6 +69,7 @@ EXAMPLES = '''
 '''
 
 import errno
+import filecmp
 import os
 import platform
 import random
@@ -592,15 +593,59 @@ class BSDTimezone(Timezone):
     def __init__(self, module):
         super(BSDTimezone, self).__init__(module)
 
+    def __get_timezone(self):
+        zoneinfo_dir = '/usr/share/zoneinfo/'
+        localtime_file = '/etc/localtime'
+
+        # Strategy 1:
+        #   If /etc/localtime does not exist, assum the timezone is UTC.
+        if not os.path.exists(localtime_file):
+            self.module.warn('Could not read /etc/localtime. Assuming UTC.')
+            return 'UTC'
+
+        # Strategy 2:
+        #   Return planned timezone as current timezone if their content matches.
+        #   This is bad design to see `self.value` here,
+        #   but it's intended to avoid useless diff.
+        planned = self.value['name']['planned']
+        try:
+            already_planned_state = filecmp.cmp(os.path.join(zoneinfo_dir, planned), localtime_file)
+        except OSError:
+            # Even if reading planned zoneinfo file gives an OSError, don't abort here,
+            # because a bit more detailed check will be done in `set`.
+            already_planned_state = False
+        if already_planned_state:
+            return planned
+
+        # Strategy 3:
+        #   Follow symlink of /etc/localtime
+        zoneinfo_file = localtime_file
+        while not zoneinfo_file.startswith(zoneinfo_dir):
+            try:
+                zoneinfo_file = os.readlink(localtime_file)
+            except OSError:
+                # OSError means "end of symlink chain" or broken link.
+                break
+        else:
+            return zoneinfo_file.replace(zoneinfo_dir, '')
+
+        # Strategy 4:
+        #   Check all files in /usr/share/zoneinfo and return first match.
+        for dname, _, fnames in os.walk(zoneinfo_dir):
+            for fname in fnames:
+                zoneinfo_file = os.path.join(dname, fname)
+                if filecmp.cmp(zoneinfo_file, localtime_file):
+                    return zoneinfo_file.replace(zoneinfo_dir, '')
+
+        # Strategy 5:
+        #   As a fall-back, return 'UTC' as default assumption.
+        self.module.warn('Could not identify timezone name from /etc/localtime. Assuming UTC.')
+        return 'UTC'
+
     def get(self, key, phase):
         """Lookup the current timezone by resolving `/etc/localtime`."""
         if key == 'name':
-            try:
-                tz = os.readlink('/etc/localtime')
-                return tz.replace('/usr/share/zoneinfo/', '')
-            except:
-                self.module.warn('Could not read /etc/localtime. Assuming UTC')
-                return 'UTC'
+            return self.__get_timezone()
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
 
