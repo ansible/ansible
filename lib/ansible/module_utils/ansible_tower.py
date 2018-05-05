@@ -37,6 +37,8 @@ try:
 except ImportError:
     HAS_TOWER_CLI = False
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def tower_auth_config(module):
     '''tower_auth_config attempts to load the tower-cli.cfg file
@@ -82,11 +84,18 @@ def tower_check_mode(module):
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
 
 
-def tower_argument_spec():
-    return dict(
-        tower_host=dict(),
-        tower_username=dict(),
-        tower_password=dict(no_log=True),
-        tower_verify_ssl=dict(type='bool', default=True),
-        tower_config_file=dict(type='path'),
-    )
+class TowerModule(AnsibleModule):
+    def __init__(self, argument_spec, **kwargs):
+        args = dict(
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+        )
+        args.update(argument_spec)
+
+        super(TowerModule, self).__init__(argument_spec=args, **kwargs)
+
+        if not HAS_TOWER_CLI:
+            self.fail_json(msg='ansible-tower-cli required for this module')
