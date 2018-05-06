@@ -75,7 +75,7 @@
         name: testnic001
         resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001rg
       public_ip_allocation_method: Static
       security_group: testnic001
   register: output
@@ -88,7 +88,7 @@
         name: testnic001
         resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001rg
       public_ip_allocation_method: Static
       security_group: testnic001
   register: output
