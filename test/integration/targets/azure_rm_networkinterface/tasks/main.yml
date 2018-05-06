@@ -236,7 +236,7 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001noip
-      has_security_group: False
+      create_with_security_group: False
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
