@@ -1,1 +1,2 @@
 lib/ansible/modules/utilities/logic/async_status.py
+lib/ansible/modules/cloud/digital_ocean/digital_ocean_space.py
