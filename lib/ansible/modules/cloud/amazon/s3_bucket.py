@@ -416,11 +416,13 @@ def paginated_list(s3_client, **pagination_params):
     for page in pg.paginate(**pagination_params):
         yield [data['Key'] for data in page.get('Contents', [])]
 
+
 def paginated_versions_list(s3_client, **pagination_params):
     pg = s3_client.get_paginator('list_object_versions')
     for page in pg.paginate(**pagination_params):
         # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
         yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+
 
 def destroy_bucket(s3_client, module):
 
