@@ -262,6 +262,12 @@ options:
     - ' - C(type) (string): Value type, string type by default.'
     - ' - C(operation): C(remove): This attribute is required only when removing properties.'
     version_added: '2.6'
+  customization_spec:
+    description:
+    - Unique name identifying the requested customization specification.
+    - This parameter is case sensitive.
+    - If set, then overrides C(customization) parameter values.
+    version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -1267,6 +1273,19 @@ class PyVmomiHelper(PyVmomi):
             self.change_detected = True
 
     def customize_vm(self, vm_obj):
+
+        # User specified customization specification
+        custom_spec_name = self.params.get('customization_spec')
+        if custom_spec_name:
+            cc_mgr = self.content.customizationSpecManager
+            if cc_mgr.DoesCustomizationSpecExist(name=custom_spec_name):
+                temp_spec = cc_mgr.GetCustomizationSpec(name=custom_spec_name)
+                self.customspec = temp_spec.spec
+                return
+            else:
+                self.module.fail_json(msg="Unable to find customization specification"
+                                          " '%s' in given configuration." % custom_spec_name)
+
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
@@ -2095,6 +2114,7 @@ def main():
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
     )
 
