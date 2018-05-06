@@ -33,8 +33,8 @@
 - name: validate before assertions
   assert:
     that:
-      - replace_test0|success
-      - replace_test0|changed
+      - replace_test0 is successful
+      - replace_test0 is changed
       - replace_cat0.stdout_lines[0] == 'Thequickbrownfoxjumpsoverthelazydog.'
       - replace_cat0.stdout_lines[-1] == 'Jaded zombies acted quaintly but kept driving their oxen forward.'
 
@@ -53,8 +53,8 @@
 - name: validate after assertions
   assert:
     that:
-      - replace_test1|success
-      - replace_test1|changed
+      - replace_test1 is successful
+      - replace_test1 is changed
       - replace_cat1.stdout_lines[0] == 'The quick brown fox jumps over the lazy dog.'
       - replace_cat1.stdout_lines[-1] == 'Jadedzombiesactedquaintlybutkeptdrivingtheiroxenforward.'
 
@@ -72,8 +72,8 @@
 - name: validate after+before assertions
   assert:
     that:
-      - replace_test2|success
-      - not replace_test2|changed
+      - replace_test2 is successful
+      - not replace_test2 is changed
       - replace_test2.msg.startswith("Pattern for before/after params did not match the given file")
 
 - name: before "quilt" but after "promptly", replace every "e" with a "3"
@@ -91,8 +91,8 @@
 - name: validate before+after assertions
   assert:
     that:
-      - replace_test3|success
-      - replace_test3|changed
+      - replace_test3 is successful
+      - replace_test3 is changed
       - replace_cat3.stdout_lines[1] == 'We promptly judg3d antiqu3 ivory buckl3s for th3 n3xt priz3.'
 
 
@@ -120,10 +120,10 @@
 - name: validate before+after assertions
   assert:
     that:
-      - replace_test4_0|success
-      - replace_test4_0|changed
-      - replace_test4_1|success
-      - replace_test4_1|changed
+      - replace_test4_0 is successful
+      - replace_test4_0 is changed
+      - replace_test4_1 is successful
+      - replace_test4_1 is changed
       - replace_cat4_0.stdout_lines[0] == '"The quick brown fox jumps over the lazy dog.'
       - replace_cat4_0.stdout_lines[-1] == 'Jaded zombies acted quaintly but kept driving their oxen forward."'
       - replace_cat4_1.stdout_lines[0] == '""The quick brown fox jumps over the lazy dog."'
@@ -162,10 +162,10 @@
 - name: validate before+after assertions
   assert:
     that:
-      - not replace_test5_0|changed
-      - replace_test5_1|changed
-      - replace_test5_2|changed
-      - not replace_test5_3|changed
+      - not replace_test5_0 is changed
+      - replace_test5_1 is changed
+      - replace_test5_2 is changed
+      - not replace_test5_3 is changed
       - replace_cat5_1.stdout_lines[0] == '"The quick brown fox jumps over the lazy dog".'
       - replace_cat5_1.stdout_lines[-1] == '"Jaded zombies acted quaintly but kept driving their oxen forward".'
       - replace_cat5_2.stdout_lines[0] == '""The quick brown fox jumps over the lazy dog"".'
@@ -190,9 +190,9 @@
 - name: validate backup
   assert:
     that:
-      - replace_test6|success
-      - replace_test6|changed
-      - replace_test6.backup_file | search('/pangrams.06.txt.')
+      - replace_test6 is successful
+      - replace_test6 is changed
+      - replace_test6.backup_file is search('/pangrams.06.txt.')
       - replace_cat6_0.stdout != replace_cat6_1.stdout
 
 
@@ -214,8 +214,8 @@
 - name: validate backup
   assert:
     that:
-      - replace_test7_1|failure
-      - replace_test7_2|failure
+      - replace_test7_1 is failure
+      - replace_test7_2 is failure
       - replace_test7_1.msg.endswith(" is a directory !")
       - replace_test7_2.msg.endswith(" does not exist !")
 
@@ -258,8 +258,8 @@
 - name: validate before+after assertions
   assert:
     that:
-      - replace_test8|success
-      - replace_test8|changed
+      - replace_test8 is successful
+      - replace_test8 is changed
       - replace_cat8.stdout_lines[1] == "9.9.9.9"
       - replace_cat8.stdout_lines[7] == "0.0.0.0"
       - replace_cat8.stdout_lines[13] == "0.0.0.0"
