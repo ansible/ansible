@@ -1117,6 +1117,20 @@ class PyVmomiHelper(PyVmomi):
 
                 dvs_port_connection = vim.dvs.PortConnection()
                 dvs_port_connection.portgroupKey = pg_obj.key
+                # If user specifies distributed port group without associating to the hostsystem on which
+                # virtual machine is going to be deployed then we get error. We can infer that there is no
+                # association between given distributed port group and host system.
+                host_system = self.params.get('esxi_hostname')
+                if host_system and host_system not in [host.config.host.name for host in pg_obj.config.distributedVirtualSwitch.config.host]:
+                    self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
+                                              " virtual portgroup '%s'. Please make sure host system is associated"
+                                              " with given distributed virtual portgroup" % (host_system, pg_obj.name))
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
@@ -1124,10 +1138,10 @@ class PyVmomiHelper(PyVmomi):
             elif isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
                 # NSX-T Logical Switch
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
+                network_id = self.cache.get_network(network_name).summary.opaqueNetworkId
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
-                nic.device.backing.opaqueNetworkId = self.cache.get_network(network_name).summary.opaqueNetworkId
-                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % (self.cache.get_network(network_name).summary.opaqueNetworkId)
-
+                nic.device.backing.opaqueNetworkId = network_id
+                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
