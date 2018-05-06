@@ -52,25 +52,22 @@ options:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
         required: false
-    virtual_network_resource_group:
+    virtual_network:
         description:
-        - The resource group of I(virtual_network_name).
-        - If not set then this is the same resource group as I(resource_group).
-        - This can be used to specify the resource group of a virtual network that is in another resource group
-          than the network interface.
-        - If I(virtual_network_name) is specified as a virtual network id, this parameter is ignored.
-        version_added: 2.6
-    virtual_network_name:
-        description:
-            - Name or id of an existing virtual network with which the network interface will be associated. Required
+            - An existing virtual network with which the network interface will be associated. Required
               when creating a network interface.
+            - It can be the virtual network's name.
+            - Make sure your virtual network is in the same resource group as NIC when you give only the name.
+            - It can be the virtual network's resource id.
+            - It can be a dict which contains C(name) and C(resource_group) of the virtual network.
         aliases:
-            - virtual_network
+            - virtual_network_name
         required: true
     subnet_name:
         description:
             - Name of an existing subnet within the specified virtual network. Required when creating a network
               interface
+            - Use the C(virtual_network)'s resource group.
         aliases:
             - subnet
         required: true
@@ -124,8 +121,7 @@ options:
     ip_configurations:
         description:
             - List of ip configuration if contains mutilple configuration, should contain configuration object include
-              field private_ip_address, private_ip_allocation_method, public_ip_address_name, public_ip, subnet_name,
-              virtual_network_name, public_ip_allocation_method, name
+              field private_ip_address, private_ip_allocation_method, public_ip_address_name, public_ip, public_ip_allocation_method, name
         suboptions:
             name:
                 description:
@@ -169,12 +165,16 @@ options:
         type: bool
         version_added: 2.6
         default: True
-    security_group_name:
+    security_group:
         description:
-            - Name of an existing security group with which to associate the network interface. If not provided, a
+            - An existing security group with which to associate the network interface. If not provided, a
               default security group will be created when C(create_with_security_group) is true.
+            - It can be the name of security group.
+            - Make sure the security group is in the same resource group when you only give its name.
+            - It can be the resource id.
+            - It can be a dict contains security_group's C(name) and C(resource_group).
         aliases:
-            - security_group
+            - security_group_name
     open_ports:
         description:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
@@ -195,7 +195,7 @@ EXAMPLES = '''
       azure_rm_networkinterface:
         name: nic001
         resource_group: Testing
-        virtual_network_name: vnet001
+        virtual_network: vnet001
         subnet_name: subnet001
         ip_configurations:
           - name: ipconfig1
@@ -206,7 +206,7 @@ EXAMPLES = '''
       azure_rm_networkinterface:
         name: nic001
         resource_group: Testing
-        virtual_network_name: vnet001
+        virtual_network: vnet001
         subnet_name: subnet001
         ip_configurations:
           - name: ipconfig1
@@ -216,7 +216,7 @@ EXAMPLES = '''
       azure_rm_networkinterface:
         name: nic002
         resource_group: Testing
-        virtual_network_name: vnet001
+        virtual_network: vnet001
         subnet_name: subnet001
         os_type: Windows
         rdp_port: 3399
@@ -229,7 +229,7 @@ EXAMPLES = '''
       azure_rm_networkinterface:
         name: nic003
         resource_group: Testing
-        virtual_network_name: vnet001
+        virtual_network: vnet001
         subnet_name: subnet001
         security_group_name: secgroup001
         ip_configurations:
@@ -242,7 +242,7 @@ EXAMPLES = '''
         name: nic004
         resource_group: Testing
         subnet_name: subnet001
-        virtual_network_name: vnet001
+        virtual_network: vnet001
         security_group_name: secgroup001
         ip_configurations:
           - name: ipconfig1
@@ -377,15 +377,14 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             name=dict(type='str', required=True),
             location=dict(type='str'),
             create_with_security_group=dict(type='bool', default=True),
-            security_group_name=dict(type='str', aliases=['security_group']),
+            security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
             private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
             public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
-            virtual_network_resource_group=dict(type='str'),
-            virtual_network_name=dict(type='str', aliases=['virtual_network']),
+            virtual_network=dict(type='raw', aliases=['virtual_network_name']),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
@@ -393,21 +392,20 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         )
 
         required_if = [
-            ('state', 'present', ['subnet_name', 'virtual_network_name'])
+            ('state', 'present', ['subnet_name', 'virtual_network'])
         ]
 
         self.resource_group = None
         self.name = None
         self.location = None
         self.create_with_security_group = None
-        self.security_group_name = None
+        self.security_group = None
         self.private_ip_address = None
         self.private_ip_allocation_method = None
         self.public_ip_address_name = None
         self.public_ip = None
         self.subnet_name = None
-        self.virtual_network_resource_group = None
-        self.virtual_network_name = None
+        self.virtual_network = None
         self.public_ip_allocation_method = None
         self.state = None
         self.tags = None
@@ -440,15 +438,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             self.location = resource_group.location
 
         # parse the virtual network resource group and name
-        virtual_network_dict = parse_resource_id(self.virtual_network_name)
-        virtual_network_name = virtual_network_dict.get('name')
-        virtual_network_resource_group = virtual_network_dict.get('resource_group', self.virtual_network_resource_group)
-
-        if virtual_network_resource_group is None:
-            virtual_network_resource_group = self.resource_group
+        self.virtual_network = self.parse_resource_to_dict(self.virtual_network)
 
         # if not set the security group name, use nic name for default
-        self.security_group_name = self.security_group_name or self.name
+        self.security_group = self.parse_resource_to_dict(self.security_group or self.name)
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
@@ -486,16 +479,16 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     changed = True
 
                 if not changed:
-                    nsg = self.get_security_group(self.security_group_name)
+                    nsg = self.get_security_group(self.security_group['resource_group'], self.security_group['name'])
                     if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
                         self.log("CHANGED: network interface {0} network security group".format(self.name))
                         changed = True
 
-                if results['ip_configurations'][0]['subnet']['virtual_network_name'] != virtual_network_name:
+                if results['ip_configurations'][0]['subnet']['virtual_network_name'] != self.virtual_network['name']:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
                     changed = True
 
-                if results['ip_configurations'][0]['subnet']['resource_group'] != virtual_network_resource_group:
+                if results['ip_configurations'][0]['subnet']['resource_group'] != self.virtual_network['resource_group']:
                     self.log("CHANGED: network interface {0} virtual network resource group".format(self.name))
                     changed = True
 
@@ -532,9 +525,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             if self.state == 'present':
                 subnet = self.network_models.SubResource(
                     '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}'.format(
-                        self.subscription_id,
-                        virtual_network_resource_group,
-                        virtual_network_name,
+                        self.virtual_network['subscription_id'],
+                        self.virtual_network['resource_group'],
+                        self.virtual_network['name'],
                         self.subnet_name))
 
                 nic_ip_configurations = [
@@ -551,9 +544,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
-                nsg = self.create_default_securitygroup(self.resource_group,
+                nsg = self.create_default_securitygroup(self.security_group['resource_group'],
                                                         self.location,
-                                                        self.security_group_name,
+                                                        self.security_group['name'],
                                                         self.os_type,
                                                         self.open_ports) if self.create_with_security_group else None
 
@@ -616,10 +609,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         except Exception as exc:
             return None
 
-    def get_security_group(self, name):
+    def get_security_group(self, resource_group, name):
         self.log("Fetching security group {0}".format(name))
         try:
-            return self.network_client.network_security_groups.get(self.resource_group, name)
+            return self.network_client.network_security_groups.get(resource_group, name)
         except Exception as exc:
             return None
 

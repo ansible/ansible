@@ -11,10 +11,12 @@
       name: testnic001
       address_prefix: "10.10.0.0/24"
       virtual_network: testnic001
+
 - name: create public ip
   azure_rm_publicipaddress:
     name: ansiblepip3
     resource_group: '{{ resource_group }}'
+
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
@@ -65,24 +67,26 @@
     that:
       - output.changed
 
-- name: Create NIC using virtual_network_resource_group parameter
+- name: Create NIC using virtual_network resource_group parameter
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001rg
-      virtual_network: testnic001
-      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network:
+        name: testnic001
+        resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
       public_ip_name: testnic001
       public_ip_allocation_method: Static
       security_group: testnic001
   register: output
 
-- name: Create NIC using virtual_network_resource_group parameter (idempotent)
+- name: Create NIC using virtual_network resource_group parameter (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001rg
-      virtual_network: testnic001
-      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network:
+        name: testnic001
+        resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
       public_ip_name: testnic001
       public_ip_allocation_method: Static
@@ -98,7 +102,7 @@
       resource_group: "{{ resource_group }}"
       name: testnic001rg
       state: absent
-  
+
 - name: Create NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -107,7 +111,9 @@
       subnet: testnic001
       public_ip_name: testnic001
       public_ip_allocation_method: Static
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
   register: output
 
 - assert:
@@ -119,7 +125,9 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -142,7 +150,9 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -165,12 +175,15 @@
       - output.changed
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 3
+      - output.state.network_security_group.name == 'testnic002'
 
 - name: Update the NIC with mutilple ip configurations (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -196,7 +209,9 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
