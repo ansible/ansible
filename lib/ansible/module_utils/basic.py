@@ -249,6 +249,16 @@ PERM_BITS = 0o7777       # file mode permission bits
 EXEC_PERM_BITS = 0o0111  # execute permission bits
 DEFAULT_PERM = 0o0666    # default file permission bits
 
+
+# Used in ``dotted_accessor``
+DOTTED_ACCESSOR_RE = re.compile(r'(\w+)|\[[\'"]?(\w+)[\'"]?\]|\.(\w+)')
+DOTTED_ACCESSOR_SAFE_MAPS = {
+    'True': True,
+    'None': None,
+    'False': False,
+}
+
+
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
@@ -792,6 +802,67 @@ def jsonify(data, **kwargs):
         except UnicodeDecodeError:
             continue
     raise UnicodeError('Invalid unicode encoding encountered')
+
+
+def dotted_accessor(obj, accessor=None):
+    """Function to fetch the value of an element or key in lists or dicts using
+    dot notation
+
+    >>> obj = {'foo': {'bar': [{'baz': 'qux'}]}}
+    >>> dotted_accessor(obj, 'foo["bar"][0].baz')
+    'qux'
+    >>> dotted_accessor(obj, 'foo["bar"].0.baz')
+    'qux'
+    >>> dotted_accessor(obj, 'foo.bar')
+    [{'baz': 'qux'}]
+    >>> dotted_accessor(obj, 'foo.bar.0.baz')
+    'qux'
+    >>> dotted_accessor(obj, ['foo', "bar", 0, 'baz'])
+    'qux'
+    >>> dotted_accessor(obj, ['foo', "bar", '0', 'baz'])
+    'qux'
+    >>> dotted_accessor(obj)
+    {'foo': {'bar': [{'baz': 'qux'}]}}
+    >>> dotted_accessor({None: {'False': 'foo'}}, 'None.False')
+    'foo'
+    >>> dotted_accessor({'1': ['foo']}, '1.0')
+    'foo'
+    >>> dotted_accessor({}, 'foo')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'foo'
+    >>> dotted_accessor(None, 'foo')
+    Traceback (most recent call last):
+        ...
+    TypeError: 'NoneType' object is not subscriptable
+    """
+    if not accessor:
+        return obj
+
+    if isinstance(accessor, str):
+        accessors = [v for match in DOTTED_ACCESSOR_RE.findall(accessor) for v in match if v]
+    else:
+        accessors = accessor
+
+    this = accessors[0]
+
+    try:
+        if not this.isdigit():
+            raise ValueError
+        new = obj[int(this)]
+    except (IndexError, KeyError, ValueError, AttributeError):
+        try:
+            new = obj[this]
+        except KeyError as e:
+            try:
+                new = obj[DOTTED_ACCESSOR_SAFE_MAPS[this]]
+            except KeyError:
+                raise e
+
+    if len(accessors) > 1:
+        return dotted_accessor(new, accessors[1:])
+    else:
+        return new
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -1676,7 +1747,11 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
         for term in check:
-            if term in param:
+            try:
+                dotted_accessor(param, term)
+            except KeyError:
+                pass
+            else:
                 count += 1
         return count
 
@@ -1755,11 +1830,17 @@ class AnsibleModule(object):
             else:
                 term = 'all'
 
-            if key in param and param[key] == val:
+            try:
+                param_val = dotted_accessor(param, key)
+            except KeyError:
+                continue
+
+            if param_val == val:
                 for check in requirements:
                     count = self._count_terms((check,), param)
                     if count == 0:
                         missing.append(check)
+
             if len(missing) and len(missing) >= max_missing_count:
                 msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
                 if self._options_context:

@@ -88,6 +88,33 @@ def complex_argspec():
 
 
 @pytest.fixture
+def restrict_across_levels_argspec():
+    arg_spec = dict(
+        foo=dict(type='bool'),
+        bar=dict(
+            type='dict',
+            options=dict(
+                baz=dict(type='bool'),
+                bang=dict(type='bool'),
+            ),
+        ),
+        qux=dict(),
+        bam=dict(),
+    )
+    mut_ex = (('foo', 'bar.baz'),)
+    req_to = (('bar.baz', 'qux'),)
+    req_if = (('bar.bang', True, ('bam',)),)
+
+    kwargs = dict(
+        argument_spec=arg_spec,
+        mutually_exclusive=mut_ex,
+        required_together=req_to,
+        required_if=req_if,
+    )
+    return kwargs
+
+
+@pytest.fixture
 def options_argspec_list():
     options_spec = dict(
         foo=dict(required=True, aliases=['dup']),
@@ -358,6 +385,38 @@ class TestComplexOptions:
          'parameters are required together: bam1, baz found in foobar'),
     )
 
+    # arg_spec = dict(
+    #     foo=dict(type='bool'),
+    #     bar=dict(
+    #         type='dict',
+    #         options=dict(
+    #             baz=dict(type='bool'),
+    #             bang=dict(type='bool'),
+    #         ),
+    #     ),
+    #     qux=dict(),
+    #     bam=dict(),
+    # )
+    # mut_ex = (('foo', 'bar.baz'),)
+    # req_to = (('bar.baz', 'qux'),)
+    # req_if = (('bar.bang', True, ('bam',)),)
+
+    OPTIONS_MULTI_LEVEL = (
+        {'foo': True, 'bar': {'bang': True}, 'bam': 'bam'},
+        {'bar': {'bang': True, 'baz': True}, 'qux': 'qux', 'bam': 'bam'},
+        {'foo': True, 'bar': {'bang': False}},
+    )
+
+    # (Paramaters, failure message)
+    FAILING_MULTI_LEVEL = (
+        ({'foo': True, 'bar': {'baz': True}},
+         'parameters are mutually exclusive: foo, bar.baz'),
+        ({'bar': {'baz': True}},
+         'parameters are required together: bar.baz, qux'),
+        ({'bar': {'bang': True}},
+         'bar.bang is True but all of the following are missing: bam'),
+    )
+
     @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
     def test_options_type_dict(self, stdin, options_argspec_dict, expected):
         """Test that a basic creation with required and required_if works"""
@@ -411,6 +470,24 @@ class TestComplexOptions:
 
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
+
+    @pytest.mark.parametrize('stdin, expected', FAILING_MULTI_LEVEL, indirect=['stdin'])
+    def test_multi_level_restriction_mut_ex(self, capfd, stdin, restrict_across_levels_argspec, expected):
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**restrict_across_levels_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert expected in results['msg']
+
+    @pytest.mark.parametrize('stdin', OPTIONS_MULTI_LEVEL, indirect=['stdin'])
+    def test_multi_level_restriction_mut_ex(self, capfd, stdin, restrict_across_levels_argspec):
+        am = basic.AnsibleModule(**restrict_across_levels_argspec)
+
+        out, err = capfd.readouterr()
+        assert not out
 
 
 class TestLoadFileCommonArguments:
