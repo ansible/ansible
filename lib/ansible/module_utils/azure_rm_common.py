@@ -319,11 +319,8 @@ class AzureRMModuleBase(object):
         self.subscription_id = self.credentials['subscription_id']
 
         # get authentication authority
-<<<<<<< HEAD
         # for adfs, user could pass in authority or not.
         # for others, use default authority from cloud environment
-=======
->>>>>>> remove default client_id after discussion
         if self.credentials.get('adfs_authority_url') is None:
             self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
         else:
