@@ -54,6 +54,25 @@
   assert:
     that: results.changed
 
+- name: Get scaleset info
+  azure_rm_virtualmachine_scaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS
+    format: full
+  register: output_scaleset
+
+- name: Modify scaleset (set upgradePolicy to Automatic and capacity to 3)
+  set_fact:
+    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] | combine({'capacity': 1}, recursive=True) }}"
+
+- name: Update VMSS
+  azure_rm_virtualmachine_scaleset: "{{ body }}"
+  register: results
+
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
+
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
