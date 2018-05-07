@@ -201,7 +201,7 @@ class MerakiModule(object):
                     org_name=org_name,
                     net_name=net_name,
                     data=data)
-                )
+            )
             return json.loads(self.request('GET', path))
         else:
             for n in data:
