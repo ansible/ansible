@@ -113,6 +113,7 @@ options:
   execution_group:
     description:
       - Physical location where the servers will be located.
+    version_added: '2.6'
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
