@@ -615,7 +615,10 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + r"\d+)", folder)
+                if diskname.startswith(('nvme', 'cciss', 'loop')):
+                    m = re.search("(" + diskname + r"p\d+)", folder)
+                else:
+                    m = re.search("(" + diskname + r"\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)

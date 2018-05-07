@@ -94,7 +94,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         mtab_entries = lh._mtab_entries()
         self.assertIsInstance(mtab_entries, list)
         self.assertIsInstance(mtab_entries[0], list)
-        self.assertEqual(len(mtab_entries), 38)
+        self.assertEqual(len(mtab_entries), 39)
 
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
     def test_find_bind_mounts(self, mock_run_findmnt):
@@ -134,6 +134,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertIn(b'/dev/loop9', lsblk_uuids)
         self.assertIn(b'/dev/sda1', lsblk_uuids)
+        self.assertIn(b'/dev/nvme0n1p1', lsblk_uuids)
         self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
 
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT, ''))
@@ -162,6 +163,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertIn(b'/dev/loop0', lsblk_uuids)
         self.assertIn(b'/dev/sda1', lsblk_uuids)
+        self.assertIn(b'/dev/nvme0n1p1', lsblk_uuids)
         self.assertEqual(lsblk_uuids[b'/dev/mapper/an-example-mapper with a space in the name'], b'84639acb-013f-4d2f-9392-526a572b4373')
         self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
 

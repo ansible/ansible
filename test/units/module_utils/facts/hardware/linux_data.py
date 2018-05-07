@@ -20,6 +20,9 @@ LSBLK_OUTPUT = b"""
 /dev/sda
 /dev/sda1                             32caaec3-ef40-4691-a3b6-438c3f9bc1c0
 /dev/sda2                             66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK
+/dev/nvme0n1
+/dev/nvme0n1p1                        d7689555-a803-431b-ad28-f4ce64b62dbb
+/dev/nvme0n1p2                        ca780054-f7fd-436a-b1c7-efe179279e41
 /dev/mapper/fedora_dhcp129--186-swap  eae6059d-2fbe-4d1c-920d-a80bbeb1ac6d
 /dev/mapper/fedora_dhcp129--186-root  d34cf5e3-3449-4a6c-8179-a1feb2bca6ce
 /dev/mapper/fedora_dhcp129--186-home  2d3e4853-fa69-4ccf-8a6a-77b05ab0a42d
@@ -37,6 +40,9 @@ LSBLK_OUTPUT_2 = b"""
 /dev/sda
 /dev/sda1                            32caaec3-ef40-4691-a3b6-438c3f9bc1c0
 /dev/sda2                            66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK
+/dev/nvme0n1
+/dev/nvme0n1p1                       d7689555-a803-431b-ad28-f4ce64b62dbb
+/dev/nvme0n1p2                       ca780054-f7fd-436a-b1c7-efe179279e41
 /dev/mapper/fedora_dhcp129--186-swap eae6059d-2fbe-4d1c-920d-a80bbeb1ac6d
 /dev/mapper/fedora_dhcp129--186-root d34cf5e3-3449-4a6c-8179-a1feb2bca6ce
 /dev/mapper/fedora_dhcp129--186-home 2d3e4853-fa69-4ccf-8a6a-77b05ab0a42d
@@ -100,6 +106,7 @@ tmpfs /tmp tmpfs rw,seclabel 0 0
 mqueue /dev/mqueue mqueue rw,seclabel,relatime 0 0
 /dev/loop0 /var/lib/machines btrfs rw,seclabel,relatime,space_cache,subvolid=5,subvol=/ 0 0
 /dev/sda1 /boot ext4 rw,seclabel,relatime,data=ordered 0 0
+/dev/nvme0n1p1 /var/lib/ceph/osd/ceph-24 xfs rw,noatime,attr2,inode64,noquota 0 0
 /dev/mapper/fedora_dhcp129--186-home /home ext4 rw,seclabel,relatime,data=ordered 0 0
 tmpfs /run/user/1000 tmpfs rw,seclabel,nosuid,nodev,relatime,size=1611044k,mode=700,uid=1000,gid=1000 0 0
 gvfsd-fuse /run/user/1000/gvfs fuse.gvfsd-fuse rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
@@ -292,6 +299,7 @@ MTAB_ENTRIES = [
     ['/dev/sdz3', '/not/a/real/device', 'none', 'rw,seclabel,relatime,data=ordered', '0', '0'],
     # lets assume this is a bindmount
     ['/dev/sdz4', '/not/a/real/bind_mount', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
+    ['/dev/nvme0n1p1', '/var/lib/ceph/osd/ceph-24', 'xfs', 'rw,noatime,attr2,inode64,noquota', '0', '0'],
     [
         '/dev/mapper/fedora_dhcp129--186-home',
         '/home',
@@ -327,6 +335,15 @@ STATVFS_INFO = {'/': {'block_available': 10192323,
                       'inode_used': 215101,
                       'size_available': 41747755008,
                       'size_total': 52710309888},
+                '/var/lib/ceph/osd/ceph-24': {'block_available': 376068204,
+                                              'block_size': 512,
+                                              'block_total': 978753928,
+                                              'block_used': 602685724,
+                                              'inode_available': 122253327,
+                                              'inode_total': 122403968,
+                                              'inode_used': 150641,
+                                              'size_available': 385093844992,
+                                              'size_total': 1002244022272},
                 '/not/a/real/bind_mount': {},
                 '/home': {'block_available': 1001578731,
                           'block_size': 4096,
