@@ -116,6 +116,7 @@
         username: "{{ redshift_master_username }}"
         password: "{{ reshift_master_password }}"
         node_type: "{{ node_type }}"
+        wait: yes
         <<: *aws_connection_info
         wait: true
       register: result
