@@ -801,7 +801,7 @@ def main():
         project=dict(),
         azure_tenant_id=dict(aliases=['keystone_v3_domain_id']),
         tenant_mapping_enabled=dict(default=False, type='bool'),
-        api_version=dict(),
+        api_version=dict(choices=['v2', 'v3']),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
