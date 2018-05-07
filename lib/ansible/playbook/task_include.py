@@ -64,14 +64,14 @@ class TaskInclude(Task):
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
         if bad_opts and task.action in ('include_tasks', 'import_tasks'):
-            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))))
+            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file')
 
         apply_attrs = task.args.pop('apply', {})
         if apply_attrs and task.action != 'include_tasks':
-            raise AnsibleParserError('Invalid options for %s: apply' % task.action)
+            raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
         elif apply_attrs:
             apply_attrs['block'] = []
             p_block = Block.load(

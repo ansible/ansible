@@ -137,7 +137,7 @@ class IncludeRole(TaskInclude):
 
         apply_attrs = ir.args.pop('apply', {})
         if apply_attrs and ir.action != 'include_role':
-            raise AnsibleParserError('Invalid options for %s: apply' % ir.action)
+            raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
         elif apply_attrs:
             apply_attrs['block'] = []
             p_block = Block.load(
