@@ -12,7 +12,7 @@
       no_log: yes
 
     - name: create glue connection
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         connection_properties:
           JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}"
@@ -27,7 +27,7 @@
           - result.changed
 
     - name: test idempotence creating glue connection
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         connection_properties:
           JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}"
@@ -42,7 +42,7 @@
           - not result.changed
 
     - name: test updating JDBC connection url
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         connection_properties:
           JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}-updated"
@@ -57,7 +57,7 @@
           - result.changed
 
     - name: delete glue connection
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         state: absent
         <<: *aws_connection_info
@@ -68,7 +68,7 @@
           - result.changed
 
     - name: test idempotence removing glue connection
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         state: absent
         <<: *aws_connection_info
@@ -81,7 +81,7 @@
   always:
 
     - name: delete glue connection
-      glue_connection:
+      aws_glue_connection:
         name: "{{ resource_prefix }}"
         state: absent
         <<: *aws_connection_info
