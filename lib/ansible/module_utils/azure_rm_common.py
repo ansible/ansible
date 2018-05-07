@@ -319,8 +319,11 @@ class AzureRMModuleBase(object):
         self.subscription_id = self.credentials['subscription_id']
 
         # get authentication authority
+<<<<<<< HEAD
         # for adfs, user could pass in authority or not.
         # for others, use default authority from cloud environment
+=======
+>>>>>>> remove default client_id after discussion
         if self.credentials.get('adfs_authority_url') is None:
             self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
         else:
@@ -364,7 +367,6 @@ class AzureRMModuleBase(object):
                                                          tenant=tenant,
                                                          cloud_environment=self._cloud_environment,
                                                          verify=self._cert_validation_mode == 'validate')
-
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password, or "
