@@ -443,6 +443,7 @@ class AzureRM(object):
         msi_credentials = self._get_msi_credentials(arg_credentials.get('subscription_id'))
         if msi_credentials:
             self.log('Retrieved credentials from MSI.')
+            return msi_credentials
         
         try:
             if HAS_AZURE_CLI_CORE:
