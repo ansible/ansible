@@ -539,7 +539,7 @@ def create_or_update_target_group(connection, module):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
                         if not status_achieved:
                             module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
-            elif module.get.params("targets") is None or elif module.get.params("targets") = []:
+            elif module.get.params("targets") is not None:
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
