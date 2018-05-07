@@ -190,13 +190,13 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
             with ssh.open_sftp() as sftp:
                 sftp.put(source, destination)
 
-    def get_file(self, source=None, destination=None, proto='scp'):
+    def get_file(self, source=None, destination=None, proto='scp', timeout=30):
         """Fetch file over scp/sftp from remote device"""
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport()) as scp:
+            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                 scp.get(source, destination)
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
