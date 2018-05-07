@@ -47,6 +47,12 @@ class HttpApi:
         queue = list()
         responses = list()
 
+        def run_queue(queue, output):
+            response = to_list(self.send_request(queue, output=output))
+            if output == 'json':
+                response = [json.loads(item) for item in response]
+            return response
+
         for item in to_list(commands):
             cmd_output = None
             if isinstance(item, dict):
@@ -61,20 +67,14 @@ class HttpApi:
                 cmd_output = 'json'
 
             if output and output != cmd_output:
-                response = self.send_request(queue, output=output)
-                if output == 'json':
-                    response = json.loads(response)
-                responses.extend(to_list(response))
+                responses.extend(run_queue(queue, output))
                 queue = list()
 
             output = cmd_output or 'json'
             queue.append(command)
 
         if queue:
-            response = self.send_request(queue, output=output)
-            if output == 'json':
-                response = json.loads(response)
-            responses.extend(to_list(response))
+            responses.extend(run_queue(queue, output))
 
         return responses
 
