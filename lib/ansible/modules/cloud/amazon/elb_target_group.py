@@ -121,7 +121,7 @@ options:
   targets:
     description:
       - A list of targets to assign to the target group.  The list should be an Id and a Port parameter.
-        Defaults to None.  See the Examples for detail. 
+        Defaults to None.  See the Examples for detail.
         Prior to 2.6, all targets were drained if targets was None and I(purge_targets) was True.  As of 2.6,
         to drain all targets, this option must be set to an empty list to use in conjustion with I(purge_targets).
     required: false
