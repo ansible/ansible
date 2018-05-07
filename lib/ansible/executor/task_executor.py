@@ -302,6 +302,9 @@ class TaskExecutor:
             if index_var:
                 task_vars[index_var] = item_index
 
+            # Update template vars to reflect current loop iteration
+            templar.set_available_variables(task_vars)
+
             # pause between loop iterations
             if loop_pause and ran_once:
                 try:
