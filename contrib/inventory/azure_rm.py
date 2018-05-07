@@ -391,20 +391,17 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
-        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
-        if not subscription_id:
-            try:
-                # use the first subscription of the MSI
-                subscription_client = SubscriptionClient(credentials)
-                subscription = next(subscription_client.subscriptions.list())
-                subscription_id = str(subscription.subscription_id)
-            except Exception as exc:
-                self.fail("Failed to get MSI token: {0}. "
-                          "Please check whether your machine enabled MSI or grant access to any subscription.".format(str(exc)))
-        return {
-            'credentials': credentials,
-            'subscription_id': subscription_id
-        }
+        try:
+            # try to get the subscription in MSI to test whether MSI is enabled
+            subscription_client = SubscriptionClient(credentials)
+            subscription = next(subscription_client.subscriptions.list())
+            subscription_id = str(subscription.subscription_id)
+            return {
+                'credentials': credentials,
+                'subscription_id': subscription_id_param or subscription_id
+            }
+        except Exception as exc:
+            return None
 
     def _get_credentials(self, params):
         # Get authentication credentials.
