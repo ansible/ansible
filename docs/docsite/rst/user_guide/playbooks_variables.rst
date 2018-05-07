@@ -500,7 +500,7 @@ Here is an example of what that might look like::
     tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
-      - name: install custom impi fact
+      - name: install custom ipmi fact
         copy: src=ipmi.fact dest=/etc/ansible/facts.d
       - name: re-read facts after adding custom fact
         setup: filter=ansible_local
