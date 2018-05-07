@@ -24,7 +24,11 @@ notes:
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
-requirements: [ debconf, debconf-utils ]
+requirements:
+  - debconf
+  - debconf-utils
+  - python-apt (python 2)
+  - python3-apt (python 3)
 options:
   name:
     description:
@@ -49,6 +53,12 @@ options:
       - Do not set 'seen' flag when pre-seeding.
     type: bool
     default: False
+  reconfigure:
+    description:
+      - If the package is already installed it will be reconfigured via 'dpkg-reconfigure'
+    type: bool
+    default: False
+    version_added: "2.7"
 author:
 - Brian Coca (@bcoca)
 
@@ -62,12 +72,13 @@ EXAMPLES = '''
     value: fr_FR.UTF-8
     vtype: select
 
-- name: set to generate locales
+- name: set to generate locales and regenerate them
   debconf:
     name: locales
     question: locales/locales_to_be_generated
     value: en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8
     vtype: multiselect
+    reconfigure: true
 
 - name: Accept oracle license
   debconf:
@@ -81,7 +92,27 @@ EXAMPLES = '''
     name: tzdata
 '''
 
+import ansible.module_utils.apt_utils as apt_utils
+
 from ansible.module_utils.basic import AnsibleModule
+
+
+def reconfigure_pkg(apt, module, pkgname):
+    cache = apt_utils.get_cache(apt, module)
+    pkg = cache[pkgname]
+    try:
+        installed = pkg.is_installed
+    except AttributeError:
+        # assume older version of python-apt is installed
+        installed = pkg.isInstalled
+    if not installed:
+        return
+    cmd = ' '.join([module.get_bin_path('dpkg-reconfigure', True),
+                    '--frontend noninteractive',
+                    pkgname])
+    rc, msg, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
 
 
 def get_selections(module, pkg):
@@ -124,6 +155,7 @@ def main():
             vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
             value=dict(type='str', aliases=['answer']),
             unseen=dict(type='bool'),
+            reconfigure=dict(type='bool'),
         ),
         required_together=(['question', 'vtype', 'value'],),
         supports_check_mode=True,
@@ -135,6 +167,10 @@ def main():
     vtype = module.params["vtype"]
     value = module.params["value"]
     unseen = module.params["unseen"]
+    reconfigure = module.params["reconfigure"]
+
+    if reconfigure:
+        apt = apt_utils.import_apt(module)[0]
 
     prev = get_selections(module, pkg)
 
@@ -153,6 +189,8 @@ def main():
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
+            elif reconfigure:
+                reconfigure_pkg(apt, module, pkg)
 
         curr = {question: value}
         if question in prev:
