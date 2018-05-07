@@ -44,6 +44,12 @@ try:
 except ImportError:
     HAS_DICTDIFFER = False
 
+try:
+    import urllib3
+    urllib3.disable_warnings()
+except ImportError:
+    pass
+
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
 COMMON_ARG_SPEC = {

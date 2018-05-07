@@ -18,7 +18,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import urllib3
 
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
@@ -28,8 +27,6 @@ try:
 except ImportError:
     # Exception handled in common
     pass
-
-urllib3.disable_warnings()
 
 
 class KubernetesRawModule(KubernetesAnsibleModule):
