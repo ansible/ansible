@@ -120,7 +120,7 @@ class NetAppOntapBroadcastDomain(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_na_ontap_zaip(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
         return
 
     def get_broadcast_domain(self):
@@ -215,7 +215,7 @@ class NetAppOntapBroadcastDomain(object):
         broadcast_domain_details = self.get_broadcast_domain()
         broadcast_domain_exists = False
         results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_na_ontap_zaip(module=self.module, vserver=results)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_broadcast_domain", cserver)
         if broadcast_domain_details:
             broadcast_domain_exists = True

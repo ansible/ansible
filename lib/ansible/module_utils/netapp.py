@@ -77,6 +77,7 @@ def has_netapp_lib():
 def has_sf_sdk():
     return HAS_SF_SDK
 
+
 def na_ontap_host_argument_spec():
 
     return dict(
@@ -85,6 +86,7 @@ def na_ontap_host_argument_spec():
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
         https=dict(required=False, type='str', default='False')
     )
+
 
 def ontap_sf_host_argument_spec():
 
@@ -109,7 +111,8 @@ def create_sf_connection(module, port=None):
     else:
         module.fail_json(msg="the python SolidFire SDK module is required")
 
-def setup_na_ontap_zaip(module, vserver=None):
+
+def setup_na_ontap_zapi(module, vserver=None):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -135,6 +138,7 @@ def setup_na_ontap_zaip(module, vserver=None):
         return server
     else:
         module.fail_json(msg="the python NetApp-Lib module is required")
+
 
 def setup_ontap_zapi(module, vserver=None):
     hostname = module.params['hostname']
