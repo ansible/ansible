@@ -5,10 +5,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import time
 
-from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.connection import ConnectionError
 
 try:
     from __main__ import display
@@ -26,7 +27,7 @@ class HttpApi:
             display.vvvv('firing event: on_become')
             # TODO ??? self._terminal.on_become(passwd=auth_pass)
 
-        output = message_kwargs.get('output', 'json')
+        output = message_kwargs.get('output', 'text')
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
@@ -34,6 +35,11 @@ class HttpApi:
         response = json.loads(to_text(response.read()))
         return handle_response(response)
 
+    def get_prompt(self):
+        # Hack to keep @enable_mode working
+        return '#'
+
+    # Imported from module_utils
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
@@ -42,16 +48,22 @@ class HttpApi:
         responses = list()
 
         for item in to_list(commands):
-            if item['command'].endswith('| json'):
-                item['command'] = str(item['command']).replace('| json', '')
-                item['output'] = 'json'
+            cmd_output = None
+            if isinstance(item, dict):
+                command = item['command']
+                if command.endswith('| json'):
+                    command = command.replace('| json', '')
+                    cmd_output = 'json'
+            else:
+                command = item
+                cmd_output = 'json'
 
-            if output and output != item['output']:
+            if output and output != cmd_output:
                 responses.extend(self.send_request(queue, output=output))
                 queue = list()
 
-            output = item['output'] or 'json'
-            queue.append(item['command'])
+            output = cmd_output or 'json'
+            queue.append(command)
 
         if queue:
             responses.extend(self.send_request(queue, output=output))
@@ -64,22 +76,53 @@ class HttpApi:
 
         return responses
 
-    def get_prompt(self):
-        # Hack to keep @enable_mode working
-        return '#'
+    def load_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+
+        commands = ['configure session %s' % session]
+        if replace:
+            commands.append('rollback clean-config')
+        commands.extend(config)
+
+        response = self.send_request(commands)
+
+        commands = ['configure session %s' % session, 'show session-config diffs']
+        if commit:
+            commands.append('commit')
+        else:
+            commands.append('abort')
+
+        response = self.send_request(commands, output='text')
+        diff = response[1].strip()
+        if len(diff) > 0:
+            result['diff'] = diff
+
+        return result
 
 
 def handle_response(response):
     if 'error' in response:
-        raise AnsibleConnectionFailure(response['error'])
+        error = respone['error']
+        raise ConnectionError(error['message'], code=error['code'])
 
     results = []
     for result in response['result']:
         if 'messages' in result:
             results.append(result['messages'][0])
+        elif 'output' in result:
+            results.append(result['output'])
         else:
             results.append(json.dumps(result))
 
+    if len(results) == 1:
+        return results[0]
     return results
 
 

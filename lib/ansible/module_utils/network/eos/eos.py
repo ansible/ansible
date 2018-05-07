@@ -166,22 +166,6 @@ class Cli:
         connection = self._get_connection()
         return connection.run_commands(commands, check_rc)
 
-    def send_config(self, commands):
-        conn = self._get_connection()
-
-        multiline = False
-        rc = 0
-        for command in to_list(commands):
-            if command == 'end':
-                continue
-
-            if command.startswith('banner') or multiline:
-                multiline = True
-            elif command == 'EOF' and multiline:
-                multiline = False
-
-            conn.get(command, None, None, multiline)
-
     def configure(self, commands):
         """Sends configuration commands to the remote device
         """
@@ -217,31 +201,11 @@ class Cli:
                 return result
 
         conn = self._get_connection()
-        session = 'ansible_%s' % int(time.time())
-        result = {'session': session}
-
-        out = conn.get('configure session %s' % session)
-
-        if replace:
-            out = conn.get('rollback clean-config')
-
         try:
-            self.send_config(commands)
+            return conn.load_config(commands, commit, replace)
         except ConnectionError as exc:
-            self.close_session(session)
             message = getattr(exc, 'err', exc)
             self._module.fail_json(msg="Error on executing commands %s" % commands, data=to_text(message, errors='surrogate_then_replace'))
-
-        out = conn.get('show session-config diffs')
-        if out:
-            result['diff'] = to_text(out, errors='surrogate_then_replace').strip()
-
-        if commit:
-            conn.get('commit')
-        else:
-            self.close_session(session)
-
-        return result
 
 
 class Eapi:

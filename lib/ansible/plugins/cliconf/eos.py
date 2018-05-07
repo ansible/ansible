@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import time
 
 from itertools import chain
 
@@ -96,10 +97,18 @@ class Cliconf(CliconfBase):
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
 
+    # Imported from module_utils
+    def close_session(self, session):
+        # to close session gracefully execute abort in top level session prompt.
+        self.get('end')
+        self.get('configure session %s' % session)
+        self.get('abort')
+
     def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         responses = list()
+        multiline = False
 
         for cmd in to_list(commands):
             if isinstance(cmd, dict):
@@ -111,7 +120,14 @@ class Cliconf(CliconfBase):
                 prompt = None
                 answer = None
 
-            out = self.get(command, prompt, answer)
+            if command == 'end':
+                continue
+            elif command.startswith('banner') or multiline:
+                multiline = True
+            elif command == 'EOF' and multiline:
+                multiline = False
+
+            out = self.get(command, prompt, answer, multiline)
 
             try:
                 out = json.loads(out)
@@ -121,3 +137,30 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
+
+    def load_config(self, commands, commit=False, replace=False):
+        """Loads the config commands onto the remote device
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+
+        self.get('configure session %s' % session)
+        if replace:
+            self.get('rollback clean-config')
+
+        try:
+            self.run_commands(commands)
+        except ConnectionError:
+            self.close_session(session)
+            raise
+
+        out = self.get('show session-config diffs')
+        if out:
+            result['diff'] = out.strip()
+
+        if commit:
+            self.get('commit')
+        else:
+            self.close_session(session)
+
+        return result
