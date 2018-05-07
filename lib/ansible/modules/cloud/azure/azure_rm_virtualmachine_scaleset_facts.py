@@ -224,9 +224,9 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                         'lun': old_disk['lun'],
                         'disk_size_gb': old_disk['diskSizeGB'],
                         'managed_disk_type': old_disk['managedDisk']['storageAccountType'],
-                        'caching': old_disk['caching'],
-                        'disk_index': new_disk
+                        'caching': old_disk['caching']
                     }
+                    data_disks[disk_index] = new_disk
 
                 updated = {
                     'resource_group': self.resource_group,
@@ -245,7 +245,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     # image could be a dict, string,
                     'image': vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference'],
                     'os_disk_caching': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'],
-                    'os_type': 'Linux'  # vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']
+                    'os_type': 'Linux',  # vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']
                     'managed_disk_type': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['managedDisk']['storageAccountType'],
                     'data_disks': data_disks,
                     'virtual_network_name': virtual_network_name,
