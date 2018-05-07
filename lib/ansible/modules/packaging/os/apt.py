@@ -264,6 +264,8 @@ import re
 import sys
 import time
 
+import ansible.module_utils.apt_utils as apt_utils
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_url
@@ -293,19 +295,6 @@ CLEAN_OP_CHANGED_STR = dict(
     # "Del python3-q 2.4-1 [24 kB]"
     autoclean='Del ',
 )
-
-HAS_PYTHON_APT = True
-try:
-    import apt
-    import apt.debfile
-    import apt_pkg
-except ImportError:
-    HAS_PYTHON_APT = False
-
-if sys.version_info[0] < 3:
-    PYTHON_APT = 'python-apt'
-else:
-    PYTHON_APT = 'python3-apt'
 
 
 def package_split(pkgspec):
@@ -902,30 +891,6 @@ def get_updated_cache_time():
     return mtimestamp, updated_cache_time
 
 
-# https://github.com/ansible/ansible-modules-core/issues/2951
-def get_cache(module):
-    '''Attempt to get the cache object and update till it works'''
-    cache = None
-    try:
-        cache = apt.Cache()
-    except SystemError as e:
-        if '/var/lib/apt/lists/' in to_native(e).lower():
-            # update cache until files are fixed or retries exceeded
-            retries = 0
-            while retries < 2:
-                (rc, so, se) = module.run_command(['apt-get', 'update', '-q'])
-                retries += 1
-                if rc == 0:
-                    break
-            if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
-            # try again
-            cache = apt.Cache()
-        else:
-            module.fail_json(msg=to_native(e))
-    return cache
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -953,20 +918,8 @@ def main():
 
     module.run_command_environ_update = APT_ENV_VARS
 
-    if not HAS_PYTHON_APT:
-        if module.check_mode:
-            module.fail_json(msg="%s must be installed to use check mode. "
-                                 "If run normally this module can auto-install it." % PYTHON_APT)
-        try:
-            module.run_command(['apt-get', 'update'], check_rc=True)
-            module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
-            global apt, apt_pkg
-            import apt
-            import apt.debfile
-            import apt_pkg
-        except ImportError:
-            module.fail_json(msg="Could not import python modules: apt, apt_pkg. "
-                                 "Please install %s package." % PYTHON_APT)
+    global apt, apt_pkg
+    apt, apt_pkg, aptsources_distro = apt_utils.import_apt(module)
 
     global APTITUDE_CMD
     APTITUDE_CMD = module.get_bin_path("aptitude", False)
@@ -1001,7 +954,7 @@ def main():
         p['state'] = 'absent'
 
     # Get the cache object
-    cache = get_cache(module)
+    cache = apt_utils.get_cache(apt, module)
 
     try:
         if p['default_release']:
