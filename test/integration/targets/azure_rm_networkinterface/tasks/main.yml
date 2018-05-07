@@ -76,21 +76,21 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001sgrg
-      virtual_network: testnic001
+      virtual_network: "{{ vn.state.id }}"      
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001sgrg
       public_ip_allocation_method: Static
       security_group: testnic001sgrg
       security_group_resource_group: "{{ resource_group_secondary }}"
   register: output
 
-- name: Create NIC using virtual_network_resource_group parameter (idempotent)
+- name: Create NIC using security_group_resource_group parameter (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001sgrg
-      virtual_network: testnic001
+      virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001sgrg
       public_ip_allocation_method: Static
       security_group: testnic001
       security_group_resource_group: "{{ resource_group_secondary }}"      
