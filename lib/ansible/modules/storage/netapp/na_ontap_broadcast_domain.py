@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: na_ontap_broadcast_domain
 short_description: Manage NetApp Ontap broadcast domains.
 extends_documentation_fragment:
-    - netapp.ontap
+    - netapp.na_ontap
 version_added: '2.6'
 author: Chris Archibald (carchi8py@gmail.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 description:
@@ -94,7 +94,7 @@ class NetAppOntapBroadcastDomain(object):
         """
             Initialize the Ontap Net Route class
         """
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             broadcast_domain=dict(required=True, type='str'),
@@ -120,7 +120,7 @@ class NetAppOntapBroadcastDomain(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zaip(module=self.module)
         return
 
     def get_broadcast_domain(self):
@@ -215,7 +215,7 @@ class NetAppOntapBroadcastDomain(object):
         broadcast_domain_details = self.get_broadcast_domain()
         broadcast_domain_exists = False
         results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_ontap_zapi(module=self.module, vserver=results)
+        cserver = netapp_utils.setup_na_ontap_zaip(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_broadcast_domain", cserver)
         if broadcast_domain_details:
             broadcast_domain_exists = True

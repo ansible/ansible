@@ -28,8 +28,8 @@ notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
 """
 
-    # Documentation fragment for ONTAP
-    ONTAP = """
+    # Documentation fragment for ONTAP (na_ontap)
+    NA_ONTAP = """
 options:
   hostname:
       required: true
@@ -59,6 +59,34 @@ requirements:
 
 notes:
   - The modules prefixed with na\\_ontap are built to support the ONTAP storage platform.
+
+    """
+
+    # Documentation fragment for ONTAP (na_cdot)
+    ONTAP = """
+options:
+  hostname:
+      required: true
+      description:
+      - The hostname or IP address of the ONTAP instance.
+  username:
+      required: true
+      description:
+      - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
+        For more information, please read the documentation U(https://goo.gl/BRu78Z).
+      aliases: ['user']
+  password:
+      required: true
+      description:
+      - Password for the specified user.
+      aliases: ['pass']
+requirements:
+  - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
+  - Ansible 2.2
+  - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
+
+notes:
+  - The modules prefixed with na\\_cdot are built to support the ONTAP storage platform.
 
 """
 
