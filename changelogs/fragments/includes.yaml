@@ -14,3 +14,4 @@ bugfixes:
 - dynamic includes - Allow inheriting attributes from static parents (https://github.com/ansible/ansible/pull/38827)
 - include_role/import_role - improved performance and recursion depth (https://github.com/ansible/ansible/pull/36470)
 - include_role/import_role - Fix parameter templating (https://github.com/ansible/ansible/pull/36372)
+- dynamic includes - Use the copied and merged task for calculating task vars (https://github.com/ansible/ansible/pull/39762)
