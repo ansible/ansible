@@ -30,6 +30,7 @@
     ip: "{{ result.data.floating_ip.ip }}"
     region: "lon1"
     oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
 
 - name: Verify that a Floating IP was deleted
   assert:

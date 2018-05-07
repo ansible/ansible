@@ -17,6 +17,7 @@
     state: "absent"
     fingerprint: "{{ result.data.ssh_key.fingerprint }}"
     oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
 
 - name: Verify that SSH key was deleted
   assert:
