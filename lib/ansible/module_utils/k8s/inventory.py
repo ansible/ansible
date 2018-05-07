@@ -18,8 +18,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible.errors import AnsibleError
 from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER
+
+try:
+    from ansible.errors import AnsibleError
+except ImportError:
+    AnsibleError = Exception
 
 try:
     from openshift.dynamic.exceptions import DynamicApiError
