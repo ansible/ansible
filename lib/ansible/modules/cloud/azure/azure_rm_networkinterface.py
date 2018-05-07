@@ -443,7 +443,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         security_group_dict = parse_resource_id(self.security_group_name)
         security_group_name = security_group_dict.get('name')
         security_group_resource_group = security_group_dict.get('resource_group', self.security_group_resource_group)
-        
+
         if security_group_resource_group is None:
             security_group_resource_group = self.resource_group
 
@@ -480,7 +480,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
                     changed = True
-
 
                 nsg = self.get_security_group(security_group_resource_group, self.security_group_name)
                 if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
