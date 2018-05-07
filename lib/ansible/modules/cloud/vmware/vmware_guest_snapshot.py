@@ -279,7 +279,7 @@ class PyVmomiHelper(PyVmomi):
 
     def rename_snapshot(self, vm):
         if vm.snapshot is None:
-            self.module.exit_json(msg="virtual machine - %s doesn't have any"
+            self.module.fail_json(msg="virtual machine - %s doesn't have any"
                                       " snapshots" % (self.module.params.get('uuid') or self.module.params.get('name')))
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
@@ -303,8 +303,12 @@ class PyVmomiHelper(PyVmomi):
 
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
+            vm_name = (self.module.params.get('uuid') or self.module.params.get('name'))
+            if self.module.params.get('state') == 'revert':
+                self.module.fail_json(msg="virtual machine - %s does not"
+                                          " have any snapshots to revert to." % vm_name)
             self.module.exit_json(msg="virtual machine - %s doesn't have any"
-                                      " snapshots" % (self.module.params.get('uuid') or self.module.params.get('name')))
+                                      " snapshots to remove." % vm_name)
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
