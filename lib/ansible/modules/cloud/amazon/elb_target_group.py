@@ -120,8 +120,8 @@ options:
     version_added: 2.5
   targets:
     description:
-      - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'purge_targets' parameter then
-        all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail.
+      - A list of targets to assign to the target group.  The list should be an Id and a Port parameter.
+        Defaults to 'None.'  See the Examples for detail. 
     required: false
   unhealthy_threshold_count:
     description:
@@ -537,7 +537,7 @@ def create_or_update_target_group(connection, module):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
                         if not status_achieved:
                             module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
-            else:
+            elif module.get.parames("targets") is None:
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
