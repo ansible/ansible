@@ -100,6 +100,18 @@ def find_obj(content, vimtype, name, first=True):
     return [obj for obj in obj_list if obj.name == name]
 
 
+def find_objs(content, vimtypes, container=None, name=None):
+    """ Get all objects of certain type(s) and optionally match name """
+    items = []
+    cv = content.viewManager.CreateContainerView(container or content.rootFolder,
+                                                 vimtypes, recursive=True)
+    for item in cv.view:
+        if not name or item.name == name:
+            items.append(item)
+    cv.Destroy()
+    return items
+
+
 def find_dvspg_by_name(dv_switch, portgroup_name):
 
     portgroups = dv_switch.portgroup

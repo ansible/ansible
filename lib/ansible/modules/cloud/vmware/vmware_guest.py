@@ -554,7 +554,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
+from ansible.module_utils.vmware import (find_obj, find_objs, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
                                          find_dvs_by_name, find_dvspg_by_name)
@@ -1850,33 +1850,6 @@ class PyVmomiHelper(PyVmomi):
             if current_parent is None:
                 return False
 
-    def select_resource_pool_by_name(self, resource_pool_name):
-        resource_pool = self.cache.find_obj(self.content, [vim.ResourcePool], resource_pool_name)
-        if resource_pool is None:
-            self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
-        return resource_pool
-
-    def select_resource_pool_by_host(self, host):
-        resource_pools = self.cache.get_all_objs(self.content, [vim.ResourcePool])
-        for rp in resource_pools.items():
-            if not rp[0]:
-                continue
-
-            if not hasattr(rp[0], 'parent') or not rp[0].parent:
-                continue
-
-            # Find resource pool on host
-            if self.obj_has_parent(rp[0].parent, host.parent):
-                # If no resource_pool selected or it's the selected pool, return it
-                if self.module.params['resource_pool'] is None or rp[0].name == self.module.params['resource_pool']:
-                    return rp[0]
-
-        if self.module.params['resource_pool'] is not None:
-            self.module.fail_json(msg="Could not find resource_pool %s for selected host %s"
-                                  % (self.module.params['resource_pool'], host.name))
-        else:
-            self.module.fail_json(msg="Failed to find a resource group for %s" % host.name)
-
     def get_scsi_type(self):
         disk_controller_type = "paravirtual"
         # set cpu/memory/etc
@@ -1921,29 +1894,42 @@ class PyVmomiHelper(PyVmomi):
 
         return root
 
-    def get_resource_pool(self):
-        resource_pool = None
-        # highest priority, resource_pool given.
-        if self.params['resource_pool']:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-        # next priority, esxi hostname given.
-        elif self.params['esxi_hostname']:
-            host = self.select_host()
-            resource_pool = self.select_resource_pool_by_host(host)
-        # next priority, cluster given, take the root of the pool
-        elif self.params['cluster']:
-            cluster = self.cache.get_cluster(self.params['cluster'])
-            if cluster is None:
-                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
-            resource_pool = cluster.resourcePool
-        # fallback, pick any RP
+    def get_resource_pool(self, cluster=None, host=None, resource_pool=None):
+        """ Get a resource pool, filter on cluster, esxi_hostname or resource_pool if given """
+
+        cluster_name = cluster or self.params['cluster']
+        host_name = host or self.params['esxi_hostname']
+        resource_pool_name = resource_pool or self.params['resource_pool']
+
+        # get the datacenter object
+        datacenter_list = find_objs(self.content, [vim.Datacenter], None, self.params['datacenter'])
+        if not datacenter_list:
+            self.module.fail_json(msg='Unable to find datacenter "%s"' % self.params['datacenter'])
+        datacenter = datacenter_list[0]
+
+        # if cluster is given, get the cluster object
+        if cluster_name:
+            cluster_list = find_objs(self.content, [vim.ComputeResource], datacenter, cluster_name)
+            if not cluster_list:
+                self.module.fail_json(msg='Unable to find cluster "%s"' % cluster_name)
+            cluster = cluster_list[0]
+        # if host is given, get the cluster object using the host
+        elif host_name:
+            host_list = find_objs(self.content, [vim.HostSystem], datacenter, host_name)
+            if not host_list:
+                self.module.fail_json(msg='Unable to find host "%s"' % host_name)
+            cluster = host_list[0].parent
         else:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            cluster = None
 
-        if resource_pool is None:
-            self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
-
-        return resource_pool
+        # get resource pools limiting search to cluster or datacenter
+        resource_pool_list = find_objs(self.content, [vim.ResourcePool], cluster or datacenter, resource_pool_name)
+        if not resource_pool_list:
+            if resource_pool_name:
+                self.module.fail_json(msg='Unable to find resource_pool "%s"' % resource_pool_name)
+            else:
+                self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
+        return resource_pool_list[0]
 
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
@@ -2189,12 +2175,9 @@ class PyVmomiHelper(PyVmomi):
 
         relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            relospec.pool = self.get_resource_pool()
 
-            if relospec.pool is None:
-                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
-
-            elif relospec.pool != self.current_vm_obj.resourcePool:
+            if relospec.pool != self.current_vm_obj.resourcePool:
                 task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
                 self.wait_for_task(task)
                 change_applied = True
