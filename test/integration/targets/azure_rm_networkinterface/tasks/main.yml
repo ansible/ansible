@@ -66,7 +66,46 @@
       resource_group: "{{ resource_group }}"
       name: testnic001rg
       state: absent
-  
+
+- name: Create Security Group in secondary Resource Group
+  azure_rm_securitygroup:
+    name: testnic001sgrg
+    resource_group: "{{ resource_group_secondary }}"
+
+- name: Create NIC using security_group_resource_group parameter
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001sgrg
+      virtual_network: testnic001
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001sgrg
+      security_group_resource_group: "{{ resource_group_secondary }}"
+  register: output
+
+- name: Create NIC using virtual_network_resource_group parameter (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001sgrg
+      virtual_network: testnic001
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+      security_group_resource_group: "{{ resource_group_secondary }}"      
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001sgrg      
+      state: absent
+
 - name: Create NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"

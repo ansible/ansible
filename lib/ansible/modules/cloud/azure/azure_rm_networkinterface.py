@@ -159,10 +159,18 @@ options:
         version_added: 2.5
     security_group_name:
         description:
-            - Name of an existing security group with which to associate the network interface. If not provided, a
+            - Name or id of an existing security group with which to associate the network interface. If not provided, a
               default security group will be created.
         aliases:
             - security_group
+    security_group_resource_group:
+        description:
+        - The resource group of I(security_group_name).
+        - If not set then this is the same resource group as I(resource_group).
+        - This can be used to specify the resource group of a virtual network that is in another resource group
+          than the network interface.
+        - If I(security_group_name) is specified as a security group id, this parameter is ignored.
+        version_added: 2.6
     open_ports:
         description:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
@@ -362,6 +370,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             name=dict(type='str', required=True),
             location=dict(type='str'),
             security_group_name=dict(type='str', aliases=['security_group']),
+            security_group_resource_group=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
             private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
@@ -431,8 +440,15 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if virtual_network_resource_group is None:
             virtual_network_resource_group = self.resource_group
 
+        security_group_dict = parse_resource_id(self.security_group_name)
+        security_group_name = security_group_dict.get('name')
+        security_group_resource_group = security_group_dict.get('resource_group', self.security_group_resource_group)
+        
+        if security_group_resource_group is None:
+            security_group_resource_group = self.resource_group
+
         # if not set the security group name, use nic name for default
-        self.security_group_name = self.security_group_name or self.name
+        self.security_group_name = security_group_name or self.security_group_name or self.name
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
@@ -465,7 +481,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                nsg = self.get_security_group(self.security_group_name)
+
+                nsg = self.get_security_group(security_group_resource_group, self.security_group_name)
                 if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
                     self.log("CHANGED: network interface {0} network security group".format(self.name))
                     changed = True
@@ -527,7 +544,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
-                nsg = self.create_default_securitygroup(self.resource_group,
+                nsg = self.create_default_securitygroup(security_group_resource_group,
                                                         self.location,
                                                         self.security_group_name,
                                                         self.os_type,
@@ -591,10 +608,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         except Exception as exc:
             return None
 
-    def get_security_group(self, name):
+    def get_security_group(self, resource_group, name):
         self.log("Fetching security group {0}".format(name))
         try:
-            return self.network_client.network_security_groups.get(self.resource_group, name)
+            return self.network_client.network_security_groups.get(resource_group, name)
         except Exception as exc:
             return None
 
