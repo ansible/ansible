@@ -134,7 +134,7 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     role_type = module.params.pop('role')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     json_output = {'role': role_type, 'state': state}
 
