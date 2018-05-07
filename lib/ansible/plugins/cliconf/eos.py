@@ -129,12 +129,13 @@ class Cliconf(CliconfBase):
 
             out = self.get(command, prompt, answer, multiline)
 
-            try:
-                out = json.loads(out)
-            except ValueError:
-                out = str(out).strip()
+            if out is not None:
+                try:
+                    out = json.loads(out)
+                except ValueError:
+                    out = str(out).strip()
 
-            responses.append(out)
+                responses.append(out)
 
         return responses
 

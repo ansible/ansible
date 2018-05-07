@@ -87,11 +87,27 @@ class HttpApi:
         """
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
+        banner_cmd = None
+        banner_input = []
 
         commands = ['configure session %s' % session]
         if replace:
             commands.append('rollback clean-config')
-        commands.extend(config)
+
+        for command in config:
+            if command.startswith('banner'):
+                banner_cmd = command
+                banner_input = []
+            elif banner_cmd:
+                if command == 'EOF':
+                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
+                    banner_cmd = None
+                    commands.append(command)
+                else:
+                    banner_input.append(command)
+                    continue
+            else:
+                commands.append(command)
 
         response = self.send_request(commands)
 
@@ -103,7 +119,7 @@ class HttpApi:
 
         response = self.send_request(commands, output='text')
         diff = response[1].strip()
-        if len(diff) > 0:
+        if diff:
             result['diff'] = diff
 
         return result
@@ -119,7 +135,7 @@ def handle_response(response):
         if 'messages' in result:
             results.append(result['messages'][0])
         elif 'output' in result:
-            results.append(result['output'])
+            results.append(result['output'].strip())
         else:
             results.append(json.dumps(result))
 
