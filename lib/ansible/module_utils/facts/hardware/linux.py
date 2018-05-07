@@ -585,7 +585,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + r"[p]*\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)
