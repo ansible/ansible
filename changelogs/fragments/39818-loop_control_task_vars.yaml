@@ -1,0 +1,2 @@
+bugfixes:
+  - loop_control - update template vars for loop_control fields on each loop iteration (https://github.com/ansible/ansible/pull/39818).
