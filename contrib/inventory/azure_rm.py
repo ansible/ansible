@@ -262,6 +262,7 @@ AZURE_CONFIG_SETTINGS = dict(
 AZURE_MIN_VERSION = "2.0.0"
 ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ansible_version)
 
+
 def azure_id_to_dict(id):
     pieces = re.sub(r'^\/', '', id).split('/')
     result = {}
@@ -318,12 +319,12 @@ class AzureRM(object):
         if self.credentials.get('credentials'):
             self.azure_credentials = self.credentials.get('credentials')
         elif self.credentials.get('client_id') is not None and \
-            self.credentials.get('secret') is not None and \
-            self.credentials.get('tenant') is not None:
-            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                 secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'],
-                                                                 cloud_environment=self._cloud_environment)
+             self.credentials.get('secret') is not None and \
+             self.credentials.get('tenant') is not None:
+             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                  secret=self.credentials['secret'],
+                                                                  tenant=self.credentials['tenant'],
+                                                                  cloud_environment=self._cloud_environment)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if not tenant:
@@ -443,7 +444,7 @@ class AzureRM(object):
         if msi_credentials:
             self.log('Retrieved credentials from MSI.')
             return msi_credentials
-        
+
         try:
             if HAS_AZURE_CLI_CORE:
                 self.log('Retrieving credentials from AzureCLI profile')
