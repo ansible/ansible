@@ -140,7 +140,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 apply_attrs = task_ds.pop('apply', {})
 
-                if apply_attrs and 'include_tasks' not in task_ds:
+                if apply_attrs and action != 'include_tasks':
                     raise AnsibleParserError('Invalid params for include/import_tasks: apply', obj=task_ds)
                 elif apply_attrs:
                     apply_attrs['block'] = []
@@ -327,7 +327,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             elif action in ('include_role', 'import_role'):
                 apply_attrs = task_ds.pop('apply', {})
 
-                if apply_attrs and 'include_role' not in task_ds:
+                if apply_attrs and action != 'include_role':
                     raise AnsibleParserError('Invalid params for import_role: apply', obj=task_ds)
                 elif apply_attrs:
                     apply_attrs['block'] = []
