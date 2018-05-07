@@ -651,7 +651,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
         # make sure all commands use the designated temporary directory
-        module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+        try:
+            module_args['_ansible_tmpdir'] = self._connection._shell.get_option('remote_tmp')
+        except KeyError:
+            module_args['_ansible_tmpdir'] = '~/ansible'
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
