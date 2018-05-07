@@ -112,12 +112,12 @@ class IncludeRole(TaskInclude):
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
-            raise AnsibleParserError("'name' is a required field for %s." % ir.action)
+            raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
-            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))))
+            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))), obj=data)
 
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
