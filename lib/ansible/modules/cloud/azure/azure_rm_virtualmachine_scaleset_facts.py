@@ -32,7 +32,6 @@ options:
         description:
             - The resource group to search for the desired virtual machine scale set
         required: false
-
     format:
         description:
             - What data should be returned?
@@ -40,6 +39,7 @@ options:
         choices:
             - 'ansible'
             - 'raw'
+        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure
