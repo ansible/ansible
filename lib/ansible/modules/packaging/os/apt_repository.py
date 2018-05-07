@@ -109,51 +109,16 @@ import re
 import sys
 import tempfile
 
-try:
-    import apt
-    import apt_pkg
-    import aptsources.distro as aptsources_distro
-    distro = aptsources_distro.get_distro()
-    HAVE_PYTHON_APT = True
-except ImportError:
-    distro = None
-    HAVE_PYTHON_APT = False
+import ansible.module_utils.apt_utils as apt_utils
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
 
-if sys.version_info[0] < 3:
-    PYTHON_APT = 'python-apt'
-else:
-    PYTHON_APT = 'python3-apt'
-
 DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
-
-
-def install_python_apt(module):
-
-    if not module.check_mode:
-        apt_get_path = module.get_bin_path('apt-get')
-        if apt_get_path:
-            rc, so, se = module.run_command([apt_get_path, 'update'])
-            if rc != 0:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
-            rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
-            if rc == 0:
-                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
-                import apt
-                import apt_pkg
-                import aptsources.distro as aptsources_distro
-                distro = aptsources_distro.get_distro()
-                HAVE_PYTHON_APT = True
-            else:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
-    else:
-        module.fail_json(msg="%s must be installed to use check mode" % PYTHON_APT)
 
 
 class InvalidSource(Exception):
@@ -497,11 +462,10 @@ def main():
 
     sourceslist = None
 
-    if not HAVE_PYTHON_APT:
-        if params['install_python_apt']:
-            install_python_apt(module)
-        else:
-            module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
+    global apt, apt_pkg, aptsources_distro, distro
+    apt, apt_pkg, aptsources_distro = apt_utils.import_apt(module,
+                                                           params['install_python_apt'])
+    distro = aptsources_distro.get_distro()
 
     if not repo:
         module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
