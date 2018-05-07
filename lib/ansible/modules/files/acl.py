@@ -73,6 +73,14 @@ options:
     type: bool
     default: 'no'
     version_added: "2.0"
+
+  nomask:
+    description:
+      - Don't recalculate the effective rights mask of the files. Incompatible with C(state=query).
+    type: bool
+    default: 'no'
+    version_added: "2.6"
+
 author:
     - Brian Coca (@bcoca)
     - Jérémie Astori (@astorije)
@@ -174,7 +182,7 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     return etype + ':' + entity
 
 
-def build_command(module, mode, path, follow, default, recursive, entry=''):
+def build_command(module, mode, path, follow, default, recursive, nomask, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
@@ -191,6 +199,9 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
 
     if recursive:
         cmd.append('--recursive')
+
+    if nomask and (mode == 'set' or mode == 'rm'):
+        cmd.append('--no-mask')
 
     if not follow:
         if get_platform().lower() == 'linux':
@@ -261,6 +272,7 @@ def main():
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
             recursive=dict(required=False, type='bool', default=False),
+            nomask=dict(required=False, type='bool', default=False),
             use_nfsv4_acls=dict(required=False, type='bool', default=False)
         ),
         supports_check_mode=True,
@@ -278,13 +290,18 @@ def main():
     follow = module.params.get('follow')
     default = module.params.get('default')
     recursive = module.params.get('recursive')
+    nomask = module.params.get('nomask')
     use_nfsv4_acls = module.params.get('use_nfsv4_acls')
 
     if not os.path.exists(path):
         module.fail_json(msg="Path not found or not accessible.")
 
-    if state == 'query' and recursive:
-        module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
+    if state == 'query':
+        if recursive:
+            module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
+
+        if nomask:
+            module.fail_json(msg="'nomask' MUST NOT be set when 'state=query'.")
 
     if not entry:
         if state == 'absent' and permissions:
@@ -324,7 +341,7 @@ def main():
         entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
-            default, recursive, entry
+            default, recursive, nomask, entry
         )
         changed = acl_changed(module, command)
 
@@ -336,7 +353,7 @@ def main():
         entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
-            default, recursive, entry
+            default, recursive, nomask, entry
         )
         changed = acl_changed(module, command)
 
@@ -349,7 +366,7 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default, recursive)
+        build_command(module, 'get', path, follow, default, recursive, nomask)
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
