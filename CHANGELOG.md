@@ -12,6 +12,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/37964)
 * Fix Windows setup.ps1 for slow performance in large domain environments
   (https://github.com/ansible/ansible/pull/38646)
+* Update template vars for loop_control fields on each loop iteration
+  (https://github.com/ansible/ansible/pull/39818)
 
 
 <a id="2.4.4"></a>
