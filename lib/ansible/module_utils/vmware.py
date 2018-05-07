@@ -1020,7 +1020,7 @@ class PyVmomi(object):
         if not self.is_vcenter():
             hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
             if hosts:
-                host_obj_list.append(hosts[0])
+                host_obj_list.append(list(hosts)[0])
         else:
             if cluster_name:
                 cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
