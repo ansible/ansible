@@ -54,25 +54,27 @@ class HttpApi:
                 if command.endswith('| json'):
                     command = command.replace('| json', '')
                     cmd_output = 'json'
+                elif 'output' in item:
+                    cmd_output = item['output']
             else:
                 command = item
                 cmd_output = 'json'
 
             if output and output != cmd_output:
-                responses.extend(self.send_request(queue, output=output))
+                response = self.send_request(queue, output=output)
+                if output == 'json':
+                    response = json.loads(response)
+                responses.extend(to_list(response))
                 queue = list()
 
             output = cmd_output or 'json'
             queue.append(command)
 
         if queue:
-            responses.extend(self.send_request(queue, output=output))
-
-        for index, item in enumerate(commands):
-            try:
-                responses[index] = responses[index].strip()
-            except KeyError:
-                pass
+            response = self.send_request(queue, output=output)
+            if output == 'json':
+                response = json.loads(response)
+            responses.extend(to_list(response))
 
         return responses
 
@@ -109,7 +111,7 @@ class HttpApi:
 
 def handle_response(response):
     if 'error' in response:
-        error = respone['error']
+        error = response['error']
         raise ConnectionError(error['message'], code=error['code'])
 
     results = []
