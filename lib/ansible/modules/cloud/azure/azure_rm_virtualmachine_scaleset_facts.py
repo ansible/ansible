@@ -208,10 +208,10 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         if self.format == 'ansible':
             for index in range(len(self.results['ansible_facts']['azure_vmss'])):
                 vmss = self.results['ansible_facts']['azure_vmss'][index]
-                subnet_id = vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                ['properties']['ipConfigurations'][0]['properties']['subnet']['id']
-                backend_address_pool_id = vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                              ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id']
+                subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
+                                 ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
+                backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
+                                               ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
                 subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                 load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                 virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
@@ -227,8 +227,8 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                 updated['upgrade_policy'] = vmss['properties']['upgradePolicy']['mode']
                 updated['admin_username'] = vmss['properties']['virtualMachineProfile']['osProfile']['adminUsername']
                 # updated['admin_password']
-                updated['ssh_password_enabled'] = not vmss['properties']['virtualMachineProfile']['osProfile']
-                                                          ['linuxConfiguration']['disablePasswordAuthentication']
+                updated['ssh_password_enabled'] = (not vmss['properties']['virtualMachineProfile']['osProfile']
+                                                           ['linuxConfiguration']['disablePasswordAuthentication'])
                 # updated['ssh_public_keys']
                 # image could be a dict, string,
                 updated['image'] = vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference']
