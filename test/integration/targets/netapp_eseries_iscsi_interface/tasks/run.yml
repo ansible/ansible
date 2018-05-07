@@ -1,0 +1,106 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test iSCSI Interface module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+
+- name: set credentials
+  set_fact:
+    credentials: *creds
+
+- name: Show some debug information
+  debug:
+    msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
+
+
+- name: Configure ports to use dhcp with different MTU
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: B
+    channel: 1
+    state: present
+    config_method: dhcp
+    max_frame_size: "{{ item | int }}"
+    address: "10.10.1.{{ item }}"
+    subnet_mask: 255.255.255.0
+  loop:
+    - 1500
+    - 2000
+    - 9000
+
+- name: Configure port to use dhcp
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: A
+    channel: 3
+    state: present
+    config_method: dhcp
+
+- name: Configure port to use a static configuration method
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: A
+    channel: 3
+    state: present
+    config_method: static
+    address: 10.10.10.1
+    subnet_mask: 255.255.255.0
+
+- name: Disable all ports on A
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: A
+    channel: "{{ item | int }}"
+    state: absent
+    address: "10.10.1.{{ item }}"
+    subnet_mask: 255.255.255.0
+  loop:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+
+- name: Configure ports to use dhcp
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: A
+    channel: "{{ item | int }}"
+    state: present
+    config_method: dhcp
+  loop:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+
+- name: Configure ports to use static addresses
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: A
+    channel: "{{ item | int }}"
+    state: present
+    config_method: static
+    address: "10.1.1.{{ item }}"
+    subnet_mask: 255.255.255.0
+  loop:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
