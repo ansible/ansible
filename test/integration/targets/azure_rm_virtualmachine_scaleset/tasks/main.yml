@@ -1,3 +1,8 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
@@ -26,7 +31,7 @@
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS
+    name: testVMSS{{ rfpx }}
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -57,26 +62,26 @@
 - name: Retrieve scaleset facts
   azure_rm_virtualmachine_scaleset_facts:
     resource_group: "{{ resource_group }}"
-    name: testVMSS
-    format: full
+    name: testVMSS{{ rfpx }}
+    format: ansible
   register: output_scaleset
 
-#- name: Modify scaleset (set upgradePolicy to Automatic and capacity to 3)
-#  set_fact:
-#    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] | combine({'capacity': 1}, recursive=True) }}"
+- name: Modify scaleset (set upgradePolicy to Automatic and capacity to 3)
+  set_fact:
+    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] | combine({'capacity': 1}, recursive=True) }}"
 
-#- name: Update VMSS
-#  azure_rm_virtualmachine_scaleset: "{{ body }}"
-#  register: results
+- name: Update VMSS
+  azure_rm_virtualmachine_scaleset: "{{ body }}"
+  register: results
 
-#- name: Assert that VMSS was updated
-#  assert:
-#    that: results.changed
+- name: Assert that VMSS was updated
+  assert:
+    that: results.changed
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS
+    name: testVMSS{{ rfpx }}
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
@@ -101,7 +106,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rfpx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -134,7 +139,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rfpx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -166,7 +171,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rfpx }}1
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
