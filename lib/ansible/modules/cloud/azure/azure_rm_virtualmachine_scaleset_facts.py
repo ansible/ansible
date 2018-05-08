@@ -37,7 +37,7 @@ options:
             - What data should be returned?
         default: 'raw'
         choices:
-            - 'ansible'
+            - 'curated'
             - 'raw'
         version_added: "2.6"
 
@@ -170,7 +170,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
             tags=dict(type='list'),
             format=dict(
                 type='str',
-                choices=['ansible',
+                choices=['curated',
                          'raw']
             ),
         )
@@ -205,7 +205,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         else:
             self.results['ansible_facts']['azure_vmss'] = self.list_items()
 
-        if self.format == 'ansible':
+        if self.format == 'curated':
             for index in range(len(self.results['ansible_facts']['azure_vmss'])):
                 vmss = self.results['ansible_facts']['azure_vmss'][index]
                 subnet_name = None
