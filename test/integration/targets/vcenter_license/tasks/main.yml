@@ -2,11 +2,6 @@
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-
 - name: Store the vCenter container IP
   set_fact:
     vcenter_host: "{{ lookup('env', 'vcenter_host') }}"
