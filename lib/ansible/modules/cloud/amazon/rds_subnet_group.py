@@ -96,6 +96,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
+def create_partial_subnet_group_info(name, desc, subnets):
+    return dict(
+        name=name,
+        description=desc,
+        subnet_ids=subnets
+    )
+
+
 def get_subnet_group_info(subnet_group):
     return dict(
         name=subnet_group.name,
@@ -106,6 +114,18 @@ def get_subnet_group_info(subnet_group):
     )
 
 
+def has_different_value(actual, expected):
+    # Sort the subnet groups before we compare them
+    actual['subnet_ids'].sort()
+    expected['subnet_ids'].sort()
+    fields = ['name', 'description', 'subnet_ids']
+    return extract(actual, fields) != extract(expected, fields)
+
+
+def extract(dic, fields):
+    return {f: dic[f] for f in fields}
+
+
 def create_result(changed, subnet_group=None):
     if subnet_group is None:
         return dict(
@@ -114,7 +134,7 @@ def create_result(changed, subnet_group=None):
     else:
         return dict(
             changed=changed,
-            subnet_group=get_subnet_group_info(subnet_group)
+            subnet_group=subnet_group
         )
 
 
@@ -127,7 +147,10 @@ def main():
         subnets=dict(required=False, type='list'),
     )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -158,6 +181,7 @@ def main():
         module.fail_json(msg=e.error_message)
 
     try:
+        check_mode = module.check_mode
         exists = False
         result = create_result(False)
 
@@ -170,23 +194,33 @@ def main():
 
         if state == 'absent':
             if exists:
-                conn.delete_db_subnet_group(group_name)
+                # delete
+                if not check_mode:
+                    conn.delete_db_subnet_group(group_name)
                 result = create_result(True)
         else:
-            if not exists:
-                new_group = conn.create_db_subnet_group(group_name, desc=group_description, subnet_ids=group_subnets)
-                result = create_result(True, new_group)
-            else:
-                # Sort the subnet groups before we compare them
-                matching_groups[0].subnet_ids.sort()
-                group_subnets.sort()
-                if (matching_groups[0].name != group_name or
-                        matching_groups[0].description != group_description or
-                        matching_groups[0].subnet_ids != group_subnets):
-                    changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
+            expected_group = create_partial_subnet_group_info(group_name, group_description, group_subnets)
+            if exists:
+                # modify or do nothing
+                target_group = get_subnet_group_info(matching_groups[0])
+                if has_different_value(target_group, expected_group):
+                    changed_group = None
+                    if check_mode:
+                        changed_group = target_group.copy()
+                        changed_group.update(expected_group)
+                    else:
+                        changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
+                        changed_group = get_subnet_group_info(changed_group)
                     result = create_result(True, changed_group)
                 else:
-                    result = create_result(False, matching_groups[0])
+                    result = create_result(False, target_group)
+            else:
+                # create
+                if check_mode:
+                    result = create_result(True, expected_group)
+                else:
+                    new_group = conn.create_db_subnet_group(group_name, desc=group_description, subnet_ids=group_subnets)
+                    result = create_result(True, get_subnet_group_info(new_group))
     except BotoServerError as e:
         module.fail_json(msg=e.error_message)
 
