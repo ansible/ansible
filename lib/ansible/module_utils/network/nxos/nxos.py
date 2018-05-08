@@ -49,6 +49,9 @@ nxos_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
 
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+
     'use_ssl': dict(type='bool'),
     'use_proxy': dict(default=True, type='bool'),
     'validate_certs': dict(type='bool'),
@@ -67,6 +70,9 @@ nxos_top_spec = {
     'username': dict(removed_in_version=2.9),
     'password': dict(removed_in_version=2.9, no_log=True),
     'ssh_keyfile': dict(removed_in_version=2.9),
+
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
 
     'use_ssl': dict(removed_in_version=2.9, type='bool'),
     'validate_certs': dict(removed_in_version=2.9, type='bool'),
