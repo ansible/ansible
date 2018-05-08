@@ -1,0 +1,2 @@
+bugfixes:
+- Fix unset 'ansible_virtualization_role' fact while setting virtualization facts for real hardware.
