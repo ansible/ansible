@@ -49,8 +49,8 @@ options:
     default: 'yes'
   private:
     description:
-      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
+      - This option is a no op, and the functionality described in previous versions was not implemented. This
+        option will be removed in Ansible v2.8.
     type: bool
     default: 'no'
 notes:
