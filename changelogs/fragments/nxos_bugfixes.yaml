@@ -28,3 +28,4 @@ bugfixes:
 - nxos_snmp_host - Fix for nxos_snmp_host issues (https://github.com/ansible/ansible/pull/39642)
 - nxos_snmp_traps - Fix nxos_snmp_traps issues (https://github.com/ansible/ansible/pull/39444)
 - nxos_linkagg - nxos_linkagg abbreviated form issue (https://github.com/ansible/ansible/pull/39591)
+- nxos_snmp_user - Fix nxos_snmp_user (https://github.com/ansible/ansible/pull/39760)
