@@ -219,6 +219,13 @@ except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
 
+try:
+    from azure.cli.core.util import CLIError
+    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+    from azure.common.cloud import get_cli_active_cloud
+except ImportError:
+    HAS_AZURE_CLI_CORE = False
+    CLIError = Exception
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
     profile='AZURE_PROFILE',
@@ -272,10 +279,12 @@ class AzureRM(object):
         self.credentials = self._get_credentials(args)
         if not self.credentials:
             self.fail("Failed to get credentials. Either pass as parameters, set environment variables, "
-                      "or define a profile in ~/.azure/credentials.")
+                      "or define a profile in ~/.azure/credentials, or log in with Azure CLI (`az login`).")
 
         # if cloud_environment specified, look up/build Cloud object
         raw_cloud_env = self.credentials.get('cloud_environment')
+        if self.credentials.get('credentials') and raw_cloud_env:
+            self._cloud_environment = raw_cloud_env
         if not raw_cloud_env:
             self._cloud_environment = azure_cloud.AZURE_PUBLIC_CLOUD  # SDK default
         else:
@@ -294,11 +303,14 @@ class AzureRM(object):
                 except Exception as e:
                     self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message))
 
-        if self.credentials.get('subscription_id', None) is None:
+        if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
             self.fail("Credentials did not include a subscription_id value.")
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
 
+        if self.credentials.get('credentials') is not None:
+            # AzureCLI credentials
+            self.azure_credentials = self.credentials['credentials']
         if self.credentials.get('client_id') is not None and \
            self.credentials.get('secret') is not None and \
            self.credentials.get('tenant') is not None:
@@ -360,6 +372,17 @@ class AzureRM(object):
 
         return None
 
+    def _get_azure_cli_credentials(self):
+        credentials, subscription_id = get_azure_cli_credentials()
+        cloud_environment = get_cli_active_cloud()
+
+        cli_credentials = {
+            'credentials': credentials,
+            'subscription_id': subscription_id,
+            'cloud_environment': cloud_environment
+        }
+        return cli_credentials
+
     def _get_credentials(self, params):
         # Get authentication credentials.
         # Precedence: cmd line parameters-> environment variables-> default profile in ~/.azure/credentials.
@@ -395,6 +418,14 @@ class AzureRM(object):
         if default_credentials:
             self.log('Retrieved default profile credentials from ~/.azure/credentials.')
             return default_credentials
+
+        try:
+            if HAS_AZURE_CLI_CORE:
+                self.log('Retrieving credentials from AzureCLI profile')
+            cli_credentials = self._get_azure_cli_credentials()
+            return cli_credentials
+        except CLIError as ce:
+            self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
         return None
 
