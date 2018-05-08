@@ -322,7 +322,7 @@ def main():
     )
     if not dynamic_resource_definition and state != "absent":
         module.fail_json(
-            msg="Dymamic resource definition:%s does not exist." % (dynamic_resource_definition)
+            msg="Dynamic resource definition:%s does not exist." % (module.params['dynamic_resource_definition'])
         )
     # Get instance if exists
     dynamic_resource_instance = manageiq_dynamic_resource_instance.dynamic_resource_instance(
