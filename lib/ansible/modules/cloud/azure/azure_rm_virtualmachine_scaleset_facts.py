@@ -211,6 +211,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                 subnet_name = None
                 load_balancer_name = None
                 virtual_network_name = None
+                ssh_password_enabled = False
 
                 try:
                     subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
@@ -220,6 +221,8 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                     load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
+                    ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
+                                                    ['linuxConfiguration']['disablePasswordAuthentication'])
                 except:
                     pass
 
@@ -246,8 +249,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     'upgrade_policy': vmss['properties']['upgradePolicy']['mode'],
                     'admin_username': vmss['properties']['virtualMachineProfile']['osProfile']['adminUsername'],
                     # updated['admin_password']
-                    'ssh_password_enabled': (not vmss['properties']['virtualMachineProfile']['osProfile'],
-                                                     ['linuxConfiguration']['disablePasswordAuthentication']),
+                    'ssh_password_enabled': ssh_password_enabled,
                     # updated['ssh_public_keys']
                     # image could be a dict, string,
                     'image': vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference'],
