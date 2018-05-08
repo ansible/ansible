@@ -78,6 +78,7 @@ class Play(Base, Taggable, CollectionSearch):
     _force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
+    _break_play_on_batch_failed = FieldAttribute(isa='bool', default=True, always_post_validate=True)
     _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     _order = FieldAttribute(isa='string', always_post_validate=True)
 
