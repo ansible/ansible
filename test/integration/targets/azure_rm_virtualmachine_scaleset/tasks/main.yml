@@ -50,11 +50,11 @@
         managed_disk_type: Standard_LRS
   register: results
 
-- name: Assert that VMSS ran
+- name: Assert that VMSS was created
   assert:
     that: results.changed
 
-- name: Get scaleset info
+- name: Retrieve scaleset facts
   azure_rm_virtualmachine_scaleset_facts:
     resource_group: "{{ resource_group }}"
     name: testVMSS
@@ -69,7 +69,7 @@
   azure_rm_virtualmachine_scaleset: "{{ body }}"
   register: results
 
-- name: Assert that VMSS ran
+- name: Assert that VMSS was updated
   assert:
     that: results.changed
 
