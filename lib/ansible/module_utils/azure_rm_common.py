@@ -934,7 +934,7 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version=AZURE_API_PROFILES[self.api_profile]['NetworkManagementClient']) 
+                                                            api_version=AZURE_API_PROFILES[self.api_profile]['NetworkManagementClient'])
         return self._network_client
 
     @property
@@ -948,7 +948,7 @@ class AzureRMModuleBase(object):
         if not self._resource_client:
             self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
                                                              base_url=self._cloud_environment.endpoints.resource_manager,
-                                                             api_version=AZURE_API_PROFILES[self.api_profile]['ResourceManagementClient']) 
+                                                             api_version=AZURE_API_PROFILES[self.api_profile]['ResourceManagementClient'])
         return self._resource_client
 
     @property
@@ -962,7 +962,7 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version=AZURE_API_PROFILES[self.api_profile]['ComputeManagementClient']) 
+                                                            api_version=AZURE_API_PROFILES[self.api_profile]['ComputeManagementClient'])
         return self._compute_client
 
     @property
