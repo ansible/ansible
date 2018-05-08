@@ -1,0 +1,2 @@
+bugfixes:
+- nxos terminal plugin on_become (https://github.com/ansible/ansible/pull/39355)
