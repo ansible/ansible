@@ -115,7 +115,7 @@ class HashiVault:
         if s is None:
             raise AnsibleError("No secret specified for hashi_vault lookup")
 
-        s_f = s.split(':')
+        s_f = s.rsplit(':', 1)
         self.secret = s_f[0]
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
