@@ -201,15 +201,19 @@ def create_admin(meraki, org_id, name, email):
         networks = network_factory(meraki, meraki.params['networks'], nets)
         # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks
-
     if is_admin_existing is None:  # Create new admin
         path = meraki.construct_path('create', function='admin', org_id=org_id)
         r = meraki.request(path,
                            method='POST',
                            payload=json.dumps(payload)
                            )
+        meraki.result['changed'] = True
         return json.loads(r)
     elif is_admin_existing is not None:  # Update existing admin
+        if not meraki.params['tags']:
+            payload['tags'] = []
+        if not meraki.params['networks']:
+            payload['networks'] = []
         if meraki.is_update_required(is_admin_existing, payload) is True:
             # meraki.fail_json(msg='Update is required!!!', original=is_admin_existing, proposed=payload)
             path = meraki.construct_path('update', function='admin', org_id=org_id) + is_admin_existing['id']
@@ -217,6 +221,7 @@ def create_admin(meraki, org_id, name, email):
                                method='PUT',
                                payload=json.dumps(payload)
                                )
+            meraki.result['changed'] = True
             return json.loads(r)
         else:
             # meraki.fail_json(msg='No update is required!!!')
@@ -321,7 +326,6 @@ def main():
                          )
         if r != -1:
             meraki.result['data'] = r
-            meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         admin_id = get_admin_id(meraki,
                                 meraki.params['org_name'],

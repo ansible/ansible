@@ -55,9 +55,9 @@
   register: create_tags_invalid
   ignore_errors: yes
 
-# - assert:
-#     that:
-#       - '"Invalid permission type" in create_tags_invalid.msg'
+- assert:
+    that:
+      - '"Invalid permission type" in create_tags_invalid.msg'
 
 - name: Create administrator with networks
   meraki_admin:
@@ -78,6 +78,42 @@
       - create_network.changed == true
       - create_network.data.name == "Jim Doe"
       - create_network.data.networks | length == 2
+
+- name: Update administrator
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: meraki+jimdoe@kevinbreit.net
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "full" }
+  delegate_to: localhost
+  register: update_network
+
+- assert:
+    that:
+      - update_network.changed == true
+      - update_network.data.networks.0.access == "full"
+      - update_network.data.networks | length == 1
+
+- name: Update administrator for idempotency check
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: meraki+jimdoe@kevinbreit.net
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "full" }
+  delegate_to: localhost
+  register: update_network_idempotent
+
+- assert:
+    that:
+      - update_network_idempotent.changed == false
 
 - name: Create administrator with invalid network
   meraki_admin:
