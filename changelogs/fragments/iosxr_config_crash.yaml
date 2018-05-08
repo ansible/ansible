@@ -1,0 +1,2 @@
+bugfixes:
+- iosxr_config - handle configuration block with mis-indented sublevel command
