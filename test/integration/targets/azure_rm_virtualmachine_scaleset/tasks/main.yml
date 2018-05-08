@@ -54,12 +54,12 @@
   assert:
     that: results.changed
 
-#- name: Retrieve scaleset facts
-#  azure_rm_virtualmachine_scaleset_facts:
-#    resource_group: "{{ resource_group }}"
-#    name: testVMSS
-#    format: full
-#  register: output_scaleset
+- name: Retrieve scaleset facts
+  azure_rm_virtualmachine_scaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS
+    format: full
+  register: output_scaleset
 
 #- name: Modify scaleset (set upgradePolicy to Automatic and capacity to 3)
 #  set_fact:
