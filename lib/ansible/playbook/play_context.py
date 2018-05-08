@@ -544,7 +544,7 @@ class PlayContext(Base):
                     flags += ' -u %s ' % self.become_user
 
                 # FIXME: make shell independent
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
 
