@@ -15,6 +15,7 @@ from lib.util import (
     run_command,
     common_environment,
     display,
+    find_executable,
 )
 
 from lib.config import (
@@ -22,6 +23,13 @@ from lib.config import (
 )
 
 BUFFER_SIZE = 256 * 256
+
+
+def docker_available():
+    """
+    :rtype: bool
+    """
+    return find_executable('docker', required=False)
 
 
 def get_docker_container_id():

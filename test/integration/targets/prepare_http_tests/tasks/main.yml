@@ -46,4 +46,26 @@
       command: update-ca-certificates
       when: ansible_os_family == 'Debian' or ansible_os_family == 'Suse'
 
+    - name: FreeBSD - Retrieve test cacert
+      get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/tmp/ansible.pem"
+      when: ansible_os_family == 'FreeBSD'
+
+    - name: FreeBSD - Add cacert to root certificate store
+      blockinfile:
+        path: "/etc/ssl/cert.pem"
+        block: "{{ lookup('file', '/tmp/ansible.pem') }}"
+      when: ansible_os_family == 'FreeBSD'
+
+    - name: MacOS - Retrieve test cacert
+      get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/usr/local/etc/openssl/certs/ansible.pem"
+      when: ansible_os_family == 'Darwin'
+
+    - name: MacOS - Update ca certificates
+      command: /usr/local/opt/openssl/bin/c_rehash
+      when: ansible_os_family == 'Darwin'
+
   when: has_httptester|bool
