@@ -227,7 +227,8 @@ class CallbackBase(AnsiblePlugin):
             item = result.get('_ansible_item_label')
         else:
             item = result.get('item', None)
-
+        ## Fix to output string of items rather than unicode of items. 
+        item = [str(x) for x in item]
         return item
 
     def _process_items(self, result):
