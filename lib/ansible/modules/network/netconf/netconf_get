@@ -25,9 +25,7 @@ notes:
     - This module supports reading from startup, running and candidate datastores.
       If no datastore is specified, it will execute a <get> request to retrieve
       operational state data.
-    - This module support the use of connection=netconf. Still this module can
-      use a dedicated NETCONF connection by specifying the "host" option in the
-      playbook.
+    - This module support the use of connection=netconf and connection=local.
     - This module supports both xpath and subtree filters as per RFC6241.
       Remind that NETCONF xpath filters will ignore xml namespaces, while
       for NETCONF subtree filters xmlns are enforced.
@@ -224,8 +222,8 @@ def main():
             module.fail_json(msg='jxmlease is required but does not appear to be installed. '
                                  'It can be installed using `pip install jxmlease`')
 
-    if module.params['host'] or not module._socket_path:
-        # [1] need to connect to NETCONF server
+    if not module._socket_path:
+        # [1] need to connect to NETCONF server (connection=local)
         if not HAS_NCCLIENT:
             module.fail_json(msg='ncclient is required but does not appear to be installed. '
                                  'It can be installed using `pip install ncclient`')
@@ -250,7 +248,7 @@ def main():
 
         local_connection = True
     else:
-        # [2] reuse existing NETCONF connection
+        # [2] reuse existing NETCONF connection (connection=netconf)
         m = Connection(module._socket_path)
         capabilities = module.from_json(m.get_capabilities())
         server_capabilities = capabilities.get('server_capabilities')
