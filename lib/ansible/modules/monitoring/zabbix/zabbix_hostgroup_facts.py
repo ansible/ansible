@@ -150,7 +150,7 @@ def main():
 
     host = Host(module, zbx)
     hostgroups = host.get_group_ids_by_group_names(hostgroup_name)
-    module.exit_json(ok=True, hostgroups=hostgroups)
+    module.exit_json(hostgroups=hostgroups)
 
 if __name__ == '__main__':
     main()
