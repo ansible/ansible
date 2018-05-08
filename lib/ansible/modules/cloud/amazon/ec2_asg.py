@@ -620,7 +620,7 @@ def elb_dreg(asg_connection, group_name, instance_id):
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
     
-    = module.params.get('wait_timeout')
+    wait_timeout = module.params.get('wait_timeout')
     count = 1
     if as_group['LoadBalancerNames'] and as_group['HealthCheckType'] == 'ELB':
         elb_connection = boto3_conn(module,
