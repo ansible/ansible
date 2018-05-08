@@ -189,6 +189,7 @@ CONFIG_MISPLACED_CHILDREN = [
     re.compile(r'end-\s*(.+)$')
 ]
 
+
 def copy_file_to_node(module):
     """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
     """
@@ -229,8 +230,9 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+
 def sanitize_candidate_config(config):
-    last_parents= None
+    last_parents = None
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(config):
             if line._parents:
@@ -239,16 +241,18 @@ def sanitize_candidate_config(config):
             if m and m.group(0):
                 config[index]._parents = last_parents
 
+
 def sanitize_running_config(config):
-    last_parents= None
+    last_parents = None
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(config):
             if line._parents:
                 last_parents = line._parents
             m = regex.search(line.text)
             if m and m.group(0):
-                config[index].text = ' '+m.group(0)
+                config[index].text = ' ' + m.group(0)
                 config[index]._parents = last_parents
+
 
 def run(module, result):
     match = module.params['match']
