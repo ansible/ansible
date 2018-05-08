@@ -118,6 +118,12 @@ class IncludeRole(TaskInclude):
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
+        if ir.private is not None:
+            display.deprecated(
+                msg='Supplying "private" for "include_role" is a no op, and is deprecated',
+                version='2.8'
+            )
+
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
