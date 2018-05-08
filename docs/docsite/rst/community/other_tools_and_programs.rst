@@ -20,3 +20,5 @@ of some of the most popular of these tools.
 - `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory.
 
 - `Molecule <http://github.com/metacloud/molecule>`_ A testing framework for Ansible plays and roles.
+
+- `ARA Records Ansible <http://github.com/openstack/ara>`_ ARA Records Ansible playbook runs and makes the recorded data available and intuitive for users and systems.
