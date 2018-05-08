@@ -3,145 +3,134 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-# - name: Create new administrator
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: present
-#     org_name: '{{test_org_name}}'
-#     name: Jane Doe
-#     email: meraki+janedoe@kevinbreit.net
-#     orgAccess: read-only
-#   delegate_to: localhost
-#   register: create_orgaccess
+- name: Create new administrator
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jane Doe
+    email: meraki+janedoe@kevinbreit.net
+    orgAccess: read-only
+  delegate_to: localhost
+  register: create_orgaccess
 
-# - debug:
-#     msg: '{{create_orgaccess}}'
+- name: Create new admin assertion
+  assert:
+    that:
+      - create_orgaccess.changed == true
+      - 'create_orgaccess.data.name == "Jane Doe"'
 
-# - name: Create new admin assertion
-#   assert:
-#     that:
-#       - create_orgaccess.changed is True
-#       - 'create_orgaccess.data.name == "Jane Doe"'
+- name: Create administrator with tags
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: John Doe
+    email: meraki+johndoe@kevinbreit.net
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "beta", "access": "full" }
+  delegate_to: localhost
+  register: create_tags
 
-# - name: Create administrator with tags
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: present
-#     org_name: '{{test_org_name}}'
-#     name: John Doe
-#     email: meraki+johndoe@kevinbreit.net
-#     orgAccess: none
-#     tags:
-#       - { "tag": "production", "access": "read-only" }
-#       - { "tag": "beta", "access": "full" }
-#   delegate_to: localhost
-#   register: create_tags
+- assert:
+    that:
+      - create_tags.changed == true
+      - create_tags.data.name == "John Doe"
+      - create_tags.data.tags | length == 2
 
-# - assert:
-#     that:
-#       - create_tags.changed is True
-#       - create_tags.data.name == "John Doe"
-#       - create_tags.data.tags | length == 3
+- name: Create administrator with invalid tags
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jake Doe
+    email: meraki+jakedoe@kevinbreit.net
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "beta", "access": "invalid" }
+  delegate_to: localhost
+  register: create_tags_invalid
+  ignore_errors: yes
 
-# - name: Create administrator with invalid tags
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: present
-#     org_name: '{{test_org_name}}'
-#     name: John Doe
-#     email: meraki+John@kevinbreit.net
-#     orgAccess: none
-#     tags:
-#       - { "tag": "production", "access": "read-only" }
-#       - { "tag": "beta", "access": "invalid" }
-#   delegate_to: localhost
-#   register: create_tags_invalid
+- assert:
+    that:
+      - '"Invalid permission type" in create_tags_invalid.msg'
 
-# - assert:
-#     that:
-#       - '"Admin has invalid access level of" in create_tags_invalid.msg'
+- name: Create administrator with networks
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: meraki+jimdoe@kevinbreit.net
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "read-only" }
+      - { "network": "TestNet2", "access": "full" }
+  delegate_to: localhost
+  register: create_network
 
-# - name: Create administrator with networks
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: present
-#     org_name: '{{test_org_name}}'
-#     name: John Doe
-#     email: meraki+John@kevinbreit.net
-#     orgAccess: none
-#     networks:
-#       - { "network": "readnet", "access": "read-only" }
-#       - { "network": "nonenet", "access": "none" }
-#       - { "network": "fullnet", "access": "full" }
-#   delegate_to: localhost
-#   register: create_network
+- assert:
+    that:
+      - create_network.changed == true
+      - create_network.data.name == "Jim Doe"
+      - create_network.data.networks | length == 2
 
-# - assert:
-#     that:
-#       - create_tags.changed is True
-#       - create_tags.data.name == "John Doe"
-#       - create_tags.data.tags | length == 3
+- name: Create administrator with invalid network
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: John Doe
+    email: meraki+John@kevinbreit.net
+    orgAccess: none
+    networks:
+      - { "network": "readnet", "access": "read-only" }
+  delegate_to: localhost
+  register: create_network_invalid
+  ignore_errors: yes
 
-# - name: Create administrator with invalid network
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: present
-#     org_name: '{{test_org_name}}'
-#     name: John Doe
-#     email: meraki+John@kevinbreit.net
-#     orgAccess: none
-#     networks:
-#       - { "network": "readnet", "access": "read-only" }
-#   delegate_to: localhost
-#   register: create_network_invalid
+- assert:
+    that:
+      - '"No network found with the name" in create_network_invalid.msg'
 
-# - assert:
-#     that:
-#       - '"Error finding network" in create_tags.body'
+- name: Query all administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    # org_name: kbreit@insight.com
+    org_name: '{{test_org_name}}'
+  delegate_to: localhost
+  register: query_all
 
-# - name: Query all administrators
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: query
-#     # org_name: kbreit@insight.com
-#     org_name: '{{test_org_name}}'
-#   delegate_to: localhost
-#   register: query_all
+- assert:
+    that:
+      - query_all.data | length == 4
+      - query_all.changed == False
 
-# - debug:
-#     msg: '{{query_all}}'
+- name: Query admin by name
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+    name: Jane Doe
+  delegate_to: localhost
+  register: query_name
 
-# - assert:
-#     that:
-#       - query_all.data | length == 2
-#       - query_all.changed == False
+- name: Query admin by email
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+    email: meraki+janedoe@kevinbreit.net
+  delegate_to: localhost
+  register: query_email
 
-# - name: Query admin by name
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: query
-#     org_name: '{{test_org_name}}'
-#     name: Jane Doe
-#   delegate_to: localhost
-#   register: query_name
-
-# - debug:
-#     msg: '{{query_name}}'
-
-# - name: Query admin by email
-#   meraki_admin:
-#     auth_key: '{{auth_key}}'
-#     state: query
-#     org_name: '{{test_org_name}}'
-#     email: jane@doe.com
-#   delegate_to: localhost
-#   register: query_email
-
-# - debug:
-#     msg: '{{query_email}}'
-
-# - assert:
-#     that:
-#       - query_name.data.name == "Jane Doe"
-#       - query_email.data.email == "jane@doe.com"
+- assert:
+    that:
+      - query_name.data.name == "Jane Doe"
+      - query_email.data.email == "meraki+janedoe@kevinbreit.net"
 #       - query_all.changed == False

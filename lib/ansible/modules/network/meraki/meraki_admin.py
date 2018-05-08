@@ -154,7 +154,6 @@ def get_admin(meraki, data, id):
 
 
 def find_admin(meraki, data, email):
-    # meraki.fail_json(msg='find_admin', data=data)
     for a in data:
         if a['email'] == email:
             return a
@@ -168,22 +167,38 @@ def delete_admin(meraki, org_id, admin_id):
                        method='DELETE'
                        )
 
+def network_factory(meraki, networks, nets):
+    networks = json.loads(networks)
+    networks_new = []
+    for n in networks:
+        networks_new.append({'id': meraki.get_net_id(org_name=meraki.params['org_name'],
+                                                     net_name=n['network'],
+                                                     data=nets),
+                            'access': n['access']
+                            })
+    return networks_new
 
-def create_admin(meraki, org_id, name, email, orgAccess=None, tags=[], networks=[]):
+
+def get_nets_temp(meraki, org_id):  # Function won't be needed when get_nets is added to util
+    path = meraki.construct_path('get_all', function='networks', org_id=org_id)
+    return json.loads(meraki.request(path, method='GET'))
+
+
+def create_admin(meraki, org_id, name, email):
     payload = dict()
     payload['name'] = name
     payload['email'] = email
-    payload['orgAccess'] = orgAccess
-    payload['tags'] = tags
-    payload['networks'] = networks
 
     is_admin_existing = find_admin(meraki, get_admins(meraki, org_id), email)
 
-    if orgAccess is not None:
-        payload['orgAccess'] = orgAccess
-    elif tags is not None:
-        payload['tags'] = tags
-    elif networks is not None:
+    if meraki.params['orgAccess'] is not None:
+        payload['orgAccess'] = meraki.params['orgAccess']
+    if meraki.params['tags'] is not None:
+        payload['tags'] = json.loads(meraki.params['tags'])
+    if meraki.params['networks'] is not None:
+        nets = get_nets_temp(meraki, org_id)
+        networks = network_factory(meraki, meraki.params['networks'], nets)
+        # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks
 
     if is_admin_existing is None:  # Create new admin
@@ -298,16 +313,14 @@ def main():
             admin = get_admin(meraki, admins, admin_id)
             meraki.result['data'] = admin
     elif meraki.params['state'] == 'present':
-        if meraki.params['orgAccess'] is not None:
-            r = create_admin(meraki,
-                             org_id,
-                             meraki.params['name'],
-                             meraki.params['email'],
-                             orgAccess=meraki.params['orgAccess']
-                             )
-            if r != -1:
-                meraki.result['data'] = r
-                meraki.result['changed'] = True
+        r = create_admin(meraki,
+                         org_id,
+                         meraki.params['name'],
+                         meraki.params['email'],
+                         )
+        if r != -1:
+            meraki.result['data'] = r
+            meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         admin_id = get_admin_id(meraki,
                                 meraki.params['org_name'],
