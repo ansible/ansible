@@ -72,7 +72,7 @@ nxos_top_spec = {
     'ssh_keyfile': dict(removed_in_version=2.9),
 
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
 
     'use_ssl': dict(removed_in_version=2.9, type='bool'),
     'validate_certs': dict(removed_in_version=2.9, type='bool'),
