@@ -167,6 +167,7 @@ def delete_admin(meraki, org_id, admin_id):
                        method='DELETE'
                        )
 
+
 def network_factory(meraki, networks, nets):
     networks = json.loads(networks)
     networks_new = []
@@ -174,8 +175,8 @@ def network_factory(meraki, networks, nets):
         networks_new.append({'id': meraki.get_net_id(org_name=meraki.params['org_name'],
                                                      net_name=n['network'],
                                                      data=nets),
-                            'access': n['access']
-                            })
+                             'access': n['access']
+                             })
     return networks_new
 
 
