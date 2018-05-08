@@ -1,0 +1,27 @@
+---
+- debug: msg="START cli/misplaced_sublevel.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    src: basic/init_prefix_set.j2
+  ignore_errors: yes
+
+- name: Change prefix-set and new command after prefix-set
+  iosxr_config:
+    src: basic/change_prefix_set.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Play same config again to verify no diff in prefix-set also works
+  iosxr_config:
+    src: basic/change_prefix_set.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- debug: msg="END cli/misplaced_sublevel.yaml on connection={{ ansible_connection }}"
