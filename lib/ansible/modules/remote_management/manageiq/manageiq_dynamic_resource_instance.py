@@ -34,16 +34,16 @@ options:
       - The dynamic resource instance's name.
   dynamic_resource_definition:
     description:
-      - The name of the generic resource definition. Must exist in manageiq.
+      - The name of the generic resource definition. Must exist in manageiq. Required if state is present.
   property_attributes:
     description:
       - The dynamic resource instances properties. fields match the dynamic resource definition properties.
   providers:
     description:
-      - list of provider names to associate instance with. Must exist in manageiq.
+      - List of provider names to associate instance with. Must exist in manageiq.
   services:
     description:
-      - list of service names to associate instance with. Must exist in manageiq.
+      - List of service names to associate instance with. Must exist in manageiq.
 '''
 
 EXAMPLES = '''
@@ -51,16 +51,17 @@ EXAMPLES = '''
   manageiq_dynamic_resource_instance:
     name: 'my_instance'
     state: 'present'
+    dynamic_resource_definition: 'my_custom_definition'
     property_attributes:
       engine: 'mysql'
       type: 'DB'
       size: 30
       region: 'default'
       username: 'masterdb'
-      services:
-        - service1
-      providers:
-        - Red Hat Virtualization
+    services:
+      - service1
+    providers:
+      - Red Hat Virtualization
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       username: 'admin'
@@ -70,6 +71,7 @@ EXAMPLES = '''
 - name: Edit a dynamic resource definition in ManageIQ
   manageiq_dynamic_resource_instance:
     name: 'my_instance'
+    dynamic_resource_definition: 'my_custom_definition'
     state: 'present'
     property_attributes:
       engine: 'mysql'
@@ -77,10 +79,10 @@ EXAMPLES = '''
       size: 30
       region: 'nova'
       username: 'masterdb'
-      services:
-        - service2
-      providers:
-        - Openstack
+    services:
+      - service2
+    providers:
+      - Openstack
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       username: 'admin'
@@ -348,12 +350,12 @@ def main():
         provider_objs = [
             manageiq_dynamic_resource_instance.provider(provider) for provider in providers
         ]
-
+        # Fail if any of the services do not exist in manageiq
         if not all(service_objs) and any(services):
             module.fail_json(
                 msg="One or more service(s):%s do not exist in manageiq." % (services)
             )
-
+        # Fail if any of the providers do not exist in manageiq
         if not all(provider_objs) and any(providers):
             module.fail_json(
                 msg="One or more provider(s):%s do not exist in manageiq." % (providers)
