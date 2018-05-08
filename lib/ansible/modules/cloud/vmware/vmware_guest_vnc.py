@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018, Armin Ranjbar Daemi randjbar@gmail.com
+# Copyright (c) 2018, Armin Ranjbar Daemi armin@webair.com
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,21 +15,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: vmware_guest_vnc
-
 short_description: Manages VNC remote display on virtual machines in vCenter
-
 description:
   - Enables and disables VNC remote display on virtual machine.
-
 version_added: '2.6'
-
 author:
-  - Armin Ranjbar Daemi (@rmin) <randjbar@gmail.com>
-
+  - Armin Ranjbar Daemi (@rmin) <armin@webair.com>
 requirements:
   - python >= 2.6
   - PyVmomi
-
 options:
   state:
     description:
@@ -80,7 +74,6 @@ options:
       - This is required only when I(state) is set to present and will be ignored if I(state) is absent.
     default: ""
     required: false
-
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -98,7 +91,6 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
   register: vnc_result
-
 - name: disable VNC remote display on the VM
   vmware_guest_vnc:
     hostname: 192.168.1.1
@@ -116,12 +108,10 @@ changed:
   description: If anything changed on VM's extraConfig.
   returned: always
   type: bool
-
 failed:
   description: If changes failed.
   returned: always
   type: bool
-
 instance:
   description: Dictionary describing the VM, including VNC info.
   returned: On success in both I(state)
@@ -152,6 +142,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
+                           required_one_of=[['name', 'uuid']],
                            mutually_exclusive=[['name', 'uuid']])
 
     result = dict(changed=False,)
