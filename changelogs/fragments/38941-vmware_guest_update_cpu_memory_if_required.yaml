@@ -1,0 +1,2 @@
+bugfixes:
+- Do not update cpu/memory allocation in configspec if there is no change.
