@@ -231,7 +231,7 @@ class AzureRMResource(AzureRMModuleBase):
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         if self.idempotency:
-            response = self.mgmt_client.query(self.url, "GET", None, [ 200, 404])
+            response = self.mgmt_client.query(self.url, "GET", None, None, None, [ 200, 404])
             # XXX - compare
 
         response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
