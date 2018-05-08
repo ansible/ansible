@@ -63,7 +63,7 @@ class TestIcinga2Feature(ModuleTestCase):
                 icinga2_feature.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 0)
+        self.assertEqual(run_command.call_count, 1)
 
     def test_disable_feature(self):
         """Check that result is changed."""
@@ -93,4 +93,4 @@ class TestIcinga2Feature(ModuleTestCase):
                 icinga2_feature.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 0)
+        self.assertEqual(run_command.call_count, 1)
