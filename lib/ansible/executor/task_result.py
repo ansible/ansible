@@ -70,7 +70,7 @@ class TaskResult:
         _ignore_errors = C.TASK_DEBUGGER_IGNORE_ERRORS and self._task_fields.get('ignore_errors')
 
         ret = False
-        if globally_enabled and not _ignore_errors and (self.is_failed() or self.is_unreachable()):
+        if globally_enabled and ((self.is_failed() and not _ignore_errors) or self.is_unreachable()):
             ret = True
 
         if _debugger in ('always',):
@@ -79,7 +79,7 @@ class TaskResult:
             ret = False
         elif _debugger in ('on_failed',) and self.is_failed() and not _ignore_errors:
             ret = True
-        elif _debugger in ('on_unreachable',) and self.is_unreachable() and not _ignore_errors:
+        elif _debugger in ('on_unreachable',) and self.is_unreachable():
             ret = True
         elif _debugger in('on_skipped',) and self.is_skipped():
             ret = True
