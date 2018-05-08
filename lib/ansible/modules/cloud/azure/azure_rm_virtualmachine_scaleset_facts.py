@@ -208,13 +208,20 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         if self.format == 'ansible':
             for index in range(len(self.results['ansible_facts']['azure_vmss'])):
                 vmss = self.results['ansible_facts']['azure_vmss'][index]
-                subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                 ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
-                backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                               ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
-                subnet_name = re.sub('.*subnets\\/', '', subnet_id)
-                load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
-                virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
+                subnet_name = None
+                load_balancer_name = None
+                virtual_network_name = None
+
+                try:
+                    subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
+                                    ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
+                    backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
+                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
+                    subnet_name = re.sub('.*subnets\\/', '', subnet_id)
+                    load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
+                    virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
+                except:
+                    pass
 
                 data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])
 
