@@ -16,19 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
 import json
 
 from contextlib import contextmanager
 
-from ansible.errors import AnsibleError
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.netconf import NetconfConnection
-
-try:
-    from ncclient.xml_ import NCElement
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
 
 
 def get_connection(module):
@@ -71,37 +64,3 @@ def locked_config(module, target=None):
         yield
     finally:
         unlock_configuration(module, target=target)
-
-
-def transform_reply():
-    reply = '''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-    <xsl:output method="xml" indent="no"/>
-
-    <xsl:template match="/|comment()|processing-instruction()">
-        <xsl:copy>
-            <xsl:apply-templates/>
-        </xsl:copy>
-    </xsl:template>
-
-    <xsl:template match="*">
-        <xsl:element name="{local-name()}">
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:element>
-    </xsl:template>
-
-    <xsl:template match="@*">
-        <xsl:attribute name="{local-name()}">
-            <xsl:value-of select="."/>
-        </xsl:attribute>
-    </xsl:template>
-    </xsl:stylesheet>
-    '''
-    if sys.version < '3':
-        return reply
-    else:
-        return reply.encode('UTF-8')
-
-
-# Note: Workaround for ncclient 0.5.3
-def remove_namespaces(data):
-    return NCElement(data, transform_reply()).data_xml

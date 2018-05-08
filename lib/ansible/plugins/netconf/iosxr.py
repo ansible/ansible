@@ -22,11 +22,10 @@ __metaclass__ = type
 
 import json
 import re
-import sys
 import collections
 
 from ansible import constants as C
-from ansible.module_utils.network.netconf.netconf import remove_namespaces
+from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
