@@ -10,10 +10,11 @@
 
     - name: set connection information for all tasks
       set_fact:
-      aws_connection_info: &aws_connection_info
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        region: "{{ aws_region }}"
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
       no_log: yes
 
     # ============================================================
@@ -231,4 +232,8 @@
         identifier: '{{ redshift_cluster_name }}'
         skip_final_cluster_snapshot: true
         <<: *aws_connection_info
+      register: removed_cluster
+      tries: 10
+      delay: 5
+      until: removed_cluster is not failed
       ignore_errors: yes
