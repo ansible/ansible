@@ -114,7 +114,7 @@ options:
     version_added: "2.0"
   wait_timeout:
     description:
-      - How long before wait instances to become viable when replaced.  If you experience the error 'Waited too long for ELB instances to be healthy',
+      - How long before wait instances to become viable when replaced.  If you experience the error "Waited too long for ELB instances to be healthy",
         try increasing this value.
     default: 300
     version_added: "1.8"
