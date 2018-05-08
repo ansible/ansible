@@ -3,6 +3,7 @@
   nxos_config:
     lines:
       - feature nxapi
+      - feature privilege
   connection: network_cli
   ignore_errors: yes
 
