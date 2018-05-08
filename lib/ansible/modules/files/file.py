@@ -370,7 +370,7 @@ def ensure_directory(path, b_path, prev_state, follow, recurse):
 
     if prev_state == 'absent':
         if module.check_mode:
-            module.exit_json(changed=True, diff=diff)
+            return {'changed': True, 'diff': diff}
         curpath = ''
 
         try:
@@ -411,7 +411,7 @@ def ensure_directory(path, b_path, prev_state, follow, recurse):
     if recurse:
         changed |= recursive_set_attributes(to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
 
-    module.exit_json(path=path, changed=changed, diff=diff)
+    return {'path': path, 'changed': changed, 'diff': diff}
 
 
 def ensure_symlink(path, b_path, src, b_src, prev_state, follow, force):
@@ -508,7 +508,7 @@ def ensure_symlink(path, b_path, src, b_src, prev_state, follow, force):
                                                   'path': path})
 
     if module.check_mode and not os.path.exists(b_path):
-        module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+        return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
     # Whenever we create a link to a nonexistent target we know that the nonexistent target
     # cannot have any permissions set on it.  Skip setting those and emit a warning (the user
@@ -519,7 +519,7 @@ def ensure_symlink(path, b_path, src, b_src, prev_state, follow, force):
     else:
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
-    module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+    return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
 def ensure_hardlink(path, b_path, src, b_src, prev_state, follow, force):
@@ -572,7 +572,7 @@ def ensure_hardlink(path, b_path, src, b_src, prev_state, follow, force):
         changed = True
         if os.path.exists(b_path):
             if os.stat(b_path).st_ino == os.stat(b_src).st_ino:
-                module.exit_json(path=path, changed=False)
+                return {'path': path, 'changed': False}
             elif not force:
                 raise AnsibleModuleError(results={'msg': 'Cannot link: different hard link exists at destination',
                                                   'dest': path, 'src': src})
@@ -610,11 +610,11 @@ def ensure_hardlink(path, b_path, src, b_src, prev_state, follow, force):
                                                   'path': path})
 
     if module.check_mode and not os.path.exists(b_path):
-        module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+        return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
-    module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+    return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
 def main():
@@ -681,7 +681,6 @@ def main():
         result = execute_touch(path, b_path, prev_state, follow)
     elif state == 'absent':
         result = ensure_absent(path, b_path, prev_state)
-        module.exit_json(**result)
 
     module.exit_json(**result)
 
