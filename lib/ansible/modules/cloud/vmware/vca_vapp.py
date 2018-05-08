@@ -153,10 +153,8 @@ def create(module):
     poweron = module.params['operation'] == 'poweron'
 
     task = module.vca.create_vapp(vdc_name, vapp_name, template_name,
-                                  catalog_name, network_name, network_mode,
+                                  catalog_name, network_name, 'bridged', 
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
-    if task is False:
-        module.fail('unable to create vapp')
 
     if task is False:
         module.fail('Failed to create vapp: %s' % vapp_name)
