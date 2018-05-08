@@ -10,6 +10,7 @@
     resource_type: networksecuritygroups
     resource_name: sg{{ rpfx }}
     api_version: "2018-01-01"
+    idempotency: yes
     body:
       location: eastus
       properties:

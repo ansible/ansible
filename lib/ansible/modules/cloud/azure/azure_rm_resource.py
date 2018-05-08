@@ -73,6 +73,10 @@ options:
       - A valid, numeric, HTTP status code that signifies success of the
         request. Can also be comma separated list of status codes.
     default: [ 200, 201, 202 ]
+  idempotency:
+    description:
+      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
+    default: no
   state:
     description:
       - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
@@ -162,6 +166,10 @@ class AzureRMResource(AzureRMModuleBase):
                 type='list',
                 default=[200, 201, 202]
             ),
+            idempotency=dict(
+                type='bool',
+                default=False
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -184,6 +192,7 @@ class AzureRMResource(AzureRMModuleBase):
         self.subresource_name = None
         self.method = None
         self.status_code = []
+        self.idempotency = False
         self.state = None
         super(AzureRMResource, self).__init__(self.module_arg_spec, supports_tags=False)
 
@@ -220,6 +229,10 @@ class AzureRMResource(AzureRMModuleBase):
 
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+
+        if self.idempotency:
+            response = self.mgmt_client.query(self.url, "GET", None, [ 200, 404])
+            # XXX - compare
 
         response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
 
