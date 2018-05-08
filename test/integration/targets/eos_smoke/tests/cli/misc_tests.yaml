@@ -23,4 +23,15 @@
         provider: "{{ cli }}"
       become: no
 
+    # Test that transport values are properly ignored
+    - name: wrong transport specified
+      eos_command:
+          commands: show version
+          transport: eapi
+
+    - name: wrong transport specified in provider
+      eos_command:
+          commands: show version
+          provider: "{{ eapi }}"
+
   when: "ansible_connection != 'local'"
