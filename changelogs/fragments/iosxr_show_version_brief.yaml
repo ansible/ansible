@@ -1,0 +1,2 @@
+bugfixes:
+- iosxr_* modules do not work with iosxr version >= 6.3.2 as cisco has deprecated 'show version brief'
