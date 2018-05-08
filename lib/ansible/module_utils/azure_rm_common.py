@@ -874,6 +874,7 @@ class AzureRMModuleBase(object):
         if not base_url:
             # most things are resource_manager, don't make everyone specify
             base_url = self._cloud_environment.endpoints.resource_manager
+            client_kwargs['base_url'] = base_url
 
         # unversioned clients won't accept profile; only send it if necessary
         # clients without a version specified in the profile will use the default
@@ -919,7 +920,7 @@ class AzureRMModuleBase(object):
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+                                                            api_version=AZURE_API_PROFILES[self.api_profile]['StorageManagementClient'])
         return self._storage_client
 
     @property
@@ -933,7 +934,7 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-11-01')
+                                                            api_version=AZURE_API_PROFILES[self.api_profile]['NetworkManagementClient']) 
         return self._network_client
 
     @property
@@ -947,7 +948,7 @@ class AzureRMModuleBase(object):
         if not self._resource_client:
             self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
                                                              base_url=self._cloud_environment.endpoints.resource_manager,
-                                                             api_version='2017-05-10')
+                                                             api_version=AZURE_API_PROFILES[self.api_profile]['ResourceManagementClient']) 
         return self._resource_client
 
     @property
@@ -961,7 +962,7 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
+                                                            api_version=AZURE_API_PROFILES[self.api_profile]['ComputeManagementClient']) 
         return self._compute_client
 
     @property
