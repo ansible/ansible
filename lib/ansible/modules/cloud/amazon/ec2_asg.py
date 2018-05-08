@@ -114,7 +114,8 @@ options:
     version_added: "2.0"
   wait_timeout:
     description:
-      - how long before wait instances to become viable when replaced.  Used in conjunction with instance_ids option.
+      - How long before wait instances to become viable when replaced.  If you experience the error 'Waited too long for ELB instances to be healthy',
+        try increasing this value.
     default: 300
     version_added: "1.8"
   wait_for_instances:
@@ -618,7 +619,8 @@ def get_properties(autoscaling_group):
 def elb_dreg(asg_connection, group_name, instance_id):
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
-    wait_timeout = module.params.get('wait_timeout')
+    
+    = module.params.get('wait_timeout')
     count = 1
     if as_group['LoadBalancerNames'] and as_group['HealthCheckType'] == 'ELB':
         elb_connection = boto3_conn(module,
