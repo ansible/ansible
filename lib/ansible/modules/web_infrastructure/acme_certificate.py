@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: letsencrypt
+module: acme_certificate
 author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with Let's Encrypt
@@ -40,6 +40,8 @@ description:
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
+   - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
+      did not change."
 requirements:
   - "python >= 2.6"
   - openssl
@@ -194,7 +196,7 @@ EXAMPLES = '''
 ### Example with HTTP challenge ###
 
 - name: Create a challenge for sample.com using a account key from a variable.
-  letsencrypt:
+  acme_certificate:
     account_key_content: "{{ account_private_key }}"
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
@@ -202,7 +204,7 @@ EXAMPLES = '''
 
 # Alternative first step:
 - name: Create a challenge for sample.com using a account key from hashi vault.
-  letsencrypt:
+  acme_certificate:
     account_key_content: "{{ lookup('hashi_vault', 'secret=secret/account_private_key:value') }}"
     csr: /etc/pki/cert/csr/sample.com.csr
     fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
@@ -210,7 +212,7 @@ EXAMPLES = '''
 
 # Alternative first step:
 - name: Create a challenge for sample.com using a account key file.
-  letsencrypt:
+  acme_certificate:
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
@@ -226,7 +228,7 @@ EXAMPLES = '''
 #     when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
-  letsencrypt:
+  acme_certificate:
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
@@ -237,7 +239,7 @@ EXAMPLES = '''
 ### Example with DNS challenge against production ACME server ###
 
 - name: Create a challenge for sample.com using a account key file.
-  letsencrypt:
+  acme_certificate:
     account_key_src: /etc/pki/cert/private/account.key
     account_email: myself@sample.com
     src: /etc/pki/cert/csr/sample.com.csr
@@ -274,7 +276,7 @@ EXAMPLES = '''
 #     when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
-  letsencrypt:
+  acme_certificate:
     account_key_src: /etc/pki/cert/private/account.key
     account_email: myself@sample.com
     src: /etc/pki/cert/csr/sample.com.csr
@@ -1304,6 +1306,8 @@ def main():
         ),
         supports_check_mode=True,
     )
+    if module._name == 'letsencrypt':
+        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version=2.10)
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
