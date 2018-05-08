@@ -99,9 +99,6 @@ EXAMPLES = '''
     remove_duplicate: true
 '''
 
-import logging
-import copy
-
 from ansible.module_utils.basic import AnsibleModule
 
 try:
