@@ -929,7 +929,7 @@ class AnsibleModule(object):
         # if _ansible_tmpdir was not set, the module needs to create it and
         # clean it up once finished.
         if self._tmpdir is None:
-            basedir = os.path.expanduser(self._remote_tmp)
+            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
             basefile = "ansible-moduletmp-%s-" % time.time()
             tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
             if not self._keep_remote_files:

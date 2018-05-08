@@ -697,9 +697,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # We set the module_style to new here so the remote_tmp is created
         # before the module args are built if remote_tmp is needed (async).
         # If the module_style turns out to not be new and we didn't create the
-        # remote tmp here, it will still be created. Thist must be done before
-        # so the ANSIBALLZ wrapper (if created) has the proper value for
-        # _ansible_tmp set in cases where we know it is required
+        # remote tmp here, it will still be created. This must be done before
+        # calling self._update_module_args() so the module wrapper has the
+        # correct remote_tmp value set
         if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
             self._make_tmp_path()
             tmpdir = self._connection._shell.tmpdir
