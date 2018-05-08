@@ -47,6 +47,10 @@ class ActionModule(_ActionModule):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
+                del self._task.args['provider']
+            if self._task.args.get('transport'):
+                display.warning('transport is unnecessary when using network_cli and will be ignored')
+                del self._task.args['transport']
         elif self._play_context.connection == 'local':
             provider = load_provider(eos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
