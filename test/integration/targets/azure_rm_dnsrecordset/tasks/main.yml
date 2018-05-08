@@ -158,6 +158,26 @@
     that: 
       - results.changed
 
+- name: create TXT records in a new record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: "_txt.{{ domain_name }}.com"
+    zone_name: "{{ domain_name }}.com"
+    record_type: TXT
+    state: present
+    records:
+      - entry: "v=spf1 a -all"
+      - entry: "foo"
+      - entry:
+          - "bar"
+          - "baz"
+  register: results
+
+- name: Assert that TXT record set was created
+  assert:
+    that:
+      - results.changed
+
 - name: Delete DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
