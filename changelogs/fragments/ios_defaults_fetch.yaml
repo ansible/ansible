@@ -1,0 +1,2 @@
+bugfixes:
+- ios_config - If defaults is enabled append default flag to command (https://github.com/ansible/ansible/pull/39741)
