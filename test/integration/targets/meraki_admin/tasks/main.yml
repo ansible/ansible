@@ -55,9 +55,9 @@
   register: create_tags_invalid
   ignore_errors: yes
 
-- assert:
-    that:
-      - '"Invalid permission type" in create_tags_invalid.msg'
+# - assert:
+#     that:
+#       - '"Invalid permission type" in create_tags_invalid.msg'
 
 - name: Create administrator with networks
   meraki_admin:
@@ -93,15 +93,14 @@
   register: create_network_invalid
   ignore_errors: yes
 
-- assert:
-    that:
-      - '"No network found with the name" in create_network_invalid.msg'
+# - assert:
+#     that:
+#       - '"No network found with the name" in create_network_invalid.msg'
 
 - name: Query all administrators
   meraki_admin:
     auth_key: '{{auth_key}}'
     state: query
-    # org_name: kbreit@insight.com
     org_name: '{{test_org_name}}'
   delegate_to: localhost
   register: query_all
@@ -133,4 +132,28 @@
     that:
       - query_name.data.name == "Jane Doe"
       - query_email.data.email == "meraki+janedoe@kevinbreit.net"
-#       - query_all.changed == False
+
+- name: Delete administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    email: '{{item}}'
+  delegate_to: localhost
+  register: delete_all
+  loop:
+      - meraki+janedoe@kevinbreit.net
+      - meraki+johndoe@kevinbreit.net
+      - meraki+jimdoe@kevinbreit.net
+
+- name: Query all administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+  delegate_to: localhost
+  register: query_all_deleted
+
+- assert:
+    that:
+      - query_all_deleted.data | length == 1

@@ -264,7 +264,7 @@ def main():
                    }
     update_urls = {'admin': '/organizations/{org_id}/admins/',
                    }
-    revoke_urls = {'admin': '/organizations/{org_id}/admins/{net_id}',
+    revoke_urls = {'admin': '/organizations/{org_id}/admins/',
                    }
 
     meraki.url_catalog['query'] = query_urls
