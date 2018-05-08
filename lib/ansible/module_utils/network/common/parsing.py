@@ -200,6 +200,7 @@ class Conditional(object):
         'lt': ['lt', '<'],
         'le': ['le', '<='],
         'contains': ['contains'],
+        'not_contains': ['not_contains'],
         'matches': ['matches']
     }
 
@@ -289,6 +290,9 @@ class Conditional(object):
 
     def contains(self, value):
         return str(self.value) in value
+
+    def not_contains(self, value):
+        return str(self.value) not in value
 
     def matches(self, value):
         match = re.search(self.value, value, re.M)
