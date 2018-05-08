@@ -215,12 +215,18 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
 
                 try:
                     subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                    ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
+                                     ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
+                except:
+                    pass
+                try:
                     backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
-                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
+                                                   ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
                     subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                     load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
+                except:
+                    pass
+                try:
                     ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
                 except:
