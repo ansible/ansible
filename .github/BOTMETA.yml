@@ -679,6 +679,7 @@ files:
   $modules/utilities/logic/pause.py: tbielawa
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
+  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -693,7 +694,6 @@ files:
   $modules/web_infrastructure/jenkins_plugin.py: jtyr
   $modules/web_infrastructure/jenkins_script.py: hogarthj
   $modules/web_infrastructure/jira.py: Slezhuk tarka
-  $modules/web_infrastructure/letsencrypt.py: mgruener resmo felixfontein
   $modules/web_infrastructure/nginx_status_facts.py: resmo
   $modules/web_infrastructure/rundeck_acl_policy.py:
   $modules/web_infrastructure/rundeck_project.py: nerzhul
