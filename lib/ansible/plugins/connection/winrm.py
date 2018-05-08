@@ -115,6 +115,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
@@ -227,7 +228,8 @@ class Connection(ConnectionBase):
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
 
         if unsupported_transports:
-            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
+            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' %
+                               to_native(list(unsupported_transports), nonstring='simplerepr'))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
         kinit_mode = self.get_option('kerberos_mode')
@@ -269,12 +271,22 @@ class Connection(ConnectionBase):
         os.environ["KRB5CCNAME"] = krb5ccname
         krb5env = dict(KRB5CCNAME=krb5ccname)
 
+        # stores various flags to call with kinit, we currently only use this
+        # to set -f so we can get a forward-able ticket (cred delegation)
+        kinit_flags = []
+        if boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
+            kinit_flags.append('-f')
+
+        kinit_cmdline = [self._kinit_cmd]
+        kinit_cmdline.extend(kinit_flags)
+        kinit_cmdline.append(principal)
+
         # pexpect runs the process in its own pty so it can correctly send
         # the password as input even on MacOS which blocks subprocess from
         # doing so. Unfortunately it is not available on the built in Python
         # so we can only use it if someone has installed it
         if HAS_PEXPECT:
-            kinit_cmdline = "%s %s" % (self._kinit_cmd, principal)
+            kinit_cmdline = " ".join(kinit_cmdline)
             password = to_text(password, encoding='utf-8',
                                errors='surrogate_or_strict')
 
@@ -283,11 +295,10 @@ class Connection(ConnectionBase):
             events = {
                 ".*:": password + "\n"
             }
-            # technically this is the stdout but to match subprocess we wil call
-            # it stderr
+            # technically this is the stdout but to match subprocess we will
+            # call it stderr
             stderr, rc = pexpect.run(kinit_cmdline, withexitstatus=True, events=events, env=krb5env, timeout=60)
         else:
-            kinit_cmdline = [self._kinit_cmd, principal]
             password = to_bytes(password, encoding='utf-8',
                                 errors='surrogate_or_strict')
 
@@ -301,7 +312,7 @@ class Connection(ConnectionBase):
             rc = p.returncode != 0
 
         if rc != 0:
-            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
+            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % to_native(stderr.strip()))
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
@@ -397,7 +408,6 @@ class Connection(ConnectionBase):
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
 
             except Exception as ex:
-                from traceback import format_exc
                 display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
                 stdin_push_failed = True
 
@@ -422,7 +432,7 @@ class Connection(ConnectionBase):
                 if self.is_clixml(stderr):
                     stderr = self.parse_clixml_stream(stderr)
 
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, stderr))
+                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
 
             return response
         finally:
@@ -432,9 +442,9 @@ class Connection(ConnectionBase):
     def _connect(self):
 
         if not HAS_WINRM:
-            raise AnsibleError("winrm or requests is not installed: %s" % to_text(WINRM_IMPORT_ERR))
+            raise AnsibleError("winrm or requests is not installed: %s" % to_native(WINRM_IMPORT_ERR))
         elif not HAS_XMLTODICT:
-            raise AnsibleError("xmltodict is not installed: %s" % to_text(XMLTODICT_IMPORT_ERR))
+            raise AnsibleError("xmltodict is not installed: %s" % to_native(XMLTODICT_IMPORT_ERR))
 
         super(Connection, self)._connect()
         if not self.protocol:
@@ -489,48 +499,7 @@ class Connection(ConnectionBase):
         if self.is_clixml(result.std_err):
             try:
                 result.std_err = self.parse_clixml_stream(result.std_err)
-            except:
-                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
-                pass
-
-        return (result.status_code, result.std_out, result.std_err)
-
-    def exec_command_old(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
-        script = None
-        cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
-        # Support running .ps1 files (via script/raw).
-        if cmd_ext == '.ps1':
-            script = '& %s' % cmd
-        # Support running .bat/.cmd files; change back to the default system encoding instead of UTF-8.
-        elif cmd_ext in ('.bat', '.cmd'):
-            script = '[System.Console]::OutputEncoding = [System.Text.Encoding]::Default; & %s' % cmd
-        # Encode the command if not already encoded; supports running simple PowerShell commands via raw.
-        elif '-EncodedCommand' not in cmd_parts:
-            script = cmd
-        if script:
-            cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
-        if '-EncodedCommand' in cmd_parts:
-            encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = to_text(base64.b64decode(encoded_cmd).decode('utf-16-le'))
-            display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
-        else:
-            display.vvv("EXEC %s" % cmd, host=self._winrm_host)
-        try:
-            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
-        except Exception:
-            traceback.print_exc()
-            raise AnsibleConnectionFailure("failed to exec cmd %s" % cmd)
-        result.std_out = to_bytes(result.std_out)
-        result.std_err = to_bytes(result.std_err)
-
-        # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
-            try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
-            except:
+            except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
@@ -567,7 +536,7 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
+            raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
         script_template = u'''
             begin {{
@@ -681,7 +650,7 @@ class Connection(ConnectionBase):
                         offset += len(data)
                 except Exception:
                     traceback.print_exc()
-                    raise AnsibleError('failed to transfer file to "%s"' % out_path)
+                    raise AnsibleError('failed to transfer file to "%s"' % to_native(out_path))
         finally:
             if out_file:
                 out_file.close()

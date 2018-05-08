@@ -101,23 +101,17 @@ class KubernetesAnsibleModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
 
-        if not HAS_K8S_MODULE_HELPER:
-            raise Exception(
-                "This module requires the OpenShift Python client. Try `pip install openshift`"
-            )
-
-        if not HAS_YAML:
-            raise Exception(
-                "This module requires PyYAML. Try `pip install PyYAML`"
-            )
-
-        if not HAS_STRING_UTILS:
-            raise Exception(
-                "This module requires Python string utils. Try `pip install python-string-utils`"
-            )
-
         kwargs['argument_spec'] = self.argspec
         AnsibleModule.__init__(self, *args, **kwargs)
+
+        if not HAS_K8S_MODULE_HELPER:
+            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+
+        if not HAS_YAML:
+            self.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")
+
+        if not HAS_STRING_UTILS:
+            self.fail_json(msg="This module requires Python string utils. Try `pip install python-string-utils`")
 
     @property
     def argspec(self):

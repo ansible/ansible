@@ -22,7 +22,7 @@ deprecated:
   removed_in: "2.5"
   why: Replaced by dedicated modules.
   alternative: Use M(ec2_vpc_net) along with supporting modules including M(ec2_vpc_igw), M(ec2_vpc_route_table), M(ec2_vpc_subnet),
-               M(ec2_vpc_dhcp_options), M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
+               M(ec2_vpc_dhcp_option), M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
 options:
   cidr_block:
     description:

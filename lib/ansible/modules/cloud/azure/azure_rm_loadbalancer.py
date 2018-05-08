@@ -43,6 +43,13 @@ options:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
+    sku:
+        description:
+            The load balancer SKU.
+        choices:
+            - Basic
+            - Standard
+        version_added: 2.6
     frontend_ip_configurations:
         description: List of frontend IPs to be used
         suboptions:
@@ -51,7 +58,20 @@ options:
                 required: True
             public_ip_address:
                 description: Name of an existing public IP address object in the current resource group to associate with the security group.
-                required: True
+            private_ip_address:
+                description: The reference of the Public IP resource.
+                version_added: 2.6
+            private_ip_allocation_method:
+                description: The Private IP allocation method.
+                choices:
+                    - Static
+                    - Dynamic
+                version_added: 2.6
+            subnet:
+                description:
+                    - The reference of the subnet resource.
+                    - Should be an existing subnet's resource id.
+                version_added: 2.6
         version_added: 2.5
     backend_address_pools:
         description: List of backend address pools
@@ -321,7 +341,7 @@ changed:
 '''
 
 import random
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:
     from msrestazure.tools import parse_resource_id
@@ -337,8 +357,16 @@ frontend_ip_configuration_spec = dict(
         required=True
     ),
     public_ip_address=dict(
-        type='str',
-        required=True
+        type='str'
+    ),
+    private_ip_address=dict(
+        type='str'
+    ),
+    private_ip_allocation_method=dict(
+        type='str'
+    ),
+    subnet=dict(
+        type='str'
     )
 )
 
@@ -474,6 +502,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
+            sku=dict(
+                type='str',
+                choices=['Basic', 'Standard']
+            ),
             frontend_ip_configurations=dict(
                 type='list',
                 elements='dict',
@@ -556,6 +588,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
+        self.sku = None
         self.frontend_ip_configurations = None
         self.backend_address_pools = None
         self.probes = None
@@ -658,7 +691,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             # create or update
             frontend_ip_configurations_param = [self.network_models.FrontendIPConfiguration(
                 name=item.get('name'),
-                public_ip_address=self.get_public_ip_address(item.get('public_ip_address'))
+                public_ip_address=self.get_public_ip_address_instance(item.get('public_ip_address')) if item.get('public_ip_address') else None,
+                private_ip_address=item.get('private_ip_address'),
+                private_ip_allocation_method=item.get('private_ip_allocation_method'),
+                subnet=self.network_models.Subnet(id=item.get('subnet')) if item.get('subnet') else None
             ) for item in self.frontend_ip_configurations] if self.frontend_ip_configurations else None
 
             backend_address_pools_param = [self.network_models.BackendAddressPool(
@@ -723,6 +759,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
             param = self.network_models.LoadBalancer(
+                sku=self.network_models.LoadBalancerSku(self.sku) if self.sku else None,
                 location=self.location,
                 frontend_ip_configurations=frontend_ip_configurations_param,
                 backend_address_pools=backend_address_pools_param,
@@ -731,23 +768,18 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 load_balancing_rules=load_balancing_rules_param
             )
 
-            self.create_or_update_load_balancer(param)
+            self.results['state'] = self.create_or_update_load_balancer(param)
         elif self.state == 'absent' and changed:
             self.delete_load_balancer()
             self.results['state'] = None
 
         return self.results
 
-    def get_public_ip_address(self, id):
+    def get_public_ip_address_instance(self, id):
         """Get a reference to the public ip address resource"""
         self.log('Fetching public ip address {}'.format(id))
-        pip_dict = parse_resource_id(id)
-        resource_group = pip_dict.get('resource_group', self.resource_group)
-        name = pip_dict.get('name')
-        try:
-            return self.network_client.public_ip_addresses.get(resource_group, name)
-        except CloudError as err:
-            self.fail('Error fetching public ip address {} - {}'.format(name, str(err)))
+        resource_id = format_resource_id(id, self.subscription_id, 'Microsoft.Network', 'publicIPAddresses', self.resource_group)
+        return self.network_models.PublicIPAddress(id=resource_id)
 
     def get_load_balancer(self):
         """Get a load balancer"""
@@ -784,6 +816,7 @@ def load_balancer_to_dict(load_balancer):
         id=load_balancer.id,
         name=load_balancer.name,
         location=load_balancer.location,
+        sku=load_balancer.sku.name,
         tags=load_balancer.tags,
         provisioning_state=load_balancer.provisioning_state,
         etag=load_balancer.etag,

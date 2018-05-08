@@ -24,7 +24,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'ios'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+),', data)
@@ -56,12 +56,14 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
+
+        if not flags:
+            flags = []
+
         if source == 'running':
             cmd = 'show running-config '
-            if not flags:
-                flags = ['all']
         else:
-            cmd = 'show startup-config'
+            cmd = 'show startup-config '
 
         cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()

@@ -63,7 +63,7 @@ class PylintTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)

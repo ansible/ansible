@@ -826,7 +826,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 become_required = True
 
         for m in set(module_names):
-            m = to_text(m)
+            m = to_text(m).rstrip()  # tolerate windows line endings
             mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
             if not mu_path:
                 raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
@@ -874,7 +874,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=None, templar=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
+def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
                   become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than

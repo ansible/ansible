@@ -544,16 +544,16 @@ class PlayContext(Base):
                     flags += ' -u %s ' % self.become_user
 
                 # FIXME: make shell independent
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
 
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
+                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
                 else:
-                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
             elif self.become_method == 'pmrun':
 

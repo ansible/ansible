@@ -4,8 +4,7 @@
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -19,7 +18,6 @@ $verbosity = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int
 
 $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-$upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
@@ -30,22 +28,14 @@ $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
 $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
 $ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
 $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
+$allowprerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
 
 $result = @{
-    changed = $false
-}
-
-if ($upgrade)
-{
-    Add-DeprecationWarning -obj $result -message "Parameter upgrade=yes is replaced with state=latest" -version 2.6
-    if ($state -eq "present")
-    {
-        $state = "latest"
-    }
+    changed = $false 
 }
 
 Function Chocolatey-Install-Upgrade
@@ -77,8 +67,6 @@ Function Chocolatey-Install-Upgrade
         $result.rc = $LastExitCode
         $result.stdout = $install_output | Out-String
         if ($result.rc -ne 0) {
-            # Deprecated below result output in v2.4, remove in v2.6
-            $result.choco_bootstrap_output = $install_output
             Fail-Json -obj $result -message "Chocolatey bootstrap installation failed."
         }
         $result.changed = $true
@@ -162,9 +150,6 @@ Function Choco-IsInstalled
         $result.rc = $LastExitCode
         $result.command =  "$script:executable list $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error checking installation status for $package 'package'"
     }
 
@@ -194,6 +179,7 @@ Function Choco-Upgrade
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
         [bool] $allowdowngrade,
+        [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password
@@ -261,6 +247,11 @@ Function Choco-Upgrade
         $options += "--allow-downgrade"
     }
 
+    if ($allowprerelease)
+    {
+        $options += "--prerelease"
+    }
+
     if ($proxy_url)
     {
         $options += "--proxy=`"'$proxy_url'`""
@@ -288,9 +279,6 @@ Function Choco-Upgrade
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable upgrade $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error upgrading package '$package'"
     }
 
@@ -326,6 +314,7 @@ Function Choco-Install
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
         [bool] $allowdowngrade,
+        [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password
@@ -340,7 +329,8 @@ Function Choco-Install
                 -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
                 -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
-                -proxy_username $proxy_username -proxy_password $proxy_password
+                -proxy_username $proxy_username -proxy_password $proxy_password `
+                -allowprerelease $allowprerelease
             return
         }
         elseif (-not $force)
@@ -386,6 +376,11 @@ Function Choco-Install
         $options += "--allow-empty-checksums"
     }
 
+    if ($allowprerelease)
+    {
+        $options += "--prerelease"
+    }
+
     if ($ignorechecksums)
     {
         $options += "--ignore-checksums"
@@ -428,9 +423,6 @@ Function Choco-Install
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable install $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error installing package '$package'"
     }
 
@@ -499,9 +491,6 @@ Function Choco-Uninstall
     if ($result.rc -notin $successexitcodes) {
         $result.command =  "$script:executable uninstall $script:options $options"
         $result.stdout = $output | Out-String
-        # Deprecated below result output in v2.4, remove in v2.6
-        $result.choco_error_cmd = $result.command
-        $result.choco_error_log = $output
         Fail-Json -obj $result -message "Error uninstalling package '$package'"
     }
 
@@ -529,7 +518,8 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
-        -proxy_username $proxy_username -proxy_password $proxy_password
+        -proxy_username $proxy_username -proxy_password $proxy_password `
+        -allowprerelease $allowprerelease
 }
 
 Exit-Json -obj $result

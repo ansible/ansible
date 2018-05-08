@@ -38,11 +38,11 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-      - If C(directory), all immediate subdirectories will be created if they
-        do not exist, since 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist, see the M(copy)
-        or M(template) module if you want that behavior.  If C(link), the symbolic
-        link will be created or changed. Use C(hard) for hardlinks. If C(absent),
+      - If C(directory), all intermediate subdirectories will be created if they
+        do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
+        If C(file), the file will NOT be created if it does not exist; see the C(touch)
+        value or the M(copy) or M(template) module if you want that behavior.  If C(link), the
+        symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
         Note that C(absent) will not cause C(file) to fail if the C(path) does not exist
         as the state did not change.
@@ -53,11 +53,12 @@ options:
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept absolute,
-        relative and nonexisting paths. Relative paths are not expanded.
+      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
+        absolute, relative and nonexisting paths. Relative paths are relative to the file being
+        created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to state=directory)
+      - recursively set the specified file attributes (applies only to directories)
     type: bool
     default: 'no'
     version_added: "1.1"
@@ -160,16 +161,23 @@ def recursive_set_attributes(module, b_path, follow, file_args):
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
             else:
+                # Change perms on the link
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
+
                 if follow:
                     b_fsname = os.path.join(b_root, os.readlink(b_fsname))
-                    if os.path.isdir(b_fsname):
-                        changed |= recursive_set_attributes(module, b_fsname, follow, file_args)
-                    tmp_file_args = file_args.copy()
-                    tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
+                    # The link target could be nonexistent
+                    if os.path.exists(b_fsname):
+                        if os.path.isdir(b_fsname):
+                            # Link is a directory so change perms on the directory's contents
+                            changed |= recursive_set_attributes(module, b_fsname, follow, file_args)
+
+                        # Change perms on the file pointed to by the link
+                        tmp_file_args = file_args.copy()
+                        tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
+                        changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
     return changed
 
 
@@ -182,7 +190,7 @@ def main():
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
-            follow=dict(required=False, default=False, type='bool'),
+            follow=dict(required=False, default=True, type='bool'),
             diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
             validate=dict(required=False, default=None),  # Internal use only, for template and copy
             src=dict(required=False, default=None, type='path'),
@@ -280,8 +288,9 @@ def main():
                 else:
                     try:
                         os.unlink(b_path)
-                    except Exception as e:
-                        module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
+                    except OSError as e:
+                        if e.errno != errno.ENOENT:  # It may already have been removed
+                            module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
             module.exit_json(path=path, changed=True, diff=diff)
         else:
             module.exit_json(path=path, changed=False)
@@ -352,7 +361,6 @@ def main():
         module.exit_json(path=path, changed=changed, diff=diff)
 
     elif state in ('link', 'hard'):
-
         if not os.path.islink(b_path) and os.path.isdir(b_path):
             relpath = path
         else:
@@ -414,7 +422,11 @@ def main():
                         os.rmdir(b_path)
                     elif prev_state == 'directory' and state == 'hard':
                         if os.path.exists(b_path):
-                            os.remove(b_path)
+                            try:
+                                os.unlink(b_path)
+                            except OSError as e:
+                                if e.errno != errno.ENOENT:  # It may already have been removed
+                                    raise
                     if state == 'hard':
                         os.link(b_src, b_tmppath)
                     else:
@@ -436,7 +448,16 @@ def main():
         if module.check_mode and not os.path.exists(b_path):
             module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+        # Whenever we create a link to a nonexistent target we know that the nonexistent target
+        # cannot have any permissions set on it.  Skip setting those and emit a warning (the user
+        # can set follow=False to remove the warning)
+        if (state == 'link' and params['follow'] and os.path.islink(params['path']) and
+                not os.path.exists(file_args['path'])):
+            module.warn('Cannot set fs attributes on a non-existent symlink target. follow should be'
+                        ' set to False to avoid this.')
+        else:
+            changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
     elif state == 'touch':
@@ -468,6 +489,7 @@ def main():
         module.exit_json(dest=path, changed=True, diff=diff)
 
     module.fail_json(path=path, msg='unexpected position reached')
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,2 @@
+- name: stop supervisord
+  command: "supervisorctl -c {{ remote_dir }}/supervisord.conf {% if credentials.username %}-u {{ credentials.username }} -p {{ credentials.password }}{% endif %} shutdown"

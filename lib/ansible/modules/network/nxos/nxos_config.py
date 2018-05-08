@@ -119,8 +119,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -204,6 +205,9 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+notes:
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 """
 
 EXAMPLES = """
@@ -244,6 +248,13 @@ EXAMPLES = """
     replace_src: config.txt
     replace: config
 
+- name: for idempotency, use full-form commands
+  nxos_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int eth1/1
+    parents: interface Ethernet1/1
 """
 
 RETURN = """

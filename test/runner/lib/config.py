@@ -46,6 +46,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
+        self.docker_memory = args.docker_memory if 'docker_memory' in args else None
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
@@ -159,7 +160,12 @@ class IntegrationConfig(TestConfig):
 
         self.start_at = args.start_at  # type: str
         self.start_at_task = args.start_at_task  # type: str
-        self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
+        self.allow_destructive = args.allow_destructive  # type: bool
+        self.allow_root = args.allow_root  # type: bool
+        self.allow_disabled = args.allow_disabled  # type: bool
+        self.allow_unstable = args.allow_unstable  # type: bool
+        self.allow_unstable_changed = args.allow_unstable_changed  # type: bool
+        self.allow_unsupported = args.allow_unsupported  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
         self.continue_on_error = args.continue_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool
@@ -245,3 +251,5 @@ class CoverageReportConfig(CoverageConfig):
         super(CoverageReportConfig, self).__init__(args)
 
         self.show_missing = args.show_missing  # type: bool
+        self.include = args.include  # type: str
+        self.omit = args.omit  # type: str

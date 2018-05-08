@@ -38,15 +38,29 @@ The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the
 additional methods for connecting to AWS using the standard module arguments
 
-      m.resource('lambda') # - get an AWS connection as a boto3 resource.
+    m.resource('lambda') # - get an AWS connection as a boto3 resource.
 
 or
 
-      m.client('sts') # - get an AWS connection as a boto3 client.
+    m.client('sts') # - get an AWS connection as a boto3 client.
 
+To make use of AWSRetry easier, it can now be wrapped around any call from a
+module-created client. To add retries to a client, create a client:
+
+    m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+    ec2 = m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+    ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
 
 """
 
+from functools import wraps
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
@@ -119,10 +133,11 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
-    def client(self, service):
+    def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='client', resource=service,
+        conn = boto3_conn(self, conn_type='client', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
     def resource(self, service):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
@@ -154,8 +169,59 @@ class AnsibleAWSModule(object):
         except AttributeError:
             response = None
 
-        if response is None:
-            self._module.fail_json(msg=message, exception=last_traceback)
+        failure = dict(
+            msg=message,
+            exception=last_traceback,
+            **self._gather_versions()
+        )
+
+        if response is not None:
+            failure.update(**camel_dict_to_snake_dict(response))
+
+        self._module.fail_json(**failure)
+
+    def _gather_versions(self):
+        """Gather AWS SDK (boto3 and botocore) dependency versions
+
+        Returns {'boto3_version': str, 'botocore_version': str}
+        Returns {} if neither are installed
+        """
+        if not HAS_BOTO3:
+            return {}
+        import boto3
+        import botocore
+        return dict(boto3_version=boto3.__version__,
+                    botocore_version=botocore.__version__)
+
+
+class _RetryingBotoClientWrapper(object):
+    __never_wait = (
+        'get_paginator', 'can_paginate',
+        'get_waiter', 'generate_presigned_url',
+    )
+
+    def __init__(self, client, retry):
+        self.client = client
+        self.retry = retry
+
+    def _create_optional_retry_wrapper_function(self, unwrapped):
+        retrying_wrapper = self.retry(unwrapped)
+
+        @wraps(unwrapped)
+        def deciding_wrapper(aws_retry=False, *args, **kwargs):
+            if aws_retry:
+                return retrying_wrapper(*args, **kwargs)
+            else:
+                return unwrapped(*args, **kwargs)
+        return deciding_wrapper
+
+    def __getattr__(self, name):
+        unwrapped = getattr(self.client, name)
+        if name in self.__never_wait:
+            return unwrapped
+        elif callable(unwrapped):
+            wrapped = self._create_optional_retry_wrapper_function(unwrapped)
+            setattr(self, name, wrapped)
+            return wrapped
         else:
-            self._module.fail_json(msg=message, exception=last_traceback,
-                                   **camel_dict_to_snake_dict(response))
+            return unwrapped

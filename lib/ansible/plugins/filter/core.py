@@ -459,12 +459,12 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
-def b64encode(string):
-    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_or_strict')))
+def b64encode(string, encoding='utf-8'):
+    return to_text(base64.b64encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
 
 
-def b64decode(string):
-    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
+def b64decode(string, encoding='utf-8'):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
 
 def flatten(mylist, levels=None):
@@ -485,6 +485,19 @@ def flatten(mylist, levels=None):
         else:
             ret.append(element)
 
+    return ret
+
+
+def dict_to_list_of_dict_key_value_elements(mydict):
+    ''' takes a dictionary and transforms it into a list of dictionaries,
+        with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
+
+    if not isinstance(mydict, MutableMapping):
+        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+
+    ret = []
+    for key in mydict:
+        ret.append({'key': key, 'value': mydict[key]})
     return ret
 
 
@@ -517,6 +530,7 @@ class FilterModule(object):
             'basename': partial(unicode_wrap, os.path.basename),
             'dirname': partial(unicode_wrap, os.path.dirname),
             'expanduser': partial(unicode_wrap, os.path.expanduser),
+            'expandvars': partial(unicode_wrap, os.path.expandvars),
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),
@@ -574,4 +588,5 @@ class FilterModule(object):
             'combine': combine,
             'extract': extract,
             'flatten': flatten,
+            'dict2items': dict_to_list_of_dict_key_value_elements,
         }

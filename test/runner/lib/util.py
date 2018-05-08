@@ -327,7 +327,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     if communicate:
         encoding = 'utf-8'
-        data_bytes = data.encode(encoding) if data else None
+        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
         stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
         stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
@@ -441,6 +441,55 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
+    assume_text = set([
+        '.cfg',
+        '.conf',
+        '.crt',
+        '.css',
+        '.html',
+        '.ini',
+        '.j2',
+        '.js',
+        '.json',
+        '.md',
+        '.pem',
+        '.ps1',
+        '.psm1',
+        '.py',
+        '.rst',
+        '.sh',
+        '.txt',
+        '.xml',
+        '.yaml',
+        '.yml',
+    ])
+
+    assume_binary = set([
+        '.bin',
+        '.eot',
+        '.gz',
+        '.ico',
+        '.iso',
+        '.jpg',
+        '.otf',
+        '.p12',
+        '.png',
+        '.pyc',
+        '.rpm',
+        '.ttf',
+        '.woff',
+        '.woff2',
+        '.zip',
+    ])
+
+    ext = os.path.splitext(path)[1]
+
+    if ext in assume_text:
+        return False
+
+    if ext in assume_binary:
+        return True
+
     with open(path, 'rb') as path_fd:
         return b'\0' in path_fd.read(1024)
 

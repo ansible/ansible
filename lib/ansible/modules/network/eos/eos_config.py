@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: eos
 notes:
   - Tested against EOS 4.15
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -113,8 +115,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -234,6 +237,14 @@ EXAMPLES = """
   eos_config:
     diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+- name: for idempotency, use full-form commands
+  eos_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int eth1
+    parents: interface Ethernet1
 """
 
 RETURN = """

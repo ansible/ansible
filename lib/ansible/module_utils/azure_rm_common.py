@@ -23,7 +23,7 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file']
+        choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -127,6 +127,7 @@ except ImportError as exc:
 try:
     from enum import Enum
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.azure_active_directory import MSIAuthentication
     from msrestazure.tools import resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
@@ -138,6 +139,7 @@ try:
     from azure.mgmt.web.version import VERSION as web_client_version
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.resource.subscriptions import SubscriptionClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
@@ -489,6 +491,23 @@ class AzureRMModuleBase(object):
 
         return None
 
+    def _get_msi_credentials(self, subscription_id_param=None):
+        credentials = MSIAuthentication()
+        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
+        if not subscription_id:
+            try:
+                # use the first subscription of the MSI
+                subscription_client = SubscriptionClient(credentials)
+                subscription = next(subscription_client.subscriptions.list())
+                subscription_id = str(subscription.subscription_id)
+            except Exception as exc:
+                self.fail("Failed to get MSI token: {0}. "
+                          "Please check whether your machine enabled MSI or grant access to any subscription.".format(str(exc)))
+        return {
+            'credentials': credentials,
+            'subscription_id': subscription_id
+        }
+
     def _get_azure_cli_credentials(self):
         credentials, subscription_id = get_azure_cli_credentials()
         cloud_environment = get_cli_active_cloud()
@@ -525,6 +544,10 @@ class AzureRMModuleBase(object):
         auth_source = params.get('auth_source', None)
         if not auth_source:
             auth_source = os.environ.get('ANSIBLE_AZURE_AUTH_SOURCE', 'auto')
+
+        if auth_source == 'msi':
+            self.log('Retrieving credenitals from MSI')
+            return self._get_msi_credentials(arg_credentials['subscription_id'])
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
@@ -747,17 +770,41 @@ class AzureRMModuleBase(object):
             if os_type == 'Linux':
                 # add an inbound SSH rule
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
-                                                     source_port_range='*', destination_port_range='22', priority=100, name='SSH')
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow SSH Access',
+                                                     source_port_range='*',
+                                                     destination_port_range='22',
+                                                     priority=100,
+                                                     name='SSH')
                 ]
                 parameters.location = location
             else:
                 # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
-                                                     source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
-                                                     source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow RDP port 3389',
+                                                     source_port_range='*',
+                                                     destination_port_range='3389',
+                                                     priority=100,
+                                                     name='RDP01'),
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow WinRM HTTPS port 5986',
+                                                     source_port_range='*',
+                                                     destination_port_range='5986',
+                                                     priority=101,
+                                                     name='WinRM01'),
                 ]
         else:
             # Open custom ports
@@ -767,8 +814,15 @@ class AzureRMModuleBase(object):
                 priority += 1
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                                     destination_port_range=str(port), priority=priority, name=rule_name)
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     source_port_range='*',
+                                                     destination_port_range=str(port),
+                                                     priority=priority,
+                                                     name=rule_name)
                 )
 
         self.log('Creating default security group {0}'.format(security_group_name))
@@ -879,13 +933,13 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
+                                                            api_version='2017-11-01')
         return self._network_client
 
     @property
     def network_models(self):
         self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-06-01")
+        return NetworkManagementClient.models("2017-11-01")
 
     @property
     def rm_client(self):

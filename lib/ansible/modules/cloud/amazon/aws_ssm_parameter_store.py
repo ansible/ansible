@@ -50,17 +50,20 @@ options:
       - aws KMS key to decrypt the secrets.
     required: false
     default: aws/ssm (this key is automatically generated at the first parameter created).
-  overwrite:
+  overwrite_value:
     description:
-      - Overwrite the value when create or update parameter
-      - Boolean
+      - Option to overwrite an existing value if it already exists.
+      - String
     required: false
-    default: True
+    version_added: "2.6"
+    choices: ['never', 'changed', 'always']
+    default: changed
   region:
     description:
       - region.
     required: false
 author:
+  - Nathan Webster (@nathanwebsterdotme)
   - Bill Wang (ozbillwang@gmail.com)
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
@@ -94,8 +97,16 @@ EXAMPLES = '''
     key_id: "alias/demo"
     value: "World"
 
-- name: recommend to use with ssm lookup plugin
-  debug: msg="{{ lookup('ssm', 'hello') }}"
+- name: Always update a parameter store value and create a new version
+  aws_ssm_parameter_store:
+    name: "overwrite_example"
+    description: "This example will always overwrite the value"
+    string_type: "String"
+    value: "Test1234"
+    overwrite_value: "always"
+
+- name: recommend to use with aws_ssm lookup plugin
+  debug: msg="{{ lookup('aws_ssm', 'hello') }}"
 '''
 
 RETURN = '''
@@ -118,16 +129,34 @@ except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
 
+def update_parameter(client, module, args):
+    changed = False
+    response = {}
+
+    try:
+        response = client.put_parameter(**args)
+        changed = True
+    except ClientError as e:
+        module.fail_json_aws(e, msg="setting parameter")
+
+    return changed, response
+
+
 def create_update_parameter(client, module):
     changed = False
+    existing_parameter = None
     response = {}
 
     args = dict(
         Name=module.params.get('name'),
         Value=module.params.get('value'),
-        Type=module.params.get('string_type'),
-        Overwrite=module.params.get('overwrite')
+        Type=module.params.get('string_type')
     )
+
+    if (module.params.get('overwrite_value') == "always" or "changed"):
+        args.update(Overwrite=True)
+    else:
+        args.update(Overwrite=False)
 
     if module.params.get('description'):
         args.update(Description=module.params.get('description'))
@@ -136,10 +165,34 @@ def create_update_parameter(client, module):
         args.update(KeyId=module.params.get('key_id'))
 
     try:
-        response = client.put_parameter(**args)
-        changed = True
-    except ClientError as e:
-        module.fail_json_aws(e, msg="setting parameter")
+        existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
+    except:
+        pass
+
+    if existing_parameter:
+        if (module.params.get('overwrite_value') == 'always'):
+
+            (changed, response) = update_parameter(client, module, args)
+
+        elif (module.params.get('overwrite_value') == 'changed'):
+            if existing_parameter['Parameter']['Type'] != args['Type']:
+                (changed, response) = update_parameter(client, module, args)
+
+            if existing_parameter['Parameter']['Value'] != args['Value']:
+                (changed, response) = update_parameter(client, module, args)
+
+            if args['Description']:
+                # Description field not available from get_parameter function so get it from describe_parameters
+                describe_existing_parameter = None
+                try:
+                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key": "Name", "Values": [args['Name']]}])
+                except ClientError as e:
+                    module.fail_json_aws(e, msg="getting description value")
+
+                if describe_existing_parameter['Parameters'][0]['Description'] != args['Description']:
+                    (changed, response) = update_parameter(client, module, args)
+    else:
+        (changed, response) = update_parameter(client, module, args)
 
     return changed, response
 
@@ -174,7 +227,7 @@ def setup_module_object():
         string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),
         decryption=dict(default=True, type='bool'),
         key_id=dict(default="alias/aws/ssm"),
-        overwrite=dict(default=True, type='bool'),
+        overwrite_value=dict(default='changed', choices=['never', 'changed', 'always']),
         region=dict(required=False),
     )
 

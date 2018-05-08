@@ -1,0 +1,312 @@
+# File module tests for overwriting directories
+- name: Initialize the test output dir
+  include: initialize.yml
+
+# We need to make this more consistent:
+# https://github.com/ansible/proposals/issues/111
+#
+# This series of tests document the current inconsistencies.  We should not
+# break these by accident but if we approve a proposal we can break these on
+# purpose.
+
+#
+# Setup
+#
+
+- name: create a test sub-directory
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: directory
+
+- name: create a file for linking to
+  copy:
+    dest: '{{output_dir}}/file_to_link'
+    content: 'Hello World'
+
+#
+# Error condtion: specify a directory with state={link,file}, force=False
+#
+
+# file raises an error
+- name: Try to create a file with directory as dest
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: file
+    force: False
+  ignore_errors: True
+  register: file1_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file1_dir_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file1_result is failed'
+      - 'file1_dir_stat["stat"].isdir'
+
+# link raises an error
+- name: Try to create a symlink with directory as dest
+  file:
+    src: '{{ output_dir }}/file_to_link'
+    dest: '{{output_dir}}/sub1'
+    state: link
+    force: False
+  ignore_errors: True
+  register: file2_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file2_dir_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file2_result is failed'
+      - 'file2_dir_stat["stat"].isdir'
+
+#
+# Error condition: file and link with non-empty directory
+#
+
+- copy:
+    content: 'test'
+    dest: '{{ output_dir }}/sub1/passwd'
+
+# file raises an error
+- name: Try to create a file with directory as dest
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: file
+    force: True
+  ignore_errors: True
+  register: file3_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file3_dir_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file3_result is failed'
+      - 'file3_dir_stat["stat"].isdir'
+
+# link raises an error
+- name: Try to create a symlink with directory as dest
+  file:
+    src: '{{ output_dir }}/file_to_link'
+    dest: '{{output_dir}}/sub1'
+    state: link
+    force: True
+  ignore_errors: True
+  register: file4_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file4_dir_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file4_result is failed'
+      - 'file4_dir_stat["stat"].isdir'
+
+# Cleanup the file that made it non-empty
+- name: Cleanup the file that made the directory nonempty
+  file:
+    state: 'absent'
+    dest: '{{ output_dir }}/sub1/passwd'
+
+#
+# Error condition: file cannot even overwrite an empty directory with force=True
+#
+
+# file raises an error
+- name: Try to create a file with directory as dest
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: file
+    force: True
+  ignore_errors: True
+  register: file5_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file5_dir_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file5_result is failed'
+      - 'file5_dir_stat["stat"].isdir'
+
+#
+# Directory overwriting - link with force=True will overwrite an empty directory
+#
+
+# link can overwrite an empty directory with force=True
+- name: Try to create a symlink with directory as dest
+  file:
+    src: '{{ output_dir }}/file_to_link'
+    dest: '{{output_dir}}/sub1'
+    state: link
+    force: True
+  register: file6_result
+
+- name: Get stat info to show the directory has been overwritten
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file6_dir_stat
+
+- name: verify that the directory was overwritten
+  assert:
+    that:
+      - 'file6_result is changed'
+      - 'not file6_dir_stat["stat"].isdir'
+      - 'file6_dir_stat["stat"].islnk'
+
+#
+# Cleanup from last set of tests
+#
+
+- name: Cleanup the test subdirectory
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: 'absent'
+
+- name: Re-create the test sub-directory
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: 'directory'
+
+#
+# Hard links have the proposed 111 behaviour already: Place the new file inside the directory
+#
+
+- name: Try to create a hardlink with directory as dest
+  file:
+    src: '{{ output_dir }}/file_to_link'
+    dest: '{{ output_dir }}/sub1'
+    state: hard
+    force: False
+  ignore_errors: True
+  register: file7_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file7_dir_stat
+
+- name: Get stat info to show the link has been created
+  stat:
+    path: '{{ output_dir }}/sub1/file_to_link'
+    follow: False
+  register: file7_link_stat
+
+- debug:
+    var: file7_link_stat
+
+- name: verify that the directory was not overwritten
+  assert:
+    that:
+      - 'file7_result is changed'
+      - 'file7_dir_stat["stat"].isdir'
+      - 'file7_link_stat["stat"].isfile'
+      - 'file7_link_stat["stat"].isfile'
+  ignore_errors: True
+
+#
+# Touch is a bit different than everything else.
+# If we need to set timestamps we should probably add atime, mtime, and ctime parameters
+# But I think touch was written because state=file didn't create a file if it
+# didn't already exist.  We should look at changing that behaviour.
+#
+
+- name: Get initial stat info to compare with later
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file8_initial_dir_stat
+
+- name: Use touch with directory as dest
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: touch
+    force: False
+  register: file8_result
+
+- name: Get stat info to show the directory has not been changed to a file
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file8_dir_stat
+
+- name: verify that the directory has been updated
+  assert:
+    that:
+      - 'file8_result is changed'
+      - 'file8_dir_stat["stat"].isdir'
+      - 'file8_dir_stat["stat"]["mtime"] != file8_initial_dir_stat["stat"]["mtime"]'
+
+#
+# State=directory realizes that the directory already exists and does nothing
+#
+- name: Get initial stat info to compare with later
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file9_initial_dir_stat
+
+- name: Use directory with directory as dest
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: directory
+    force: False
+  register: file9_result
+
+- name: Get stat info to show the directory has not been changed
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file9_dir_stat
+
+- name: verify that the directory has been updated
+  assert:
+    that:
+      - 'file9_result is not changed'
+      - 'file9_dir_stat["stat"].isdir'
+      - 'file9_dir_stat["stat"]["mtime"] == file9_initial_dir_stat["stat"]["mtime"]'
+
+- name: Use directory with directory as dest and force=True
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: directory
+    force: True
+  register: file10_result
+
+- name: Get stat info to show the directory has not been changed
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file10_dir_stat
+
+- name: verify that the directory has been updated
+  assert:
+    that:
+      - 'file10_result is not changed'
+      - 'file10_dir_stat["stat"].isdir'
+      - 'file10_dir_stat["stat"]["mtime"] == file9_initial_dir_stat["stat"]["mtime"]'

@@ -59,12 +59,12 @@ options:
     description:
       - Enable Dead Peer Detection.
       - Disabled per default by the API on creation if not set.
-    choices: [ yes, no ]
+    type: bool
   force_encap:
     description:
       - Force encapsulation for NAT traversal.
       - Disabled per default by the API on creation if not set.
-    choices: [ yes, no ]
+    type: bool
   state:
     description:
       - State of the VPN customer gateway.

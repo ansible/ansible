@@ -311,6 +311,9 @@ class DistributionFiles:
         elif 'Ubuntu' in data:
             debian_facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
+        elif 'SteamOS' in data:
+            debian_facts['distribution'] = 'SteamOS'
+            # nothing else to do, SteamOS gets correct info from python functions
         else:
             return False, debian_facts
 
@@ -410,7 +413,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint'],
+                                'Linux Mint', 'SteamOS'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],

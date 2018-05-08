@@ -35,13 +35,13 @@ options:
     description:
     - Defines the host connection protocol for volumes.
     default: iscsi
-    choices: [ fc, iscsi ]
+    choices: [ fc, iscsi, mixed ]
   wwns:
     description:
-    - List of wwns of the host if protocol is fc.
+    - List of wwns of the host if protocol is fc or mixed.
   iqn:
     description:
-    - List of IQNs of the host if protocol is iscsi.
+    - List of IQNs of the host if protocol is iscsi or mixed.
   volume:
     description:
     - Volume name to map to the host.
@@ -63,7 +63,7 @@ EXAMPLES = r'''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: absent
 
-- name: Make sure host bar is available with wwn ports
+- name: Make host bar with wwn ports
   purefa_host:
     host: bar
     protocol: fc
@@ -73,12 +73,24 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Make sure host bar is available with iSCSI ports
+- name: Make host bar with iSCSI ports
   purefa_host:
     host: bar
     protocol: iscsi
     iqn:
     - iqn.1994-05.com.redhat:7d366003913
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Make mixed protocol host
+  purefa_host:
+    host: bar
+    protocol: mixed
+    iqn:
+    - iqn.1994-05.com.redhat:7d366003914
+    wwns:
+    - 00:00:00:00:00:00:01
+    - 11:11:11:11:11:11:12
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -104,6 +116,15 @@ except ImportError:
     HAS_PURESTORAGE = False
 
 
+def _set_host_initiators(module, array):
+    if module.params['protocol'] in ['iscsi', 'mixed']:
+        if module.params['iqn']:
+            array.set_host(module.params['host'], addiqnlist=module.params['iqn'])
+    if module.params['protocol'] in ['fc', 'mixed']:
+        if module.params['wwns']:
+            array.set_host(module.params['host'], addwwnlist=module.params['wwns'])
+
+
 def get_host(module, array):
 
     host = None
@@ -117,25 +138,20 @@ def get_host(module, array):
 
 
 def make_host(module, array):
-
-    changed = True
-
     if not module.check_mode:
-        host = array.create_host(module.params['host'])
-        if module.params['protocol'] == 'iscsi':
-            if module.params['iqn']:
-                array.set_host(module.params['host'], addiqnlist=module.params['iqn'])
-        if module.params['protocol'] == 'fc':
-            if module.params['wwns']:
-                array.set_host(module.params['host'], addwwnlist=module.params['wwns'])
-        if module.params['volume']:
-            array.connect_host(module.params['host'], module.params['volume'])
+        try:
+            host = array.create_host(module.params['host'])
+            _set_host_initiators(module, array)
+            if module.params['volume']:
+                array.connect_host(module.params['host'], module.params['volume'])
+            changed = True
+        except:
+            changed = False
     module.exit_json(changed=changed)
 
 
 def update_host(module, array):
     changed = False
-    host = module.params['host']
     module.exit_json(changed=changed)
 
 
@@ -153,7 +169,7 @@ def main():
     argument_spec.update(dict(
         host=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
-        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi']),
+        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi', 'mixed']),
         iqn=dict(type='list'),
         wwns=dict(type='list'),
         volume=dict(type='str'),

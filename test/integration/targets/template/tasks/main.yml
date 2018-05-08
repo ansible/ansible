@@ -51,6 +51,24 @@
     that:
       - "template_result.changed == true"
 
+# Basic template with non-ascii names
+- name: Check that non-ascii source and dest work
+  template:
+    src: 'café.j2'
+    dest: '{{ output_dir }}/café.txt'
+  register: template_results
+
+- name: Check that the resulting file exists
+  stat:
+    path: '{{ output_dir }}/café.txt'
+  register: stat_results
+
+- name: Check that template created the right file
+  assert:
+    that:
+      - 'template_results is changed'
+      - 'stat_results.stat["exists"]'
+
 # test for import with context on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import with context ala issue 20494
   template: src=import_with_context.j2 dest={{output_dir}}/import_with_context.templated mode=0644
@@ -119,6 +137,93 @@
     that:
         - 'import_as_with_context_diff_result.stdout == ""'
         - "import_as_with_context_diff_result.rc == 0"
+
+# VERIFY trim_blocks
+
+- name: Render a template with "trim_blocks" set to False
+  template:
+    src: trim_blocks.j2
+    dest: "{{output_dir}}/trim_blocks_false.templated"
+    trim_blocks: False
+  register: trim_blocks_false_result
+
+- name: Get checksum of known good trim_blocks_false.expected
+  stat:
+    path: "{{role_path}}/files/trim_blocks_false.expected"
+  register: trim_blocks_false_good
+
+- name: Verify templated trim_blocks_false matches known good using checksum
+  assert:
+    that:
+        - "trim_blocks_false_result.checksum == trim_blocks_false_good.stat.checksum"
+
+- name: Render a template with "trim_blocks" set to True
+  template:
+    src: trim_blocks.j2
+    dest: "{{output_dir}}/trim_blocks_true.templated"
+    trim_blocks: True
+  register: trim_blocks_true_result
+
+- name: Get checksum of known good trim_blocks_true.expected
+  stat:
+    path: "{{role_path}}/files/trim_blocks_true.expected"
+  register: trim_blocks_true_good
+
+- name: Verify templated trim_blocks_true matches known good using checksum
+  assert:
+    that:
+        - "trim_blocks_true_result.checksum == trim_blocks_true_good.stat.checksum"
+
+# VERIFY lstrip_blocks
+
+- name: Check support for lstrip_blocks in Jinja2
+  shell: "{{ ansible_python.executable }} -c 'import jinja2; jinja2.defaults.LSTRIP_BLOCKS'"
+  register: lstrip_block_support
+  ignore_errors: True
+
+- name: Render a template with "lstrip_blocks" set to False
+  template:
+    src: lstrip_blocks.j2
+    dest: "{{output_dir}}/lstrip_blocks_false.templated"
+    lstrip_blocks: False
+  register: lstrip_blocks_false_result
+
+- name: Get checksum of known good lstrip_blocks_false.expected
+  stat:
+    path: "{{role_path}}/files/lstrip_blocks_false.expected"
+  register: lstrip_blocks_false_good
+
+- name: Verify templated lstrip_blocks_false matches known good using checksum
+  assert:
+    that:
+        - "lstrip_blocks_false_result.checksum == lstrip_blocks_false_good.stat.checksum"
+
+- name: Render a template with "lstrip_blocks" set to True
+  template:
+    src: lstrip_blocks.j2
+    dest: "{{output_dir}}/lstrip_blocks_true.templated"
+    lstrip_blocks: True
+  register: lstrip_blocks_true_result
+  ignore_errors: True
+
+- name: Verify exception is thrown if Jinja2 does not support lstrip_blocks but lstrip_blocks is used
+  assert:
+    that:
+      - "lstrip_blocks_true_result.failed"
+      - 'lstrip_blocks_true_result.msg is search(">=2.7")'
+  when: "lstrip_block_support is failed"
+
+- name: Get checksum of known good lstrip_blocks_true.expected
+  stat:
+    path: "{{role_path}}/files/lstrip_blocks_true.expected"
+  register: lstrip_blocks_true_good
+  when: "lstrip_block_support is successful"
+
+- name: Verify templated lstrip_blocks_true matches known good using checksum
+  assert:
+    that:
+        - "lstrip_blocks_true_result.checksum == lstrip_blocks_true_good.stat.checksum"
+  when: "lstrip_block_support is successful"
 
 # VERIFY CONTENTS
 
@@ -486,6 +591,33 @@
     that:
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
+
+# Check that mode=preserve works with template
+- name: Create a template which has strange permissions
+  copy:
+    content: !unsafe '{{ ansible_managed }}\n'
+    dest: '{{ output_dir }}/foo-template.j2'
+    mode: 0547
+  delegate_to: localhost
+
+- name: Use template with mode=preserve
+  template:
+    src: '{{ output_dir }}/foo-template.j2'
+    dest: '{{ output_dir }}/foo-templated.txt'
+    mode: 'preserve'
+  register: template_results
+
+- name: Get permissions from the templated file
+  stat:
+    path: '{{ output_dir }}/foo-templated.txt'
+  register: stat_results
+
+- name: Check that the resulting file has the correct permissions
+  assert:
+    that:
+      - 'template_results is changed'
+      - 'template_results.mode == "0547"'
+      - 'stat_results.stat["mode"] == "0547"'
 
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml

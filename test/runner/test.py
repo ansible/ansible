@@ -225,6 +225,26 @@ def parse_args():
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
 
+    integration.add_argument('--allow-root',
+                             action='store_true',
+                             help='allow tests requiring root when not root')
+
+    integration.add_argument('--allow-disabled',
+                             action='store_true',
+                             help='allow tests which have been marked as disabled')
+
+    integration.add_argument('--allow-unstable',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable')
+
+    integration.add_argument('--allow-unstable-changed',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable when focused changes are detected')
+
+    integration.add_argument('--allow-unsupported',
+                             action='store_true',
+                             help='allow tests which have been marked as unsupported')
+
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')
@@ -397,6 +417,15 @@ def parse_args():
     coverage_report.add_argument('--show-missing',
                                  action='store_true',
                                  help='show line numbers of statements not executed')
+    coverage_report.add_argument('--include',
+                                 metavar='PAT1,PAT2,...',
+                                 help='include only files whose paths match one of these '
+                                      'patterns. Accepts shell-style wildcards, which must be '
+                                      'quoted.')
+    coverage_report.add_argument('--omit',
+                                 metavar='PAT1,PAT2,...',
+                                 help='omit files whose paths match one of these patterns. '
+                                      'Accepts shell-style wildcards, which must be quoted.')
 
     add_extra_coverage_options(coverage_report)
 
@@ -598,12 +627,15 @@ def add_extra_docker_options(parser, integration=True):
 
     docker.add_argument('--docker-util',
                         metavar='IMAGE',
-                        default='httptester',
+                        default='quay.io/ansible/http-test-container:1.0.0',
                         help='docker utility image to provide test services')
 
     docker.add_argument('--docker-privileged',
                         action='store_true',
                         help='run docker container in privileged mode')
+
+    docker.add_argument('--docker-memory',
+                        help='memory limit for docker in bytes', type=int)
 
 
 def complete_target(prefix, parsed_args, **_):

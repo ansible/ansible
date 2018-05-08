@@ -44,12 +44,6 @@ options:
       - Using C(force) will cause ansible to always report that a change was made.
     type: bool
     default: 'no'
-  upgrade:
-    description:
-      - If package is already installed it, try to upgrade to the latest version or to the specified version.
-      - As of Ansible v2.3 this is deprecated, set parameter C(state) to C(latest) for the same result.
-    type: bool
-    default: 'no'
   version:
     description:
       - Specific version of the package to be installed.
@@ -111,6 +105,13 @@ options:
       - See notes in C(proxy_username) when dealing with double quotes in a
         password.
     version_added: '2.4'
+  allow_prerelease:
+    description:
+      - Allow install of prerelease packages.
+      - If state C(state) is C(latest) the highest prerelease package will be installed.
+    type: bool
+    default: 'no'
+    version_added: '2.6'
 notes:
 - Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
   is considered to be a floating-point number and depending on the locale could
@@ -203,21 +204,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-choco_bootstrap_output:
-  description: DEPRECATED, will be removed in 2.6, use stdout instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: Chocolatey upgraded 1/1 packages.
-choco_error_cmd:
-  description: DEPRECATED, will be removed in 2.6, use command instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
-choco_error_log:
-  description: DEPRECATED, will be removed in 2.6, use stdout instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: sysinternals not installed. The package was not found with the source(s) listed
 command:
   description: The full command used in the chocolatey task.
   returned: changed

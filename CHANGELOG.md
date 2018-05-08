@@ -5,13 +5,15 @@ Ansible Changes By Release
 
 ## 2.6 "Heartbreaker" - ACTIVE DEVELOPMENT
 
-[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html)
+[Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html)
 
 ### Major Changes
 
 ### Deprecations (to be removed in 2.10)
+* In the `nxos_igmp_interface` module, `oif_prefix` and `oif_source` properties are deprecated.
+  Use the `oif_ps` parameter with a dictionary of prefix and source to values instead.
 
-See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
+See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
 
 ### Minor Changes
 * Removed restriction from protocol in cloudflare_dns module to allow other protocols than tcp and udp to be specified.
@@ -25,6 +27,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 #### Cloud
 - amazon
   * aws_caller_facts
+  * aws_ses_identity_policy
 
 
 <a id="2.5"></a>
@@ -124,7 +127,7 @@ See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/portin
 * network_cli
 * netconf
 
-While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
+While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](https://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
 
 #### Filters
 * parse_xml
@@ -1355,7 +1358,7 @@ While neither is technically a new plugin, these connections may now be used dir
 
 ## 2.3 "Ramble On" - 2017-04-12
 
-Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
+Moving to Ansible 2.3 guide https://docs.ansible.com/ansible/porting_guide_2.3.html
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
@@ -2130,7 +2133,7 @@ Module fixes:
 * Added a new strategy `debug`, which allows per-task debugging of playbooks, for more details see https://docs.ansible.com/ansible/playbooks_debugger.html
 * Added a new option for tasks: `loop_control`. This currently only supports one option - `loop_var`, which allows a different loop variable from `item` to be used.
 * Added the ability to filter facts returned by the fact gathering setup step using the `gather_subset` option on the play or in the ansible.cfg configuration file.
-  See http://docs.ansible.com/ansible/intro_configuration.html#gathering for details on the format of the option.
+  See https://docs.ansible.com/ansible/intro_configuration.html#gathering for details on the format of the option.
 * Added the ability to send per-item callbacks, rather than a batch update (this more closely resembles the behavior of Ansible 1.x).
 * Added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
 * Added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)

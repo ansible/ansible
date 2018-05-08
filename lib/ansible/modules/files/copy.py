@@ -57,6 +57,17 @@ options:
     default: 'yes'
     aliases: [ thirsty ]
     version_added: "1.1"
+  mode:
+    description:
+      - "Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that
+        modes are actually octal numbers.  You must either specify the leading zero so that
+        Ansible's YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it
+        (like C('644') or C('0644') so Ansible receives a string and can do its own conversion from
+        string into number.  Giving Ansible a number without following one of these rules will end
+        up with a decimal number which will have unexpected results.  As of version 1.8, the mode
+        may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).  As of
+        version 2.3, the mode may also be the special string C(preserve).  C(preserve) means that
+        the file will be given the same permissions as the source file."
   directory_mode:
     description:
       - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
@@ -68,6 +79,7 @@ options:
       - If C(no), it will search for I(src) at originating/master machine.
       - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
       - Currently I(remote_src) does not support recursive copying.
+      - I(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -85,7 +97,7 @@ options:
     version_added: "2.4"
   checksum:
     description:
-      - SHA1 checksum of the file being transferred. Used to valdiate that the copy of the file was successful.
+      - SHA1 checksum of the file being transferred. Used to validate that the copy of the file was successful.
       - If this is not provided, ansible will use the local calculated checksum of the src file.
     version_added: '2.5'
 extends_documentation_fragment:
@@ -220,6 +232,7 @@ state:
 import os
 import os.path
 import shutil
+import stat
 import tempfile
 import traceback
 
@@ -289,7 +302,6 @@ def main():
     original_basename = module.params.get('original_basename', None)
     validate = module.params.get('validate', None)
     follow = module.params['follow']
-    mode = module.params['mode']
     remote_src = module.params['remote_src']
     checksum = module.params['checksum']
 
@@ -299,6 +311,12 @@ def main():
         module.fail_json(msg="Source %s not readable" % (src))
     if os.path.isdir(b_src):
         module.fail_json(msg="Remote copy does not support recursive copy of directory: %s" % (src))
+
+    # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
+    # remote host
+    if module.params['mode'] == 'preserve':
+        module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
+    mode = module.params['mode']
 
     checksum_src = module.sha1(src)
     checksum_dest = None

@@ -48,8 +48,6 @@ class IncludeRole(TaskInclude):
     OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
-    _inheritable = False
-
     # =================================================================================
     # ATTRIBUTES
 
@@ -65,6 +63,10 @@ class IncludeRole(TaskInclude):
         self._parent_role = role
         self._role_name = None
         self._role_path = None
+
+    def get_name(self):
+        ''' return the name of the task '''
+        return "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
@@ -98,6 +100,8 @@ class IncludeRole(TaskInclude):
 
         # updated available handlers in play
         handlers = actual_role.get_handler_blocks(play=myplay)
+        for h in handlers:
+            h._parent = self
         myplay.handlers = myplay.handlers + handlers
         return blocks, handlers
 
@@ -112,12 +116,18 @@ class IncludeRole(TaskInclude):
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
-            raise AnsibleParserError("'name' is a required field for include_role.")
+            raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
+
+        if ir.private is not None:
+            display.deprecated(
+                msg='Supplying "private" for "include_role" is a no op, and is deprecated',
+                version='2.8'
+            )
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
-            raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
+            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))), obj=data)
 
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):

@@ -17,6 +17,7 @@ from lib.util import (
     load_plugins,
     parse_to_dict,
     ABC,
+    is_binary_file,
 )
 
 from lib.ansible_util import (
@@ -219,7 +220,7 @@ class SanityCodeSmellTest(SanityTest):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         if self.path.endswith('.py'):
             cmd = [args.python_executable, self.path]
@@ -240,6 +241,7 @@ class SanityCodeSmellTest(SanityTest):
             prefixes = config.get('prefixes')
             files = config.get('files')
             always = config.get('always')
+            text = config.get('text')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -256,6 +258,12 @@ class SanityCodeSmellTest(SanityTest):
             # short-term work-around for paths being str instead of unicode on python 2.x
             if sys.version_info[0] == 2:
                 paths = [p.decode('utf-8') for p in paths]
+
+            if text is not None:
+                if text:
+                    paths = [p for p in paths if not is_binary_file(p)]
+                else:
+                    paths = [p for p in paths if is_binary_file(p)]
 
             if extensions:
                 paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
@@ -319,7 +327,7 @@ class SanitySingleVersion(SanityFunc):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
@@ -332,7 +340,7 @@ class SanityMultipleVersion(SanityFunc):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 

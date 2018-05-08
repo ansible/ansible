@@ -14,6 +14,22 @@
     that:
     - new_way.data == 'success'
 
+- name: call old WANTS_JSON module with windows line endings
+  legacy_only_old_way_win_line_ending:
+  register: old_way_win
+
+- assert:
+    that:
+    - old_way_win.data == 'success'
+
+- name: call module with only legacy requires and windows line endings
+  legacy_only_new_way_win_line_ending:
+  register: new_way_win
+
+- assert:
+    that:
+    - new_way_win.data == 'success'
+
 - name: call module with local module_utils
   uses_local_utils:
   register: local_utils
@@ -40,9 +56,23 @@
     that:
     - camel_conversion.data == 'success'
 
-- name: call module with SID tests
-  sid_utils_test:
-  register: sid_test
+- block:
+  - name: create test user with well know SID as the name
+    win_user:
+      name: S-1-0-0
+      password: AbcDef123!@#
+      state: present
+
+  - name: call module with SID tests
+    sid_utils_test:
+      sid_account: S-1-0-0
+    register: sid_test
+
+  always:
+  - name: remove test SID user
+    win_user:
+      name: S-1-0-0
+      state: absent
 
 - assert:
     that:

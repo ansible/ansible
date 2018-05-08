@@ -134,7 +134,6 @@ options:
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     type: bool
-    default: 'no'
   private_ip:
     version_added: "1.2"
     description:
@@ -180,8 +179,8 @@ options:
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type,
-        iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
     description:
@@ -541,15 +540,15 @@ EXAMPLES = '''
 
 '''
 
-import traceback
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code, string_types
-from ansible.module_utils._text import to_text
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
-from distutils.version import LooseVersion
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import boto.ec2
@@ -1042,7 +1041,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'user_data': user_data}
+                      'user_data': to_bytes(user_data, errors='surrogate_or_strict')}
 
             if ebs_optimized:
                 params['ebs_optimized'] = ebs_optimized
@@ -1560,7 +1559,7 @@ def warn_if_public_ip_assignment_changed(module, instance):
 
     # Check that public ip assignment is the same and warn if not
     public_dns_name = getattr(instance, 'public_dns_name', None)
-    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or assign_public_ip is False):
         module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
                     "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
@@ -1590,7 +1589,7 @@ def main():
             user_data=dict(),
             instance_tags=dict(type='dict'),
             vpc_subnet_id=dict(),
-            assign_public_ip=dict(type='bool', default=False),
+            assign_public_ip=dict(type='bool'),
             private_ip=dict(),
             instance_profile_name=dict(),
             instance_ids=dict(type='list', aliases=['instance_id']),

@@ -130,6 +130,7 @@
             "Sid": "AllowLoadBalancerOperations",
             "Effect": "Allow",
             "Action": [
+                "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
                 "elasticloadbalancing:CreateListener",
                 "elasticloadbalancing:CreateLoadBalancer",
@@ -144,12 +145,13 @@
                 "elasticloadbalancing:DescribeLoadBalancerAttributes",
                 "elasticloadbalancing:DescribeLoadBalancerPolicies",
                 "elasticloadbalancing:DescribeLoadBalancerPolicyTypes",
-                "elasticloadbalancing:DescribeLoadBalancerTags",
                 "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeTags",
                 "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
                 "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
                 "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "elasticloadbalancing:RemoveTags"
             ],
             "Resource": "*"
         },
@@ -261,7 +263,11 @@
             "ses:VerifyDomainIdentity",
             "ses:SetIdentityNotificationTopic",
             "ses:SetIdentityHeadersInNotificationsEnabled",
-            "ses:SetIdentityFeedbackForwardingEnabled"
+            "ses:SetIdentityFeedbackForwardingEnabled",
+            "ses:GetIdentityPolicies",
+            "ses:PutIdentityPolicy",
+            "ses:DeleteIdentityPolicy",
+            "ses:ListIdentityPolicies"
           ],
           "Resource": [
             "*"

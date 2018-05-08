@@ -100,7 +100,7 @@ options:
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
 
 extends_documentation_fragment:
     - aws
@@ -941,7 +941,7 @@ def main():
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
-        elif vpc_id is not None:
+        elif 'VpcId' in group:
             # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added

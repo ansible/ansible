@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import os.path
+import shutil
 import tempfile
 import traceback
 import zipfile
@@ -274,7 +275,7 @@ class ActionModule(ActionBase):
                 dest=dest,
                 src=tmp_src,
                 original_basename=source_rel,
-                mode="single"
+                _copy_mode="single"
             )
         )
         copy_args.pop('content', None)
@@ -316,16 +317,14 @@ class ActionModule(ActionBase):
             dict(
                 src=tmp_src,
                 dest=dest,
-                mode="explode"
+                _copy_mode="explode"
             )
         )
         copy_args.pop('content', None)
-        os.remove(zip_path)
-
         module_return = self._execute_module(module_name='copy',
                                              module_args=copy_args,
                                              task_vars=task_vars)
-        os.removedirs(os.path.dirname(zip_path))
+        shutil.rmtree(os.path.dirname(zip_path))
         return module_return
 
     def run(self, tmp=None, task_vars=None):
@@ -381,7 +380,7 @@ class ActionModule(ActionBase):
             new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
-                    mode="remote",
+                    _copy_mode="remote",
                     dest=dest,
                     src=source,
                     force=force
@@ -468,7 +467,7 @@ class ActionModule(ActionBase):
         query_args = self._task.args.copy()
         query_args.update(
             dict(
-                mode="query",
+                _copy_mode="query",
                 dest=check_dest,
                 force=force,
                 files=source_files['files'],

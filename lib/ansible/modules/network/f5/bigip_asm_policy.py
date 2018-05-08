@@ -26,9 +26,7 @@ options:
         deactivate existing active policy. Generally should be C(yes) only in cases where
         you want to activate new or existing policy.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
   name:
     description:
       - The ASM policy to manage or create.

@@ -228,6 +228,7 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
+    _log_channel = None
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -239,6 +240,10 @@ class Connection(ConnectionBase):
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
+
+    def _set_log_channel(self, name):
+        '''Mimic paramiko.SSHClient.set_log_channel'''
+        self._log_channel = name
 
     def _parse_proxy_command(self, port=22):
         proxy_command = None
@@ -296,6 +301,10 @@ class Connection(ConnectionBase):
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
+
+        # override paramiko's default logger name
+        if self._log_channel is not None:
+            ssh.set_log_channel(self._log_channel)
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 

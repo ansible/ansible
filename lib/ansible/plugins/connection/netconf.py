@@ -66,7 +66,8 @@ options:
       - Configures the user password used to authenticate to the remote device
         when first establishing the SSH connection.
     vars:
-      - name: ansible_pass
+      - name: ansible_password
+      - name: ansible_ssh_pass
   private_key_file:
     description:
       - The private SSH key or certificate file used to to authenticate to the
@@ -156,8 +157,9 @@ except ImportError:
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
-network_os_device_param_map = {
-    "nxos": "nexus"
+NETWORK_OS_DEVICE_PARAM_MAP = {
+    "nxos": "nexus",
+    "ios": "default"
 }
 
 
@@ -241,7 +243,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        device_params = {'name': (network_os_device_param_map.get(network_os) or network_os or 'default')}
+        device_params = {'name': (NETWORK_OS_DEVICE_PARAM_MAP.get(network_os) or network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:

@@ -35,6 +35,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -117,8 +119,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -261,6 +264,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   ios_config:
     save_when: modified
+
+- name: for idempotency, use full-form commands
+  ios_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int gig1/0/11
+    parents: interface GigabitEthernet1/0/11
 """
 
 RETURN = """
@@ -340,13 +351,13 @@ def load_banners(module, banners):
         run_commands(module, ['\n'])
 
 
-def get_running_config(module, current_config=None):
+def get_running_config(module, current_config=None, flags=None):
     contents = module.params['running_config']
+
     if not contents:
         if not module.params['defaults'] and current_config:
             contents, banners = extract_banners(current_config.config_text)
         else:
-            flags = get_defaults_flag(module) if module.params['defaults'] else []
             contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
@@ -434,9 +445,10 @@ def main():
     result['warnings'] = warnings
 
     config = None
+    flags = get_defaults_flag(module) if module.params['defaults'] else []
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
-        contents = get_config(module)
+        contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
@@ -449,7 +461,7 @@ def main():
         candidate, want_banners = get_candidate(module)
 
         if match != 'none':
-            config, have_banners = get_running_config(module, config)
+            config, have_banners = get_running_config(module, config, flags=flags)
             path = module.params['parents']
             configobjs = candidate.difference(config, path=path, match=match, replace=replace)
         else:

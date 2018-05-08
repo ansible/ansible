@@ -69,7 +69,7 @@ options:
     auto_attach:
         description:
             - Upon successful registration, auto-consume available subscriptions
-            - Added in favor of depracated autosubscribe in 2.5.
+            - Added in favor of deprecated autosubscribe in 2.5.
         type: bool
         default: 'no'
         version_added: "2.5"
@@ -622,7 +622,8 @@ def main():
                               required=False),
             auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
             activationkey=dict(default=None,
-                               required=False),
+                               required=False,
+                               no_log=True),
             org_id=dict(default=None,
                         required=False),
             environment=dict(default=None,

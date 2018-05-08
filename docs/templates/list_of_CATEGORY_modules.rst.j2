@@ -7,11 +7,11 @@
 @{ blurb }@
 
 {% endif %}
-.. toctree:: :maxdepth: 1
+
 {% if category['_modules'] %}
 
 {% for module in category['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}  --  @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
 {% endfor %}
 {% endif %}
 
@@ -22,11 +22,10 @@
 @{ name.title() }@
 @{ '-' * name | length }@
 
-.. toctree:: :maxdepth: 1
+
 
 {% for module in info['_modules'] | sort %}
-{#  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ #}
-    @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}  --  @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
 {% endfor %}
 
 {% endfor %}

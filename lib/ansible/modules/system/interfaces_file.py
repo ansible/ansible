@@ -141,6 +141,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def lineDict(line):
@@ -190,6 +191,9 @@ def read_interfaces_lines(module, line_strings):
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "source-dir":
+            lines.append(lineDict(line))
+            currently_processing = "NONE"
+        elif words[0] == "source-directory":
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "iface":
@@ -289,11 +293,11 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
             if option in ["pre-up", "up", "down", "post-up"] and value is not None and value != "None":
                 for target_option in filter(lambda i: i['value'] == value, target_options):
                     changed = True
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
             else:
                 changed = True
                 for target_option in target_options:
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
     else:
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
 
@@ -301,6 +305,14 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
 
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
+    # Changing method of interface is not an addition
+    if option == 'method':
+        for ln in lines:
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
+                ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
+                ln['params']['method'] = value
+        return lines
+
     last_line = last_line_dict['line']
     prefix_start = last_line.find(last_line.split()[0])
     suffix_start = last_line.rfind(last_line.split()[-1]) + len(last_line.split()[-1])
@@ -321,7 +333,7 @@ def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
-    f.writelines(lines)
+    f.write(to_bytes(''.join(lines), errors='surrogate_or_strict'))
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 

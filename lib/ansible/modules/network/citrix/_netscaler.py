@@ -88,14 +88,14 @@ EXAMPLES = '''
     action: disable
 '''
 
-import base64
 import json
 import socket
 import traceback
+import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.urls import fetch_url
 
 
@@ -115,7 +115,7 @@ class netscaler(object):
         if not len(data_json):
             data_json = None
 
-        auth = base64.encodestring('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip()
+        auth = base64.b64encode(to_bytes('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip())
         headers = {
             'Authorization': 'Basic %s' % auth,
             'Content-Type': 'application/x-www-form-urlencoded',

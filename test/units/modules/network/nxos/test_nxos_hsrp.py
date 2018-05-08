@@ -59,7 +59,7 @@ class TestNxosHsrpModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['config t',
                                                              'interface ethernet1/2',
-                                                             'hsrp version 2',
+                                                             'hsrp version 1',
                                                              'hsrp 10',
                                                              'priority 150',
                                                              'ip 192.0.2.2/8',
