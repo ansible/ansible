@@ -36,6 +36,7 @@ import os
 import os.path
 import subprocess
 import traceback
+import ansible.constants as C
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
@@ -58,10 +59,8 @@ class Connection(ConnectionBase):
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
     has_pipelining = True
-    # Some become_methods may work in v2 (sudo works for other chroot-based
-    # plugins while su seems to be failing).  If some work, check chroot.py to
-    # see how to disable just some methods.
-    become_methods = frozenset()
+
+    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
