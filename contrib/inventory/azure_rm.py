@@ -321,10 +321,10 @@ class AzureRM(object):
         elif self.credentials.get('client_id') is not None and \
              self.credentials.get('secret') is not None and \
              self.credentials.get('tenant') is not None:
-             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                  secret=self.credentials['secret'],
-                                                                  tenant=self.credentials['tenant'],
-                                                                  cloud_environment=self._cloud_environment)
+            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                 secret=self.credentials['secret'],
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if not tenant:
