@@ -31,7 +31,7 @@
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}
+    name: testVMSS{{ rpfx }}
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -62,7 +62,7 @@
 - name: Retrieve scaleset facts
   azure_rm_virtualmachine_scaleset_facts:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}
+    name: testVMSS{{ rpfx }}
     format: ansible
   register: output_scaleset
 
@@ -81,7 +81,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}
+    name: testVMSS{{ rpfx }}
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
@@ -106,7 +106,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}1
+    name: testVMSS{{ rpfx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -139,7 +139,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}1
+    name: testVMSS{{ rpfx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -171,7 +171,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rfpx }}1
+    name: testVMSS{{ rpfx }}1
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
