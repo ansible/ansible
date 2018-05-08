@@ -210,11 +210,17 @@
       - "venv_chdir.changed"
 
 # https://github.com/ansible/ansible/issues/37912
-- name: install pip throught pip into fresh virtualenv
+- name: install pip throught pip into fresh virtualenv for test pip without virtualenv
   pip:
     name: pip
     virtualenv: "{{ output_dir }}/pipenv"
-  
+  register: pip_install_venv4test
+
+- name: test for previos task not fail
+  assert:
+    that:
+      - "pip_install_venv4test.changed or pip_install_venv4test.ok"
+
 - name: pip chdir without virtualenv
   pip:
     chdir: "{{ output_dir }}/"
