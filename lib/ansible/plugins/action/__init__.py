@@ -660,6 +660,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         try:
             module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
         except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/ansible'
 
     def _update_connection_options(self, options, variables=None):
