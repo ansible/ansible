@@ -81,6 +81,7 @@ class ActionModule(_ActionModule):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using {0} and will be ignored'.format(self._play_context.connection))
+                del self._task.args['provider']
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
