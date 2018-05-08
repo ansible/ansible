@@ -36,7 +36,7 @@ options:
   dest:
     description:
       - destination file name with absolute path
-    default: playbook or role root directory if playbook is part of a role 
+    default: playbook or role root directory if playbook is part of a role
     required: no
 
 requirements:
