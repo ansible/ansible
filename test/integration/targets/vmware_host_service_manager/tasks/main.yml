@@ -4,11 +4,6 @@
 
 # TODO: vcsim does not support service management
 #       commenting this testcase till the time.
-#- name: make sure pyvmomi is installed
-#  pip:
-#    name: pyvmomi
-#    state: latest
-#  when: "{{ ansible_user_id == 'root' }}"
 
 #- name: store the vcenter container ip
 #  set_fact:
