@@ -9,7 +9,7 @@
     command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
 
   - name: Do not try to create account
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -19,7 +19,7 @@
     register: account_not_created
 
   - name: Create it now
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -31,7 +31,7 @@
     register: account_created
 
   - name: Change email address
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -42,7 +42,7 @@
     register: account_modified
 
   - name: Change email address (idempotent)
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -59,7 +59,7 @@
     command: openssl ec -in {{ output_dir }}/accountkey2.pem -noout -text
 
   - name: Change account key
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -70,7 +70,7 @@
     register: account_change_key
 
   - name: Deactivate account
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -78,7 +78,7 @@
     register: account_deactivate
 
   - name: Deactivate account (idempotent)
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -86,7 +86,7 @@
     register: account_deactivate_idempotent
 
   - name: Do not try to create account II
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -96,7 +96,7 @@
     register: account_not_created_2
 
   - name: Do not try to create account III
-    letsencrypt_account:
+    acme_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory

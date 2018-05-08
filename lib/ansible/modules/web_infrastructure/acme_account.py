@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: letsencrypt_account
+module: acme_account
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.6"
 short_description: Create, modify or delete accounts with Let's Encrypt
@@ -76,7 +76,7 @@ options:
 
 EXAMPLES = '''
 - name: Make sure account exists and has given contacts. We agree to TOS.
-  letsencrypt:
+  acme_account:
     account_key_src: /etc/pki/cert/private/account.key
     state: present
     terms_agreed: yes
@@ -85,7 +85,7 @@ EXAMPLES = '''
     - mailto:myself@example.org
 
 - name: Make sure account has given email address. Don't create account if it doesn't exist
-  letsencrypt:
+  acme_account:
     account_key_src: /etc/pki/cert/private/account.key
     state: present
     allow_creation: no
@@ -93,13 +93,13 @@ EXAMPLES = '''
     - mailto:me@example.com
 
 - name: Change account's key to the one stored in the variable new_account_key
-  letsencrypt:
+  acme_account:
     account_key_src: /etc/pki/cert/private/account.key
     new_account_key_content: '{{ new_account_key }}'
     state: changed_key
 
 - name: Delete account (we have to use the new key)
-  letsencrypt:
+  acme_account:
     account_key_content: '{{ new_account_key }}'
     state: absent
 '''
@@ -158,7 +158,7 @@ def main():
                             'This should only be done for testing against a local ACME server for ' +
                             'development purposes, but *never* for production purposes.')
     if module.params.get('acme_version') < 2:
-        module.fail_json(msg='The letsencrypt_account module requires the ACME v2 protocol!')
+        module.fail_json(msg='The acme_account module requires the ACME v2 protocol!')
 
     try:
         account = ACMEAccount(module)
