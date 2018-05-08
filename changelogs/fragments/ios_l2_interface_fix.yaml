@@ -1,2 +1,3 @@
 bugfixes:
 - ios_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37389)
+- ios_l2_interface - use show run instead of section pipeline ios_l2_interface (https://github.com/ansible/ansible/pull/39658)
