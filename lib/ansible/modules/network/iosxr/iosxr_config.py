@@ -254,6 +254,19 @@ def sanitize_running_config(config):
                 config[index]._parents = last_parents
 
 
+# iosxr_commands like as-path-set or prefix-set do not allow
+# comma at the end of the block. If difference removes last line
+# from block, we can not come out of this prompt until we enter new
+# prefix-set and it will fail all configs below this block
+def sanitize_difference(config):
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(config):
+            m = regex.search(line.text)
+            if m and m.group(0):
+                if config[index - 1].text[-1:] == ',':
+                    config[index - 1].text = config[index - 1].text[:-1]
+
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -288,6 +301,7 @@ def run(module, result):
         commands = candidate_config.items
 
     if commands:
+        sanitize_difference(commands)
         if not replace_config:
             commands = dumps(commands, 'commands').split('\n')
 
