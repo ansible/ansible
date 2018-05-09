@@ -25,6 +25,37 @@
             sourcePortRange: "*"
             priority: 100
             direction: "Outbound"
+    register: output
+
+- assert:
+    that: output.changed
+
+- name: Try to create the same security again
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    api_version: "2018-01-01"
+    idempotency: yes
+    body:
+      location: eastus
+      properties:
+        securityRules:
+        - name: firstsecurityrule
+          properties:
+            protocol: "*"
+            sourceAddressPrefix: "10.0.0.0/8"
+            destinationAddressPrefix: "11.0.0.0/8"
+            access: "Deny"
+            destinationPortRange: "8080"
+            sourcePortRange: "*"
+            priority: 100
+            direction: "Outbound"
+    register: output
+
+- assert:
+    that: not output.changed
 
 - name: Query instance of security rule
   azure_rm_resource_facts:

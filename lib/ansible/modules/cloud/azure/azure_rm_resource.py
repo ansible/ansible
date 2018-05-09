@@ -236,7 +236,12 @@ class AzureRMResource(AzureRMModuleBase):
 
         if self.idempotency:
             response = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [ 200, 404])
-            needs_update = dict(response, **self.body) == response
+
+            try:
+                response = json.loads(response.text)
+                needs_update = dict(response, **self.body) == response
+            except:
+                pass
 
         if needs_update:
             response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
@@ -246,7 +251,7 @@ class AzureRMResource(AzureRMModuleBase):
         except:
             self.results['response'] = response.text
 
-        self.results['changed'] = True
+        self.results['changed'] = needs_update
 
         if self.state == 'absent' and response.status_code == 204:
             self.results['changed'] = False
