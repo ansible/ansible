@@ -37,7 +37,7 @@ options:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
     required: yes
-    choices: [ consumer, proivder ]
+    choices: [ consumer, provider ]
   epg:
     description:
     - The name of the end point group.
@@ -45,15 +45,13 @@ options:
   priority:
     description:
     - QoS class.
-    - The APIC defaults new EPG to Contract bindings to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
-    - The APIC defaults new EPG to Provided Contracts to C(at_least_one).
+    - The APIC defaults to C(at_least_one) when unset during creation.
     choices: [ all, at_least_one, at_most_one, none ]
-    default: at_least_one
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -236,8 +234,6 @@ def main():
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
