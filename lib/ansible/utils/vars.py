@@ -155,6 +155,7 @@ def load_extra_vars(loader, options):
 
     return extra_vars
 
+
 def load_options_vars(options, version):
 
     options_vars = {'ansible_version': version}
