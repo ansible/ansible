@@ -46,6 +46,7 @@ options:
               effect.
             - For ES 1.x use url.
         required: False
+        version_added: "2.6"
     url:
         description:
             - Set exact URL to download the plugin from (Only works for ES 1.x).
