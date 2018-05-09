@@ -46,13 +46,11 @@ options:
               effect.
             - For ES 1.x use url.
         required: False
-        default: None
     url:
         description:
             - Set exact URL to download the plugin from (Only works for ES 1.x).
             - For ES 2.x and higher, use src.
         required: False
-        default: None
     timeout:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
@@ -150,6 +148,7 @@ def parse_plugin_repo(string):
 
 def is_plugin_present(plugin_name, plugin_dir):
     return os.path.isdir(os.path.join(plugin_dir, plugin_name))
+
 
 def parse_error(string):
     reason = "ERROR: "
@@ -263,7 +262,7 @@ def main():
             proxy_port=dict(default=None),
             version=dict(default=None)
         ),
-        mutually_exclusive=[("src","url")],
+        mutually_exclusive=[("src", "url")],
         supports_check_mode=True
     )
 
