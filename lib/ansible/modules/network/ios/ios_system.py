@@ -86,7 +86,7 @@ EXAMPLES = """
   ios_system:
     hostname: ios01
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com
