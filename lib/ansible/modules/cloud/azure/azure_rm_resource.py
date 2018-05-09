@@ -233,23 +233,28 @@ class AzureRMResource(AzureRMModuleBase):
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         needs_update = True
+        response = None
 
         if self.idempotency:
-            response = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [ 200, 404])
+            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [ 200, 404])
 
-            try:
-                response = json.loads(response.text)
-                needs_update = dict(response, **self.body) == response
-            except:
-                pass
+            if original.status_code == 404:
+                if self.state == 'absent':
+                    needs_update = False
+            else:
+                try:
+                    response = json.loads(original.text)
+                    needs_update = (dict(response, **self.body) == response)
+                except:
+                    pass
 
         if needs_update:
             response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
-
+            response = json.loads(response.text)
         try:
-            self.results['response'] = json.loads(response.text)
+            self.results['response'] = response
         except:
-            self.results['response'] = json.dumps(response)
+            self.results['response'] = None
 
         self.results['changed'] = needs_update
 
