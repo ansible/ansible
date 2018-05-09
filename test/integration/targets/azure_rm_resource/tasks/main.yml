@@ -25,7 +25,7 @@
             sourcePortRange: "*"
             priority: 100
             direction: "Outbound"
-    register: output
+  register: output
 
 - assert:
     that: output.changed
@@ -52,7 +52,7 @@
             sourcePortRange: "*"
             priority: 100
             direction: "Outbound"
-    register: output
+  register: output
 
 - assert:
     that: not output.changed
