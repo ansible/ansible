@@ -18,7 +18,7 @@ module: postgresql_slot
 short_description: Add or remove physical or logical slots from a PostgreSQL database.
 description:
   - Add or remove slots from a postgresql database.
-version_added: "2.4"
+version_added: "2.6"
 options:
   name:
     description:
