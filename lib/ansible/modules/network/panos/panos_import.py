@@ -35,18 +35,6 @@ requirements:
     - requests
     - requests_toolbelt
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device.
-        required: true
-    password:
-        description:
-            - Password for device authentication.
-        required: true
-    username:
-        description:
-            - Username for device authentication.
-        default: "admin"
     category:
         description:
             - Category of file uploaded. The default is software.
@@ -64,6 +52,7 @@ options:
         default: yes
         type: bool
         version_added: "2.6"
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
