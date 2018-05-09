@@ -35,8 +35,8 @@ import time
 import socket
 import re
 try:
-    import cnos_errorcodes
-    import cnos_devicerules
+    from ansible.module_utils.network.cnos import cnos_errorcodes
+    from ansible.module_utils.network.cnos import cnos_devicerules
     HAS_LIB = True
 except:
     HAS_LIB = False
