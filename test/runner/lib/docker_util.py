@@ -15,6 +15,7 @@ from lib.util import (
     run_command,
     common_environment,
     display,
+    find_executable,
 )
 
 from lib.config import (
@@ -22,6 +23,13 @@ from lib.config import (
 )
 
 BUFFER_SIZE = 256 * 256
+
+
+def docker_available():
+    """
+    :rtype: bool
+    """
+    return find_executable('docker', required=False)
 
 
 def get_docker_container_id():
@@ -46,6 +54,17 @@ def get_docker_container_id():
         return container_ids.pop()
 
     raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+
+
+def get_docker_container_ip(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :rtype: str
+    """
+    results = docker_inspect(args, container_id)
+    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    return ipaddress
 
 
 def docker_pull(args, image):
