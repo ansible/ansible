@@ -130,24 +130,24 @@ def load_extra_vars(loader, options):
                 # Argument is a YAML file (JSON is a subset of YAML)
                 data = loader.load_from_file(extra_vars_opt[1:])
             elif extra_vars_opt:
-                # Arguments as YAML
+                # Arguments as YAML or Key-value
                 try:
-                    # Parsing the exta variables as YAML; fix proposed to resolve JSON is YAML but YAML isn't JSON
                     yaml.load(extra_vars_opt)
                     data = loader.load(extra_vars_opt)
                 except yaml.parser.ParserError:
                     raise AnsibleOptionsError("Invalid format in vars data supplied. '%s' could not be parsed as yaml" % extra_vars_opt)
-            else:
-                # Arguments as Key-value
-                data = parse_kv(extra_vars_opt)
+                else:
+                    # key=value is valid yaml syntax, now let's discard the yaml parse in favor of k,v pairs
+                    kv_data = parse_kv(extra_vars_opt)
+                    if '_raw_params' not in kv_data:
+                        # Everything parsed clean
+                        data = kv_data
 
             if isinstance(data, MutableMapping):
                 extra_vars = combine_vars(extra_vars, data)
             else:
                 raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
-
     return extra_vars
-
 
 def load_options_vars(options, version):
 
