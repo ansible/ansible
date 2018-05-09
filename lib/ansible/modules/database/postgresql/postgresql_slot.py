@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -42,6 +42,7 @@ options:
   login_user:
     description:
       - The username used to authenticate with
+    default: postgres
   login_password:
     description:
       - The password used to authenticate with
@@ -148,7 +149,7 @@ def main():
             login_host=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=False),
-            slot=dict(required=True, aliases=['name']),
+            name=dict(required=True),
             type=dict(default="physical", choices=["physical", "logical"]),
             decoder=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
