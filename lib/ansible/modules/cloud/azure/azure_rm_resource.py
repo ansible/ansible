@@ -190,10 +190,12 @@ class AzureRMResource(AzureRMModuleBase):
         self.resource_name = None
         self.subresource_type = None
         self.subresource_name = None
+        self.subresource = []
         self.method = None
         self.status_code = []
         self.idempotency = False
         self.state = None
+        self.body = None
         super(AzureRMResource, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -230,11 +232,14 @@ class AzureRMResource(AzureRMModuleBase):
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
+        needs_update = True
+
         if self.idempotency:
             response = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [ 200, 404])
-            # XXX - compare
+            needs_update = dict(response, **self.body) == response
 
-        response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
+        if needs_update:
+            response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
 
         try:
             self.results['response'] = json.loads(response.text)
