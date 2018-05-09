@@ -117,7 +117,6 @@ from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure import AzureConfiguration
     from msrest.service_client import ServiceClient
     from msrestazure.tools import resource_id, is_valid_resource_id
     import json
@@ -237,7 +236,7 @@ class AzureRMResource(AzureRMModuleBase):
         response = None
 
         if self.idempotency:
-            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [ 200, 404])
+            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404])
 
             if original.status_code == 404:
                 if self.state == 'absent':
