@@ -71,7 +71,7 @@ author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = r'''
-- name: Case insensitve password string match
+- name: Case insensitive password string match
   expect:
     command: passwd username
     responses:
