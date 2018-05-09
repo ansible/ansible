@@ -1028,6 +1028,7 @@ def main():
                     raise ValueError('.git file has invalid git dir reference format')
                 if not os.path.isdir(os.environ['GIT_DIR']):
                     raise TypeError('%s is not a directory' % os.environ['GIT_DIR'])
+                gitconfig = os.path.join(os.environ['GIT_DIR'], 'config')
             except (TypeError, ValueError) as err:
                 """``.git`` file does not have a valid format for detached Git dir."""
                 module.fail_json(
