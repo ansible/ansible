@@ -544,8 +544,10 @@ class InventoryManager(object):
             if implicit:
                 results.append(implicit)
 
-        if not results and pattern != 'all':
+        # Display warning if specified host pattern did not match any groups or hosts
+        if not results and not matching_groups and pattern != 'all':
             display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+
         return results
 
     def list_hosts(self, pattern="all"):
