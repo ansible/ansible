@@ -25,7 +25,11 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
+
 from ansible.parsing.dataloader import DataLoader
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.vault import AnsibleVaultError
+
 from ansible.utils.vars import combine_vars
 
 try:
@@ -191,10 +195,39 @@ class InventoryCLI(CLI):
         if self.options.yaml:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
+
+            def walk_dicts(data):
+                if isinstance(data, dict):
+                    yield data
+                    for key, value in data.items():
+                        for d in walk_dicts(value):
+                            yield d
+
+            # Convert Vault objects into strings
+            for d in walk_dicts(stuff):
+                for key, value in d.items():
+                    if isinstance(value, AnsibleVaultEncryptedUnicode):
+                        try:
+                            decrypted_value = str(value)
+                        except AnsibleVaultError as exc:
+                            pass
+                        else:
+                            d[key] = decrypted_value
+
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
-            from ansible.module_utils.basic import jsonify
-            results = jsonify(stuff, sort_keys=True, indent=4)
+            from ansible.module_utils.basic import jsonify, _json_encode_fallback
+
+            def vault_converter(s):
+                if isinstance(s, AnsibleVaultEncryptedUnicode):
+                    try:
+                        ret = str(s)
+                    except AnsibleVaultError as exc:
+                        ret = '!vault: {}'.format(s._ciphertext)
+                    return ret
+                return _json_encode_fallback(s)
+
+            results = jsonify(stuff, sort_keys=True, indent=4, default=vault_converter)
 
         return results
 
