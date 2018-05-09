@@ -24,6 +24,11 @@ notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 - Some of the options are likely only used for developers within Meraki.
 options:
+    state:
+        description:
+        - Specifies whether SNMP information should be queried or modified.
+        choices: ['query', 'present']
+        default: present
     v2cEnabled:
         description:
         - Specifies whether SNMPv2c is enabled.
@@ -149,8 +154,8 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
-                         org_name=dict(type='str', aliases=['name', 'organization']),
-                         org_id=dict(type='int', aliases=['id']),
+                         org_name=dict(type='str', aliases=['organization']),
+                         org_id=dict(type='int'),
                          v2cEnabled=dict(type='bool'),
                          v3Enabled=dict(type='bool'),
                          v3AuthMode=dict(type='str', choices=['SHA', 'MD5']),
