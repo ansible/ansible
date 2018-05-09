@@ -93,6 +93,8 @@ class Peer(object):
         if self.state == 'present':
             nodes = self.get_to_be_probed_hosts(nodes)
             action = 'probe'
+            # In case of peer probe, we do not need `force'
+            force = ''
         else:
             action = 'detach'
         cmd = []
