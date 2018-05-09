@@ -1,0 +1,3 @@
+bugfixes:
+- apt - Auto install of python-apt without recommends (https://github.com/ansible/ansible/pull/37121)
+- apt - Mark installed packages manual (https://github.com/ansible/ansible/pull/37751)

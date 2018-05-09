@@ -162,6 +162,41 @@
         - "not apt_result.changed"
         - "apt_result.failed"
 
+# https://github.com/ansible/ansible/issues/28907
+- name: Install parent package
+  apt:
+    name: libcaca-dev
+
+- name: Install child package
+  apt:
+    name: libslang2-dev
+
+- shell: apt-mark showmanual | grep libcaca-dev
+  ignore_errors: yes
+  register: parent_output
+
+- name: Check that parent package is marked as installed manually
+  assert:
+    that:
+      - "'libcaca-dev' in parent_output.stdout"
+
+- shell: apt-mark showmanual | grep libslang2-dev
+  ignore_errors: yes
+  register: child_output
+
+- name: Check that child package is marked as installed manually
+  assert:
+    that:
+      - "'libslang2-dev' in child_output.stdout"
+
+- name: Clean up
+  apt:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - libcaca-dev
+    - libslang2-dev
+
 - name: autoclean during install
   apt: pkg=hello state=present autoclean=yes
 
