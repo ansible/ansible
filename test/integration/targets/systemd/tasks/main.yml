@@ -47,4 +47,32 @@
               - 'not systemd_test0.changed'
               - 'systemd_test0.state == "started"'
 
+    - name: install rpcbind to test its service
+      package:
+        name: rpcbind
+        state: present
+
+    - name: Stop and disable the service
+      systemd:
+          name: rpcbind
+          state: stopped
+          enabled: no
+
+    - name: Stop and disable the service again
+      systemd:
+          name: rpcbind
+          state: stopped
+          enabled: no
+      register: systemd_test1
+
+    - name: validate results for test1
+      assert:
+          that:
+              - 'systemd_test1.changed is defined'
+              - 'systemd_test1.name is defined'
+              - 'systemd_test1.state is defined'
+              - 'systemd_test1.status is defined'
+              - 'not systemd_test1.changed'
+              - 'systemd_test1.state == "stopped"'
+
   when: 'systemctl_check.rc == 0'

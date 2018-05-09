@@ -399,7 +399,7 @@ def main():
 
             # check systemctl result or if it is a init script
             if rc == 0:
-                enabled = True
+                enabled = 'enabled' in out
             elif rc == 1:
                 # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
                 if not module.params['user'] and \

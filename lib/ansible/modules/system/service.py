@@ -528,7 +528,7 @@ class LinuxService(Service):
         service_name = self.__systemd_unit
         (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, service_name,))
         if rc == 0:
-            return True
+            return 'enabled' in out
         elif out.startswith('disabled'):
             return False
         elif sysv_exists(service_name):
