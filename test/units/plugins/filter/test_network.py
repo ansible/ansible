@@ -101,19 +101,19 @@ class TestNetworkType5(unittest.TestCase):
 
         with self.assertRaises(Exception) as e:
             type5_pw([])
-        self.assertEqual("type5_pw password input should be a string, but was given a input of <type \'list\'>", str(e.exception))
+        self.assertEqual("type5_pw password input should be a string, but was given a input of list", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             type5_pw({})
-        self.assertEqual("type5_pw password input should be a string, but was given a input of <type \'dict\'>", str(e.exception))
+        self.assertEqual("type5_pw password input should be a string, but was given a input of dict", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             type5_pw('pass', [])
-        self.assertEqual("type5_pw salt input should be a string, but was given a input of <type \'list\'>", str(e.exception))
+        self.assertEqual("type5_pw salt input should be a string, but was given a input of list", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             type5_pw('pass', {})
-        self.assertEqual("type5_pw salt input should be a string, but was given a input of <type \'dict\'>", str(e.exception))
+        self.assertEqual("type5_pw salt input should be a string, but was given a input of dict", str(e.exception))
 
     def test_bad_salt_char(self):
 
