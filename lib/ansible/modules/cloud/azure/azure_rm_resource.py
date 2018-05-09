@@ -250,12 +250,12 @@ class AzureRMResource(AzureRMModuleBase):
 
         if needs_update:
             response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
-            response = json.loads(response.text)
-        try:
-            self.results['response'] = response
-        except:
-            self.results['response'] = None
+            if self.state == 'present':
+                response = json.loads(response.text)
+            else:
+                response = None
 
+        self.results['response'] = response
         self.results['changed'] = needs_update
 
         if self.state == 'absent' and response.status_code == 204:
