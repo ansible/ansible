@@ -77,6 +77,7 @@ options:
     description:
       - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
     default: no
+    type: bool
   state:
     description:
       - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
