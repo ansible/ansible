@@ -4,7 +4,7 @@
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure import AzureConfiguration
+    from msrestazure.azure_configuration import AzureConfiguration
     from msrest.service_client import ServiceClient
     import json
 except ImportError:
