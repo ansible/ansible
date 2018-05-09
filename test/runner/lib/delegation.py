@@ -12,7 +12,10 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
+    HTTPTESTER_HOSTS,
     create_shell_command,
+    run_httptester,
+    start_httptester,
 )
 
 from lib.config import (
@@ -37,6 +40,7 @@ from lib.util import (
     run_command,
     common_environment,
     pass_vars,
+    display,
 )
 
 from lib.docker_util import (
@@ -46,18 +50,24 @@ from lib.docker_util import (
     docker_put,
     docker_rm,
     docker_run,
+    docker_available,
 )
 
 from lib.cloud import (
     get_cloud_providers,
 )
 
+from lib.target import (
+    IntegrationTarget,
+)
 
-def delegate(args, exclude, require):
+
+def delegate(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
     if isinstance(args, TestConfig):
@@ -66,40 +76,42 @@ def delegate(args, exclude, require):
             args.metadata.to_file(args.metadata_path)
 
             try:
-                return delegate_command(args, exclude, require)
+                return delegate_command(args, exclude, require, integration_targets)
             finally:
                 args.metadata_path = None
     else:
-        return delegate_command(args, exclude, require)
+        return delegate_command(args, exclude, require, integration_targets)
 
 
-def delegate_command(args, exclude, require):
+def delegate_command(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
     if args.tox:
-        delegate_tox(args, exclude, require)
+        delegate_tox(args, exclude, require, integration_targets)
         return True
 
     if args.docker:
-        delegate_docker(args, exclude, require)
+        delegate_docker(args, exclude, require, integration_targets)
         return True
 
     if args.remote:
-        delegate_remote(args, exclude, require)
+        delegate_remote(args, exclude, require, integration_targets)
         return True
 
     return False
 
 
-def delegate_tox(args, exclude, require):
+def delegate_tox(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :type integration_targets: tuple[IntegrationTarget]
     """
     if args.python:
         versions = args.python_version,
@@ -108,6 +120,12 @@ def delegate_tox(args, exclude, require):
             raise ApplicationError('tox does not support Python version %s' % args.python_version)
     else:
         versions = SUPPORTED_PYTHON_VERSIONS
+
+    if args.httptester:
+        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
+
+        if needs_httptester:
+            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
 
     options = {
         '--tox': args.tox_args,
@@ -145,22 +163,27 @@ def delegate_tox(args, exclude, require):
         run_command(args, tox + cmd, env=env)
 
 
-def delegate_docker(args, exclude, require):
+def delegate_docker(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :type integration_targets: tuple[IntegrationTarget]
     """
-    util_image = args.docker_util
     test_image = args.docker
     privileged = args.docker_privileged
 
-    if util_image:
-        docker_pull(args, util_image)
+    if isinstance(args, ShellConfig):
+        use_httptester = args.httptester
+    else:
+        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
+
+    if use_httptester:
+        docker_pull(args, args.httptester)
 
     docker_pull(args, test_image)
 
-    util_id = None
+    httptester_id = None
     test_id = None
 
     options = {
@@ -196,19 +219,10 @@ def delegate_docker(args, exclude, require):
 
                 lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
 
-            if util_image:
-                util_options = [
-                    '--detach',
-                ]
-
-                util_id, _ = docker_run(args, util_image, options=util_options)
-
-                if args.explain:
-                    util_id = 'util_id'
-                else:
-                    util_id = util_id.strip()
+            if use_httptester:
+                httptester_id = run_httptester(args)
             else:
-                util_id = None
+                httptester_id = None
 
             test_options = [
                 '--detach',
@@ -227,14 +241,11 @@ def delegate_docker(args, exclude, require):
             if os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
-            if util_id:
-                test_options += [
-                    '--link', '%s:ansible.http.tests' % util_id,
-                    '--link', '%s:sni1.ansible.http.tests' % util_id,
-                    '--link', '%s:sni2.ansible.http.tests' % util_id,
-                    '--link', '%s:fail.ansible.http.tests' % util_id,
-                    '--env', 'HTTPTESTER=1',
-                ]
+            if httptester_id:
+                test_options += ['--env', 'HTTPTESTER=1']
+
+                for host in HTTPTESTER_HOSTS:
+                    test_options += ['--link', '%s:%s' % (httptester_id, host)]
 
             if isinstance(args, IntegrationConfig):
                 cloud_platforms = get_cloud_providers(args)
@@ -268,18 +279,19 @@ def delegate_docker(args, exclude, require):
                     docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
                     run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
         finally:
-            if util_id:
-                docker_rm(args, util_id)
+            if httptester_id:
+                docker_rm(args, httptester_id)
 
             if test_id:
                 docker_rm(args, test_id)
 
 
-def delegate_remote(args, exclude, require):
+def delegate_remote(args, exclude, require, integration_targets):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :type integration_targets: tuple[IntegrationTarget]
     """
     parts = args.remote.split('/', 1)
 
@@ -289,8 +301,24 @@ def delegate_remote(args, exclude, require):
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     success = False
 
+    if isinstance(args, ShellConfig):
+        use_httptester = args.httptester
+    else:
+        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
+
+    if use_httptester and not docker_available():
+        display.warning('Assuming --disable-httptester since `docker` is not available.')
+        use_httptester = False
+
+    httptester_id = None
+    ssh_options = []
+
     try:
         core_ci.start()
+
+        if use_httptester:
+            httptester_id, ssh_options = start_httptester(args)
+
         core_ci.wait()
 
         options = {
@@ -298,6 +326,9 @@ def delegate_remote(args, exclude, require):
         }
 
         cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
+
+        if httptester_id:
+            cmd += ['--inject-httptester']
 
         if isinstance(args, TestConfig):
             if args.coverage and not args.coverage_label:
@@ -314,8 +345,6 @@ def delegate_remote(args, exclude, require):
         manage = ManagePosixCI(core_ci)
         manage.setup()
 
-        ssh_options = []
-
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
 
@@ -331,6 +360,9 @@ def delegate_remote(args, exclude, require):
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             core_ci.stop()
+
+        if httptester_id:
+            docker_rm(args, httptester_id)
 
 
 def generate_command(args, path, options, exclude, require):
