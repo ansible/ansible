@@ -143,8 +143,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         # Some resources, like ProjectRequests, can't be created multiple times,
                         # because the resources that they create don't match their kind
                         # In this case we'll mark it as unchanged and warn the user
-                        self.warn("{} was not found, but creating it returned a 409 Conflict error. This can happen " +
-                                  "if the resource you are creating does not directly create a resource of the same kind.")
+                        self.warn("{} was not found, but creating it returned a 409 Conflict error. This can happen \
+                                  if the resource you are creating does not directly create a resource of the same kind.".format(name))
                         return result
                     result['result'] = k8s_obj.to_dict()
                 result['changed'] = True
