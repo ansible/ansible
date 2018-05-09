@@ -393,7 +393,10 @@ def ensure(module, base, state, names, autoremove):
                 # best effort causes to install the latest package
                 # even if not previously installed
                 base.conf.best = True
-                base.install(pkg_spec)
+                try:
+                    base.install(pkg_spec)
+                except dnf.exceptions.MarkingError as e:
+                    failures.append((pkg_spec, to_native(e)))
 
         else:
             # state == absent
