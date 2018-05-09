@@ -144,7 +144,7 @@ failed:
     returned: info
     type: bool
     sample:
-        "failed": false 
+        "failed": false
 '''
 
 import os
