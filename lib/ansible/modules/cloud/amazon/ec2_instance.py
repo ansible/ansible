@@ -1391,7 +1391,7 @@ def ensure_present(existing_matches, changed, ec2, state):
                 except botocore.exceptions.ClientError as e:
                     module.fail_json_aws(e, msg="Could not apply change {0} to new instance.".format(str(c)))
 
-        await_instances(instance_ids)
+        await_instances(instance_ids, 'RUNNING')
         instances = ec2.get_paginator('describe_instances').paginate(
             InstanceIds=instance_ids
         ).search('Reservations[].Instances[]')
