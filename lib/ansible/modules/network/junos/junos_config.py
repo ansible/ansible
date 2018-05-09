@@ -295,7 +295,7 @@ def main():
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
 
-        confirm=dict(default=0, type='int'),
+        confirm=dict(default=0, type='str'),
         comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
 
