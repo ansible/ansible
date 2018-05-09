@@ -1,0 +1,128 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Test an API key is provided
+  fail:
+    msg: Please define an API key
+  when: auth_key is not defined
+
+# - name: Query all SNMP settings
+#   meraki_snmp:
+#     auth_key: '{{auth_key}}'
+#     org_name: '{{test_org_name}}'
+#     state: query
+#   delegate_to: localhost
+#   register: snmp_query
+
+# - debug:
+#     msg: '{{snmp_query}}'
+
+- name: Enable SNMPv2
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v2cEnabled: true
+  delegate_to: localhost
+  register: snmp_v2_enable
+
+- debug:
+    msg: '{{snmp_v2_enable}}'
+
+- assert:
+    that:
+      - snmp_v2_enable.data.v2CommunityString is defined
+      - snmp_v2_enable.data.v2cEnabled == true
+
+- name: 
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v2cEnabled: False
+  delegate_to: localhost
+  register: snmp_v2_disable
+
+# - debug:
+#     msg: '{{snmp_v2_disable}}'
+
+- assert:
+    that:
+      - snmp_v2_disable.data.v2CommunityString is not defined
+      - snmp_v2_disable.data.v2cEnabled == False
+
+- name: 
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v3Enabled: true
+    v3AuthMode: SHA
+    v3AuthPass: ansiblepass
+    v3PrivMode: AES128
+    v3PrivPass: ansiblepass
+  delegate_to: localhost
+  register: snmp_v3_enable
+
+- assert:
+    that:
+      - snmp_v3_enable.data.v3Enabled == True
+
+- name: Add peer IPs
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v3Enabled: true
+    v3AuthMode: SHA
+    v3AuthPass: ansiblepass
+    v3PrivMode: AES128
+    v3PrivPass: ansiblepass
+    peerIps: 1.1.1.1;2.2.2.2
+  delegate_to: localhost
+  register: peers
+
+- debug:
+    msg: '{{peers}}'
+
+- assert:
+    that:
+      - peers.data.peerIps is defined
+
+- name: Add invalid peer IPs
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    peerIps: 1.1.1.1 2.2.2.2
+  delegate_to: localhost
+  register: invalid_peers
+  ignore_errors: yes
+
+- assert:
+    that:
+      '"Peer IP addresses are semi-colon delimited." in invalid_peers.msg'
+
+- name: Add peer IPs
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v3Enabled: true
+    v3AuthMode: SHA
+    v3AuthPass: ansible
+    v3PrivMode: AES128
+    v3PrivPass: ansible
+    peerIps: 1.1.1.1;2.2.2.2
+  delegate_to: localhost
+  register: short_password
+  ignore_errors: yes
+
+- debug:
+    msg: '{{short_password}}'
+
+- assert:
+    that:
+      - '"at least 8" in short_password.msg'
