@@ -32,7 +32,7 @@ Function Get-CategoryGuid($category_name) {
         "Tools" {"B4832BD8-E735-4761-8DAF-37F882276DAB"}
         "UpdateRollups" {"28BC880E-0592-4CBF-8F95-C79B17911D5F"}
         "Updates" {"CD5FFD1E-E932-4E3A-BF74-18BF0B1BBD83"}
-        default { Fail-Json -message "Unknown category_name $category_name, must be one of (Application,Connectors,CriticalUpdates,DefinitionUpdates,DevelopcePacks,ToolsePacks,Guidance,SecurityUpdates,ServicePacks,Tools,UpdateRollups,Updates)" }
+        default { Fail-Json -message "Unknown category_name $category_name, must be one of (Application,Connectors,CriticalUpdates,DefinitionUpdates,DeveloperKits,FeaturePacks,Guidance,SecurityUpdates,ServicePacks,Tools,UpdateRollups,Updates)" }
     }
     return $guid
 }
