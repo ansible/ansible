@@ -60,6 +60,7 @@ try:
 except ImportError:
     HAS_PASSLIB = False
 
+
 def re_matchall(regex, value):
     objects = list()
     for match in re.findall(regex.pattern, value, re.M):
@@ -353,6 +354,7 @@ def parse_xml(output, tmpl):
 
     return obj
 
+
 def type5_pw(password, salt=None):
     if not HAS_PASSLIB:
         raise AnsibleFilterError('type5_pw filter requires PassLib library to be installed')
@@ -367,18 +369,20 @@ def type5_pw(password, salt=None):
         salt = random_password(length=4, chars=salt_chars)
     elif not set(salt) <= set(salt_chars):
         raise AnsibleFilterError("type5_pw salt used inproper characters, must be one of %s" % (salt_chars))
-        
+
     encrypted_password = md5_crypt.encrypt(password, salt=salt)
 
     return encrypted_password
 
+
 def hash_salt(password):
 
-    split_password = password.split("$") 
+    split_password = password.split("$")
     if len(split_password) != 4:
         raise AnsibleFilterError('Could not parse salt out password correctly from {}'.format(password))
     else:
         return split_password[2]
+
 
 def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
 
@@ -389,6 +393,7 @@ def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
         else:
             return True
     return False
+
 
 class FilterModule(object):
     """Filters for working with output from network devices"""

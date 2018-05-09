@@ -82,6 +82,7 @@ class TestNetworkParseFilter(unittest.TestCase):
             parse_xml(output, spec_file_path)
         self.assertEqual("parse_xml works on string input, but given input of : %s" % type(output), str(e.exception))
 
+
 class TestNetworkType5(unittest.TestCase):
 
     def test_defined_salt_success(self):
@@ -96,9 +97,8 @@ class TestNetworkType5(unittest.TestCase):
         parsed = type5_pw(password)
         self.assertEqual(len(parsed), 30)
 
-
     def test_wrong_data_type(self):
-        
+
         with self.assertRaises(Exception) as e:
             type5_pw([])
         self.assertEqual("type5_pw password input should be a string, but was given a input of <type \'list\'>", str(e.exception))
@@ -116,16 +116,17 @@ class TestNetworkType5(unittest.TestCase):
         self.assertEqual("type5_pw salt input should be a string, but was given a input of <type \'dict\'>", str(e.exception))
 
     def test_bad_salt_char(self):
-        
+
         with self.assertRaises(Exception) as e:
             type5_pw('password', '*()')
-        self.assertEqual("type5_pw salt used inproper characters, must be one of " \
+        self.assertEqual("type5_pw salt used inproper characters, must be one of "
                          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             type5_pw('password', 'asd$')
-        self.assertEqual("type5_pw salt used inproper characters, must be one of " \
+        self.assertEqual("type5_pw salt used inproper characters, must be one of "
                          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./", str(e.exception))
+
 
 class TestHashSalt(unittest.TestCase):
 
@@ -138,12 +139,12 @@ class TestHashSalt(unittest.TestCase):
         parsed = hash_salt(password)
         self.assertEqual(parsed, '14')
 
-
     def test_unparseable_salt(self):
         password = '$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         with self.assertRaises(Exception) as e:
             parsed = hash_salt(password)
         self.assertEqual("Could not parse salt out password correctly from $nTc1$Z28sUTcWfXlvVe2x.3XAa.", str(e.exception))
+
 
 class TestCompareType5(unittest.TestCase):
 
