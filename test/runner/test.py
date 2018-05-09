@@ -357,6 +357,10 @@ def parse_args():
                         choices=[test.name for test in sanity_get_tests()],
                         help='tests to skip').completer = complete_sanity_test
 
+    sanity.add_argument('--allow-disabled',
+                        action='store_true',
+                        help='allow tests to run which are disabled by default')
+
     sanity.add_argument('--list-tests',
                         action='store_true',
                         help='list available tests')
