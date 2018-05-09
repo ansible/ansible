@@ -249,7 +249,7 @@ class AzureRMResource(AzureRMModuleBase):
         try:
             self.results['response'] = json.loads(response.text)
         except:
-            self.results['response'] = "json.loads(response)
+            self.results['response'] = json.loads(response)
 
         self.results['changed'] = needs_update
 
