@@ -29,6 +29,7 @@
 import os
 import re
 
+from ansible.module_utils.ansible_release import __version__
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
@@ -126,15 +127,21 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
+
+    config = botocore.config.Config(
+        user_agent_extra='Ansible {0}'.format(__version__),
+    )
+    session = boto3.session.Session(
+        profile_name=profile,
+    )
+
     if conn_type == 'resource':
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
-        return resource
+        return session.resource(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
     elif conn_type == 'client':
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        return client
+        return session.client(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
     else:
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = session.client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = session.resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 
