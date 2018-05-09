@@ -193,6 +193,54 @@ except ImportError:
     pass
 
 
+def list_assessment_template_with_backoff(client, **kwargs):
+    return client.list_assessment_templates(**kwargs)
+
+
+def describe_assesment_template_with_backoff(client, **kwargs):
+    return client.describe_assessment_templates(**kwargs)
+
+
+def list_rules_packages_with_backoff(client, **kwargs):
+    return client.list_rules_packages(**kwargs)
+
+
+def describe_rules_packages_with_backoff(client, **kwargs):
+    return client.describe_rules_packages(**kwargs)
+
+
+def list_tags_for_resource_with_backoff(client, **kwargs):
+    return client.list_tags_for_resource(**kwargs)
+
+
+def list_assessment_targets_with_backoff(client, **kwargs):
+    return client.list_assessment_targets(**kwargs)
+
+
+def create_assessment_template_with_backoff(client, **kwargs):
+    return client.create_assessment_template(**kwargs)
+
+
+def delete_assessment_template_with_backoff(client, **kwargs):
+    return client.delete_assessment_template(**kwargs)
+
+
+def subscribe_to_event_with_backoff(client, **kwargs):
+    return client.subscribe_to_event(**kwargs)
+
+
+def unsubscribe_from_event_with_backoff(client, **kwargs):
+    return client.unsubscribe_from_event(**kwargs)
+
+
+def list_event_subscriptions_with_backoff(client, **kwargs):
+    return client.list_event_subscriptions(**kwargs)
+
+
+def set_tags_for_resource_with_backoff(client, **kwargs):
+    return client.set_tags_for_resource(**kwargs)
+
+
 def _check_subs(module, subs):
     sns_arn_regexp = (
         '^'
@@ -226,31 +274,25 @@ def _check_subs(module, subs):
     return checked_subs
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_template_arn(client, module, name):
     try:
-        return client.list_assessment_templates(
+        return list_assessment_template_with_backoff(
+            client,
             filter={'namePattern': name},
         ).get('assessmentTemplateArns')[0]
-    except (
-            botocore.exceptions.BotoCoreError,
-            botocore.exceptions.ClientError,
-    ) as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e, msg='trying to retrieve template arn')
     except IndexError:
         return None
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_template(client, module, arn):
     try:
-        template = client.describe_assessment_templates(
+        template = describe_assesment_template_with_backoff(
+            client,
             assessmentTemplateArns=[arn],
         ).get('assessmentTemplates')[0]
-    except (
-        botocore.exceptions.BotoCoreError,
-        botocore.exceptions.ClientError,
-    ) as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e, msg='trying to retrieve template')
     except IndexError:
         module.fail_json(msg='unknown template: %s' % arn)
@@ -268,7 +310,6 @@ def get_template(client, module, arn):
     return camel_dict_to_snake_dict(template)
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_rules_arns(client, module, rules):
     # Add new rules to this dictionary
     rules_mapping = {
@@ -285,8 +326,11 @@ def get_rules_arns(client, module, rules):
 
     rules_fullnames = [rules_mapping.get(rule) for rule in rules]
     try:
-        all_rules_arns = client.list_rules_packages().get('rulesPackageArns')
-        all_rules = client.describe_rules_packages(
+        all_rules_arns = list_rules_packages_with_backoff(
+            client,
+        ).get('rulesPackageArns')
+        all_rules = describe_rules_packages_with_backoff(
+            client,
             rulesPackageArns=all_rules_arns,
         ).get('rulesPackages')
     except (
@@ -301,11 +345,12 @@ def get_rules_arns(client, module, rules):
     ]
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def _retrieve_tags(client, module, arn):
     try:
         return boto3_tag_list_to_ansible_dict(
-            client.list_tags_for_resource(resourceArn=arn).get('tags')
+            list_tags_for_resource_with_backoff(
+                client, resourceArn=arn,
+            ).get('tags')
         )
     except (
         botocore.exceptions.BotoCoreError,
@@ -314,13 +359,12 @@ def _retrieve_tags(client, module, arn):
         module.fail_json_aws(e, msg="trying to retrieve tags for target")
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def set_tags(client, module, arn, tags):
     try:
-        return client.set_tags_for_resource(
-            resourceArn=arn, tags=ansible_dict_to_boto3_tag_list(
-                tags, 'key', 'value'
-            ),
+        return set_tags_for_resource_with_backoff(
+            client,
+            resourceArn=arn,
+            tags=ansible_dict_to_boto3_tag_list(tags, 'key', 'value'),
         )
     except (
         botocore.exceptions.BotoCoreError,
@@ -340,14 +384,17 @@ def update_tags(client, module, arn, tags):
         return None
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def _retrieve_subs(client, module, arn):
     try:
-        event_subs = client.list_event_subscriptions(resourceArn=arn)
+        event_subs = list_event_subscriptions_with_backoff(
+            client,
+            resourceArn=arn,
+        )
         subs = event_subs.get('subscriptions')
         next_token = event_subs.get('nextToken')
         while next_token:
-            event_subs = client.list_event_subscriptions(
+            event_subs = list_event_subscriptions_with_backoff(
+                client,
                 resourceArn=arn,
                 nextToken=next_token,
             )
@@ -365,12 +412,12 @@ def _retrieve_subs(client, module, arn):
     ]
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def add_subs(client, module, arn, subs):
     changed = False
     try:
         for sub in subs:
-            client.subscribe_to_event(
+            subscribe_to_event_with_backoff(
+                client,
                 resourceArn=arn,
                 event=sub.get('event'),
                 topicArn=sub.get('topic_arn'),
@@ -385,12 +432,12 @@ def add_subs(client, module, arn, subs):
     return changed
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def delete_subs(client, module, arn, subs):
     changed = False
     try:
         for sub in subs:
-            client.unsubscribe_from_event(
+            unsubscribe_from_event_with_backoff(
+                client,
                 resourceArn=arn,
                 event=sub.get('event'),
                 topicArn=sub.get('topic_arn'),
@@ -422,10 +469,10 @@ def update_subs(client, module, arn, subs):
     return changed
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_target_arn(client, module, target):
     try:
-        return client.list_assessment_targets(
+        return list_assessment_targets_with_backoff(
+            client,
             filter={'assessmentTargetNamePattern': target},
         ).get('assessmentTargetArns')[0]
     except (
@@ -437,7 +484,6 @@ def get_target_arn(client, module, target):
         module.fail_json(msg='unknown target: %s' % target)
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def main():
     argument_spec = dict(
         attributes=dict(type='dict', default={}),
@@ -471,8 +517,12 @@ def main():
     tags = module.params.get('tags')
     target = module.params.get('target')
 
-    client = module.client('inspector')
-
+    retry_decorator = AWSRetry.exponential_backoff(
+        retries=5,
+        delay=5,
+        backoff=2.0,
+    )
+    client = module.client('inspector', retry_decorator=retry_decorator)
     arn = get_template_arn(client, module, name)
     if state == 'present' and arn:
         changed = False
@@ -489,7 +539,8 @@ def main():
         )
     elif state == 'present' and not arn:
         try:
-            arn = client.create_assessment_template(
+            arn = create_assessment_template_with_backoff(
+                client,
                 assessmentTargetArn=get_target_arn(client, module, target),
                 assessmentTemplateName=name,
                 durationInSeconds=duration * 60,
@@ -511,7 +562,10 @@ def main():
 
     elif state == 'absent' and arn:
         try:
-            client.delete_assessment_template(assessmentTemplateArn=arn)
+            delete_assessment_template_with_backoff(
+                client,
+                assessmentTemplateArn=arn,
+            )
             module.exit_json(changed=True)
         except(
             botocore.exceptions.BotoCoreError,
