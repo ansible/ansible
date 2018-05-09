@@ -379,7 +379,7 @@ def hash_salt(password):
 
     split_password = password.split("$")
     if len(split_password) != 4:
-        raise AnsibleFilterError('Could not parse salt out password correctly from {}'.format(password))
+        raise AnsibleFilterError('Could not parse salt out password correctly from {0}'.format(password))
     else:
         return split_password[2]
 
