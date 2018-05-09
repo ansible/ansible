@@ -32,7 +32,7 @@ options:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
         are installed.
     default: present
-    choices: [ absent, build-dep, latest, present ]
+    choices: [ absent, build-dep, latest, present, installed ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
