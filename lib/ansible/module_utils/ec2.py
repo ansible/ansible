@@ -129,7 +129,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
 
 
     config = botocore.config.Config(
-        user_agent_extra='Ansible {0}'.format(__version__),
+        user_agent_extra='Ansible/{0}'.format(__version__),
     )
     session = boto3.session.Session(
         profile_name=profile,
