@@ -14,6 +14,8 @@ from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
     create_shell_command,
+    run_httptester,
+    start_httptester,
 )
 
 from lib.config import (
@@ -39,7 +41,6 @@ from lib.util import (
     common_environment,
     pass_vars,
     display,
-    get_available_port,
 )
 
 from lib.docker_util import (
@@ -219,7 +220,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
 
             if use_httptester:
-                httptester_id = docker_httptester_run(args)
+                httptester_id = run_httptester(args)
             else:
                 httptester_id = None
 
@@ -316,26 +317,7 @@ def delegate_remote(args, exclude, require, integration_targets):
         core_ci.start()
 
         if use_httptester:
-            # map ports from remote -> localhost -> container
-            ports = [
-                dict(
-                    remote=8080,
-                    localhost=get_available_port(),
-                    container=80,
-                ),
-                dict(
-                    remote=8443,
-                    localhost=get_available_port(),
-                    container=443,
-                ),
-            ]
-
-            docker_pull(args, args.httptester)
-
-            httptester_id = docker_httptester_run(args, dict((port['localhost'], port['container']) for port in ports))
-
-            for port in ports:
-                ssh_options += ['-R', '%d:localhost:%d' % (port['remote'], port['localhost'])]
+            httptester_id, ssh_options = start_httptester(args)
 
         core_ci.wait()
 
@@ -478,27 +460,3 @@ def filter_options(args, argv, options, exclude, require):
 
     if args.redact:
         yield '--redact'
-
-
-def docker_httptester_run(args, ports=None):
-    """
-    :type args: EnvironmentConfig
-    :type ports: dict[int, int] | None
-    :rtype: str
-    """
-    options = [
-        '--detach',
-    ]
-
-    if ports:
-        for localhost_port, container_port in ports.items():
-            options += ['-p', '%d:%d' % (localhost_port, container_port)]
-
-    httptester_id, _ = docker_run(args, args.httptester, options=options)
-
-    if args.explain:
-        httptester_id = 'httptester_id'
-    else:
-        httptester_id = httptester_id.strip()
-
-    return httptester_id

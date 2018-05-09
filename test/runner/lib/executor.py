@@ -48,6 +48,14 @@ from lib.util import (
     find_executable,
     raw_command,
     get_coverage_path,
+    get_available_port,
+)
+
+from lib.docker_util import (
+    docker_pull,
+    docker_run,
+    get_docker_container_id,
+    get_docker_container_ip,
 )
 
 from lib.ansible_util import (
@@ -825,6 +833,75 @@ def command_integration_filtered(args, targets, all_targets):
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
             len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
+
+
+def start_httptester(args):
+    """
+    :type args: EnvironmentConfig
+    :rtype: str, list[str]
+    """
+
+    # map ports from remote -> localhost -> container
+    # passing through localhost is only used when ansible-test is not already running inside a docker container
+    ports = [
+        dict(
+            remote=8080,
+            container=80,
+        ),
+        dict(
+            remote=8443,
+            container=443,
+        ),
+    ]
+
+    container_id = get_docker_container_id()
+
+    if container_id:
+        display.info('Running in docker container: %s' % container_id, verbosity=1)
+    else:
+        for item in ports:
+            item['localhost'] = get_available_port()
+
+    docker_pull(args, args.httptester)
+
+    httptester_id = run_httptester(args, dict((port['localhost'], port['container']) for port in ports if 'localhost' in port))
+
+    if container_id:
+        container_host = get_docker_container_ip(args, httptester_id)
+        display.info('Found httptester container address: %s' % container_host, verbosity=1)
+    else:
+        container_host = 'localhost'
+
+    ssh_options = []
+
+    for port in ports:
+        ssh_options += ['-R', '%d:%s:%d' % (port['remote'], container_host, port.get('localhost', port['container']))]
+
+    return httptester_id, ssh_options
+
+
+def run_httptester(args, ports=None):
+    """
+    :type args: EnvironmentConfig
+    :type ports: dict[int, int] | None
+    :rtype: str
+    """
+    options = [
+        '--detach',
+    ]
+
+    if ports:
+        for localhost_port, container_port in ports.items():
+            options += ['-p', '%d:%d' % (localhost_port, container_port)]
+
+    httptester_id, _ = docker_run(args, args.httptester, options=options)
+
+    if args.explain:
+        httptester_id = 'httptester_id'
+    else:
+        httptester_id = httptester_id.strip()
+
+    return httptester_id
 
 
 def inject_httptester(args):

@@ -56,6 +56,17 @@ def get_docker_container_id():
     raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
 
 
+def get_docker_container_ip(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :rtype: str
+    """
+    results = docker_inspect(args, container_id)
+    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    return ipaddress
+
+
 def docker_pull(args, image):
     """
     :type args: EnvironmentConfig
