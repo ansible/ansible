@@ -53,6 +53,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import Mapping, MutableSequence, Set
+
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_text
 
@@ -95,9 +97,9 @@ def _wrap_list(v):
 
 
 def wrap_var(v):
-    if isinstance(v, dict):
+    if isinstance(v, Mapping):
         v = _wrap_dict(v)
-    elif isinstance(v, list):
+    elif isinstance(v, (MutableSequence, Set)):
         v = _wrap_list(v)
     elif v is not None and not isinstance(v, AnsibleUnsafe):
         v = UnsafeProxy(v)
