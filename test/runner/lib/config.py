@@ -43,7 +43,6 @@ class EnvironmentConfig(CommonConfig):
         self.remote = args.remote  # type: str
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
@@ -69,6 +68,9 @@ class EnvironmentConfig(CommonConfig):
 
         if self.delegate:
             self.requirements = True
+
+        self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
+        self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
 
     @property
     def python_executable(self):
