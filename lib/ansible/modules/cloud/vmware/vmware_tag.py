@@ -19,7 +19,7 @@ module: vmware_tag
 short_description: Manage VMware tags
 description:
 - This module can be used to create / delete / update VMware tags.
-- Tag Feature is introduced in vSphere 6 version, so module not supported in eariler versions of vSphere.
+- Tag feature is introduced in vSphere 6 version, so this module is not supported in the earlier versions of vSphere.
 - All variables and VMware object names are case sensitive.
 version_added: '2.6'
 author:
