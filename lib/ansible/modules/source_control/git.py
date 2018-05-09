@@ -1022,11 +1022,19 @@ def main():
         elif os.path.isfile(os.path.join(dest, '.git')):
             with open(os.path.join(dest, '.git'), 'r') as gitfile:
                 data = gitfile.read()
-            match = re.match('gitdir: (.+)$', data)
-            if match:
-                separate_git_dir = match.group(1)
-                os.environ['GIT_DIR'] = separate_git_dir
-                gitconfig = os.path.join(separate_git_dir, 'config')
+            try:
+                ref_prefix, os.environ['GIT_DIR'] = data.split('gitdir: ', 1)
+                if ref_prefix:
+                    raise ValueError('.git file has invalid git dir reference format')
+                if not os.path.isdir(os.environ['GIT_DIR']):
+                    raise TypeError('%s is not a directory' % os.environ['GIT_DIR'])
+            except (TypeError, ValueError) as err:
+                """``.git`` file does not have a valid format for detached Git dir."""
+                module.fail_json(
+                    msg='Current repo does not have a valid reference to a '
+                    'separate Git dir or it refers to the invalid path',
+                    details=str(err),
+                )
         else:
             gitconfig = os.path.join(dest, '.git', 'config')
 
