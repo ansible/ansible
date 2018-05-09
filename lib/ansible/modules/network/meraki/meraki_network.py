@@ -32,12 +32,12 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: ['present', 'query', 'absent']
+        choices: [absent, present, query]
         default: present
     net_name:
         description:
         - Name of a network.
-        aliases: ['name', 'network']
+        aliases: [name, network]
     net_id:
         description:
         - ID number of a network.
@@ -51,8 +51,8 @@ options:
         description:
         - Type of network device network manages.
         - Required when creating a network.
-        choices: ['switch', 'appliance', 'wireless', 'combined']
-        aliases: ['net_type']
+        choices: [appliance, combined, switch, wireless]
+        aliases: [net_type]
     tags:
         description:
         - Comma delimited list of tags to assign to network.

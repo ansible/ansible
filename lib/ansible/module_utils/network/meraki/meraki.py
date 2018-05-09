@@ -193,21 +193,21 @@ class MerakiModule(object):
 
     def get_net(self, org_name, net_name, data=None):
         ''' Return network information '''
-        if not data:
-            org_id = self.get_org_id(org_name)
-            path = '/organizations/{org_id}/networks/{net_id}'.format(
-                org_id=org_id,
-                net_id=self.get_net_id(
-                    org_name=org_name,
-                    net_name=net_name,
-                    data=data)
-            )
-            return json.loads(self.request('GET', path))
-        else:
-            for n in data:
-                if n['name'] == net_name:
-                    return n
-            return False
+        # if not data:
+        #     org_id = self.get_org_id(org_name)
+        #     path = '/organizations/{org_id}/networks/{net_id}'.format(
+        #         org_id=org_id,
+        #         net_id=self.get_net_id(
+        #             org_name=org_name,
+        #             net_name=net_name,
+        #             data=data)
+        #     )
+        #     return json.loads(self.request('GET', path))
+        # else:
+        for n in data:
+            if n['name'] == net_name:
+                return n
+        return False
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Return network id from lookup or existing data '''
@@ -250,9 +250,7 @@ class MerakiModule(object):
         self.status = info['status']
 
         if self.status >= 300:
-            if not payload:
-                self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
-            self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info), payload=json.loads(payload))
+            self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
         return to_native(resp.read())
 
     def exit_json(self, **kwargs):
