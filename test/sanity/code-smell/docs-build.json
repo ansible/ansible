@@ -1,4 +1,5 @@
 {
+    "disabled": true,
     "always": true,
     "output": "path-line-column-message"
 }
