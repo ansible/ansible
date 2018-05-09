@@ -48,6 +48,14 @@ from lib.util import (
     find_executable,
     raw_command,
     get_coverage_path,
+    get_available_port,
+)
+
+from lib.docker_util import (
+    docker_pull,
+    docker_run,
+    get_docker_container_id,
+    get_docker_container_ip,
 )
 
 from lib.ansible_util import (
@@ -98,6 +106,12 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.5',
     '3.6',
     '3.7',
+)
+
+HTTPTESTER_HOSTS = (
+    'ansible.http.tests',
+    'sni1.ansible.http.tests',
+    'fail.ansible.http.tests',
 )
 
 
@@ -276,6 +290,9 @@ def command_shell(args):
         raise Delegate()
 
     install_command_requirements(args)
+
+    if args.inject_httptester:
+        inject_httptester(args)
 
     cmd = create_shell_command(['bash', '-i'])
     run_command(args, cmd)
@@ -649,7 +666,7 @@ def command_integration_filter(args, targets, init_callback=None):
     cloud_init(args, internal_targets)
 
     if args.delegate:
-        raise Delegate(require=changes, exclude=exclude)
+        raise Delegate(require=changes, exclude=exclude, integration_targets=internal_targets)
 
     install_command_requirements(args)
 
@@ -696,6 +713,9 @@ def command_integration_filtered(args, targets, all_targets):
                 seconds = 3
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
+
+    if args.inject_httptester:
+        inject_httptester(args)
 
     start_at_task = args.start_at_task
 
@@ -815,6 +835,133 @@ def command_integration_filtered(args, targets, all_targets):
             len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
 
 
+def start_httptester(args):
+    """
+    :type args: EnvironmentConfig
+    :rtype: str, list[str]
+    """
+
+    # map ports from remote -> localhost -> container
+    # passing through localhost is only used when ansible-test is not already running inside a docker container
+    ports = [
+        dict(
+            remote=8080,
+            container=80,
+        ),
+        dict(
+            remote=8443,
+            container=443,
+        ),
+    ]
+
+    container_id = get_docker_container_id()
+
+    if container_id:
+        display.info('Running in docker container: %s' % container_id, verbosity=1)
+    else:
+        for item in ports:
+            item['localhost'] = get_available_port()
+
+    docker_pull(args, args.httptester)
+
+    httptester_id = run_httptester(args, dict((port['localhost'], port['container']) for port in ports if 'localhost' in port))
+
+    if container_id:
+        container_host = get_docker_container_ip(args, httptester_id)
+        display.info('Found httptester container address: %s' % container_host, verbosity=1)
+    else:
+        container_host = 'localhost'
+
+    ssh_options = []
+
+    for port in ports:
+        ssh_options += ['-R', '%d:%s:%d' % (port['remote'], container_host, port.get('localhost', port['container']))]
+
+    return httptester_id, ssh_options
+
+
+def run_httptester(args, ports=None):
+    """
+    :type args: EnvironmentConfig
+    :type ports: dict[int, int] | None
+    :rtype: str
+    """
+    options = [
+        '--detach',
+    ]
+
+    if ports:
+        for localhost_port, container_port in ports.items():
+            options += ['-p', '%d:%d' % (localhost_port, container_port)]
+
+    httptester_id, _ = docker_run(args, args.httptester, options=options)
+
+    if args.explain:
+        httptester_id = 'httptester_id'
+    else:
+        httptester_id = httptester_id.strip()
+
+    return httptester_id
+
+
+def inject_httptester(args):
+    """
+    :type args: CommonConfig
+    """
+    comment = ' # ansible-test httptester\n'
+    append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
+
+    with open('/etc/hosts', 'r+') as hosts_fd:
+        original_lines = hosts_fd.readlines()
+
+        if not any(line.endswith(comment) for line in original_lines):
+            hosts_fd.writelines(append_lines)
+
+    # determine which forwarding mechanism to use
+    pfctl = find_executable('pfctl', required=False)
+    iptables = find_executable('iptables', required=False)
+
+    if pfctl:
+        kldload = find_executable('kldload', required=False)
+
+        if kldload:
+            try:
+                run_command(args, ['kldload', 'pf'], capture=True)
+            except SubprocessError:
+                pass  # already loaded
+
+        rules = '''
+rdr pass inet proto tcp from any to any port 80 -> 127.0.0.1 port 8080
+rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
+'''
+        cmd = ['pfctl', '-ef', '-']
+
+        try:
+            run_command(args, cmd, capture=True, data=rules)
+        except SubprocessError:
+            pass  # non-zero exit status on success
+
+    elif iptables:
+        ports = [
+            (80, 8080),
+            (443, 8443),
+        ]
+
+        for src, dst in ports:
+            rule = ['-o', 'lo', '-p', 'tcp', '--dport', str(src), '-j', 'REDIRECT', '--to-port', str(dst)]
+
+            try:
+                # check for existing rule
+                cmd = ['iptables', '-t', 'nat', '-C', 'OUTPUT'] + rule
+                run_command(args, cmd, capture=True)
+            except SubprocessError:
+                # append rule when it does not exist
+                cmd = ['iptables', '-t', 'nat', '-A', 'OUTPUT'] + rule
+                run_command(args, cmd, capture=True)
+    else:
+        raise ApplicationError('No supported port forwarding mechanism detected.')
+
+
 def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, always):
     """
     :type args: IntegrationConfig
@@ -851,6 +998,11 @@ def integration_environment(args, target, cmd):
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
+
+    if args.inject_httptester:
+        env.update(dict(
+            HTTPTESTER='1',
+        ))
 
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
@@ -1464,15 +1616,17 @@ class NoTestsForChanges(ApplicationWarning):
 
 class Delegate(Exception):
     """Trigger command delegation."""
-    def __init__(self, exclude=None, require=None):
+    def __init__(self, exclude=None, require=None, integration_targets=None):
         """
         :type exclude: list[str] | None
         :type require: list[str] | None
+        :type integration_targets: tuple[IntegrationTarget] | None
         """
         super(Delegate, self).__init__()
 
         self.exclude = exclude or []
         self.require = require or []
+        self.integration_targets = integration_targets or tuple()
 
 
 class AllTargetsSkipped(ApplicationWarning):
