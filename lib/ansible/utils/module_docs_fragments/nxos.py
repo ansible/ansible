@@ -59,6 +59,7 @@ options:
         attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
+    type: bool
     default: no
     choices: ['yes', 'no']
     version_added: 2.4.4
