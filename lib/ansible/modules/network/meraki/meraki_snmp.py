@@ -35,27 +35,22 @@ options:
     v3AuthMode:
         description:
         - Sets authentication mode for SNMPv3.
-        type: string
         choices: ['MD5', 'SHA']
     v3AuthPass:
         description:
         - Authentication password for SNMPv3.
         - Must be at least 8 characters long.
-        type: string
     v3PrivMode:
         description:
         - Specifies privacy mode for SNMPv3.
-        type: string
         choices: ['DES', 'AES128']
     v3PrivPass:
         description:
         - Privacy password for SNMPv3.
         - Must be at least 8 characters long.
-        type: string
     peerIps:
         description:
         - Semi-colon delimited IP addresses which can perform SNMP queries.
-        type: string
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -93,12 +88,14 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
+
 def get_snmp(meraki, org_id):
     path = meraki.construct_path('get_all', org_id=org_id)
     r = meraki.request(path,
                        method='GET',
                        )
     return json.loads(r)
+
 
 def set_snmp(meraki, org_id):
     payload = dict()
@@ -113,10 +110,10 @@ def set_snmp(meraki, org_id):
         if len(meraki.params['v3AuthPass']) < 8 or len(meraki.params['v3PrivPass']) < 8:
             meraki.fail_json(msg='v3AuthPass and v3PrivPass must both be at least 8 characters long.')
         if (meraki.params['v3AuthMode'] is None or
-            meraki.params['v3AuthPass'] is None or
-            meraki.params['v3PrivMode'] is None or
-            meraki.params['v3PrivPass'] is None):
-            meraki.fail_json(msg='v3AuthMode, v3AuthPass, v3PrivMode, and v3AuthPass are required')
+                meraki.params['v3AuthPass'] is None or
+                meraki.params['v3PrivMode'] is None or
+                meraki.params['v3PrivPass'] is None):
+                    meraki.fail_json(msg='v3AuthMode, v3AuthPass, v3PrivMode, and v3AuthPass are required')
         payload = {'v3Enabled': meraki.params['v3Enabled'],
                    'v3AuthMode': meraki.params['v3AuthMode'].upper(),
                    'v3AuthPass': meraki.params['v3AuthPass'],
@@ -130,16 +127,14 @@ def set_snmp(meraki, org_id):
                     'v3PrivMode': meraki.params['v3PrivMode'],
                     'peerIps': meraki.params['peerIps'],
                     }
-    if not meraki.params['v3Enabled']:
+    if meraki.params['v3Enabled'] is None:
         full_compare['v3Enabled'] = False
-    elif not meraki.params['v2cEnabled']:
-        full_compare['v2CommunityString'] = False
+    if meraki.params['v2cEnabled'] is None:
+        full_compare['v2cEnabled'] = False
     path = meraki.construct_path('create', org_id=org_id)
     snmp = get_snmp(meraki, org_id)
-    ignored_parameters = ('v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString')
-    # meraki.fail_json(msg='Payload', before=snmp, after=full_compare)
+    ignored_parameters = ('v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User')
     if meraki.is_update_required(snmp, full_compare, optional_ignore=ignored_parameters):
-        # meraki.fail_json(msg='Payload', payload=payload)
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
@@ -147,13 +142,13 @@ def set_snmp(meraki, org_id):
         return json.loads(r)
     return -1
 
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
     argument_spec = meraki_argument_spec()
-    argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['present', 'query'], default='present'),
+    argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['name', 'organization']),
                          org_id=dict(type='int', aliases=['id']),
                          v2cEnabled=dict(type='bool'),
@@ -184,7 +179,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'snmp': '/organizations/{org_id}/snmp',
-                   }
+                  }
 
     update_urls = {'snmp': '/organizations/{org_id}/snmp',
                    }
@@ -216,7 +211,6 @@ def main():
         meraki.result['data'] = get_snmp(meraki, org_id)
     if meraki.params['state'] == 'present':
         meraki.result['data'] = set_snmp(meraki, org_id)
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

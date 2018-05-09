@@ -19,7 +19,7 @@
 # - debug:
 #     msg: '{{snmp_query}}'
 
-- name: Enable SNMPv2
+- name: Enable SNMPv2c
   meraki_snmp:
     auth_key: '{{auth_key}}'
     org_name: '{{test_org_name}}'
@@ -36,7 +36,7 @@
       - snmp_v2_enable.data.v2CommunityString is defined
       - snmp_v2_enable.data.v2cEnabled == true
 
-- name: 
+- name: Disable SNMPv2c
   meraki_snmp:
     auth_key: '{{auth_key}}'
     org_name: '{{test_org_name}}'
@@ -53,7 +53,7 @@
       - snmp_v2_disable.data.v2CommunityString is not defined
       - snmp_v2_disable.data.v2cEnabled == False
 
-- name: 
+- name: Enable SNMPv3
   meraki_snmp:
     auth_key: '{{auth_key}}'
     org_name: '{{test_org_name}}'
@@ -69,6 +69,27 @@
 - assert:
     that:
       - snmp_v3_enable.data.v3Enabled == True
+      - snmp_v3_enable.changed == True
+
+- name: Check for idempotency
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v3Enabled: true
+    v3AuthMode: SHA
+    v3AuthPass: ansiblepass
+    v3PrivMode: AES128
+    v3PrivPass: ansiblepass
+  delegate_to: localhost
+  register: snmp_idempotent
+
+- debug:
+    msg: '{{snmp_idempotent}}'
+
+- assert:
+    that:
+      - snmp_idempotent.changed == False
 
 - name: Add peer IPs
   meraki_snmp:
@@ -105,7 +126,7 @@
     that:
       '"Peer IP addresses are semi-colon delimited." in invalid_peers.msg'
 
-- name: Add peer IPs
+- name: Set short password
   meraki_snmp:
     auth_key: '{{auth_key}}'
     org_name: '{{test_org_name}}'
