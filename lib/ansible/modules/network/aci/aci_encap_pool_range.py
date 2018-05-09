@@ -18,8 +18,8 @@ description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
 notes:
 - The C(pool) must exist in order to add or delete a range.
-- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'

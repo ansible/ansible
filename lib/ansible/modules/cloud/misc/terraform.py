@@ -79,8 +79,9 @@ options:
       - To avoid duplicating infra, if a state file can't be found this will
         force a `terraform init`. Generally, this should be turned off unless
         you intend to provision an entirely new Terraform deployment.
-    required: false
     default: false
+    required: false
+    type: bool
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -136,13 +137,13 @@ APPLY_ARGS = ('apply', '-no-color', '-auto-approve=true')
 module = None
 
 
-def preflight_validation(bin_path, project_path, variables_file=None, plan_file=None):
+def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None):
     if not os.path.exists(bin_path):
         module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'], cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
@@ -153,6 +154,13 @@ def _state_args(state_file):
     if state_file and not os.path.exists(state_file):
         module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(state_file))
     return []
+
+
+def init_plugins(bin_path, project_path):
+    command = [bin_path, 'init']
+    rc, out, err = module.run_command(command, cwd=project_path)
+    if rc != 0:
+        module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
 
 
 def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
@@ -191,6 +199,7 @@ def main():
             targets=dict(type='list', default=[]),
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
+            force_init=dict(type='bool', default=False)
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -203,13 +212,26 @@ def main():
     variables_file = module.params.get('variables_file')
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
+    force_init = module.params.get('force_init')
 
     if bin_path is not None:
         command = [bin_path]
     else:
         command = [module.get_bin_path('terraform')]
 
-    preflight_validation(command[0], project_path)
+    if force_init:
+        init_plugins(command[0], project_path)
+
+    variables_args = []
+    for k, v in variables.items():
+        variables_args.extend([
+            '-var',
+            '{0}={1}'.format(k, v)
+        ])
+    if variables_file:
+        variables_args.extend(['-var-file', variables_file])
+
+    preflight_validation(command[0], project_path, variables_args)
 
     if state == 'present':
         command.extend(APPLY_ARGS)
@@ -224,15 +246,6 @@ def main():
     if module.params.get('lock_timeout') is not None:
         command.append('-lock-timeout=%ds' % module.params.get('lock_timeout'))
 
-    variables_args = []
-    for k, v in variables.items():
-        variables_args.extend([
-            '-var',
-            '{0}={1}'.format(k, v)
-        ])
-    if variables_file:
-        variables_args.append('-var-file', variables_file)
-
     for t in (module.params.get('targets') or []):
         command.extend(['-target', t])
 
@@ -244,6 +257,8 @@ def main():
     if state == 'absent':
         # deleting cannot use a statefile
         needs_application = True
+        # add variables settings to destroy command
+        command.extend(variables_args)
     elif plan_file and os.path.exists(plan_file):
         command.append(plan_file)
     elif plan_file and not os.path.exists(plan_file):

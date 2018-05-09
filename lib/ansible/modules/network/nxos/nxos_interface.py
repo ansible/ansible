@@ -56,7 +56,7 @@ options:
     version_added: 2.2
   speed:
     description:
-      - Interface link speed.
+      - Interface link speed. Applicable for ethernet interface only.
     version_added: 2.5
   admin_state:
     description:
@@ -73,12 +73,14 @@ options:
     description:
       - Manage Layer 2 or Layer 3 state of the interface.
         This option is supported for ethernet and portchannel interface.
+        Applicable for ethernet and portchannel interface only.
     required: false
     default: null
     choices: ['layer2','layer3']
   mtu:
     description:
       - MTU for a specific interface. Must be an even number between 576 and 9216.
+        Applicable for ethernet interface only.
     required: false
     version_added: 2.5
   ip_forward:
@@ -91,28 +93,33 @@ options:
   fabric_forwarding_anycast_gateway:
     description:
       - Associate SVI with anycast gateway under VLAN configuration mode.
+        Applicable for SVI interface only.
     required: false
     default: null
     choices: ['true','false']
     version_added: 2.2
   duplex:
     description:
-      - Interface link status
+      - Interface link status. Applicable for ethernet interface only.
     default: auto
     choices: ['full', 'half', 'auto']
     version_added: 2.5
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
     version_added: 2.5
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
     version_added: 2.5
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
-      - The following suboptions are available.
+      - The following suboptions are available. This is state check parameter only.
     suboptions:
         host:
           description:
@@ -430,31 +437,27 @@ def map_obj_to_commands(updates, module):
         if name:
             w['interface_type'] = None
 
-        obj_in_have = search_obj_in_list(name, have)
-        is_default = is_default_interface(name, module)
+        if interface_type:
+            obj_in_have = {}
+            if state in ('present', 'default'):
+                module.fail_json(msg='The interface_type param can be used only with state absent.')
+        else:
+            obj_in_have = search_obj_in_list(name, have)
+            is_default = is_default_interface(name, module)
+
         if name:
             interface = 'interface ' + name
-
-        if interface_type and state == 'present':
-            module.fail_json(msg='The interface_type param can be used only with state absent.')
 
         if state == 'absent':
             if obj_in_have:
                 commands.append('no interface {0}'.format(name))
-            elif interface_type:
+            elif interface_type and not obj_in_have:
                 intfs = get_interfaces_dict(module)[interface_type]
                 cmds = get_interface_type_removed_cmds(intfs)
                 commands.extend(cmds)
 
         elif state == 'present':
             if obj_in_have:
-                for item in args:
-                    candidate = w.get(item)
-
-                    if candidate and candidate != obj_in_have.get(item):
-                        cmd = item + ' ' + str(candidate)
-                        add_command_to_interface(interface, cmd, commands)
-
                 if mode == 'layer2' and mode != obj_in_have.get('mode'):
                     add_command_to_interface(interface, 'switchport', commands)
                 elif mode == 'layer3' and mode != obj_in_have.get('mode'):
@@ -471,12 +474,18 @@ def map_obj_to_commands(updates, module):
                     add_command_to_interface(interface, 'no ip forward', commands)
 
                 if (fabric_forwarding_anycast_gateway is True and
-                        obj_in_have.get('fabric_forwarding_anycast_gateway') is True):
+                        obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
                     add_command_to_interface(interface, 'fabric forwarding mode anycast-gateway', commands)
 
                 elif (fabric_forwarding_anycast_gateway is False and
-                        obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
+                        obj_in_have.get('fabric_forwarding_anycast_gateway') is True):
                     add_command_to_interface(interface, 'no fabric forwarding mode anycast-gateway', commands)
+
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate and candidate != obj_in_have.get(item):
+                        cmd = item + ' ' + str(candidate)
+                        add_command_to_interface(interface, cmd, commands)
 
                 if name and get_interface_type(name) == 'ethernet':
                     if mode != obj_in_have.get('mode'):
@@ -489,11 +498,6 @@ def map_obj_to_commands(updates, module):
 
             else:
                 commands.append(interface)
-                for item in args:
-                    candidate = w.get(item)
-                    if candidate:
-                        commands.append(item + ' ' + str(candidate))
-
                 if mode == 'layer2':
                     commands.append('switchport')
                 elif mode == 'layer3':
@@ -514,6 +518,11 @@ def map_obj_to_commands(updates, module):
 
                 elif fabric_forwarding_anycast_gateway is False:
                     commands.append('no fabric forwarding mode anycast-gateway')
+
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate:
+                        commands.append(item + ' ' + str(candidate))
 
         elif state == 'default':
             if is_default is False:
@@ -567,6 +576,9 @@ def map_config_to_obj(want, module):
                    mtu=None, mode=None, duplex=None, interface_type=None,
                    ip_forward=None, fabric_forwarding_anycast_gateway=None)
 
+        if not w['name']:
+            return obj
+
         command = 'show interface {0}'.format(w['name'])
         try:
             body = execute_show_command(command, module)[0]
@@ -592,13 +604,9 @@ def map_config_to_obj(want, module):
                     obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
-                    obj['mtu'] = int(interface_table.get('eth_mtu'))
+                    obj['mtu'] = interface_table.get('eth_mtu')
                     obj['duplex'] = interface_table.get('eth_duplex')
                     speed = interface_table.get('eth_speed')
-                    if 'auto' in speed:
-                        obj['speed'] = speed
-                    else:
-                        obj['speed'] = int(speed.split()[0])
                     mode = interface_table.get('eth_mode')
                     if mode in ('access', 'trunk'):
                         obj['mode'] = 'layer2'
@@ -607,14 +615,21 @@ def map_config_to_obj(want, module):
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
+
+                    if 'speed' in body:
+                        obj['speed'] = re.search(r'speed (\d+)', body).group(1)
+                    else:
+                        obj['speed'] = 'auto'
+
+                    if 'duplex' in body:
+                        obj['duplex'] = re.search(r'duplex (\S+)', body).group(1)
+                    else:
+                        obj['duplex'] = 'auto'
+
                     if 'ip forward' in body:
                         obj['ip_forward'] = 'enable'
                     else:
                         obj['ip_forward'] = 'disable'
-                    if 'fabric forwarding mode anycast-gateway' in body:
-                        obj['fabric_forwarding_anycast_gateway'] = True
-                    else:
-                        obj['fabric_forwarding_anycast_gateway'] = False
 
                 elif intf_type == 'svi':
                     obj['name'] = normalize_interface(interface_table.get('interface'))
@@ -660,6 +675,9 @@ def check_declarative_intent_params(module, want):
         want_neighbors = w.get('neighbors')
 
         time.sleep(module.params['delay'])
+
+        if w['interface_type']:
+            return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
         output = run_commands(module, cmd, check_rc=False)
@@ -755,7 +773,7 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
-    required_one_of = [['name', 'aggregate']]
+    required_one_of = [['name', 'aggregate', 'interface_type']]
     mutually_exclusive = [['name', 'aggregate'],
                           ['name', 'interface_type']]
 

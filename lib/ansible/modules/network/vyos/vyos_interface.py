@@ -306,11 +306,9 @@ def check_declarative_intent_params(module, want, result):
     have_neighbors = None
     for w in want:
         want_state = w.get('state')
-        want_tx_rate = w.get('tx_rate')
-        want_rx_rate = w.get('rx_rate')
         want_neighbors = w.get('neighbors')
 
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
+        if want_state not in ('up', 'down') and not want_neighbors:
             continue
 
         if result['changed']:

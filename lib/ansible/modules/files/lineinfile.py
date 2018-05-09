@@ -150,10 +150,11 @@ EXAMPLES = r"""
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if it does not exist, without passing regexp
+# Add a line to a file if the file does not exist, without passing regexp
 - lineinfile:
     path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
+    create: yes
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:

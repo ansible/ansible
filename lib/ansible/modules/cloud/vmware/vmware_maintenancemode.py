@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, VMware, Inc.
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -23,8 +23,8 @@ description:
     - This module can be used for placing a ESXi host into maintenance mode.
     - Support for VSAN compliant maintenance mode when selected.
 author:
-- "Jay Jahns <jjahns@vmware.com>"
-- "Abhijeet Kasurde (@akasurde)"
+- Jay Jahns (@jjahns) <jjahns@vmware.com>
+- Abhijeet Kasurde (@akasurde)
 version_added: "2.1"
 notes:
     - Tested on vSphere 5.5, 6.0 and 6.5

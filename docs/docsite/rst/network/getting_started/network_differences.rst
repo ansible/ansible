@@ -30,7 +30,7 @@ Because network modules execute on the control node instead of on the managed no
    "netconf", "XML over SSH", "network_os setting"
    "local", "depends on provider", "provider setting"
 
-Beginning with Ansible 2.5, we recommend using ``network_cli`` or ``netconf`` for ``ansible_connection`` whenever possible. For details on using API over HTTPS connections, see the platform-specific pages.
+Beginning with Ansible 2.5, we recommend using ``network_cli`` or ``netconf`` for ``ansible_connection`` whenever possible. For details on using API over HTTPS connections, see the :ref:`platform-specific <platform_options>` pages.
 
 
 Modules Organized by Network Platform
@@ -43,7 +43,7 @@ A network platform is a set of network devices with a common operating system th
 - Juniper: ``junos_``
 - VyOS ``vyos_``
 
-All modules within a network platform share certain requirements. Some network platforms have specific differences - see the platform-specific documentation for details.
+All modules within a network platform share certain requirements. Some network platforms have specific differences - see the :ref:`platform-specific <platform_options>` documentation for details.
 
 
 Privilege Escalation: `authorize` and `become`
@@ -76,7 +76,7 @@ Some network platforms support privilege escalation but cannot use ``network_cli
      transport: eapi
      use_ssl: no
 
-And you use the ``setting`` variable in your play(s) or task(s):
+And you use the ``eapi`` variable in your play(s) or task(s):
 
 .. code-block:: yaml
 

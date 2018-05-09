@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -1369,28 +1367,45 @@ class PyVmomiHelper(PyVmomi):
     def get_configured_disk_size(self, expected_disk_spec):
         # what size is it?
         if [x for x in expected_disk_spec.keys() if x.startswith('size_') or x == 'size']:
-            # size_tb, size_gb, size_mb, size_kb, size_b ...?
+            # size, size_tb, size_gb, size_mb, size_kb
             if 'size' in expected_disk_spec:
-                expected = ''.join(c for c in expected_disk_spec['size'] if c.isdigit())
-                unit = expected_disk_spec['size'].replace(expected, '').lower()
-                expected = int(expected)
+                size_regex = re.compile(r'(\d+(?:\.\d+)?)([tgmkTGMK][bB])')
+                disk_size_m = size_regex.match(expected_disk_spec['size'])
+                try:
+                    if disk_size_m:
+                        expected = disk_size_m.group(1)
+                        unit = disk_size_m.group(2)
+                    else:
+                        raise ValueError
+
+                    if re.match(r'\d+\.\d+', expected):
+                        # We found float value in string, let's typecast it
+                        expected = float(expected)
+                    else:
+                        # We found int value in string, let's typecast it
+                        expected = int(expected)
+
+                    if not expected or not unit:
+                        raise ValueError
+
+                except (TypeError, ValueError, NameError):
+                    # Common failure
+                    self.module.fail_json(msg="Failed to parse disk size please review value"
+                                              " provided using documentation.")
             else:
                 param = [x for x in expected_disk_spec.keys() if x.startswith('size_')][0]
                 unit = param.split('_')[-1].lower()
                 expected = [x[1] for x in expected_disk_spec.items() if x[0].startswith('size_')][0]
                 expected = int(expected)
 
-            if unit == 'tb':
-                return expected * 1024 * 1024 * 1024
-            elif unit == 'gb':
-                return expected * 1024 * 1024
-            elif unit == 'mb':
-                return expected * 1024
-            elif unit == 'kb':
-                return expected
-
-            self.module.fail_json(
-                msg='%s is not a supported unit for disk size. Supported units are kb, mb, gb or tb' % unit)
+            disk_units = dict(tb=3, gb=2, mb=1, kb=0)
+            if unit in disk_units:
+                unit = unit.lower()
+                return expected * (1024 ** disk_units[unit])
+            else:
+                self.module.fail_json(msg="%s is not a supported unit for disk size."
+                                          " Supported units are ['%s']." % (unit,
+                                                                            "', '".join(disk_units.keys())))
 
         # No size found but disk, fail
         self.module.fail_json(

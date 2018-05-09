@@ -106,6 +106,7 @@ class DigitalOceanHelper:
                 # Support environment variable for DigitalOcean OAuth Token
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN', 'OAUTH_TOKEN']),
                 required=False,
+                aliases=['api_token'],
             ),
             timeout=dict(type='int', default=30),
         )

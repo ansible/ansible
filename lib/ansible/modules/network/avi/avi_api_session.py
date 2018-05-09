@@ -45,6 +45,7 @@ options:
     timeout:
         description:
             - Timeout (in seconds) for Avi API calls.
+        default: 60
 extends_documentation_fragment:
     - avi
 '''

@@ -81,8 +81,8 @@ You can refer to hosts within the group by adding a subscript to the group name:
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
-    webservers[0:1]     # == webservers[0]
-                        # == cobweb
+    webservers[0:2]     # == webservers[0],webservers[1]
+                        # == cobweb,webbing
     webservers[1:]      # == webbing,weber
     webservers[:3]      # == cobweb,webbing,weber
 

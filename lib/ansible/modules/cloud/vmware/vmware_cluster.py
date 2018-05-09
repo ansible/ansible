@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -19,7 +18,8 @@ short_description: Manage VMware vSphere clusters
 description:
     - Add or remove VMware vSphere clusters.
 version_added: '2.0'
-author: Joseph Callen (@jcpowermac)
+author:
+- Joseph Callen (@jcpowermac)
 requirements:
     - Tested on ESXi 5.5
     - PyVmomi installed

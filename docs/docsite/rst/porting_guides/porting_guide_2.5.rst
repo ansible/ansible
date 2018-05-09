@@ -20,12 +20,12 @@ Playbook
 Dynamic includes and attribute inheritance
 ------------------------------------------
 
-In Ansible version 2.4, the concept of dynamic includes (``include_tasks``) versus static imports (``import_tasks``) was introduced to clearly define the differences in how ``include`` works between dynamic and static includes. 
+In Ansible version 2.4, the concept of dynamic includes (``include_tasks``) versus static imports (``import_tasks``) was introduced to clearly define the differences in how ``include`` works between dynamic and static includes.
 
 All attributes applied to a dynamic ``include_*`` would only apply to the include itself, while attributes applied to a
 static ``import_*`` would be inherited by the tasks within.
 
-This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within. 
+This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within.
 
 To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks
 should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
@@ -128,8 +128,8 @@ The following modules no longer exist:
 * :ref:`cl_license <cl_license>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_interface <cl_interface>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_bond <cl_bond>` use :ref:`nclu <nclu>` instead
-* :ref:`ec2_vpc <ec_vpc>` use :ref:`ec2_vpc_net <ec2_vpc_net>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl>` instead.
-* :ref:`ec2_ami_search <ec2_ami_search` use :ref:`ec2_ami_facts <ec2_ami_facts>` instead
+* :ref:`ec2_vpc <ec2_vpc>` use :ref:`ec2_vpc_net <ec2_vpc_net>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl>` instead.
+* :ref:`ec2_ami_search <ec2_ami_search>` use :ref:`ec2_ami_facts <ec2_ami_facts>` instead
 * :ref:`docker <docker>` use :ref:`docker_container <docker_container>` and :ref:`docker_image <docker_image>` instead
 
 Deprecation notices
@@ -245,7 +245,7 @@ the standard Ansible infrastructure for controlling connections should be used.
 Developers: Shared Module Utilities Moved
 -----------------------------------------
 
-Beginning with Ansible 2.5, shared module utilities for network modules moved to ``ansible.module_utils.network``. 
+Beginning with Ansible 2.5, shared module utilities for network modules moved to ``ansible.module_utils.network``.
 
 * Platform-independent utilities are found in ``ansible.module_utils.network.common``
 

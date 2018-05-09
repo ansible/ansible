@@ -164,6 +164,7 @@ try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
+    from firewall.errors import FirewallError
     fw = None
     fw_offline = False
     import_failure = False
@@ -171,7 +172,7 @@ try:
     try:
         fw = FirewallClient()
         fw.getDefaultZone()
-    except AttributeError:
+    except (AttributeError, FirewallError):
         # Firewalld is not currently running, permanent-only operations
         fw_offline = True
 

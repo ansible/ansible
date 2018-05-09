@@ -473,6 +473,14 @@ DEFAULT_CALLBACK_WHITELIST:
   - {key: callback_whitelist, section: defaults}
   type: list
   yaml: {key: plugins.callback.whitelist}
+DEFAULT_CLICONF_PLUGIN_PATH:
+  name: Cliconf Plugins Path
+  default: ~/.ansible/plugins/cliconf:/usr/share/ansible/plugins/cliconf
+  description: Colon separated paths in which Ansible will search for Cliconf Plugins.
+  env: [{name: ANSIBLE_CLICONF_PLUGINS}]
+  ini:
+  - {key: cliconf_plugins, section: defaults}
+  type: pathspec
 DEFAULT_CONNECTION_PLUGIN_PATH:
   name: Connection Plugins Path
   default: ~/.ansible/plugins/connection:/usr/share/ansible/plugins/connection
@@ -800,6 +808,14 @@ DEFAULT_MODULE_UTILS_PATH:
   ini:
   - {key: module_utils, section: defaults}
   type: pathspec
+DEFAULT_NETCONF_PLUGIN_PATH:
+  name: Netconf Plugins Path
+  default: ~/.ansible/plugins/netconf:/usr/share/ansible/plugins/netconf
+  description: Colon separated paths in which Ansible will search for Netconf Plugins.
+  env: [{name: ANSIBLE_NETCONF_PLUGINS}]
+  ini:
+  - {key: netconf_plugins, section: defaults}
+  type: pathspec
 DEFAULT_NO_LOG:
   name: No log
   default: False
@@ -1083,6 +1099,14 @@ DEFAULT_TASK_INCLUDES_STATIC:
     why: include itself is deprecated and this setting will not matter in the future
     version: "2.8"
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
+DEFAULT_TERMINAL_PLUGIN_PATH:
+  name: Terminal Plugins Path
+  default: ~/.ansible/plugins/terminal:/usr/share/ansible/plugins/terminal
+  description: Colon separated paths in which Ansible will search for Terminal Plugins.
+  env: [{name: ANSIBLE_TERMINAL_PLUGINS}]
+  ini:
+  - {key: terminal_plugins, section: defaults}
+  type: pathspec
 DEFAULT_TEST_PLUGIN_PATH:
   name: Jinja2 Test Plugins Path
   description: Colon separated paths in which Ansible will search for Jinja2 Test Plugins.

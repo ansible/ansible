@@ -17,6 +17,7 @@ import os
 import pty
 import json
 import subprocess
+import sys
 
 from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
@@ -75,7 +76,11 @@ class Connection(ConnectionBase):
         Starts the persistent connection
         '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection", to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        python = sys.executable
+        # Assume ansible-connection is in the same dir as sys.argv[0]
+        ansible_connection = os.path.join(os.path.dirname(sys.argv[0]), 'ansible-connection')
+        p = subprocess.Popen([python, ansible_connection, to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
@@ -96,7 +101,10 @@ class Connection(ConnectionBase):
         if p.returncode == 0:
             result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
         else:
-            result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+            try:
+                result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+            except json.decoder.JSONDecodeError:
+                result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:
             for msg in result.get('messages'):
@@ -104,8 +112,9 @@ class Connection(ConnectionBase):
 
         if 'error' in result:
             if self._play_context.verbosity > 2:
-                msg = "The full traceback is:\n" + result['exception']
-                display.display(msg, color=C.COLOR_ERROR)
+                if result.get('exception'):
+                    msg = "The full traceback is:\n" + result['exception']
+                    display.display(msg, color=C.COLOR_ERROR)
             raise AnsibleError(result['error'])
 
         return result['socket_path']

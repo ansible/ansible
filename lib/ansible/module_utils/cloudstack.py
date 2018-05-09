@@ -631,3 +631,16 @@ class AnsibleCloudStack:
             if 'tags' in resource:
                 self.result['tags'] = resource['tags']
         return self.result
+
+    def get_result_and_facts(self, facts_name, resource):
+        result = self.get_result(resource)
+
+        ansible_facts = {
+            facts_name: result.copy()
+        }
+        for k in ['diff', 'changed']:
+            if k in ansible_facts[facts_name]:
+                del ansible_facts[facts_name][k]
+
+        result.update(ansible_facts=ansible_facts)
+        return result

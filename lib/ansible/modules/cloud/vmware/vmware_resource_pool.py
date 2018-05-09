@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Davis Phillips davis.phillips@gmail.com
+# Copyright: (c) 2017, Davis Phillips davis.phillips@gmail.com
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -19,7 +18,8 @@ short_description: Add/remove resource pools to/from vCenter
 description:
     - This module can be used to add/remove a resource pool to/from vCenter
 version_added: 2.3
-author: "Davis Phillips (@dav1x)"
+author:
+- Davis Phillips (@dav1x)
 notes:
     - Tested on vSphere 6.5
 requirements:
