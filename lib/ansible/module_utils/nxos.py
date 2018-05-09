@@ -47,6 +47,9 @@ nxos_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
 
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
@@ -71,10 +74,10 @@ def get_argspec():
 def check_args(module, warnings):
     for key in nxos_argument_spec:
         if module._name == 'nxos_user':
-            if key not in ['password', 'provider', 'transport'] and module.params[key]:
+            if key not in ['password', 'provider', 'transport', 'authorize'] and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be in a future version' % key)
         else:
-            if key not in ['provider', 'transport'] and module.params[key]:
+            if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     # set argument's default value if not provided in input

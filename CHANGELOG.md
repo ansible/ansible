@@ -151,6 +151,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/37329
 * Fix Python 3 error in the openssl_certificate module:
   https://github.com/ansible/ansible/pull/35143
+* Fix nxos enable mode
+  https://github.com/ansible/ansible/pull/39898
 
 
 <a id="2.4.3"></a>
