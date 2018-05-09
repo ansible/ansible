@@ -52,13 +52,11 @@ options:
             - Basic Auth login
         required: false
         default: null
-        version_added: "2.6"
     http_login_password:
         description:
             - Basic Auth password
         required: false
         default: null
-        version_added: "2.6"
     hostgroup_name:
         description:
             - Name of the hostgroup in Zabbix.
