@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: postgresql_slot
 short_description: Add or remove physical or logical slots from a PostgreSQL database.
 description:
-   - Add or remove slots from a postgresql database.
+  - Add or remove slots from a postgresql database.
 version_added: "2.4"
 options:
   name:
@@ -59,13 +59,11 @@ options:
     default: present
     choices: [ "present", "absent" ]
 notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL mu
-st also be installed
-     on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the
-remote host before using
-     this module.
+  - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
+  - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
+    the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL
+    must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and
+    C(python-psycopg2) packages on the remote host before using this module.
 requirements: [ psycopg2 ]
 author: "John Scalia (@jscalia)"
 '''
