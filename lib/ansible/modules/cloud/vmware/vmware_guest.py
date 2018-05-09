@@ -2179,6 +2179,8 @@ def main():
             tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
             if tmp_result['changed']:
                 result["changed"] = True
+                if module.params['wait_for_ip_address']:
+                    pyv.wait_for_vm_ip(vm)
             if not tmp_result["failed"]:
                 result["failed"] = False
             result['instance'] = tmp_result['instance']
