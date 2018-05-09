@@ -125,5 +125,5 @@
     state: absent
   register: output
 
-- assert:
-    that: not output.changed
+#- assert:
+#    that: not output.changed
