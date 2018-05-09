@@ -227,6 +227,9 @@ def delegate_docker(args, exclude, require):
             if os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
+            if args.docker_seccomp == 'unconfined':
+                test_options += ['--security-opt', 'seccomp=unconfined']
+
             if util_id:
                 test_options += [
                     '--link', '%s:ansible.http.tests' % util_id,

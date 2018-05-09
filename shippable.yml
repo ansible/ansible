@@ -17,30 +17,6 @@ matrix:
     - env: T=units/3.6
     - env: T=units/3.7
 
-    - env: T=windows/2008/1
-    - env: T=windows/2008-R2/1
-    - env: T=windows/2012/1
-    - env: T=windows/2012-R2/1
-    - env: T=windows/2016/1
-
-    - env: T=windows/2008/2
-    - env: T=windows/2008-R2/2
-    - env: T=windows/2012/2
-    - env: T=windows/2012-R2/2
-    - env: T=windows/2016/2
-
-    - env: T=windows/2008/3
-    - env: T=windows/2008-R2/3
-    - env: T=windows/2012/3
-    - env: T=windows/2012-R2/3
-    - env: T=windows/2016/3
-
-    - env: T=network
-
-    - env: T=osx/10.11/1
-    - env: T=rhel/7.4/1
-    - env: T=freebsd/10.4/1
-    - env: T=freebsd/11.1/1
     - env: T=linux/centos6/1
     - env: T=linux/centos7/1
     - env: T=linux/fedora24/1
@@ -50,10 +26,6 @@ matrix:
     - env: T=linux/ubuntu1604/1
     - env: T=linux/ubuntu1604py3/1
 
-    - env: T=osx/10.11/2
-    - env: T=rhel/7.4/2
-    - env: T=freebsd/10.4/2
-    - env: T=freebsd/11.1/2
     - env: T=linux/centos6/2
     - env: T=linux/centos7/2
     - env: T=linux/fedora24/2
@@ -63,10 +35,6 @@ matrix:
     - env: T=linux/ubuntu1604/2
     - env: T=linux/ubuntu1604py3/2
 
-    - env: T=osx/10.11/3
-    - env: T=rhel/7.4/3
-    - env: T=freebsd/10.4/3
-    - env: T=freebsd/11.1/3
     - env: T=linux/centos6/3
     - env: T=linux/centos7/3
     - env: T=linux/fedora24/3
@@ -94,6 +62,9 @@ branches:
   except:
     - "*-patch-*"
     - "revert-*-*"
+
+runtime:
+  nodePool: test_node_pool
 
 build:
   pre_ci_boot:
