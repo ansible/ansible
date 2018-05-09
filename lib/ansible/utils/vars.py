@@ -135,9 +135,12 @@ def load_extra_vars(loader, options):
                     yaml.load(extra_vars_opt)
                     data = loader.load(extra_vars_opt)
                 except yaml.parser.ParserError:
-                    raise AnsibleOptionsError("Invalid format in vars data supplied. '%s' could not be parsed as yaml" % extra_vars_opt)
+                    raise AnsibleOptionsError(
+                        "Invalid format in vars data supplied. '%s' could not be parsed as yaml" % extra_vars_opt
+                    )
                 else:
-                    # key=value is valid yaml syntax, now let's discard the yaml parse in favor of k,v pairs
+                    # key=value is valid yaml syntax,
+                    # now let's discard the yaml parse in favor of k,v pairs
                     kv_data = parse_kv(extra_vars_opt)
                     if '_raw_params' not in kv_data:
                         # Everything parsed clean
@@ -146,7 +149,10 @@ def load_extra_vars(loader, options):
             if isinstance(data, MutableMapping):
                 extra_vars = combine_vars(extra_vars, data)
             else:
-                raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+                raise AnsibleOptionsError(
+                    "Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt
+                )
+
     return extra_vars
 
 def load_options_vars(options, version):
