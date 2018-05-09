@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import curses
 import datetime
 import signal
 import sys
@@ -150,8 +151,10 @@ class ActionModule(ActionBase):
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
+                    stdout = sys.stdout.buffer
                 else:
                     stdin = self._connection._new_stdin
+                    stdout = sys.stdout
                 fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
@@ -176,7 +179,7 @@ class ActionModule(ActionBase):
 
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
-                    tty.setraw(sys.stdout.fileno())
+                    tty.setraw(stdout.fileno())
 
                     # Only echo input if no timeout is specified
                     if not seconds and echo:
@@ -187,6 +190,9 @@ class ActionModule(ActionBase):
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
+
+            cursor_bol = curses.tigetstr('cr')
+            clear_eol = curses.tigetstr('el')
 
             while True:
                 try:
@@ -205,10 +211,11 @@ class ActionModule(ActionBase):
                             break
                         elif key_pressed in backspace:
                             # delete a character if backspace is pressed
-                            result['user_input'] = result['user_input'][0:-1]
-                            sys.stdout.write(u'\u001b[2')
-                            # sys.stdout.write('PROMPT')
-                            sys.stdout.write(to_text(result['user_input']))
+                            result['user_input'] = result['user_input'][:-1]
+                            stdout.write(b'\x1b[%s' % cursor_bol)
+                            stdout.write(b'\x1b[%s' % clear_eol)
+                            stdout.write(result['user_input'])
+                            stdout.flush()
                         else:
                             result['user_input'] += key_pressed
 
