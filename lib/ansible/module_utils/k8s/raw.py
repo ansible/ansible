@@ -116,7 +116,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             pass
         except DynamicApiError as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
-                           error=exc.status)
+                           error=exc.status, status=exc.status, reason=exc.reason)
 
         if state == 'absent':
             result['method'] = "delete"
@@ -131,7 +131,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         result['result'] = k8s_obj.to_dict()
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
-                                       error=exc.status)
+                                       error=exc.status, status=exc.status, reason=exc.reason)
                 result['changed'] = True
                 return result
         else:
@@ -158,7 +158,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         result['result'] = k8s_obj.to_dict()
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
-                                       error=exc.status)
+                                       error=exc.status, status=exc.status, reason=exc.reason)
                 result['changed'] = True
                 result['method'] = 'replace'
                 return result
@@ -174,7 +174,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     k8s_obj = resource.patch(definition, name=name, namespace=namespace)
                     result['result'] = k8s_obj.to_dict()
                 except DynamicApiError as exc:
-                    self.fail_json(msg="Failed to patch object: {0}".format(exc.body))
+                    self.fail_json(msg="Failed to patch object: {0}".format(exc.body),
+                                   error=exc.status, status=exc.status, reason=exc.reason)
             result['changed'] = True
             result['method'] = 'patch'
             result['diff'] = diffs
