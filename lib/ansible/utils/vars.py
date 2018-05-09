@@ -22,6 +22,7 @@ __metaclass__ = type
 import ast
 import random
 import uuid
+import yaml
 
 from collections import MutableMapping
 from json import dumps
@@ -128,9 +129,14 @@ def load_extra_vars(loader, options):
             if extra_vars_opt.startswith(u"@"):
                 # Argument is a YAML file (JSON is a subset of YAML)
                 data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            elif extra_vars_opt:
                 # Arguments as YAML
-                data = loader.load(extra_vars_opt)
+                try:
+                    # Parsing the exta variables as YAML; fix proposed to resolve JSON is YAML but YAML isn't JSON
+                    yaml.load(extra_vars_opt)
+                    data = loader.load(extra_vars_opt)
+                except yaml.parser.ParserError:
+                    raise AnsibleOptionsError("Invalid format in vars data supplied. '%s' could not be parsed as yaml" % extra_vars_opt)
             else:
                 # Arguments as Key-value
                 data = parse_kv(extra_vars_opt)
