@@ -148,7 +148,7 @@ class TestHashSalt(unittest.TestCase):
 
 class TestCompareType5(unittest.TestCase):
 
-    def test_compare_type5_bool(self):
+    def test_compare_type5_boolean(self):
         unencrypted_password = 'cisco'
         encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         parsed = comp_type5(unencrypted_password, encrypted_password)
