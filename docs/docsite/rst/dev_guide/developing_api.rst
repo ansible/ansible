@@ -103,8 +103,8 @@ This example is a simple demonstration that shows how to minimally run a couple 
         if tqm is not None:
             tqm.cleanup()
         
-         # Remove ansible tmpdir
-         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+        # Remove ansible tmpdir
+        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
