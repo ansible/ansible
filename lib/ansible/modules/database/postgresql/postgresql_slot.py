@@ -84,6 +84,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+slot:
     description: Name of the slot
     returned: success, changed
     type: string
