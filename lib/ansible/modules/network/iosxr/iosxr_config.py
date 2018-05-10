@@ -177,7 +177,6 @@ backup_path:
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
 import re
-import q
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
@@ -264,7 +263,6 @@ def sanitize_difference(config):
             if m and m.group(0):
                 if config[index - 1].text[-1:] == ',':
                     config[index - 1].text = config[index - 1].text[:-1]
-            q(line.text)
 
 def run(module, result):
     match = module.params['match']
@@ -277,6 +275,7 @@ def run(module, result):
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
+
 
     commands = None
     if match != 'none' and replace != 'config':
