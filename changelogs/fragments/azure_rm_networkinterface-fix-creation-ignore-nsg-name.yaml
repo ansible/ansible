@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_networkinterface - Network interface can attach an existing NSG or create a new NSG with specified name in Ansible v2.5.0.
