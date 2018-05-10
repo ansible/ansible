@@ -212,8 +212,6 @@ def main():
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
