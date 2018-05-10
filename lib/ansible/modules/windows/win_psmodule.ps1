@@ -131,8 +131,8 @@ Function Install-PsModule {
             $ht["Repository"] = "$Repository";
         }
 
-        # Check Powershell Version (-AllowClobber was introduced in early version only)
-        if ($PsVersion.Minor -ge 1){
+        # Check Powershell Version (-AllowClobber was introduced in PowerShellGet 1.6.0)
+        if ("AllowClobber" -in ((Get-Command PowerShellGet\Install-Module | Select -ExpandProperty Parameters).Keys)) {
           AllowClobber = $AllowClobber;
         }
         
