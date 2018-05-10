@@ -1344,7 +1344,7 @@ def wait_for_term_inst(connection, term_instances):
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
             module.debug("Instance %s has state of %s,%s" % (i, lifecycle, health))
-            if lifecycle == 'Terminating' or health == 'Unhealthy':
+            if lifecycle.startswith('Terminating') or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 
