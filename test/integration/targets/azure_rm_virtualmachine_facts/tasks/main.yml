@@ -1,0 +1,98 @@
+- name: Retrieve vms facts (all vms of the resource group)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+  register: results
+
+- name: Fail if the resource group has vms inside
+  fail:
+    msg: "The resource group must be empty of virtual machines in order to run this integration test."
+  when: results.ansible_facts.azure_virtualmachines | length > 0
+
+- name: Create the first vm
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: vm1
+    admin_username: ubuntu
+    admin_password: Ubuntu@123
+    vm_size: Standard_A0
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: '16.04-LTS'
+      version: 16.04.201801220
+    tags:
+      role: test
+
+- name: Create the second vm
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: vm2
+    admin_username: ubuntu
+    admin_password: Ubuntu@123
+    vm_size: Standard_A0
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: '16.04-LTS'
+      version: 16.04.201801220
+
+- name: Retrieve vms facts (all vms of the resource group)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+  register: results
+
+- name: Assert that facts module returned 2 vms
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_virtualmachines | length == 2
+
+- name: Retrieve vms facts (filtering by tag)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    tags:
+      - role:test
+  register: results
+
+- name: Assert that facts module returned the first vm
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_virtualmachines | length == 1
+      - results.ansible_facts.azure_virtualmachines[0].name == 'vm1'
+
+- name: Retrieve vms facts (filtering by name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: vm2
+  register: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_virtualmachines | length == 1
+      - results.ansible_facts.azure_virtualmachines[0].name == 'vm2'
+
+- name: Retrieve vms facts (filtering by wrong name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: vm3
+  register: results
+
+- name: Assert that facts module returned no vm
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_virtualmachines | length == 0
+
+- name: Delete the vms previously created
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    state: absent
+    remove_on_absent:
+      - all
+  loop:
+    - vm1
+    - vm2
