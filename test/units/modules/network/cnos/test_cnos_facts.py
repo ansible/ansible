@@ -22,23 +22,23 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch
-from .cnos_module import TestEnosModule, load_fixture
+from .cnos_module import TestCnosModule, load_fixture
 from ansible.modules.network.cnos import cnos_facts
 from units.modules.utils import set_module_args
 
 
-class TestEnosFacts(TestEnosModule):
+class TestCnosFacts(TestCnosModule):
 
     module = cnos_facts
 
     def setUp(self):
-        super(TestEnosFacts, self).setUp()
+        super(TestCnosFacts, self).setUp()
         self.mock_run_commands = patch(
             'ansible.modules.network.cnos.cnos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
-        super(TestEnosFacts, self).tearDown()
+        super(TestCnosFacts, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
