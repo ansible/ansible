@@ -198,7 +198,7 @@ def main():
                 changed = slot_exists(cursor, slot)
         else:
             if state == "absent":
-                ch:wqanged = slot_delete(cursor, slot)
+                changed = slot_delete(cursor, slot)
             elif state == "present":
                 if type == "physical":
                     changed = slot_create_physical(cursor, slot)
