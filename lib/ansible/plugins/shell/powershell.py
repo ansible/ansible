@@ -1163,7 +1163,7 @@ namespace Ansible
 
 Function Dump-Error ($excep, $msg=$null) {
     $eo = @{failed=$true}
-    
+
     $exception_message = $excep.Exception.Message
     if ($null -ne $msg) {
         $exception_message = "$($msg): $exception_message"
