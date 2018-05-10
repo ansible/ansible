@@ -151,6 +151,8 @@ vars:
     username: admin
     password: admin
     timeout: 30
+    authorize: True
+    auth_pass:
 
 ---
 - name: test contains operator
