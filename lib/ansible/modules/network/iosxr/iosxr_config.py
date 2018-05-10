@@ -177,11 +177,13 @@ backup_path:
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
 import re
+import q
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils._text import to_bytes, to_native
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
@@ -213,25 +215,49 @@ def check_args(module, warnings):
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
+def sanitize_config(config, force_diff_prefix=None):
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
+        for index, line in enumerate(conf_lines):
+            m = regex.search(line)
+            if m and m.group(0):
+                if force_diff_prefix:
+                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
+                else:
+                    conf_lines[index] = '  ' + m.group(0)
+        conf = ('\n').join(conf_lines)
+        return conf
 
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
+    contents = sanitize_config(contents, "ansible")
     return NetworkConfig(indent=1, contents=contents)
 
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = module.params['src']
+        config = sanitize_config(config)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
 
+# sanitize_candidate_config to handle commands with misplaced children
+# like end-set that do not have proper indentation. This function will
+# attach such line to last-parent known.
+# In case it is empty prefix-set/community-set/as-path-set then
+# end-set might not get correct parent as last parent will be last
+# non-empty prefix-set. Such blocks are removed by detecting duplicate
+# last-parent stored in visited_parent set
+
 def sanitize_candidate_config(config):
+    visited_parents = set()
     last_parents = None
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(config):
@@ -239,10 +265,19 @@ def sanitize_candidate_config(config):
                 last_parents = line._parents
             m = regex.search(line.text)
             if m and m.group(0):
-                config[index]._parents = last_parents
+                parent_text = ''
+                for parent in last_parents:
+                    parent_text = parent_text + parent_text
+                if parent_text not in visited_parents:
+                    config[index]._parents = last_parents
+                    visited_parents.add(parent_text)
 
+# sanitize_running_config runs same logic as above sanitize_candidate_config
+# Only difference is it adds extra indentation at end-* lines so that
+# we can include these in difference of candidate and running
 
 def sanitize_running_config(config):
+    visited_parents = set()
     last_parents = None
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(config):
@@ -250,14 +285,20 @@ def sanitize_running_config(config):
                 last_parents = line._parents
             m = regex.search(line.text)
             if m and m.group(0):
-                config[index].text = ' ' + m.group(0)
-                config[index]._parents = last_parents
+                parent_text = ''
+                for parent in last_parents:
+                    parent_text = parent_text + parent.text
+                if parent_text not in visited_parents:
+                    config[index].text = '  ' + m.group(0)
+                    config[index]._parents = last_parents
+                    visited_parents.add(parent_text)
 
 
 # iosxr_commands like as-path-set or prefix-set do not allow
-# comma at the end of the block. If difference removes last line
-# from block, we can not come out of this prompt until we enter new
-# prefix-set and it will fail all configs below this block
+# comma at the end of the block. If 'difference' function removes last line
+# from block(without comma), we can not come out of this prompt until we
+# enter new prefix-set and it will fail all configs below this block
+
 def sanitize_difference(config):
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(config):
@@ -265,7 +306,7 @@ def sanitize_difference(config):
             if m and m.group(0):
                 if config[index - 1].text[-1:] == ',':
                     config[index - 1].text = config[index - 1].text[:-1]
-
+            q(line.text)
 
 def run(module, result):
     match = module.params['match']
@@ -279,8 +320,8 @@ def run(module, result):
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
 
-    sanitize_candidate_config(candidate_config.items)
-    sanitize_running_config(running_config.items)
+#    sanitize_candidate_config(candidate_config.items)
+#    sanitize_running_config(running_config.items)
 
     commands = None
     if match != 'none' and replace != 'config':
