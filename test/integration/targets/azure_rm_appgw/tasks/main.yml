@@ -1,0 +1,155 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+    name: vnet{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    address_prefixes_cidr:
+        - 10.1.0.0/16
+        - 172.100.0.0/16
+    dns_servers:
+        - 127.0.0.1
+        - 127.0.0.2
+- name: Create a subnet
+  azure_rm_subnet:
+    name: subnet{{ rpfx }}
+    virtual_network_name: vnet{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: 10.1.0.0/24
+
+- name: Create instance of Application Gateway -- check mode
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    sku:
+      name: Standard_Small
+      tier: Standard
+      capacity: 2
+    gateway_ip_configurations:
+      - subnet:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+        name: app_gateway_ip_config
+    frontend_ip_configurations:
+      - subnet:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+        name: sample_gateway_frontend_ip_config
+    frontend_ports:
+      - port: 90
+        name: ag_frontend_port
+    backend_address_pools:
+      - backend_addresses:
+          - ip_address: 10.0.0.4
+        name: test_backend_address_pool
+    backend_http_settings_collection:
+      - port: 80
+        protocol: Http
+        cookie_based_affinity: Enabled
+        name: sample_appgateway_http_settings
+    http_listeners:
+      - frontend_ip_configuration:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendIPConfigurations/sample_gateway_frontend_ip_config
+        frontend_port:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendPorts/ag_frontend_port
+        name: sample_http_listener
+    request_routing_rules:
+      - rule_type: Basic
+        backend_address_pool:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendAddressPools/test_backend_address_pool
+        backend_http_settings:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendHttpSettingsCollection/sample_appgateway_http_settings
+        http_listener:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/httpListeners/sample_http_listener
+        name: rule1
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Application Gateway
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    sku:
+      name: Standard_Small
+      tier: Standard
+      capacity: 2
+    gateway_ip_configurations:
+      - subnet:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+        name: app_gateway_ip_config
+    frontend_ip_configurations:
+      - subnet:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+        name: sample_gateway_frontend_ip_config
+    frontend_ports:
+      - port: 90
+        name: ag_frontend_port
+    backend_address_pools:
+      - backend_addresses:
+          - ip_address: 10.0.0.4
+        name: test_backend_address_pool
+    backend_http_settings_collection:
+      - port: 80
+        protocol: Http
+        cookie_based_affinity: Enabled
+        name: sample_appgateway_http_settings
+    http_listeners:
+      - frontend_ip_configuration:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendIPConfigurations/sample_gateway_frontend_ip_config
+        frontend_port:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendPorts/ag_frontend_port
+        name: sample_http_listener
+    request_routing_rules:
+      - rule_type: Basic
+        backend_address_pool:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendAddressPools/test_backend_address_pool
+        backend_http_settings:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendHttpSettingsCollection/sample_appgateway_http_settings
+        http_listener:
+          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/httpListeners/sample_http_listener
+        name: rule1
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Application Gateway -- check mode
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Application Gateway
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Application Gateway
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
