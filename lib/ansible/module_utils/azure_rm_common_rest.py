@@ -9,6 +9,7 @@ try:
     import json
 except ImportError:
     # This is handled in azure_rm_common
+    AzureConfiguration = object
     pass
 
 
