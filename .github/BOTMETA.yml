@@ -864,6 +864,9 @@ files:
   $module_utils/network/meraki:
     maintainers: $team_meraki
     labels: networking
+  $module_utils/network/netconf:
+    maintainers: $team_networking
+    labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
