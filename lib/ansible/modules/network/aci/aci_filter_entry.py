@@ -28,9 +28,8 @@ options:
   arp_flag:
     description:
     - The arp flag to use when the ether_type is arp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ arp_reply, arp_request, unspecified ]
-    default: unspecified
   description:
     description:
     - Description for the Filter Entry.
@@ -38,21 +37,18 @@ options:
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
   dst_port_end:
     description:
     - Used to set the destination end port when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
   dst_port_start:
     description:
     - Used to set the destination start port when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
   entry:
     description:
     - Then name of the Filter Entry.
@@ -60,9 +56,8 @@ options:
   ether_type:
     description:
     - The Ethernet type.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ arp, fcoe, ip, mac_security, mpls_ucast, trill, unspecified ]
-    default: unspecified
   filter:
     description:
       The name of Filter that the entry should belong to.
@@ -70,21 +65,18 @@ options:
   icmp_msg_type:
     description:
     - ICMPv4 message type; used when ip_protocol is icmp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ dst_unreachable, echo, echo_reply, src_quench, time_exceeded, unspecified ]
-    default: unspecified
   icmp6_msg_type:
     description:
     - ICMPv6 message type; used when ip_protocol is icmpv6.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ dst_unreachable, echo_request, echo_reply, neighbor_advertisement, neighbor_solicitation, redirect, time_exceeded, unspecified ]
-    default: unspecified
   ip_protocol:
     description:
     - The IP Protocol type when ether_type is ip.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ eigrp, egp, icmp, icmpv6, igmp, igp, l2tp, ospfigp, pim, tcp, udp, unspecified ]
-    default: unspecified
   state:
     description:
     - present, absent, query
@@ -93,6 +85,7 @@ options:
   stateful:
     description:
     - Determines the statefulness of the filter entry.
+    type: bool
   tenant:
     description:
     - The name of the tenant.
@@ -224,8 +217,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
 VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']
-VALID_ICMP_TYPES = ['dst_unreachable', 'echo', 'echo_reply', 'src_quench', 'time_exceeded',
-                    'unspecified', 'echo-rep', 'dst-unreach']
+VALID_ICMP_TYPES = ['dst_unreachable', 'echo', 'echo_reply', 'src_quench', 'time_exceeded', 'unspecified']
 VALID_ICMP6_TYPES = ['dst_unreachable', 'echo_request', 'echo_reply', 'neighbor_advertisement',
                      'neighbor_solicitation', 'redirect', 'time_exceeded', 'unspecified']
 VALID_IP_PROTOCOLS = ['eigrp', 'egp', 'icmp', 'icmpv6', 'igmp', 'igp', 'l2tp', 'ospfigp', 'pim', 'tcp', 'udp', 'unspecified']

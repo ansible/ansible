@@ -42,7 +42,7 @@ options:
   tag:
     description:
     - The value of the route tag (range 0-4294967295).
-    default: '4294967295'
+    - The APIC defaults to C(4294967295) when unset during creation.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -181,8 +181,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         tag=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

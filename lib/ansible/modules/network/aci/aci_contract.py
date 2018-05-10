@@ -44,18 +44,18 @@ options:
   scope:
     description:
     - The scope of a service contract.
+    - The APIC defaults to C(context) when unset during creation.
     choices: [ application-profile, context, global, tenant ]
-    default: context
   priority:
     description:
     - The desired QoS class to be used.
-    default: unspecified
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
   dscp:
     description:
     - The target Differentiated Service (DSCP) value.
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
-    default: unspecified
     aliases: [ target ]
   state:
     description:
@@ -226,8 +226,6 @@ def main():
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

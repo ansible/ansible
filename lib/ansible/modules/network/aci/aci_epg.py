@@ -46,14 +46,14 @@ options:
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
-    - QoS class.
+    - The QoS class.
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   intra_epg_isolation:
     description:
-    - Intra EPG Isolation.
+    - The Intra EPG Isolation.
+    - The APIC defaults to C(unenforced) when unset during creation.
     choices: [ enforced, unenforced ]
-    default: unenforced
   description:
     description:
     - Description for the EPG.
@@ -61,15 +61,14 @@ options:
   fwd_control:
     description:
     - The forwarding control used by the EPG.
-    - The APIC defaults new EPGs to C(none).
+    - The APIC defaults to C(none) when unset during creation.
     choices: [ none, proxy-arp ]
-    default: none
   preferred_group:
     description:
     - Whether ot not the EPG is part of the Preferred Group and can communicate without contracts.
     - This is very convenient for migration scenarios, or when ACI is used for network automation but not for policy.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
     version_added: '2.5'
   state:
     description:
@@ -280,8 +279,6 @@ def main():
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         preferred_group=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
