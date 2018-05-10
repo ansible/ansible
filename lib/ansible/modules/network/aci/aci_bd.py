@@ -28,9 +28,8 @@ options:
   arp_flooding:
     description:
     - Determines if the Bridge Domain should flood ARP traffic.
-    - The APIC defaults new Bridge Domains to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   bd:
     description:
     - The name of the Bridge Domain.
@@ -38,43 +37,37 @@ options:
   bd_type:
     description:
     - The type of traffic on the Bridge Domain.
-    - The APIC defaults new Bridge Domains to C(ethernet).
+    - The APIC defaults to C(ethernet) when unset during creation.
     choices: [ ethernet, fc ]
-    default: ethernet
   description:
     description:
     - Description for the Bridge Domain.
   enable_multicast:
     description:
-    - Determines if PIM is enabled
-    - The APIC defaults new Bridge Domains to C(no).
+    - Determines if PIM is enabled.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   enable_routing:
     description:
     - Determines if IP forwarding should be allowed.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   endpoint_clear:
     description:
     - Clears all End Points in all Leaves when C(yes).
-    - The APIC defaults new Bridge Domains to C(no).
     - The value is not reset to disabled once End Points have been cleared; that requires a second task.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   endpoint_move_detect:
     description:
     - Determines if GARP should be enabled to detect when End Points move.
-    - The APIC defaults new Bridge Domains to C(garp).
+    - The APIC defaults to C(garp) when unset during creation.
     choices: [ default, garp ]
-    default: garp
   endpoint_retention_action:
    description:
    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
-   - The APIC defaults new Bridge Domain to End Point Retention Policies to C(resolve).
+    - The APIC defaults to C(resolve) when unset during creation.
    choices: [ inherit, resolve ]
-   default: resolve
   endpoint_retention_policy:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when
@@ -86,7 +79,7 @@ options:
   ip_learning:
     description:
     - Determines if the Bridge Domain should learn End Point IPs.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
   ipv6_nd_policy:
     description:
@@ -95,33 +88,29 @@ options:
   l2_unknown_unicast:
     description:
     - Determines what forwarding method to use for unknown l2 destinations.
-    - The APIC defaults new Bridge domains to C(proxy).
+    - The APIC defaults to C(proxy) when unset during creation.
     choices: [ proxy, flood ]
-    default: proxy
   l3_unknown_multicast:
     description:
     - Determines the forwarding method to use for unknown multicast destinations.
-    - The APCI defaults new Bridge Domains to C(flood).
+    - The APIC defaults to C(flood) when unset during creation.
     choices: [ flood, opt-flood ]
-    default: flood
   limit_ip_learn:
     description:
     - Determines if the BD should limit IP learning to only subnets owned by the Bridge Domain.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   mac_address:
     description:
     - The MAC Address to assign to the C(bd) instead of using the default.
-    default: 00:22:BD:F8:19:FF
+    - The APIC defaults to C(00:22:BD:F8:19:FF) when unset during creation.
     aliases: [ mac ]
     version_added: '2.5'
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
-    - The APIC defaults new Bridge Domains to C(bd-flood).
+    - The APIC defaults to C(bd-flood) when unset during creation.
     choices: [ bd-flood, drop, encap-flood ]
-    default: bd-flood
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -331,19 +320,17 @@ def main():
         igmp_snoop_policy=dict(type='str'),
         ip_learning=dict(type='bool'),
         ipv6_nd_policy=dict(type='str'),
-        l2_unknown_unicast=dict(choices=['proxy', 'flood']),
-        l3_unknown_multicast=dict(choices=['flood', 'opt-flood']),
+        l2_unknown_unicast=dict(type='str', choices=['proxy', 'flood']),
+        l3_unknown_multicast=dict(type='str', choices=['flood', 'opt-flood']),
         limit_ip_learn=dict(type='bool'),
         mac_address=dict(type='str', aliases=['mac']),
-        multi_dest=dict(choices=['bd-flood', 'drop', 'encap-flood']),
-        state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
+        multi_dest=dict(type='str', choices=['bd-flood', 'drop', 'encap-flood']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
         gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         subnet_mask=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

@@ -70,7 +70,7 @@ def aci_argument_spec():
         password=dict(type='str', no_log=True),
         private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
-        output_level=dict(type='str', choices=['debug', 'info', 'normal']),
+        output_level=dict(type='str', default='normal', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
         use_ssl=dict(type='bool', default=True),
@@ -210,26 +210,14 @@ class ACIModule(object):
         ''' Set protocol based on use_ssl parameter '''
 
         # Set protocol for further use
-        if 'protocol' in self.params and self.params['protocol'] in ('http', 'https'):
-            self.module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", '2.6')
-        elif 'protocol' not in self.params or self.params['protocol'] is None:
-            self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
-        else:
-            self.module.fail_json(msg="Parameter 'protocol' needs to be one of ( http, https )")
+        self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
 
     def define_method(self):
         ''' Set method based on state parameter '''
 
-        # Handle deprecated method/action parameter
-        if self.params['method']:
-            # Deprecate only if state was a valid option (not for aci_rest)
-            if 'state' in self.module.argument_spec:
-                self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
-            method_map = dict(delete='absent', get='query', post='present')
-            self.params['state'] = method_map[self.params['method']]
-        else:
-            state_map = dict(absent='delete', present='post', query='get')
-            self.params['method'] = state_map[self.params['state']]
+        # Set method for further use
+        state_map = dict(absent='delete', present='post', query='get')
+        self.params['method'] = state_map[self.params['state']]
 
     def login(self):
         ''' Log in to APIC '''
@@ -467,9 +455,9 @@ class ACIModule(object):
 
         self.path = path
         if 'port' in self.params and self.params['port'] is not None:
-            self.url = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
+            self.url = '{protocol}://{host}:{port}/{path}'.format(path=path, **self.module.params)
         else:
-            self.url = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
+            self.url = '{protocol}://{host}/{path}'.format(path=path, **self.module.params)
         self.filter_string = filter_string
 
     def _construct_url_1(self, obj, child_includes):
