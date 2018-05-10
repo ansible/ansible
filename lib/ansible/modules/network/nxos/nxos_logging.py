@@ -52,10 +52,6 @@ options:
       - Set logging serverity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -295,8 +291,7 @@ def main():
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
+        aggregate=dict(type='list')
     )
 
     argument_spec.update(nxos_argument_spec)
