@@ -115,15 +115,14 @@ def get_subnet_group_info(subnet_group):
 
 
 def has_different_value(actual, expected):
-    # Sort the subnet groups before we compare them
+    fields = ['name', 'description', 'subnet_ids']
     actual['subnet_ids'].sort()
     expected['subnet_ids'].sort()
-    fields = ['name', 'description', 'subnet_ids']
     return extract(actual, fields) != extract(expected, fields)
 
 
 def extract(dic, fields):
-    return {f: dic[f] for f in fields}
+    return dict([(f, dic[f]) for f in fields])
 
 
 def create_result(changed, subnet_group=None):
