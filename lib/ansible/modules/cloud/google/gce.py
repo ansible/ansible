@@ -689,7 +689,7 @@ def main():
                          changed=False)
 
     json_output = {'zone': zone}
-    if state in ['absent', 'deleted', 'started', 'stopped', 'terminated']:
+    if state in ['absent', 'deleted', 'stopped', 'terminated']:
         json_output['state'] = state
         (changed, state_instance_names) = change_instance_state(
             module, gce, inames, number, lc_zone, state)
@@ -700,6 +700,25 @@ def main():
             json_output['instance_names'] = state_instance_names
         elif name:
             json_output['name'] = name
+
+    elif state in ['started']:
+        instance_data = []
+        json_output['state'] = state
+        (changed, state_instance_names) = change_instance_state(
+            module, gce, inames, number, lc_zone, state)
+        if instance_names or name and number:
+            json_output['instance_names'] = state_instance_names
+            for name in state_instance_names:
+                public_ip = gce.ex_get_node(name).public_ips[0]
+                d = {'name': name, 'public_ip': public_ip}
+                instance_data.append(d)
+        elif name:
+            json_output['name'] = name
+            public_ip = gce.ex_get_node(name).public_ips[0]
+            d = {'name': name, 'public_ip': public_ip}
+            instance_data.append(d)
+
+        json_output['instance_data'] = instance_data
 
     elif state in ['active', 'present']:
         json_output['state'] = 'present'
