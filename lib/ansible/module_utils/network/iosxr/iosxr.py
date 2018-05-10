@@ -426,6 +426,8 @@ def load_config(module, command_filter, commit=False, replace=False,
         elif commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
+            if admin:
+                conn.edit_config('exit')
         else:
             conn.discard_changes()
 
