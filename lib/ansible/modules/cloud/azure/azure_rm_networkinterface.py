@@ -208,6 +208,7 @@ EXAMPLES = '''
         resource_group: Testing
         virtual_network: vnet001
         subnet_name: subnet001
+        create_with_security_group: False
         ip_configurations:
           - name: ipconfig1
             primary: True
@@ -220,6 +221,7 @@ EXAMPLES = '''
         subnet_name: subnet001
         os_type: Windows
         rdp_port: 3399
+        security_group: "/subscriptions/XXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/nsg001"
         ip_configurations:
           - name: ipconfig1
             public_ip_address_name: publicip001
@@ -231,7 +233,7 @@ EXAMPLES = '''
         resource_group: Testing
         virtual_network: vnet001
         subnet_name: subnet001
-        security_group_name: secgroup001
+        security_group: secgroup001
         ip_configurations:
           - name: ipconfig1
             public_ip_address_name: publicip001
@@ -243,12 +245,18 @@ EXAMPLES = '''
         resource_group: Testing
         subnet_name: subnet001
         virtual_network: vnet001
-        security_group_name: secgroup001
+        security_group:
+          name: testnic002
+          resource_group: Testing1
         ip_configurations:
           - name: ipconfig1
             public_ip_address_name: publicip001
             primary: True
           - name: ipconfig2
+            load_balancer_backend_address_pools:
+              - "{{ loadbalancer001.state.backend_address_pools[0].id }}"
+              - name: backendaddrpool1
+                load_balancer: loadbalancer001
 
     - name: Delete network interface
       azure_rm_networkinterface:
@@ -286,7 +294,10 @@ state:
         "location": "eastus2",
         "mac_address": null,
         "name": "nic003",
-        "network_security_group": {},
+        "network_security_group": {
+            "id": "/subscriptions//XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/nsg001",
+            "name": "nsg001"
+        },
         "primary": null,
         "provisioning_state": "Succeeded",
         "tags": null,
