@@ -1072,7 +1072,6 @@ lib/ansible/modules/network/f5/bigip_gtm_facts.py E326
 lib/ansible/modules/network/f5/bigip_gtm_pool.py E324
 lib/ansible/modules/network/f5/bigip_gtm_pool.py E326
 lib/ansible/modules/network/f5/bigip_gtm_server.py E326
-lib/ansible/modules/network/f5/bigip_gtm_wide_ip.py E326
 lib/ansible/modules/network/f5/bigip_iapp_service.py E324
 lib/ansible/modules/network/f5/bigip_iapp_service.py E325
 lib/ansible/modules/network/f5/bigip_monitor_snmp_dca.py E326
