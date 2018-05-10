@@ -1,2 +1,3 @@
 bugfixes:
 - nxos terminal plugin on_become (https://github.com/ansible/ansible/pull/39355)
+- nxos module_doc_fragments for authorize, auth_pass (https://github.com/ansible/ansible/pull/39946)
