@@ -24,7 +24,6 @@ options:
     description:
       - name of the slot to add or remove
     required: true
-    alias: slot
   type:
     description:
       - slots come in two distinct flavors
@@ -210,8 +209,6 @@ def main():
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, db=db, slot=slot)
-
-    return changed
 
 if __name__ == '__main__':
     main()
