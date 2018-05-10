@@ -48,8 +48,8 @@ options:
   dscp:
     description:
     - The target Differentiated Service (DSCP) value.
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
-    default: unspecified
     aliases: [ target ]
   route_control:
     description:
@@ -63,7 +63,6 @@ options:
   description:
     description:
     - Description for the L3Out.
-    default:
     aliases: [ descr ]
   state:
     description:
@@ -219,21 +218,17 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         l3out=dict(type='str', aliases=['l3out_name', 'name']),
-        domain=dict(type='str', aliases=[
-                    'ext_routed_domain_name', 'routed_domain']),
+        domain=dict(type='str', aliases=['ext_routed_domain_name', 'routed_domain']),
         vrf=dict(type='str', aliases=['vrf_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
         description=dict(type='str', aliases=['descr']),
-        route_control=dict(type='list', choices=[
-                           'export', 'import'], aliases=['route_control_enforcement']),
-        dscp=dict(type='str', default='unspecified',
-                  choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
-                           'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
+        route_control=dict(type='list', choices=['export', 'import'], aliases=['route_control_enforcement']),
+        dscp=dict(type='str',
+                  choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
+                           'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='list',
-                        choices=['static', 'bgp', 'ospf', 'pim']),
-        state=dict(type='str', default='present',
-                   choices=['absent', 'present', 'query'])
+        l3protocol=dict(type='list', choices=['static', 'bgp', 'ospf', 'pim']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
     module = AnsibleModule(
@@ -266,8 +261,7 @@ def main():
             enforce_ctrl = 'export'
         else:
             enforce_ctrl = 'export,import'
-    child_classes = ['l3extRsL3DomAtt', 'l3extRsEctx',
-                     'bgpExtP', 'ospfExtP', 'eigrpExtP', 'pimExtP']
+    child_classes = ['l3extRsL3DomAtt', 'l3extRsEctx', 'bgpExtP', 'ospfExtP', 'eigrpExtP', 'pimExtP']
 
     aci.construct_url(
         root_class=dict(
