@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import curses
 import datetime
 import signal
 import sys
@@ -37,6 +36,20 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+try:
+    import curses
+    curses.setupterm()
+    HAS_CURSES = True
+except (ImportError, curses.error):
+    HAS_CURSES = False
+
+if HAS_CURSES:
+    MOVE_TO_BOL = curses.tigetstr('cr')
+    CLEAR_TO_EOL = curses.tigetstr('el')
+else:
+    MOVE_TO_BOL = b'\r'
+    CLEAR_TO_EOL = b'\x1b[K'
+
 
 class AnsibleTimeoutExceeded(Exception):
     pass
@@ -44,6 +57,11 @@ class AnsibleTimeoutExceeded(Exception):
 
 def timeout_handler(signum, frame):
     raise AnsibleTimeoutExceeded
+
+
+def clear_line(stdout):
+    stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
+    stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
 
 
 class ActionModule(ActionBase):
@@ -191,14 +209,12 @@ class ActionModule(ActionBase):
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
 
-            cursor_bol = curses.tigetstr('cr')
-            clear_eol = curses.tigetstr('el')
-
             while True:
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
                         if key_pressed == intr:  # value for Ctrl+C
+                            clear_line(stdout)
                             raise KeyboardInterrupt
 
                     if not seconds:
@@ -208,13 +224,14 @@ class ActionModule(ActionBase):
 
                         # read key presses and act accordingly
                         if key_pressed in (b'\r', b'\n'):
+                            clear_line(stdout)
                             break
                         elif key_pressed in backspace:
                             # delete a character if backspace is pressed
                             result['user_input'] = result['user_input'][:-1]
-                            stdout.write(b'\x1b[%s' % cursor_bol)
-                            stdout.write(b'\x1b[%s' % clear_eol)
-                            stdout.write(result['user_input'])
+                            clear_line(stdout)
+                            if echo:
+                                stdout.write(result['user_input'])
                             stdout.flush()
                         else:
                             result['user_input'] += key_pressed
@@ -223,7 +240,10 @@ class ActionModule(ActionBase):
                     signal.alarm(0)
                     display.display("Press 'C' to continue the play or 'A' to abort \r"),
                     if self._c_or_a(stdin):
+                        clear_line(stdout)
                         break
+
+                    clear_line(stdout)
 
                     raise AnsibleError('user requested abort!')
 
