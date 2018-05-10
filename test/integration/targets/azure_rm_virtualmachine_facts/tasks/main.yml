@@ -8,6 +8,17 @@
     msg: "The resource group must be empty of virtual machines in order to run this integration test."
   when: results.ansible_facts.azure_virtualmachines | length > 0
 
+- name: Get facts for all virtual networks
+  azure_rm_virtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+  register: results
+
+- name: Create a virtual network, if there is no one in the resource group
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: vn
+  when: results.azure_virtualnetworks | length == 0
+
 - name: Create the first vm
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
