@@ -50,6 +50,7 @@ DOCUMENTATION = """
         description: Used with C(overwrite=yes). Backup the previous password in a subkey.
         type: bool
         default: 'no'
+        version_added: 2.6
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
