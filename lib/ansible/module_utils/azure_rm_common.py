@@ -913,11 +913,13 @@ class AzureRMModuleBase(object):
             client.config.session_configuration_callback = self._validation_ignore_callback
 
         return client
+
     # In the AZURE_API_PROFILES structure for ComputeManagementClient
     # one of the API versions returns a dictionary (i.e. 'latest')
     # Therefore this causes further functions to fail later - therefore
     # we now check if the value is a str or a dictionary and always
     # return a string
+
     def get_compute_management_api(self, api_ver):
         if type(AZURE_API_PROFILES[api_ver]['ComputeManagementClient']) is str:
             returnVal = AZURE_API_PROFILES[api_ver]['ComputeManagementClient']
@@ -925,7 +927,9 @@ class AzureRMModuleBase(object):
             returnVal = AZURE_API_PROFILES[api_ver]['ComputeManagementClient']['virtual_machine_run_commands']
         else:
             returnVal = None
+
         return returnVal
+
     @property
     def storage_client(self):
         self.log('Getting storage client...')
