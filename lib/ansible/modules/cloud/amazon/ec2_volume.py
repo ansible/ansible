@@ -521,13 +521,13 @@ def main():
         delete_on_termination=dict(type='bool', default=False),
         availability_zone=dict(),
         snapshot=dict(),
-        state=dict(choices=['absent', 'present', 'detached', 'list'], default='present'),
+        state=dict(choices=['absent', 'present', 'detached'], default='present'),
         tags=dict(type='dict', default={}),
         wait=dict(type='bool', default=True),
         wait_timeout=dict(type='int', default=300),
     )
 
-    mutually_exclusive = [('volume_id', 'volume_size')]
+    # FIXME
     required_if = [
         ('state', 'absent', ['volume_id']),
         ('state', 'present', ['instance_id', 'availability_zone'], True),
