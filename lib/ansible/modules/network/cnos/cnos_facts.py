@@ -96,6 +96,7 @@ options:
             in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
   gather_subset:
+    version_added: "2.6"
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
