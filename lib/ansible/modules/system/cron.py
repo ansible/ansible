@@ -388,8 +388,12 @@ class CronTab(object):
 
         # failing that, attempt to find job by exact match
         if job:
+            blank_trimmed_job = " ".join(job.split())  #  by Loreton:  create a line with single BLANK word separator just for comparing
             for i, l in enumerate(self.lines):
-                if l == job:
+                l = l.strip()
+                if len(l) and l[0] == '#': continue
+                blank_trimmed_line = " ".join(l.split())
+                if blank_trimmed_line == blank_trimmed_job:
                     # if no leading ansible header, insert one
                     if not re.match(r'%s' % self.ansible, self.lines[i - 1]):
                         self.lines.insert(i, self.do_comment(name))
@@ -684,9 +688,13 @@ def main():
             if len(old_job) == 0:
                 crontab.add_job(name, job)
                 changed = True
-            if len(old_job) > 0 and old_job[1] != job:
-                crontab.update_job(name, job)
-                changed = True
+            # if len(old_job) > 0 and old_job[1] != job:
+            if len(old_job) > 0:
+                trimmed_new_job = ' '.join(job.split())        # var created just for understanding
+                trimmed_old_job = ' '.join(old_job[1].split()) # var created just for understanding
+                if trimmed_old_job != trimmed_new_job: 
+                    crontab.update_job(name, job)
+                    changed = True
             if len(old_job) > 2:
                 crontab.update_job(name, job)
                 changed = True
