@@ -38,6 +38,7 @@ description:
     before returning or timing out if the condition is not met.
 options:
   authorize:
+    version_added: "2.6"
     description:
       - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
@@ -47,12 +48,14 @@ options:
     type: bool
     default: 'no'
   auth_pass:
+    version_added: "2.6"
     description:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
   provider:
+    version_added: "2.6"
     description:
       - A dict object containing connection details.
     suboptions:
