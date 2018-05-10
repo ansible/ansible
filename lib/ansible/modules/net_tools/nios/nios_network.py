@@ -20,6 +20,7 @@ description:
   - Adds and/or removes instances of network objects from
     Infoblox NIOS servers.  This module manages NIOS C(network) objects
     using the Infoblox WAPI interface over REST.
+  - Supports both IPV4 and IPV6 internet protocols
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
@@ -87,9 +88,9 @@ options:
 '''
 
 EXAMPLES = '''
-- name: configure a networkv4/v6
+- name: configure a networkv4
   nios_network:
-    network: 192.168.10.0/24 or fe80::/64
+    network: 192.168.10.0/24
     comment: this is a test comment
     state: present
     provider:
@@ -98,9 +99,20 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: set dhcp options for a networkv4/v6
+- name: configure a networkv6
   nios_network:
-    network: 192.168.10.0/24 or fe80::/64
+    network: fe80::/64
+    comment: this is a test comment
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+
+- name: set dhcp options for a networkv4
+  nios_network:
+    network: 192.168.10.0/24
     comment: this is a test comment
     options:
       - name: domain-name
@@ -112,9 +124,9 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: remove a networkv4/v6
+- name: remove a networkv4
   nios_network:
-    network: 192.168.10.0/24 or fe80::/64
+    network: 192.168.10.0/24
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
