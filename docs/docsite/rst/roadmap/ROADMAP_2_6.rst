@@ -51,18 +51,12 @@ Connection work
 * New connection plugin: eAPI `proposal#102 <https://github.com/ansible/proposals/issues/102>`_
 * New connection plugin: NX-API
 * Support for configurable options for network_cli & netconf
-* Stretch & tech preview: New connection plugin for gRPC
-* Stretch: netconf plugin for IOS
-* Stretch: netconf plugin for NXOS
 
 Modules
 =======
 
 * New ``cli_config`` - platform agnostic module for sending text based config over network_cli
 * New ``cli_command`` - platform agnostic command module
-* New ``netconf_get`` - implements the standard netconf get rpc
-* New ``netconf_config`` - implements the standard netconf edit/configure rpc 
-* New ``netconf_rpc`` - calls any playbook defined rpc on the remote device and returns the results
 * New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
 * New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
 
