@@ -82,6 +82,15 @@ EXAMPLES = '''
     state: present
     decoder: custom_decoder_one
 '''
+
+RETURN = '''
+    description: Name of the slot
+    returned: success, changed
+    type: string
+    sample: "physical_slot_one"
+'''
+
+
 import traceback
 
 try:
