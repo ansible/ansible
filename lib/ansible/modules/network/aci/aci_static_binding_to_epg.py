@@ -53,23 +53,20 @@ options:
   deploy_immediacy:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
-    - The APIC defaults the Deployement Immediacy to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
     choices: [ immediate, lazy ]
-    default: lazy
   interface_mode:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
     - Values C(802.1p) and C(native) are identical.
     - Values C(access) and C(untagged) are identical.
     - Values C(regular), C(tagged) and C(trunk) are identical.
-    - The APIC defaults the mode to C(trunk).
+    - The APIC defaults to C(trunk) when unset during creation.
     choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
-    default: trunk
     aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
-    - The APIC defaults the C(interface_type) to C(switch_port).
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
   pod_id:

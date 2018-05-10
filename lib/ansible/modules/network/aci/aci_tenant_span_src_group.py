@@ -28,8 +28,8 @@ options:
   admin_state:
     description:
     - Enable or disable the span sources.
+    - The APIC defaults to C(enabled) when unset during creation.
     choices: [ enabled, disabled ]
-    default: enabled
   description:
     description:
     - The description for Span source group.
@@ -184,8 +184,6 @@ def main():
         src_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

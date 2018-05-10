@@ -35,62 +35,54 @@ options:
   max_links:
     description:
     - Maximum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to C(16).
+    - The APIC defaults to C(16) when unset during creation.
     choices: [ Ranges from 1 to 16 ]
-    default: 16
   min_links:
     description:
     - Minimum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to C(1).
+    - The APIC defaults to C(1) when unset during creation.
     choices: [ Ranges from 1 to 16 ]
-    default: 1
   mode:
     description:
     - Port channel interface policy mode.
     - Determines the LACP method to use for forming port-channels.
-    - The APIC defaults new Port Channel Polices to C(off).
+    - The APIC defaults to C(off) when unset during creation.
     choices: [ active, mac-pin, mac-pin-nicload, 'off', passive ]
-    default: 'off'
   fast_select:
     description:
     - Determines if Fast Select is enabled for Hot Standby Ports.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   graceful_convergence:
     description:
     - Determines if Graceful Convergence is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   load_defer:
     description:
     - Determines if Load Defer is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   suspend_individual:
     description:
     - Determines if Suspend Individual is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   symmetric_hash:
     description:
     - Determines if Symmetric Hashing is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -235,8 +227,6 @@ def main():
         suspend_individual=dict(type='bool'),
         symmetric_hash=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

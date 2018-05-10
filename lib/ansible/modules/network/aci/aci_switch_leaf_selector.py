@@ -227,6 +227,7 @@ def main():
         'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),  # Not required for querying all objects
         'leaf_node_blk': dict(type='str', aliases=['leaf_node_blk_name', 'node_blk_name']),
         'leaf_node_blk_description': dict(type='str'),
+        # NOTE: Keyword 'from' is a reserved word in python, so we need it as a string
         'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
