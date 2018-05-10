@@ -9,6 +9,13 @@ from ansible.modules.packaging.language import gem
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
+def get_command(run_command):
+    """Generate the command line string from the patched run_command"""
+    args = run_command.call_args[0]
+    command = args[0]
+    return ' '.join(command)
+
+
 class TestGem(ModuleTestCase):
     def setUp(self):
         super(TestGem, self).setUp()
@@ -82,6 +89,33 @@ class TestGem(ModuleTestCase):
         assert result['changed']
         assert run_command.called
 
-        args = run_command.call_args[0]
-        command = args[0]
-        assert '--install-dir /opt/dummy' in ' '.join(command)
+        assert '--install-dir /opt/dummy' in get_command(run_command)
+
+    def test_passes_install_dir_and_gem_home_when_uninstall_gem(self):
+        # XXX: This test is also extremely fragile because of mocking.
+        #      If this breaks, the only that matters is to check whether '--install-dir' is
+        #      in the run command, and that GEM_HOME is passed to the command.
+        set_module_args({
+            'name': 'dummy',
+            'user_install': False,
+            'install_dir': '/opt/dummy',
+            'state': 'absent',
+        })
+
+        self.patch_rubygems_version()
+        self.patch_installed_versions(['1.0.0'])
+
+        run_command = self.patch_run_command()
+
+        with pytest.raises(AnsibleExitJson) as exc:
+            gem.main()
+
+        result = exc.value.args[0]
+
+        assert result['changed']
+        assert run_command.called
+
+        assert '--install-dir /opt/dummy' in get_command(run_command)
+
+        update_environ = run_command.call_args[1].get('environ_update', {})
+        assert update_environ.get('GEM_HOME') == '/opt/dummy'

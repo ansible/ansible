@@ -189,6 +189,7 @@ def uninstall(module):
     if module.check_mode:
         return
     cmd = get_rubygems_path(module)
+    environ = get_rubygems_environ(module)
     cmd.append('uninstall')
     if module.params['install_dir']:
         cmd.extend(['--install-dir', module.params['install_dir']])
@@ -199,7 +200,7 @@ def uninstall(module):
         cmd.append('--all')
         cmd.append('--executable')
     cmd.append(module.params['name'])
-    module.run_command(cmd, check_rc=True)
+    module.run_command(cmd, environ_update=environ, check_rc=True)
 
 
 def install(module):
