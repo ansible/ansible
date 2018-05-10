@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ibm_sa_pool
 short_description: Handles pools on an IBM Spectrum Accelerate storage array.
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - "This module creates or deletes pools to be used on
@@ -87,6 +87,9 @@ EXAMPLES = '''
     password: secret
     endpoints: hostdev-system
 '''
+RETURN = '''
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ibm_sa_utils import execute_pyxcli_command, \
     connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed

@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: ibm_sa_vol_map
 short_description: Handles volume mapping on an
     IBM Spectrum Accelerate storage array.
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - "This module maps volumes to or unmaps them from the hosts on
@@ -99,6 +99,9 @@ EXAMPLES = '''
     endpoints: hostdev-system
     state: absent
 '''
+RETURN = '''
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ibm_sa_utils import execute_pyxcli_command, \
     connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed

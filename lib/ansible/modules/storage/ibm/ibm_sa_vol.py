@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ibm_sa_vol
 short_description: Handle volumes on an IBM Spectrum Accelerate storage array.
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - "This module creates or deletes volumes to be used on
@@ -79,6 +79,9 @@ EXAMPLES = '''
     password: secret
     endpoints: hostdev-system
 '''
+RETURN = '''
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ibm_sa_utils import execute_pyxcli_command, \
     connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed

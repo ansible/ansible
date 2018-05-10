@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: ibm_sa_host
 short_description: Adds hosts to or removes them from
     IBM Spectrum Accelerate storage systems.
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - "This module adds hosts to or removes them
@@ -89,6 +89,8 @@ EXAMPLES = '''
     username: admin
     password: secret
     endpoints: hostdev-system
+'''
+RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
