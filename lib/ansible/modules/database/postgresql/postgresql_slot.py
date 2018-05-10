@@ -146,7 +146,7 @@ def main():
         argument_spec=dict(
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
+            login_host=dict(default="localhost"),
             port=dict(default="5432"),
             db=dict(required=False),
             name=dict(required=True),
@@ -197,7 +197,7 @@ def main():
                 changed = slot_exists(cursor, slot)
         else:
             if state == "absent":
-                changed = slot_delete(cursor, slot)
+                ch:wqanged = slot_delete(cursor, slot)
             elif state == "present":
                 if type == "physical":
                     changed = slot_create_physical(cursor, slot)
@@ -210,6 +210,7 @@ def main():
 
     module.exit_json(changed=changed, db=db, slot=slot)
 
+    return changed
 
 if __name__ == '__main__':
     main()
