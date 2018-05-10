@@ -1,0 +1,124 @@
+---
+# tasks file for test_ec2_volume
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - name: Create an EC2 volume of each type
+      ec2_volume:
+        name: "{{ resource_prefix }} {{ item.type }} volume"
+        volume_size: "{{ item.size }}"
+        volume_type: "{{ item.type }}"
+        iops: "{{ item.iops | default(omit) }}"
+        state: present
+        wait: false
+        zone: "{{ aws_az }}"
+        <<: *aws_connection_info
+      loop:
+        - type: standard
+          size: 1
+        - type: gp2
+          size: 1
+        - type: io1
+          size: 4
+          iops: 100
+        - type: st1
+          size: 500
+        - type: sc1
+          size: 500
+      register: volumes
+
+    - assert:
+        that:
+          - item is changed
+          - item.volume.attachments | length == 0
+          - item.volume.availability_zone == aws_az
+          - item.volume.encrypted == False
+          - item.volume.size == item.item.size
+          - item.volume.snapshot_id == ''
+          - item.volume.tags.Name == item.invocation.module_args.name
+          - item.volume.volume_type == item.item.type
+          - "'create_time' in item.volume"
+          - "'state' in item.volume"
+          - "'tags' in item.volume"
+          - "'volume_id' in item.volume"
+      loop: "{{ volumes.results }}"
+
+    - name: Test ec2_volume_facts
+      ec2_volume_facts:
+        filters:
+          "tag:Name": "{{ resource_prefix }} * volume"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result.volumes | length == volumes.results | length
+
+    - name: Test ec2_volume_facts with no filter
+      ec2_volume_facts:
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    - name: Create an encrypted volume
+      ec2_volume:
+        name: "{{ resource_prefix }} unspecified volume"
+        volume_size: 1
+        state: present
+        zone: "{{ aws_az }}"
+        encrypted: true
+        wait: true
+        <<: *aws_connection_info
+      register: encrypted_volume
+
+    - name: Check encrypted return values, wait state, and default volume type
+      assert:
+        that:
+          - encrypted_volume.volume.state == 'available'
+          - encrypted_volume.volume.volume_type == 'gp2'
+          - encrypted_volume.volume.encrypted
+          - encrypted_volume.volume.kms_key_id is match('arn:aws:kms')
+
+    - name: Create a volume when it already exists
+      ec2_volume:
+        name: "{{ resource_prefix }} unspecified volume"
+        state: present
+        zone: "{{ aws_az }}"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+  always:
+    - name: Remove the volumes
+      ec2_volume:
+        volume_id: "{{ item.volume.volume_id }}"
+        state: absent
+        <<: *aws_connection_info
+      loop: "{{ volumes.results }}"
+      register: removed
+      until: removed is not failed
+      ignore_errors: true
+      retries: 10
+
+    - name: Remove the encrypted volume
+      ec2_volume:
+        volume_id: "{{ encrypted_volume.volume.volume_id }}"
+        state: absent
+        <<: *aws_connection_info
+      until: removed is not failed
+      ignore_errors: true
+      retries: 10

@@ -1,0 +1,141 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - name: Make instance for attachment tests
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-default-vpc"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      register: instance_with_volume
+
+    - name: Create volumes for test
+      ec2_volume:
+        name: "{{ resource_prefix }}-test-instance-{{ item }}"
+        availability_zone: "{{ instance_with_volume.instances.0.placement.availability_zone }}"
+        volume_size: 1
+        state: present
+        <<: *aws_connection_info
+      loop:
+        - a
+        - b
+      register: ec2_volume
+
+    - name: Attach the volume
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id }}"
+        instance_id: "{{ instance_with_volume.instances.0.instance_id }}"
+        delete_on_termination: true
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.volume.state == 'in-use'
+          - result.volume.attachments.0.instance_id == instance_with_volume.instances.0.instance_id
+          - result.volume.attachments.0.state == 'attached'
+          - result.volume.attachments.0.delete_on_termination
+
+    - name: Attach a volume when one is already attached
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.1.volume.volume_id }}"
+        instance_id: "{{ instance_with_volume.instances.0.instance_id }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+
+    - name: Change delete_on_termination
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id  }}"
+        instance_id: "{{ instance_with_volume.instances.0.instance_id }}"
+        delete_on_termination: false
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - not result.volume.attachments.0.delete_on_termination
+
+    - name: Detach the volume
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id }}"
+        state: detached
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.volume.state == 'available'
+
+    - name: Attach the volume without waiting
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id }}"
+        instance_id: "{{ instance_with_volume.instances.0.instance_id }}"
+        state: present
+        wait: false
+        <<: *aws_connection_info
+
+    - name: Reattach the volume without waiting
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id }}"
+        instance_id: "{{ instance_with_volume.instances.0.instance_id }}"
+        state: present
+        wait: false
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    - name: Detach the volume without waiting
+      ec2_volume:
+        volume_id: "{{ ec2_volume.results.0.volume.volume_id }}"
+        state: detached
+        wait: false
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+  always:
+    - name: Terminate instance
+      ec2:
+        instance_ids: "{{ instance_with_volume.instance_ids }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: Delete volumes
+      ec2_volume:
+        volume_id: "{{ item.volume.volume_id }}"
+        state: absent
+        <<: *aws_connection_info
+      loop: "{{ ec2_volume.results }}"
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
