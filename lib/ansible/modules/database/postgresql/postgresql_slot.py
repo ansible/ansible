@@ -20,7 +20,7 @@ description:
   - Add or remove slots from a postgresql database.
 version_added: "2.6"
 options:
-  name:
+  slot:
     description:
       - name of the slot to add or remove
     required: true
@@ -73,12 +73,12 @@ author: "John Scalia (@jscalia)"
 EXAMPLES = '''
 # Adds physical_slot_one to the cluster running on target host default port 5432
 - postgresql_slot:
-    name: physical_slot_one
+    slot: physical_slot_one
     state: present
 
 # Add a logical_slot_one to the database "acme" on target host default port 5432
 - postgresql_slot:
-    name: logical_slot_one
+    slot: logical_slot_one
     type: logical
     state: present
     decoder: custom_decoder_one
@@ -150,7 +150,7 @@ def main():
             login_host=dict(default="localhost"),
             port=dict(default="5432"),
             db=dict(required=False),
-            name=dict(required=True, aliases=['slot']),
+            slot=dict(required=True),
             type=dict(default="physical", choices=["physical", "logical"]),
             decoder=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
@@ -162,7 +162,7 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
-    slot = module.params["name"]
+    slot = module.params["slot"]
     type = module.params["type"]
     state = module.params["state"]
     decoder = module.params["decoder"]
