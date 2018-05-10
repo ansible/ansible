@@ -272,30 +272,30 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     argument_spec = aci_argument_spec()
-    argument_spec.update({
-        'policy_group': dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
-        'description': dict(type='str', aliases=['descr']),
+    argument_spec.update(
+        policy_group=dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC and VPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
-        'lag_type': dict(type='str', aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),  # Not required for querying all objects
-        'link_level_policy': dict(type='str', aliases=['link_level_policy_name']),
-        'cdp_policy': dict(type='str', aliases=['cdp_policy_name']),
-        'mcp_policy': dict(type='str', aliases=['mcp_policy_name']),
-        'lldp_policy': dict(type='str', aliases=['lldp_policy_name']),
-        'stp_interface_policy': dict(type='str', aliases=['stp_interface_policy_name']),
-        'egress_data_plane_policing_policy': dict(type='str', aliases=['egress_data_plane_policing_policy_name']),
-        'ingress_data_plane_policing_policy': dict(type='str', aliases=['ingress_data_plane_policing_policy_name']),
-        'priority_flow_control_policy': dict(type='str', aliases=['priority_flow_control_policy_name']),
-        'fibre_channel_interface_policy': dict(type='str', aliases=['fibre_channel_interface_policy_name']),
-        'slow_drain_policy': dict(type='str', aliases=['slow_drain_policy_name']),
-        'port_channel_policy': dict(type='str', aliases=['port_channel_policy_name']),
-        'monitoring_policy': dict(type='str', aliases=['monitoring_policy_name']),
-        'storm_control_interface_policy': dict(type='str', aliases=['storm_control_interface_policy_name']),
-        'l2_interface_policy': dict(type='str', aliases=['l2_interface_policy_name']),
-        'port_security_policy': dict(type='str', aliases=['port_security_policy_name']),
-        'aep': dict(type='str', aliases=['aep_name']),
-        'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
-    })
+        lag_type=dict(type='str', aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),  # Not required for querying all objects
+        link_level_policy=dict(type='str', aliases=['link_level_policy_name']),
+        cdp_policy=dict(type='str', aliases=['cdp_policy_name']),
+        mcp_policy=dict(type='str', aliases=['mcp_policy_name']),
+        lldp_policy=dict(type='str', aliases=['lldp_policy_name']),
+        stp_interface_policy=dict(type='str', aliases=['stp_interface_policy_name']),
+        egress_data_plane_policing_policy=dict(type='str', aliases=['egress_data_plane_policing_policy_name']),
+        ingress_data_plane_policing_policy=dict(type='str', aliases=['ingress_data_plane_policing_policy_name']),
+        priority_flow_control_policy=dict(type='str', aliases=['priority_flow_control_policy_name']),
+        fibre_channel_interface_policy=dict(type='str', aliases=['fibre_channel_interface_policy_name']),
+        slow_drain_policy=dict(type='str', aliases=['slow_drain_policy_name']),
+        port_channel_policy=dict(type='str', aliases=['port_channel_policy_name']),
+        monitoring_policy=dict(type='str', aliases=['monitoring_policy_name']),
+        storm_control_interface_policy=dict(type='str', aliases=['storm_control_interface_policy_name']),
+        l2_interface_policy=dict(type='str', aliases=['l2_interface_policy_name']),
+        port_security_policy=dict(type='str', aliases=['port_security_policy_name']),
+        aep=dict(type='str', aliases=['aep_name']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
