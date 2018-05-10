@@ -3,7 +3,7 @@
     - name: ensure facts have not been collected
       assert:
         that:
-            - ansible_facts is undefined or not 'ansible_fqdn' in ansible_facts
+            - ansible_facts is undefined or not 'fqdn' in ansible_facts
 
 - hosts: testhost
   gather_facts: True
@@ -11,4 +11,4 @@
     - name: ensure facts have been collected
       assert:
         that:
-            - ansible_facts is defined and 'ansible_fqdn' in ansible_facts
+            - ansible_facts is defined and 'fqdn' in ansible_facts

@@ -3,7 +3,7 @@
     - name: ensure facts are gathered but no local exists
       assert:
         that:
-            - ansible_facts is defined and 'ansible_fqdn' in ansible_facts
+            - ansible_facts is defined and 'fqdn' in ansible_facts
             - not 'uuid' in ansible_local
     - name: create local facts for latter test
       copy:
@@ -16,7 +16,7 @@
     - name: ensure we still have facts, but didnt pickup new local ones
       assert:
         that:
-            - ansible_facts is defined and 'ansible_fqdn' in ansible_facts
+            - ansible_facts is defined and 'fqdn' in ansible_facts
             - not 'uuid' in ansible_local
 
     - name: remove local facts file
