@@ -1,0 +1,92 @@
+# Copyright (C) 2018 IBM CORPORATION
+# Author(s): Tzur Eliyahu <tzure@il.ibm.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+from functools import wraps
+
+PYXCLI_INSTALLED = True
+try:
+    from pyxcli import client, errors
+except ImportError:
+    PYXCLI_INSTALLED = False
+
+AVAILABLE_PYXCLI_FIELDS = ['pool', 'size', 'snapshot_size',
+                           'domain', 'perf_class', 'vol',
+                           'iscsi_chap_name', 'iscsi_chap_secret',
+                           'cluster', 'host', 'lun', 'override',
+                           'fcaddress', 'iscsi_name']
+
+
+def xcli_wrapper(func):
+    """ Catch xcli errors and return a proper message"""
+    @wraps(func)
+    def wrapper(module, *args, **kwargs):
+        try:
+            return func(module, *args, **kwargs)
+        except errors.CommandExecutionError as e:
+            module.fail_json(msg=str(e))
+    return wrapper
+
+
+@xcli_wrapper
+def connect_ssl(module):
+    endpoints = module.params['endpoints']
+    username = module.params['username']
+    password = module.params['password']
+    if not (username and password and endpoints):
+        module.fail_json(
+            "Username, password or endpoints arguments" +
+            "are missing from the module arguments")
+
+    try:
+        return client.XCLIClient.connect_multiendpoint_ssl(username,
+                                                           password,
+                                                           endpoints)
+    except errors.CommandFailedConnectionError as e:
+        module.fail_json(
+            "Connection with Spectrum Accelerate system has " +
+            "failed: {}.".format(str(e)))
+
+
+def spectrum_accelerate_spec():
+    """ Return arguments spec for AnsibleModule """
+    return dict(
+        endpoints=dict(required=True),
+        username=dict(required=True),
+        password=dict(no_log=True),
+    )
+
+
+@xcli_wrapper
+def execute_pyxcli_command(module, xcli_command, xcli_client):
+    pyxcli_args = build_pyxcli_command(module.params)
+    getattr(xcli_client.cmd, xcli_command)(**(pyxcli_args))
+    return True
+
+
+def build_pyxcli_command(fields):
+    """ Builds the args for pyxcli using the exact args from ansible"""
+    pyxcli_args = {}
+    for field in fields:
+        if field in AVAILABLE_PYXCLI_FIELDS and fields[field]:
+            pyxcli_args[field] = fields[field]
+    return pyxcli_args
+
+
+def is_pyxcli_installed(module):
+    if not PYXCLI_INSTALLED:
+        module.fail_json(
+            msg='pyxcli is required, use \'pip install pyxcli\' ' +
+            'in order to install it.')
