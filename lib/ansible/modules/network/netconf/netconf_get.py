@@ -17,13 +17,14 @@ DOCUMENTATION = """
 ---
 module: netconf_get
 version_added: "2.6"
-author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Fetch configuration/state data from Netconf enabled network devices.
+author:
+    - "Ganesh Nalawade (@ganeshrn)"
+    - "Sven Wisotzky (@wisotzky)"
+short_description: Fetch configuration/state data from NETCONF enabled network devices.
 description:
-    - Netconf is a network management protocol developed and standardized by
+    - NETCONF is a network management protocol developed and standardized by
       the IETF. It is documented in RFC 6241.
-
-    - This module allows the user to fetch configuration and state data from Netconf
+    - This module allows the user to fetch configuration and state data from NETCONF
       enabled network devices.
 options:
   source:
@@ -32,16 +33,17 @@ options:
         Valid values are I(running), I(candidate) and I(auto). If the value is I(auto) it fetches
         configuration data from I(candidate) datastore and if candidate datastore is not supported
         it fallback to I(running) datastore. If the C(source) value is not mentioned in that case
-        both configuration and state information in returned in response from running datastore.
-    choices: ['running', 'candidate', 'auto', 'startup']
+        both configuration and state information is returned in the response from running datastore.
+    choices: ['running', 'candidate', 'startup']
+    default: 'running'
   filter:
     description:
       - This argument specifies the XML string which acts as a filter to restrict the portions of
-        the data to be are retrieved from remote device. If this option is not specified entire
+        the data to be are retrieved from the remote device. If this option is not specified entire
         configuration or state data is returned in result depending on the value of C(source)
-        option. The C(filter) value can be either xml string or xpath, if the filter is in
-        xpath format the Netconf server running on remote host should support xpath capabiltiy
-        else it will result in error.
+        option. The C(filter) value can be either XML string or XPath, if the filter is in
+        XPath format the NETCONF server running on remote host should support xpath capability
+        else it will result in an error.
   display:
     description:
       - Encoding scheme to use when serializing output from the device. Currently supported option
@@ -53,25 +55,25 @@ requirements:
   - jxmlease
 
 notes:
-  - This module requires the netconf system service be enabled on
+  - This module requires the NETCONF system service be enabled on
     the remote device being managed.
   - This module supports the use of connection=netconf
 """
 
 EXAMPLES = """
-- name: Get confgiuration and state data
+- name: Get running configuration and state data
   netconf_get:
 
-- name: Get configuration data from candidate datastore state
+- name: Get configuration and state data from startup datastore
   netconf_get:
-    source: candidate
+    source: startup
 
 - name: Get system configuration data from running datastore state
   netconf_get:
     source: running
     filter: <configuration><system></system></configuration>
 
-- name: Get confgiuration and state data in json format
+- name: Get configuration and state data in JSON format
   netconf_get:
     display: json
 """
@@ -79,23 +81,24 @@ EXAMPLES = """
 RETURN = """
 stdout:
   description: The transformed xml string containing configuration or state data
-               retrieved from remote host, namespace will be removed from this xml string.
-  returned: always apart from low level errors (such as action plugin)
+               retrieved from the remote host, the namespace will be removed from
+               this XML string.
+  returned: always apart from low-level errors (such as action plugin)
   type: string
   sample: '...'
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always apart from low level errors (such as action plugin)
+  returned: always apart from low-level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 output:
-  description: The set of transformed xml to json format from the RPC responses
-  returned: when display format is selected as json apart from low level
+  description: The set of transformed XML to JSON format from the RPC responses
+  returned: when the display format is selected as JSON apart from low-level
             errors (such as action plugin)
   type: dict
   sample: {'...'}
 xml:
-  description: The raw xml string received from the underlying ncclient library.
+  description: The raw XML string received from the underlying ncclient library.
   returned: always apart from low level errors (such as action plugin)
   type: string
   sample: '...'
@@ -137,7 +140,7 @@ def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        source=dict(choices=['running', 'candidate', 'startup', 'auto']),
+        source=dict(default='running', choices=['running', 'candidate', 'startup']),
         filter=dict(),
         display=dict(choices=['json'])
     )
@@ -166,12 +169,6 @@ def main():
     filter_spec = (filter_type, filter) if filter_type else None
 
     if source is not None:
-        if source == 'auto':
-            if operations.get('supports_commit', False):
-                source = 'candidate'
-            else:
-                source = 'running'
-
         if source == 'candidate':
             with locked_config(module, target=source):
                 response = conn.get_config(source=source, filter=filter_spec)
