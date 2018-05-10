@@ -940,7 +940,6 @@ lib/ansible/modules/network/f5/bigip_device_ntp.py E324
 lib/ansible/modules/network/f5/bigip_device_sshd.py E326
 lib/ansible/modules/network/f5/bigip_facts.py E324
 lib/ansible/modules/network/f5/bigip_facts.py E326
-lib/ansible/modules/network/f5/bigip_gtm_facts.py E326
 lib/ansible/modules/network/f5/bigip_gtm_pool.py E324
 lib/ansible/modules/network/f5/bigip_gtm_pool.py E326
 lib/ansible/modules/network/f5/bigip_gtm_server.py E326
