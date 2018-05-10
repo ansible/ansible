@@ -194,7 +194,7 @@ def main():
     if not module.params['force']:
         contents = get_acl_config(module, acl_name)
         config = NetworkConfig(indent=1, contents=contents)
-        if candidate.difference(config)
+        if candidate.difference(config):
             commands = candidate.items
         else:
             commands = candidate.difference(config)
