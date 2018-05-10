@@ -60,7 +60,7 @@ class ActionModule(_ActionModule):
             if transport == 'cli':
                 pc = copy.deepcopy(self._play_context)
                 pc.connection = 'network_cli'
-                pc.network_os = 'bigip'
+                pc.network_os = 'bigiq'
                 pc.remote_addr = provider.get('server', self._play_context.remote_addr)
                 pc.port = int(provider['server_port'] or self._play_context.port or 22)
                 pc.remote_user = provider.get('user', self._play_context.connection_user)
@@ -74,7 +74,7 @@ class ActionModule(_ActionModule):
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
                 if not socket_path:
                     return {'failed': True,
-                            'msg': 'Unable to open shell. Please see: ' +
+                            'msg': 'unable to open shell. Please see: ' +
                                    'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
                 task_vars['ansible_socket'] = socket_path
