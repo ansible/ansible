@@ -621,7 +621,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
-        for key in self.module_args.keys() + ['tags']:
+        for key in list(self.module_args.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         changed = False
