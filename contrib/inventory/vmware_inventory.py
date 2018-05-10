@@ -494,16 +494,13 @@ class VMWareInventory(object):
             for k, v in inventory['_meta']['hostvars'].items():
                 if 'customvalue' in v:
                     for tv in v['customvalue']:
-                        if not isinstance(tv['value'], string_types):
-                            continue
-
                         newkey = None
                         field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
                         values = []
                         keylist = map(lambda x: x.strip(), tv['value'].split(','))
                         for kl in keylist:
                             try:
-                                newkey = self.config.get('vmware', 'custom_field_group_prefix') + str(field_name) + '_' + kl
+                                newkey = "%s%s_%s" % (self.config.get('vmware', 'custom_field_group_prefix'), str(field_name), kl)
                                 newkey = newkey.strip()
                             except Exception as e:
                                 self.debugl(e)
@@ -521,7 +518,6 @@ class VMWareInventory(object):
 
     def create_template_mapping(self, inventory, pattern, dtype='string'):
         ''' Return a hash of uuid to templated string from pattern '''
-
         mapping = {}
         for k, v in inventory['_meta']['hostvars'].items():
             t = self.env.from_string(pattern)
@@ -557,7 +553,15 @@ class VMWareInventory(object):
 
             if '.' not in prop:
                 # props without periods are direct attributes of the parent
-                rdata[key] = getattr(vm, prop)
+                vm_property = getattr(vm, prop)
+                if isinstance(vm_property, vim.CustomFieldsManager.Value.Array):
+                    temp_vm_property = []
+                    for vm_prop in vm_property:
+                        temp_vm_property.append({'key': vm_prop.key,
+                                                 'value': vm_prop.value})
+                    rdata[key] = temp_vm_property
+                else:
+                    rdata[key] = vm_property
             else:
                 # props with periods are subkeys of parent attributes
                 parts = prop.split('.')
