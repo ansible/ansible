@@ -800,6 +800,8 @@ files:
   $module_utils/network/aci:
     maintainers: $team_aci
     labels: networking
+  $module_utils/acme.py:
+    maintainers: mgruener resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -865,8 +867,6 @@ files:
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
-  $module_utils/letsencrypt.py:
-    maintainers: mgruener resmo felixfontein
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/network/meraki:
