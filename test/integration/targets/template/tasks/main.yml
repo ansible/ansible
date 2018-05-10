@@ -54,13 +54,13 @@
 # Basic template with non-ascii names
 - name: Check that non-ascii source and dest work
   template:
-    src: 'café.j2'
-    dest: '{{ output_dir }}/café.txt'
+    src: 'cafe.j2'
+    dest: '{{ output_dir }}/cafe.txt'
   register: template_results
 
 - name: Check that the resulting file exists
   stat:
-    path: '{{ output_dir }}/café.txt'
+    path: '{{ output_dir }}/cafe.txt'
   register: stat_results
 
 - name: Check that template created the right file

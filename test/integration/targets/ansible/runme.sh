@@ -8,8 +8,8 @@ ansible --help
 ansible testhost -i ../../inventory -m ping  "$@"
 ansible testhost -i ../../inventory -m setup "$@"
 
-ansible-config -c ./ansible-testé.cfg view | grep 'remote_user = admin'
-ansible-config -c ./ansible-testé.cfg dump | grep 'DEFAULT_REMOTE_USER([^)]*) = admin\>'
+ansible-config -c ./ansible-test.cfg view | grep 'remote_user = admin'
+ansible-config -c ./ansible-test.cfg dump | grep 'DEFAULT_REMOTE_USER([^)]*) = admin\>'
 ANSIBLE_REMOTE_USER=administrator ansible-config dump| grep 'DEFAULT_REMOTE_USER([^)]*) = administrator\>'
 ansible-config list | grep 'DEFAULT_REMOTE_USER'
 
