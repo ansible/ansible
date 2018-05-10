@@ -20,11 +20,11 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_device_trust import Parameters
-    from library.bigip_device_trust import ModuleManager
-    from library.bigip_device_trust import ArgumentSpec
-    from library.bigip_device_trust import HAS_F5SDK
-    from library.bigip_device_trust import HAS_NETADDR
+    from library.modules.bigip_device_trust import Parameters
+    from library.modules.bigip_device_trust import ModuleManager
+    from library.modules.bigip_device_trust import ArgumentSpec
+    from library.modules.bigip_device_trust import HAS_F5SDK
+    from library.modules.bigip_device_trust import HAS_NETADDR
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -113,6 +113,22 @@ class TestParameters(unittest.TestCase):
         assert p.peer_user == 'admin'
         assert p.peer_password == 'secret'
         assert p.type is False
+
+    def test_hyphenated_peer_hostname(self):
+        args = dict(
+            peer_hostname='hn---hyphen____underscore.hmatsuda.local',
+        )
+
+        p = Parameters(params=args)
+        assert p.peer_hostname == 'hn---hyphen____underscore.hmatsuda.local'
+
+    def test_numbered_peer_hostname(self):
+        args = dict(
+            peer_hostname='BIG-IP_12x_ans2.example.local',
+        )
+
+        p = Parameters(params=args)
+        assert p.peer_hostname == 'BIG-IP_12x_ans2.example.local'
 
 
 class TestManager(unittest.TestCase):
