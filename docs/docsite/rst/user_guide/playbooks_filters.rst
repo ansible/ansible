@@ -359,9 +359,7 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-.. code-block:: yaml
-
-  {{ output | parse_cli('path/to/spec') }}
+    {{ output | parse_cli('path/to/spec') }}
 
 
 The ``parse_cli`` filter will load the spec file and pass the command output
