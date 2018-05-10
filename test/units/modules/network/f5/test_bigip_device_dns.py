@@ -21,9 +21,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_device_dns import Parameters
-    from library.bigip_device_dns import ModuleManager
-    from library.bigip_device_dns import ArgumentSpec
+    from library.modules.bigip_device_dns import Parameters
+    from library.modules.bigip_device_dns import ModuleManager
+    from library.modules.bigip_device_dns import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -64,7 +64,6 @@ class TestParameters(unittest.TestCase):
     def test_module_parameters(self):
         args = dict(
             cache='disable',
-            forwarders=['12.12.12.12', '13.13.13.13'],
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
@@ -87,15 +86,6 @@ class TestParameters(unittest.TestCase):
         p = Parameters(params=args)
         assert p.ip_version == 'options inet6'
 
-    def test_ensure_forwards_raises_exception(self):
-        args = dict(
-            forwarders=['12.12.12.12', '13.13.13.13'],
-        )
-        p = Parameters(params=args)
-        with pytest.raises(F5ModuleError) as ex:
-            p.forwarders
-        assert 'The modifying of forwarders is not supported' in str(ex)
-
 
 class TestManager(unittest.TestCase):
 
@@ -105,7 +95,6 @@ class TestManager(unittest.TestCase):
     def test_update_settings(self, *args):
         set_module_args(dict(
             cache='disable',
-            forwarders=['12.12.12.12', '13.13.13.13'],
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
