@@ -24,6 +24,7 @@ options:
     description:
       - name of the slot to add or remove
     required: true
+    alias: slot
   type:
     description:
       - slots come in two distinct flavors
@@ -149,7 +150,7 @@ def main():
             login_host=dict(default="localhost"),
             port=dict(default="5432"),
             db=dict(required=False),
-            name=dict(required=True),
+            name=dict(required=True, aliases=['slot']),
             type=dict(default="physical", choices=["physical", "logical"]),
             decoder=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
@@ -161,7 +162,7 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
-    slot = module.params["slot"]
+    slot = module.params["name"]
     type = module.params["type"]
     state = module.params["state"]
     decoder = module.params["decoder"]
