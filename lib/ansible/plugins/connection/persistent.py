@@ -22,10 +22,12 @@ options:
         close
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_persistent_command_timeout
 """
 import os
 import pty
