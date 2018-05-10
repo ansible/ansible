@@ -101,11 +101,12 @@
 - name: remove logging as collection tearDown
   nxos_logging: &agg
     aggregate:
-      - { dest: console, dest_level: 0, state: absent }
-      - { dest: module, dest_level: 2, state: absent }
-      - { dest: monitor, dest_level: 3, state: absent }
-      - { dest: logfile, dest_level: 1, name: test, state: absent }
-      - { facility: daemon, facility_level: 4, state: absent }
+      - { dest: console, dest_level: 0 }
+      - { dest: module, dest_level: 2 }
+      - { dest: monitor, dest_level: 3 }
+      - { dest: logfile, dest_level: 1, name: test }
+      - { facility: daemon, facility_level: 4 }
+    state: absent
     provider: "{{ connection }}"
   register: result
 
