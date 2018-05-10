@@ -339,7 +339,7 @@ def kv_list(data):
     if isinstance(data, Mapping):
         return list(data.items())
 
-    raise ValueError('cannot form-urlencode body, expect list or dict')
+    raise TypeError('cannot form-urlencode body, expect list or dict')
 
 
 def form_urlencoded(body):
@@ -349,6 +349,7 @@ def form_urlencoded(body):
 
     if isinstance(body, (Mapping, Sequence)):
         result = []
+        # Turn a list of lists into a list of tupples that urlencode accepts
         for key, values in kv_list(body):
             if isinstance(values, string_types) or not isinstance(values, (Mapping, Sequence)):
                 values = [values]
