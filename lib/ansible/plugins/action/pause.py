@@ -26,8 +26,9 @@ import tty
 
 from os import isatty
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
 try:
@@ -101,10 +102,11 @@ class ActionModule(ActionBase):
 
         # Should keystrokes be echoed to stdout?
         if 'echo' in self._task.args:
-            echo = self._task.args['echo']
-            if not type(echo) == bool:
+            try:
+                echo = boolean(self._task.args['echo'])
+            except TypeError as e:
                 result['failed'] = True
-                result['msg'] = "'%s' is not a valid setting for 'echo'." % self._task.args['echo']
+                result['msg'] = to_native(e)
                 return result
 
             # Add a note saying the output is hidden if echo is disabled
