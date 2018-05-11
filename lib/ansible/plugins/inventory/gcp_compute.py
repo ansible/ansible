@@ -344,17 +344,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         else:
             cache_key = None
 
-        cache_needs_update = False
-        if cache:
+        use_cache = cache and self.get_option('cache')
+        cache_needs_update = not use_cache and self.get_option('cache')  # refresh_inventory and --flush-cache should update the cache
+
+        if use_cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
                 for project in results:
                     for zone in results[project]:
                         self._add_hosts(results[project][zone], config_data, False)
             except KeyError:
                 cache_needs_update = True
 
-        if not cache or cache_needs_update:
+        if not use_cache or cache_needs_update:
             cached_data = {}
             for project in projects:
                 cached_data[project] = {}
@@ -369,4 +371,4 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     cached_data[project][zone] = resp.get('items')
 
         if cache_needs_update:
-            self.cache.set(cache_key, cached_data)
+            self._cache.set(cache_key, cached_data)

@@ -25,8 +25,9 @@ from abc import ABCMeta, abstractmethod
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
 
 try:
@@ -36,10 +37,15 @@ except ImportError:
     display = Display()
 
 
-class BaseCacheModule(with_metaclass(ABCMeta, object)):
+class BaseCacheModule(AnsiblePlugin):
 
     # Backwards compat only.  Just import the global display instead
     _display = display
+
+    def __init__(self, *args, **kwargs):
+        self._load_name = self.__module__.split('.')[-1]
+        super(BaseCacheModule, self).__init__()
+        self.set_options(var_options=args, direct=kwargs)
 
     @abstractmethod
     def get(self, key):
@@ -70,17 +76,157 @@ class BaseCacheModule(with_metaclass(ABCMeta, object)):
         pass
 
 
+def _set_plugin(func):
+    def method_wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        for unique_cache in list(self.top_level_reference.keys()):
+            cache_contents = self._recursively_get_values(self.top_level_reference.value)[unique_cache]
+            self._plugin.set(unique_cache, cache_contents)
+        return result
+    return method_wrapper
+
+
+def _get_plugin(func):
+    def method_wrapper(self, key, *args, **kwargs):
+        # Check for a brand new cache and attempt to load the key from the plugin if so
+        if not self.top_level_reference.keys() and self._plugin.contains(key):
+            try:
+                # set the cache object and return the simple dict of the cache contents
+                cache_contents = self._plugin.get(key)
+                self.top_level_reference.set(key, cache_contents)
+                return cache_contents
+            except KeyError:
+                # Cache expired
+                pass
+        # return the cache object so the inventory plugin can populate it like a dictionary
+        return func(self, key, *args, **kwargs)
+    return method_wrapper
+
+
+class CacheObject(MutableMapping):
+    def __init__(self, value={}, top_level_reference=None, plugin=None, plugin_kwargs={}):
+        self.value = value
+        self.simple_dict = self._recursively_get_values(self.value)
+        # New Cache
+        if top_level_reference is None:
+            top_level_reference = self
+            # Backwards compat for FactCache - FIXME
+            if plugin is None:
+                plugin_name = C.CACHE_PLUGIN
+            else:
+                plugin_name = plugin
+            plugin = cache_loader.get(plugin_name, **plugin_kwargs)
+            if plugin is None:
+                raise AnsibleError('Unable to load the facts cache plugin ({0}).'.format(plugin_name))
+
+        self.top_level_reference = top_level_reference
+        self._plugin = plugin
+
+    def __repr__(self):
+        return to_text(self.simple_dict)
+
+    def __contains__(self, key):
+        # Check for a brand new cache and update it with the plugin if possible
+        if not self.top_level_reference.keys() and self._plugin.contains(key):
+            try:
+                self.top_level_reference.set(key, self._plugin.get(key))
+            except KeyError:
+                # Cache expired
+                pass
+        return key in self.keys()
+
+    def __iter__(self):
+        return iter(self.simple_dict)
+
+    def __len__(self):
+        return len(self.keys())
+
+    @_get_plugin
+    def __getitem__(self, key):
+        return self.value[key]
+
+    def copy(self):
+        return CacheObject(dict(self.simple_dict), plugin=self._plugin._load_name)
+
+    def items(self):
+        return self.simple_dict.items()
+
+    def values(self):
+        return self.simple_dict.values()
+
+    def keys(self):
+        # This breaks with FactCache FIXME
+        return self.simple_dict.keys()
+
+    @_get_plugin
+    def get(self, key, default=None):
+        try:
+            return self.value[key]
+        except KeyError:
+            return default
+
+    def _recursively_get_values(self, item):
+        if isinstance(item, CacheObject):
+            return self._recursively_get_values(item.value)
+        elif isinstance(item, dict):
+            return dict((k, self._recursively_get_values(v)) for k, v in item.items())
+        elif isinstance(item, list):
+            return [self._recursively_get_values(v) for v in item]
+        else:
+            return item
+
+    @_set_plugin
+    def pop(self, key, *args):
+        if args and key not in self.keys():
+            return args[0]
+        value = self.simple_dict[key]
+        del self[key]
+        return value
+
+    @_set_plugin
+    def __delitem__(self, key):
+        del self.simple_dict[key]
+        del self.value[key]
+
+    def set(self, key, value):
+        self[key] = value
+
+    @_set_plugin
+    def __setitem__(self, key, value):
+        self.value[key] = self._recursively_set(value)
+        self.simple_dict = self._recursively_get_values(self.value)
+
+    def _recursively_set(self, value):
+        if not value:
+            return CacheObject(value, self.top_level_reference, self._plugin)
+        elif isinstance(value, dict):
+            return CacheObject(value, self.top_level_reference, self._plugin)
+        elif isinstance(value, list):
+            return [self._recursively_set(v) for v in value]
+        else:
+            return CacheObject(value, self.top_level_reference, self._plugin)
+
+    def flush(self):
+        self.top_level_reference.value = {}
+        self._plugin.flush()
+
+    @_set_plugin
+    def update(self, key, value):
+        key_cache = self.simple_dict[key]
+        key_cache.update(value)
+        self[key] = key_cache
+
+
 class BaseFileCacheModule(BaseCacheModule):
     """
     A caching module backed by file based storage.
     """
     def __init__(self, *args, **kwargs):
-
+        super(BaseFileCacheModule, self).__init__(*args, **kwargs)
         self.plugin_name = self.__module__.split('.')[-1]
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
-        self._set_inventory_cache_override(**kwargs)
+        self._timeout = float(self.get_option('_timeout'))
+        self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
         self.validate_cache_connection()
 
     def _get_cache_connection(self, source):
@@ -89,12 +235,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return os.path.expanduser(os.path.expandvars(source))
             except TypeError:
                 pass
-
-    def _set_inventory_cache_override(self, **kwargs):
-        if kwargs.get('cache_timeout'):
-            self._timeout = kwargs.get('cache_timeout')
-        if kwargs.get('cache_connection'):
-            self._cache_dir = self._get_cache_connection(kwargs.get('cache_connection'))
 
     def validate_cache_connection(self):
         if not self._cache_dir:
@@ -247,6 +387,9 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
 
+# Backwards compatibility FIXME
+#FactCache = CacheObject
+
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
@@ -296,52 +439,3 @@ class FactCache(MutableMapping):
         host_cache = self._plugin.get(key)
         host_cache.update(value)
         self._plugin.set(key, host_cache)
-
-
-class InventoryFileCacheModule(BaseFileCacheModule):
-    """
-    A caching module backed by file based storage.
-    """
-    def __init__(self, plugin_name, timeout, cache_dir):
-
-        self.plugin_name = plugin_name
-        self._timeout = timeout
-        self._cache = {}
-        self._cache_dir = self._get_cache_connection(cache_dir)
-        self.validate_cache_connection()
-        self._plugin = self.get_plugin(plugin_name)
-
-    def validate_cache_connection(self):
-        try:
-            super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError as e:
-            cache_connection_set = False
-        else:
-            cache_connection_set = True
-
-        if not cache_connection_set:
-            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
-                               "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
-                               "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
-                               "to be set to a writeable directory path" % self.plugin_name)
-
-    def get(self, cache_key):
-
-        if not self.contains(cache_key):
-            # Check if cache file exists
-            raise KeyError
-
-        return super(InventoryFileCacheModule, self).get(cache_key)
-
-    def get_plugin(self, plugin_name):
-        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
-        if not plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
-        self._cache = {}
-        return plugin
-
-    def _load(self, path):
-        return self._plugin._load(path)
-
-    def _dump(self, value, path):
-        return self._plugin._dump(value, path)

@@ -25,12 +25,13 @@ import re
 import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.cache import CacheObject
+from ansible.plugins.loader import cache_loader
 from ansible.template import Templar
 
 try:
@@ -56,6 +57,23 @@ def detect_range(line=None):
     Returns True if the given line contains a pattern, else False.
     '''
     return '[' in line
+
+
+def handle_inventory_cache_plugin_errors(f):
+    def wrapper_method(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except AnsibleError as e:
+            if 'fact_caching_connection' in to_native(e):
+                # fact_caching_connection error message does not reflect inventory cache options
+                raise AnsibleError(
+                    "error, '%s' inventory cache plugin requires the one of the following to be set:\n"
+                    "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
+                    "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION "
+                    "to be set to a writeable directory path" % self.get_option('cache_plugin')
+                )
+            raise e
+    return wrapper_method
 
 
 def expand_hostname_range(line=None):
@@ -142,7 +160,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
-        self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
@@ -161,6 +178,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
+        self._cache = None
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check
@@ -210,16 +228,17 @@ class BaseInventoryPlugin(AnsiblePlugin):
             # configs are dictionaries
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
+        # Since cache options may be set in config, set_options and instantiate the cache
         self.set_options(direct=config)
-        if self._options.get('cache'):
-            self._set_cache_options(self._options)
-
+        try:
+            enable_cache = self.get_option('cache')
+        except AnsibleError:
+            # caching has not been added to the inventory plugin
+            pass
+        else:
+            if enable_cache:
+                self._cache = CacheObject(plugin=self.get_option('cache_plugin'), plugin_kwargs=self._options)
         return config
-
-    def _set_cache_options(self, options):
-        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
-                                              timeout=options.get('cache_timeout'),
-                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from alternate configuration sources not normally used by Ansible.
@@ -272,6 +291,9 @@ class Cacheable(object):
 
     def clear_cache(self):
         self._cache = {}
+
+    def instantiate_cache(self, cache_plugin_name, **kwargs):
+        self._cache = CacheObject(plugin=cache_plugin_name, plugin_kwargs=kwargs)
 
 
 class Constructable(object):

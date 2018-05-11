@@ -118,7 +118,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if not self.use_cache or url not in self._cache.get(self.cache_key, {}):
 
             if self.cache_key not in self._cache:
-                self._cache[self.cache_key] = {'url': ''}
+                self._cache[self.cache_key] = {url: ''}
 
             results = []
             s = self._get_session()
@@ -155,7 +155,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     # get next page
                     params['page'] += 1
 
-            self._cache[self.cache_key][url] = results
+            # Set the cache if it is enabled or if the cache was refreshed
+            if self.use_cache or self.get_option('cache'):
+                self._cache[self.cache_key][url] = results
 
         return self._cache[self.cache_key][url]
 

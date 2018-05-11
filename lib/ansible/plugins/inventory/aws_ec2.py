@@ -575,9 +575,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # Generate inventory
         formatted_inventory = {}
         cache_needs_update = False
+
+        cache = cache and self.get_option('cache')
+
+        # if refresh_inventory/flush cache is used and user is using caching, update the cached inventory
+        cache_needs_update = not cache and self.get_option('cache')
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
@@ -589,7 +594,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
-        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
-        # when the user is using caching, update the cached inventory
-        if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, formatted_inventory)
+        if cache_needs_update:
+            self._cache[cache_key] = formatted_inventory

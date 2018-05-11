@@ -24,6 +24,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.cache import FactCache
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
+from ansible.plugins.loader import cache_loader
 
 HAVE_MEMCACHED = True
 try:
@@ -114,11 +115,14 @@ class TestAbstractClass(unittest.TestCase):
 
     @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
     def test_memcached_cachemodule(self):
-        self.assertIsInstance(MemcachedCache(), MemcachedCache)
+        # Load plugin so config defs are instantiated
+        self.assertIsInstance(cache_loader.get('memcached'), MemcachedCache)
 
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
     @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
     def test_redis_cachemodule(self):
-        self.assertIsInstance(RedisCache(), RedisCache)
+        # Load plugin so config defs are instantiated
+        # The _uri option is required for the redis plugin
+        self.assertIsInstance(cache_loader.get('redis', **{'_uri': '127.0.0.1:6379:1'}), RedisCache)

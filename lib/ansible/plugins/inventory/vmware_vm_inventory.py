@@ -265,13 +265,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         config_data = self._read_config_data(path)
 
         source_data = None
-        if cache:
-            cache = self.get_option('cache')
+        use_cache = cache and self.get_option('cache')
+        update_cache = not use_cache and self.get_option('cache')  # meta: refresh_inventory or --flush-cache may be used
 
-        update_cache = False
-        if cache:
+        if use_cache:
             try:
-                source_data = self.cache.get(cache_key)
+                source_data = self._cache[cache_key]
             except KeyError:
                 update_cache = True
 
@@ -283,11 +282,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if self.with_tags:
             self.rest_content = self._login_vapi()
 
-        using_current_cache = cache and not update_cache
+        using_current_cache = use_cache and not update_cache
         cacheable_results = self._populate_from_source(source_data, using_current_cache)
 
         if update_cache:
-            self.cache.set(cache_key, cacheable_results)
+            self._cache.set(cache_key, cacheable_results)
 
     def _populate_from_cache(self, source_data):
         """

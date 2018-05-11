@@ -392,6 +392,11 @@ class PluginLoader:
                 return None
 
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+
+        # load plugin config data
+        if not found_in_cache:
+            self._load_config_defs(name, path)
+
         if not class_only:
             try:
                 obj = obj(*args, **kwargs)
@@ -401,10 +406,6 @@ class PluginLoader:
                     # fully implement the defined interface.
                     return None
                 raise
-
-        # load plugin config data
-        if not found_in_cache:
-            self._load_config_defs(name, path)
 
         self._update_object(obj, name, path)
         return obj
