@@ -86,7 +86,7 @@ def na_ontap_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
-        https=dict(required=False, type='str', default='False')
+        https=dict(required=False, type='bool', default=False)
     )
 
 
@@ -129,8 +129,8 @@ def setup_na_ontap_zapi(module, vserver=None):
             server.set_vserver(vserver)
         # Todo : Replace hard-coded values with configurable parameters.
         server.set_api_version(major=1, minor=21)
-        # default is HTTPS
-        if https in ['True', 'true']:
+        # default is HTTP
+        if https is True:
             server.set_port(443)
             server.set_transport_type('HTTPS')
         else:
