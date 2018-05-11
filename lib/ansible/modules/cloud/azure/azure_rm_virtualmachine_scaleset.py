@@ -522,7 +522,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['sku']['capacity'] = self.capacity
 
                 if self.data_disks and \
-                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile']['dataDisks']):
+                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])):
                     self.log('CHANGED: virtual machine scale set {0} - Data Disks'.format(self.name))
                     differences.append('Data Disks')
                     changed = True
