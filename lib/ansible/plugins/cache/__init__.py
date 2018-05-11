@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
+from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
 
 try:
@@ -36,7 +37,7 @@ except ImportError:
     display = Display()
 
 
-class BaseCacheModule(with_metaclass(ABCMeta, object)):
+class BaseCacheModule(AnsiblePlugin):
 
     # Backwards compat only.  Just import the global display instead
     _display = display
@@ -298,18 +299,20 @@ class FactCache(MutableMapping):
         self._plugin.set(key, host_cache)
 
 
-class InventoryFileCacheModule(BaseFileCacheModule):
-    """
-    A caching module backed by file based storage.
-    """
-    def __init__(self, plugin_name, timeout, cache_dir):
-
-        self.plugin_name = plugin_name
-        self._timeout = timeout
+class InventoryCacheModule(FactCache, AnsiblePlugin):
+    def __init__(self, *args, **kwargs):
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(cache_dir)
-        self.validate_cache_connection()
-        self._plugin = self.get_plugin(plugin_name)
+        self._display = display
+
+        plugin_name = kwargs.pop('cache_plugin')
+        plugin_path = cache_loader.find_plugin(plugin_name)
+        # FIXME figure out why get is not sufficient when it calls _load_config_defs itself
+        self._plugin = cache_loader._load_config_defs(plugin_name, plugin_path)
+        self._plugin = cache_loader.get(plugin_name, *args, **kwargs)
+
+        if not self._plugin:
+            super(FactCache, self).__init__()
+
 
     def validate_cache_connection(self):
         try:
@@ -320,28 +323,25 @@ class InventoryFileCacheModule(BaseFileCacheModule):
             cache_connection_set = True
 
         if not cache_connection_set:
-            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
-                               "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
-                               "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
-                               "to be set to a writeable directory path" % self.plugin_name)
+            raise AnsibleError(
+                "error, '%s' inventory cache plugin requires the one of the following to be set:\n"
+                "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
+                "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
+                "to be set to a writeable directory path" % self.plugin_name
+            )
 
-    def get(self, cache_key):
 
-        if not self.contains(cache_key):
-            # Check if cache file exists
-            raise KeyError
+    def set(self, value, path):
+        if isinstance(self._plugin, BaseFileCacheModule):
+            self._plugin._dump(value, path)
+        else:
+            self._plugin.set(value, path)
 
-        return super(InventoryFileCacheModule, self).get(cache_key)
 
-    def get_plugin(self, plugin_name):
-        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
-        if not plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
-        self._cache = {}
-        return plugin
-
-    def _load(self, path):
-        return self._plugin._load(path)
-
-    def _dump(self, value, path):
-        return self._plugin._dump(value, path)
+    def get(self, key):
+        if isinstance(self._plugin, BaseFileCacheModule):
+            if not self.contains(cache_key):
+                raise KeyError
+            return self._plugin._load(key)
+        else:
+            return self._plugin.get(key)
