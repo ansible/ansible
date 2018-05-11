@@ -1,0 +1,14 @@
+- hosts: testhost
+  tasks:
+    - name: ensure facts have not been collected
+      assert:
+        that:
+            - ansible_facts is undefined or not 'fqdn' in ansible_facts
+
+- hosts: testhost
+  gather_facts: True
+  tasks:
+    - name: ensure facts have been collected
+      assert:
+        that:
+            - ansible_facts is defined and 'fqdn' in ansible_facts
