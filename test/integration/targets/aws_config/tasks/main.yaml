@@ -87,10 +87,9 @@
            - 'output.msg.startswith("missing required arguments: resource_type")'
 
     - name: test resource_type rule with no source parameter
-      aws_config:
+      aws_config_rule:
         name: random_name
         state: present
-        resource_type: rule
       register: output
       ignore_errors: true
 
@@ -101,10 +100,9 @@
            - 'output.msg.startswith("resource_type is rule but all of the following are missing: source")'
 
     - name: test resource_type delivery_channel with no s3_bucket parameter
-      aws_config:
+      aws_config_delivery_channel:
         name: random_name
         state: present
-        resource_type: delivery_channel
       register: output
       ignore_errors: true
 
@@ -221,11 +219,10 @@
           - output.changed
 
     - name: Create Delivery Channel for AWS Config
-      aws_config:
+      aws_config_delivery_channel:
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        resource_type: delivery_channel
         s3_bucket: "{{ config_s3_bucket | to_uuid }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'Twelve_Hours'
@@ -236,11 +233,10 @@
           - output.changed
 
     - name: Create Config Rule for AWS Config
-      aws_config:
+      aws_config_rule:
         <<: *aws_connection_info
         name: test_config_rule
         state: present
-        resource_type: rule
         description: 'This AWS Config rule checks for public write access on S3 buckets'
         scope:
             compliance_types:
@@ -276,11 +272,10 @@
           - output.changed
 
     - name: Update Delivery Channel
-      aws_config:
+      aws_config_delivery_channel:
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        resource_type: delivery_channel
         s3_bucket: "{{ config_s3_bucket | to_uuid }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
@@ -291,11 +286,10 @@
           - output.changed
 
     - name: Update Config Rule
-      aws_config:
+      aws_config_rule:
         <<: *aws_connection_info
         name: test_config_rule
         state: present
-        resource_type: rule
         description: 'This AWS Config rule checks for public write access on S3 buckets'
         scope:
             compliance_types:
@@ -331,11 +325,10 @@
           - not output.changed
 
     - name: Don't update Delivery Channel
-      aws_config:
+      aws_config_delivery_channel:
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        resource_type: delivery_channel
         s3_bucket: "{{ config_s3_bucket | to_uuid }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
@@ -346,11 +339,10 @@
           - not output.changed
 
     - name: Don't update Config Rule
-      aws_config:
+      aws_config_rule:
         <<: *aws_connection_info
         name: test_config_rule
         state: present
-        resource_type: rule
         description: 'This AWS Config rule checks for public write access on S3 buckets'
         scope:
             compliance_types:
@@ -388,11 +380,10 @@
 #          - output.changed
 
     - name: Destroy Delivery Channel
-      aws_config:
+      aws_config_delivery_channel:
         <<: *aws_connection_info
         name: test_delivery_channel
         state: absent
-        resource_type: delivery_channel
         s3_bucket: "{{ config_s3_bucket | to_uuid }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
@@ -404,11 +395,10 @@
 #          - output.changed
 
     - name: Destroy Config Rule
-      aws_config:
+      aws_config_rule:
         <<: *aws_connection_info
         name: test_config_rule
         state: absent
-        resource_type: rule
         description: 'This AWS Config rule checks for public write access on S3 buckets'
         scope:
             compliance_types:

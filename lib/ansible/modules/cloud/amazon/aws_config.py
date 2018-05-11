@@ -675,8 +675,7 @@ def main():
                     'AllAwsRegions': module.params.get('organization_source').get('all_aws_regions')
                 })
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='config', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('config', retry_decorator=AWSRetry.jittered_backoff())
 
     resource_status = resource_exists(client, module, resource_type, params)
 
