@@ -179,7 +179,7 @@ conditions:
   type: complex
   contains:
     type:
-      description: The condition type
+      description: The condition type.
       returned: changed
       type: string
       sample: http_uri
