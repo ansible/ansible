@@ -189,7 +189,12 @@ DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 CONFIG_MISPLACED_CHILDREN = [
     re.compile(r'end-\s*(.+)$')
 ]
-
+CONFIG_BLOCKS_FORCED_IN_DIFF = [
+    {
+        'start' : re.compile(r'route-policy'),
+        'end' : re.compile(r'end-policy')
+    }
+]
 
 def copy_file_to_node(module):
     """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
@@ -221,8 +226,8 @@ def check_args(module, warnings):
 # 2. Add a prefix so that they are forced in diff for any config change in their
 #    siblings
 def sanitize_config(config, force_diff_prefix=None):
+    conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
     for regex in CONFIG_MISPLACED_CHILDREN:
-        conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
         for index, line in enumerate(conf_lines):
             m = regex.search(line)
             if m and m.group(0):
@@ -230,14 +235,34 @@ def sanitize_config(config, force_diff_prefix=None):
                     conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
                 else:
                     conf_lines[index] = '  ' + m.group(0)
-        conf = ('\n').join(conf_lines)
-        return conf
+    conf = ('\n').join(conf_lines)
+    return conf
+
+def mask_config_blocks_from_diff(config, force_diff_prefix):
+    conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
+    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
+        mask_start_block = False
+        for index, line in enumerate(conf_lines):
+            startre = regex['start'].search(line)
+            if startre and startre.group(0):
+                mask_start_block = True
+            else:
+                endre = regex['end'].search(line)
+                if endre and endre.group(0):
+                    mask_start_block = False
+
+            if mask_start_block:
+                conf_lines[index] = conf_lines[index] + force_diff_prefix
+    conf = ('\n').join(conf_lines)
+    return conf
+
 
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
     contents = sanitize_config(contents, "ansible")
+    contents = mask_config_blocks_from_diff(contents, "ansible")
     return NetworkConfig(indent=1, contents=contents)
 
 
