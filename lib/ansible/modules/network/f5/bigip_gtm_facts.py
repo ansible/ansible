@@ -583,6 +583,14 @@ class ServerParameters(BaseParameters):
     ]
 
     @property
+    def product(self):
+        if self._values['product'] is None:
+            return None
+        if self._values['product'] in ['single-bigip', 'redundant-bigip']:
+            return 'bigip'
+        return self._values['product']
+
+    @property
     def devices(self):
         result = []
         if self._values['devices'] is None or 'items' not in self._values['devices']:
