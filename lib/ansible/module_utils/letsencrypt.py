@@ -512,14 +512,7 @@ class ACMEAccount(object):
                 raise ModuleFailException("Account is deactivated!")
 
             # ...and check if update is necessary
-            do_update = False
-            if 'contact' in result:
-                if contact != result['contact']:
-                    do_update = True
-            elif len(contact) > 0:
-                do_update = True
-
-            if do_update:
+            if result.get('contact', []) != contact:
                 if not self.module.check_mode:
                     upd_reg = result
                     upd_reg['contact'] = contact
