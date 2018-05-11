@@ -78,17 +78,18 @@ The relevant change in those examples is, that in Ansible 2.5, the included file
 Fixed handling of keywords and inline variables
 -----------------------------------------------
 
-Several fixes to how we handle keywords and 'inline variables' help avoid conflating ones with the others, sadly this has broken a common usage of 'name', as it always was a reserved keyword but freely used as a variable when calling roles::
+We made several fixes to how we handle keywords and 'inline variables', to avoid conflating the two. Unfortunately these changes mean you must specify whether `name` is a keyword or a variable when calling roles. If you have playbooks that look like this::
 
     roles:
         - { role: myrole, name: Justin, othervar: othervalue, become: True}
 
-As you see above we have both keywords (``role`', ``become``) and variables (``name``, ``othervar``) mixed in the same bag, this created issues with what was intended as a variable overriding a keyword and a keyword being available as a variable in the roles. Now all the keywords get removed from the variables available to the role, which would remove the above ``name`` as it is itself a keyword and can cause ``Undefined`` errors in the role if it expects it.
-
-The workaround is to use ``vars:`` to explicitly declare variables for the role and avoid the confusion::
+You will run into errors because Ansible reads name in this context as a keyword. Beginning in 2.5, if you want to use a variable name that is also a keyword, you must explicitly declare it as a variable for the role::
 
     roles:
         - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
+
+
+For a full list of keywords see ::ref::`Playbook Keywords`.
 
 
 Deprecated
