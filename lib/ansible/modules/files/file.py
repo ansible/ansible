@@ -160,12 +160,11 @@ def _ansible_excepthook(exc_type, exc_value, tb):
 def additional_parameter_handling(params):
     """Additional parameter validation and reformatting"""
 
-    params['b_path'] = to_bytes(params['path'], errors='surrogate_or_strict')
     params['b_src'] = to_bytes(params['src'], errors='surrogate_or_strict', nonstring='passthru')
 
     # state should default to file, but since that creates many conflicts,
     # default state to 'current' when it exists.
-    prev_state = get_state(params['b_path'])
+    prev_state = get_state(params['path'])
 
     if params['state'] is None:
         if prev_state != 'absent':
@@ -181,9 +180,10 @@ def additional_parameter_handling(params):
                                       "path": params["path"]})
 
 
-def get_state(b_path):
+def get_state(path):
     ''' Find out current state '''
 
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.lexists(b_path):
         if os.path.islink(b_path):
             return 'link'
@@ -245,8 +245,9 @@ def initial_diff(path, state, prev_state):
 #
 
 
-def execute_diff_peek(b_path):
+def execute_diff_peek(path):
     """Take a guess as to whether a file is a binary file"""
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     appears_binary = False
     try:
         with open(b_path, 'rb') as f:
@@ -261,7 +262,8 @@ def execute_diff_peek(b_path):
     return appears_binary
 
 
-def ensure_absent(path, b_path, prev_state):
+def ensure_absent(path, prev_state):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     result = {}
 
     if prev_state != 'absent':
@@ -287,7 +289,8 @@ def ensure_absent(path, b_path, prev_state):
     return result
 
 
-def execute_touch(path, b_path, prev_state, follow):
+def execute_touch(path, prev_state, follow):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
@@ -338,7 +341,8 @@ def execute_touch(path, b_path, prev_state, follow):
     return {'dest': path, 'changed': True}
 
 
-def ensure_file_attributes(path, b_path, prev_state, follow):
+def ensure_file_attributes(path, prev_state, follow):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     file_args = module.load_file_common_arguments(module.params)
     if prev_state != 'file':
         if follow and prev_state == 'link':
@@ -358,7 +362,8 @@ def ensure_file_attributes(path, b_path, prev_state, follow):
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_directory(path, b_path, prev_state, follow, recurse):
+def ensure_directory(path, prev_state, follow, recurse):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     if follow and prev_state == 'link':
         b_path = os.path.realpath(b_path)
         path = to_native(b_path, errors='strict')
@@ -414,7 +419,8 @@ def ensure_directory(path, b_path, prev_state, follow, recurse):
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_symlink(path, b_path, src, b_src, prev_state, follow, force):
+def ensure_symlink(path, src, b_src, prev_state, follow, force):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     file_args = module.load_file_common_arguments(module.params)
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
@@ -522,7 +528,8 @@ def ensure_symlink(path, b_path, src, b_src, prev_state, follow, force):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
-def ensure_hardlink(path, b_path, src, b_src, prev_state, follow, force):
+def ensure_hardlink(path, src, b_src, prev_state, follow, force):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     file_args = module.load_file_common_arguments(module.params)
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
@@ -646,19 +653,19 @@ def main():
     force = params['force']
     follow = params['follow']
     path = params['path']
-    b_path = params['b_path']
     src = params['src']
     b_src = params['b_src']
 
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
 
     # short-circuit for diff_peek
     if params['_diff_peek'] is not None:
-        appears_binary = execute_diff_peek(b_path)
+        appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
     # original_basename is used by other modules that depend on file.
-    if state not in ("link", "absent") and os.path.isdir(b_path):
+    if state not in ("link", "absent") and os.path.isdir(to_bytes(path, errors='surrogate_or_strict')):
         basename = None
         if params['original_basename']:
             basename = params['original_basename']
@@ -670,17 +677,17 @@ def main():
             prev_state = get_state(b_path)
 
     if state == 'file':
-        result = ensure_file_attributes(path, b_path, prev_state, follow)
+        result = ensure_file_attributes(path, prev_state, follow)
     elif state == 'directory':
-        result = ensure_directory(path, b_path, prev_state, follow, recurse)
+        result = ensure_directory(path, prev_state, follow, recurse)
     elif state == 'link':
-        result = ensure_symlink(path, b_path, src, b_src, prev_state, follow, force)
+        result = ensure_symlink(path, src, b_src, prev_state, follow, force)
     elif state == 'hard':
-        result = ensure_hardlink(path, b_path, src, b_src, prev_state, follow, force)
+        result = ensure_hardlink(path, src, b_src, prev_state, follow, force)
     elif state == 'touch':
-        result = execute_touch(path, b_path, prev_state, follow)
+        result = execute_touch(path, prev_state, follow)
     elif state == 'absent':
-        result = ensure_absent(path, b_path, prev_state)
+        result = ensure_absent(path, prev_state)
 
     module.exit_json(**result)
 
