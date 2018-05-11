@@ -136,10 +136,10 @@ def write_file(module, dest, content):
 
 class ACMEDirectory(object):
     '''
-    The ACME server directory. Gives access to the available resources
-    and the Replay-Nonce for a given URI. This only works for
-    URIs that permit GET requests (so normally not the ones that
-    require authentication).
+    The ACME server directory. Gives access to the available resources,
+    and allows to obtain a Replay-Nonce. The acme_directory URL
+    needs to support unauthenticated GET requests; ACME endpoints
+    requiring authentication are not supported.
     https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.1
     '''
 
