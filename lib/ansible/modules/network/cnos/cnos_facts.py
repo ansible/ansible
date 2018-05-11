@@ -231,7 +231,7 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    COMMANDS = ['show sys-info', 'show run']
+    COMMANDS = ['display sys-info', 'display running-config']
 
     def populate(self):
         super(Default, self).populate()
@@ -297,12 +297,12 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     COMMANDS = [
-        'show run'
+        'display running-config'
     ]
 
     def populate(self):
         super(Hardware, self).populate()
-        data = self.run(['show process memory'])
+        data = self.run(['display process memory'])
         data = to_text(data, errors='surrogate_or_strict').strip()
         data = data.replace(r"\n", "\n")
         if data:
@@ -331,7 +331,7 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    COMMANDS = ['show running-config']
+    COMMANDS = ['display running-config']
 
     def populate(self):
         super(Config, self).populate()
@@ -342,18 +342,18 @@ class Config(FactsBase):
 
 class Interfaces(FactsBase):
 
-    COMMANDS = ['show interface brief']
-
+    COMMANDS = ['display interface brief']
+display
     def populate(self):
         super(Interfaces, self).populate()
 
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data1 = self.run(['show interface status'])
+        data1 = self.run(['display interface status'])
         data1 = to_text(data1, errors='surrogate_or_strict').strip()
         data1 = data1.replace(r"\n", "\n")
-        data2 = self.run(['show interface mac-address'])
+        data2 = self.run(['display interface mac-address'])
         data2 = to_text(data2, errors='surrogate_or_strict').strip()
         data2 = data2.replace(r"\n", "\n")
         lines1 = None
@@ -364,7 +364,7 @@ class Interfaces(FactsBase):
             lines2 = self.parse_interfaces(data2)
         if lines1 is not None and lines2 is not None:
             self.facts['interfaces'] = self.populate_interfaces(lines1, lines2)
-        data3 = self.run(['show lldp neighbors'])
+        data3 = self.run(['display lldp neighbors'])
         data3 = to_text(data3, errors='surrogate_or_strict').strip()
         data3 = data3.replace(r"\n", "\n")
         if data3:
@@ -372,9 +372,9 @@ class Interfaces(FactsBase):
         if lines3 is not None:
             self.facts['neighbors'] = self.populate_neighbors(lines3)
 
-        data4 = self.run(['show ip interface brief vrf all'])
-        data5 = self.run(['show ipv6 interface brief vrf all'])
-        data4 = to_text(data4, errors='surrogate_or_strict').strip()
+        data4 = self.run(['display ip interface brief vrf all'])
+        data5 = self.run(['display ipv6 interface brief vrf all'])
+        data4 = to_text(data4, errors='surrogate_or_stdisplay').strip()
         data4 = data4.replace(r"\n", "\n")
         data5 = to_text(data5, errors='surrogate_or_strict').strip()
         data5 = data5.replace(r"\n", "\n")
@@ -383,8 +383,8 @@ class Interfaces(FactsBase):
         if data4:
             lines4 = self.parse_ipaddresses(data4)
             ipv4_interfaces = self.set_ip_interfaces(lines4)
-            self.facts['all_ipv4_addresses'] = ipv4_interfaces
-        if data5:
+            sdisplayfacts['all_ipv4_addresses'] = ipv4_interfaces
+        ifdisplaya5:
             lines5 = self.parse_ipaddresses(data5)
             ipv6_interfaces = self.set_ipv6_interfaces(lines5)
             self.facts['all_ipv6_addresses'] = ipv6_interfaces
