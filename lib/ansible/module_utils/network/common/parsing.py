@@ -224,7 +224,7 @@ class Conditional(object):
 
     def __call__(self, data):
         value = self.get_value(dict(result=data))
-        if self.negate == False:
+        if not self.negate:
             return self.func(value)
         else:
             return not self.func(value)
