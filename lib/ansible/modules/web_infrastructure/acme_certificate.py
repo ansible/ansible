@@ -18,23 +18,23 @@ DOCUMENTATION = '''
 module: acme_certificate
 author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
-short_description: Create SSL certificates with Let's Encrypt
+short_description: Create SSL certificates with an ACME protocol endpoint
 description:
-   - "Create and renew SSL certificates with Let's Encrypt. Let's Encrypt is a
-      free, automated, and open certificate authority (CA), run for the
-      public's benefit. For details see U(https://letsencrypt.org). The current
-      implementation supports the http-01 and dns-01 challenges."
+   - "Create and renew SSL certificates with a CA supporting the ACME protocol,
+      such as Let's Encrypt (U(https://letsencrypt.org)). For details see
+      U(https://letsencrypt.org). The current implementation supports the
+      C(http-01) and C(dns-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
       module argument C(data)."
    - "Between these two tasks you have to fulfill the required steps for the
-      chosen challenge by whatever means necessary. For http-01 that means
+      chosen challenge by whatever means necessary. For C(http-01) that means
       creating the necessary challenge file on the destination webserver. For
-      dns-01 the necessary dns record has to be created.
+      C(dns-01) the necessary dns record has to be created.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8).
+      U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
       Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
@@ -48,7 +48,7 @@ requirements:
 options:
   account_key_src:
     description:
-      - "Path to a file containing the Let's Encrypt account RSA or Elliptic Curve
+      - "Path to a file containing the ACME account RSA or Elliptic Curve
          key."
       - "RSA keys can be created with C(openssl rsa ...). Elliptic curve keys can
          be created with C(openssl ecparam -genkey ...)."
@@ -57,7 +57,7 @@ options:
     aliases: [ account_key ]
   account_key_content:
     description:
-      - "Content of the Let's Encrypt account RSA or Elliptic Curve key."
+      - "Content of the ACME account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
       - "Warning: the content will be written into a temporary file, which will
@@ -74,26 +74,23 @@ options:
     description:
       - "The ACME directory to use. This is the entry point URL to access
          CA server API."
-      - "For safety reasons the default is set to the Let's Encrypt staging server.
-         This will create technically correct, but untrusted certificates."
-      - "You can find URLs of staging endpoints here:
+      - "For safety reasons the default is set to the Let's Encrypt staging
+         server (for the ACME v1 protocol). This will create technically correct,
+         but untrusted certificates."
+      - "For Let's Encrypt, all staging endpoints can be found here:
          U(https://letsencrypt.org/docs/staging-environment/)"
-      - "The production Let's Encrypt ACME v1 directory URL, which produces properly
-         trusted certificates, is U(https://acme-v01.api.letsencrypt.org/directory)."
-      - "The production Let's Encrypt ACME v2 directory URL, which produces properly
-         trusted certificates, including wildcard certificates, is
-         U(https://acme-v02.api.letsencrypt.org/directory)."
+      - "For Let's Encrypt, the production directory URL for ACME v1 is
+         U(https://acme-v01.api.letsencrypt.org/directory), and the production
+         directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
+      - "I(Warning): So far, the module has only been tested against Let's Encrypt
+         (staging and production) and against the Pebble testing server
+         (U(https://github.com/letsencrypt/Pebble))."
     default: https://acme-staging.api.letsencrypt.org/directory
   acme_version:
     description:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
-         new ACME v2 endpoint."
-      - "I(Warning): ACME v2 support is currently experimental, as the Let's Encrypt
-         production ACME v2 endpoint is still under development. The code is tested
-         against the latest staging endpoint as well as the Pebble testing server,
-         but there could be bugs which will only appear with a newer version of these
-         or with the production ACME v2 endpoint."
+         new standardized ACME v2 endpoint."
     default: 1
     choices: [1, 2]
     version_added: "2.5"
@@ -122,9 +119,10 @@ options:
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
-      - "Note: the private key used to create the CSR I(must not) be the the
+      - "I(Note): the private key used to create the CSR I(must not) be the the
          account key. This is a bad idea from a security point of view, and
-         Let's Encrypt will not accept the CSR."
+         the CA should not accept the CSR. Let's Encrypt will return an error
+         in this case."
     required: true
     aliases: ['src']
   data:
@@ -165,7 +163,7 @@ options:
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
-      - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
+      - I(Warning:) Should I(only ever) be set to C(no) for testing purposes,
         for example when testing against a local Pebble server.
     type: bool
     default: 'yes'
@@ -311,12 +309,12 @@ challenge_data:
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
     record:
       description: the full DNS record's name for the challenge
-      returned: changed and challenge is dns-01
+      returned: changed and challenge is C(dns-01)
       type: string
       sample: _acme-challenge.example.com
       version_added: "2.5"
 challenge_data_dns:
-  description: list of TXT values per DNS record, in case challenge is dns-01
+  description: list of TXT values per DNS record, in case challenge is C(dns-01)
   returned: changed
   type: dict
   version_added: "2.5"
@@ -326,7 +324,7 @@ authorizations:
   type: complex
   contains:
       authorization:
-        description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.4
+        description: ACME authorization object. See U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.4)
         returned: success
         type: dict
 order_uri:
