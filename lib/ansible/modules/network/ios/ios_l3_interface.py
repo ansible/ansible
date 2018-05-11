@@ -72,6 +72,11 @@ EXAMPLES = """
     ipv4: dhcp
     ipv6: dhcp
 
+- name: Set interface Vlan1 (SVI) IPv4 address
+  ios_l3_interface:
+    name: Vlan1
+    ipv4: 192.168.0.5/24
+
 - name: Set IP addresses on aggregate
   ios_l3_interface:
     aggregate:
