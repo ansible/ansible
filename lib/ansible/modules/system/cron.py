@@ -388,12 +388,12 @@ class CronTab(object):
 
         # failing that, attempt to find job by exact match
         if job:
-            blank_trimmed_job = " ".join(job.split())  # remove extra BLANKs inside job line
+            blank_trimmed_job = " ".join(job.split())
             for i, l in enumerate(self.lines):
-                if len(l) and l[0] == '#': continue   # for performance reasons... may be it's not necessary to continue
-
-                blank_trimmed_lin=" ".join(l.split()) # remove extra BLANKs inside current line
-                if blank_trimmed_lin == blank_trimmed_job: #  by Loreto:  09-05-2018 12.44.31
+                if len(l) and l[0] == '#': 
+                    continue
+                blank_trimmed_lin = " ".join(l.split())
+                if blank_trimmed_lin == blank_trimmed_job: 
                     # if no leading ansible header, insert one
                     if not re.match(r'%s' % self.ansible, self.lines[i - 1]):
                         self.lines.insert(i, self.do_comment(name))
