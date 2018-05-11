@@ -22,7 +22,7 @@
     port: 443
     state: started
 
-- name: get a list of VMS from vcsim   
+- name: get a list of VMS from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vmlist
@@ -48,4 +48,4 @@
 - name: make sure no changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [True]"
