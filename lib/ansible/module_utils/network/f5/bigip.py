@@ -80,15 +80,15 @@ class F5RestClient(F5BaseClient):
                 payload = {
                     'username': self.provider['user'],
                     'password': self.provider['password'],
-                    'loginProviderName': self.provider['auth_provider']
+                    'loginProviderName': self.provider['auth_provider'] or 'tmos'
                 }
                 session = iControlRestSession()
                 session.verify = self.provider['validate_certs']
                 response = session.post(url, json=payload)
 
-                if response.status_code not in [200]:
-                    raise F5ModuleError('{0} Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status_code, response.reason, response.url, response._content
+                if response.status not in [200]:
+                    raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
+                        response.status, response.reason, response.url, response._content
                     ))
 
                 session.headers['X-F5-Auth-Token'] = response.json()['token']['token']
@@ -98,7 +98,7 @@ class F5RestClient(F5BaseClient):
                 exc = ex
                 time.sleep(1)
         error = 'Unable to connect to {0} on port {1}.'.format(
-            self.params['server'], self.params['server_port']
+            self.provider['server'], self.provider['server_port']
         )
         if exc is not None:
             error += ' The reported error was "{0}".'.format(str(exc))
