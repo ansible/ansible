@@ -147,11 +147,11 @@ class CloudStackInventory(object):
         sys.exit(1)
 
     def get_host(self, name, project_id=None, domain_id=None, **kwargs):
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, fetch_list=True, **kwargs)
         data = {}
         if not hosts:
             return data
-        for host in hosts['virtualmachine']:
+        for host in hosts:
             host_name = host['displayname']
             if name == host_name:
                 data['zone'] = host['zonename']
@@ -202,10 +202,10 @@ class CloudStackInventory(object):
                         'hosts': []
                     }
 
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, fetch_list=True, **kwargs)
         if not hosts:
             return data
-        for host in hosts['virtualmachine']:
+        for host in hosts:
             host_name = host['displayname']
             data['all']['hosts'].append(host_name)
             data['_meta']['hostvars'][host_name] = {}
