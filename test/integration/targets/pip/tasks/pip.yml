@@ -232,4 +232,4 @@
 - name: test for previos task not fail
   assert:
     that:
-      - "venv_chdir_wo_virtualenv.state == 'present'"
+      - "venv_chdir_wo_virtualenv.state == 'latest'"
