@@ -164,7 +164,7 @@ def additional_parameter_handling(params):
 
     # state should default to file, but since that creates many conflicts,
     # default state to 'current' when it exists.
-    prev_state = get_state(params['path'])
+    prev_state = get_state(to_bytes(params['path'], errors='surrogate_or_strict'))
 
     if params['state'] is None:
         if prev_state != 'absent':
@@ -262,8 +262,9 @@ def execute_diff_peek(path):
     return appears_binary
 
 
-def ensure_absent(path, prev_state):
+def ensure_absent(path):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
     result = {}
 
     if prev_state != 'absent':
@@ -289,8 +290,10 @@ def ensure_absent(path, prev_state):
     return result
 
 
-def execute_touch(path, prev_state, follow):
+def execute_touch(path, follow):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
+
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
@@ -341,9 +344,11 @@ def execute_touch(path, prev_state, follow):
     return {'dest': path, 'changed': True}
 
 
-def ensure_file_attributes(path, prev_state, follow):
+def ensure_file_attributes(path, follow):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+
     if prev_state != 'file':
         if follow and prev_state == 'link':
             # follow symlink and operate on original
@@ -362,8 +367,10 @@ def ensure_file_attributes(path, prev_state, follow):
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_directory(path, prev_state, follow, recurse):
+def ensure_directory(path, follow, recurse):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
+
     if follow and prev_state == 'link':
         b_path = os.path.realpath(b_path)
         path = to_native(b_path, errors='strict')
@@ -419,9 +426,11 @@ def ensure_directory(path, prev_state, follow, recurse):
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_symlink(path, src, b_src, prev_state, follow, force):
+def ensure_symlink(path, src, b_src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
@@ -528,9 +537,11 @@ def ensure_symlink(path, src, b_src, prev_state, follow, force):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
-def ensure_hardlink(path, src, b_src, prev_state, follow, force):
+def ensure_hardlink(path, src, b_src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
@@ -656,9 +667,6 @@ def main():
     src = params['src']
     b_src = params['b_src']
 
-    b_path = to_bytes(path, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
-
     # short-circuit for diff_peek
     if params['_diff_peek'] is not None:
         appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
@@ -673,21 +681,19 @@ def main():
             basename = os.path.basename(b_src)
         if basename:
             params['path'] = path = os.path.join(path, basename)
-            b_path = to_bytes(path, errors='surrogate_or_strict')
-            prev_state = get_state(b_path)
 
     if state == 'file':
-        result = ensure_file_attributes(path, prev_state, follow)
+        result = ensure_file_attributes(path, follow)
     elif state == 'directory':
-        result = ensure_directory(path, prev_state, follow, recurse)
+        result = ensure_directory(path, follow, recurse)
     elif state == 'link':
-        result = ensure_symlink(path, src, b_src, prev_state, follow, force)
+        result = ensure_symlink(path, src, b_src, follow, force)
     elif state == 'hard':
-        result = ensure_hardlink(path, src, b_src, prev_state, follow, force)
+        result = ensure_hardlink(path, src, b_src, follow, force)
     elif state == 'touch':
-        result = execute_touch(path, prev_state, follow)
+        result = execute_touch(path, follow)
     elif state == 'absent':
-        result = ensure_absent(path, prev_state)
+        result = ensure_absent(path)
 
     module.exit_json(**result)
 
