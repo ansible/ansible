@@ -17,6 +17,17 @@
            vm_size: Standard_DS1_v2
    check_mode: yes
 
+ - name: Check there is no AKS created
+   azure_rm_aks_facts:
+     name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+   register: fact
+
+ - name: Check there is no AKS created
+   assert:
+     that:
+        - "fact.aks | length == 0"
+
  - name: Create an AKS instance
    azure_rm_aks:
      name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -40,7 +51,7 @@
    assert:
      that:
        - output.changed
-       - output.state.provisioning_state == 'Succeeded'
+       - output.provisioning_state == 'Succeeded'
 
  - name: Get AKS fact
    azure_rm_aks_facts:
@@ -51,8 +62,8 @@
  - name: Assert fact returns the created one
    assert:
       that:
-        - "fact.ansible_facts.aks | length == 1"
-        - fact.ansible_facts.aks[0].id == output.state.id
+        - "fact.aks | length == 1"
+        - fact.aks[0].id == output.id
 
  - name: Create an AKS instance (idempotent)
    azure_rm_aks:
@@ -99,7 +110,7 @@
    assert:
       that:
        - output.changed
-       - output.state.kubernetes_version == '1.8.1'
+       - output.kubernetes_version == '1.8.1'
 
  - name: Scale the AKS instance agent count from 1 to 2
    azure_rm_aks:
@@ -123,7 +134,7 @@
    assert:
      that:
        - output.changed
-       - output.state.agent_pool_profiles[0].count == 2
+       - output.agent_pool_profiles[0].count == 2
 
  - name: Delete the AKS instance
    azure_rm_aks:
@@ -158,4 +169,4 @@
  - name: Assert fact returns empty
    assert:
       that:
-        - "fact.ansible_facts.aks | length == 0"
+        - "fact.aks | length == 0"

@@ -2,21 +2,7 @@
 #
 # Copyright (c) 2018 Yuwei Zhou, <yuwzho@microsoft.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -50,6 +36,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
@@ -97,23 +84,12 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list'),
-            cloud_environment=dict(
-                type='str',
-                default='AzureCloud'
-            ),
-            auth_source=dict(
-                type='str',
-                choices=['auto', 'cli', 'credential_file', 'env', 'msi'],
-                default='auto'
-            ),
+            tags=dict(type='list')
         )
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(
-                aks=[]
-            )
+            aks=[]
         )
 
         self.name = None
@@ -131,7 +107,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['aks'] = (
+        self.results['aks'] = (
             self.get_item() if self.name
             else self.list_items()
         )
