@@ -343,7 +343,7 @@ class Config(FactsBase):
 class Interfaces(FactsBase):
 
     COMMANDS = ['display interface brief']
-display
+
     def populate(self):
         super(Interfaces, self).populate()
 
