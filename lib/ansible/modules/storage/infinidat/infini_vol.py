@@ -36,6 +36,11 @@ options:
     description:
       - Volume size in MB, GB or TB units. See examples.
     required: false
+  thin_provision:
+    description:
+      - Whether the volume should be thin provisioned
+    type: bool
+    required: false
   pool:
     description:
       - Pool that volume will reside on
@@ -51,6 +56,7 @@ EXAMPLES = '''
   infini_vol:
     name: foo
     size: 1TB
+    thin_provision: yes
     pool: bar
     state: present
     user: admin
@@ -93,7 +99,10 @@ def get_volume(module, system):
 def create_volume(module, system):
     """Create Volume"""
     if not module.check_mode:
-        volume = system.volumes.create(name=module.params['name'], pool=get_pool(module, system))
+        if module.params['thin_provision']:
+            volume = system.volumes.create(name=module.params['name'], provtype="THIN", pool=get_pool(module, system))
+        else:
+            volume = system.volumes.create(name=module.params['name'], pool=get_pool(module, system))
         if module.params['size']:
             size = Capacity(module.params['size']).roundup(64 * KiB)
             volume.update_size(size)
@@ -109,6 +118,14 @@ def update_volume(module, volume):
         if volume.get_size() != size:
             if not module.check_mode:
                 volume.update_size(size)
+            changed = True
+    if module.params['thin_provision'] is not None:
+        type = str(volume.get_provisioning())
+        if type == 'THICK' and module.params['thin_provision']:
+            volume.update_provisioning('THIN')
+            changed = True
+        if type == 'THIN' and not module.params['thin_provision']:
+            volume.update_provisioning('THICK')
             changed = True
 
     module.exit_json(changed=changed)
@@ -129,7 +146,8 @@ def main():
             name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
             pool=dict(required=True),
-            size=dict()
+            size=dict(),
+            thin_provision=dict(type='bool'),
         )
     )
 
