@@ -13,13 +13,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_broadcast_domain
-short_description: Manage NetApp Ontap broadcast domains.
+short_description: Manage NetApp ONTAP broadcast domains.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: Chris Archibald (carchi8py@gmail.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 description:
-- Modify a Ontap broadcast domain.
+- Modify a ONTAP broadcast domain.
 options:
   state:
     description:
@@ -92,7 +92,7 @@ class NetAppOntapBroadcastDomain(object):
     """
     def __init__(self):
         """
-            Initialize the Ontap Net Route class
+            Initialize the Ontap Broadcast Domain class
         """
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
@@ -244,7 +244,7 @@ class NetAppOntapBroadcastDomain(object):
 
 def main():
     """
-    Creates the NetApp Ontap Net Route object and runs the correct play task
+    Creates the NetApp Ontap Broadcast Domain Object that can be created, deleted and modified.
     """
     obj = NetAppOntapBroadcastDomain()
     obj.apply()
