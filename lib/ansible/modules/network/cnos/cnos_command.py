@@ -37,23 +37,6 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 options:
-  authorize:
-    version_added: "2.6"
-    description:
-      - Instructs the module to enter privileged mode on the remote device
-        before sending any commands.  If not specified, the device will
-        attempt to execute all commands in non-privileged mode. If the value
-        is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    type: bool
-    default: 'no'
-  auth_pass:
-    version_added: "2.6"
-    description:
-      - Specifies the password to use if required to enter privileged mode
-        on the remote device.  If I(authorize) is false, then this argument
-        does nothing. If the value is not specified in the task, the value of
-        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
   provider:
     version_added: "2.6"
     description:
@@ -151,8 +134,6 @@ vars:
     username: admin
     password: admin
     timeout: 30
-    authorize: True
-    auth_pass:
 
 ---
 - name: test contains operator
