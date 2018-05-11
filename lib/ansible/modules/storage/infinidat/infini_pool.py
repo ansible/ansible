@@ -199,8 +199,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             size=dict(),
             vsize=dict(),
-            ssd_cache=dict(type='bool', default=True)
-            compression=dict(type='bool', default=True)
+            ssd_cache=dict(type='bool', default=True),
+            compression=dict(type='bool', default=True),
         )
     )
 
