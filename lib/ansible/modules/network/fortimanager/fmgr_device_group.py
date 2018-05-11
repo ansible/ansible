@@ -250,7 +250,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        state=dict(choices=["absent", "present"], type="str"),
+        state=dict(choices=["absent", "present"], type="str", default="present"),
         grp_desc=dict(required=False, type="str"),
         grp_name=dict(required=True, type="str"),
         grp_members=dict(required=False, type="str"),
