@@ -3,9 +3,12 @@
     resource_group: "{{ resource_group }}"
   register: results
 
-- name: Set some variables
+- name: Get the amount of vms the resource group has
   set_fact:
     vms_total: "{{ results.ansible_facts.azure_virtualmachines | length }}"
+
+- name: Create random names
+  set_fact:
     vn_name: "{{ 'vn' | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
     vm1_name: "{{ 'vm1' | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
     vm2_name: "{{ 'vm2' | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
@@ -16,13 +19,24 @@
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
   register: results
-  when: vms_total == 0
+  when: vms_total | int == 0
 
 - name: Create a virtual network, if there is no one in the resource group
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
     name: "{{ vn_name }}"
-  when: vms_total == 0 and results.azure_virtualnetworks | length == 0
+    address_prefixes_cidr:
+      - "10.0.0.0/16"
+  register: vn_results
+  when: vms_total | int == 0 and results.ansible_facts.azure_virtualnetworks | length == 0
+
+- name: Create a subnet, and associate it to the new virtual network
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    virtual_network_name: "{{ vn_name }}"
+    name: default
+    address_prefix_cidr: "10.0.0.0/24"
+  when: vn_results.changed
 
 - name: Create the first vm
   azure_rm_virtualmachine:
@@ -112,3 +126,10 @@
   loop:
     - "{{ vm1_name }}"
     - "{{ vm2_name }}"
+
+- name: Delete the virtual network, if created previously
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vn_name }}"
+    state: absent
+  when: vn_results.changed
