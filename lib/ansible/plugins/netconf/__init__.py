@@ -284,8 +284,6 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         operations['supports_startup'] = True if ':startup' in capabilities else False
         operations['supports_xpath'] = True if ':xpath' in capabilities else False
         operations['supports_writeable_running'] = True if ':writable-running' in capabilities else False
-        if operations['supports_commit'] or operations['supports_lock']:
-            operations['supports_lock'] = True
 
         operations['lock_datastore'] = []
         if operations['supports_writeable_running']:
@@ -296,6 +294,9 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
 
         if operations['supports_startup']:
             operations['lock_datastore'].append('startup')
+
+        operations['supports_lock'] = True if len(operations['lock_datastore']) else False
+
         return operations
 
 # TODO Restore .xml, when ncclient supports it for all platforms
