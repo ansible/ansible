@@ -925,6 +925,10 @@ class VaultEditor:
     def create_file(self, filename, secret, vault_id=None):
         """ create a new encrypted file """
 
+        dirname = os.path.dirname(filename)
+        if not os.path.exists(dirname):
+            raise AnsibleError("%s does not exist" % dirname)
+
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.
         if os.path.isfile(filename):
