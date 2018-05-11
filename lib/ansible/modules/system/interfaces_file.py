@@ -219,7 +219,7 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "auto":
             lines.append(lineDict(line))
             currently_processing = "NONE"
-        elif words[0] == "allow-":
+        elif words[0].startswith("allow-"):
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "no-auto-down":
