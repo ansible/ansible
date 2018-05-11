@@ -78,6 +78,7 @@ from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.path import makedirs_safe
 
 try:
     from __main__ import display
@@ -927,7 +928,8 @@ class VaultEditor:
 
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
-            raise AnsibleError("%s does not exist" % dirname)
+            display.warning("%s does not exist, creating..." % dirname)
+            makedirs_safe(dirname)
 
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.
