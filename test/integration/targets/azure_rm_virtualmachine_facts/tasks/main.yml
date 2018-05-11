@@ -67,7 +67,7 @@
   azure_rm_virtualmachine_facts:
     resource_group: "{{ resource_group }}"
     tags:
-      - role:"{{ tag_value }}"
+      - "role:{{ tag_value }}"
   register: results
 
 - name: Assert that facts module returned the first vm
