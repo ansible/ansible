@@ -295,8 +295,6 @@ def compare_dictionary(want, have):
 
     Returns:
         bool:
-    :param have:
-    :return:
     """
     if want == [] and have is None:
         return None
@@ -326,6 +324,26 @@ def exit_json(module, results, client=None):
     if is_ansible_debug(module) and client:
         results['__f5debug__'] = client.api.debug_output
     module.exit_json(**results)
+
+
+def is_uuid(uuid=None):
+    """Check to see if value is an F5 UUID
+
+    UUIDs are used in BIG-IQ and in select areas of BIG-IP (notably ASM). This method
+    will check to see if the provided value matches a UUID as known by these products.
+
+    Args:
+        uuid (string): The value to check for UUID-ness
+
+    Returns:
+        bool:
+    """
+    if uuid is None:
+        return False
+    pattern = r'[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}'
+    if re.match(pattern, uuid):
+        return True
+    return False
 
 
 class Noop(object):
@@ -405,7 +423,7 @@ class F5BaseClient(object):
         elif self.params.get('auth_provider', None):
             result['auth_provider'] = self.params.get('auth_provider', None)
         else:
-            result['auth_provider'] = 'tmos'
+            result['auth_provider'] = None
 
         if provider.get('user', None):
             result['user'] = provider.get('user', None)
