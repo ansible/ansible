@@ -1324,6 +1324,17 @@ ERROR_ON_MISSING_HANDLER:
   ini:
   - {key: error_on_missing_handler, section: defaults}
   type: boolean
+FACTS_MODULES:
+  name: Gather Facts Modules
+  default:
+    - setup
+  description: "Which modules to run during a play's fact gathering stage"
+  env: [{name: ANSIBLE_FACTS_MODULES}]
+  ini:
+    - {key: facts_modules, section: defaults}
+  type: list
+  vars:
+    - name: ansible_facts_modules
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   default: False
