@@ -47,7 +47,6 @@ options:
     object_type:
         description:
             - The object type being targeted.
-        required: False
         default: 'Folder'
         choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem', 'cluster', 'ClusterComputeResource', 'DistributedVirtualPort', 'DistributedVirtualSwitch']
     recursive:
