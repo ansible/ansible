@@ -206,11 +206,12 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
                 'projectid': self.get_project(key='id'),
+                'fetch_list': True,
             }
             # Do not pass zoneid, as the instance name must be unique across zones.
             instances = self.query_api('listVirtualMachines', **args)
             if instances:
-                for v in instances['virtualmachine']:
+                for v in instances:
                     if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break

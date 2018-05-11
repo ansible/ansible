@@ -269,10 +269,11 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             return rule
 
         args = self._get_common_args()
+        args['fetch_list'] = True
         vms = self.query_api('listVirtualMachines', **args)
         to_change_ids = []
         for name in to_change:
-            for vm in vms.get('virtualmachine', []):
+            for vm in vms:
                 if vm['name'] == name:
                     to_change_ids.append(vm['id'])
                     break
