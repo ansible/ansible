@@ -163,7 +163,7 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author:
-    - "Jesse Keating (@j2sol)"
+    - "Jesse Keating (@omgjlk)"
     - "Matt Martz (@sivel)"
 notes:
   - I(exact_count) can be "destructive" if the number of running servers in
