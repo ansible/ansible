@@ -48,11 +48,12 @@ options:
         description:
             - The object type being targeted.
         default: 'Folder'
-        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem', 'cluster', 'ClusterComputeResource', 'DistributedVirtualPort', 'DistributedVirtualSwitch']
+        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem', 'cluster', 'ClusterComputeResource', 'DistributedVirtualSwitch']
     recursive:
         description:
             - Should the permissions be recursively applied.
         default: True
+        type: bool
     state:
         description:
             - Indicate desired state of the object's permission. When C(state=present), the permission will be added if it doesn't already exist.
@@ -85,6 +86,13 @@ EXAMPLES = '''
       object_name: Accounts
       state: present
 
+'''
+
+RETURN = r'''
+changed:
+    description: whether or not a change was made to the object's role
+    returned: always
+    type: bool
 '''
 
 try:
@@ -175,20 +183,20 @@ class VMwareObjectRolePermission(PyVmomi):
             if role.name == self.params['role']:
                 self.role = role
                 return
-        self.module.fail_json(msg="Specified role ({}) was not found".format(self.params['role']))
+        self.module.fail_json(msg="Specified role (%s) was not found" % self.params['role'])
 
     def get_object(self):
         try:
             object_type = getattr(vim, self.params['object_type'])
         except AttributeError:
-            self.module.fail_json(msg="Object type {} is not valid.".format(self.params['object_type']))
+            self.module.fail_json(msg="Object type %s is not valid." % self.params['object_type'])
 
         self.current_obj = find_obj(content=self.content,
             vimtype=[getattr(vim, self.params['object_type'])],
             name=self.params['object_name'])
 
         if self.current_obj is None:
-            self.module.fail_json(msg="Specified object {} of type {} was not found.".format(self.params['object_name'],
+            self.module.fail_json(msg="Specified object %s of type %s was not found." % (self.params['object_name'],
                                                                                          self.params['object_type']))
 
 
@@ -201,7 +209,6 @@ def main():
                                                         'ResourcePool', 'Datastore', 'Network',
                                                         'HostSystem', 'cluster',
                                                         'ClusterComputeResource',
-                                                        # 'DistributedVirtualPort',
                                                         'DistributedVirtualSwitch']),
                               principal=dict(type='str'),
                               group=dict(type='str'),
