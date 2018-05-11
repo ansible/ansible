@@ -66,7 +66,6 @@ class ActionModule(_ActionModule):
             if connection._play_context.timeout is None:
                 connection._play_context.timeout = connection.get_option('persistent_command_timeout')
 
-            import q;q(connection._play_context.timeout)
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
             if not socket_path:
