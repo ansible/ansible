@@ -11,6 +11,11 @@ become_flags: A string of flag(s) to pass to the privilege escalation program wh
 become_method: Which method of privilege escalation to use (such as sudo or su).
 become_user: "User that you 'become' after using privilege escalation. The remote/login user must have permissions to become this user."
 block: List of tasks in a block.
+break_play_on_batch_failed: |
+    Boolean that controls if entire play is to be broken when a batch of hosts became failed
+
+    .. seealso:: :ref:`playbooks_strategies`
+
 changed_when: "Conditional expression that overrides the task's normal 'changed' status."
 check_mode: |
     A boolean that controls if a task is executed in 'check' mode
@@ -65,7 +70,7 @@ serial: |
 
     .. seealso:: :ref:`rolling_update_batch_size`
 
-strategy: Allows you to choose the connection plugin to use for the play.
+strategy: Allows you to choose the execution strategy plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.
 until: "This keyword implies a ':term:`retries` loop' that will go on until the condition supplied here is met or we hit the :term:`retries` limit."
