@@ -30,7 +30,7 @@ DOCUMENTATION = """
         type: bool
         default: 'no'
       overwrite:
-        description: Override the password if it does already exist.
+        description: Overwrite the password if it does already exist.
         type: bool
         default: 'no'
       returnall:
