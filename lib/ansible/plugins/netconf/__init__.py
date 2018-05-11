@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
 
+import q
 try:
     from ncclient.operations import RPCError
     from ncclient.xml_ import to_xml, to_ele
@@ -124,8 +125,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         if not source:
             source = 'running'
         resp = self.m.get_config(source=source, filter=filter)
-        response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
-        return response
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
     def get(self, filter=None):
@@ -283,6 +283,19 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         operations['supports_confirm_commit'] = True if ':confirmed-commit' in capabilities else False
         operations['supports_startup'] = True if ':startup' in capabilities else False
         operations['supports_xpath'] = True if ':xpath' in capabilities else False
+        operations['supports_writeable_running'] = True if ':writable-running' in capabilities else False
+        if operations['supports_commit'] or operations['supports_lock']:
+            operations['supports_lock'] = True
+
+        operations['lock_datastore'] = []
+        if operations['supports_writeable_running']:
+            operations['lock_datastore'].append('running')
+
+        if operations['supports_commit']:
+            operations['lock_datastore'].append('candidate')
+
+        if operations['supports_startup']:
+            operations['lock_datastore'].append('startup')
         return operations
 
 # TODO Restore .xml, when ncclient supports it for all platforms

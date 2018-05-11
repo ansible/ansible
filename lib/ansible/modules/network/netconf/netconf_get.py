@@ -47,9 +47,17 @@ options:
   display:
     description:
       - Encoding scheme to use when serializing output from the device. Currently supported option
-        value is I(json) only. If the option value is I(json) it requires jxmlease to be installed
-        on control node.
-    choices: ['json']
+        value is I(json) and I(pretty).  The option I(pretty) is similar to I(xml) but is using human
+        readable format (spaces, new lines). The option I(json) will serialize the output as JSON data.
+        If the option value is I(json) it requires jxmlease to be installed on control node.
+    choices: ['json', 'pretty']
+  lock:
+    description:
+      - Instructs the module to explicitly lock the datastore specified as C(source). If no
+        I(source) is defined, the I(running) datastore will be locked. By setting the option
+        value I(True) is will always lock the datastore mentioned in C(source) option provided
+        the platform supports it else module will report error By setting the option value I(False)
+        it will never lock the C(source) datastore.
 requirements:
   - ncclient (>=v0.5.2)
   - jxmlease
@@ -76,13 +84,23 @@ EXAMPLES = """
 - name: Get configuration and state data in JSON format
   netconf_get:
     display: json
+
+- name: get schema list using subtree w/ namespaces
+  netconf_get:
+    format: json
+    filter: <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"><schemas><schema/></schemas></netconf-state>
+    lock: False
+
+- name: get schema list using xpath
+  netconf_get:
+    format: json
+    filter: /netconf-state/schemas/schema
 """
 
 RETURN = """
 stdout:
-  description: The transformed xml string containing configuration or state data
-               retrieved from the remote host, the namespace will be removed from
-               this XML string.
+  description: The raw XML string containing configuration or state data
+               received from the underlying ncclient library.
   returned: always apart from low-level errors (such as action plugin)
   type: string
   sample: '...'
@@ -93,12 +111,13 @@ stdout_lines:
   sample: ['...', '...']
 output:
   description: The set of transformed XML to JSON format from the RPC responses
-  returned: when the display format is selected as JSON apart from low-level
+               or pretty XML based on the value of C(display) option.
+  returned: when the display format is selected as JSON os pretty apart from low-level
             errors (such as action plugin)
   type: dict
   sample: {'...'}
 xml:
-  description: The raw XML string received from the underlying ncclient library.
+  description: The transformed XML string after removing namespace.
   returned: always apart from low level errors (such as action plugin)
   type: string
   sample: '...'
@@ -142,7 +161,8 @@ def main():
     argument_spec = dict(
         source=dict(default='running', choices=['running', 'candidate', 'startup']),
         filter=dict(),
-        display=dict(choices=['json'])
+        display=dict(choices=['json']),
+        lock=dict(default=False, type=bool)
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -155,6 +175,7 @@ def main():
     source = module.params['source']
     filter = module.params['filter']
     filter_type = get_filter_type(filter)
+    lock = module.params['lock']
     display = module.params['display']
 
     if source == 'candidate' and not operations.get('supports_commit', False):
@@ -166,10 +187,16 @@ def main():
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
         module.fail_json(msg='filter type xpath is not supported on this device')
 
+    if lock and not operations.get('supports_lock', False):
+        module.fail_json(msg='lock operation is not supported on this device')
+
+    if lock and source not in operations.get('lock_datastore', []):
+        module.fail_json(msg='lock operation on source %s is not supported on this device' % source)
+
     filter_spec = (filter_type, filter) if filter_type else None
 
     if source is not None:
-        if source == 'candidate':
+        if lock:
             with locked_config(module, target=source):
                 response = conn.get_config(source=source, filter=filter_spec)
         else:
@@ -191,10 +218,12 @@ def main():
             output = jxmlease.parse(transformed_resp)
         except:
             raise ValueError(response)
+    elif display == 'pretty':
+        output = tostring(response, pretty_print=True)
 
     result = {
-        'stdout': transformed_resp,
-        'xml': response,
+        'stdout': response,
+        'xml': transformed_resp,
         'output': output
     }
 
