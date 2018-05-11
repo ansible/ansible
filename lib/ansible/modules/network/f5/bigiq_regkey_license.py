@@ -18,7 +18,7 @@ module: bigiq_regkey_license
 short_description: Manages licenses in a BIG-IQ registration key pool
 description:
   - Manages licenses in a BIG-IQ registration key pool.
-version_added: "2.5"
+version_added: 2.5
 options:
   regkey_pool:
     description:
@@ -40,6 +40,7 @@ options:
       - A key that signifies that you accept the F5 EULA for this license.
       - A copy of the EULA can be found here https://askf5.f5.com/csp/article/K12902
       - This is required when C(state) is C(present).
+    type: bool
   state:
     description:
       - The state of the regkey license in the pool on the system.
@@ -91,30 +92,21 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigiq import HAS_F5SDK
     from library.module_utils.network.f5.bigiq import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigiq import HAS_F5SDK
     from ansible.module_utils.network.f5.bigiq import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
