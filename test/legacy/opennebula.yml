@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  roles:
+    - { role: one_vm, tags: test_one_vm }
+    - { role: one_image, tags: test_one_image }
+    - { role: one_image_facts, tags: test_one_image_facts }

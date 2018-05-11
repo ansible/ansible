@@ -1,0 +1,16 @@
+---
+
+- name: Remove htttp service
+  netscaler_service:
+
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: absent
+
+    name: service-http
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"

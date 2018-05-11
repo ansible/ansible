@@ -1,26 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -29,9 +18,10 @@ short_description: Create or remove a distributed vSwitch
 description:
     - Create or remove a distributed vSwitch
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author:
+- Joseph Callen (@jcpowermac)
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -44,6 +34,12 @@ options:
         description:
             - The name of the switch to create or remove
         required: True
+    switch_version:
+        description:
+            - The version of the switch to create. Can be 6.5.0, 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vcenter running vSphere 6.5
+            - Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
+        required: False
+        version_added: 2.5
     mtu:
         description:
             - The switch maximum transmission unit
@@ -86,6 +82,7 @@ EXAMPLES = '''
     password: vcenter_password
     datacenter_name: datacenter
     switch_name: dvSwitch
+    switch_version: 6.0.0
     mtu: 9000
     uplink_quantity: 2
     discovery_proto: lldp
@@ -99,17 +96,28 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (HAS_PYVMOMI,
+                                         connect_to_api,
+                                         find_datacenter_by_name,
+                                         find_dvs_by_name,
+                                         vmware_argument_spec,
+                                         wait_for_task
+                                         )
+
+
 class VMwareDVSwitch(object):
+
     def __init__(self, module):
         self.module = module
         self.dvs = None
         self.switch_name = self.module.params['switch_name']
+        self.switch_version = self.module.params['switch_version']
         self.datacenter_name = self.module.params['datacenter_name']
         self.mtu = self.module.params['mtu']
         self.uplink_quantity = self.module.params['uplink_quantity']
         self.discovery_proto = self.module.params['discovery_proto']
         self.discovery_operation = self.module.params['discovery_operation']
-        self.switch_name = self.module.params['switch_name']
         self.state = self.module.params['state']
         self.content = connect_to_api(module)
 
@@ -134,7 +142,6 @@ class VMwareDVSwitch(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def create_dvswitch(self, network_folder):
         result = None
         changed = False
@@ -151,8 +158,9 @@ class VMwareDVSwitch(object):
         spec.productInfo = vim.dvs.ProductSpec()
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
+        spec.productInfo.version = self.switch_version
 
-        for count in range(1, self.uplink_quantity+1):
+        for count in range(1, self.uplink_quantity + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
 
         task = network_folder.CreateDVS_Task(spec)
@@ -193,6 +201,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),
@@ -206,8 +215,6 @@ def main():
     vmware_dvswitch = VMwareDVSwitch(module)
     vmware_dvswitch.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

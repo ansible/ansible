@@ -1,69 +1,72 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
 module: group
-author: "Stephen Fromm (@sfromm)"
+author:
+- Stephen Fromm (@sfromm)
 version_added: "0.0.2"
 short_description: Add or remove groups
-requirements: [ groupadd, groupdel, groupmod ]
+requirements:
+- groupadd
+- groupdel
+- groupmod
 description:
     - Manage presence of groups on a host.
+    - For Windows targets, use the M(win_group) module instead.
 options:
     name:
-        required: true
         description:
             - Name of the group to manage.
+        required: true
     gid:
-        required: false
         description:
             - Optional I(GID) to set for the group.
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the group should be present or not on the remote host.
+        choices: [ absent, present ]
+        default: present
     system:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-
+        type: bool
+        default: 'no'
+    local:
+        version_added: "2.5"
+        required: false
+        default: 'no'
+        description:
+            - Forces the use of "local" command alternatives on platforms that implement it.
+              This is useful in environments that use centralized authentification when you want to manipulate the local groups.
+              I.E. it uses `lgroupadd` instead of `useradd`.
+            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+notes:
+    - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''
-# Example group command from Ansible Playbooks
-- group:
+- name: Ensure group "somegroup" exists
+  group:
     name: somegroup
     state: present
 '''
 
 import grp
-import platform
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+
 
 class Group(object):
     """
@@ -86,32 +89,45 @@ class Group(object):
         return load_platform_subclass(Group, args, kwargs)
 
     def __init__(self, module):
-        self.module     = module
-        self.state      = module.params['state']
-        self.name       = module.params['name']
-        self.gid        = module.params['gid']
-        self.system     = module.params['system']
+        self.module = module
+        self.state = module.params['state']
+        self.name = module.params['name']
+        self.gid = module.params['gid']
+        self.system = module.params['system']
+        self.local = module.params['local']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        if self.local:
+            command_name = 'lgroupdel'
+        else:
+            command_name = 'groupdel'
+        cmd = [self.module.get_bin_path(command_name, True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        if self.local:
+            command_name = 'lgroupadd'
+        else:
+            command_name = 'groupadd'
+        cmd = [self.module.get_bin_path(command_name, True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        if self.local:
+            command_name = 'lgroupmod'
+        else:
+            command_name = 'groupmod'
+        cmd = [self.module.get_bin_path(command_name, True)]
         info = self.group_info()
         for key in kwargs:
             if key == 'gid':
@@ -140,6 +156,7 @@ class Group(object):
         except KeyError:
             return False
         return info
+
 
 # ===========================================
 
@@ -190,8 +207,8 @@ class AIX(Group):
         cmd = [self.module.get_bin_path('mkgroup', True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
-                cmd.append('id='+kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+                cmd.append('id=' + kwargs[key])
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -202,13 +219,14 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('id='+kwargs[key])
+                    cmd.append('id=' + kwargs[key])
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
             return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
+
 
 # ===========================================
 
@@ -251,9 +269,17 @@ class FreeBsdGroup(Group):
             return self.execute_command(cmd)
         return (None, '', '')
 
+
+class DragonFlyBsdGroup(FreeBsdGroup):
+    """
+    This is a DragonFlyBSD Group manipulation class.
+    It inherits all behaviors from FreeBsdGroup class.
+    """
+
+    platform = 'DragonFly'
+
+
 # ===========================================
-
-
 
 class DarwinGroup(Group):
     """
@@ -272,22 +298,22 @@ class DarwinGroup(Group):
 
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += [ '-o', 'create' ]
+        cmd += ['-o', 'create']
         if self.gid is not None:
-            cmd += [ '-i', self.gid ]
-        elif 'system' in kwargs and kwargs['system'] == True:
+            cmd += ['-i', self.gid]
+        elif 'system' in kwargs and kwargs['system'] is True:
             gid = self.get_lowest_available_system_gid()
-            if gid != False:
+            if gid is not False:
                 self.gid = str(gid)
-                cmd += [ '-i', self.gid ]
-        cmd += [ '-L', self.name ]
+                cmd += ['-i', self.gid]
+        cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
     def group_del(self):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += [ '-o', 'delete' ]
-        cmd += [ '-L', self.name ]
+        cmd += ['-o', 'delete']
+        cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
@@ -295,19 +321,19 @@ class DarwinGroup(Group):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd = [self.module.get_bin_path('dseditgroup', True)]
-            cmd += [ '-o', 'edit' ]
+            cmd += ['-o', 'edit']
             if gid is not None:
-                cmd += [ '-i', gid ]
-            cmd += [ '-L', self.name ]
+                cmd += ['-i', gid]
+            cmd += ['-L', self.name]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
         return (None, '', '')
-    
+
     def get_lowest_available_system_gid(self):
         # check for lowest available system gid (< 500)
         try:
             cmd = [self.module.get_bin_path('dscl', True)]
-            cmd += [ '/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
+            cmd += ['/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
             (rc, out, err) = self.execute_command(cmd)
             lines = out.splitlines()
             highest = 0
@@ -322,6 +348,7 @@ class DarwinGroup(Group):
             return (highest + 1)
         except:
             return False
+
 
 class OpenBsdGroup(Group):
     """
@@ -352,7 +379,6 @@ class OpenBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -362,6 +388,7 @@ class OpenBsdGroup(Group):
             return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
+
 
 # ===========================================
 
@@ -394,7 +421,6 @@ class NetBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -405,17 +431,19 @@ class NetBsdGroup(Group):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, type='str'),
-            gid=dict(default=None, type='str'),
-            system=dict(default=False, type='bool'),
+        argument_spec=dict(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            name=dict(type='str', required=True),
+            gid=dict(type='str'),
+            system=dict(type='bool', default=False),
+            local=dict(type='bool', default=False)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     group = Group(module)
@@ -468,8 +496,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

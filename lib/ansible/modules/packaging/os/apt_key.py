@@ -1,130 +1,104 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: "Jayson Vantuyl & others (@jvantuyl)"
+author:
+- Jayson Vantuyl (@jvantuyl)
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:
-    - Add or remove an I(apt) key, optionally downloading it
+    - Add or remove an I(apt) key, optionally downloading it.
 notes:
-    - doesn't download the key unless it really needs it
-    - as a sanity check, downloaded key id must match the one specified
-    - best practice is to specify the key id and the url
+    - Doesn't download the key unless it really needs it.
+    - As a sanity check, downloaded key id must match the one specified.
+    - Best practice is to specify the key id and the URL.
 options:
     id:
-        required: false
-        default: none
         description:
-            - identifier of key. Including this allows check mode to correctly report the changed state.
-            - "If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead."
+            - The identifier of the key.
+            - Including this allows check mode to correctly report the changed state.
+            - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
+            - This parameter is required when C(state) is set to C(absent).
     data:
-        required: false
-        default: none
         description:
-            - keyfile contents to add to the keyring
+            - The keyfile contents to add to the keyring.
     file:
-        required: false
-        default: none
         description:
-            - path to a keyfile on the remote server to add to the keyring
+            - The path to a keyfile on the remote server to add to the keyring.
     keyring:
-        required: false
-        default: none
         description:
-            - path to specific keyring file in /etc/apt/trusted.gpg.d
+            - The full path to specific keyring file in /etc/apt/trusted.gpg.d/
         version_added: "1.3"
     url:
-        required: false
-        default: none
         description:
-            - url to retrieve key from.
+            - The URL to retrieve key from.
     keyserver:
-        version_added: "1.6"
-        required: false
-        default: none
         description:
-            - keyserver to retrieve key from.
+            - The keyserver to retrieve key from.
+        version_added: "1.6"
     state:
-        required: false
+        description:
+            - Ensures that the key is present (added) or absent (revoked).
         choices: [ absent, present ]
         default: present
-        description:
-            - used to specify if key is being added or revoked
     validate_certs:
         description:
             - If C(no), SSL certificates for the target url will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
-
 '''
 
 EXAMPLES = '''
-# Add an apt key by id from a keyserver
-- apt_key:
+- name: Add an apt key by id from a keyserver
+  apt_key:
     keyserver: keyserver.ubuntu.com
     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
-# Add an Apt signing key, uses whichever key is at the URL
-- apt_key:
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+- name: Add an Apt signing key, uses whichever key is at the URL
+  apt_key:
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
-# Add an Apt signing key, will not download if present
-- apt_key:
+- name: Add an Apt signing key, will not download if present
+  apt_key:
     id: 473041FA
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
-# Remove an Apt signing key, uses whichever key is at the URL
-- apt_key:
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
-    state: absent
-
-# Remove a Apt specific signing key, leading 0x is valid
-- apt_key:
+- name: Remove a Apt specific signing key, leading 0x is valid
+  apt_key:
     id: 0x473041FA
     state: absent
 
-# Add a key from a file on the Ansible server
-- apt_key:
-    data: "{{ lookup('file', 'apt.gpg') }}"
+# Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
+- name: Add a key from a file on the Ansible server.
+  apt_key:
+    data: "{{ lookup('file', 'apt.asc') }}"
     state: present
 
-# Add an Apt signing key to a specific keyring file
-- apt_key:
+- name: Add an Apt signing key to a specific keyring file
+  apt_key:
     id: 473041FA
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
-# Add Apt signing key on remote server to keyring
-- apt_key:
+- name: Add Apt signing key on remote server to keyring
+  apt_key:
     id: 473041FA
     file: /tmp/apt.gpg
     state: present
@@ -147,7 +121,7 @@ def find_needed_binaries(module):
 
     apt_key_bin = module.get_bin_path('apt-key', required=True)
 
-    ### FIXME: Is there a reason that gpg and grep are checked?  Is it just
+    # FIXME: Is there a reason that gpg and grep are checked?  Is it just
     # cruft or does the apt .deb package not require them (and if they're not
     # installed, /usr/bin/apt-key fails?)
     module.get_bin_path('gpg', required=True)
@@ -200,7 +174,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = to_native(out).split('\n')
     for line in lines:
-        if line.startswith("pub") or line.startswith("sub"):
+        if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
@@ -287,28 +261,28 @@ def remove_key(module, key_id, keyring):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            id=dict(required=False, default=None),
-            url=dict(required=False),
-            data=dict(required=False),
-            file=dict(required=False, type='path'),
-            key=dict(required=False),
-            keyring=dict(required=False, type='path'),
-            validate_certs=dict(default='yes', type='bool'),
-            keyserver=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'], default='present')
+            id=dict(type='str'),
+            url=dict(type='str'),
+            data=dict(type='str'),
+            file=dict(type='path'),
+            key=dict(type='str'),
+            keyring=dict(type='path'),
+            validate_certs=dict(type='bool', default=True),
+            keyserver=dict(type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('filename', 'keyserver', 'data', 'url'),),
+        mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
     )
 
-    key_id          = module.params['id']
-    url             = module.params['url']
-    data            = module.params['data']
-    filename        = module.params['file']
-    keyring         = module.params['keyring']
-    state           = module.params['state']
-    keyserver       = module.params['keyserver']
-    changed         = False
+    key_id = module.params['id']
+    url = module.params['url']
+    data = module.params['data']
+    filename = module.params['file']
+    keyring = module.params['keyring']
+    state = module.params['state']
+    keyserver = module.params['keyserver']
+    changed = False
 
     fingerprint = short_key_id = key_id
     short_format = False
@@ -330,7 +304,7 @@ def main():
         if fingerprint and fingerprint in keys:
             module.exit_json(changed=False)
         elif fingerprint and fingerprint not in keys and module.check_mode:
-            ### TODO: Someday we could go further -- write keys out to
+            # TODO: Someday we could go further -- write keys out to
             # a temporary file and then extract the key id from there via gpg
             # to decide if the key is installed or not.
             module.exit_json(changed=True)
@@ -348,7 +322,7 @@ def main():
             changed = False
             keys2 = all_keys(module, keyring, short_format)
             if len(keys) != len(keys2):
-                changed=True
+                changed = True
 
             if fingerprint and fingerprint not in keys2:
                 module.fail_json(msg="key does not seem to have been added", id=key_id)
@@ -366,7 +340,8 @@ def main():
             if remove_key(module, short_key_id, keyring):
                 keys = all_keys(module, keyring, short_format)
                 if fingerprint in keys:
-                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)", id=key_id)
+                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
+                                     id=key_id)
                 changed = True
             else:
                 # FIXME: module.fail_json or exit-json immediately at point of failure

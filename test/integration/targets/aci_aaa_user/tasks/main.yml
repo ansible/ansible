@@ -1,0 +1,175 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove any pre-existing user
+  aci_aaa_user: &user_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    aaa_user: ansible
+    state: absent
+
+
+# ADD USER
+- name: Add user (check_mode)
+  aci_aaa_user: &user_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    aaa_user: ansible
+    description: Ansible test user
+    email: ansible@ansible.lan
+    enabled: yes
+    expiration: never
+    expires: no
+    first_name: Test
+    last_name: User
+    phone: 1-234-555-678
+  check_mode: yes
+  register: cm_add_user
+
+# NOTE: Setting password is not idempotent, see #35544
+- name: Add user (normal mode)
+  aci_aaa_user:
+    <<: *user_present
+    aaa_password: 12!Ab:cD!34
+  register: nm_add_user
+
+- name: Add user again (check mode)
+  aci_aaa_user: *user_present
+  check_mode: yes
+  register: cm_add_user_again
+
+- name: Add user again (normal mode)
+  aci_aaa_user: *user_present
+  register: nm_add_user_again
+
+- name: Verify add user
+  assert:
+    that:
+    - cm_add_user.changed == nm_add_user.changed == true
+    - cm_add_user_again.changed == nm_add_user_again.changed == false
+
+
+# MODIFY USER
+- name: Modify user (check_mode)
+  aci_aaa_user: &user_changed
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    aaa_user: ansible
+    description: Ansible test user for integration tests
+    email: aci-ansible@ansible.lan
+    expiration: '2123-12-12'
+    expires: yes
+    phone: 2-345-555-678
+  check_mode: yes
+  register: cm_modify_user
+
+- name: Modify user (normal mode)
+  aci_aaa_user: *user_changed
+  register: nm_modify_user
+
+- name: Modify user again (check mode)
+  aci_aaa_user: *user_changed
+  check_mode: yes
+  register: cm_modify_user_again
+
+- name: Modify user again (normal mode)
+  aci_aaa_user: *user_changed
+  register: nm_modify_user_again
+
+- name: Verify modify user
+  assert:
+    that:
+    - cm_modify_user.changed == nm_modify_user.changed == true
+    - cm_modify_user_again.changed == nm_modify_user_again.changed == false
+
+
+# QUERY ALL USERS
+- name: Query all users (check_mode)
+  aci_aaa_user: &user_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    aaa_user: ansible
+    state: query
+  check_mode: yes
+  register: cm_query_all_users
+
+- name: Query all users (normal mode)
+  aci_aaa_user: *user_query
+  register: nm_query_all_users
+
+- name: Verify query_all_users
+  assert:
+    that:
+    - cm_query_all_users.changed == nm_query_all_users.changed == false
+    # NOTE: Order of users is not stable between calls
+    #- cm_query_all_users == nm_query_all_users
+
+
+# QUERY OUR USER
+- name: Query our user (check_mode)
+  aci_aaa_user:
+    <<: *user_query
+  check_mode: yes
+  register: cm_query_user
+
+- name: Query our user (normal mode)
+  aci_aaa_user:
+    <<: *user_query
+  register: nm_query_user
+
+- name: Verify query_user
+  assert:
+    that:
+    - cm_query_user.changed == nm_query_user.changed == false
+    - cm_query_user == nm_query_user
+
+
+# REMOVE USER
+- name: Remove user (check_mode)
+  aci_aaa_user: *user_absent
+  check_mode: yes
+  register: cm_remove_user
+
+- name: Remove user (normal mode)
+  aci_aaa_user: *user_absent
+  register: nm_remove_user
+
+- name: Remove user again (check_mode)
+  aci_aaa_user: *user_absent
+  check_mode: yes
+  register: cm_remove_user_again
+
+- name: Remove user again (normal mode)
+  aci_aaa_user: *user_absent
+  register: nm_remove_user_again
+
+- name: Verify remove_user
+  assert:
+    that:
+    - cm_remove_user.changed == nm_remove_user.changed == true
+    - cm_remove_user_again.changed == nm_remove_user_again.changed == false

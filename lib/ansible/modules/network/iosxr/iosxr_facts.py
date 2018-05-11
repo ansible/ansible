@@ -1,37 +1,33 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: iosxr_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote devices running IOS-XR
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+short_description: Collect facts from remote devices running IOS XR
 description:
   - Collects a base set of device facts from a remote device that
-    is running iosxr.  This module prepends all of the
+    is running IOS XR.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
 options:
   gather_subset:
     description:
@@ -121,43 +117,31 @@ ansible_net_neighbors:
 """
 import re
 
-import ansible.module_utils.iosxr
-from ansible.module_utils.netcli import CommandRunner, AddCommandError
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_command
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
 
-def add_command(runner, command):
-    try:
-        runner.add_command(command)
-    except AddCommandError:
-        # AddCommandError is raised for any issue adding a command to
-        # the runner.  Silently ignore the exception in this case
-        pass
-
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self):
         self.facts = dict()
-
         self.commands()
 
     def commands(self):
         raise NotImplementedError
 
+
 class Default(FactsBase):
 
     def commands(self):
-        add_command(self.runner, 'show version brief')
+        return(['show version | utility head -n 20'])
 
-    def populate(self):
-        data = self.runner.get_command('show version brief')
-
-        self.facts['version'] = self.parse_version(data)
-        self.facts['image'] = self.parse_image(data)
-        self.facts['hostname'] = self.parse_hostname(data)
+    def populate(self, results):
+        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
+        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
+        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -178,18 +162,17 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     def commands(self):
-        add_command(self.runner, 'dir /all | include Directory')
-        add_command(self.runner, 'show memory summary')
+        return(['dir /all', 'show memory summary'])
 
-    def populate(self):
-        data = self.runner.get_command('dir /all | include Directory')
-        self.facts['filesystems'] = self.parse_filesystems(data)
+    def populate(self, results):
+        self.facts['filesystems'] = self.parse_filesystems(
+            results['dir /all'])
 
-        data = self.runner.get_command('show memory summary')
-        match = re.search(r'Physical Memory (\d+)M total \((\d+)', data)
+        match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
+                          results['show memory summary'])
         if match:
-            self.facts['memtotal_mb'] = int(match[0])
-            self.facts['memfree_mb'] = int(match[1])
+            self.facts['memtotal_mb'] = match.group(1)
+            self.facts['memfree_mb'] = match.group(2)
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)', data, re.M)
@@ -198,35 +181,32 @@ class Hardware(FactsBase):
 class Config(FactsBase):
 
     def commands(self):
-        add_command(self.runner, 'show running-config')
+        return(['show running-config'])
 
-    def populate(self):
-        self.facts['config'] = self.runner.get_command('show running-config')
+    def populate(self, results):
+        self.facts['config'] = results['show running-config']
 
 
 class Interfaces(FactsBase):
 
     def commands(self):
-        add_command(self.runner, 'show interfaces')
-        add_command(self.runner, 'show ipv6 interface')
-        add_command(self.runner, 'show lldp')
-        add_command(self.runner, 'show lldp neighbors detail')
+        return(['show interfaces', 'show ipv6 interface',
+                'show lldp', 'show lldp neighbors detail'])
 
-    def populate(self):
+    def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interfaces')
-        interfaces = self.parse_interfaces(data)
+        interfaces = self.parse_interfaces(results['show interfaces'])
         self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.runner.get_command('show ipv6 interface')
+        data = results['show ipv6 interface']
         if len(data) > 0:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        if 'LLDP is not enabled' not in self.runner.get_command('show lldp'):
-            neighbors = self.runner.get_command('show lldp neighbors detail')
+        if 'LLDP is not enabled' not in results['show lldp']:
+            neighbors = results['show lldp neighbors detail']
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
     def populate_interfaces(self, interfaces):
@@ -253,6 +233,8 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
+            if key in ['No', 'RPF'] or key.startswith('IP'):
+                continue
             self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)
@@ -325,7 +307,7 @@ class Interfaces(FactsBase):
             return int(match.group(1))
 
     def parse_duplex(self, data):
-        match = re.search(r'(\w+) Duplex', data, re.M)
+        match = re.search(r'(\w+)(?: D|-d)uplex', data, re.M)
         if match:
             return match.group(1)
 
@@ -369,12 +351,18 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
     spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    spec.update(iosxr_argument_spec)
+
+    module = AnsibleModule(argument_spec=spec,
+                           supports_check_mode=True)
+
+    warnings = list()
 
     gather_subset = module.params['gather_subset']
 
@@ -412,27 +400,26 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](runner))
-
-    runner.run()
+        instances.append(FACT_SUBSETS[key]())
 
     try:
         for inst in instances:
-            inst.populate()
+            commands = inst.commands()
+            responses = run_command(module, commands)
+            results = dict(zip(commands, responses))
+            inst.populate(results)
             facts.update(inst.facts)
     except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+        module.exit_json(out=module.from_json(results))
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

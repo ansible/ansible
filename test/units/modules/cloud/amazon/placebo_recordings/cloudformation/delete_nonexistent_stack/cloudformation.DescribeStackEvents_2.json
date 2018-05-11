@@ -1,0 +1,22 @@
+{
+    "status_code": 400,
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 400,
+            "RequestId": "17d80f44-b5d0-11e7-80c4-9f499f779cdb",
+            "HTTPHeaders": {
+                "x-amzn-requestid": "17d80f44-b5d0-11e7-80c4-9f499f779cdb",
+                "date": "Fri, 20 Oct 2017 19:51:40 GMT",
+                "content-length": "301",
+                "content-type": "text/xml",
+                "connection": "close"
+            }
+        },
+        "Error": {
+            "Message": "Stack [ansible-test-nonexist] does not exist",
+            "Code": "ValidationError",
+            "Type": "Sender"
+        }
+    }
+}

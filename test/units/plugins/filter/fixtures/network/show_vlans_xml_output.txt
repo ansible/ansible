@@ -1,0 +1,34 @@
+<rpc-reply>
+    <configuration>
+            <vlans>
+                <vlan>
+                    <name>test-1</name>
+                    <vlan-id>100</vlan-id>
+                </vlan>
+                <vlan>
+                    <name>test-2</name>
+                </vlan>
+                <vlan>
+                    <name>test-3</name>
+                    <vlan-id>300</vlan-id>
+                    <description>test vlan-3</description>
+                    <interface>
+                        <name>em3.0</name>
+                    </interface>
+                </vlan>
+                <vlan inactive="inactive">
+                    <name>test-4</name>
+                    <description>test vlan-4</description>
+                    <vlan-id>400</vlan-id>
+                </vlan>
+                <vlan inactive="inactive">
+                    <name>test-5</name>
+                    <description>test vlan-5</description>
+                    <vlan-id>500</vlan-id>
+                    <interface>
+                        <name>em5.0</name>
+                    </interface>
+                </vlan>
+            </vlans>
+    </configuration>
+</rpc-reply>

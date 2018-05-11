@@ -36,4 +36,3 @@ class TestSplit(unittest.TestCase):
 
     def test_error(self):
         self.assertRaises(ValueError, shlex_split, 'a "b')
-

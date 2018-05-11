@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.parsing.utils.jsonify import jsonify
 
+
 class TestJsonify(unittest.TestCase):
     def test_jsonify_simple(self):
         self.assertEqual(jsonify(dict(a=1, b=2, c=3)), '{"a": 1, "b": 2, "c": 3}')

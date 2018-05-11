@@ -23,26 +23,17 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible.playbook import Play
+from ansible.playbook.role_include import IncludeRole
 from ansible.playbook.task import Task
-from ansible.vars import VariableManager
+from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
 
 
-def flatten_tasks(tasks):
-    for task in tasks:
-        if isinstance(task, Task):
-            yield task
-        else:
-            for t in flatten_tasks(task.block):
-                yield t
-
-
 class TestIncludeRole(unittest.TestCase):
 
     def setUp(self):
-        self.var_manager = VariableManager()
 
         self.loader = DictDataLoader({
             '/etc/ansible/roles/l1/tasks/main.yml': """
@@ -93,18 +84,32 @@ class TestIncludeRole(unittest.TestCase):
             """
         })
 
+        self.var_manager = VariableManager(loader=self.loader)
+
     def tearDown(self):
         pass
 
+    def flatten_tasks(self, tasks):
+        for task in tasks:
+            if isinstance(task, IncludeRole):
+                blocks, handlers = task.get_block_list(loader=self.loader)
+                for block in blocks:
+                    for t in self.flatten_tasks(block.block):
+                        yield t
+            elif isinstance(task, Task):
+                yield task
+            else:
+                for t in self.flatten_tasks(task.block):
+                    yield t
+
     def get_tasks_vars(self, play, tasks):
-        for task in flatten_tasks(tasks):
+        for task in self.flatten_tasks(tasks):
             role = task._role
             if not role:
                 continue
 
             yield (role.get_name(),
-                   self.var_manager.get_vars(self.loader, play=play,
-                                             task=task))
+                   self.var_manager.get_vars(play=play, task=task))
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -122,9 +127,12 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        tested = False
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
             self.assertEqual(task_vars.get('test_variable'), 'l3-main')
+        self.assertTrue(tested)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -136,15 +144,16 @@ class TestIncludeRole(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[
-                {'include_role': 'name=l3 tasks_from=alt defaults_from=alt'}
-            ]
-        ), loader=self.loader, variable_manager=self.var_manager)
+            tasks=[{'include_role': 'name=l3 tasks_from=alt defaults_from=alt'}]),
+            loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        tested = False
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
             self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
+        self.assertTrue(tested)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -153,7 +162,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with default tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 
@@ -167,7 +176,9 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        expected_roles = ['l1', 'l2', 'l3']
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            expected_roles.remove(role)
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
@@ -186,6 +197,9 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-main')
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-main')
+            else:
+                self.fail()
+        self.assertFalse(expected_roles)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -194,7 +208,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with alternative tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 
@@ -208,7 +222,9 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        expected_roles = ['l1', 'l2', 'l3']
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            expected_roles.remove(role)
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-alt')
@@ -227,3 +243,6 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-alt')
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
+            else:
+                self.fail()
+        self.assertFalse(expected_roles)

@@ -1,25 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: netapp_e_storage_system
@@ -29,53 +20,48 @@ description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
 options:
   api_username:
-    required: true
     description:
     - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
     required: true
+  api_password:
     description:
     - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
     required: true
+  api_url:
     description:
     - The url to the SANtricity WebServices Proxy or embedded REST API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
+    required: true
   validate_certs:
-    required: false
-    default: true
     description:
     - Should https certificates be validated?
+    type: bool
+    default: 'yes'
   ssid:
-    required: true
     description:
     - The ID of the array to manage. This value must be unique for each array.
-  state:
     required: true
+  state:
     description:
     - Whether the specified array should be configured on the Web Services Proxy or not.
+    required: true
     choices: ['present', 'absent']
   controller_addresses:
-    required: true
     description:
     - The list addresses for the out-of-band management adapter or the agent host. Mutually exclusive of array_wwn parameter.
+    required: true
   array_wwn:
-    required: false
     description:
-    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of controller_addresses parameter.
+    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of
+      controller_addresses parameter.
   array_password:
-    required: false
     description:
     - The management password of the array to manage, if set.
   enable_trace:
-    required: false
-    default: false
     description:
     - Enable trace logging for SYMbol calls to the storage system.
+    type: bool
+    default: 'no'
   meta_tags:
-    required: false
-    default: None
     description:
     - Optional meta tags to associate to this storage system
 author: Kevin Hulquest (@hulquest)
@@ -99,8 +85,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg: Storage system removed.
-msg: Storage system added.
+msg:
+    description: State of request
+    type: string
+    returned: always
+    sample: 'Storage system removed.'
 '''
 import json
 from datetime import datetime as dt, timedelta
@@ -108,7 +97,7 @@ from time import sleep
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -121,8 +110,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:
@@ -215,9 +203,8 @@ def main():
         (rc, resp) = request(api_url + "/storage-systems/%s" % ssid, headers=dict(Accept="application/json"),
                              url_username=api_usr, url_password=api_pwd, validate_certs=validate_certs,
                              ignore_errors=True)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Error accessing storage-system with id [%s]. Error [%s]" % (ssid, str(err)))
+    except Exception as err:
+        module.fail_json(msg="Error accessing storage-system with id [%s]. Error [%s]" % (ssid, to_native(err)))
 
     array_exists = True
     array_detail = resp
@@ -232,7 +219,9 @@ def main():
                 changed = True
             if array_detail['wwn'] != array_wwn and array_wwn is not None:
                 module.fail_json(
-                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' % (ssid, array_detail['wwn']))
+                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' %
+                        (ssid, array_detail['wwn'])
+                )
     elif rc == 404:
         if state == 'present':
             changed = True
@@ -265,10 +254,9 @@ def main():
                 try:
                     (rc, resp) = do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, request_data,
                                          array_status_timeout_sec)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     module.fail_json(msg="Failed to add storage system. Id[%s]. Request body [%s]. Error[%s]." %
-                                         (ssid, request_data, str(err)))
+                                         (ssid, request_data, to_native(err)))
 
             else:  # array exists, modify...
                 post_headers = dict(Accept="application/json")
@@ -283,10 +271,9 @@ def main():
                 try:
                     (rc, resp) = do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, post_body,
                                          array_status_timeout_sec)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     module.fail_json(msg="Failed to update storage system. Id[%s]. Request body [%s]. Error[%s]." %
-                                         (ssid, post_body, str(err)))
+                                         (ssid, post_body, to_native(err)))
 
         elif state == 'absent':
             # delete the array
@@ -294,9 +281,8 @@ def main():
                 (rc, resp) = request(api_url + "/storage-systems/%s" % ssid, method='DELETE',
                                      url_username=api_usr,
                                      url_password=api_pwd, validate_certs=validate_certs)
-            except:
-                err = get_exception()
-                module.fail_json(msg="Failed to remove storage array. Id[%s]. Error[%s]." % (ssid, str(err)))
+            except Exception as err:
+                module.fail_json(msg="Failed to remove storage array. Id[%s]. Error[%s]." % (ssid, to_native(err)))
 
             if rc == 422:
                 module.exit_json(changed=changed, msg="Storage system was not presnt.")

@@ -23,61 +23,44 @@ options:
     username:
       description:
         - The vca username or email address, if not set the environment variable C(VCA_USER) is checked for the username.
-      required: false
-      default: None
       aliases: ['user']
     password:
       description:
         - The vca password, if not set the environment variable C(VCA_PASS) is checked for the password.
-      required: false
-      default: None
-      aliases: ['pass', 'pwd']
+      aliases: ['pass', 'passwd']
     org:
       description:
         - The org to login to for creating vapp. This option is required when the C(service_type) is I(vdc).
-      required: false
-      default: None
     instance_id:
       description:
         - The instance id in a vchs environment to be used for creating the vapp.
-      required: false
-      default: None
     host:
       description:
         - The authentication host to be used when service type is vcd.
-      required: false
-      default: None
     api_version:
       description:
         - The api version to be used with the vca.
-      required: false
       default: "5.7"
     service_type:
       description:
         - The type of service we are authenticating against.
-      required: false
       default: vca
       choices: [ "vca", "vchs", "vcd" ]
     state:
       description:
         - If the object should be added or removed.
-      required: false
       default: present
       choices: [ "present", "absent" ]
     verify_certs:
       description:
         - If the certificates of the authentication is to be verified.
-      required: false
-      default: True
+      type: bool
+      default: 'yes'
     vdc_name:
       description:
         - The name of the vdc where the gateway is located.
-      required: false
-      default: None
     gateway_name:
       description:
         - The name of the gateway of the vdc where the rule should be added.
-      required: false
       default: gateway
 """
-

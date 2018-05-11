@@ -1,0 +1,54 @@
+# test for  https://github.com/ansible/ansible-modules-core/issues/527
+# clone a repo, add a tag to the same commit and try to checkout the new commit
+
+
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: checkout example repo
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+
+- name: get tags of head
+  command: git tag --contains
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: listoftags
+
+- name: make sure the tag does not yet exist
+  assert:
+    that:
+      - "'newtag' not in listoftags.stdout_lines"
+
+- name: add tag in orig repo
+  command: git tag newtag
+  args:
+    chdir: "{{ repo_dir }}/format1"
+
+- name: update copy with new tag
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{checkout_dir}}"
+    version: newtag
+  register: update_new_tag
+
+- name: get tags of new head
+  command: git tag --contains
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: listoftags
+
+- name: check new head
+  assert:
+    that:
+      - update_new_tag is not changed
+      - "'newtag' in listoftags.stdout_lines"
+
+
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"

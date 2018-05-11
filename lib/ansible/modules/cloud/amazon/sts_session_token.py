@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,19 +22,15 @@ author: Victor Costan (@pwnall)
 options:
   duration_seconds:
     description:
-      - The duration, in seconds, of the session token. See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters for acceptable and default values.
-    required: false
-    default: null
+      - The duration, in seconds, of the session token.
+        See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters
+        for acceptable and default values.
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the GetSessionToken call.
-    required: false
-    default: null
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the user requires MFA.
-    required: false
-    default: null
 notes:
   - In order to use the session token in a following playbook task you must pass the I(access_key), I(access_secret) and I(access_token).
 extends_documentation_fragment:
@@ -75,7 +64,7 @@ EXAMPLES = '''
 
 # Get a session token (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
 sts_session_token:
-  duration: 3600
+  duration_seconds: 3600
 register: session_credentials
 
 # Use the session token obtained above to tag an instance in account 123456789012
@@ -113,6 +102,7 @@ def normalize_credentials(credentials):
         'expiration': expiration
     }
 
+
 def get_session_token(connection, module):
     duration_seconds = module.params.get('duration_seconds')
     mfa_serial_number = module.params.get('mfa_serial_number')
@@ -136,13 +126,14 @@ def get_session_token(connection, module):
     credentials = normalize_credentials(response.get('Credentials', {}))
     module.exit_json(changed=changed, sts_creds=credentials)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            duration_seconds = dict(required=False, default=None, type='int'),
-            mfa_serial_number = dict(required=False, default=None),
-            mfa_token = dict(required=False, default=None)
+            duration_seconds=dict(required=False, default=None, type='int'),
+            mfa_serial_number=dict(required=False, default=None),
+            mfa_token=dict(required=False, default=None)
         )
     )
 

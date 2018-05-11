@@ -1,0 +1,41 @@
+---
+- debug: msg="START junos netconf/net_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful
+
+- name: setup remove interface
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create interface using platform agnostic module
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in config.xml"
+      - "'<description>test-interface</description>' in config.xml"
+
+- name: teardown remove interface
+  net_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_interface.yaml on connection={{ ansible_connection }}"

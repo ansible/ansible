@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -109,125 +98,216 @@ EXAMPLES = '''
     name: topicExchange
     destination: topicExchange
     type: exchange
-    routing_key: *.info
+    routing_key: '*.info'
 '''
 
-import requests
-import urllib
 import json
+
+try:
+    import requests
+
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+from ansible.module_utils.basic import AnsibleModule
+
+
+class RabbitMqBinding(object):
+    def __init__(self, module):
+        """
+        :param module:
+        """
+        self.module = module
+        self.name = self.module.params['name']
+        self.login_user = self.module.params['login_user']
+        self.login_password = self.module.params['login_password']
+        self.login_host = self.module.params['login_host']
+        self.login_port = self.module.params['login_port']
+        self.vhost = self.module.params['vhost']
+        self.destination = self.module.params['destination']
+        self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
+        self.routing_key = self.module.params['routing_key']
+        self.arguments = self.module.params['arguments']
+        self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
+                                                             self.login_port)
+        self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
+                                                      urllib_parse.quote(self.vhost),
+                                                      urllib_parse.quote(self.name),
+                                                      self.destination_type,
+                                                      self.destination,
+                                                      self.routing_key)
+        self.result = {
+            'changed': False,
+            'name': self.module.params['name'],
+        }
+        self.authentication = (
+            self.login_user,
+            self.login_password
+        )
+        self.request = requests
+        self.http_check_states = {
+            200: True,
+            404: False,
+        }
+        self.http_actionable_states = {
+            201: True,
+            204: True,
+        }
+        self.api_result = self.request.get(self.url, auth=self.authentication)
+
+    def run(self):
+        """
+        :return:
+        """
+        self.check_presence()
+        self.check_mode()
+        self.action_mode()
+
+    def check_presence(self):
+        """
+        :return:
+        """
+        if self.check_should_throw_fail():
+            self.fail()
+
+    def change_required(self):
+        """
+        :return:
+        """
+        if self.module.params['state'] == 'present':
+            if not self.is_present():
+                return True
+        return False
+
+    def is_present(self):
+        """
+        :return:
+        """
+        return self.http_check_states.get(self.api_result.status_code, False)
+
+    def check_mode(self):
+        """
+        :return:
+        """
+        if self.module.check_mode:
+            result = self.result
+            result['changed'] = self.change_required()
+            result['details'] = self.api_result.json() if self.is_present() else self.api_result.text
+            result['arguments'] = self.module.params['arguments']
+            self.module.exit_json(**result)
+
+    def check_reply_is_correct(self):
+        """
+        :return:
+        """
+        if self.api_result.status_code in self.http_check_states:
+            return True
+        return False
+
+    def check_should_throw_fail(self):
+        """
+        :return:
+        """
+        if not self.is_present():
+            if not self.check_reply_is_correct():
+                return True
+        return False
+
+    def action_mode(self):
+        """
+        :return:
+        """
+        result = self.result
+        if self.change_required():
+            if self.module.params['state'] == 'present':
+                self.create()
+            if self.module.params['state'] == 'absent':
+                self.remove()
+            if self.action_should_throw_fail():
+                self.fail()
+            result['changed'] = True
+            result['destination'] = self.module.params['destination']
+            self.module.exit_json(**result)
+        else:
+            result['changed'] = False
+            self.module.exit_json(**result)
+
+    def action_reply_is_correct(self):
+        """
+        :return:
+        """
+        if self.api_result.status_code in self.http_actionable_states:
+            return True
+        return False
+
+    def action_should_throw_fail(self):
+        """
+        :return:
+        """
+        if not self.action_reply_is_correct():
+            return True
+        return False
+
+    def create(self):
+        """
+        :return:
+        """
+        self.url = '{0}/{1}/e/{2}/{3}/{4}'.format(self.base_url,
+                                                  urllib_parse.quote(self.vhost),
+                                                  urllib_parse.quote(self.name),
+                                                  self.destination_type,
+                                                  urllib_parse.quote(self.destination))
+        self.api_result = self.request.post(self.url,
+                                            auth=self.authentication,
+                                            headers={"content-type": "application/json"},
+                                            data=json.dumps({
+                                                'routing_key': self.routing_key,
+                                                'arguments': self.arguments
+                                            }))
+
+    def remove(self):
+        """
+        :return:
+        """
+        self.api_result = self.request.delete(self.url, auth=self.authentication)
+
+    def fail(self):
+        """
+        :return:
+        """
+        self.module.fail_json(
+            msg="Unexpected reply from API",
+            status=self.api_result.status_code,
+            details=self.api_result.text
+        )
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent'], type='str'),
-            name = dict(required=True, aliases=[ "src", "source" ], type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            vhost = dict(default='/', type='str'),
-            destination = dict(required=True, aliases=[ "dst", "dest"], type='str'),
-            destination_type = dict(required=True, aliases=[ "type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
-            routing_key = dict(default='#', type='str'),
-            arguments = dict(default=dict(), type='dict')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, aliases=["src", "source"], type='str'),
+            login_user=dict(default='guest', type='str'),
+            login_password=dict(default='guest', type='str', no_log=True),
+            login_host=dict(default='localhost', type='str'),
+            login_port=dict(default='15672', type='str'),
+            vhost=dict(default='/', type='str'),
+            destination=dict(required=True, aliases=["dst", "dest"], type='str'),
+            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"],
+                                  type='str'),
+            routing_key=dict(default='#', type='str'),
+            arguments=dict(default=dict(), type='dict')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
-    if module.params['destination_type'] == "queue":
-        dest_type="q"
-    else:
-        dest_type="e"
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
-    if module.params['routing_key'] == "":
-        props = "~"
-    else:
-        props = urllib.quote(module.params['routing_key'],'')
+    RabbitMqBinding(module).run()
 
-    url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
-        module.params['login_host'],
-        module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
-        urllib.quote(module.params['name'],''),
-        dest_type,
-        urllib.quote(module.params['destination'],''),
-        props
-    )
-
-    # Check if exchange already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
-
-    if r.status_code==200:
-        binding_exists = True
-        response = r.json()
-    elif r.status_code==404:
-        binding_exists = False
-        response = r.text
-    else:
-        module.fail_json(
-            msg = "Invalid response from RESTAPI when trying to check if exchange exists",
-            details = r.text
-        )
-
-    if module.params['state']=='present':
-        change_required = not binding_exists
-    else:
-        change_required = binding_exists
-
-    # Exit if check_mode
-    if module.check_mode:
-        module.exit_json(
-            changed= change_required,
-            name = module.params['name'],
-            details = response,
-            arguments = module.params['arguments']
-        )
-
-    # Do changes
-    if change_required:
-        if module.params['state'] == 'present':
-            url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s" % (
-                module.params['login_host'],
-                module.params['login_port'],
-                urllib.quote(module.params['vhost'],''),
-                urllib.quote(module.params['name'],''),
-                dest_type,
-                urllib.quote(module.params['destination'],'')
-            )
-
-            r = requests.post(
-                    url,
-                    auth = (module.params['login_user'],module.params['login_password']),
-                    headers = { "content-type": "application/json"},
-                    data = json.dumps({
-                        "routing_key": module.params['routing_key'],
-                        "arguments": module.params['arguments']
-                    })
-                )
-        elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
-
-        if r.status_code == 204 or r.status_code == 201:
-            module.exit_json(
-                changed = True,
-                name = module.params['name'],
-                destination = module.params['destination']
-            )
-        else:
-            module.fail_json(
-                msg = "Error creating exchange",
-                status = r.status_code,
-                details = r.text
-            )
-
-    else:
-        module.exit_json(
-            changed = False,
-            name = module.params['name']
-        )
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

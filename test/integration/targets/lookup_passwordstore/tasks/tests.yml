@@ -1,0 +1,36 @@
+- name: "check name of gpg2 binary"
+  command: which gpg2
+  register: gpg2_check
+  ignore_errors: true
+
+- name: "set gpg2 binary name"
+  set_fact:
+    gpg2_bin: '{{ "gpg2" if gpg2_check is successful else "gpg" }}'
+
+- name: "remove previous password files and directory"
+  file: dest={{item}} state=absent
+  with_items:
+  - "~/.gnupg"
+  - "~/.password-store"
+
+- name: "import gpg private key"
+  shell: echo "{{passwordstore_privkey}}" | {{ gpg2_bin }} --import --allow-secret-key-import -
+
+- name: "trust gpg key"
+  shell: echo "A2A6052A09617FFC935644F1059AA7454B2652D1:6:" | {{ gpg2_bin }} --import-ownertrust
+
+- name: initialise passwordstore
+  command: pass init passwordstore-lookup
+
+- name: create a password
+  set_fact:
+    newpass: "{{ lookup('passwordstore', 'test-pass length=8 create=yes') }}"
+
+- name: fetch password from an existing file
+  set_fact:
+    readpass: "{{ lookup('passwordstore', 'test-pass') }}"
+
+- name: verify password
+  assert:
+    that:
+        - "readpass == newpass"

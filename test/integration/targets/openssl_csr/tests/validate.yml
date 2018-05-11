@@ -1,0 +1,51 @@
+- name: Validate CSR (test - privatekey modulus)
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
+  register: privatekey_modulus
+
+- name: Validate CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr.csr -nameopt oneline,-space_eq"
+  register: csr_cn
+
+- name: Validate CSR (test - csr modulus)
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr.csr'
+  register: csr_modulus
+
+- name: Validate CSR (assert)
+  assert:
+    that:
+      - csr_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_modulus.stdout == privatekey_modulus.stdout
+
+- name: Validate CSR_KU_XKU (assert idempotency)
+  assert:
+    that:
+      - csr_ku_xku is not changed
+
+- name: Validate old_API CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr_oldapi.csr -nameopt oneline,-space_eq"
+  register: csr_oldapi_cn
+
+- name: Validate old_API CSR (test - csr modulus)
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr_oldapi.csr'
+  register: csr_oldapi_modulus
+
+- name: Validate old_API CSR (assert)
+  assert:
+    that:
+      - csr_oldapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_oldapi_modulus.stdout == privatekey_modulus.stdout
+
+- name: Validate OCSP Must Staple CSR (test - everything)
+  shell: "openssl req -noout -in {{ output_dir }}/csr_ocsp.csr -text"
+  register: csr_ocsp
+
+- name: Validate OCSP Must Staple CSR (assert)
+  assert:
+    that:
+      - "(csr_ocsp.stdout is search('\\s+TLS Feature:\\s*\\n\\s+status_request\\s+')) or
+         (csr_ocsp.stdout is search('\\s+1.3.6.1.5.5.7.1.24:\\s*\\n\\s+0\\.\\.\\.\\.\\s+'))"
+
+- name: Validate OCSP Must Staple CSR (assert idempotency)
+  assert:
+    that:
+      - csr_ocsp_idempotency is not changed

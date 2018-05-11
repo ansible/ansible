@@ -1,29 +1,16 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -41,7 +28,6 @@ options:
           then I(ram), I(vcpus), and I(disk) are all required. There are no
           default values for those parameters.
      choices: ['present', 'absent']
-     required: false
      default: present
    name:
      description:
@@ -50,44 +36,41 @@ options:
    ram:
      description:
         - Amount of memory, in MB.
-     required: false
-     default: null
    vcpus:
      description:
         - Number of virtual CPUs.
-     required: false
-     default: null
    disk:
      description:
         - Size of local disk, in GB.
-     required: false
-     default: null
    ephemeral:
      description:
         - Ephemeral space size, in GB.
-     required: false
      default: 0
    swap:
      description:
         - Swap space size, in MB.
-     required: false
      default: 0
    rxtx_factor:
      description:
         - RX/TX factor.
-     required: false
      default: 1.0
    is_public:
      description:
         - Make flavor accessible to the public.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    flavorid:
      description:
         - ID for the flavor. This is optional as a unique UUID will be
           assigned if a value is not specified.
-     required: false
      default: "auto"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+   extra_specs:
+     description:
+        - Metadata dictionary
+     version_added: "2.3"
 requirements: ["shade"]
 '''
 
@@ -107,13 +90,25 @@ EXAMPLES = '''
     cloud: mycloud
     state: absent
     name: tiny
+
+- name: Create flavor with metadata
+  os_nova_flavor:
+    cloud: mycloud
+    state: present
+    name: tiny
+    ram: 1024
+    vcpus: 1
+    disk: 10
+    extra_specs:
+      "quota:disk_read_iops_sec": 5000
+      "aggregate_instance_extra_specs:pinned": false
 '''
 
 RETURN = '''
 flavor:
     description: Dictionary describing the flavor.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.
@@ -155,7 +150,17 @@ flavor:
             returned: success
             type: bool
             sample: true
+        extra_specs:
+            description: Flavor metadata
+            returned: success
+            type: dict
+            sample:
+                "quota:disk_read_iops_sec": 5000
+                "aggregate_instance_extra_specs:pinned": false
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(module, flavor):
@@ -169,20 +174,21 @@ def _system_state_change(module, flavor):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        state        = dict(required=False, default='present',
-                            choices=['absent', 'present']),
-        name         = dict(required=False),
+        state=dict(required=False, default='present',
+                   choices=['absent', 'present']),
+        name=dict(required=False),
 
         # required when state is 'present'
-        ram          = dict(required=False, type='int'),
-        vcpus        = dict(required=False, type='int'),
-        disk         = dict(required=False, type='int'),
+        ram=dict(required=False, type='int'),
+        vcpus=dict(required=False, type='int'),
+        disk=dict(required=False, type='int'),
 
-        ephemeral    = dict(required=False, default=0, type='int'),
-        swap         = dict(required=False, default=0, type='int'),
-        rxtx_factor  = dict(required=False, default=1.0, type='float'),
-        is_public    = dict(required=False, default=True, type='bool'),
-        flavorid     = dict(required=False, default="auto"),
+        ephemeral=dict(required=False, default=0, type='int'),
+        swap=dict(required=False, default=0, type='int'),
+        rxtx_factor=dict(required=False, default=1.0, type='float'),
+        is_public=dict(required=False, default=True, type='bool'),
+        flavorid=dict(required=False, default="auto"),
+        extra_specs=dict(required=False, default=None, type='dict'),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -194,14 +200,12 @@ def main():
         ],
         **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     name = module.params['name']
+    extra_specs = module.params['extra_specs'] or {}
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         flavor = cloud.get_flavor(name)
 
         if module.check_mode:
@@ -220,9 +224,21 @@ def main():
                     rxtx_factor=module.params['rxtx_factor'],
                     is_public=module.params['is_public']
                 )
-                changed=True
+                changed = True
             else:
-                changed=False
+                changed = False
+
+            old_extra_specs = flavor['extra_specs']
+            new_extra_specs = dict([(k, str(v)) for k, v in extra_specs.items()])
+            unset_keys = set(flavor['extra_specs'].keys()) - set(extra_specs.keys())
+
+            if unset_keys:
+                cloud.unset_flavor_specs(flavor['id'], unset_keys)
+
+            if old_extra_specs != new_extra_specs:
+                cloud.set_flavor_specs(flavor['id'], extra_specs)
+
+            changed = (changed or old_extra_specs != new_extra_specs)
 
             module.exit_json(changed=changed,
                              flavor=flavor,
@@ -238,8 +254,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

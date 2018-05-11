@@ -19,40 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_host_pm
-short_description: Module to manage power management of hosts in oVirt
+short_description: Module to manage power management of hosts in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage power management of hosts in oVirt."
+    - "Module to manage power management of hosts in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the host to manage."
+            - "Name of the host to manage."
         required: true
         aliases: ['host']
     state:
@@ -71,7 +54,7 @@ options:
             - "Password of the user specified in C(username) parameter."
     type:
         description:
-            - "Type of the power management. oVirt predefined values are I(drac5), I(ipmilan), I(rsa),
+            - "Type of the power management. oVirt/RHV predefined values are I(drac5), I(ipmilan), I(rsa),
                I(bladecenter), I(alom), I(apc), I(apc_snmp), I(eps), I(wti), I(rsb), I(cisco_ucs),
                I(drac7), I(hpblade), I(ilo), I(ilo2), I(ilo3), I(ilo4), I(ilo_ssh),
                but user can have defined custom type."
@@ -92,6 +75,7 @@ options:
     order:
         description:
             - "Integer value specifying, by default it's added at the end."
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -126,10 +110,28 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 agent:
-    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
+    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/agent."
     returned: On success if agent is found.
+    type: dict
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class HostModule(BaseModule):
@@ -170,7 +172,8 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
-            equal(self._module.params.get('type'), entity.type)
+            equal(self._module.params.get('type'), entity.type) and
+            equal(self._module.params.get('order'), entity.order)
         )
 
 
@@ -183,9 +186,10 @@ def main():
         name=dict(default=None, required=True, aliases=['host']),
         address=dict(default=None),
         username=dict(default=None),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         type=dict(default=None),
         port=dict(default=None, type='int'),
+        order=dict(default=None, type='int'),
         slot=dict(default=None),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),
@@ -197,7 +201,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         host = search_by_name(hosts_service, module.params['name'])
         fence_agents_service = hosts_service.host_service(host.id).fence_agents_service()
@@ -238,7 +243,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

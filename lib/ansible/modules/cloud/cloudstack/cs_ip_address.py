@@ -1,36 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Darren Worrall <darren@iweb.co.uk>
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, Darren Worrall <darren@iweb.co.uk>
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: cs_ip_address
 short_description: Manages public IP address associations on Apache CloudStack based clouds.
 description:
-    - Acquires and associates a public IP to an account or project. Due to API
-      limitations this is not an idempotent call, so be sure to only
-      conditionally call this when C(state=present)
+    - Acquires and associates a public IP to an account or project.
+    - Due to API limitations this is not an idempotent call, so be sure to only
+      conditionally call this when C(state=present).
+    - Tagging the IP address can also make the call idempotent.
 version_added: '2.0'
 author:
     - "Darren Worrall (@dazworrall)"
@@ -39,62 +27,77 @@ options:
   ip_address:
     description:
       - Public IP address.
-      - Required if C(state=absent)
-    required: false
-    default: null
+      - Required if C(state=absent) and C(tags) is not set
   domain:
     description:
       - Domain the IP address is related to.
-    required: false
-    default: null
   network:
     description:
       - Network the IP address is related to.
-    required: false
-    default: null
   vpc:
     description:
       - VPC the IP address is related to.
-    required: false
-    default: null
     version_added: "2.2"
   account:
     description:
       - Account the IP address is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the IP address is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the IP address is in.
       - If not set, default zone is used.
-    required: false
-    default: null
+  state:
+    description:
+      - State of the IP address.
+    default: present
+    choices: [ present, absent ]
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - Tags can be used as an unique identifier for the IP Addresses.
+      - In this case, at least one of them must be unique to ensure idempontency.
+    aliases: [ 'tag' ]
+    version_added: "2.6"
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Associate an IP address conditonally
-- local_action:
+- name: Associate an IP address conditonally
+  local_action:
     module: cs_ip_address
     network: My Network
   register: ip_address
   when: instance.public_ip is undefined
 
-# Disassociate an IP address
-- local_action:
+- name: Disassociate an IP address
+  local_action:
     module: cs_ip_address
     ip_address: 1.2.3.4
     state: absent
+
+- name: Associate an IP address with tags
+  local_action:
+    module: cs_ip_address
+    network: My Network
+    tags:
+      - key: myCustomID
+      - value: 5510c31a-416e-11e8-9013-02000a6b00bf
+  register: ip_address
+
+- name: Disassociate an IP address with tags
+  local_action:
+    module: cs_ip_address
+    state: absent
+    tags:
+      - key: myCustomID
+      - value: 5510c31a-416e-11e8-9013-02000a6b00bf
 '''
 
 RETURN = '''
@@ -129,10 +132,20 @@ domain:
   returned: success
   type: string
   sample: example domain
+tags:
+  description: List of resource tags associated with the IP address.
+  returned: success
+  type: dict
+  sample: '[ { "key": "myCustomID", "value": "5510c31a-416e-11e8-9013-02000a6b00bf" } ]'
+  version_added: "2.6"
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackIPAddress(AnsibleCloudStack):
@@ -146,8 +159,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
     def get_ip_address(self, key=None):
         if self.ip_address:
             return self._get_by_key(key, self.ip_address)
-
-        ip_address = self.module.params.get('ip_address')
         args = {
             'ipaddress': self.module.params.get('ip_address'),
             'account': self.get_account(key='name'),
@@ -158,10 +169,27 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if ip_addresses:
-            self.ip_address = ip_addresses['publicipaddress'][0]
+            tags = self.module.params.get('tags')
+            for ip_addr in ip_addresses['publicipaddress']:
+                if ip_addr['ipaddress'] == args['ipaddress'] != '':
+                    self.ip_address = ip_addresses['publicipaddress'][0]
+                elif tags:
+                    if sorted([tag for tag in tags if tag in ip_addr['tags']]) == sorted(tags):
+                        self.ip_address = ip_addr
         return self._get_by_key(key, self.ip_address)
 
-    def associate_ip_address(self):
+    def present_ip_address(self):
+        ip_address = self.get_ip_address()
+
+        if not ip_address:
+            ip_address = self.associate_ip_address(ip_address)
+
+        if ip_address:
+            ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
+
+        return ip_address
+
+    def associate_ip_address(self, ip_address):
         self.result['changed'] = True
         args = {
             'account': self.get_account(key='name'),
@@ -169,12 +197,11 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'networkid': self.get_network(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id'),
         }
         ip_address = None
         if not self.module.check_mode:
             res = self.cs.associateIpAddress(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -190,9 +217,11 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
         self.result['changed'] = True
         if not self.module.check_mode:
+            self.module.params['tags'] = []
+            ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
+
             res = self.cs.disassociateIpAddress(id=ip_address['id'])
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 self.poll_job(res, 'ipaddress')
@@ -202,43 +231,38 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        ip_address = dict(required=False),
-        state = dict(choices=['present', 'absent'], default='present'),
-        vpc = dict(default=None),
-        network = dict(default=None),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
+        ip_address=dict(required=False),
+        state=dict(choices=['present', 'absent'], default='present'),
+        vpc=dict(),
+        network=dict(),
+        zone=dict(),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        tags=dict(type='list', aliases=['tag']),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
         required_if=[
-            ('state', 'absent', ['ip_address']),
+            ('state', 'absent', ['ip_address', 'tags'], True),
         ],
         supports_check_mode=True
     )
 
-    try:
-        acs_ip_address = AnsibleCloudStackIPAddress(module)
+    acs_ip_address = AnsibleCloudStackIPAddress(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            ip_address = acs_ip_address.disassociate_ip_address()
-        else:
-            ip_address = acs_ip_address.associate_ip_address()
+    state = module.params.get('state')
+    if state in ['absent']:
+        ip_address = acs_ip_address.disassociate_ip_address()
+    else:
+        ip_address = acs_ip_address.present_ip_address()
 
-        result = acs_ip_address.get_result(ip_address)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_ip_address.get_result(ip_address)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

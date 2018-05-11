@@ -1,27 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2013, Paul Durivage <paul.durivage@rackspace.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This is a DOCUMENTATION stub specific to this module, it extends
-# a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,15 +24,12 @@ options:
     description:
       - Optionally clear existing metadata when applying metadata to existing objects.
         Selecting this option is only appropriate when setting type=meta
-    choices:
-      - "yes"
-      - "no"
-    default: "no"
+    type: bool
+    default: 'no'
   container:
     description:
       - The container to use for file object operations.
     required: true
-    default: null
   dest:
     description:
       - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder".
@@ -53,11 +39,9 @@ options:
     description:
       - Used to set an expiration on a file or folder uploaded to Cloud Files.
         Requires an integer, specifying expiration in seconds
-    default: null
   meta:
     description:
       - A hash of items to set as metadata values on an uploaded file or folder
-    default: null
   method:
     description:
       - The method of operation to be performed.  For example, put to upload files
@@ -73,16 +57,13 @@ options:
       - Source from which to upload files.  Used to specify a remote object as a source for
         an operation, i.e. a file name, "file1", or a comma-separated list of remote objects,
         "file1,file2,file17".  src and dest are mutually exclusive on remote-only object operations
-    default: null
   structure:
     description:
       - Used to specify whether to maintain nested directory structure when downloading objects
         from Cloud Files.  Setting to false downloads the contents of a container to a single,
         flat directory
-    choices:
-      - yes
-      - "no"
-    default: "yes"
+    type: bool
+    default: 'yes'
   state:
     description:
       - Indicate desired state of the resource
@@ -97,7 +78,9 @@ options:
       - meta
     default: file
 author: "Paul Durivage (@angstwad)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -231,11 +214,17 @@ EXAMPLES = '''
         type: meta
 '''
 
+import os
+
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rax import rax_argument_spec, rax_required_together, setup_rax_module
+
 
 EXIT_DICT = dict(success=False)
 META_PREFIX = 'x-object-meta-'
@@ -616,10 +605,6 @@ def main():
 
     setup_rax_module(module, pyrax)
     cloudfiles(module, container, src, dest, method, typ, meta, clear_meta, structure, expires)
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
 
 
 if __name__ == '__main__':

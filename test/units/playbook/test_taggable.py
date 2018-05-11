@@ -23,6 +23,7 @@ from ansible.compat.tests import unittest
 from ansible.playbook.taggable import Taggable
 from units.mock.loader import DictDataLoader
 
+
 class TaggableTestObj(Taggable):
 
     def __init__(self):

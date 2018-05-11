@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -58,9 +49,9 @@ options:
               Modify was added in version 2.1
     autostart:
         required: false
-        choices: ["yes", "no"]
+        type: bool
         description:
-            - Specify if a given storage pool should be started automatically on system boot.
+            - Specify if a given network should be started automatically on system boot.
     uri:
         required: false
         default: "qemu:///system"
@@ -140,11 +131,6 @@ EXAMPLES = '''
     name: br_nat
 '''
 
-VIRT_FAILED = 1
-VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
-
-
 try:
     import libvirt
 except ImportError:
@@ -160,30 +146,36 @@ else:
     HAS_XML = True
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
+
+VIRT_FAILED = 1
+VIRT_SUCCESS = 0
+VIRT_UNAVAILABLE = 2
 
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop',
                   'undefine', 'destroy', 'get_xml', 'define',
-                  'modify' ]
-HOST_COMMANDS = [ 'list_nets', 'facts', 'info' ]
+                  'modify']
+HOST_COMMANDS = ['list_nets', 'facts', 'info']
 ALL_COMMANDS.extend(ENTRY_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
 
 ENTRY_STATE_ACTIVE_MAP = {
-    0 : "inactive",
-    1 : "active"
+    0: "inactive",
+    1: "active"
 }
 
 ENTRY_STATE_AUTOSTART_MAP = {
-    0 : "no",
-    1 : "yes"
+    0: "no",
+    1: "yes"
 }
 
 ENTRY_STATE_PERSISTENT_MAP = {
-    0 : "no",
-    1 : "yes"
+    0: "no",
+    1: "yes"
 }
+
 
 class EntryNotFound(Exception):
     pass
@@ -254,13 +246,13 @@ class LibvirtConnection(object):
             if host is None:
                 # add the host
                 if not self.module.check_mode:
-                    res = network.update (libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
-                        libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
-                        -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                    res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                                         libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                                         -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
                 else:
                     # pretend there was a change
                     res = 0
-                if res == 0: 
+                if res == 0:
                     return True
             else:
                 # change the host
@@ -268,16 +260,16 @@ class LibvirtConnection(object):
                     return False
                 else:
                     if not self.module.check_mode:
-                        res = network.update (libvirt.VIR_NETWORK_UPDATE_COMMAND_MODIFY,
-                            libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
-                            -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                        res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_MODIFY,
+                                             libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                                             -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
                     else:
                         # pretend there was a change
                         res = 0
                     if res == 0:
                         return True
             #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet '+unicode(xml))
+            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -295,18 +287,18 @@ class LibvirtConnection(object):
 
     def get_status2(self, entry):
         state = entry.isActive()
-        return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+        return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
 
     def get_status(self, entryid):
         if not self.module.check_mode:
             state = self.find_entry(entryid).isActive()
-            return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+            return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
         else:
             try:
                 state = self.find_entry(entryid).isActive()
-                return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+                return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
             except:
-                return ENTRY_STATE_ACTIVE_MAP.get("inactive","unknown")
+                return ENTRY_STATE_ACTIVE_MAP.get("inactive", "unknown")
 
     def get_uuid(self, entryid):
         return self.find_entry(entryid).UUIDString()
@@ -340,7 +332,7 @@ class LibvirtConnection(object):
 
     def get_autostart(self, entryid):
         state = self.find_entry(entryid).autostart()
-        return ENTRY_STATE_AUTOSTART_MAP.get(state,"unknown")
+        return ENTRY_STATE_AUTOSTART_MAP.get(state, "unknown")
 
     def get_autostart2(self, entryid):
         if not self.module.check_mode:
@@ -367,7 +359,11 @@ class LibvirtConnection(object):
 
     def get_persistent(self, entryid):
         state = self.find_entry(entryid).isPersistent()
-        return ENTRY_STATE_PERSISTENT_MAP.get(state,"unknown")
+        return ENTRY_STATE_PERSISTENT_MAP.get(state, "unknown")
+
+    def get_dhcp_leases(self, entryid):
+        network = self.find_entry(entryid)
+        return network.DHCPLeases()
 
     def define_from_xml(self, entryid, xml):
         if not self.module.check_mode:
@@ -403,7 +399,7 @@ class VirtNetwork(object):
         results = []
         for entry in self.list_nets():
             state_blurb = self.conn.get_status(entry)
-            results.append("%s %s" % (entry,state_blurb))
+            results.append("%s %s" % (entry, state_blurb))
         return results
 
     def autostart(self, entryid):
@@ -417,7 +413,7 @@ class VirtNetwork(object):
 
     def create(self, entryid):
         return self.conn.create(entryid)
-    
+
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 
@@ -454,6 +450,11 @@ class VirtNetwork(object):
             results[entry]["state"] = self.conn.get_status(entry)
             results[entry]["bridge"] = self.conn.get_bridge(entry)
             results[entry]["uuid"] = self.conn.get_uuid(entry)
+            try:
+                results[entry]["dhcp_leases"] = self.conn.get_dhcp_leases(entry)
+            # not supported on RHEL 6
+            except AttributeError:
+                pass
 
             try:
                 results[entry]["forward_mode"] = self.conn.get_forward(entry)
@@ -481,11 +482,11 @@ class VirtNetwork(object):
 
 def core(module):
 
-    state     = module.params.get('state', None)
-    name      = module.params.get('name', None)
-    command   = module.params.get('command', None)
-    uri       = module.params.get('uri', None)
-    xml       = module.params.get('xml', None)
+    state = module.params.get('state', None)
+    name = module.params.get('name', None)
+    command = module.params.get('command', None)
+    uri = module.params.get('uri', None)
+    xml = module.params.get('xml', None)
     autostart = module.params.get('autostart', None)
 
     v = VirtNetwork(uri, module)
@@ -494,33 +495,33 @@ def core(module):
     if state and command == 'list_nets':
         res = v.list_nets(state=state)
         if not isinstance(res, dict):
-            res = { command: res }
+            res = {command: res}
         return VIRT_SUCCESS, res
 
     if state:
         if not name:
-            module.fail_json(msg = "state change requires a specified name")
+            module.fail_json(msg="state change requires a specified name")
 
         res['changed'] = False
-        if state in [ 'active' ]:
+        if state in ['active']:
             if v.status(name) is not 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
-        elif state in [ 'present' ]:
+        elif state in ['present']:
             try:
                 v.get_net(name)
             except EntryNotFound:
                 if not xml:
-                    module.fail_json(msg = "network '" + name + "' not present, but xml not specified")
+                    module.fail_json(msg="network '" + name + "' not present, but xml not specified")
                 v.define(name, xml)
                 res = {'changed': True, 'created': name}
-        elif state in [ 'inactive' ]:
+        elif state in ['inactive']:
             entries = v.list_nets()
             if name in entries:
                 if v.status(name) is not 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
-        elif state in [ 'undefined', 'absent' ]:
+        elif state in ['undefined', 'absent']:
             entries = v.list_nets()
             if name in entries:
                 if v.status(name) is not 'inactive':
@@ -535,10 +536,10 @@ def core(module):
     if command:
         if command in ENTRY_COMMANDS:
             if not name:
-                module.fail_json(msg = "%s requires 1 argument: name" % command)
+                module.fail_json(msg="%s requires 1 argument: name" % command)
             if command in ('define', 'modify'):
                 if not xml:
-                    module.fail_json(msg = command+" requires xml argument")
+                    module.fail_json(msg=command + " requires xml argument")
                 try:
                     v.get_net(name)
                 except EntryNotFound:
@@ -551,13 +552,13 @@ def core(module):
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         else:
@@ -565,7 +566,7 @@ def core(module):
 
     if autostart is not None:
         if not name:
-            module.fail_json(msg = "state change requires a specified name")
+            module.fail_json(msg="state change requires a specified name")
 
         res['changed'] = False
         if autostart:
@@ -584,16 +585,16 @@ def core(module):
 
 def main():
 
-    module = AnsibleModule (
-        argument_spec = dict(
-            name = dict(aliases=['network']),
-            state = dict(choices=['active', 'inactive', 'present', 'absent']),
-            command = dict(choices=ALL_COMMANDS),
-            uri = dict(default='qemu:///system'),
-            xml = dict(),
-            autostart = dict(type='bool')
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(aliases=['network']),
+            state=dict(choices=['active', 'inactive', 'present', 'absent']),
+            command=dict(choices=ALL_COMMANDS),
+            uri=dict(default='qemu:///system'),
+            xml=dict(),
+            autostart=dict(type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not HAS_VIRT:
@@ -612,7 +613,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-    if rc != 0: # something went wrong emit the msg
+    if rc != 0:  # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
     else:
         module.exit_json(**result)

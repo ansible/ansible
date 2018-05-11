@@ -1,39 +1,34 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: iosxr_command
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
-short_description: Run commands on remote devices running Cisco iosxr
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+short_description: Run commands on remote devices running Cisco IOS XR
 description:
-  - Sends arbitrary commands to an iosxr node and returns the results
+  - Sends arbitrary commands to an IOS XR node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
+notes:
+  - This module does not support netconf connection
+  - Tested against IOS XR 6.1.2
 options:
   commands:
     description:
@@ -50,8 +45,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -62,7 +55,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -72,7 +64,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -80,37 +71,26 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: root
-    password: root
-
 tasks:
   - name: run show version on remote devices
     iosxr_command:
       commands: show version
-      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains iosxr
     iosxr_command:
       commands: show version
       wait_for: result[0] contains IOS-XR
-      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     iosxr_command:
+    iosxr_command:
       commands:
         - show version
         - show interfaces
-      provider: "{{ cli }}"
+        - { command: example command that prompts, prompt: expected prompt, answer: yes}
 
   - name: run multiple commands and evaluate the output
     iosxr_command:
@@ -120,59 +100,66 @@ tasks:
       wait_for:
         - result[0] contains IOS-XR
         - result[1] contains Loopback0
-      provider: "{{ cli }}"
 """
 
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
   description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
 """
-import ansible.module_utils.iosxr
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.six import string_types
+import time
 
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import command_spec
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_native(item, errors='surrogate_or_strict').split('\n')
         yield item
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, string_types):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text']:
-            module.fail_json(msg='invalid output specified for command')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown command keyword specified.  Valid '
-                                 'values are %s' % ', '.join(VALID_KEYS))
-        yield cmd
+
+def parse_commands(module, warnings):
+    commands = module.params['commands']
+    for item in list(commands):
+        try:
+            command = item['command']
+        except Exception:
+            command = item
+        if module.check_mode and not command.startswith('show'):
+            warnings.append(
+                'only show commands are supported when using check mode, not '
+                'executing `%s`' % command
+            )
+            commands.remove(item)
+        elif command.startswith('conf'):
+            module.fail_json(
+                msg='iosxr_command does not support running config mode '
+                    'commands.  Please use iosxr_config instead'
+            )
+
+    return commands
+
 
 def main():
     spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -182,62 +169,53 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
-                           supports_check_mode=True)
+    spec.update(iosxr_argument_spec)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
+    spec.update(command_spec)
+
+    module = AnsibleModule(argument_spec=spec,
+                           supports_check_mode=True)
 
     warnings = list()
 
-    runner = CommandRunner(module)
+    commands = parse_commands(module, warnings)
 
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='iosxr_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'iosxr_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
 
-    for item in conditionals:
-        runner.add_conditional(item)
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
 
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
+    while retries > 0:
+        responses = run_command(module, commands)
 
-    try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+        for item in list(conditionals):
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
 
-    result = dict(changed=False, stdout=list())
+        if not conditionals:
+            break
 
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'])
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
+        time.sleep(interval)
+        retries -= 1
 
-    result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+
+    result = {
+        'changed': False,
+        'stdout': responses,
+        'warnings': warnings,
+        'stdout_lines': list(to_lines(responses))
+    }
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,10 @@
 
 set -o pipefail
 
-pip install tox --disable-pip-version-check
+declare -a args
+IFS='/:' read -ra args <<< "$1"
 
-ansible-test units --color -v --tox --coverage
+version="${args[1]}"
+
+# shellcheck disable=SC2086
+ansible-test units --color -v --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \

@@ -2,26 +2,16 @@
 
 #
 # Copyright (c) 2015 CenturyLink
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: clc_alert_policy
@@ -37,43 +27,30 @@ options:
   name:
     description:
       - The name of the alert policy. This is mutually exclusive with id
-    required: False
-    default: None
   id:
     description:
       - The alert policy id. This is mutually exclusive with name
-    required: False
-    default: None
   alert_recipients:
     description:
       - A list of recipient email ids to notify the alert.
         This is required for state 'present'
-    required: False
-    default: None
   metric:
     description:
       - The metric on which to measure the condition that will trigger the alert.
         This is required for state 'present'
-    required: False
-    default: None
     choices: ['cpu','memory','disk']
   duration:
     description:
       - The length of time in minutes that the condition must exceed the threshold.
         This is required for state 'present'
-    required: False
-    default: None
   threshold:
     description:
       - The threshold that will trigger the alert when the metric equals or exceeds it.
         This is required for state 'present'
         This number represents a percentage and must be a value between 5.0 - 95.0 that is a multiple of 5.0
-    required: False
-    default: None
   state:
     description:
       - Whether to create or delete the policy.
-    required: False
     default: present
     choices: ['present','absent']
 requirements:
@@ -178,6 +155,8 @@ policy:
 
 __version__ = '${version}'
 
+import json
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -199,6 +178,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcAlertPolicy:
@@ -536,6 +517,6 @@ def main():
     clc_alert_policy = ClcAlertPolicy(module)
     clc_alert_policy.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()

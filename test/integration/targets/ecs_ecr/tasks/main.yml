@@ -1,0 +1,341 @@
+---
+- set_fact:
+    ecr_name: '{{ resource_prefix }}-ecr'
+
+- block:
+
+    - name: When creating with check mode
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - result.created
+
+
+    - name: When specifying a registry that is inaccessible
+      ecs_ecr:
+        registry_id: 999999999999
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail with an AccessDeniedException
+      assert:
+        that:
+          - result is failed
+          - '"AccessDeniedException" in result.msg'
+
+
+    - name: When creating a repository
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should change and create
+      assert:
+        that:
+          - result is changed
+          - result.created
+
+
+    - name: When creating a repository that already exists in check mode
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should not skip, should not change
+      assert:
+        that:
+          - result is not skipped
+          - result is not changed
+
+
+    - name: When creating a repository that already exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+
+    - name: When in check mode, and deleting a policy that does not exist
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        delete_policy: yes
+      register: result
+      check_mode: yes
+
+    - name: it should not skip and not change
+      assert:
+        that:
+          - result is not skipped
+          - result is not changed
+
+
+    - name: When in check mode, setting policy on a repository that has no policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and not create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+
+
+    - name: When setting policy on a repository that has no policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+
+
+    - name: When in check mode, and deleting a policy that exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        delete_policy: yes
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change but not create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+
+
+    - name: When deleting a policy that exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        delete_policy: yes
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+
+
+    - name: When setting a policy as a string
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy | to_json }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+
+
+    - name: When setting a policy to its current value
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+
+    - name: When omitting policy on a repository that has a policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+
+    - name: When specifying both policy and delete_policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+        delete_policy: yes
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result is failed
+
+
+    - name: When specifying invalid JSON for policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy_text: "Ceci n'est pas une JSON"
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result is failed
+
+
+    - name: When in check mode, deleting a policy that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and not create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+
+
+    - name: When deleting a policy that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should change
+      assert:
+        that:
+          - result is changed
+
+
+    - name: When in check mode, deleting a policy that does not exist
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not skipped
+          - result is not changed
+
+
+    - name: When deleting a policy that does not exist
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+  always:
+
+    - name: Delete lingering ECR repository
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        state: absent
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'

@@ -1,0 +1,61 @@
+# test code for the win_chocolatey module
+# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install chocolatey-core.extension
+  win_chocolatey:
+    name: chocolatey-core.extension
+    state: present
+  register: install
+
+- name: verify install chocolatey-core.extension
+  assert:
+    that:
+    - 'install.changed == true'
+
+- name: install chocolatey-core.extension again
+  win_chocolatey:
+    name: chocolatey-core.extension
+    state: present
+  register: install_again
+
+- name: verify install chocolatey-core.extension again
+  assert:
+    that:
+    - 'install_again.changed == false'
+
+- name: remove chocolatey-core.extension
+  win_chocolatey:
+    name: chocolatey-core.extension
+    state: absent
+  register: remove
+
+- name: verify remove chocolatey-core.extension
+  assert:
+    that:
+    - 'remove.changed == true'
+
+- name: remove chocolatey-core.extension again
+  win_chocolatey:
+    name: chocolatey-core.extension
+    state: absent
+  register: remove_again
+
+- name: verify remove chocolatey-core.extension again
+  assert:
+    that:
+    - 'remove_again.changed == false'

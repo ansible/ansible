@@ -19,18 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import itertools
-
-from ansible.compat.six import string_types
-from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import FieldAttributeBase
 
-class LoopControl(Base):
 
-    _loop_var = FieldAttribute(isa='str')
-    _label    = FieldAttribute(isa='str')
-    _pause    = FieldAttribute(isa='int')
+class LoopControl(FieldAttributeBase):
+
+    _loop_var = FieldAttribute(isa='str', default='item')
+    _index_var = FieldAttribute(isa='str')
+    _label = FieldAttribute(isa='str')
+    _pause = FieldAttribute(isa='int', default=0)
 
     def __init__(self):
         super(LoopControl, self).__init__()
@@ -39,4 +37,3 @@ class LoopControl(Base):
     def load(data, variable_manager=None, loader=None):
         t = LoopControl()
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
-

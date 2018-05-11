@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Kevin Carter <kevin.carter@rackspace.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -46,69 +36,56 @@ options:
           - zfs
         description:
           - Backend storage type for the container.
-        required: false
         default: dir
     template:
         description:
           - Name of the template to use within an LXC create.
-        required: false
         default: ubuntu
     template_options:
         description:
           - Template options when building the container.
-        required: false
     config:
         description:
           - Path to the LXC configuration file.
-        required: false
-        default: null
     lv_name:
         description:
           - Name of the logical volume, defaults to the container name.
         default: $CONTAINER_NAME
-        required: false
     vg_name:
         description:
           - If Backend store is lvm, specify the name of the volume group.
         default: lxc
-        required: false
     thinpool:
         description:
           - Use LVM thin pool called TP.
-        required: false
     fs_type:
         description:
           - Create fstype TYPE.
         default: ext4
-        required: false
     fs_size:
         description:
           - File system Size.
         default: 5G
-        required: false
     directory:
         description:
           - Place rootfs directory under DIR.
-        required: false
     zfs_root:
         description:
           - Create zfs under given zfsroot.
-        required: false
     container_command:
         description:
           - Run a command within a container.
-        required: false
     lxc_path:
         description:
           - Place container under PATH
-        required: false
     container_log:
         choices:
           - true
           - false
         description:
           - Enable a container log for host actions to the container.
-        default: false
+        type: bool
+        default: 'no'
     container_log_level:
         choices:
           - INFO
@@ -119,15 +96,13 @@ options:
         required: false
         default: INFO
     clone_name:
-        version_added: "2.0"
         description:
           - Name of the new cloned server. This is only used when state is
             clone.
-        required: false
-        default: false
-    clone_snapshot:
+        type: bool
+        default: 'no'
         version_added: "2.0"
-        required: false
+    clone_snapshot:
         choices:
           - true
           - false
@@ -135,7 +110,9 @@ options:
           - Create a snapshot a container when cloning. This is not supported
             by all container storage backends. Enabling this may fail if the
             backing store does not support snapshots.
-        default: false
+        type: bool
+        default: 'no'
+        version_added: "2.0"
     archive:
         choices:
           - true
@@ -143,12 +120,12 @@ options:
         description:
           - Create an archive of a container. This will create a tarball of the
             running container.
-        default: false
+        type: bool
+        default: 'no'
     archive_path:
         description:
           - Path the save the archived container. If the path does not exist
             the archive method will attempt to create it.
-        default: null
     archive_compression:
         choices:
           - gzip
@@ -171,12 +148,10 @@ options:
             The running container will be stopped while the clone operation is
             happening and upon completion of the clone the original container
             state will be restored.
-        required: false
         default: started
     container_config:
         description:
           - list of 'key=value' options to use when configuring a container.
-        required: false
 requirements:
   - 'lxc >= 1.0 # OS package'
   - 'python >= 2.6 # OS Package'
@@ -387,11 +362,11 @@ EXAMPLES = """
     - test-container-new-archive-destroyed-clone
 """
 
-RETURN="""
+RETURN = """
 lxc_container:
     description: container information
     returned: success
-    type: list
+    type: complex
     contains:
         name:
             description: name of the lxc container
@@ -430,7 +405,13 @@ lxc_container:
             sample: True
 """
 
+import os
+import os.path
 import re
+import shutil
+import subprocess
+import tempfile
+import time
 
 try:
     import lxc
@@ -438,6 +419,11 @@ except ImportError:
     HAS_LXC = False
 else:
     HAS_LXC = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_text, to_bytes
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -477,7 +463,15 @@ LXC_COMMAND_MAP = {
         }
     },
     'clone': {
-        'variables': {
+        'variables-lxc-copy': {
+            'backing_store': '--backingstorage',
+            'lxc_path': '--lxcpath',
+            'fs_size': '--fssize',
+            'name': '--name',
+            'clone_name': '--newname'
+        },
+        # lxc-clone is deprecated in favor of lxc-copy
+        'variables-lxc-clone': {
             'backing_store': '--backingstore',
             'lxc_path': '--lxcpath',
             'fs_size': '--fssize',
@@ -541,6 +535,7 @@ ATTACH_TEMPLATE = """#!/usr/bin/env bash
 pushd "$(getent passwd $(whoami)|cut -f6 -d':')"
     if [[ -f ".bashrc" ]];then
         source .bashrc
+        unset HOSTNAME
     fi
 popd
 
@@ -560,21 +555,16 @@ def create_script(command):
     :type command: ``str``
     """
 
-    import os
-    import os.path as path
-    import subprocess
-    import tempfile
-
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
-        f.write(ATTACH_TEMPLATE % {'container_command': command})
+        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}, errors='surrogate_or_strict'))
         f.flush()
     finally:
         f.close()
 
     # Ensure the script is executable.
-    os.chmod(script_file, int('0700',8))
+    os.chmod(script_file, int('0700', 8))
 
     # Output log file.
     stdout_file = os.fdopen(tempfile.mkstemp(prefix='lxc-attach-script-log')[0], 'ab')
@@ -664,8 +654,7 @@ class LxcContainerManagement(object):
             build_command.append(
                 '%s %s' % (key, value)
             )
-        else:
-            return build_command
+        return build_command
 
     def _get_vars(self, variables):
         """Return a dict of all variables as found within the module.
@@ -680,13 +669,12 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
-        false_values = [None, ''] + BOOLEANS_FALSE
+        false_values = BOOLEANS_FALSE.union([None, ''])
         for k, v in variables.items():
             _var = self.module.params.get(k)
             if _var not in false_values:
                 return_dict[v] = _var
-        else:
-            return return_dict
+        return return_dict
 
     def _run_command(self, build_command, unsafe_shell=False):
         """Return information from running an Ansible Command.
@@ -720,7 +708,7 @@ class LxcContainerManagement(object):
 
         container_config_file = self.container.config_file_name
         with open(container_config_file, 'rb') as f:
-            container_config = f.readlines()
+            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines(True)
 
         # Note used ast literal_eval because AnsibleModule does not provide for
         # adequate dictionary parsing.
@@ -761,7 +749,7 @@ class LxcContainerManagement(object):
                 self.container.stop()
 
             with open(container_config_file, 'wb') as f:
-                f.writelines(container_config)
+                f.writelines([to_bytes(line, errors='surrogate_or_strict') for line in container_config])
 
             self.state_change = True
             if container_state == 'running':
@@ -792,13 +780,20 @@ class LxcContainerManagement(object):
             self.state_change = True
             self.container.stop()
 
+        # lxc-clone is deprecated in favor of lxc-copy
+        clone_vars = 'variables-lxc-copy'
+        clone_cmd = self.module.get_bin_path('lxc-copy')
+        if not clone_cmd:
+            clone_vars = 'variables-lxc-clone'
+            clone_cmd = self.module.get_bin_path('lxc-clone', True)
+
         build_command = [
-            self.module.get_bin_path('lxc-clone', True),
+            clone_cmd,
         ]
 
         build_command = self._add_variables(
             variables_dict=self._get_vars(
-                variables=LXC_COMMAND_MAP['clone']['variables']
+                variables=LXC_COMMAND_MAP['clone'][clone_vars]
             ),
             build_command=build_command
         )
@@ -814,7 +809,7 @@ class LxcContainerManagement(object):
 
         rc, return_data, err = self._run_command(build_command)
         if rc != 0:
-            message = "Failed executing lxc-clone."
+            message = "Failed executing %s." % os.path.basename(clone_cmd)
             self.failure(
                 err=err, rc=rc, msg=message, command=' '.join(
                     build_command
@@ -905,7 +900,7 @@ class LxcContainerManagement(object):
             'ips': self.container.get_ips(),
             'state': self._get_state(),
             'init_pid': int(self.container.init_pid),
-            'name' : self.container_name,
+            'name': self.container_name,
         }
 
     def _unfreeze(self):
@@ -964,16 +959,15 @@ class LxcContainerManagement(object):
                 time.sleep(1)
             else:
                 return True
-        else:
-            self.failure(
-                lxc_container=self._container_data(),
-                error='Failed to start container'
-                      ' [ %s ]' % self.container_name,
-                rc=1,
-                msg='The container [ %s ] failed to start. Check to lxc is'
-                    ' available and that the container is in a functional'
-                    ' state.' % self.container_name
-            )
+        self.failure(
+            lxc_container=self._container_data(),
+            error='Failed to start container'
+                  ' [ %s ]' % self.container_name,
+            rc=1,
+            msg='The container [ %s ] failed to start. Check to lxc is'
+                ' available and that the container is in a functional'
+                ' state.' % self.container_name
+        )
 
     def _check_archive(self):
         """Create a compressed archive of a container.
@@ -1356,7 +1350,7 @@ class LxcContainerManagement(object):
         :type source_dir: ``str``
         """
 
-        old_umask = os.umask(int('0077',8))
+        old_umask = os.umask(int('0077', 8))
 
         archive_path = self.module.params.get('archive_path')
         if not os.path.isdir(archive_path):
@@ -1741,7 +1735,7 @@ def main():
             )
         ),
         supports_check_mode=False,
-        required_if = ([
+        required_if=([
             ('archive', True, ['archive_path'])
         ]),
     )
@@ -1759,7 +1753,5 @@ def main():
     lxc_manage.run()
 
 
-# import module bits
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

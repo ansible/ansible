@@ -1,0 +1,13 @@
+---
+# test code for the etcd3 module
+# (c) 2017,  Jean-Philippe Evrard <jean-philippe@evrard.me>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# # Copyright: (c) 2018, Ansible Project
+#
+etcd3_ver: "v3.2.14"
+etcd3_download_server: "https://storage.googleapis.com/etcd"
+#etcd3_download_server: "https://github.com/coreos/etcd/releases/download"
+etcd3_download_url: "{{ etcd3_download_server }}/{{ etcd3_ver }}/etcd-{{ etcd3_ver }}-linux-amd64.tar.gz"
+etcd3_download_location: /tmp/etcd-download-test
+etcd3_path: "{{ etcd3_download_location }}/etcd-{{ etcd3_ver }}-linux-amd64"

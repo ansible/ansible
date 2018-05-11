@@ -1,27 +1,17 @@
 #!/usr/bin/python
-
 #
 # Copyright (c) 2015 CenturyLink
 #
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: clc_loadbalancer
@@ -37,8 +27,6 @@ options:
   description:
     description:
       - A description for the loadbalancer
-    required: False
-    default: None
   alias:
     description:
       - The alias of your CLC Account
@@ -50,36 +38,27 @@ options:
   method:
     description:
       -The balancing method for the load balancer pool
-    required: False
-    default: None
     choices: ['leastConnection', 'roundRobin']
   persistence:
     description:
       - The persistence method for the load balancer
-    required: False
-    default: None
     choices: ['standard', 'sticky']
   port:
     description:
       - Port to configure on the public-facing side of the load balancer pool
-    required: False
-    default: None
     choices: [80, 443]
   nodes:
     description:
       - A list of nodes that needs to be added to the load balancer pool
-    required: False
     default: []
   status:
     description:
       - The status of the loadbalancer
-    required: False
     default: enabled
     choices: ['enabled', 'disabled']
   state:
     description:
       - Whether to create or delete the load balancer pool
-    required: False
     default: present
     choices: ['present', 'absent', 'port_absent', 'nodes_present', 'nodes_absent']
 requirements:
@@ -114,7 +93,7 @@ EXAMPLES = '''
         port: 443
         nodes:
           - ipAddress: 10.11.22.123
-            privatePort: 80 
+            privatePort: 80
         state: present
 
 - name: Add node to an existing loadbalancer pool
@@ -130,7 +109,7 @@ EXAMPLES = '''
         port: 443
         nodes:
           - ipAddress: 10.11.22.234
-            privatePort: 80 
+            privatePort: 80
         state: nodes_present
 
 - name: Remove node from an existing loadbalancer pool
@@ -146,7 +125,7 @@ EXAMPLES = '''
         port: 443
         nodes:
           - ipAddress: 10.11.22.234
-            privatePort: 80 
+            privatePort: 80
         state: nodes_absent
 
 - name: Delete LoadbalancerPool
@@ -162,7 +141,7 @@ EXAMPLES = '''
         port: 443
         nodes:
           - ipAddress: 10.11.22.123
-            privatePort: 80 
+            privatePort: 80
         state: port_absent
 
 - name: Delete Loadbalancer
@@ -178,7 +157,7 @@ EXAMPLES = '''
         port: 443
         nodes:
           - ipAddress: 10.11.22.123
-            privatePort: 80 
+            privatePort: 80
         state: absent
 '''
 
@@ -221,6 +200,8 @@ loadbalancer:
 
 __version__ = '${version}'
 
+import json
+import os
 from time import sleep
 from distutils.version import LooseVersion
 
@@ -243,6 +224,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcLoadBalancer:
@@ -802,10 +785,10 @@ class ClcLoadBalancer:
         for node in nodes_to_add:
             if not node.get('status'):
                 node['status'] = 'enabled'
-            if not node in nodes:
+            if node not in nodes:
                 changed = True
                 nodes.append(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,
@@ -836,7 +819,7 @@ class ClcLoadBalancer:
             if node in nodes:
                 changed = True
                 nodes.remove(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,
@@ -940,6 +923,6 @@ def main():
     clc_loadbalancer = ClcLoadBalancer(module)
     clc_loadbalancer.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()

@@ -1,0 +1,248 @@
+# Test code for the user module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: get the jinja2 version
+  shell: python -c 'import jinja2; print(jinja2.__version__)'
+  register: jinja2_version
+  delegate_to: localhost
+  changed_when: no
+
+- debug:
+    msg: "Jinja version: {{ jinja2_version.stdout }}, Python version: {{ ansible_python_version }}"
+
+
+## user add
+
+- name: remove the test user
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: try to create a user
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0
+
+- debug:
+    var: user_test0
+    verbosity: 2
+
+- name: make a list of users
+  script: userlist.sh {{ ansible_distribution }}
+  register: user_names
+
+- debug:
+    var: user_names
+    verbosity: 2
+
+- name: validate results for testcase 0
+  assert:
+    that:
+      - user_test0 is changed
+      - '"ansibulluser" in user_names.stdout_lines'
+
+
+## user check
+
+- name: run existing user check tests
+  user:
+    name: "{{ user_names.stdout_lines | random }}"
+    state: present
+    create_home: no
+  with_sequence: start=1 end=5
+  register: user_test1
+
+- debug:
+    var: user_test1
+    verbosity: 2
+
+- name: validate results for testcase 1
+  assert:
+    that:
+      - user_test1.results is defined
+      - user_test1.results | length == 5
+
+- name: validate changed results for testcase 1 (jinja >= 2.6)
+  assert:
+    that:
+      - user_test1.results | map(attribute='changed') | unique | list == [False]
+      - user_test1.results | map(attribute='state') | unique | list == ['present']
+  when: jinja2_version.stdout is version('2.6', '>=')
+
+- name: validate changed results for testcase 1 (jinja < 2.6)
+  assert:
+    that:
+      - "user_test1.results[0] is not changed"
+      - "user_test1.results[1] is not changed"
+      - "user_test1.results[2] is not changed"
+      - "user_test1.results[3] is not changed"
+      - "user_test1.results[4] is not changed"
+      - "user_test1.results[0]['state'] == 'present'"
+      - "user_test1.results[1]['state'] == 'present'"
+      - "user_test1.results[2]['state'] == 'present'"
+      - "user_test1.results[3]['state'] == 'present'"
+      - "user_test1.results[4]['state'] == 'present'"
+  when: jinja2_version.stdout is version('2.6', '<')
+
+
+## user remove
+
+- name: try to delete the user
+  user:
+    name: ansibulluser
+    state: absent
+    force: true
+  register: user_test2
+
+- name: make a new list of users
+  script: userlist.sh {{ ansible_distribution }}
+  register: user_names2
+
+- debug:
+    var: user_names2
+    verbosity: 2
+
+- name: validate results for testcase 2
+  assert:
+    that:
+      - '"ansibulluser" not in user_names2.stdout_lines'
+
+
+- block:
+    - name: create non-system user on macOS to test the shell is set to /bin/bash
+      user:
+        name: macosuser
+      register: macosuser_output
+
+    - name: validate the shell is set to /bin/bash
+      assert:
+        that:
+          - 'macosuser_output.shell == "/bin/bash"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent
+
+    - name: create system user on macos to test the shell is set to /usr/bin/false
+      user:
+        name: macosuser
+        system: yes
+      register: macosuser_output
+
+    - name: validate the shell is set to /usr/bin/false
+      assert:
+        that:
+          - 'macosuser_output.shell == "/usr/bin/false"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent
+
+    - name: create non-system user on macos and set the shell to /bin/sh
+      user:
+        name: macosuser
+        shell: /bin/sh
+      register: macosuser_output
+
+    - name: validate the shell is set to /bin/sh
+      assert:
+        that:
+          - 'macosuser_output.shell == "/bin/sh"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent
+  when: ansible_distribution == "MacOSX"
+
+
+## user expires
+# Date is March 3, 2050
+- name: Create user with expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires1
+
+- name: Create user with expiration again to ensure no change is made
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires2
+
+- name: Ensure that account with expiration was created and did not change on subsequent run
+  assert:
+    that:
+      - user_test_expires1 is changed
+      - user_test_expires2 is not changed
+
+- name: Verify expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][6] == '29281'
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        that:
+          - bsd_account_expiration.stdout == '2529878400'
+  when: ansible_os_family == 'FreeBSD'
+
+- name: Change timezone
+  timezone:
+    name: America/Denver
+  register: original_timezone
+
+- name: Change system timezone to make sure expiration comparison works properly
+  block:
+    - name: Create user with expiration again to ensure no change is made in a new timezone
+      user:
+        name: ansibulluser
+        state: present
+        expires: 2529881062
+      register: user_test_different_tz
+
+    - name: Ensure that no change was reported
+      assert:
+        that:
+          - user_test_different_tz is not changed
+
+  always:
+    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"

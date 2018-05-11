@@ -230,7 +230,7 @@ class OVirtInventory(object):
         """
         return [x.get_name() for x in inst.get_tags().list()]
 
-    def get_machine_type(self,inst):
+    def get_machine_type(self, inst):
         inst_type = inst.get_instance_type()
         if inst_type:
             return self.driver.instancetypes.get(id=inst_type.id).name

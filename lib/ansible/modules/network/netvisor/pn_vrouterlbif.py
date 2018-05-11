@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_vrouterlbif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove vrouter-loopback-interface.
 description:
   - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
@@ -87,6 +84,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the vrouterlb command.
   returned: always
@@ -101,6 +100,7 @@ changed:
   type: bool
 """
 
+import shlex
 
 VROUTER_EXISTS = None
 LB_INTERFACE_EXISTS = None
@@ -240,8 +240,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_interface_ip=dict(type='str'),
             pn_index=dict(type='int')

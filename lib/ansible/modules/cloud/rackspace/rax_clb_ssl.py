@@ -1,26 +1,17 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This is a DOCUMENTATION stub specific to this module, it extends
-# a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION='''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
+DOCUMENTATION = '''
 module: rax_clb_ssl
 short_description: Manage SSL termination for a Rackspace Cloud Load Balancer.
 description:
@@ -76,7 +67,9 @@ options:
     - How long before "wait" gives up, in seconds.
     default: 300
 author: Ash Wilson
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -103,6 +96,15 @@ try:
 except ImportError:
     HAS_PYRAX = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rax import (rax_argument_spec,
+                                      rax_find_loadbalancer,
+                                      rax_required_together,
+                                      rax_to_dict,
+                                      setup_rax_module,
+                                      )
+
+
 def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
                             certificate, intermediate_certificate, secure_port,
                             secure_traffic_only, https_redirect,
@@ -120,7 +122,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         else:
             certificate = certificate.strip()
 
-    attempts = wait_timeout / 5
+    attempts = wait_timeout // 5
 
     # Locate the load balancer.
 
@@ -223,6 +225,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
     else:
         module.fail_json(**result)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(dict(
@@ -267,8 +270,6 @@ def main():
         https_redirect, wait, wait_timeout
     )
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
 
 if __name__ == '__main__':
     main()

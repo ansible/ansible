@@ -1,4 +1,4 @@
-- hosts: "{{ hosts }}"
+- hosts: "{{ target_hosts }}"
   gather_facts: no
   serial: 1
   tasks:
@@ -12,7 +12,7 @@
     assert:
       that:
       - "'汉语' in command.stdout"
-      - command | changed # as of 2.2, raw should default to changed: true for consistency w/ shell/command/script modules
+      - command is changed # as of 2.2, raw should default to changed: true for consistency w/ shell/command/script modules
 
   ### copy local file with unicode filename and content
 
@@ -38,3 +38,6 @@
     local_action: file path={{ local_tmp }}-汉语 state=absent
   - name: remove remote temp file
     action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent"
+
+  ### test wait_for_connection plugin
+  - wait_for_connection:

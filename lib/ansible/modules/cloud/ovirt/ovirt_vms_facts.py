@@ -19,38 +19,38 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_facts_full_argument_spec,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_vms_facts
-short_description: Retrieve facts about one or more oVirt virtual machines
+short_description: Retrieve facts about one or more oVirt/RHV virtual machines
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt virtual machines."
+    - "Retrieve facts about one or more oVirt/RHV virtual machines."
 notes:
     - "This module creates a new top-level C(ovirt_vms) fact, which
        contains a list of virtual machines."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search VM X from cluster Y use following pattern:
            name=X and cluster=Y"
+    all_content:
+      description:
+        - "If I(true) all the attributes of the virtual machines should be
+           included in the response."
+    case_sensitive:
+      description:
+        - "If I(true) performed search will take case into account."
+    max:
+      description:
+        - "The maximum number of results to return."
 extends_documentation_fragment: ovirt_facts
 '''
 
@@ -69,23 +69,42 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_vms:
     description: "List of dictionaries describing the VMs. VM attribues are mapped to dictionary keys,
-                  all VMs attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm."
+                  all VMs attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
     returned: On success.
     type: list
 '''
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_facts_full_argument_spec,
+)
 
 
 def main():
     argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
+        all_content=dict(default=False, type='bool'),
+        case_sensitive=dict(default=True, type='bool'),
+        max=dict(default=None, type='int'),
     )
     module = AnsibleModule(argument_spec)
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
-        vms = vms_service.list(search=module.params['pattern'])
+        vms = vms_service.list(
+            search=module.params['pattern'],
+            all_content=module.params['all_content'],
+            case_sensitive=module.params['case_sensitive'],
+            max=module.params['max'],
+        )
         module.exit_json(
             changed=False,
             ansible_facts=dict(
@@ -102,7 +121,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

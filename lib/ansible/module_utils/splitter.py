@@ -26,6 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 def _get_quote_state(token, quote_char):
     '''
     the goal of this block is to determine if the quoted string
@@ -36,7 +37,7 @@ def _get_quote_state(token, quote_char):
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
-            prev_char = token[idx-1]
+            prev_char = token[idx - 1]
         if cur_char in '"\'' and prev_char != '\\':
             if quote_char:
                 if cur_char == quote_char:
@@ -45,19 +46,21 @@ def _get_quote_state(token, quote_char):
                 quote_char = cur_char
     return quote_char
 
+
 def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     '''
     this function counts the number of opening/closing blocks for a
     given opening/closing type and adjusts the current depth for that
     block based on the difference
     '''
-    num_open  = token.count(open_token)
+    num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
         cur_depth += (num_open - num_close)
         if cur_depth < 0:
             cur_depth = 0
     return cur_depth
+
 
 def split_args(args):
     '''
@@ -99,13 +102,13 @@ def split_args(args):
 
     quote_char = None
     inside_quotes = False
-    print_depth   = 0 # used to count nested jinja2 {{ }} blocks
-    block_depth   = 0 # used to count nested jinja2 {% %} blocks
-    comment_depth = 0 # used to count nested jinja2 {# #} blocks
+    print_depth = 0  # used to count nested jinja2 {{ }} blocks
+    block_depth = 0  # used to count nested jinja2 {% %} blocks
+    comment_depth = 0  # used to count nested jinja2 {# #} blocks
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for itemidx,item in enumerate(items):
+    for itemidx, item in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
@@ -113,7 +116,7 @@ def split_args(args):
         tokens = item.strip().split(' ')
 
         line_continuation = False
-        for idx,token in enumerate(tokens):
+        for idx, token in enumerate(tokens):
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
@@ -201,12 +204,13 @@ def split_args(args):
 
     return params
 
+
 def is_quoted(data):
     return len(data) > 0 and (data[0] == '"' and data[-1] == '"' or data[0] == "'" and data[-1] == "'")
+
 
 def unquote(data):
     ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
     if is_quoted(data):
         return data[1:-1]
     return data
-

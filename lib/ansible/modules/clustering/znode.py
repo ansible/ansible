@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2015 WP Engine, Inc. All rights reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -39,28 +30,21 @@ options:
     value:
         description:
             - The value assigned to the znode.
-        default: None
-        required: false
     op:
         description:
             - An operation to perform. Mutually exclusive with state.
-        default: None
-        required: false
     state:
         description:
             - The state to enforce. Mutually exclusive with op.
-        default: None
-        required: false
     timeout:
         description:
             - The amount of time to wait for a node to appear.
         default: 300
-        required: false
     recursive:
         description:
             - Recursively delete node and all its children.
-        default: False
-        required: false
+        type: bool
+        default: 'no'
         version_added: "2.1"
 requirements:
     - kazoo >= 2.1
@@ -100,15 +84,27 @@ EXAMPLES = """
     hosts: 'localhost:2181'
     name: /mypath
     state: absent
+
+# Creating or updating a znode with a given value on a remote Zookeeper
+- znode:
+    hosts: 'my-zookeeper-node:2181'
+    name: /mypath
+    value: myvalue
+    state: present
+  delegate_to: 127.0.0.1
 """
+
+import time
 
 try:
     from kazoo.client import KazooClient
-    from kazoo.exceptions import NoNodeError, ZookeeperError
     from kazoo.handlers.threading import KazooTimeoutError
     KAZOO_INSTALLED = True
 except ImportError:
     KAZOO_INSTALLED = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def main():
@@ -230,13 +226,13 @@ class KazooCommandProxy():
         if self.exists(path):
             (current_value, zstat) = self.zk.get(path)
             if value != current_value:
-                self.zk.set(path, value)
+                self.zk.set(path, to_bytes(value))
                 return True, {'changed': True, 'msg': 'Updated the znode value.', 'znode': path,
                               'value': value}
             else:
                 return True, {'changed': False, 'msg': 'No changes were necessary.', 'znode': path, 'value': value}
         else:
-            self.zk.create(path, value, makepath=True)
+            self.zk.create(path, to_bytes(value), makepath=True)
             return True, {'changed': True, 'msg': 'Created a new znode.', 'znode': path, 'value': value}
 
     def _wait(self, path, timeout, interval=5):
@@ -252,7 +248,6 @@ class KazooCommandProxy():
         return False, {'msg': 'The node did not appear before the operation timed out.', 'timeout': timeout,
                        'znode': path}
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

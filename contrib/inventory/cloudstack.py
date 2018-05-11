@@ -72,7 +72,6 @@ usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]  [--domain DOMAI
 
 from __future__ import print_function
 
-import os
 import sys
 import argparse
 
@@ -96,15 +95,15 @@ class CloudStackInventory(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('--host')
         parser.add_argument('--list', action='store_true')
+        parser.add_argument('--tag', help="Filter machines by a tag. Should be in the form key=value.")
         parser.add_argument('--project')
         parser.add_argument('--domain')
 
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
-        except CloudStackException as e:
+        except CloudStackException:
             print("Error: Could not connect to CloudStack API", file=sys.stderr)
-            sys.exit(1)
 
         domain_id = None
         if options.domain:
@@ -119,10 +118,13 @@ class CloudStackInventory(object):
             print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list(project_id, domain_id)
+            tags = dict()
+            if options.tag:
+                tags['tags[0].key'], tags['tags[0].value'] = options.tag.split('=')
+            data = self.get_list(project_id, domain_id, **tags)
             print(json.dumps(data, indent=2))
         else:
-            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]",
+            print("usage: --list [--tag <tag>] | --host <hostname> [--project <project>] [--domain <domain_path>]",
                   file=sys.stderr)
             sys.exit(1)
 
@@ -144,9 +146,8 @@ class CloudStackInventory(object):
         print("Error: Project %s not found." % project, file=sys.stderr)
         sys.exit(1)
 
-
-    def get_host(self, name, project_id=None, domain_id=None):
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+    def get_host(self, name, project_id=None, domain_id=None, **kwargs):
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
         data = {}
         if not hosts:
             return data
@@ -179,30 +180,29 @@ class CloudStackInventory(object):
                     })
                     if nic['isdefault']:
                         data['default_ip'] = nic['ipaddress']
-                break;
+                break
         return data
 
-
-    def get_list(self, project_id=None, domain_id=None):
+    def get_list(self, project_id=None, domain_id=None, **kwargs):
         data = {
             'all': {
                 'hosts': [],
-                },
+            },
             '_meta': {
                 'hostvars': {},
-                },
-            }
+            },
+        }
 
         groups = self.cs.listInstanceGroups(projectid=project_id, domainid=domain_id)
         if groups:
             for group in groups['instancegroup']:
                 group_name = group['name']
-                if group_name and not group_name in data:
+                if group_name and group_name not in data:
                     data[group_name] = {
-                            'hosts': []
-                        }
+                        'hosts': []
+                    }
 
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
         if not hosts:
             return data
         for host in hosts['virtualmachine']:
@@ -242,7 +242,7 @@ class CloudStackInventory(object):
                     'netmask': nic['netmask'],
                     'gateway': nic['gateway'],
                     'type': nic['type'],
-                    })
+                })
                 if nic['isdefault']:
                     data['_meta']['hostvars'][host_name]['default_ip'] = nic['ipaddress']
 

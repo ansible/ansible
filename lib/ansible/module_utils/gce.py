@@ -25,10 +25,6 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-
-from ansible.module_utils.gcp import gcp_connect
-from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
 
 try:
     from libcloud.compute.types import Provider
@@ -37,8 +33,12 @@ try:
 except ImportError:
     HAS_LIBCLOUD_BASE = False
 
+from ansible.module_utils.gcp import gcp_connect
+from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
+
 USER_AGENT_PRODUCT = "Ansible-gce"
 USER_AGENT_VERSION = "v1"
+
 
 def gce_connect(module, provider=None):
     """Return a GCP connection for Google Compute Engine."""
@@ -47,6 +47,7 @@ def gce_connect(module, provider=None):
     provider = provider or Provider.GCE
 
     return gcp_connect(module, provider, get_driver, USER_AGENT_PRODUCT, USER_AGENT_VERSION)
+
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""

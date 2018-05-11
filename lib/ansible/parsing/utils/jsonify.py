@@ -24,6 +24,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
 
@@ -38,4 +39,3 @@ def jsonify(result, format=False):
         return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False)
     except UnicodeDecodeError:
         return json.dumps(result, sort_keys=True, indent=indent)
-

@@ -3,25 +3,16 @@
 
 # Copyright 2016 Dino Occhialini <dino.occhialini@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -37,12 +28,9 @@ options:
     name:
         description:
             - Name of the package to install, upgrade, or remove.
-        required: false
-        default: null
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent", "latest"]
     recurse:
@@ -50,22 +38,19 @@ options:
             - When removing a package, also remove its dependencies, provided
               that they are not required by other packages and were not
               explicitly installed by a user.
-        required: false
-        default: no
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
     update_cache:
         description:
             - Whether or not to refresh the master package lists. This can be
               run as part of a package installation or as a separate step.
-        required: false
-        default: yes
-        choices: ["yes", "no"]
+        type: bool
+        default: 'yes'
     upgrade:
         description:
             - Whether or not to upgrade whole system
-        required: false
-        default: no
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''
@@ -93,6 +78,7 @@ packages:
     description: Packages that are affected/would be affected
     type: list
     sample: ["ansible"]
+    returned: success
 '''
 
 

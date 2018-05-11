@@ -1,31 +1,22 @@
 #!/usr/bin/python
 # (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: gitlab_project
 short_description: Creates/updates/deletes Gitlab Projects
 description:
-   - When the project does not exists in Gitlab, it will be created.
+   - When the project does not exist in Gitlab, it will be created.
    - When the project does exists and state=absent, the project will be deleted.
    - When changes are made to the project, the project will be updated.
 version_added: "2.1"
@@ -40,32 +31,24 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     group:
         description:
             - The name of the group of which this projects belongs to.
             - When not provided, project will belong to user which is configured in 'login_user' or 'login_token'
             - When provided with username, project will be created for this user. 'login_user' or 'login_token' needs admin rights.
-        required: false
-        default: null
     name:
         description:
             - The name of the project
@@ -74,63 +57,57 @@ options:
         description:
             - The path of the project you want to create, this will be server_url/<group>/path
             - If not supplied, name will be used.
-        required: false
-        default: null
     description:
         description:
             - An description for the project.
-        required: false
-        default: null
     issues_enabled:
         description:
             - Whether you want to create issues or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     merge_requests_enabled:
         description:
             - If merge requests can be made or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     wiki_enabled:
         description:
             - If an wiki for this project should be available or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     public:
         description:
             - If the project is public available or not.
             - Setting this to true is same as setting visibility_level to 20.
             - Possible values are true and false.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     visibility_level:
         description:
             - Private. visibility_level is 0. Project access must be granted explicitly for each user.
             - Internal. visibility_level is 10. The project can be cloned by any logged in user.
             - Public. visibility_level is 20. The project can be cloned without any authentication.
             - Possible values are 0, 10 and 20.
-        required: false
         default: 0
     import_url:
         description:
-            - Git repository which will me imported into gitlab.
+            - Git repository which will be imported into gitlab.
             - Gitlab server needs read access to this git repository.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - create or delete project.
             - Possible values are present and absent.
-        required: false
         default: "present"
         choices: ["present", "absent"]
 '''
@@ -169,8 +146,8 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class GitLabProject(object):
@@ -196,10 +173,15 @@ class GitLabProject(object):
 
     def createProject(self, is_user, user_id, import_url, arguments):
         if is_user:
-            return self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
+            result = self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
         else:
             group_id = user_id
-            return self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+            result = self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+
+        if not result:
+            self._module.fail_json(msg="Failed to create project %r" % arguments['name'])
+
+        return result
 
     def deleteProject(self, group_name, project_name):
         if self.existsGroup(group_name):
@@ -370,9 +352,16 @@ def main():
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+    except Exception as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
+
+    # Check if user is authorized or not before proceeding to any operations
+    # if not, exit from here
+    auth_msg = git.currentuser().get('message', None)
+    if auth_msg is not None and auth_msg == '401 Unauthorized':
+        module.fail_json(msg='User unauthorized',
+                         details="User is not allowed to access Gitlab server "
+                                 "using login_token. Please check login_token")
 
     # Validate if project exists and take action based on "state"
     project = GitLabProject(module, git)
@@ -394,13 +383,12 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Project deleted or does not exists")
+            module.exit_json(changed=False, result="Project deleted or does not exist")
         else:
             if project.createOrUpdateProject(project_exists, group_name, import_url, arguments):
                 module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name)
             else:
                 module.exit_json(changed=False)
-
 
 
 if __name__ == '__main__':

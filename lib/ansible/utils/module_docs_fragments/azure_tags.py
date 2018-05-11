@@ -25,12 +25,13 @@ class ModuleDocFragment(object):
 options:
     tags:
         description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object will be updated with any provided values. To remove tags set append_tags option to false."
-        required: false
-        default: null
+            - >
+              Dictionary of string:string pairs to assign as metadata to the object.
+              Metadata tags on the object will be updated with any provided values. To remove tags set append_tags option to false.
     append_tags:
         description:
-            - Use to control if tags field is canonical or just appends to existing tags. When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
-        default: True
-        required: false
+            - Use to control if tags field is canonical or just appends to existing tags.
+              When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
+        type: bool
+        default: 'yes'
     '''

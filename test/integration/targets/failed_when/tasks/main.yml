@@ -23,7 +23,7 @@
 
 - assert:
     that:
-      - "'failed' not in result"
+      - "'failed' in result and not result.failed"
 
 - name: command rc 0 failed_when_result False
   shell: exit 0

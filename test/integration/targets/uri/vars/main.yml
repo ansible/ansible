@@ -1,14 +1,19 @@
 uri_os_packages:
   RedHat:
-    - python-pyasn1
-    - pyOpenSSL
-    - python-urllib3
+    step1:
+      - python-pyasn1
+      - pyOpenSSL
+      - python-urllib3
+    step2:
+      - libffi-devel
+      - openssl-devel
+      - python-devel
   Debian:
-    - python-pyasn1
-    - python-openssl
-    - python-urllib3
-
-# Needs to be a url to a site that is hosted using SNI.
-# Eventually we should make this a test server that we stand up as part of the test run.
-#SNI_URI: 'https://sni.velox.ch'
-SNI_URI: "https://www.mnot.net/blog/2014/05/09/if_you_can_read_this_youre_sniing"
+    step1:
+      - python-pyasn1
+      - python-openssl
+      - python-urllib3
+    step2:
+      - libffi-dev
+      - libssl-dev
+      - python-dev

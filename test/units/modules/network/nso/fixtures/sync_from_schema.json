@@ -1,0 +1,178 @@
+{
+    "meta": {
+        "prefix": "ncs",
+        "namespace": "http://tail-f.com/ns/ncs",
+        "types": {
+            "http://tail-f.com/ns/ncs:outformat2": [
+                {
+                    "name": "http://tail-f.com/ns/ncs:outformat2",
+                    "enumeration": [
+                        {
+                            "info": "NCS CLI curly bracket format.",
+                            "label": "cli"
+                        },
+                        {
+                            "info": "NETCONF XML edit-config format, i.e., the edit-config that\nwould be applied locally (at NCS) to get a config\nthat is equal to that of the managed device.",
+                            "label": "xml"
+                        }
+                    ]
+                },
+                {
+                    "name": "string"
+                }
+            ]
+        },
+        "keypath": "/ncs:devices/device{ce0}/sync-from"
+    },
+    "data": {
+        "info": {
+            "string": "Synchronize the config by pulling from the device"
+        },
+        "kind": "action",
+        "mandatory": true,
+        "name": "sync-from",
+        "qname": "ncs:sync-from",
+        "access": {
+            "read": false,
+            "create": false,
+            "execute": true,
+            "update": false,
+            "delete": false
+        },
+        "children": [
+            {
+                "kind": "container",
+                "is_action_input": true,
+                "name": "dry-run",
+                "presence": true,
+                "qname": "ncs:dry-run",
+                "access": {
+                    "read": false,
+                    "create": false,
+                    "execute": false,
+                    "update": true,
+                    "delete": false
+                },
+                "children": [
+                    {
+                        "info": {
+                            "string": "Report what would be done towards CDB, without\nactually doing anything."
+                        },
+                        "kind": "leaf",
+                        "is_action_input": true,
+                        "name": "outformat",
+                        "qname": "ncs:outformat",
+                        "access": {
+                            "read": false,
+                            "create": false,
+                            "execute": false,
+                            "update": true,
+                            "delete": false
+                        },
+                        "type": {
+                            "namespace": "http://tail-f.com/ns/ncs",
+                            "name": "outformat2"
+                        }
+                    }
+                ]
+            },
+            {
+                "kind": "choice",
+                "cases": [
+                    {
+                        "kind": "case",
+                        "name": "result",
+                        "children": [
+                            {
+                                "kind": "leaf",
+                                "name": "result",
+                                "qname": "ncs:result",
+                                "access": {
+                                    "read": false,
+                                    "create": false,
+                                    "execute": false,
+                                    "update": false,
+                                    "delete": false
+                                },
+                                "type": {
+                                    "primitive": true,
+                                    "name": "boolean"
+                                },
+                                "is_action_output": true
+                            }
+                        ]
+                    },
+                    {
+                        "kind": "case",
+                        "name": "result-xml",
+                        "children": [
+                            {
+                                "kind": "leaf",
+                                "name": "result-xml",
+                                "is_cli_preformatted": true,
+                                "qname": "ncs:result-xml",
+                                "access": {
+                                    "read": false,
+                                    "create": false,
+                                    "execute": false,
+                                    "update": false,
+                                    "delete": false
+                                },
+                                "type": {
+                                    "primitive": true,
+                                    "name": "string"
+                                },
+                                "is_action_output": true
+                            }
+                        ]
+                    },
+                    {
+                        "kind": "case",
+                        "name": "cli",
+                        "children": [
+                            {
+                                "kind": "leaf",
+                                "name": "cli",
+                                "is_cli_preformatted": true,
+                                "qname": "ncs:cli",
+                                "access": {
+                                    "read": false,
+                                    "create": false,
+                                    "execute": false,
+                                    "update": false,
+                                    "delete": false
+                                },
+                                "type": {
+                                    "primitive": true,
+                                    "name": "string"
+                                },
+                                "is_action_output": true
+                            }
+                        ]
+                    }
+                ],
+                "name": "outformat"
+            },
+            {
+                "info": {
+                    "string": "If present, contains additional information about the result."
+                },
+                "kind": "leaf",
+                "name": "info",
+                "qname": "ncs:info",
+                "access": {
+                    "read": false,
+                    "create": false,
+                    "execute": false,
+                    "update": false,
+                    "delete": false
+                },
+                "type": {
+                    "primitive": true,
+                    "name": "string"
+                },
+                "is_action_output": true
+            }
+        ]
+    }
+}

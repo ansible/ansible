@@ -1,0 +1,14 @@
+- hosts: testhost
+  gather_facts: true
+  roles:
+    - { role: test_gce, tags: test_gce }
+    - { role: test_gce_pd, tags: test_gce_pd }
+    - { role: test_gce_mig, tags: test_gce_mig }
+    - { role: test_gcdns, tags: test_gcdns }
+    - { role: test_gce_tag, tags: test_gce_tag }
+    - { role: test_gce_net, tags: test_gce_net }
+    - { role: test_gcp_url_map, tags: test_gcp_url_map }
+    - { role: test_gcp_glb, tags: test_gcp_glb }
+    - { role: test_gcp_healthcheck, tags: test_gcp_healthcheck }
+    - { role: test_gce_labels, tags: test_gce_labels }
+    # TODO: tests for gce_lb, gc_storage

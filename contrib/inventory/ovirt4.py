@@ -60,11 +60,15 @@ Author: Ondra Machacek (@machacekondra)
 """
 
 import argparse
-import ConfigParser
 import os
 import sys
 
 from collections import defaultdict
+
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     import json
@@ -118,12 +122,12 @@ def create_connection():
     config_path = os.environ.get('OVIRT_INI_PATH', default_path)
 
     # Create parser and add ovirt section if it doesn't exist:
-    config = ConfigParser.SafeConfigParser(
+    config = configparser.SafeConfigParser(
         defaults={
-            'ovirt_url': None,
-            'ovirt_username': None,
-            'ovirt_password': None,
-            'ovirt_ca_file': None,
+            'ovirt_url': os.environ.get('OVIRT_URL'),
+            'ovirt_username': os.environ.get('OVIRT_USERNAME'),
+            'ovirt_password': os.environ.get('OVIRT_PASSWORD'),
+            'ovirt_ca_file': os.environ.get('OVIRT_CAFILE'),
         }
     )
     if not config.has_section('ovirt'):
@@ -134,9 +138,9 @@ def create_connection():
     return sdk.Connection(
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
-        password=config.get('ovirt', 'ovirt_password'),
-        ca_file=config.get('ovirt', 'ovirt_ca_file', None),
-        insecure=config.get('ovirt', 'ovirt_ca_file', None) is None,
+        password=config.get('ovirt', 'ovirt_password', raw=True),
+        ca_file=config.get('ovirt', 'ovirt_ca_file'),
+        insecure=config.get('ovirt', 'ovirt_ca_file') is None,
     )
 
 
@@ -178,9 +182,9 @@ def get_dict_of_struct(connection, vm):
             (stat.name, stat.values[0].datum) for stat in stats
         ),
         'devices': dict(
-            (device.name, [ip.address for ip in device.ips]) for device in devices
+            (device.name, [ip.address for ip in device.ips]) for device in devices if device.ips
         ),
-        'ansible_host': devices[0].ips[0].address if len(devices) > 0 else None,
+        'ansible_host': next((device.ips[0].address for device in devices if device.ips), None)
     }
 
 

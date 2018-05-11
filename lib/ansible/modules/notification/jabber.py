@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Brian Coca <bcoca@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -47,20 +37,16 @@ options:
     description:
       - The message body.
     required: true
-    default: null
   host:
     description:
       - host to connect, overrides user info
-    required: false
   port:
     description:
       - port to connect to, overrides default
-    required: false
     default: 5222
   encoding:
     description:
       - message encoding
-    required: false
 
 # informational: requirements for nodes
 requirements:
@@ -84,7 +70,7 @@ EXAMPLES = '''
     msg: Ansible task finished
 
 # send a message, specifying the host and port
-- jabber
+- jabber:
     user: mybot@example.net
     host: talk.example.net
     port: 5223
@@ -93,15 +79,18 @@ EXAMPLES = '''
     msg: Ansible task finished
 '''
 
-import os
-import re
 import time
+import traceback
 
 HAS_XMPP = True
 try:
     import xmpp
 except ImportError:
     HAS_XMPP = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 def main():
 
@@ -112,7 +101,7 @@ def main():
             to=dict(required=True),
             msg=dict(required=True),
             host=dict(required=False),
-            port=dict(required=False,default=5222),
+            port=dict(required=False, default=5222),
             encoding=dict(required=False),
         ),
         supports_check_mode=True
@@ -136,20 +125,20 @@ def main():
     else:
         host = server
     if module.params['encoding']:
-        xmpp.simplexml.ENCODING = params['encoding']
+        xmpp.simplexml.ENCODING = module.params['encoding']
 
     msg = xmpp.protocol.Message(body=module.params['msg'])
 
     try:
-        conn=xmpp.Client(server, debug=[])
-        if not conn.connect(server=(host,port)):
+        conn = xmpp.Client(server, debug=[])
+        if not conn.connect(server=(host, port)):
             module.fail_json(rc=1, msg='Failed to connect to server: %s' % (server))
-        if not conn.auth(user,password,'Ansible'):
-            module.fail_json(rc=1, msg='Failed to authorize %s on: %s' % (user,server))
+        if not conn.auth(user, password, 'Ansible'):
+            module.fail_json(rc=1, msg='Failed to authorize %s on: %s' % (user, server))
         # some old servers require this, also the sleep following send
         conn.sendInitPresence(requestRoster=0)
 
-        if nick: # sending to room instead of user, need to join
+        if nick:  # sending to room instead of user, need to join
             msg.setType('groupchat')
             msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
             conn.send(xmpp.Presence(to=module.params['to']))
@@ -162,15 +151,11 @@ def main():
             conn.send(msg)
         time.sleep(1)
         conn.disconnect()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to send msg: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="unable to send msg: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=False, to=to, user=user, msg=msg.getBody())
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

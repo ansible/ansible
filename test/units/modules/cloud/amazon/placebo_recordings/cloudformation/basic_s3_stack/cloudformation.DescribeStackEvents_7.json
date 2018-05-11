@@ -1,0 +1,119 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackEvents": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "140d7220-b5d0-11e7-933f-50a686be7356",
+                "ResourceStatus": "CREATE_COMPLETE",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 35,
+                    "microsecond": 121000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "StackName": "ansible-test-basic-yaml",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "LogicalResourceId": "ansible-test-basic-yaml"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_COMPLETE-2017-10-20T19:51:33.200Z",
+                "ResourceStatus": "CREATE_COMPLETE",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 33,
+                    "microsecond": 200000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "StackName": "ansible-test-basic-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:12.754Z",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 12,
+                    "microsecond": 754000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "ResourceStatusReason": "Resource creation Initiated",
+                "StackName": "ansible-test-basic-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:11.159Z",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 11,
+                    "microsecond": 159000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "StackName": "ansible-test-basic-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "04032730-b5d0-11e7-86b8-503ac93168c5",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 8,
+                    "microsecond": 324000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "ResourceStatusReason": "User Initiated",
+                "StackName": "ansible-test-basic-yaml",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "LogicalResourceId": "ansible-test-basic-yaml"
+            }
+        ],
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "RequestId": "16faf590-b5d0-11e7-ae09-550cfe4b2358",
+            "HTTPHeaders": {
+                "x-amzn-requestid": "16faf590-b5d0-11e7-ae09-550cfe4b2358",
+                "vary": "Accept-Encoding",
+                "content-length": "4276",
+                "content-type": "text/xml",
+                "date": "Fri, 20 Oct 2017 19:51:39 GMT"
+            }
+        }
+    }
+}

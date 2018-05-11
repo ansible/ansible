@@ -5,29 +5,20 @@
 # based on svr4pkg by
 #  Boyd Adamson <boyd () boydadamson.com> (2012)
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
-module: pkgutil 
+module: pkgutil
 short_description: Manage CSW-Packages on Solaris
 description:
     - Manages CSW packages (SVR4 format) on Solaris 10 and 11.
@@ -75,8 +66,8 @@ EXAMPLES = '''
     state: latest
 '''
 
-import os
-import pipes
+from ansible.module_utils.basic import AnsibleModule
+
 
 def package_installed(module, name):
     cmd = ['pkginfo']
@@ -88,11 +79,12 @@ def package_installed(module, name):
     else:
         return False
 
+
 def package_latest(module, name, site):
     # Only supports one package
-    cmd = [ 'pkgutil', '-U', '--single', '-c' ]
+    cmd = ['pkgutil', '-U', '--single', '-c']
     if site is not None:
-        cmd += [ '-t', site]
+        cmd += ['-t', site]
     cmd.append(name)
     rc, out, err = run_command(module, cmd)
     # replace | tail -1 |grep -v SAME
@@ -100,45 +92,50 @@ def package_latest(module, name, site):
     # at the end of the list
     return 'SAME' in out.split('\n')[-2]
 
+
 def run_command(module, cmd, **kwargs):
     progname = cmd[0]
     cmd[0] = module.get_bin_path(progname, True, ['/opt/csw/bin'])
     return module.run_command(cmd, **kwargs)
 
+
 def package_install(module, state, name, site, update_catalog):
-    cmd = [ 'pkgutil', '-iy' ]
+    cmd = ['pkgutil', '-iy']
     if update_catalog:
-        cmd += [ '-U' ]
+        cmd += ['-U']
     if site is not None:
-        cmd += [ '-t', site ]
+        cmd += ['-t', site]
     if state == 'latest':
-        cmd += [ '-f' ] 
+        cmd += ['-f']
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
+
 
 def package_upgrade(module, name, site, update_catalog):
-    cmd = [ 'pkgutil', '-ufy' ]
+    cmd = ['pkgutil', '-ufy']
     if update_catalog:
-        cmd += [ '-U' ]
+        cmd += ['-U']
     if site is not None:
-        cmd += [ '-t', site ]
+        cmd += ['-t', site]
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
+
 def package_uninstall(module, name):
-    cmd = [ 'pkgutil', '-ry', name]
+    cmd = ['pkgutil', '-ry', name]
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required = True),
-            state = dict(required = True, choices=['present', 'absent','latest']),
-            site = dict(default = None),
-            update_catalog = dict(required = False, default = False, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent', 'latest']),
+            site=dict(default=None),
+            update_catalog=dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -186,7 +183,7 @@ def main():
         else:
             if not package_latest(module, name, site):
                 if module.check_mode:
-                    module.exit_json(changed=True) 
+                    module.exit_json(changed=True)
                 (rc, out, err) = package_upgrade(module, name, site, update_catalog)
                 if len(out) > 75:
                     out = out[:75] + '...'
@@ -227,8 +224,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

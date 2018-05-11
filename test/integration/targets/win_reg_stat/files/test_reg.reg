@@ -1,0 +1,24 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Test]
+
+[HKEY_CURRENT_USER\Test\nested]
+"string"="test"
+"binary"=hex:01,16
+"dword"=dword:00000001
+"qword"=hex(b):01,00,00,00,00,00,00,00
+"multi"=hex(7):61,00,2c,00,20,00,62,00,00,00,63,00,00,00,00,00
+"expand"=hex(2):25,00,77,00,69,00,6e,00,64,00,69,00,72,00,25,00,5c,00,64,00,69,\
+  00,72,00,00,00
+
+[HKEY_CURRENT_USER\Test\nested\nest1]
+"dontcare"=""
+
+[HKEY_CURRENT_USER\Test\nested\nest2]
+
+
+[HKEY_CURRENT_USER\Test\single]
+"string1"=""
+"string2"="abc123"
+"none"=hex(0):
+"none1"=hex(0):00

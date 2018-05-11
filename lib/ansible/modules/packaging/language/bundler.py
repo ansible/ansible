@@ -2,28 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Tim Hoiberg <tim.hoiberg@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION='''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
+DOCUMENTATION = '''
 ---
 module: bundler
 short_description: Manage Ruby Gem dependencies with Bundler
@@ -34,19 +24,15 @@ options:
   executable:
     description:
       - The path to the bundler executable
-    required: false
-    default: null
   state:
     description:
       - The desired state of the Gem bundle. C(latest) updates gems to the most recent, acceptable version
-    required: false
     choices: [present, latest]
     default: present
   chdir:
     description:
       - The directory to execute the bundler commands from. This directoy
         needs to contain a valid Gemfile or .bundle/ directory
-    required: false
     default: temporary working directory
   exclude_groups:
     description:
@@ -54,46 +40,38 @@ options:
         applies when state is C(present). Bundler considers this
         a 'remembered' property for the Gemfile and will automatically exclude
         groups in future operations even if C(exclude_groups) is not set
-    required: false
-    default: null
   clean:
     description:
       - Only applies if state is C(present). If set removes any gems on the
         target host that are not in the gemfile
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   gemfile:
     description:
       - Only applies if state is C(present). The path to the gemfile to use to install gems.
-    required: false
     default: Gemfile in current directory
   local:
     description:
       - If set only installs gems from the cache on the target host
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   deployment_mode:
     description:
       - Only applies if state is C(present). If set it will only install gems
         that are in the default or production groups. Requires a Gemfile.lock
         file to have been created prior
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   user_install:
     description:
       - Only applies if state is C(present). Installs gems in the local user's cache or for all users
-    required: false
-    choices: [yes, no]
-    default: "yes"
+    type: bool
+    default: 'yes'
   gem_path:
     description:
       - Only applies if state is C(present). Specifies the directory to
         install the gems into. If C(chdir) is set then this path is relative to
         C(chdir)
-    required: false
     default: RubyGems gem paths
   binstub_directory:
     description:
@@ -102,19 +80,15 @@ options:
         within the context of the Gemfile and fail if any required gem
         dependencies are not installed. If C(chdir) is set then this path is
         relative to C(chdir)
-    required: false
-    default: null
   extra_args:
     description:
       - A space separated string of additional commands that can be applied to
         the Bundler command. Refer to the Bundler documentation for more
         information
-    required: false
-    default: null
 author: "Tim Hoiberg (@thoiberg)"
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Installs gems from a Gemfile in the current directory
 - bundler:
     state: present
@@ -141,34 +115,36 @@ EXAMPLES='''
     chdir: ~/rails_project
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def get_bundler_executable(module):
     if module.params.get('executable'):
-        return module.params.get('executable').split(' ')
+        result = module.params.get('executable').split(' ')
     else:
-        return [ module.get_bin_path('bundle', True) ]
+        result = [module.get_bin_path('bundle', True)]
+    return result
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-                executable=dict(default=None, required=False),
-                state=dict(default='present', required=False, choices=['present', 'latest']),
-                chdir=dict(default=None, required=False, type='path'),
-                exclude_groups=dict(default=None, required=False, type='list'),
-                clean=dict(default=False, required=False, type='bool'),
-                gemfile=dict(default=None, required=False, type='path'),
-                local=dict(default=False, required=False, type='bool'),
-                deployment_mode=dict(default=False, required=False, type='bool'),
-                user_install=dict(default=True, required=False, type='bool'),
-                gem_path=dict(default=None, required=False, type='path'),
-                binstub_directory=dict(default=None, required=False, type='path'),
-                extra_args=dict(default=None, required=False),
-            ),
+            executable=dict(default=None, required=False),
+            state=dict(default='present', required=False, choices=['present', 'latest']),
+            chdir=dict(default=None, required=False, type='path'),
+            exclude_groups=dict(default=None, required=False, type='list'),
+            clean=dict(default=False, required=False, type='bool'),
+            gemfile=dict(default=None, required=False, type='path'),
+            local=dict(default=False, required=False, type='bool'),
+            deployment_mode=dict(default=False, required=False, type='bool'),
+            user_install=dict(default=True, required=False, type='bool'),
+            gem_path=dict(default=None, required=False, type='path'),
+            binstub_directory=dict(default=None, required=False, type='path'),
+            extra_args=dict(default=None, required=False),
+        ),
         supports_check_mode=True
-        )
+    )
 
-    executable = module.params.get('executable')
     state = module.params.get('state')
     chdir = module.params.get('chdir')
     exclude_groups = module.params.get('exclude_groups')
@@ -220,6 +196,5 @@ def main():
     module.exit_json(changed='Installing' in out, state=state, stdout=out, stderr=err)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

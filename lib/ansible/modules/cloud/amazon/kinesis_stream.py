@@ -1,21 +1,15 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -25,50 +19,55 @@ description:
     - Create or Delete a Kinesis Stream.
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
+    - Enable/disable server side encryption on a Kinesis Stream.
 version_added: "2.2"
+requirements: [ boto3 ]
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:
     description:
       - "The name of the Kinesis Stream you are managing."
-    default: None
     required: true
   shards:
     description:
-      - "The number of shards you want to have with this stream. This can not
-      be modified after being created."
+      - "The number of shards you want to have with this stream."
       - "This is required when state == present"
-    required: false
-    default: None
   retention_period:
     description:
       - "The default retention period is 24 hours and can not be less than 24
       hours."
       - "The retention period can be modified during any point in time."
-    required: false
-    default: None
   state:
     description:
       - "Create or Delete the Kinesis Stream."
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   wait:
     description:
       - Wait for operation to complete before returning.
-    required: false
     default: true
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
-    required: false
     default: 300
   tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }."
-    required: false
-    default: null
     aliases: [ "resource_tags" ]
+  encryption_state:
+    description:
+      - "Enable or Disable encryption on the Kinesis Stream."
+    choices: [ 'enabled', 'disabled' ]
+    version_added: "2.5"
+  encryption_type:
+    description:
+      - "The type of encryption."
+    default: KMS
+    version_added: "2.5"
+  key_id:
+    description:
+      - "The GUID or alias for the KMS key."
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -117,6 +116,30 @@ EXAMPLES = '''
     wait: yes
     wait_timeout: 600
   register: test_stream
+
+# Basic enable encryption example:
+- name: Encrypt Kinesis Stream test-stream.
+  kinesis_stream:
+    name: test-stream
+    state: present
+    encryption_state: enabled
+    encryption_type: KMS
+    key_id: alias/aws/kinesis
+    wait: yes
+    wait_timeout: 600
+  register: test_stream
+
+# Basic disable encryption example:
+- name: Encrypt Kinesis Stream test-stream.
+  kinesis_stream:
+    name: test-stream
+    state: present
+    encryption_state: disabled
+    encryption_type: KMS
+    key_id: alias/aws/kinesis
+    wait: yes
+    wait_timeout: 600
+  register: test_stream
 '''
 
 RETURN = '''
@@ -150,17 +173,19 @@ tags:
   }
 '''
 
-try:
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 import re
 import datetime
 import time
 from functools import reduce
+
+try:
+    import botocore.exceptions
+except ImportError:
+    pass  # Taken care of by ec2.HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def convert_to_lower(data):
@@ -293,7 +318,7 @@ def get_tags(client, stream_name, check_mode=False):
             ]
         success = True
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg, results
 
@@ -332,25 +357,32 @@ def find_stream(client, stream_name, check_mode=False):
                 shards.extend(results.pop('Shards'))
                 has_more_shards = results['HasMoreShards']
             results['Shards'] = shards
+            num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
+            results['OpenShardsCount'] = len(shards) - num_closed_shards
+            results['ClosedShardsCount'] = num_closed_shards
             results['ShardsCount'] = len(shards)
         else:
             results = {
+                'OpenShardsCount': 5,
+                'ClosedShardsCount': 0,
+                'ShardsCount': 5,
                 'HasMoreShards': True,
                 'RetentionPeriodHours': 24,
                 'StreamName': stream_name,
                 'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(stream_name),
-                'StreamStatus': 'ACTIVE'
+                'StreamStatus': 'ACTIVE',
+                'EncryptionType': 'NONE'
             }
         success = True
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg, results
 
 
 def wait_for_status(client, stream_name, status, wait_timeout=300,
                     check_mode=False):
-    """Wait for the the status to change for a Kinesis Stream.
+    """Wait for the status to change for a Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client
         stream_name (str): The name of the kinesis stream.
@@ -399,7 +431,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
             else:
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+            err_msg = to_native(e)
 
     if not status_achieved:
         err_msg = "Wait time out reached, while waiting for results"
@@ -458,7 +490,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg
 
@@ -625,17 +657,76 @@ def stream_action(client, stream_name, shard_count=1, action='create',
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
+
+    return success, err_msg
+
+
+def stream_encryption_action(client, stream_name, action='start_encryption', encryption_type='', key_id='',
+                             timeout=300, check_mode=False):
+    """Create, Encrypt or Delete an Amazon Kinesis Stream.
+    Args:
+        client (botocore.client.EC2): Boto3 client.
+        stream_name (str): The name of the kinesis stream.
+
+    Kwargs:
+        shard_count (int): Number of shards this stream will use.
+        action (str): The action to perform.
+            valid actions == create and delete
+            default=create
+        encryption_type (str): NONE or KMS
+        key_id (str): The GUID or alias for the KMS key
+        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
+            default=False
+
+    Basic Usage:
+        >>> client = boto3.client('kinesis')
+        >>> stream_name = 'test-stream'
+        >>> shard_count = 20
+        >>> stream_action(client, stream_name, shard_count, action='create', encryption_type='KMS',key_id='alias/aws')
+
+    Returns:
+        List (bool, str)
+    """
+    success = False
+    err_msg = ''
+    params = {
+        'StreamName': stream_name
+    }
+    try:
+        if not check_mode:
+            if action == 'start_encryption':
+                params['EncryptionType'] = encryption_type
+                params['KeyId'] = key_id
+                client.start_stream_encryption(**params)
+                success = True
+            elif action == 'stop_encryption':
+                params['EncryptionType'] = encryption_type
+                params['KeyId'] = key_id
+                client.stop_stream_encryption(**params)
+                success = True
+            else:
+                err_msg = 'Invalid encryption action {0}'.format(action)
+        else:
+            if action == 'start_encryption':
+                success = True
+            elif action == 'stop_encryption':
+                success = True
+            else:
+                err_msg = 'Invalid encryption action {0}'.format(action)
+
+    except botocore.exceptions.ClientError as e:
+        err_msg = to_native(e)
 
     return success, err_msg
 
 
 def retention_action(client, stream_name, retention_period=24,
                      action='increase', check_mode=False):
-    """Increase or Decreaste the retention of messages in the Kinesis stream.
+    """Increase or Decrease the retention of messages in the Kinesis stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
-        stream_name (str): The
+        stream_name (str): The name of the kinesis stream.
 
     Kwargs:
         retention_period (int): This is how long messages will be kept before
@@ -650,7 +741,7 @@ def retention_action(client, stream_name, retention_period=24,
         >>> client = boto3.client('kinesis')
         >>> stream_name = 'test-stream'
         >>> retention_period = 48
-        >>> stream_action(client, stream_name, retention_period, action='create')
+        >>> retention_action(client, stream_name, retention_period, action='increase')
 
     Returns:
         Tuple (bool, str)
@@ -667,16 +758,14 @@ def retention_action(client, stream_name, retention_period=24,
                 client.increase_stream_retention_period(**params)
                 success = True
                 err_msg = (
-                    'Retention Period increased successfully to {0}'
-                    .format(retention_period)
+                    'Retention Period increased successfully to {0}'.format(retention_period)
                 )
             elif action == 'decrease':
                 params['RetentionPeriodHours'] = retention_period
                 client.decrease_stream_retention_period(**params)
                 success = True
                 err_msg = (
-                    'Retention Period decreased successfully to {0}'
-                    .format(retention_period)
+                    'Retention Period decreased successfully to {0}'.format(retention_period)
                 )
             else:
                 err_msg = 'Invalid action {0}'.format(action)
@@ -689,12 +778,49 @@ def retention_action(client, stream_name, retention_period=24,
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg
 
 
-def update(client, current_stream, stream_name, retention_period=None,
+def update_shard_count(client, stream_name, number_of_shards=1, check_mode=False):
+    """Increase or Decrease the number of shards in the Kinesis stream.
+    Args:
+        client (botocore.client.EC2): Boto3 client.
+        stream_name (str): The name of the kinesis stream.
+
+    Kwargs:
+        number_of_shards (int): Number of shards this stream will use.
+            default=1
+        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
+            default=False
+
+    Basic Usage:
+        >>> client = boto3.client('kinesis')
+        >>> stream_name = 'test-stream'
+        >>> number_of_shards = 3
+        >>> update_shard_count(client, stream_name, number_of_shards)
+
+    Returns:
+        Tuple (bool, str)
+    """
+    success = True
+    err_msg = ''
+    params = {
+        'StreamName': stream_name,
+        'ScalingType': 'UNIFORM_SCALING'
+    }
+    if not check_mode:
+        params['TargetShardCount'] = number_of_shards
+        try:
+            client.update_shard_count(**params)
+        except botocore.exceptions.ClientError as e:
+            return False, str(e)
+
+    return success, err_msg
+
+
+def update(client, current_stream, stream_name, number_of_shards=1, retention_period=None,
            tags=None, wait=False, wait_timeout=300, check_mode=False):
     """Update an Amazon Kinesis Stream.
     Args:
@@ -702,6 +828,8 @@ def update(client, current_stream, stream_name, retention_period=None,
         stream_name (str): The name of the kinesis stream.
 
     Kwargs:
+        number_of_shards (int): Number of shards this stream will use.
+            default=1
         retention_period (int): This is how long messages will be kept before
             they are discarded. This can not be less than 24 hours.
         tags (dict): The tags you want applied.
@@ -715,6 +843,7 @@ def update(client, current_stream, stream_name, retention_period=None,
     Basic Usage:
         >>> client = boto3.client('kinesis')
         >>> current_stream = {
+            'ShardCount': 3,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test-stream',
@@ -723,8 +852,9 @@ def update(client, current_stream, stream_name, retention_period=None,
         }
         >>> stream_name = 'test-stream'
         >>> retention_period = 48
-        >>> stream_action(client, current_stream, stream_name,
-                          retention_period, action='create' )
+        >>> number_of_shards = 10
+        >>> update(client, current_stream, stream_name,
+                   number_of_shards, retention_period )
 
     Returns:
         Tuple (bool, bool, str)
@@ -743,7 +873,7 @@ def update(client, current_stream, stream_name, retention_period=None,
             if not wait_success:
                 return wait_success, False, wait_msg
 
-        if current_stream['StreamStatus'] == 'ACTIVE':
+        if current_stream.get('StreamStatus') == 'ACTIVE':
             retention_changed = False
             if retention_period > current_stream['RetentionPeriodHours']:
                 retention_changed, retention_msg = (
@@ -799,9 +929,39 @@ def update(client, current_stream, stream_name, retention_period=None,
         else:
             err_msg = (
                 'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                .format(current_stream['StreamStatus'])
+                .format(current_stream.get('StreamStatus', 'UNKNOWN'))
             )
             return success, changed, err_msg
+
+    if current_stream['OpenShardsCount'] != number_of_shards:
+        success, err_msg = (
+            update_shard_count(client, stream_name, number_of_shards, check_mode=check_mode)
+        )
+
+        if not success:
+            return success, changed, err_msg
+
+        changed = True
+
+        if wait:
+            wait_success, wait_msg, current_stream = (
+                wait_for_status(
+                    client, stream_name, 'ACTIVE', wait_timeout,
+                    check_mode=check_mode
+                )
+            )
+            if not wait_success:
+                return wait_success, changed, wait_msg
+        else:
+            stream_found, stream_msg, current_stream = (
+                find_stream(client, stream_name, check_mode=check_mode)
+            )
+            if stream_found and current_stream['StreamStatus'] != 'ACTIVE':
+                err_msg = (
+                    'Number of shards for {0} is in the process of updating'
+                    .format(stream_name)
+                )
+                return success, changed, err_msg
 
     if tags:
         _, _, err_msg = (
@@ -817,7 +977,7 @@ def update(client, current_stream, stream_name, retention_period=None,
     if success and changed:
         err_msg = 'Kinesis Stream {0} updated successfully.'.format(stream_name)
     elif success and not changed:
-        err_msg = 'Kinesis Stream {0} did not changed.'.format(stream_name)
+        err_msg = 'Kinesis Stream {0} did not change.'.format(stream_name)
 
     return success, changed, err_msg
 
@@ -861,22 +1021,24 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
     stream_found, stream_msg, current_stream = (
         find_stream(client, stream_name, check_mode=check_mode)
     )
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
-    if stream_found and current_stream['StreamStatus'] == 'DELETING' and wait:
+    if stream_found and current_stream.get('StreamStatus') == 'DELETING' and wait:
         wait_success, wait_msg, current_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
                 check_mode=check_mode
             )
         )
-    if stream_found and current_stream['StreamStatus'] != 'DELETING':
+
+    if stream_found and not check_mode:
+        if current_stream['ShardsCount'] != number_of_shards:
+            err_msg = 'Can not change the number of shards in a Kinesis Stream'
+            return success, changed, err_msg, results
+
+    if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
-            client, current_stream, stream_name, retention_period, tags,
-            wait, wait_timeout, check_mode=check_mode
+            client, current_stream, stream_name, number_of_shards,
+            retention_period, tags, wait, wait_timeout, check_mode=check_mode
         )
     else:
         create_success, create_msg = (
@@ -885,7 +1047,11 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-        if create_success:
+        if not create_success:
+            changed = True
+            err_msg = 'Failed to create Kinesis stream: {0}'.format(create_msg)
+            return False, True, err_msg, {}
+        else:
             changed = True
             if wait:
                 wait_success, wait_msg, results = (
@@ -921,7 +1087,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             stream_found, stream_msg, current_stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
-            if retention_period and current_stream['StreamStatus'] == 'ACTIVE':
+            if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
                 changed, err_msg = (
                     retention_action(
                         client, stream_name, retention_period, action='increase',
@@ -935,7 +1101,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             else:
                 err_msg = (
                     'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                    .format(current_stream['StreamStatus'])
+                    .format(current_stream.get('StreamStatus', 'UNKNOWN'))
                 )
                 success = create_success
                 changed = True
@@ -1020,6 +1186,144 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
     return success, changed, err_msg, results
 
 
+def start_stream_encryption(client, stream_name, encryption_type='', key_id='',
+                            wait=False, wait_timeout=300, check_mode=False):
+    """Start encryption on an Amazon Kinesis Stream.
+    Args:
+        client (botocore.client.EC2): Boto3 client.
+        stream_name (str): The name of the kinesis stream.
+
+    Kwargs:
+        encryption_type (str): KMS or NONE
+        key_id (str): KMS key GUID or alias
+        wait (bool): Wait until Stream is ACTIVE.
+            default=False
+        wait_timeout (int): How long to wait until this operation is considered failed.
+            default=300
+        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
+            default=False
+
+    Basic Usage:
+        >>> client = boto3.client('kinesis')
+        >>> stream_name = 'test-stream'
+        >>> key_id = 'alias/aws'
+        >>> encryption_type = 'KMS'
+        >>> start_stream_encryption(client, stream_name,encryption_type,key_id)
+
+    Returns:
+        Tuple (bool, bool, str, dict)
+    """
+    success = False
+    changed = False
+    err_msg = ''
+    params = {
+        'StreamName': stream_name
+    }
+
+    results = dict()
+    stream_found, stream_msg, current_stream = (
+        find_stream(client, stream_name, check_mode=check_mode)
+    )
+    if stream_found:
+        success, err_msg = (
+            stream_encryption_action(
+                client, stream_name, action='start_encryption', encryption_type=encryption_type, key_id=key_id, check_mode=check_mode
+            )
+        )
+        if success:
+            changed = True
+            if wait:
+                success, err_msg, results = (
+                    wait_for_status(
+                        client, stream_name, 'ACTIVE', wait_timeout,
+                        check_mode=check_mode
+                    )
+                )
+                err_msg = 'Kinesis Stream {0} encryption started successfully.'.format(stream_name)
+                if not success:
+                    return success, True, err_msg, results
+            else:
+                err_msg = (
+                    'Kinesis Stream {0} is in the process of starting encryption.'.format(stream_name)
+                )
+    else:
+        success = True
+        changed = False
+        err_msg = 'Kinesis Stream {0} does not exist'.format(stream_name)
+
+    return success, changed, err_msg, results
+
+
+def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
+                           wait=True, wait_timeout=300, check_mode=False):
+    """Stop encryption on an Amazon Kinesis Stream.
+    Args:
+        client (botocore.client.EC2): Boto3 client.
+        stream_name (str): The name of the kinesis stream.
+
+    Kwargs:
+        encryption_type (str): KMS or NONE
+        key_id (str): KMS key GUID or alias
+        wait (bool): Wait until Stream is ACTIVE.
+            default=False
+        wait_timeout (int): How long to wait until this operation is considered failed.
+            default=300
+        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
+            default=False
+
+    Basic Usage:
+        >>> client = boto3.client('kinesis')
+        >>> stream_name = 'test-stream'
+        >>> start_stream_encryption(client, stream_name,encryption_type, key_id)
+
+    Returns:
+        Tuple (bool, bool, str, dict)
+    """
+    success = False
+    changed = False
+    err_msg = ''
+    params = {
+        'StreamName': stream_name
+    }
+
+    results = dict()
+    stream_found, stream_msg, current_stream = (
+        find_stream(client, stream_name, check_mode=check_mode)
+    )
+    if stream_found:
+        if current_stream.get('EncryptionType') == 'KMS':
+            success, err_msg = (
+                stream_encryption_action(
+                    client, stream_name, action='stop_encryption', key_id=key_id, encryption_type=encryption_type, check_mode=check_mode
+                )
+            )
+        elif current_stream.get('EncryptionType') == 'NONE':
+            success = True
+
+        if success:
+            changed = True
+            if wait:
+                success, err_msg, results = (
+                    wait_for_status(
+                        client, stream_name, 'ACTIVE', wait_timeout,
+                        check_mode=check_mode
+                    )
+                )
+                err_msg = 'Kinesis Stream {0} encryption stopped successfully.'.format(stream_name)
+                if not success:
+                    return success, True, err_msg, results
+            else:
+                err_msg = (
+                    'Stream {0} is in the process of stopping encryption.'.format(stream_name)
+                )
+    else:
+        success = True
+        changed = False
+        err_msg = 'Stream {0} does not exist.'.format(stream_name)
+
+    return success, changed, err_msg, results
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -1031,6 +1335,9 @@ def main():
             wait=dict(default=True, required=False, type='bool'),
             wait_timeout=dict(default=300, required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
+            encryption_type=dict(required=False, choices=['NONE', 'KMS']),
+            key_id=dict(required=False, type='str'),
+            encryption_state=dict(required=False, choices=['enabled', 'disabled']),
         )
     )
     module = AnsibleModule(
@@ -1045,6 +1352,9 @@ def main():
     tags = module.params.get('tags')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    encryption_type = module.params.get('encryption_type')
+    key_id = module.params.get('key_id')
+    encryption_state = module.params.get('encryption_state')
 
     if state == 'present' and not shards:
         module.fail_json(msg='Shards is required when state == present.')
@@ -1068,7 +1378,7 @@ def main():
             )
         )
     except botocore.exceptions.ClientError as e:
-        err_msg = 'Boto3 Client Error - {0}'.format(str(e.msg))
+        err_msg = 'Boto3 Client Error - {0}'.format(to_native(e.msg))
         module.fail_json(
             success=False, changed=False, result={}, msg=err_msg
         )
@@ -1080,6 +1390,18 @@ def main():
                 wait, wait_timeout, check_mode
             )
         )
+        if encryption_state == 'enabled':
+            success, changed, err_msg, results = (
+                start_stream_encryption(
+                    client, stream_name, encryption_type, key_id, wait, wait_timeout, check_mode
+                )
+            )
+        elif encryption_state == 'disabled':
+            success, changed, err_msg, results = (
+                stop_stream_encryption(
+                    client, stream_name, encryption_type, key_id, wait, wait_timeout, check_mode
+                )
+            )
     elif state == 'absent':
         success, changed, err_msg, results = (
             delete_stream(client, stream_name, wait, wait_timeout, check_mode)
@@ -1094,9 +1416,6 @@ def main():
             success=success, changed=changed, msg=err_msg, result=results
         )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

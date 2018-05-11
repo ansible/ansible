@@ -1,0 +1,17 @@
+---
+- debug: msg="START cli/misc_tests.yaml on connection={{ ansible_connection }}"
+
+
+- block:
+    # Test that transport values are properly ignored
+    - name: wrong transport specified
+      eos_command:
+          commands: show version
+          transport: nxapi
+
+    - name: wrong transport specified in provider
+      eos_command:
+          commands: show version
+          provider: "{{ nxapi }}"
+
+  when: "ansible_connection != 'local'"

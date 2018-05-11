@@ -1,26 +1,14 @@
 #!/usr/bin/python
 
-# Copyright (c) 2015 VMware, Inc. All Rights Reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, VMware, Inc. All Rights Reserved.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -29,7 +17,8 @@ short_description: add remove firewall rules in a gateway  in a vca
 description:
   - Adds or removes firewall rules from a gateway in a vca environment
 version_added: "2.0"
-author: Peter Sprygada (@privateip)
+author:
+- Peter Sprygada (@privateip)
 options:
     fw_rules:
       description:
@@ -75,10 +64,15 @@ except ImportError:
     # protects against generating an exception at runtime
     pass
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vca import VcaError, vca_argument_spec, vca_login
+
+
 VALID_PROTO = ['Tcp', 'Udp', 'Icmp', 'Other', 'Any']
 VALID_RULE_KEYS = ['policy', 'is_enable', 'enable_logging', 'description',
                    'dest_ip', 'dest_port', 'source_ip', 'source_port',
                    'protocol']
+
 
 def protocol_to_tuple(protocol):
     return (protocol.get_Tcp(),
@@ -86,6 +80,7 @@ def protocol_to_tuple(protocol):
             protocol.get_Icmp(),
             protocol.get_Other(),
             protocol.get_Any())
+
 
 def protocol_to_string(protocol):
     protocol = protocol_to_tuple(protocol)
@@ -100,6 +95,7 @@ def protocol_to_string(protocol):
     elif protocol[4] is True:
         return 'Any'
 
+
 def protocol_to_type(protocol):
     try:
         protocols = ProtocolsType()
@@ -107,6 +103,7 @@ def protocol_to_type(protocol):
         return protocols
     except AttributeError:
         raise VcaError("The value in protocol is not valid")
+
 
 def validate_fw_rules(fw_rules):
     for rule in fw_rules:
@@ -127,6 +124,7 @@ def validate_fw_rules(fw_rules):
 
     return fw_rules
 
+
 def fw_rules_to_dict(rules):
     fw_rules = list()
     for rule in rules:
@@ -145,6 +143,7 @@ def fw_rules_to_dict(rules):
         )
     return fw_rules
 
+
 def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                    dest_ip, source_port, source_ip, enable_logging):
 
@@ -158,13 +157,14 @@ def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                             SourceIp=source_ip,
                             EnableLogging=enable_logging)
 
+
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            fw_rules = dict(required=True, type='list'),
-            gateway_name = dict(default='gateway'),
-            state = dict(default='present', choices=['present', 'absent'])
+            fw_rules=dict(required=True, type='list'),
+            gateway_name=dict(default='gateway'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 
@@ -206,9 +206,9 @@ def main():
         except IndexError:
             additions.append(rule)
 
-    eol = len(current_rules) > len(desired_rules)
+    eol = len(current_rules) - len(desired_rules)
     if eol > 0:
-        for rule in current_rules[eos:]:
+        for rule in current_rules[eol:]:
             deletions.append(rule)
 
     for rule in additions:
@@ -231,19 +231,17 @@ def main():
             gateway.delete_fw_rule(**kwargs)
         result['changed'] = True
 
-    if not module.check_mode and result['changed'] == True:
+    if not module.check_mode and result['changed'] is True:
         task = gateway.save_services_configuration()
         if task:
             vca.block_until_completed(task)
 
-    result['rules_updated'] = count=len(updates)
-    result['rules_added'] = count=len(additions)
-    result['rules_deleted'] = count=len(deletions)
+    result['rules_updated'] = len(updates)
+    result['rules_added'] = len(additions)
+    result['rules_deleted'] = len(deletions)
 
     return module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
+
 if __name__ == '__main__':
-        main()
+    main()

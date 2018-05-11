@@ -1,0 +1,183 @@
+- set_fact:
+    varname: WINPATH_TEST
+
+- name: Remove {{ varname }} vars from user and machine scope
+  raw: '[Environment]::SetEnvironmentVariable("{{ varname }}", $null, "User"); [Environment]::SetEnvironmentVariable("{{ varname }}", $null, "Machine")'
+
+- name: Set a var at the machine and user levels
+  win_path:
+    name: "{{ varname }}"
+    elements: C:\{{ item }}Path
+    scope: "{{ item }}"
+  with_items:
+  - machine
+  - user
+  register: pathout
+
+- name: Get path value from machine and user levels
+  raw: '[Environment]::GetEnvironmentVariable("{{ varname }}","{{ item.item }}")'
+  with_items: "{{ pathout.results }}"
+  register: varout
+
+- name: Ensure output
+  assert:
+    that:
+    - item.0 is changed
+    - item.0.path_value == "C:\\" + item.0.item + "Path"
+    - item.1.stdout_lines[0] == 'C:\\' + item.0.item + 'Path'
+  with_together:
+  - "{{ pathout.results }}"
+  - "{{ varout.results }}"
+
+- name: Remove {{ varname }} vars from user and machine scope
+  raw: '[Environment]::SetEnvironmentVariable("{{ varname }}", $null, "User"); [Environment]::SetEnvironmentVariable("{{ varname }}", $null, "Machine")'
+
+- name: Create multi-element path
+  win_path:
+    name: "{{ varname }}"
+    elements:
+    - C:\PathZ
+    - C:\PathA
+  register: multiout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: varout
+
+- name: Ensure output
+  assert:
+    that:
+    - multiout is changed
+    - multiout.path_value == "C:\\PathZ;C:\\PathA"
+    - varout.stdout_lines[0] == "C:\\PathZ;C:\\PathA"
+
+- name: Add value to middle and end
+  win_path:
+    name: "{{ varname }}"
+    elements:
+    - C:\NewPath
+    - C:\PathA
+    - 'C:\PathWithTrailingBackslash\' # store with a trailing backslash
+    - '"C:\Quoted;With;Semicolons"' # embedded semicolon, wrapped in quotes
+    - '%SystemRoot%\stuff'
+  register: addout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: varout
+
+- name: Test idempotence- retry values to middle and end, test case-insensitive comparison, backslash canonicalization
+  win_path:
+    name: "{{ varname }}"
+    elements:
+    - c:\nEwPaTh
+    - c:\patha
+    - C:\pathwithtrailingbackslash # no trailing backslash, should be the same
+    - '"C:\Quoted;With;Semicolons"'
+    - '%SystemRoot%\stuff'
+  register: idemout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: idemvarout
+
+- name: Ensure output
+  assert:
+    that:
+    - addout is changed
+    - addout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
+    - varout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
+    - idemout is not changed
+    - idemout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
+    - idemvarout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
+
+- name: Remove single element
+  win_path:
+    name: "{{ varname }}"
+    elements: C:\NewPath
+    state: absent
+  register: removeout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: varout
+
+- name: Test idempotence- retry remove single element
+  win_path:
+    name: "{{ varname }}"
+    elements: C:\NewPath
+    state: absent
+  register: idemremoveout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: idemvarout
+
+- name: Ensure output
+  assert:
+    that:
+    - removeout is changed
+    - removeout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
+    - varout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
+    - idemremoveout is not changed
+    - idemremoveout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
+    - idemvarout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
+
+- name: Remove multiple elements
+  win_path:
+    name: "{{ varname }}"
+    elements:
+    - C:\PathWithTrailingBackslash # no trailing backslash
+    - c:\pathz
+    - '"C:\Quoted;With;Semicolons"'
+    - '%SystemRoot%\stuff\' # add trailing backslash
+    state: absent
+  register: removeout
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: varout
+
+- name: Ensure output
+  assert:
+    that:
+    - removeout is changed
+    - removeout.path_value == "C:\\PathA"
+    - varout.stdout_lines[0] == "C:\\PathA"
+
+- name: Test check mode add
+  check_mode: yes
+  win_path:
+    name: "{{ varname }}"
+    elements:
+    - C:\MissingPath
+  register: checkadd
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: checkaddvarout
+
+- name: Test check mode remove
+  check_mode: yes
+  win_path:
+    name: "{{ varname }}"
+    elements: C:\PathA
+    state: absent
+  register: checkremove
+
+- name: Get path value
+  raw: $env:{{ varname }}
+  register: checkremovevarout
+
+- name: Ensure output
+  assert:
+    that:
+    - checkadd is changed
+    - checkadd.path_value == "C:\\PathA;C:\\MissingPath"
+    - checkaddvarout.stdout_lines[0] == "C:\\PathA" # shouldn't have actually changed the value
+    - checkremove is changed
+    - checkremove.path_value == ""
+    - checkremovevarout.stdout_lines[0] == "C:\\PathA" # shouldn't have actually changed the value
+
+- name: Remove {{ varname }} vars from user and machine scope
+  raw: '[Environment]::SetEnvironmentVariable("{{ varname }}", $null, "User"); [Environment]::SetEnvironmentVariable("{{ varname }}", $null, "Machine")'

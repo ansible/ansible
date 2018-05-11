@@ -1,24 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -31,28 +24,21 @@ options:
   cluster:
     description:
       - Name of the cluster running the schema.
-    required: false
     default: localhost
   port:
     description:
       Database port to connect to.
-    required: false
     default: 5433
   db:
     description:
       - Name of the database running the schema.
-    required: false
-    default: null
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -70,6 +56,7 @@ EXAMPLES = """
 - name: gathering vertica facts
   vertica_facts: db=db_name
 """
+import traceback
 
 try:
     import pyodbc
@@ -79,13 +66,14 @@ else:
     pyodbc_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
     pass
 
 # module specific functions
+
 
 def get_schema_facts(cursor, schema=''):
     facts = {}
@@ -127,6 +115,7 @@ def get_schema_facts(cursor, schema=''):
                 facts[schema_key]['usage_roles'].append(row.role_name)
     return facts
 
+
 def get_user_facts(cursor, user=''):
     facts = {}
     cursor.execute("""
@@ -161,6 +150,7 @@ def get_user_facts(cursor, user=''):
                 facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_role_facts(cursor, role=''):
     facts = {}
     cursor.execute("""
@@ -181,6 +171,7 @@ def get_role_facts(cursor, role=''):
                 facts[role_key]['assigned_roles'] = row.assigned_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_configuration_facts(cursor, parameter=''):
     facts = {}
     cursor.execute("""
@@ -199,6 +190,7 @@ def get_configuration_facts(cursor, parameter=''):
                 'current_value': row.current_value,
                 'default_value': row.default_value}
     return facts
+
 
 def get_node_facts(cursor, schema=''):
     facts = {}
@@ -222,6 +214,7 @@ def get_node_facts(cursor, schema=''):
 
 # module logic
 
+
 def main():
 
     module = AnsibleModule(
@@ -230,8 +223,8 @@ def main():
             port=dict(default='5433'),
             db=dict(default=None),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
-        ), supports_check_mode = True)
+            login_password=dict(default=None, no_log=True),
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
         module.fail_json(msg="The python pyodbc module is required.")
@@ -249,13 +242,12 @@ def main():
             "User=%s;"
             "Password=%s;"
             "ConnectionLoadBalance=%s"
-            ) % (module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ) % (module.params['cluster'], module.params['port'], db,
+             module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Unable to connect to database: %s." % str(e))
+    except Exception as e:
+        module.fail_json(msg="Unable to connect to database: %s." % to_native(e), exception=traceback.format_exc())
 
     try:
         schema_facts = get_schema_facts(cursor)
@@ -264,20 +256,18 @@ def main():
         configuration_facts = get_configuration_facts(cursor)
         node_facts = get_node_facts(cursor)
         module.exit_json(changed=False,
-            ansible_facts={'vertica_schemas': schema_facts,
-                           'vertica_users': user_facts,
-                           'vertica_roles': role_facts,
-                           'vertica_configuration': configuration_facts,
-                           'vertica_nodes': node_facts})
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+                         ansible_facts={'vertica_schemas': schema_facts,
+                                        'vertica_users': user_facts,
+                                        'vertica_roles': role_facts,
+                                        'vertica_configuration': configuration_facts,
+                                        'vertica_nodes': node_facts})
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e)
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

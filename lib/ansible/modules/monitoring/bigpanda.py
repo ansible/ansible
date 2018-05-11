@@ -1,24 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,7 +25,7 @@ options:
     description:
       - "The name of the component being deployed. Ex: billing"
     required: true
-    alias: name
+    aliases: ['name']
   version:
     description:
       - The deployment version.
@@ -52,7 +44,7 @@ options:
       - Name of affected host name. Can be a list.
     required: false
     default: machine's hostname
-    alias: host
+    aliases: ['host']
   env:
     description:
       - The environment name, typically 'production', 'staging', etc.
@@ -76,7 +68,7 @@ options:
         on personally controlled sites using self-signed certificates.
     required: false
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 
 # informational: requirements for nodes
 requirements: [ ]
@@ -88,7 +80,7 @@ EXAMPLES = '''
     version: '1.3'
     token: '{{ bigpanda_token }}'
     state: started
-...
+
 - bigpanda:
     component: myapp
     version: '1.3'
@@ -104,7 +96,7 @@ EXAMPLES = '''
     state: started
   delegate_to: localhost
   register: deployment
-...
+
 - bigpanda:
     component: '{{ deployment.component }}'
     version: '{{ deployment.version }}'
@@ -116,7 +108,14 @@ EXAMPLES = '''
 # ===========================================
 # Module execution.
 #
+import json
 import socket
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
+
 
 def main():
 
@@ -136,7 +135,6 @@ def main():
             url=dict(required=False, default='https://api.bigpanda.io'),
         ),
         supports_check_mode=True,
-        check_invalid_arguments=False,
     )
 
     token = module.params['token']
@@ -186,20 +184,16 @@ def main():
 
     # Send the data to bigpanda
     data = json.dumps(body)
-    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+    headers = {'Authorization': 'Bearer %s' % token, 'Content-Type': 'application/json'}
     try:
         response, info = fetch_url(module, request_url, data=data, headers=headers)
         if info['status'] == 200:
             module.exit_json(changed=True, **deployment)
         else:
             module.fail_json(msg=json.dumps(info))
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.pycompat24 import get_exception
+
 if __name__ == '__main__':
     main()

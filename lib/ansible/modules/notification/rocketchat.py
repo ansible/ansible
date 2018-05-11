@@ -5,30 +5,22 @@
 # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: rocketchat
 short_description: Send notifications to Rocket Chat
 description:
-    - The M(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
+    - The C(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
 version_added: "2.2"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
@@ -46,7 +38,6 @@ options:
   protocol:
     description:
       - Specify the protocol used to send notification messages before the webhook url. (i.e. http or https)
-    required: false
     default: https
     choices:
       - 'http'
@@ -54,34 +45,25 @@ options:
   msg:
     description:
       - Message to be sent.
-    required: false
-    default: None
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token)
-        specifed during the creation of webhook.
-    required: false
-    default: None
+        specified during the creation of webhook.
   username:
     description:
       - This is the sender of the message.
-    required: false
     default: "Ansible"
   icon_url:
     description:
       - URL for the message sender's icon.
-    required: false
     default: "https://www.ansible.com/favicon.ico"
   icon_emoji:
     description:
       - Emoji for the message sender. The representation for the available emojis can be
         got from Rocket Chat. (for example :thumbsup:) (if I(icon_emoji) is set, I(icon_url) will not be used)
-    required: false
-    default: None
   link_names:
     description:
       - Automatically create links for channels and usernames in I(msg).
-    required: false
     default: 1
     choices:
       - 1
@@ -90,15 +72,11 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices:
-      - 'yes'
-      - 'no'
   color:
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
-    required: false
     default: 'normal'
     choices:
       - 'normal'
@@ -108,8 +86,6 @@ options:
   attachments:
     description:
       - Define a list of attachments.
-    required: false
-    default: None
 """
 
 EXAMPLES = """
@@ -167,7 +143,12 @@ changed:
     sample: false
 """
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 ROCKETCHAT_INCOMING_WEBHOOK = '%s://%s/hooks/%s'
+
 
 def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon_emoji, link_names, color, attachments):
     payload = {}
@@ -199,8 +180,9 @@ def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon
                 attachment['fallback'] = attachment['text']
             payload['attachments'].append(attachment)
 
-    payload="payload=" + module.jsonify(payload)
+    payload = "payload=" + module.jsonify(payload)
     return payload
+
 
 def do_notify_rocketchat(module, domain, token, protocol, payload):
 
@@ -213,21 +195,22 @@ def do_notify_rocketchat(module, domain, token, protocol, payload):
     if info['status'] != 200:
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            domain      = dict(type='str', required=True, default=None),
-            token       = dict(type='str', required=True, no_log=True),
-            protocol    = dict(type='str', default='https', choices=['http', 'https']),
-            msg         = dict(type='str', required=False, default=None),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
-            icon_emoji  = dict(type='str', default=None),
-            link_names  = dict(type='int', default=1, choices=[0,1]),
-            validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
-            attachments = dict(type='list', required=False, default=None)
+        argument_spec=dict(
+            domain=dict(type='str', required=True, default=None),
+            token=dict(type='str', required=True, no_log=True),
+            protocol=dict(type='str', default='https', choices=['http', 'https']),
+            msg=dict(type='str', required=False, default=None),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
+            icon_emoji=dict(type='str', default=None),
+            link_names=dict(type='int', default=1, choices=[0, 1]),
+            validate_certs=dict(default='yes', type='bool'),
+            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments=dict(type='list', required=False, default=None)
         )
     )
 
@@ -248,9 +231,6 @@ def main():
 
     module.exit_json(msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

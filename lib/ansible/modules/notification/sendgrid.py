@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Matt Makai <matthew.makai@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -46,14 +37,10 @@ options:
     description:
       - username for logging into the SendGrid account.
       - Since 2.2 it is only required if api_key is not supplied.
-    required: false
-    default: null
   password:
     description:
       - password that corresponds to the username
       - Since 2.2 it is only required if api_key is not supplied.
-    required: false
-    default: null
   from_address:
     description:
       - the address in the "from" field for the email
@@ -70,44 +57,32 @@ options:
     description:
       - sendgrid API key to use instead of username/password
     version_added: 2.2
-    required: false
-    default: null
   cc:
     description:
       - a list of email addresses to cc
     version_added: 2.2
-    required: false
-    default: null
   bcc:
     description:
       - a list of email addresses to bcc
     version_added: 2.2
-    required: false
-    default: null
   attachments:
     description:
       - a list of relative or explicit paths of files you want to attach (7MB limit as per SendGrid docs)
     version_added: 2.2
-    required: false
-    default: null
   from_name:
     description:
       - the name you want to appear in the from field, i.e 'John Doe'
     version_added: 2.2
-    required: false
-    default: null
   html_body:
     description:
       - whether the body is html content that should be rendered
     version_added: 2.2
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   headers:
     description:
       - a dict to pass on as headers
     version_added: 2.2
-    required: false
-    default: null
 author: "Matt Makai (@makaimc)"
 '''
 
@@ -124,7 +99,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 # send an email to more than one recipient that the build failed
-- sendgrid
+- sendgrid:
       username: "{{ sendgrid_username }}"
       password: "{{ sendgrid_password }}"
       from_address: "build@mycompany.com"
@@ -139,7 +114,7 @@ EXAMPLES = '''
 # =======================================
 # sendgrid module support methods
 #
-import urllib
+import os
 
 try:
     import sendgrid
@@ -147,26 +122,31 @@ try:
 except ImportError:
     HAS_SENDGRID = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils._text import to_bytes
+from ansible.module_utils.urls import fetch_url
+
+
 def post_sendgrid_api(module, username, password, from_address, to_addresses,
-        subject, body, api_key=None, cc=None, bcc=None, attachments=None,
-        html_body=False, from_name=None, headers=None):
+                      subject, body, api_key=None, cc=None, bcc=None, attachments=None,
+                      html_body=False, from_name=None, headers=None):
 
     if not HAS_SENDGRID:
         SENDGRID_URI = "https://api.sendgrid.com/api/mail.send.json"
         AGENT = "Ansible"
-        data = {'api_user': username, 'api_key':password,
-                'from':from_address, 'subject': subject, 'text': body}
-        encoded_data = urllib.urlencode(data)
+        data = {'api_user': username, 'api_key': password,
+                'from': from_address, 'subject': subject, 'text': body}
+        encoded_data = urlencode(data)
         to_addresses_api = ''
         for recipient in to_addresses:
-            if isinstance(recipient, unicode):
-                recipient = recipient.encode('utf-8')
+            recipient = to_bytes(recipient, errors='surrogate_or_strict')
             to_addresses_api += '&to[]=%s' % recipient
         encoded_data += to_addresses_api
 
-        headers = { 'User-Agent': AGENT,
-                'Content-type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json'}
+        headers = {'User-Agent': AGENT,
+                   'Content-type': 'application/x-www-form-urlencoded',
+                   'Accept': 'application/json'}
         return fetch_url(module, SENDGRID_URI, data=encoded_data, headers=headers, method='POST')
     else:
 
@@ -211,6 +191,7 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
 # Main
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -229,11 +210,11 @@ def main():
             attachments=dict(required=False, type='list')
         ),
         supports_check_mode=True,
-        mutually_exclusive = [
-                              ['api_key', 'password'],
-                              ['api_key', 'username']
-                              ],
-        required_together = [['username', 'password']],
+        mutually_exclusive=[
+            ['api_key', 'password'],
+            ['api_key', 'username']
+        ],
+        required_together=[['username', 'password']],
     )
 
     username = module.params['username']
@@ -252,12 +233,13 @@ def main():
 
     sendgrid_lib_args = [api_key, bcc, cc, headers, from_name, html_body, attachments]
 
-    if any(lib_arg != None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
-        module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: api_key, bcc, cc, headers, from_name, html_body, attachments')
+    if any(lib_arg is not None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
+        module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: '
+                             'api_key, bcc, cc, headers, from_name, html_body, attachments')
 
     response, info = post_sendgrid_api(module, username, password,
-        from_address, to_addresses, subject, body, attachments=attachments,
-        bcc=bcc, cc=cc, headers=headers, html_body=html_body, api_key=api_key)
+                                       from_address, to_addresses, subject, body, attachments=attachments,
+                                       bcc=bcc, cc=cc, headers=headers, html_body=html_body, api_key=api_key)
 
     if not HAS_SENDGRID:
         if info['status'] != 200:
@@ -268,8 +250,6 @@ def main():
 
     module.exit_json(msg=subject, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

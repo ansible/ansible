@@ -16,66 +16,57 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_vxlan_vtep
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages VXLAN Network Virtualization Endpoint (NVE).
 description:
-    - Manages VXLAN Network Virtualization Endpoint (NVE) overlay interface
-      that terminates VXLAN tunnels.
+  - Manages VXLAN Network Virtualization Endpoint (NVE) overlay interface
+    that terminates VXLAN tunnels.
 author: Gabriele Gerbino (@GGabriele)
-extends_documentation_fragment: nxos
 notes:
-    - The module is used to manage NVE properties, not to create NVE
-      interfaces. Use M(nxos_interface) if you wish to do so.
-    - C(state=absent) removes the interface.
-    - Default, where supported, restores params default value.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - The module is used to manage NVE properties, not to create NVE
+    interfaces. Use M(nxos_interface) if you wish to do so.
+  - C(state=absent) removes the interface.
+  - Default, where supported, restores params default value.
 options:
-    interface:
-        description:
-            - Interface name for the VXLAN Network Virtualization Endpoint.
-        required: true
+  interface:
     description:
-        description:
-            - Description of the NVE interface.
-        required: false
-        default: null
-    host_reachability:
-        description:
-            - Specify mechanism for host reachability advertisement.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    shutdown:
-        description:
-            - Administratively shutdown the NVE interface.
-        required: false
-        choices: ['true','false']
-        default: false
-    source_interface:
-        description:
-            - Specify the loopback interface whose IP address should be
-              used for the NVE interface.
-        required: false
-        default: null
-    source_interface_hold_down_time:
-        description:
-            - Suppresses advertisement of the NVE loopback address until
-              the overlay has converged.
-        required: false
-        default: null
-    state:
-        description:
-            - Determines whether the config should be present or not
-              on the device.
-        required: false
-        default: present
-        choices: ['present','absent']
+      - Interface name for the VXLAN Network Virtualization Endpoint.
+    required: true
+  description:
+    description:
+      - Description of the NVE interface.
+  host_reachability:
+    description:
+      - Specify mechanism for host reachability advertisement.
+    type: bool
+  shutdown:
+    description:
+      - Administratively shutdown the NVE interface.
+    type: bool
+  source_interface:
+    description:
+      - Specify the loopback interface whose IP address should be
+        used for the NVE interface.
+  source_interface_hold_down_time:
+    description:
+      - Suppresses advertisement of the NVE loopback address until
+        the overlay has converged.
+  state:
+    description:
+      - Determines whether the config should be present or not
+        on the device.
+    default: present
+    choices: ['present','absent']
 '''
 EXAMPLES = '''
 - nxos_vxlan_vtep:
@@ -85,198 +76,24 @@ EXAMPLES = '''
     source_interface: Loopback0
     source_interface_hold_down_time: 30
     shutdown: default
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"description": "simple description", "host_reachability": true,
-        "interface": "nve1", "shutdown": true, "source_interface": "loopback0",
-        "source_interface_hold_down_time": "30"}
-existing:
-    description: k/v pairs of existing VXLAN VTEP configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of VXLAN VTEP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"description": "simple description", "host_reachability": true,
-        "interface": "nve1", "shutdown": true, "source_interface": "loopback0",
-        "source_interface_hold_down_time": "30"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface nve1", "source-interface loopback0",
         "source-interface hold-down-time 30", "description simple description",
         "shutdown", "host-reachability protocol bgp"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
-# COMMON CODE FOR MIGRATION
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'shutdown',
@@ -293,15 +110,8 @@ PARAM_TO_COMMAND_KEYMAP = {
 PARAM_TO_DEFAULT_KEYMAP = {
     'description': False,
     'shutdown': True,
+    'source_interface_hold_down_time': '180',
 }
-
-WARNINGS = []
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 
 def get_value(arg, config, module):
@@ -330,7 +140,7 @@ def get_value(arg, config, module):
         value = ''
         if arg == 'description':
             if NO_DESC_REGEX.search(config):
-                value = ''
+                value = False
             elif PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value').strip()
         elif arg == 'source_interface':
@@ -349,7 +159,7 @@ def get_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['all']))
 
     interface_string = 'interface {0}'.format(module.params['interface'].lower())
     parents = [interface_string]
@@ -445,83 +255,59 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            description=dict(required=False, type='str'),
-            host_reachability=dict(required=False, type='bool'),
-            shutdown=dict(required=False, type='bool'),
-            source_interface=dict(required=False, type='str'),
-            source_interface_hold_down_time=dict(required=False, type='str'),
-            m_facts=dict(required=False, default=False, type='bool'),
-            state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        interface=dict(required=True, type='str'),
+        description=dict(required=False, type='str'),
+        host_reachability=dict(required=False, type='bool'),
+        shutdown=dict(required=False, type='bool'),
+        source_interface=dict(required=False, type='str'),
+        source_interface_hold_down_time=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    result = {'changed': False, 'commands': [], 'warnings': warnings}
+    check_args(module, warnings)
 
     state = module.params['state']
-    interface = module.params['interface'].lower()
 
-    args =  [
-            'interface',
-            'description',
-            'host_reachability',
-            'shutdown',
-            'source_interface',
-            'source_interface_hold_down_time'
-        ]
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
 
-    existing = invoke('get_existing', module, args)
-    end_state = existing
+    existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
         if key != 'interface':
-            if str(value).lower() == 'true':
-                value = True
-            elif str(value).lower() == 'false':
-                value = False
-            elif str(value).lower() == 'default':
+            if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
                 if value is None:
                     if key in BOOL_PARAMS:
                         value = False
                     else:
                         value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+            if str(existing.get(key)).lower() != str(value).lower():
                 proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
         if not existing:
-            WARNINGS.append("The proposed NVE interface did not exist. "
+            warnings.append("The proposed NVE interface did not exist. "
                             "It's recommended to use nxos_interface to create "
                             "all logical interfaces.")
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent' and existing:
+        state_absent(module, existing, proposed, candidate)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
-    else:
-        result['updates'] = []
-
-    result['connected'] = module.connected
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+    if candidate:
+        candidate = candidate.items_text()
+        result['commands'] = candidate
+        result['changed'] = True
+        load_config(module, candidate)
 
     module.exit_json(**result)
 

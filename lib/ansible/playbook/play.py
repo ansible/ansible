@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
 from ansible import constants as C
-
-from ansible.errors import AnsibleParserError
-
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -31,7 +29,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.vars import preprocess_vars
+from ansible.vars.manager import preprocess_vars
 
 try:
     from __main__ import display
@@ -56,46 +54,41 @@ class Play(Base, Taggable, Become):
     """
 
     # =================================================================================
-    # Connection-Related Attributes
+    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
-    # TODO: generalize connection
-    _accelerate          = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_ipv6     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
-
-    # Connection
-    _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
-    _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)
-    _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
-    _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
+    # Facts
+    _fact_path = FieldAttribute(isa='string', default=None)
+    _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
-    _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt         = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _vault_password      = FieldAttribute(isa='string', always_post_validate=True)
+    _vars_files = FieldAttribute(isa='list', default=[], priority=99)
+    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vault_password = FieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    _roles               = FieldAttribute(isa='list', default=[], priority=90)
+    _roles = FieldAttribute(isa='list', default=[], priority=90)
 
     # Block (Task) Lists Attributes
-    _handlers            = FieldAttribute(isa='list', default=[])
-    _pre_tasks           = FieldAttribute(isa='list', default=[])
-    _post_tasks          = FieldAttribute(isa='list', default=[])
-    _tasks               = FieldAttribute(isa='list', default=[])
+    _handlers = FieldAttribute(isa='list', default=[])
+    _pre_tasks = FieldAttribute(isa='list', default=[])
+    _post_tasks = FieldAttribute(isa='list', default=[])
+    _tasks = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
-    _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
+    _force_handlers = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    _serial = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    _order = FieldAttribute(isa='string', always_post_validate=True)
 
     # =================================================================================
 
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
         self.ROLE_CACHE = {}
@@ -108,13 +101,15 @@ class Play(Base, Taggable, Become):
         return self._attributes.get('name')
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None):
+    def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
         p = Play()
+        if vars:
+            p.vars = vars.copy()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -122,7 +117,8 @@ class Play(Base, Taggable, Become):
         Adjusts play datastructure to cleanup old/legacy items
         '''
 
-        assert isinstance(ds, dict)
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that
@@ -131,8 +127,8 @@ class Play(Base, Taggable, Become):
             # this should never happen, but error out with a helpful message
             # to the user if it does...
             if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s."
-                        " The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
+                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s. "
+                                         "The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
 
             ds['remote_user'] = ds['user']
             del ds['user']
@@ -146,8 +142,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading tasks", obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''
@@ -156,8 +152,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
     def _load_post_tasks(self, attr, ds):
         '''
@@ -166,8 +162,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
 
     def _load_handlers(self, attr, ds):
         '''
@@ -175,9 +171,13 @@ class Play(Base, Taggable, Become):
         Bare handlers outside of a block are given an implicit block.
         '''
         try:
-            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+            return self._extend_value(
+                self.handlers,
+                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
+                prepend=True
+            )
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
     def _load_roles(self, attr, ds):
         '''
@@ -190,8 +190,8 @@ class Play(Base, Taggable, Become):
 
         try:
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 
         roles = []
         for ri in role_includes:
@@ -201,22 +201,23 @@ class Play(Base, Taggable, Become):
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)
         vars_prompts = []
-        for prompt_data in new_ds:
-            if 'name' not in prompt_data:
-                display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
-                for vname, prompt in prompt_data.items():
-                    vars_prompts.append(dict(
-                        name      = vname,
-                        prompt    = prompt,
-                        default   = None,
-                        private   = None,
-                        confirm   = None,
-                        encrypt   = None,
-                        salt_size = None,
-                        salt      = None,
-                    ))
-            else:
-                vars_prompts.append(prompt_data)
+        if new_ds is not None:
+            for prompt_data in new_ds:
+                if 'name' not in prompt_data:
+                    display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
+                    for vname, prompt in prompt_data.items():
+                        vars_prompts.append(dict(
+                            name=vname,
+                            prompt=prompt,
+                            default=None,
+                            private=None,
+                            confirm=None,
+                            encrypt=None,
+                            salt_size=None,
+                            salt=None,
+                        ))
+                else:
+                    vars_prompts.append(prompt_data)
         return vars_prompts
 
     def _compile_roles(self):
@@ -283,6 +284,8 @@ class Play(Base, Taggable, Become):
         return self.vars.copy()
 
     def get_vars_files(self):
+        if self.vars_files is None:
+            return []
         return self.vars_files
 
     def get_handlers(self):
@@ -329,5 +332,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me

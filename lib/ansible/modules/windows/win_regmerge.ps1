@@ -31,12 +31,13 @@ Function Convert-RegistryPath {
     Return $output
 }
 
+$result = @{
+    changed = $false
+}
 $params = Parse-Args $args
-$result = New-Object PSObject
-Set-Attr $result "changed" $False
 
-$path = Get-Attr -obj $params -name path -failifempty $True -resultobj $result
-$compare_to = Get-Attr -obj $params -name compare_to -failifempty $False -resultobj $result
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -resultobj $result
+$compare_to = Get-AnsibleParam -obj $params -name "compare_to" -type "str" -resultobj $result
 
 # check it looks like a reg key, warn if key not present - will happen first time
 # only accepting PS-Drive style key names (starting with HKLM etc, not HKEY_LOCAL_MACHINE etc)
@@ -48,7 +49,7 @@ If ($compare_to) {
     If (Test-Path $compare_to_key -pathType container ) {
         $do_comparison = $True
     } Else {
-        Set-Attr $result "compare_to_key_found" $False
+        $result.compare_to_key_found = $false
     }
 }
 
@@ -71,28 +72,28 @@ If ( $do_comparison -eq $True ) {
      $reg_import_args = @("IMPORT", "$path")
      $ret = & reg.exe $reg_import_args 2>&1
      If ($LASTEXITCODE -eq 0) {
-         Set-Attr $result "changed" $True
-         Set-Attr $result "difference_count" $comparison_result.count
+         $result.changed = $true
+         $result.difference_count = $comparison_result.count
      } Else {
-         Set-Attr $result "rc" $LASTEXITCODE
+         $result.rc = $LASTEXITCODE
          Fail-Json $result "$ret"
      }
   } Else {
-      Set-Attr $result "difference_count" 0
+      $result.difference_count = 0
   }
 
   Remove-Item $exported_path
-  Set-Attr $result "compared" $True
+  $result.compared = $true
 
 } Else {
      # not comparing, merge and report changed
      $reg_import_args = @("IMPORT", "$path")
      $ret = & reg.exe $reg_import_args 2>&1
      If ( $LASTEXITCODE -eq 0 ) {
-         Set-Attr $result "changed" $True
-         Set-Attr $result "compared" $False
+         $result.changed = $true
+         $result.compared = $false
      } Else {
-         Set-Attr $result "rc" $LASTEXITCODE
+         $result.rc = $LASTEXITCODE
          Fail-Json $result "$ret"
      }
 }

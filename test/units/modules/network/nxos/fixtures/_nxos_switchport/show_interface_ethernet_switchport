@@ -1,0 +1,14 @@
+{
+  "TABLE_interface": {
+    "ROW_interface": {
+      "interface": "Ethernet2/1", 
+      "oper_mode": "access",
+      "switchport": "Enabled",
+      "access_vlan": 2,
+      "access_vlan_name": "VLAN2",
+      "native_vlan": 10,
+      "native_vlan_name": "VLAN10",
+      "trunk_vlans": "1-50"
+    }
+  }
+}

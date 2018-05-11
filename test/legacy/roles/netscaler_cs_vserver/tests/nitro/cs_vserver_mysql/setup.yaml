@@ -1,0 +1,20 @@
+---
+
+
+- name: Setup cs vserver
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-5
+    servicetype: MYSQL
+    ipv46: 192.168.1.5
+    port: 80
+    mysqlprotocolversion: 10
+    mysqlserverversion: Version 1
+    mysqlcharacterset: 8
+    mysqlservercapabilities: 41613

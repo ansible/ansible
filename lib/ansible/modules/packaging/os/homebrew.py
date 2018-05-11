@@ -7,22 +7,16 @@
 #
 # Based on macports (Jimmy Tang <jcftang@gmail.com>)
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -40,43 +34,39 @@ version_added: "1.1"
 options:
     name:
         description:
-            - name of package to install/remove
-        required: false
-        default: None
+            - list of names of packages to install/remove
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - "':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
-        required: false
+            - "A ':' separated list of paths to search for 'brew' executable.
+              Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
+              providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
         default: '/usr/local/bin'
     state:
         description:
             - state of the package
         choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'unlinked' ]
-        required: false
         default: present
     update_homebrew:
         description:
             - update homebrew itself first
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['update-brew']
     upgrade_all:
         description:
             - upgrade all homebrew packages
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['upgrade']
     install_options:
         description:
             - options flags to install a package
-        required: false
-        default: null
         aliases: ['options']
         version_added: "1.4"
-notes:  []
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
@@ -133,7 +123,8 @@ EXAMPLES = '''
 import os.path
 import re
 
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 
 # exceptions -------------------------------------------------------------- {{{
@@ -179,11 +170,12 @@ class Homebrew(object):
         \+                  # plusses
         -                   # dashes
         :                   # colons (for URLs)
+        @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -201,7 +193,7 @@ class Homebrew(object):
              - os.path.sep
         '''
 
-        if isinstance(path, basestring):
+        if isinstance(path, string_types):
             return not cls.INVALID_PATH_REGEX.search(path)
 
         try:
@@ -229,7 +221,7 @@ class Homebrew(object):
             return True
 
         return (
-            isinstance(brew_path, basestring)
+            isinstance(brew_path, string_types)
             and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
         )
 
@@ -241,7 +233,7 @@ class Homebrew(object):
             return True
 
         return (
-            isinstance(package, basestring)
+            isinstance(package, string_types)
             and not cls.INVALID_PACKAGE_REGEX.search(package)
         )
 
@@ -262,7 +254,7 @@ class Homebrew(object):
             return True
         else:
             return (
-                isinstance(state, basestring)
+                isinstance(state, string_types)
                 and state.lower() in (
                     'installed',
                     'upgraded',
@@ -311,7 +303,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         else:
-            if isinstance(path, basestring):
+            if isinstance(path, string_types):
                 self._path = path.split(':')
             else:
                 self._path = path
@@ -510,7 +502,7 @@ class Homebrew(object):
             'update',
         ])
         if rc == 0:
-            if out and isinstance(out, basestring):
+            if out and isinstance(out, string_types):
                 already_updated = any(
                     re.search(r'Already up-to-date.', s.strip(), re.IGNORECASE)
                     for s in out.split('\n')
@@ -695,7 +687,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         opts = (
-            [self.brew_path, 'uninstall']
+            [self.brew_path, 'uninstall', '--force']
             + self.install_options
             + [self.current_package]
         )
@@ -897,8 +889,6 @@ def main():
     else:
         module.exit_json(changed=changed, msg=message)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

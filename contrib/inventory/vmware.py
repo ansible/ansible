@@ -38,18 +38,20 @@ import os
 import ssl
 import sys
 import time
-import ConfigParser
 
-from six import text_type, string_types
+from six import integer_types, text_type, string_types
+from six.moves import configparser
 
 # Disable logging message trigged by pSphere/suds.
 try:
     from logging import NullHandler
 except ImportError:
     from logging import Handler
+
     class NullHandler(Handler):
         def emit(self, record):
             pass
+
 logging.getLogger('psphere').addHandler(NullHandler())
 logging.getLogger('suds').addHandler(NullHandler())
 
@@ -62,11 +64,11 @@ from suds.sudsobject import Object as SudsObject
 class VMwareInventory(object):
 
     def __init__(self, guests_only=None):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser()
         if os.environ.get('VMWARE_INI', ''):
             config_files = [os.environ['VMWARE_INI']]
         else:
-            config_files =  [os.path.abspath(sys.argv[0]).rstrip('.py') + '.ini', 'vmware.ini']
+            config_files = [os.path.abspath(sys.argv[0]).rstrip('.py') + '.ini', 'vmware.ini']
         for config_file in config_files:
             if os.path.exists(config_file):
                 self.config.read(config_file)
@@ -208,7 +210,7 @@ class VMwareInventory(object):
                 if obj_info != ():
                     l.append(obj_info)
             return l
-        elif isinstance(obj, (type(None), bool, int, long, float, string_types)):
+        elif isinstance(obj, (type(None), bool, float) + string_types + integer_types):
             return obj
         else:
             return ()
@@ -362,7 +364,7 @@ class VMwareInventory(object):
             # Loop through all VMs on physical host.
             for vm in host.vm:
                 if prefix_filter:
-                    if vm.name.startswith( prefix_filter ):
+                    if vm.name.startswith(prefix_filter):
                         continue
                 self._add_host(inv, 'all', vm.name)
                 self._add_host(inv, vm_group, vm.name)

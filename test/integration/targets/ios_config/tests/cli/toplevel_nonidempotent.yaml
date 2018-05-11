@@ -1,17 +1,17 @@
 ---
-- debug: msg="START cli/toplevel_nonidempotent.yaml"
+- debug: msg="START cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
-    lines: ['hostname {{ inventory_hostname }}']
-    provider: "{{ cli }}"
+    lines: ['hostname {{ shorter_hostname }}']
     match: none
+    provider: "{{ cli }}"
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
     match: strict
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -22,8 +22,8 @@
 - name: configure top level command idempotent check
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
     match: strict
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -32,8 +32,8 @@
 
 - name: teardown
   ios_config:
-    lines: ['hostname {{ inventory_hostname }}']
-    provider: "{{ cli }}"
+    lines: ['hostname {{ shorter_hostname }}']
     match: none
+    provider: "{{ cli }}"
 
-- debug: msg="END cli/toplevel_nonidempotent.yaml"
+- debug: msg="END cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"

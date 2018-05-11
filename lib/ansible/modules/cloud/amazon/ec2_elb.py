@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = """
 ---
@@ -43,33 +36,27 @@ options:
   ec2_elbs:
     description:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
-    required: false
-    default: None
   enable_availability_zone:
     description:
       - Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already
         been enabled. If set to no, the task will fail if the availability zone is not enabled on the ELB.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait:
     description:
       - Wait for instance registration or deregistration to complete successfully before returning.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'yes'
     version_added: "1.5"
   wait_timeout:
     description:
-      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs. If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
-    required: false
+      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs.
+        If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
     default: 0
     version_added: "1.6"
 extends_documentation_fragment:
@@ -111,6 +98,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
+
 
 class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
@@ -129,11 +120,15 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) 
+            initial_state = self._get_instance_health(lb)
             if initial_state is None:
                 # Instance isn't registered with this load
                 # balancer. Ignore it and try the next one.
                 continue
+
+            # The instance is not associated with any load balancer so nothing to do
+            if not self._get_instance_lbs():
+                return
 
             lb.deregister_instances([self.instance_id])
 
@@ -169,7 +164,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -257,7 +252,7 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         if not ec2_elbs:
-           ec2_elbs = self._get_auto_scaling_group_lbs()
+            ec2_elbs = self._get_auto_scaling_group_lbs()
 
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
@@ -293,24 +288,24 @@ class ElbManager:
            indirectly through its auto scaling group membership"""
 
         try:
-           asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
+            asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
 
         asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
         if len(asg_instances) > 1:
-           self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
+            self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
 
         if not asg_instances:
-           asg_elbs = []
+            asg_elbs = []
         else:
-           asg_name = asg_instances[0].group_name
+            asg_name = asg_instances[0].group_name
 
-           asgs = asg.get_all_groups([asg_name])
-           if len(asg_instances) != 1:
-              self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
+            asgs = asg.get_all_groups([asg_name])
+            if len(asg_instances) != 1:
+                self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
 
-           asg_elbs = asgs[0].load_balancers
+            asg_elbs = asgs[0].load_balancers
 
         return asg_elbs
 
@@ -326,13 +321,13 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True},
-            instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
-            wait={'required': False, 'default': True, 'type': 'bool'},
-            wait_timeout={'required': False, 'default': 0, 'type': 'int'}
-        )
+        state={'required': True},
+        instance_id={'required': True},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
+        enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
+        wait={'required': False, 'default': True, 'type': 'bool'},
+        wait_timeout={'required': False, 'default': 0, 'type': 'int'}
+    )
     )
 
     module = AnsibleModule(
@@ -361,7 +356,7 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':
@@ -374,9 +369,6 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

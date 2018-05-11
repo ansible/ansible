@@ -1,0 +1,7 @@
+- name: Create a Label
+  tower_label:
+    name: important
+    organization: Default
+    state: present
+
+# TODO: Deleting labels doesn't seem to work currently

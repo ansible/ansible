@@ -1,9 +1,10 @@
 ---
-- debug: msg="START cli/output.yaml"
+- debug: msg="START cli/output.yaml on connection={{ ansible_connection }}"
 
 - name: get output for single command
   ios_command:
-    commands: ['show version']
+    commands:
+      - show version
     provider: "{{ cli }}"
   register: result
 
@@ -26,4 +27,4 @@
       - "result.stdout is defined"
       - "result.stdout | length == 2"
 
-- debug: msg="END cli/output.yaml"
+- debug: msg="END cli/output.yaml on connection={{ ansible_connection }}"

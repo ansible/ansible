@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
@@ -34,6 +35,10 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
@@ -50,8 +55,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -62,7 +65,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -72,7 +74,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -80,38 +81,25 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 tasks:
   - name: run show version on remote devices
     ios_command:
       commands: show version
-      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains IOS
     ios_command:
       commands: show version
       wait_for: result[0] contains IOS
-      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     ios_command:
+    ios_command:
       commands:
         - show version
         - show interfaces
-      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     ios_command:
@@ -121,36 +109,41 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
-      provider: "{{ cli }}"
+  - name: run command that requires answering a prompt
+    ios_command:
+      commands:
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: 'Clear "show interface" counters on this interface [confirm]'
+          answer: c
 """
 
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
   description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
 """
-import ansible.module_utils.ios
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.network import NetworkModule, NetworkError
+import re
+import time
+
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
-VALID_KEYS = ['command', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
@@ -158,19 +151,35 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, string_types):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown keyword specified')
-        yield cmd
+
+def parse_commands(module, warnings):
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+    commands = command(module.params['commands'])
+    for item in list(commands):
+        configure_type = re.match(r'conf(?:\w*)(?:\s+(\w+))?', item['command'])
+        if module.check_mode:
+            if configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
+                module.fail_json(
+                    msg='ios_command does not support running config mode '
+                        'commands.  Please use ios_config instead'
+                )
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'only show commands are supported when using check mode, not '
+                    'executing `%s`' % item['command']
+                )
+                commands.remove(item)
+    return commands
+
 
 def main():
-    spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -180,59 +189,51 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
+    result = {'changed': False}
 
     warnings = list()
-
-    runner = CommandRunner(module)
-
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='ios_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'ios_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
-
-    for item in conditionals:
-        runner.add_conditional(item)
-
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
-
-    try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
-
-    result = dict(changed=False, stdout=list())
-
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'])
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
-
+    check_args(module, warnings)
+    commands = parse_commands(module, warnings)
     result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
+
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
+
+    while retries > 0:
+        responses = run_commands(module, commands)
+
+        for item in list(conditionals):
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
+
+        if not conditionals:
+            break
+
+        time.sleep(interval)
+        retries -= 1
+
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+
+    result.update({
+        'changed': False,
+        'stdout': responses,
+        'stdout_lines': list(to_lines(responses))
+    })
 
     module.exit_json(**result)
 

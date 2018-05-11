@@ -1,0 +1,372 @@
+---
+- name: setup
+  local_action:
+    module: exo_dns_domain
+    name: "{{ exo_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is successful
+
+- name: test fail if missing name
+  local_action:
+    module: exo_dns_domain
+  register: result
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test create a domain
+  local_action:
+    module: exo_dns_domain
+    name: "{{ exo_dns_domain_name }}"
+  register: result
+- name: verify results of test create a domain
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_domain.name == "{{ exo_dns_domain_name }}"'
+
+- name: test create a domain idempotence
+  local_action:
+    module: exo_dns_domain
+    name: "{{ exo_dns_domain_name }}"
+  register: result
+- name: verify results of test create a domain idempotence
+  assert:
+    that:
+    - result is not changed
+    - 'result.exo_dns_domain.name == "{{ exo_dns_domain_name }}"'
+
+- name: test fail if missing required params
+  local_action:
+    module: exo_dns_record
+  register: result
+  ignore_errors: true
+- name: verify results of test fail if missing required params
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: domain"'
+
+- name: test fail if missing required params state=present
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: ""
+  register: result
+  ignore_errors: true
+- name: verify results of test fail if missing required params state=present
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "state is present but all of the following are missing: content"'
+
+- name: test create a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    content: 1.2.3.4
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.4"'
+
+- name: test create a record idempotence
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    content: 1.2.3.4
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is not changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.4"'
+
+- name: test update a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    content: 1.2.3.5
+    ttl: 7200
+  register: result
+- name: verify results of test update a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+    - 'result.exo_dns_record.ttl == 7200'
+
+- name: test update a record idempotence
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    content: 1.2.3.5
+    ttl: 7200
+  register: result
+- name: verify results of test update a record idempotence
+  assert:
+    that:
+    - result is not changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+    - 'result.exo_dns_record.ttl == 7200'
+
+- name: test delete a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    state: absent
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+    - 'result.exo_dns_record.ttl == 7200'
+
+- name: test delete a record idempotence
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    state: absent
+  register: result
+- name: verify results of test create a record idempotence
+  assert:
+    that:
+    - result is not changed
+
+- name: setup an existing MX record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    record_type: MX
+    name: ""
+    content: "mx2.{{ exo_dns_domain_name }}"
+    prio: 10
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == ""'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "mx2.{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.prio == 10'
+
+- name: test create a MX record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    record_type: MX
+    name: ""
+    content: "mx1.{{ exo_dns_domain_name }}"
+    prio: 10
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == ""'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "mx1.{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.prio == 10'
+
+- name: test update a MX record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    record_type: MX
+    name: ""
+    content: "mx1.{{ exo_dns_domain_name }}"
+    prio: 20
+  tags: foo
+  register: result
+- name: verify results of test create a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == ""'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "mx1.{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.prio == 20'
+  tags: foo
+
+- name: test delete a MX record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    record_type: MX
+    name: ""
+    content: "mx1.{{ exo_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify results of test delete a MX record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == ""'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "mx1.{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.prio == 20'
+
+- name: test delete a MX record idempotence
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    record_type: MX
+    name: ""
+    content: "mx1.{{ exo_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify results of test delete a MX record idempotence
+  assert:
+    that:
+    - result is not changed
+
+- name: test create first multiple a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.4
+  register: result
+- name: verify results of test create first multiple a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.4"'
+
+- name: test create another similar a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.5
+  register: result
+- name: verify results of test create another similar a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+    - 'result.exo_dns_record.ttl == 3600'
+
+- name: test update another similar a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.5
+    ttl: 7200
+  register: result
+- name: verify results of test create another similar a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+    - 'result.exo_dns_record.ttl == 7200'
+
+- name: test create first multiple a record idempotence
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.4
+  register: result
+- name: verify results of test create first multiple a record idempotence
+  assert:
+    that:
+    - result is not changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.4"'
+
+- name: test delete similar a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.5
+    state: absent
+  register: result
+- name: verify results of test delete similar a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.5"'
+
+- name: test delete first similar a record
+  local_action:
+    module: exo_dns_record
+    domain: "{{ exo_dns_domain_name }}"
+    name: "{{ exo_dns_record_name_web }}"
+    multiple: yes
+    content: 1.2.3.4
+    state: absent
+  register: result
+- name: verify results of test delete first similar a record
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_record.name == "{{ exo_dns_record_name_web }}"'
+    - 'result.exo_dns_record.domain == "{{ exo_dns_domain_name }}"'
+    - 'result.exo_dns_record.content == "1.2.3.4"'
+
+- name: test delete a domain
+  local_action:
+    module: exo_dns_domain
+    name: "{{ exo_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify results of test delete a domain
+  assert:
+    that:
+    - result is changed
+    - 'result.exo_dns_domain.name == "{{ exo_dns_domain_name }}"'
+
+- name: test delete a domain idempotence
+  local_action:
+    module: exo_dns_domain
+    name: "{{ exo_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify results of test delete a domain idempotence
+  assert:
+    that:
+    - result is not changed

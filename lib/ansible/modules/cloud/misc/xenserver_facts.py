@@ -1,23 +1,16 @@
-#!/usr/bin/python -tt
-# This file is part of Ansible
+#!/usr/bin/python
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,6 +25,26 @@ author:
 options: {}
 '''
 
+EXAMPLES = '''
+- name: Gather facts from xenserver
+  xenserver:
+
+- name: Print running VMs
+  debug:
+    msg: "{{ item }}"
+  with_items: "{{ xs_vms.keys() }}"
+  when: xs_vms[item]['power_state'] == "Running"
+
+# Which will print:
+#
+# TASK: [Print running VMs] ***********************************************************
+# skipping: [10.13.0.22] => (item=CentOS 4.7 (32-bit))
+# ok: [10.13.0.22] => (item=Control domain on host: 10.0.13.22) => {
+#     "item": "Control domain on host: 10.0.13.22",
+#     "msg": "Control domain on host: 10.0.13.22"
+# }
+'''
+
 import platform
 
 HAVE_XENAPI = False
@@ -41,22 +54,8 @@ try:
 except ImportError:
     pass
 
-EXAMPLES = '''
-- name: Gather facts from xenserver
-   xenserver:
+from ansible.module_utils.basic import AnsibleModule
 
-- name: Print running VMs
-  debug: msg="{{ item }}"
-  with_items: "{{ xs_vms.keys() }}"
-  when: xs_vms[item]['power_state'] == "Running"
-
-TASK: [Print running VMs] ***********************************************************
-skipping: [10.13.0.22] => (item=CentOS 4.7 (32-bit))
-ok: [10.13.0.22] => (item=Control domain on host: 10.0.13.22) => {
-    "item": "Control domain on host: 10.0.13.22",
-    "msg": "Control domain on host: 10.0.13.22"
-}
-'''
 
 class XenServerFacts:
     def __init__(self):
@@ -138,11 +137,13 @@ def change_keys(recs, key='uuid', filter_func=None):
 
     return new_recs
 
+
 def get_host(session):
     """Get the host"""
     host_recs = session.xenapi.host.get_all()
     # We only have one host, so just return its entry
     return session.xenapi.host.get_record(host_recs[0])
+
 
 def get_vms(session):
     xs_vms = {}
@@ -152,7 +153,7 @@ def get_vms(session):
 
     vms = change_keys(recs, key='uuid')
     for vm in vms.values():
-       xs_vms[vm['name_label']] = vm
+        xs_vms[vm['name_label']] = vm
     return xs_vms
 
 
@@ -163,8 +164,9 @@ def get_srs(session):
         return None
     srs = change_keys(recs, key='uuid')
     for sr in srs.values():
-       xs_srs[sr['name_label']] = sr
+        xs_srs[sr['name_label']] = sr
     return xs_srs
+
 
 def main():
     module = AnsibleModule({})
@@ -204,7 +206,6 @@ def main():
 
     module.exit_json(ansible=data)
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

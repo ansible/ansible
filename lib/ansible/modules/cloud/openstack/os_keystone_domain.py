@@ -1,34 +1,23 @@
 #!/usr/bin/python
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: os_keystone_domain
 short_description: Manage OpenStack Identity Domains
+author:
+    - Monty
+    - Haneef Ali
 extends_documentation_fragment: openstack
 version_added: "2.1"
 description:
@@ -43,18 +32,19 @@ options:
    description:
      description:
         - Description of the domain
-     required: false
-     default: None
    enabled:
      description:
         - Is the domain enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -79,7 +69,7 @@ RETURN = '''
 domain:
     description: Dictionary describing the domain.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Domain ID.
@@ -105,12 +95,18 @@ id:
     sample: "474acfe5-be34-494c-b339-50f06aa143e4"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+
+
 def _needs_update(module, domain):
-    if domain.description != module.params['description']:
+    if module.params['description'] is not None and \
+       domain.description != module.params['description']:
         return True
     if domain.enabled != module.params['enabled']:
         return True
     return False
+
 
 def _system_state_change(module, domain):
     state = module.params['state']
@@ -124,8 +120,8 @@ def _system_state_change(module, domain):
 
     return False
 
-def main():
 
+def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         description=dict(default=None),
@@ -138,16 +134,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     description = module.params['description']
     enabled = module.params['enabled']
     state = module.params['state']
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         domains = cloud.search_domains(filters=dict(name=name))
 
@@ -178,18 +171,15 @@ def main():
 
         elif state == 'absent':
             if domain is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_domain(domain.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

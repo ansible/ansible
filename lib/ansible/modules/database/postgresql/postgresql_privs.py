@@ -1,24 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -40,18 +33,15 @@ options:
     description:
       - If C(present), the specified privileges are granted, if C(absent) they
         are revoked.
-    required: no
     default: present
     choices: [present, absent]
   privs:
     description:
       - Comma separated list of privileges to grant/revoke.
       - 'Alias: I(priv)'
-    required: no
   type:
     description:
       - Type of database object to set privileges on.
-    required: no
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group]
@@ -68,13 +58,11 @@ options:
         replaced with commas (needed to specify function signatures, see
         examples)'
       - 'Alias: I(obj)'
-    required: no
   schema:
     description:
       - Schema that contains the database objects specified via I(objs).
       - May only be provided if I(type) is C(table), C(sequence) or
         C(function). Defaults to  C(public) in these cases.
-    required: no
   roles:
     description:
       - Comma separated list of role (user/group) names to set permissions for.
@@ -90,25 +78,19 @@ options:
         make no changes.
       - I(grant_option) only has an effect if I(state) is C(present).
       - 'Alias: I(admin_option)'
-    required: no
-    choices: ['yes', 'no']
+    type: bool
   host:
     description:
       - Database host address. If unspecified, connect via Unix socket.
       - 'Alias: I(login_host)'
-    default: null
-    required: no
   port:
     description:
       - Database port to connect to.
-    required: no
     default: 5432
   unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
       - 'Alias: I(login_unix_socket)'
-    required: false
-    default: null
   login:
     description:
       - The username to authenticate with.
@@ -118,8 +100,19 @@ options:
     description:
       - The password to authenticate with.
       - 'Alias: I(login_password))'
-    default: null
-    required: no
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    default: prefer
+    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
+    version_added: '2.3'
 notes:
   - Default authentication assumes that postgresql_privs is run by the
     C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
@@ -139,7 +132,10 @@ notes:
     specified via I(login). If R has been granted the same privileges by
     another user also, R can still access database objects via these privileges.
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
+  - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [psycopg2]
+extends_documentation_fragment:
+  - postgres
 author: "Bernhard Weitzhofer (@b6d)"
 """
 
@@ -233,16 +229,25 @@ EXAMPLES = """
     role: librarian
 """
 
+import traceback
+
 try:
     import psycopg2
     import psycopg2.extensions
 except ImportError:
     psycopg2 = None
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils._text import to_native, to_text
+
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
                          'REFERENCES', 'TRIGGER', 'CREATE', 'CONNECT',
                          'TEMPORARY', 'TEMP', 'EXECUTE', 'USAGE', 'ALL', 'USAGE'))
+
+
 class Error(Exception):
     pass
 
@@ -269,27 +274,32 @@ class Connection(object):
         # check which values are empty and don't include in the **kw
         # dictionary
         params_map = {
-            "host":"host",
-            "login":"user",
-            "password":"password",
-            "port":"port",
+            "host": "host",
+            "login": "user",
+            "password": "password",
+            "port": "port",
             "database": "database",
+            "ssl_mode": "sslmode",
+            "ssl_rootcert": "sslrootcert"
         }
-        kw = dict( (params_map[k], getattr(params, k)) for k in params_map
-                   if getattr(params, k) != '' )
+
+        kw = dict((params_map[k], getattr(params, k)) for k in params_map
+                  if getattr(params, k) != '' and getattr(params, k) is not None)
 
         # If a unix_socket is specified, incorporate it here.
         is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
         if is_localhost and params.unix_socket != "":
             kw["host"] = params.unix_socket
 
+        sslrootcert = params.ssl_rootcert
+        if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
         self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
 
-
     def commit(self):
         self.connection.commit()
-
 
     def rollback(self):
         self.connection.rollback()
@@ -299,8 +309,7 @@ class Connection(object):
         """Connection encoding in Python-compatible form"""
         return psycopg2.extensions.encodings[self.connection.encoding]
 
-
-    ### Methods for querying database objects
+    # Methods for querying database objects
 
     # PostgreSQL < 9.0 doesn't support "ALL TABLES IN SCHEMA schema"-like
     # phrases in GRANT or REVOKE statements, therefore alternative methods are
@@ -312,7 +321,6 @@ class Connection(object):
         self.cursor.execute(query, (schema,))
         return self.cursor.fetchone()[0] > 0
 
-
     def get_all_tables_in_schema(self, schema):
         if not self.schema_exists(schema):
             raise Error('Schema "%s" does not exist.' % schema)
@@ -322,7 +330,6 @@ class Connection(object):
                    WHERE nspname = %s AND relkind in ('r', 'v')"""
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
-
 
     def get_all_sequences_in_schema(self, schema):
         if not self.schema_exists(schema):
@@ -334,9 +341,7 @@ class Connection(object):
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
-
-
-    ### Methods for getting access control lists and group membership info
+    # Methods for getting access control lists and group membership info
 
     # To determine whether anything has changed after granting/revoking
     # privileges, we compare the access control lists of the specified database
@@ -353,7 +358,6 @@ class Connection(object):
         self.cursor.execute(query, (schema, tables))
         return [t[0] for t in self.cursor.fetchall()]
 
-
     def get_sequence_acls(self, schema, sequences):
         query = """SELECT relacl
                    FROM pg_catalog.pg_class c
@@ -362,7 +366,6 @@ class Connection(object):
                    ORDER BY relname"""
         self.cursor.execute(query, (schema, sequences))
         return [t[0] for t in self.cursor.fetchall()]
-
 
     def get_function_acls(self, schema, function_signatures):
         funcnames = [f.split('(', 1)[0] for f in function_signatures]
@@ -374,13 +377,11 @@ class Connection(object):
         self.cursor.execute(query, (schema, funcnames))
         return [t[0] for t in self.cursor.fetchall()]
 
-
     def get_schema_acls(self, schemas):
         query = """SELECT nspacl FROM pg_catalog.pg_namespace
                    WHERE nspname = ANY (%s) ORDER BY nspname"""
         self.cursor.execute(query, (schemas,))
         return [t[0] for t in self.cursor.fetchall()]
-
 
     def get_language_acls(self, languages):
         query = """SELECT lanacl FROM pg_catalog.pg_language
@@ -388,20 +389,17 @@ class Connection(object):
         self.cursor.execute(query, (languages,))
         return [t[0] for t in self.cursor.fetchall()]
 
-
     def get_tablespace_acls(self, tablespaces):
         query = """SELECT spcacl FROM pg_catalog.pg_tablespace
                    WHERE spcname = ANY (%s) ORDER BY spcname"""
         self.cursor.execute(query, (tablespaces,))
         return [t[0] for t in self.cursor.fetchall()]
 
-
     def get_database_acls(self, databases):
         query = """SELECT datacl FROM pg_catalog.pg_database
                    WHERE datname = ANY (%s) ORDER BY datname"""
         self.cursor.execute(query, (databases,))
         return [t[0] for t in self.cursor.fetchall()]
-
 
     def get_group_memberships(self, groups):
         query = """SELECT roleid, grantor, member, admin_option
@@ -412,8 +410,7 @@ class Connection(object):
         self.cursor.execute(query, (groups,))
         return self.cursor.fetchall()
 
-
-    ### Manipulating privileges
+    # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles,
                          state, grant_option, schema_qualifier=None):
@@ -504,7 +501,7 @@ class Connection(object):
             self.cursor.execute(query % (set_what, for_whom))
 
             # Only revoke GRANT/ADMIN OPTION if grant_option actually is False.
-            if grant_option == False:
+            if grant_option is False:
                 if obj_type == 'group':
                     query = 'REVOKE ADMIN OPTION FOR %s FROM %s'
                 else:
@@ -519,7 +516,7 @@ class Connection(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             database=dict(required=True, aliases=['db']),
             state=dict(default='present', choices=['present', 'absent']),
             privs=dict(required=False, aliases=['priv']),
@@ -541,9 +538,11 @@ def main():
             port=dict(type='int', default=5432),
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True)
+            password=dict(default='', aliases=['login_password'], no_log=True),
+            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None)
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     # Create type object as namespace for module params
@@ -577,9 +576,15 @@ def main():
         module.fail_json(msg='Python module "psycopg2" must be installed.')
     try:
         conn = Connection(p)
-    except psycopg2.Error:
-        e = get_exception()
-        module.fail_json(msg='Could not connect to database: %s' % e)
+    except psycopg2.Error as e:
+        module.fail_json(msg='Could not connect to database: %s' % to_native(e), exception=traceback.format_exc())
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+    except ValueError as e:
+        # We raise this when the psycopg library is too old
+        module.fail_json(msg=to_native(e))
 
     try:
         # privs
@@ -609,27 +614,22 @@ def main():
             roles = p.roles.split(',')
 
         changed = conn.manipulate_privs(
-            obj_type = p.type,
-            privs = privs,
-            objs = objs,
-            roles = roles,
-            state = p.state,
-            grant_option = p.grant_option,
+            obj_type=p.type,
+            privs=privs,
+            objs=objs,
+            roles=roles,
+            state=p.state,
+            grant_option=p.grant_option,
             schema_qualifier=p.schema
         )
 
-    except Error:
-        e = get_exception()
+    except Error as e:
         conn.rollback()
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
 
-    except psycopg2.Error:
-        e = get_exception()
+    except psycopg2.Error as e:
         conn.rollback()
-        # psycopg2 errors come in connection encoding, reencode
-        msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(),
-                                                     'replace')
-        module.fail_json(msg=msg)
+        module.fail_json(msg=to_native(e.message))
 
     if module.check_mode:
         conn.rollback()
@@ -638,8 +638,5 @@ def main():
     module.exit_json(changed=changed)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 if __name__ == '__main__':
     main()

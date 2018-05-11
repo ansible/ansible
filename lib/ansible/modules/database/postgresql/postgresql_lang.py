@@ -2,41 +2,33 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2014, Jens Depuydt <http://www.jensd.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: postgresql_lang
 short_description: Adds, removes or changes procedural languages with a PostgreSQL database.
 description:
-   - Adds, removes or changes procedural languages with a PostgreSQL database. 
+   - Adds, removes or changes procedural languages with a PostgreSQL database.
    - This module allows you to add a language, remote a language or change the trust
-     relationship with a PostgreSQL database. The module can be used on the machine 
+     relationship with a PostgreSQL database. The module can be used on the machine
      where executed or on a remote host.
    - When removing a language from a database, it is possible that dependencies prevent
-     the database from being removed. In that case, you can specify casade to 
-     automatically drop objects that depend on the language (such as functions in the 
-     language). In case the language can't be deleted because it is required by the 
+     the database from being removed. In that case, you can specify casade to
+     automatically drop objects that depend on the language (such as functions in the
+     language). In case the language can't be deleted because it is required by the
      database system, you can specify fail_on_drop=no to ignore the error.
    - Be carefull when marking a language as trusted since this could be a potential
-     security breach. Untrusted languages allow only users with the PostgreSQL superuser 
+     security breach. Untrusted languages allow only users with the PostgreSQL superuser
      privilege to use this language to create new functions.
 version_added: "1.7"
 options:
@@ -44,63 +36,50 @@ options:
     description:
       - name of the procedural language to add, remove or change
     required: true
-    default: null
   trust:
     description:
       - make this language trusted for the selected db
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   db:
     description:
-      - name of database where the language will be added, removed or changed 
-    required: false
-    default: null
+      - name of database where the language will be added, removed or changed
   force_trust:
     description:
       - marks the language as trusted, even if it's marked as untrusted in pg_pltemplate.
-      - use with care! 
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+      - use with care!
+    type: bool
+    default: 'no'
   fail_on_drop:
     description:
       - if C(yes), fail when removing a language. Otherwise just log and continue
       - in some cases, it is not possible to remove a language (used by the db-system). When         dependencies block the removal, consider using C(cascade).
-    required: false
+    type: bool
     default: 'yes'
-    choices: [ "yes", "no" ]
   cascade:
     description:
-      - when dropping a language, also delete object that depend on this language. 
-      - only used when C(state=absent). 
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+      - when dropping a language, also delete object that depend on this language.
+      - only used when C(state=absent).
+    type: bool
+    default: 'no'
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
       - User used to authenticate with PostgreSQL
-    required: false
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL (must match C(login_user))
-    required: false
-    default: null
   login_host:
     description:
       - Host running PostgreSQL where you want to execute the actions.
-    required: false
     default: localhost
   state:
     description:
       - The state of the language for the selected database
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -118,7 +97,7 @@ author: "Jens Depuydt (@jensdepuydt)"
 
 EXAMPLES = '''
 # Add language pltclu to database testdb if it doesn't exist:
-- postgresql_lang db=testdb lang=pltclu state=present 
+- postgresql_lang db=testdb lang=pltclu state=present
 
 # Add language pltclu to database testdb if it doesn't exist and mark it as trusted:
 # Marks the language as trusted if it exists but isn't trusted yet
@@ -150,6 +129,7 @@ EXAMPLES = '''
     state: absent
     fail_on_drop: no
 '''
+import traceback
 
 try:
     import psycopg2
@@ -158,11 +138,16 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
 def lang_exists(cursor, lang):
     """Checks if language exists for db"""
     query = "SELECT lanname FROM pg_language WHERE lanname='%s'" % lang
     cursor.execute(query)
     return cursor.rowcount > 0
+
 
 def lang_istrusted(cursor, lang):
     """Checks if language is trusted for db"""
@@ -170,11 +155,13 @@ def lang_istrusted(cursor, lang):
     cursor.execute(query)
     return cursor.fetchone()[0]
 
+
 def lang_altertrust(cursor, lang, trust):
     """Changes if language is trusted for db"""
     query = "UPDATE pg_language SET lanpltrusted = %s WHERE lanname=%s"
     cursor.execute(query, (trust, lang))
     return True
+
 
 def lang_add(cursor, lang, trust):
     """Adds language for db"""
@@ -184,6 +171,7 @@ def lang_add(cursor, lang, trust):
         query = 'CREATE LANGUAGE "%s"' % lang
     cursor.execute(query)
     return True
+
 
 def lang_drop(cursor, lang, cascade):
     """Drops language for db"""
@@ -200,6 +188,7 @@ def lang_drop(cursor, lang, cascade):
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_lang_drop")
     return True
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -215,11 +204,10 @@ def main():
             cascade=dict(type='bool', default='no'),
             fail_on_drop=dict(type='bool', default='yes'),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     db = module.params["db"]
-    port = module.params["port"]
     lang = module.params["lang"]
     state = module.params["state"]
     trust = module.params["trust"]
@@ -231,43 +219,41 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "db":"database"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "db": "database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != "" )
+    kw = dict((params_map[k], v) for (k, v) in module.params.items()
+              if k in params_map and v != "")
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
     changed = False
-    lang_dropped = False
-    kw = dict(db=db,lang=lang,trust=trust)
+    kw = {'db': db, 'lang': lang, 'trust': trust}
 
     if state == "present":
         if lang_exists(cursor, lang):
             lang_trusted = lang_istrusted(cursor, lang)
             if (lang_trusted and not trust) or (not lang_trusted and trust):
-                if  module.check_mode:
+                if module.check_mode:
                     changed = True
                 else:
                     changed = lang_altertrust(cursor, lang, trust)
         else:
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
             else:
                 changed = lang_add(cursor, lang, trust)
                 if force_trust:
                     changed = lang_altertrust(cursor, lang, trust)
-                
+
     else:
         if lang_exists(cursor, lang):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['lang_dropped'] = True
             else:
@@ -286,9 +272,6 @@ def main():
     kw['changed'] = changed
     module.exit_json(**kw)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

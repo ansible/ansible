@@ -2,28 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Matt Wright <matt@nobien.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-import os
-from ansible.module_utils.basic import AnsibleModule, is_executable
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,42 +27,30 @@ options:
       - The name will be taken as group name when it ends with a colon I(:)
       - Group support is only available in Ansible version 1.6 or later.
     required: true
-    default: null
   config:
     description:
       - The supervisor configuration file path
-    required: false
-    default: null
     version_added: "1.3"
   server_url:
     description:
       - URL on which supervisord server is listening
-    required: false
-    default: null
     version_added: "1.3"
   username:
     description:
       - username to use for authentication
-    required: false
-    default: null
     version_added: "1.3"
   password:
     description:
       - password to use for authentication
-    required: false
-    default: null
     version_added: "1.3"
   state:
     description:
       - The desired state of program/group.
     required: true
-    default: null
     choices: [ "present", "started", "stopped", "restarted", "absent" ]
   supervisorctl_path:
     description:
       - path to supervisorctl executable
-    required: false
-    default: null
     version_added: "1.4"
 notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
@@ -110,6 +86,9 @@ EXAMPLES = '''
     password: testpass
     server_url: http://localhost:9001
 '''
+
+import os
+from ansible.module_utils.basic import AnsibleModule, is_executable
 
 
 def main():
