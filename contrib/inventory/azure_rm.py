@@ -205,20 +205,36 @@ import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 HAS_AZURE = True
 HAS_AZURE_EXC = None
+HAS_AZURE_CLI_CORE = True
+CLIError = None
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.azure_active_directory import MSIAuthentication
     from msrestazure import azure_cloud
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.resource.subscriptions import SubscriptionClient
     from azure.mgmt.compute import ComputeManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
 
+try:
+    from azure.cli.core.util import CLIError
+    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+    from azure.common.cloud import get_cli_active_cloud
+except ImportError:
+    HAS_AZURE_CLI_CORE = False
+    CLIError = Exception
+
+try:
+    from ansible.release import __version__ as ansible_version
+except ImportError:
+    ansible_version = 'unknown'
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
     profile='AZURE_PROFILE',
@@ -244,6 +260,7 @@ AZURE_CONFIG_SETTINGS = dict(
 )
 
 AZURE_MIN_VERSION = "2.0.0"
+ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ansible_version)
 
 
 def azure_id_to_dict(id):
@@ -299,9 +316,9 @@ class AzureRM(object):
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
 
-        if self.credentials.get('client_id') is not None and \
-           self.credentials.get('secret') is not None and \
-           self.credentials.get('tenant') is not None:
+        if self.credentials.get('credentials'):
+            self.azure_credentials = self.credentials.get('credentials')
+        elif self.credentials.get('client_id') and self.credentials.get('secret') and self.credentials.get('tenant'):
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'],
@@ -360,6 +377,31 @@ class AzureRM(object):
 
         return None
 
+    def _get_azure_cli_credentials(self):
+        credentials, subscription_id = get_azure_cli_credentials()
+        cloud_environment = get_cli_active_cloud()
+
+        cli_credentials = {
+            'credentials': credentials,
+            'subscription_id': subscription_id,
+            'cloud_environment': cloud_environment
+        }
+        return cli_credentials
+
+    def _get_msi_credentials(self, subscription_id_param=None):
+        credentials = MSIAuthentication()
+        try:
+            # try to get the subscription in MSI to test whether MSI is enabled
+            subscription_client = SubscriptionClient(credentials)
+            subscription = next(subscription_client.subscriptions.list())
+            subscription_id = str(subscription.subscription_id)
+            return {
+                'credentials': credentials,
+                'subscription_id': subscription_id_param or subscription_id
+            }
+        except Exception as exc:
+            return None
+
     def _get_credentials(self, params):
         # Get authentication credentials.
         # Precedence: cmd line parameters-> environment variables-> default profile in ~/.azure/credentials.
@@ -396,6 +438,19 @@ class AzureRM(object):
             self.log('Retrieved default profile credentials from ~/.azure/credentials.')
             return default_credentials
 
+        msi_credentials = self._get_msi_credentials(arg_credentials.get('subscription_id'))
+        if msi_credentials:
+            self.log('Retrieved credentials from MSI.')
+            return msi_credentials
+
+        try:
+            if HAS_AZURE_CLI_CORE:
+                self.log('Retrieving credentials from AzureCLI profile')
+            cli_credentials = self._get_azure_cli_credentials()
+            return cli_credentials
+        except CLIError as ce:
+            self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
+
         return None
 
     def _register(self, key):
@@ -411,16 +466,21 @@ class AzureRM(object):
                       "https://docs.microsoft.com/azure/azure-resource-manager/"
                       "resource-manager-common-deployment-errors#noregisteredproviderfound"))
 
+    def get_mgmt_svc_client(self, client_type, base_url, api_version):
+        client = client_type(self.azure_credentials,
+                             self.subscription_id,
+                             base_url=base_url,
+                             api_version=api_version)
+        client.config.add_user_agent(ANSIBLE_USER_AGENT)
+        return client
+
     @property
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-06-01'
-            )
+            self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
+                                                            self._cloud_environment.endpoints.resource_manager,
+                                                            '2017-06-01')
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -428,24 +488,18 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-05-10'
-            )
+            self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
+                                                             self._cloud_environment.endpoints.resource_manager,
+                                                             '2017-05-10')
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-03-30'
-            )
+            self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
+                                                            self._cloud_environment.endpoints.resource_manager,
+                                                            '2017-03-30')
             self._register('Microsoft.Compute')
         return self._compute_client
 
