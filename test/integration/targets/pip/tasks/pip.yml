@@ -219,7 +219,7 @@
 - name: test for previos task not fail
   assert:
     that:
-      - "pip_install_venv4test.changed or pip_install_venv4test.ok"
+      - "pip_install_venv4test.state == 'present'"
 
 - name: pip chdir without virtualenv
   pip:
@@ -232,4 +232,4 @@
 - name: test for previos task not fail
   assert:
     that:
-      - "venv_chdir_wo_virtualenv.changed or venv_chdir_wo_virtualenv.ok"
+      - "venv_chdir_wo_virtualenv.state == 'present'"
