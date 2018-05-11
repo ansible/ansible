@@ -58,6 +58,8 @@ options:
         value I(True) is will always lock the datastore mentioned in C(source) option provided
         the platform supports it else module will report error By setting the option value I(False)
         it will never lock the C(source) datastore.
+    default: False
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
   - jxmlease
@@ -161,7 +163,7 @@ def main():
     argument_spec = dict(
         source=dict(default='running', choices=['running', 'candidate', 'startup']),
         filter=dict(),
-        display=dict(choices=['json']),
+        display=dict(choices=['json', 'pretty']),
         lock=dict(default=False, type=bool)
     )
 
