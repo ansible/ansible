@@ -67,8 +67,8 @@ options:
       - To delete a grp_name, you must omit the grp_members field in the playbook task while setting to absent
     required: true
     default: present
-
     choices: ["absent", "present"]
+
   grp_name:
     description:
       - The name of the device group.
@@ -250,7 +250,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        state=dict(choices=["absent", "param_absent", "present"], type="str"),
+        state=dict(choices=["absent", "present"], type="str"),
         grp_desc=dict(required=False, type="str"),
         grp_name=dict(required=True, type="str"),
         grp_members=dict(required=False, type="str"),
