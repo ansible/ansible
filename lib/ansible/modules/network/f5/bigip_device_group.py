@@ -83,6 +83,7 @@ options:
     choices:
       - present
       - absent
+    default: present
 notes:
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.

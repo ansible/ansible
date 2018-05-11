@@ -42,6 +42,7 @@ options:
     choices:
       - present
       - absent
+    default: present
   file:
     description:
       - Full path to a policy file to be imported into the BIG-IP ASM.
