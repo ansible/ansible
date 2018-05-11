@@ -615,7 +615,7 @@ DEFAULT_HASH_BEHAVIOUR:
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
-  description: Colon separated list of Ansible inventory sources
+  description: Comma separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_HOSTS
       deprecated:
