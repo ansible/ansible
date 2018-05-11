@@ -18,7 +18,7 @@ module: bigip_hostname
 short_description: Manage the hostname of a BIG-IP
 description:
   - Manage the hostname of a BIG-IP.
-version_added: "2.3"
+version_added: 2.3
 options:
   hostname:
     description:
@@ -50,30 +50,23 @@ hostname:
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -100,13 +93,55 @@ class Parameters(AnsibleF5Parameters):
         return str(self._values['hostname'])
 
 
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.have = ApiParameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -114,18 +149,20 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-        self.changes = Parameters(params=changed)
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
         if changed:
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -137,15 +174,29 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.global_settings.load()
         result = resource.attrs
-        return Parameters(params=result)
+
+        collection = self.client.api.tm.cm.devices.get_collection()
+        self_device = next((x.name for x in collection if x.selfDevice == "true"), None)
+        result['self_device'] = self_device
+        return ApiParameters(params=result)
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -166,9 +217,10 @@ class ModuleManager(object):
         params = self.want.api_params()
         resource = self.client.api.tm.sys.global_settings.load()
         resource.modify(**params)
-        self.client.api.tm.cm.devices.exec_cmd(
-            'mv', name=self.have.hostname, target=self.want.hostname
-        )
+        if self.have.self_device:
+            self.client.api.tm.cm.devices.exec_cmd(
+                'mv', name=self.have.self_device, target=self.want.hostname
+            )
 
 
 class ArgumentSpec(object):
