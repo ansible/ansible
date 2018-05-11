@@ -64,7 +64,7 @@ EXAMPLES = """
         ipspace=Default
     - name: modify broadcast domain
       na_ontap_broadcast_domain:
-        state=modify
+        state=absent
         username={{ netapp_username }}
         password={{ netapp_password }}
         hostname={{ netapp_hostname }}
@@ -92,7 +92,7 @@ class NetAppOntapBroadcastDomain(object):
     """
     def __init__(self):
         """
-            Initialize the Ontap Broadcast Domain class
+            Initialize the ONTAP Broadcast Domain class
         """
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
@@ -244,7 +244,7 @@ class NetAppOntapBroadcastDomain(object):
 
 def main():
     """
-    Creates the NetApp Ontap Broadcast Domain Object that can be created, deleted and modified.
+    Creates the NetApp ONTAP Broadcast Domain Object that can be created, deleted and modified.
     """
     obj = NetAppOntapBroadcastDomain()
     obj.apply()
