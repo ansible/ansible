@@ -10,7 +10,6 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     AzureConfiguration = object
-    pass
 
 
 class GenericRestClientConfiguration(AzureConfiguration):
