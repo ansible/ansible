@@ -218,7 +218,10 @@ class AnsibleCloudStack:
 
     def query_api(self, command, **args):
         try:
-            res = getattr(self.cs, command)(**args)
+            if command.startswith('list') and 'fetch_list' not in args:
+                res = getattr(self.cs, command)(**args, fetch_list=True)
+            else:
+                res = getattr(self.cs, command)(**args)
 
             if 'errortext' in res:
                 self.fail_json(msg="Failed: '%s'" % res['errortext'])
