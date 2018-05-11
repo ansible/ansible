@@ -1,0 +1,171 @@
+- name: Fix resource prefix
+  set_fact:
+    linux_app_plan_resource_group: "{{ (resource_prefix | replace('-','x'))[-10:] }}linuxappplan"
+    win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winapp"
+    win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
+    linux_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}lnxplan"
+
+- name: 1 - Create a windows web app with non-exist app service plan
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}1"
+    plan:
+      resource_group: "{{ resource_group }}"
+      name: "{{ win_plan_name }}"
+      is_linux: false
+      sku: S1
+
+- name: 1 - Create a windows web app with existing app service plan, try to update some root level params
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}2"
+    plan:
+      name: "{{ win_plan_name }}"
+    skip_dns_registration: true
+    https_only: true
+  register: output
+
+- name: create a win web app with java run time specific
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    plan:
+      name: "{{ win_plan_name }}"
+    java_version: "1.8"
+    java_container_settings:
+      name: "Tomcat"
+      version: "8.0"
+    app_settings:
+      testkey: "testvalue"
+  register: output
+
+- name: assert the function was created
+  assert:
+    that: output.changed
+
+- name: update app settings
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    plan:
+      name: "{{ win_plan_name }}"
+    java_version: "1.8"
+    java_container_settings:
+      name: "Tomcat"
+      version: "8.0"
+    app_settings:
+      testkey2: "testvalue2"
+  register: output
+
+- name: assert the function was created
+  assert:
+    that: output.changed
+
+- name: purge all existing web app
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    plan:
+      name: "{{ win_plan_name }}"
+    purge_app_settings: true
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+- name: 1 - create a win web app with python run time
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    plan:
+      name: "{{ win_plan_name }}"
+    python_version: "2.7"
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+- name: 1 - create a docker web app with some app settings, with docker image
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}5"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+      is_linux: true
+      sku: S1
+      number_of_workers: 1
+    container_settings:
+      name: "ansible/ansible:ubuntu1404"
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+- name: 1 - create a docker web app with private acr registry
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}6"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    container_settings:
+      name: "ansible/ansible:ubuntu1404"
+      registry_server_url: test.io
+      registry_server_user: user
+      registry_server_password: password
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+
+- name: 1 - create a linux web app with nodejs framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}7"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    linux_fx_version: "node|6.6"
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+    
+- name: 1 - update nodejs framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}7"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    linux_fx_version: "node|6.9"
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+- name: 1 - create a linux web app with deployment source github
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    deployment_source:
+      url: "https://github.com/test/test"
+      branch: master
+    scm_type: GitHub
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
