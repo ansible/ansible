@@ -1,0 +1,2 @@
+bugfixes:
+- Fix interfaces_file to support `allow-` https://github.com/ansible/ansible/pull/37847
