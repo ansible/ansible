@@ -133,7 +133,7 @@ Function Install-PsModule {
 
         # Check Powershell Version (-AllowClobber was introduced in PowerShellGet 1.6.0)
         if ("AllowClobber" -in ((Get-Command PowerShellGet\Install-Module | Select -ExpandProperty Parameters).Keys)) {
-          AllowClobber = $AllowClobber;
+          $ht['AllowClobber'] = $AllowClobber;
         }
         
         Install-Module @ht | out-null;
