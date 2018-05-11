@@ -75,6 +75,7 @@ Included file:
 
 The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
 
+
 Deprecated
 ==========
 
@@ -218,6 +219,12 @@ Filter
 
 The lookup plugin API now throws an error if a non-iterable value is returned from a plugin. Previously, numbers or
 other non-iterable types returned by a plugin were accepted without error or warning. This change was made because plugins should always return a list. Please note that plugins that return strings and other non-list iterable values will not throw an error, but may cause unpredictable behavior. If you have a custom lookup plugin that does not return a list, you should modify it to wrap the return values in a list.
+
+Lookup
+-------
+
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+
 
 Porting custom scripts
 ======================
