@@ -48,7 +48,8 @@ options:
         description:
             - The object type being targeted.
         default: 'Folder'
-        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem', 'cluster', 'ClusterComputeResource', 'DistributedVirtualSwitch']
+        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem',
+                  'cluster', 'ClusterComputeResource', 'DistributedVirtualSwitch']
     recursive:
         description:
             - Should the permissions be recursively applied.
@@ -130,7 +131,7 @@ class VMwareObjectRolePermission(PyVmomi):
 
     def same_permission(self, perm_one, perm_two):
         return perm_one.principal.lower() == perm_two.principal.lower() \
-               and perm_one.roleId == perm_two.roleId
+            and perm_one.roleId == perm_two.roleId
 
     def get_state(self):
         for perm in self.current_perms:
@@ -192,8 +193,8 @@ class VMwareObjectRolePermission(PyVmomi):
             self.module.fail_json(msg="Object type %s is not valid." % self.params['object_type'])
 
         self.current_obj = find_obj(content=self.content,
-            vimtype=[getattr(vim, self.params['object_type'])],
-            name=self.params['object_name'])
+                                    vimtype=[getattr(vim, self.params['object_type'])],
+                                    name=self.params['object_name'])
 
         if self.current_obj is None:
             self.module.fail_json(msg="Specified object %s of type %s was not found." % (self.params['object_name'],
