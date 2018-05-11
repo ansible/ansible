@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -17,10 +17,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_object_role_permission
-short_description: Manage object permissions on an ESXi host
+short_description: This module can be used to manage object permissions on the given host.
 description:
     - Manage local roles on an ESXi host
-version_added: "2.5"
+version_added: "2.6"
 author:
 - Derek Rushing (@kryptsi) <drush@kryptsi.com>
 notes:
@@ -36,12 +36,10 @@ options:
         required: True
     principal:
         description:
-            - The user to be assigned permission.
-        required: False
+            - The user to be assigned permission.  Required if group is not specified.
     group:
         description:
-            - The group to be assigned permission.
-        required: False
+            - The group to be assigned permission. Required if principal is not specified.
     object_name:
         description:
             - The object name to assigned permission.
@@ -51,16 +49,15 @@ options:
             - The object type being targeted.
         required: False
         default: 'Folder'
-        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem']
+        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem', 'cluster', 'ClusterComputeResource', 'DistributedVirtualPort', 'DistributedVirtualSwitch']
     recursive:
         description:
             - Should the permissions be recursively applied.
-        required: False
         default: True
     state:
         description:
-            - Indicate desired state of the object's permission.
-            - If the permission already exists when C(state=present), nothing is changed.
+            - Indicate desired state of the object's permission. When C(state=present), the permission will be added if it doesn't already exist.
+            - When C(state=absent), the permission is removed if it exists.
         choices: ['present', 'absent']
         default: present
 extends_documentation_fragment: vmware.documentation
@@ -98,7 +95,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec,
-                                         find_obj, connect_to_api, 
+                                         find_obj, connect_to_api,
                                          wait_for_task)
 
 
@@ -107,12 +104,11 @@ class VMwareObjectRolePermission(PyVmomi):
         super(VMwareObjectRolePermission, self).__init__(module)
         self.module = module
         self.params = module.params
-        self.content = connect_to_api(module)
 
-        if self.params['principal'] is not None:
+        if self.params.get('principal', None) is not None:
             self.applied_to = self.params['principal']
             self.is_group = False
-        elif self.params['group'] is not None:
+        elif self.params.get('group', None) is not None:
             self.applied_to = self.params['group']
             self.is_group = True
 
@@ -186,9 +182,9 @@ class VMwareObjectRolePermission(PyVmomi):
         try:
             object_type = getattr(vim, self.params['object_type'])
         except AttributeError:
-            self.module.fail_json(msg="Object type {} is not valid.".format(self.params['object_type']))  
+            self.module.fail_json(msg="Object type {} is not valid.".format(self.params['object_type']))
 
-        self.current_obj = find_obj(content=self.content, 
+        self.current_obj = find_obj(content=self.content,
             vimtype=[getattr(vim, self.params['object_type'])],
             name=self.params['object_name'])
 
@@ -201,16 +197,16 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(role=dict(required=True, type='str'),
                               object_name=dict(required=True, type='str'),
-                              object_type=dict(required=False, type='str', default='Folder',
+                              object_type=dict(type='str', default='Folder',
                                                choices=['Folder', 'VirtualMachine', 'Datacenter',
-                                                        'ResourcePool', 'Datastore', 'Network', 
-                                                        'HostSystem', 'cluster', 
-                                                        'ClusterComputeResource', 
+                                                        'ResourcePool', 'Datastore', 'Network',
+                                                        'HostSystem', 'cluster',
+                                                        'ClusterComputeResource',
                                                         # 'DistributedVirtualPort',
                                                         'DistributedVirtualSwitch']),
-                              principal=dict(required=False, type='str'),
-                              group=dict(required=False, type='str'),
-                              recursive=dict(required=False, type='bool', default=True),
+                              principal=dict(type='str'),
+                              group=dict(type='str'),
+                              recursive=dict(type='bool', default=True),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec,
