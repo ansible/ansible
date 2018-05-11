@@ -67,9 +67,9 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
 
 .. versionadded:: 2.5
 
-All lookups now have an option to handle how errors behave, by default they produce fatal errors for the task, but now the user can control this via the ``errors`` option.
+You can now control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail. For example:
 
-You can ignore it::
+To ignore errors::
 
     - name: file doesnt exist, but i dont care .. file plugin itself warns anyways ...
       debug: msg="{{ lookup('file', '/idontexist', errors='ignore') }}"
@@ -81,7 +81,7 @@ You can ignore it::
     }
 
 
-You can ask it to warn::
+To get a warning instead of a failure::
 
     - name: file doesnt exist, let me know, but continue
       debug: msg="{{ lookup('file', '/idontexist', errors='warn') }}"
@@ -95,7 +95,7 @@ You can ask it to warn::
     }
 
 
-Or fail hard::
+Fatal error (the default)::
 
     - name: file doesnt exist, FAIL (this is the default)
       debug: msg="{{ lookup('file', '/idontexist', errors='strict') }}"
