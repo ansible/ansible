@@ -217,7 +217,8 @@ _ANSIBLE_ARGS = None
 
 FILE_COMMON_ARGUMENTS = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
-    # created files
+    # created files (these are used by set_fs_attributes_if_different and included in
+    # load_file_common_arguments)
     mode=dict(type='raw'),
     owner=dict(),
     group=dict(),
@@ -234,7 +235,7 @@ FILE_COMMON_ARGUMENTS = dict(
 
     # not taken by the file module, but other action plugins call the file module so this ignores
     # them for now. In the future, the caller should take care of removing these from the module
-    # arugments before calling the file module.
+    # arguments before calling the file module.
     content=dict(no_log=True),  # used by copy
     backup=dict(),  # Used by a few modules to create a remote backup before updating the file
     remote_src=dict(),  # used by assemble
