@@ -49,7 +49,7 @@ options:
   https:
       description:
       - Enable and disabled https
-      default: False
+      default: false
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 9.3
