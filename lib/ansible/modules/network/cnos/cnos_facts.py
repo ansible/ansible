@@ -384,7 +384,7 @@ class Interfaces(FactsBase):
             lines4 = self.parse_ipaddresses(data4)
             ipv4_interfaces = self.set_ip_interfaces(lines4)
             sdisplayfacts['all_ipv4_addresses'] = ipv4_interfaces
-        ifdisplaya5:
+        if data5:
             lines5 = self.parse_ipaddresses(data5)
             ipv6_interfaces = self.set_ipv6_interfaces(lines5)
             self.facts['all_ipv6_addresses'] = ipv6_interfaces
