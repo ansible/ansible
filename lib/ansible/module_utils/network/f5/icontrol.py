@@ -35,8 +35,8 @@ Use this module to make calls to an F5 REST server. It is influenced by the same
 API that the Python ``requests`` tool uses, but the two are not the same, as the
 library here is **much** more simple and targeted specifically to F5's needs.
 
-The ``requests`` design was chosen due to familiarity with the tool. Internals though
-use Ansible native libraries.
+The ``requests`` design was chosen due to familiarity with the tool. Internally,
+the classes contained herein use Ansible native libraries.
 
 The means by which you should use it are similar to ``requests`` basic usage.
 
@@ -159,7 +159,7 @@ class PreparedRequest(object):
 class Response(object):
     def __init__(self):
         self._content = None
-        self.status_code = None
+        self.status = None
         self.headers = dict()
         self.url = None
         self.reason = None
@@ -187,8 +187,13 @@ class iControlRestSession(object):
         self.headers = self.default_headers()
         self.verify = True
         self.params = {}
-        self.auth = None
         self.timeout = 30
+
+        self.server = None
+        self.user = None
+        self.password = None
+        self.server_port = None
+        self.auth_provider = None
 
     def _normalize_headers(self, headers):
         result = {}
@@ -259,12 +264,13 @@ class iControlRestSession(object):
             method=request.method,
             data=request.body,
             timeout=kwargs.get('timeout', None) or self.timeout,
+            validate_certs=kwargs.get('verify', None) or self.verify,
             headers=request.headers
         )
 
         try:
             result = open_url(request.url, **params)
-            response._content = result.read()
+            response._content = result.read().decode('utf-8')
             response.status = result.getcode()
             response.url = result.geturl()
             response.msg = "OK (%s bytes)" % result.headers.get('Content-Length', 'unknown')
@@ -280,79 +286,19 @@ class iControlRestSession(object):
             response.status_code = e.code
         return response
 
-    def delete(self, url, **kwargs):
-        """Sends a HTTP DELETE command to an F5 REST Server.
-
-        Use this method to send a DELETE command to an F5 product.
-
-        Args:
-            url (string): URL to call.
-            data (bytes): An object specifying additional data to send to the server,
-                or ``None`` if no such data is needed. Currently HTTP requests are the
-                only ones that use data. The supported object types include bytes,
-                file-like objects, and iterables.
-                See https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
-            \\*\\*kwargs (dict): Optional arguments to send to the request.
-        """
-        return self.request('DELETE', url, **kwargs)
+    def delete(self, url, json=None, **kwargs):
+        return self.request('DELETE', url, json=json, **kwargs)
 
     def get(self, url, **kwargs):
-        """Sends a HTTP GET command to an F5 REST Server.
-
-        Use this method to send a GET command to an F5 product.
-
-        Args:
-            url (string): URL to call.
-            \\*\\*kwargs (dict): Optional arguments to send to the request.
-        """
         return self.request('GET', url, **kwargs)
 
     def patch(self, url, data=None, **kwargs):
-        """Sends a HTTP PATCH command to an F5 REST Server.
-
-        Use this method to send a PATCH command to an F5 product.
-
-        Args:
-            url (string): URL to call.
-            data (bytes): An object specifying additional data to send to the server,
-                or ``None`` if no such data is needed. Currently HTTP requests are the
-                only ones that use data. The supported object types include bytes,
-                file-like objects, and iterables.
-                See https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
-            \\*\\*kwargs (dict): Optional arguments to send to the request.
-        """
         return self.request('PATCH', url, data=data, **kwargs)
 
     def post(self, url, data=None, json=None, **kwargs):
-        """Sends a HTTP POST command to an F5 REST Server.
-
-        Use this method to send a POST command to an F5 product.
-
-        Args:
-            url (string): URL to call.
-            data (dict): An object specifying additional data to send to the server,
-                or ``None`` if no such data is needed. Currently HTTP requests are the
-                only ones that use data. The supported object types include bytes,
-                file-like objects, and iterables.
-                See https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
-            \\*\\*kwargs (dict): Optional arguments to the request.
-        """
         return self.request('POST', url, data=data, json=json, **kwargs)
 
     def put(self, url, data=None, **kwargs):
-        """Sends a HTTP PUT command to an F5 REST Server.
-
-        Use this method to send a PUT command to an F5 product.
-
-        Args:
-            url (string): URL to call.
-            data (bytes): An object specifying additional data to send to the server,
-                or ``None`` if no such data is needed. Currently HTTP requests are the
-                only ones that use data. The supported object types include bytes,
-                file-like objects, and iterables.
-                See https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
-            \\*\\*kwargs (dict): Optional arguments to the request.
-        """
         return self.request('PUT', url, data=data, **kwargs)
 
 
