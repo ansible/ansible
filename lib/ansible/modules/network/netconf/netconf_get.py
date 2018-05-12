@@ -122,7 +122,7 @@ output:
                namespace removed from XML string.
   returned: when the display format is selected as JSON os pretty apart from low-level
             errors (such as action plugin)
-  type: dict or string
+  type: complex
   sample: {'...'}
 xml:
   description: The transformed XML string after removing namespace.
