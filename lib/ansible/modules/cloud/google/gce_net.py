@@ -83,8 +83,8 @@ options:
     version_added: "2.2"
     description:
       - network mode for Google Cloud
-        C(legacy) indicates a network with an IP address range
-        C(auto) automatically generates subnetworks in different regions
+        C(legacy) indicates a network with an IP address range;
+        C(auto) automatically generates subnetworks in different regions;
         C(custom) uses networks to group subnets of user specified IP address ranges
         https://cloud.google.com/compute/docs/networking#network_types
     default: "legacy"
