@@ -34,8 +34,9 @@ options:
   name:
     description:
       - The self IP to create.
+      - If this parameter is not specified, then it will default to the value supplied
+        in the C(address) parameter.
     required: True
-    default: Value of C(address)
   netmask:
     description:
       - The netmask for the self IP. When creating a new Self IP, this value

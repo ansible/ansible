@@ -769,12 +769,22 @@ class ArgumentSpec(object):
     def __init__(self):
         self.states = ['absent', 'present', 'enabled', 'disabled']
         self.server_types = [
-            'alteon-ace-director', 'cisco-css', 'cisco-server-load-balancer',
-            'generic-host', 'radware-wsd', 'windows-nt-4.0', 'bigip',
-            'cisco-local-director-v2', 'extreme', 'generic-load-balancer',
-            'sun-solaris', 'cacheflow', 'cisco-local-director-v3',
-            'foundry-server-iron', 'netapp', 'standalone-bigip',
-            'redundant-bigip', 'windows-2000-server'
+            'alteon-ace-director',
+            'cisco-css',
+            'cisco-server-load-balancer',
+            'generic-host',
+            'radware-wsd',
+            'windows-nt-4.0',
+            'bigip',
+            'cisco-local-director-v2',
+            'extreme',
+            'generic-load-balancer',
+            'sun-solaris',
+            'cacheflow',
+            'cisco-local-director-v3',
+            'foundry-server-iron',
+            'netapp',
+            'windows-2000-server'
         ]
         self.supports_check_mode = True
         argument_spec = dict(

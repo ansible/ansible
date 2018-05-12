@@ -55,6 +55,9 @@ options:
         then all conditionals in the I(wait_for) must be satisfied. If
         the value is set to C(any) then only one of the values must be
         satisfied.
+    choices:
+      - any
+      - all
     default: all
   retries:
     description:
