@@ -124,7 +124,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         resp = self._connection.send(**kwargs)
 
         if not self.response_logging:
-            self.history.append((kwargs['command'], '*****'))
+            self.history.append(('*****', '*****'))
         else:
             self.history.append((kwargs['command'], resp))
 
