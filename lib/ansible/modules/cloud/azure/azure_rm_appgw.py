@@ -1096,26 +1096,28 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 elif key == "http_listeners":
                     ev = kwargs[key]
                     for i in range(len(ev)):
-                        if 'frontend_ip_configuration' in ev:
+                        item = ev[i]
+                        if 'frontend_ip_configuration' in item:
                             id = frontend_ip_configuration_id(
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    ev['frontend_ip_configuration'])
-                            ev['frontend_ip_configuration'] = { 'id': id }
+                                    item['frontend_ip_configuration'])
+                            item['frontend_ip_configuration'] = { 'id': id }
 
-                        if 'frontend_port' in ev:
+                        if 'frontend_port' in item:
                             id = frontend_port_id(
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    ev['frontend_port'])
-                            ev['frontend_port'] = { 'id': id }
-                        if 'protocol' in ev:
-                            if ev['protocol'] == 'http':
-                                ev['protocol'] = 'Http'
-                            elif ev['protocol'] == 'https':
-                                ev['protocol'] = 'Https'
+                                    item['frontend_port'])
+                            item['frontend_port'] = { 'id': id }
+                        if 'protocol' in item:
+                            if item['protocol'] == 'http':
+                                item['protocol'] = 'Http'
+                            elif item['protocol'] == 'https':
+                                item['protocol'] = 'Https'
+                        ev[i] = item
                     self.parameters["http_listeners"] = ev
 
 
@@ -1124,37 +1126,39 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 elif key == "request_routing_rules":
                     ev = kwargs[key]
                     for i in range(len(ev)):
-                        if 'backend_address_pool' in ev:
+                        item = ev[i]
+                        if 'backend_address_pool' in item:
                             id = backend_address_pool_id(
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    ev['backend_address_pool'])
-                            ev['backend_address_pool'] = { 'id': id }
-                        if 'backend_http_settings' in ev:
+                                    item['backend_address_pool'])
+                            item['backend_address_pool'] = { 'id': id }
+                        if 'backend_http_settings' in item:
                             id = backend_http_settings_id(
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    ev['backend_http_settings'])
-                            ev['backend_http_settings'] = { 'id': id }
-                        if 'http_listener' in ev:
+                                    item['backend_http_settings'])
+                            item['backend_http_settings'] = { 'id': id }
+                        if 'http_listener' in item:
                             id = http_listener_id(
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    ev['backend_http_listener'])
-                            ev['http_listener'] = { 'id': id }
-                        if 'protocol' in ev:
-                            if ev['protocol'] == 'http':
-                                ev['protocol'] = 'Http'
-                            elif ev['protocol'] == 'https':
-                                ev['protocol'] = 'Https'
+                                    item['backend_http_listener'])
+                            item['http_listener'] = { 'id': id }
+                        if 'protocol' in item:
+                            if item['protocol'] == 'http':
+                                item['protocol'] = 'Http'
+                            elif item['protocol'] == 'https':
+                                item['protocol'] = 'Https'
                         if 'rule_type' in ev:
-                            if ev['rule_type'] == 'basic':
-                                ev['rule_type'] = 'Basic'
-                            elif ev['rule_type'] == 'path_based_routing':
-                                ev['rule_type'] = 'PathBasedRouting'
+                            if item['rule_type'] == 'basic':
+                                item['rule_type'] = 'Basic'
+                            elif item['rule_type'] == 'path_based_routing':
+                                item['rule_type'] = 'PathBasedRouting'
+                        ev[i] = item
                     self.parameters["request_routing_rules"] = ev
                 elif key == "redirect_configurations":
                     ev = kwargs[key]
