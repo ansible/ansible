@@ -269,6 +269,12 @@ options:
     - ' - C(type) (string): Value type, string type by default.'
     - ' - C(operation): C(remove): This attribute is required only when removing properties.'
     version_added: '2.6'
+  customization_spec:
+    description:
+    - Unique name identifying the requested customization specification.
+    - This parameter is case sensitive.
+    - If set, then overrides C(customization) parameter values.
+    version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -736,8 +742,9 @@ class PyVmomiHelper(PyVmomi):
         :param vm_obj: VM object in case of reconfigure, None in case of deploy
         :return: None
         """
-        self.configspec.memoryAllocation = vim.ResourceAllocationInfo()
-        self.configspec.cpuAllocation = vim.ResourceAllocationInfo()
+        rai_change_detected = False
+        memory_allocation = vim.ResourceAllocationInfo()
+        cpu_allocation = vim.ResourceAllocationInfo()
 
         if 'hardware' in self.params:
             if 'mem_limit' in self.params['hardware']:
@@ -746,9 +753,9 @@ class PyVmomiHelper(PyVmomi):
                     mem_limit = int(self.params['hardware'].get('mem_limit'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
-                self.configspec.memoryAllocation.limit = mem_limit
-                if vm_obj is None or self.configspec.memoryAllocation.limit != vm_obj.config.memoryAllocation.limit:
-                    self.change_detected = True
+                memory_allocation.limit = mem_limit
+                if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
+                    rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware']:
                 mem_reservation = None
@@ -757,10 +764,10 @@ class PyVmomiHelper(PyVmomi):
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
 
-                self.configspec.memoryAllocation.reservation = mem_reservation
+                memory_allocation.reservation = mem_reservation
                 if vm_obj is None or \
-                        self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
-                    self.change_detected = True
+                        memory_allocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    rai_change_detected = True
 
             if 'cpu_limit' in self.params['hardware']:
                 cpu_limit = None
@@ -768,9 +775,9 @@ class PyVmomiHelper(PyVmomi):
                     cpu_limit = int(self.params['hardware'].get('cpu_limit'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
-                self.configspec.cpuAllocation.limit = cpu_limit
-                if vm_obj is None or self.configspec.cpuAllocation.limit != vm_obj.config.cpuAllocation.limit:
-                    self.change_detected = True
+                cpu_allocation.limit = cpu_limit
+                if vm_obj is None or cpu_allocation.limit != vm_obj.config.cpuAllocation.limit:
+                    rai_change_detected = True
 
             if 'cpu_reservation' in self.params['hardware']:
                 cpu_reservation = None
@@ -778,10 +785,15 @@ class PyVmomiHelper(PyVmomi):
                     cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
-                self.configspec.cpuAllocation.reservation = cpu_reservation
+                cpu_allocation.reservation = cpu_reservation
                 if vm_obj is None or \
-                        self.configspec.cpuAllocation.reservation != vm_obj.config.cpuAllocation.reservation:
-                    self.change_detected = True
+                        cpu_allocation.reservation != vm_obj.config.cpuAllocation.reservation:
+                    rai_change_detected = True
+
+        if rai_change_detected:
+            self.configspec.memoryAllocation = memory_allocation
+            self.configspec.cpuAllocation = cpu_allocation
+            self.change_detected = True
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
@@ -1028,10 +1040,10 @@ class PyVmomiHelper(PyVmomi):
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
                     if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
-                            dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
+                            dvp.config.defaultPortConfig.vlan.vlanId == int(network['vlan']):
                         network['name'] = dvp.config.name
                         break
-                    if dvp.config.name == network['vlan']:
+                    if dvp.config.name == str(network['vlan']):
                         network['name'] = dvp.config.name
                         break
                 else:
@@ -1148,6 +1160,20 @@ class PyVmomiHelper(PyVmomi):
 
                 dvs_port_connection = vim.dvs.PortConnection()
                 dvs_port_connection.portgroupKey = pg_obj.key
+                # If user specifies distributed port group without associating to the hostsystem on which
+                # virtual machine is going to be deployed then we get error. We can infer that there is no
+                # association between given distributed port group and host system.
+                host_system = self.params.get('esxi_hostname')
+                if host_system and host_system not in [host.config.host.name for host in pg_obj.config.distributedVirtualSwitch.config.host]:
+                    self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
+                                              " virtual portgroup '%s'. Please make sure host system is associated"
+                                              " with given distributed virtual portgroup" % (host_system, pg_obj.name))
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
@@ -1155,11 +1181,10 @@ class PyVmomiHelper(PyVmomi):
             elif isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
                 # NSX-T Logical Switch
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
+                network_id = self.cache.get_network(network_name).summary.opaqueNetworkId
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
-                nic.device.backing.opaqueNetworkId = self.cache.get_network(network_name).summary.opaqueNetworkId
-                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % (
-                    self.cache.get_network(network_name).summary.opaqueNetworkId)
-
+                nic.device.backing.opaqueNetworkId = network_id
+                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1285,6 +1310,19 @@ class PyVmomiHelper(PyVmomi):
             self.change_detected = True
 
     def customize_vm(self, vm_obj):
+
+        # User specified customization specification
+        custom_spec_name = self.params.get('customization_spec')
+        if custom_spec_name:
+            cc_mgr = self.content.customizationSpecManager
+            if cc_mgr.DoesCustomizationSpecExist(name=custom_spec_name):
+                temp_spec = cc_mgr.GetCustomizationSpec(name=custom_spec_name)
+                self.customspec = temp_spec.spec
+                return
+            else:
+                self.module.fail_json(msg="Unable to find customization specification"
+                                          " '%s' in given configuration." % custom_spec_name)
+
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
@@ -2129,6 +2167,7 @@ def main():
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
     )
 

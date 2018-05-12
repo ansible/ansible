@@ -475,6 +475,7 @@ files:
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
+  $modules/network/meraki/: $team_meraki
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
@@ -679,6 +680,8 @@ files:
   $modules/utilities/logic/pause.py: tbielawa
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
+  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -693,7 +696,6 @@ files:
   $modules/web_infrastructure/jenkins_plugin.py: jtyr
   $modules/web_infrastructure/jenkins_script.py: hogarthj
   $modules/web_infrastructure/jira.py: Slezhuk tarka
-  $modules/web_infrastructure/letsencrypt.py: mgruener resmo felixfontein
   $modules/web_infrastructure/nginx_status_facts.py: resmo
   $modules/web_infrastructure/rundeck_acl_policy.py:
   $modules/web_infrastructure/rundeck_project.py: nerzhul
@@ -1172,7 +1174,7 @@ macros:
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha
   team_onyx: samerd
-  team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
+  team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant

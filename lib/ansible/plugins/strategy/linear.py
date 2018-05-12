@@ -363,7 +363,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=included_file._task,
+                                    task=new_block._parent
                                 )
                                 display.debug("filtering new block on tags")
                                 final_block = new_block.filter_tagged_tasks(play_context, task_vars)

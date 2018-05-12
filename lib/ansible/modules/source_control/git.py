@@ -157,6 +157,8 @@ options:
               archive file of the specified format containing the tree structure
               for the source tree.
               Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+            - This will clone and perform git archive from local directory as not
+              all git servers support git archive.
         version_added: "2.4"
 
 requirements:

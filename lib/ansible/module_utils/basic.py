@@ -216,7 +216,9 @@ _literal_eval = literal_eval
 _ANSIBLE_ARGS = None
 
 FILE_COMMON_ARGUMENTS = dict(
-    src=dict(),
+    # These are things we want. About setting metadata (mode, ownership, permissions in general) on
+    # created files (these are used by set_fs_attributes_if_different and included in
+    # load_file_common_arguments)
     mode=dict(type='raw'),
     owner=dict(),
     group=dict(),
@@ -224,17 +226,23 @@ FILE_COMMON_ARGUMENTS = dict(
     serole=dict(),
     selevel=dict(),
     setype=dict(),
-    follow=dict(type='bool', default=False),
-    # not taken by the file module, but other modules call file so it must ignore them.
-    content=dict(no_log=True),
-    backup=dict(),
-    force=dict(),
+    attributes=dict(aliases=['attr']),
+
+    # The following are not about perms and should not be in a rewritten file_common_args
+    src=dict(),  # Maybe dest or path would be appropriate but src is not
+    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
+    force=dict(type='bool'),
+
+    # not taken by the file module, but other action plugins call the file module so this ignores
+    # them for now. In the future, the caller should take care of removing these from the module
+    # arguments before calling the file module.
+    content=dict(no_log=True),  # used by copy
+    backup=dict(),  # Used by a few modules to create a remote backup before updating the file
     remote_src=dict(),  # used by assemble
     regexp=dict(),  # used by assemble
     delimiter=dict(),  # used by assemble
     directory_mode=dict(),  # used by copy
     unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
-    attributes=dict(aliases=['attr']),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -1975,7 +1983,13 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('options', None)
-                if spec is None or k not in params or params[k] is None:
+                if v.get('apply_defaults', False):
+                    if spec is not None:
+                        if params.get(k) is None:
+                            params[k] = {}
+                    else:
+                        continue
+                elif spec is None or k not in params or params[k] is None:
                     continue
 
                 self._options_context.append(k)

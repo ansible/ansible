@@ -38,9 +38,8 @@ options:
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
-    - The APIC defaults new Subnets to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
@@ -58,9 +57,8 @@ options:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
-    - The APIC defaults new Subnets to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
@@ -75,23 +73,19 @@ options:
       hosts in other VRFs.
     - The shared option limits communication to hosts in either the same VRF or the shared VRF.
     - The value is a list of options, C(private) and C(public) are mutually exclusive, but both can be used with C(shared).
-    - The APIC defaults new Subnets to C(private).
+    - The APIC defaults to C(private) when unset during creation.
     choices:
       - private
       - public
       - shared
-      - [ private, shared ]
-      - [ public, shared ]
-    default: private
   subnet_control:
     description:
     - Determines the Subnet's Control State.
     - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
     - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
-    - The APIC defaults new Subnets to C(nd_ra).
+    - The APIC defaults to C(nd_ra) when unset during creation.
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
-    default: nd_ra
   subnet_name:
     description:
     - The name of the Subnet.
@@ -330,8 +324,6 @@ def main():
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
