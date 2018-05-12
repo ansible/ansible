@@ -27,8 +27,7 @@ options:
     description:
       - Create or destroy cluster
     choices: [ "present", "absent" ]
-    default: present
-    required: false
+    required: true
   version:
     description:
       - Version of Elasticsearch to use.
@@ -42,8 +41,7 @@ options:
   instance_type:
     description:
       - Instance type of non-master nodes in the cluster.
-    required: false
-    default: t2.medium.elasticsearch
+    required: true
   zone_awareness:
     description:
       - Should cluster be aware of AWS availability zones.
@@ -81,6 +79,10 @@ options:
   wait:
     description:
       - Wait for cluster creation to finish
+  tags:
+    description:
+      - Dictionary of tags to ensure are present on resource. Will not remove other tags.
+    required: false
 
 extends_documentation_fragment:
     - aws
@@ -94,11 +96,12 @@ EXAMPLES = """
 # Basic example
 - elasticsearch:
     domain: testing
+    state: present
     instance_count: 1
     zone_awareness: false
     instance_type: "t2.medium.elasticsearch"
     ebs_volume_size: 10
-    access_policies: '{"Statement": [{"Action": "*", "Resource": "arn:aws:iam::0000000000000:user/you", "Effect": "Allow"}]}'
+    access_policies: '{"Statement": [{"Action": "*", "Principal": {"AWS": "arn:aws:iam::0000000000000:user/you"}, "Effect": "Allow"}]}'
     region: us-west-1
 """
 
@@ -325,10 +328,10 @@ def main():
     argument_spec.update(
         dict(
             domain={'required': True},
-            state={'default': 'present', 'choices': ['present', 'absent']},
+            state={'required': True, 'choices': ['present', 'absent']},
             version={'default': '5.1'},
             instance_count={'type': 'int', 'default': 1},
-            instance_type={'default': 't2.medium.elasticsearch'},
+            instance_type={'required': True},
             zone_awareness={'type': 'bool', 'default': True},
             dedicated_master_enabled={
                 'type': 'bool', 'default': False, 'choices': [True, False]
@@ -341,6 +344,7 @@ def main():
             ebs_volume_size={'required': True, 'type': 'int'},
             access_policies={'required': True},
             wait={'type': 'bool'},
+            tags={'type': 'dict'},
         )
     )
 
@@ -375,6 +379,15 @@ def main():
 
             # Reload after modifying
             domain = is_present(client, module)
+
+        if module.params['tags']:
+            arn = domain['DomainStatus']['ARN']
+
+            tag_list = []
+            for each_key, each_value in module.params['tags'].iteritems():
+                tag_list.append({'Key': each_key, 'Value': each_value})
+
+            client.add_tags(ARN=arn, TagList=tag_list)
 
         if module.params['wait']:
             while not domain['DomainStatus'].get('Endpoint'):
