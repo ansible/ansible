@@ -345,7 +345,7 @@ EXAMPLES = r'''
       runonce:
       - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
   delegate_to: localhost
-  
+
 - name: Create a diskless VM
   vmware_guest:
     hostname: 192.168.1.209
@@ -484,9 +484,9 @@ class PyVmomiDeviceHelper(object):
     @staticmethod
     def is_scsi_controller(device):
         return isinstance(device, vim.vm.device.VirtualLsiLogicController) or \
-               isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
-               isinstance(device, vim.vm.device.VirtualBusLogicController) or \
-               isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
+            isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
+            isinstance(device, vim.vm.device.VirtualBusLogicController) or \
+            isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
 
     @staticmethod
     def create_ide_controller():
@@ -1366,11 +1366,9 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiUnattended.password.plainText = True
 
             if 'joindomain' in self.params['customization']:
-                if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params[
-                    'customization']:
-                    self.module.fail_json(
-                        msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
-                            "joindomain feature")
+                if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
+                                              "joindomain feature")
 
                 ident.identification.domainAdmin = str(self.params['customization']['domainadmin'])
                 ident.identification.joinDomain = str(self.params['customization']['joindomain'])
