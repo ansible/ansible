@@ -33,6 +33,8 @@ options:
   resource:
     description:
     - The ARN of the resource to be protected.
+    - Valid resources can be Elastic IP allocations, Elastic and Application Load Balancers, Cloudfront distributions,
+      or Route 53 hosted zones.
     required: true
 extends_documentation_fragment:
     - ec2
