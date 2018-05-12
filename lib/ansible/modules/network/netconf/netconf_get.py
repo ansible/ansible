@@ -35,7 +35,6 @@ options:
         it fallback to I(running) datastore. If the C(source) value is not mentioned in that case
         both configuration and state information is returned in the response from running datastore.
     choices: ['running', 'candidate', 'startup']
-    default: 'running'
   filter:
     description:
       - This argument specifies the XML string which acts as a filter to restrict the portions of
@@ -78,7 +77,7 @@ EXAMPLES = """
   netconf_get:
     source: startup
 
-- name: Get system configuration data from running datastore state
+- name: Get system configuration data from running datastore state (junos)
   netconf_get:
     source: running
     filter: <configuration><system></system></configuration>
@@ -97,6 +96,10 @@ EXAMPLES = """
   netconf_get:
     format: json
     filter: /netconf-state/schemas/schema
+
+  - name: get interface confiugration with filter (iosxr)
+    netconf_get:
+      filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
 """
 
 RETURN = """
@@ -161,7 +164,7 @@ def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        source=dict(default='running', choices=['running', 'candidate', 'startup']),
+        source=dict(choices=['running', 'candidate', 'startup']),
         filter=dict(),
         display=dict(choices=['json', 'pretty']),
         lock=dict(default=False, type=bool)
@@ -187,13 +190,13 @@ def main():
         module.fail_json(msg='startup source is not supported on this device')
 
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
-        module.fail_json(msg='filter type xpath is not supported on this device')
+        module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
 
     if lock and not operations.get('supports_lock', False):
         module.fail_json(msg='lock operation is not supported on this device')
 
     if lock and source not in operations.get('lock_datastore', []):
-        module.fail_json(msg='lock operation on source %s is not supported on this device' % source)
+        module.fail_json(msg="lock operation on '%s' source is not supported on this device" % source)
 
     filter_spec = (filter_type, filter) if filter_type else None
 
@@ -207,8 +210,8 @@ def main():
     else:
         response = conn.get(filter=filter_spec)
 
-    response = tostring(response)
-    transformed_resp = remove_namespaces(response)
+    xml_resp = tostring(response)
+    transformed_resp = remove_namespaces(xml_resp)
     output = None
     if display == 'json':
         if not HAS_JXMLEASE:
@@ -219,12 +222,12 @@ def main():
         try:
             output = jxmlease.parse(transformed_resp)
         except:
-            raise ValueError(response)
+            raise ValueError(transformed_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)
 
     result = {
-        'stdout': response,
+        'stdout': xml_resp,
         'xml': transformed_resp,
         'output': output
     }
