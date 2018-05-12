@@ -31,6 +31,7 @@ options:
       - absent
       - enabled
       - disabled
+    default: present
   preferred_lb_method:
     description:
       - The load balancing mode that the system tries first.
@@ -94,6 +95,7 @@ options:
       - drop-packet
       - fallback-ip
       - virtual-server-score
+      - none
   fallback_ip:
     description:
       - Specifies the IPv4, or IPv6 address of the server to which the system

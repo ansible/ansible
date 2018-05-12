@@ -36,7 +36,6 @@ options:
     description:
       - The timezone to set for NTP lookups. At least one of C(ntp_servers) or
         C(timezone) is required.
-    default: UTC
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

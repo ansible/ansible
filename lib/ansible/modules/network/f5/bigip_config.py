@@ -29,13 +29,13 @@ options:
   save:
     description:
       - The C(save) argument instructs the module to save the
-        running-config to startup-config. This operation is performed
-        after any changes are made to the current running config. If
-        no changes are made, the configuration is still saved to the
-        startup config. This option will always cause the module to
-        return changed.
+        running-config to startup-config.
+      - This operation is performed after any changes are made to the
+        current running config. If no changes are made, the configuration
+        is still saved to the startup config.
+      - This option will always cause the module to return changed.
     type: bool
-    default: no
+    default: yes
   reset:
     description:
       - Loads the default configuration on the device.
@@ -323,7 +323,7 @@ class ArgumentSpec(object):
             ),
             save=dict(
                 type='bool',
-                default=True
+                default='yes'
             )
         )
         self.argument_spec = {}
