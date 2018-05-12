@@ -100,51 +100,51 @@ def main():
     if module.params["app_name"] and module.params["application_id"]:
         module.fail_json(msg="only one of 'app_name' or 'application_id' can be set")
     if module.params["app_name"]:
-	params["app_name"] = module.params["app_name"]
+        params["app_name"] = module.params["app_name"]
     elif module.params["application_id"]:
-    	params["application_id"] = module.params["application_id"]
+        params["application_id"] = module.params["application_id"]
     else:
-    	module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
+        module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
 
     if module.params["app_name"]:
-	data="filter[name]=" + str(module.params["app_name"])
-      	resp, info = fetch_url(module,
+        data="filter[name]=" + str(module.params["app_name"])
+        resp, info = fetch_url(module,
                              "https://api.newrelic.com/v2/applications.json",
                              headers={'x-api-key': module.params["token"],
                              'Content-type': 'application/x-www-form-urlencoded'},
                              data=data,
                              method="GET")
-      	if info['status'] != 200:
+        if info['status'] != 200:
             module.fail_json(msg="unable to get application list from newrelic: %s" % info['msg'])
-      	else:
+        else:
             body = json.loads(resp.read())
-      	if body == None:
+        if body == None:
             module.fail_json(msg="No Data for applications")
-    	else:
+        else:
             app_id = body["applications"][0]["id"]
             if app_id == None:
                 module.fail_json(msg="App not found in NewRelic Registerd Applications List")
     else:
-    	app_id = module.params["application_id"]
+        app_id = module.params["application_id"]
 
     # Send the data to NewRelic
     url = "https://api.newrelic.com/v2/applications/" + str(app_id) + "/deployments.json"
-    data={ "deployment": { \
-                        "revision": str(module.params["revision"]), \
-                        "changelog": str(module.params["changelog"]), \
-                        "description": str(module.params["description"]), \
+    data={"deployment": {
+                        "revision": str(module.params["revision"]),
+                        "changelog": str(module.params["changelog"]),
+                        "description": str(module.params["description"]),
                         "user": str(module.params["user"])
-                        } \
-          }
+                        }
+         }
     headers = {
         'x-api-key': module.params["token"],
         'Content-Type': 'application/json',
     }
     response, info = fetch_url(module, url, data=module.jsonify(data), headers=headers, method="POST")
     if info['status'] == 201:
-    	module.exit_json(changed=True)
+        module.exit_json(changed=True)
     else:
-    	module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
+        module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
 
 if __name__ == '__main__':
     main()
