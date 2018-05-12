@@ -66,6 +66,10 @@
     that:
       - output.changed
 
+- name: dump
+  debug:
+    var: output
+
 - name: Create instance of Application Gateway
   azure_rm_appgw:
     resource_group: "{{ resource_group }}"

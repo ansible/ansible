@@ -1243,6 +1243,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
 
         if response:
             self.results["id"] = response["id"]
+            self.results["parameters"] = self.parameters
 
         return self.results
 
