@@ -10,7 +10,7 @@
 # This will cause ansible-test to use the given configuration.
 #
 # If you run with @FIXTURES enabled (true) then you can decide if you want to
-# run in REPLAY mode (true) or, record mode (false).
+# run in @REPLAY mode (true) or, record mode (false).
 
 
 opennebula_endpoint: @ENDPOINT
