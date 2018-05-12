@@ -24,10 +24,9 @@ options:
       - Specifies, if you have enabled SSH access, the IP address or address
         range for other systems that can use SSH to communicate with this
         system.
-    choices:
-      - all
-      - IP address, such as 172.27.1.10
-      - IP range, such as 172.27.*.* or 172.27.0.0/255.255.0.0
+      - To specify all addresses, use the value C(all).
+      - IP address can be specified, such as 172.27.1.10.
+      - IP rangees can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
   banner:
     description:
       - Whether to enable the banner or not.

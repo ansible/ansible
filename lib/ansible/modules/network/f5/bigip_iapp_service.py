@@ -77,6 +77,7 @@ options:
         over any similar setting in the iApp Server payload that you provide in
         the C(parameters) field.
     default: yes
+    type: bool
     version_added: 2.5
   traffic_group:
     description:
@@ -618,7 +619,8 @@ class ArgumentSpec(object):
                 type='bool'
             ),
             strict_updates=dict(
-                type='bool'
+                type='bool',
+                default='yes'
             ),
             traffic_group=dict(),
             partition=dict(
