@@ -28,7 +28,7 @@ description:
 options:
   allowed:
     description:
-      - the protocol:ports to allow (C(tcp:80) or C(tcp:80,443) or C(tcp:80-800;udp:1-25))
+      - the protocol:ports to allow (I(tcp:80) or I(tcp:80,443) or I(tcp:80-800;udp:1-25))
         this parameter is mandatory when creating or updating a firewall rule
   ipv4_range:
     description:
