@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2018 Davinder Pal <dpsangwal@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -86,7 +87,7 @@ def main():
             app_name=dict(required=False),
             application_id=dict(required=False),
             changelog=dict(required=False),
-            description=dict(required=False ),
+            description=dict(required=False),
             revision=dict(required=True),
             user=dict(required=False),
             validate_certs=dict(default='True', type='bool'),
@@ -97,35 +98,35 @@ def main():
     # testing params
     params = {}
     if module.params["app_name"] and module.params["application_id"]:
-      module.fail_json(msg="only one of 'app_name' or 'application_id' can be set")
+		module.fail_json(msg="only one of 'app_name' or 'application_id' can be set")
 
     if module.params["app_name"]:
-      params["app_name"] = module.params["app_name"]
+		params["app_name"] = module.params["app_name"]
     elif module.params["application_id"]:
-      params["application_id"] = module.params["application_id"]
+    	params["application_id"] = module.params["application_id"]
     else:
-      module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
+    	module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
 
     if module.params["app_name"]:
-      data="filter[name]=" + str(module.params["app_name"])
-      resp, info = fetch_url(module,
+		data="filter[name]=" + str(module.params["app_name"])
+      	resp, info = fetch_url(module,
                              "https://api.newrelic.com/v2/applications.json",
                              headers={'x-api-key': module.params["token"],
                              'Content-type': 'application/x-www-form-urlencoded'},
                              data=data,
                              method="GET")
-      if info['status'] != 200:
-        module.fail_json(msg="unable to get application list from newrelic: %s" % info['msg'])
-      else:
-        body = json.loads(resp.read())
-      if body == None:
-        module.fail_json(msg="No Data for applications")
-      else:
-        app_id = body["applications"][0]["id"]
-        if app_id == None:
-          module.fail_json(msg="App not found in NewRelic Registerd Applications List")
+      	if info['status'] != 200:
+			module.fail_json(msg="unable to get application list from newrelic: %s" % info['msg'])
+      	else:
+			body = json.loads(resp.read())
+      	if body == None:
+			module.fail_json(msg="No Data for applications")
+    	else:
+			app_id = body["applications"][0]["id"]
+			if app_id == None:
+				module.fail_json(msg="App not found in NewRelic Registerd Applications List")
     else:
-      app_id = module.params["application_id"]
+    	app_id = module.params["application_id"]
 
     # Send the data to NewRelic
     url = "https://api.newrelic.com/v2/applications/" + str(app_id) + "/deployments.json"
@@ -133,7 +134,7 @@ def main():
                         "revision": str(module.params["revision"]), \
                         "changelog": str(module.params["changelog"]), \
                         "description": str(module.params["description"]), \
-                        "user": str(module.params["user"]) 
+                        "user": str(module.params["user"])
                         } \
           }
     headers = {
@@ -142,9 +143,9 @@ def main():
     }
     response, info = fetch_url(module, url, data=module.jsonify(data), headers=headers, method="POST")
     if info['status'] == 201:
-      module.exit_json(changed=True)
+    	module.exit_json(changed=True)
     else:
-      module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
+    	module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
 
 if __name__ == '__main__':
-  main()
+	main()
