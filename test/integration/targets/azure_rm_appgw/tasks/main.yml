@@ -19,7 +19,7 @@
     virtual_network_name: vnet{{ rpfx }}
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: 10.1.0.0/24
-  register: output
+  register: subnet_output
 
 - name: Create instance of Application Gateway -- check mode
   azure_rm_appgw:
@@ -31,11 +31,11 @@
       capacity: 2
     gateway_ip_configurations:
       - subnet:
-          id: "{{ output.state.id }}"
+          id: "{{ subnet_output.state.id }}"
         name: app_gateway_ip_config
     frontend_ip_configurations:
       - subnet:
-          id: "{{ output.state.id }}"
+          id: "{{ subnet_output.state.id }}"
           name: sample_gateway_frontend_ip_config
     frontend_ports:
       - port: 90
@@ -76,11 +76,11 @@
       capacity: 2
     gateway_ip_configurations:
       - subnet:
-          id: "{{ output.state.id }}"
+          id: "{{ subnet_output.state.id }}"
         name: app_gateway_ip_config
     frontend_ip_configurations:
       - subnet:
-          id: "{{ output.state.id }}"
+          id: "{{ subnet_output.state.id }}"
         name: sample_gateway_frontend_ip_config
     frontend_ports:
       - port: 90
