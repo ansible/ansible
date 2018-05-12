@@ -30,12 +30,12 @@
       capacity: 2
     gateway_ip_configurations:
       - subnet:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+          id: "{{ output.state.id }}"
         name: app_gateway_ip_config
     frontend_ip_configurations:
       - subnet:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
-        name: sample_gateway_frontend_ip_config
+          id: "{{ output.state.id }}"
+          name: sample_gateway_frontend_ip_config
     frontend_ports:
       - port: 90
         name: ag_frontend_port
@@ -49,19 +49,14 @@
         cookie_based_affinity: Enabled
         name: sample_appgateway_http_settings
     http_listeners:
-      - frontend_ip_configuration:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendIPConfigurations/sample_gateway_frontend_ip_config
-        frontend_port:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendPorts/ag_frontend_port
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: ag_frontend_port
         name: sample_http_listener
     request_routing_rules:
       - rule_type: Basic
-        backend_address_pool:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendAddressPools/test_backend_address_pool
-        backend_http_settings:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendHttpSettingsCollection/sample_appgateway_http_settings
-        http_listener:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/httpListeners/sample_http_listener
+        backend_address_pool: test_backend_address_pool
+        backend_http_settings: sample_appgateway_http_settings
+        http_listener: sample_http_listener
         name: rule1
   check_mode: yes
   register: output
@@ -80,11 +75,11 @@
       capacity: 2
     gateway_ip_configurations:
       - subnet:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+          id: "{{ output.state.id }}"
         name: app_gateway_ip_config
     frontend_ip_configurations:
       - subnet:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/vnet{{ rpfx }}/subnets/subnet{{ rpfx }}
+          id: "{{ output.state.id }}"
         name: sample_gateway_frontend_ip_config
     frontend_ports:
       - port: 90
@@ -99,19 +94,14 @@
         cookie_based_affinity: Enabled
         name: sample_appgateway_http_settings
     http_listeners:
-      - frontend_ip_configuration:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendIPConfigurations/sample_gateway_frontend_ip_config
-        frontend_port:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/frontendPorts/ag_frontend_port
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: ag_frontend_port
         name: sample_http_listener
     request_routing_rules:
       - rule_type: Basic
-        backend_address_pool:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendAddressPools/test_backend_address_pool
-        backend_http_settings:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/backendHttpSettingsCollection/sample_appgateway_http_settings
-        http_listener:
-          id: /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/applicationGateways/appgateway{{ rpfx }}/httpListeners/sample_http_listener
+        backend_address_pool: test_backend_address_pool
+        backend_http_settings: sample_appgateway_http_settings
+        http_listener: sample_http_listener
         name: rule1
   register: output
 - name: Assert the resource instance is well created

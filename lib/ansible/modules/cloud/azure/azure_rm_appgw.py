@@ -30,9 +30,6 @@ options:
         description:
             - The name of the application gateway.
         required: True
-    id:
-        description:
-            - Resource ID.
     location:
         description:
             - Resource location. If not set, location from the resource group will be used as default.
@@ -92,12 +89,9 @@ options:
                     - 'tl_sv1_2'
     gateway_ip_configurations:
         description:
-            - Subnets of application the gateway resource.
+            - List of subnets used by the application gateway.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             subnet:
                 description:
                     - Reference of the subnet resource. A subnet from where application gateway gets its private address.
@@ -105,49 +99,25 @@ options:
                     id:
                         description:
                             - Resource ID.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the application gateway I(subnet) resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     authentication_certificates:
         description:
             - Authentication certificates of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             data:
                 description:
                     - Certificate public data.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the authentication certificate resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     ssl_certificates:
         description:
             - SSL certificates of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             data:
                 description:
                     - Base-64 encoded pfx certificate. Only applicable in PUT Request.
@@ -157,26 +127,14 @@ options:
             public_cert_data:
                 description:
                     - Base-64 encoded Public cert I(data) corresponding to pfx specified in I(data). Only applicable in GET request.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the SSL certificate resource Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     frontend_ip_configurations:
         description:
             - Frontend IP addresses of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             private_ip_address:
                 description:
                     - PrivateIPAddress of the network interface IP Configuration.
@@ -200,49 +158,25 @@ options:
                     id:
                         description:
                             - Resource ID.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the public IP resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     frontend_ports:
         description:
             - Frontend ports of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             port:
                 description:
                     - Frontend port
-            provisioning_state:
-                description:
-                    - "Provisioning state of the frontend I(port) resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     probes:
         description:
             - Probes of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             protocol:
                 description:
                     - Protocol.
@@ -284,50 +218,29 @@ options:
                         description:
                             - Allowed ranges of healthy status codes. Default range of healthy status codes is 200-399.
                         type: list
-            provisioning_state:
-                description:
-                    - "Provisioning state of the backend C(http) settings resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     backend_address_pools:
         description:
             - Backend address pool of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             backend_ip_configurations:
                 description:
                     - Collection of references to IPs defined in network interfaces.
                 type: list
                 suboptions:
-                    id:
-                        description:
-                            - Resource ID.
                     application_gateway_backend_address_pools:
                         description:
                             - The reference of ApplicationGatewayBackendAddressPool resource.
                         type: list
                         suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
                             backend_ip_configurations:
                                 description:
                                     - Collection of references to IPs defined in network interfaces.
                                 type: list
                                 suboptions:
-                                    id:
-                                        description:
-                                            - Resource ID.
                                     application_gateway_backend_address_pools:
                                         description:
                                             - The reference of ApplicationGatewayBackendAddressPool resource.
@@ -369,16 +282,9 @@ options:
                                         description:
                                             - Application security groups in which the IP configuration is included.
                                         type: list
-                                    provisioning_state:
-                                        description:
-                                            - "The provisioning state of the network interface IP configuration. Possible values are: 'Updating', 'Deleting',
-                                               and 'Failed'."
                                     name:
                                         description:
                                             - The name of the resource that is unique within a resource group. This name can be used to access the resource.
-                                    etag:
-                                        description:
-                                            - A unique read-only string that changes whenever the resource is updated.
                             backend_addresses:
                                 description:
                                     - Backend addresses
@@ -390,18 +296,9 @@ options:
                                     ip_address:
                                         description:
                                             - IP address
-                            provisioning_state:
-                                description:
-                                    - "Provisioning state of the backend address pool resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
                             name:
                                 description:
                                     - Resource that is unique within a resource group. This name can be used to access the resource.
-                            etag:
-                                description:
-                                    - A unique read-only string that changes whenever the resource is updated.
-                            type:
-                                description:
-                                    - Type of the resource.
                     load_balancer_backend_address_pools:
                         description:
                             - The reference of LoadBalancerBackendAddressPool resource.
@@ -410,23 +307,14 @@ options:
                             id:
                                 description:
                                     - Resource ID.
-                            provisioning_state:
-                                description:
-                                    - "Get provisioning state of the public IP resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
                             name:
                                 description:
                                     - Gets name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            etag:
-                                description:
-                                    - A unique read-only string that changes whenever the resource is updated.
                     load_balancer_inbound_nat_rules:
                         description:
                             - A list of references of LoadBalancerInboundNatRules.
                         type: list
                         suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
                             frontend_ip_configuration:
                                 description:
                                     - A reference to frontend IP addresses.
@@ -457,15 +345,9 @@ options:
                                     - "Configures a virtual machine's endpoint for the floating IP capability required to configure a SQL AlwaysOn Availabili
                                       ty Group. This setting is required when using the SQL AlwaysOn Availability Groups in SQL server. This setting can't b
                                       e changed after you create the endpoint."
-                            provisioning_state:
-                                description:
-                                    - "Gets the provisioning state of the public IP resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
                             name:
                                 description:
                                     - Gets name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            etag:
-                                description:
-                                    - A unique read-only string that changes whenever the resource is updated.
                     private_ip_address:
                         description:
                             - Private IP address of the IP configuration.
@@ -513,12 +395,6 @@ options:
                                     resource_guid:
                                         description:
                                             - The resource GUID property of the network security group resource.
-                                    provisioning_state:
-                                        description:
-                                            - "The provisioning state of the public IP resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
-                                    etag:
-                                        description:
-                                            - A unique read-only string that changes whenever the resource is updated.
                             route_table:
                                 description:
                                     - The reference of the RouteTable resource.
@@ -536,12 +412,6 @@ options:
                                     disable_bgp_route_propagation:
                                         description:
                                             - Gets or sets whether to disable the I(routes) learned by BGP on that route table. True means disable.
-                                    provisioning_state:
-                                        description:
-                                            - "The provisioning state of the resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
-                                    etag:
-                                        description:
-                                            - Gets a unique read-only string that changes whenever the resource is updated.
                             service_endpoints:
                                 description:
                                     - An array of service endpoints.
@@ -554,9 +424,6 @@ options:
                                         description:
                                             - A list of locations.
                                         type: list
-                                    provisioning_state:
-                                        description:
-                                            - The provisioning state of the resource.
                             resource_navigation_links:
                                 description:
                                     - Gets an array of references to the external resources using subnet.
@@ -574,15 +441,9 @@ options:
                                     name:
                                         description:
                                             - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            provisioning_state:
-                                description:
-                                    - The provisioning state of the resource.
                             name:
                                 description:
                                     - The name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            etag:
-                                description:
-                                    - A unique read-only string that changes whenever the resource is updated.
                     primary:
                         description:
                             - Gets whether this is a primary customer address on the network interface.
@@ -645,12 +506,6 @@ options:
                             resource_guid:
                                 description:
                                     - The resource GUID property of the public IP resource.
-                            provisioning_state:
-                                description:
-                                    - "The provisioning state of the PublicIP resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
-                            etag:
-                                description:
-                                    - A unique read-only string that changes whenever the resource is updated.
                             zones:
                                 description:
                                     - A list of availability zones denoting the IP allocated for the resource needs to come from.
@@ -666,15 +521,9 @@ options:
                             location:
                                 description:
                                     - Resource location.
-                    provisioning_state:
-                        description:
-                            - "The provisioning state of the network interface IP configuration. Possible values are: 'Updating', 'Deleting', and 'Failed'."
                     name:
                         description:
                             - The name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    etag:
-                        description:
-                            - A unique read-only string that changes whenever the resource is updated.
             backend_addresses:
                 description:
                     - Backend addresses
@@ -686,15 +535,9 @@ options:
                     ip_address:
                         description:
                             - IP address
-            provisioning_state:
-                description:
-                    - "Provisioning state of the backend address pool resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
             type:
                 description:
                     - Type of the resource.
@@ -703,9 +546,6 @@ options:
             - Backend http settings of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             port:
                 description:
                     - Port
@@ -767,15 +607,9 @@ options:
             path:
                 description:
                     - Path which should be used as a prefix for all C(http) requests. Null means no path will be prefixed. Default value is null.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the backend C(http) settings resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
             type:
                 description:
                     - Type of the resource.
@@ -784,9 +618,6 @@ options:
             - Http listeners of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             frontend_ip_configuration:
                 description:
                     - Frontend IP configuration resource of an application gateway.
@@ -820,26 +651,14 @@ options:
             require_server_name_indication:
                 description:
                     - Applicable only if I(protocol) is C(https). Enables SNI for multi-hosting.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the C(http) listener resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     url_path_maps:
         description:
             - URL path map of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             default_backend_address_pool:
                 description:
                     - Default backend address pool resource of URL path map.
@@ -894,38 +713,20 @@ options:
                             id:
                                 description:
                                     - Resource ID.
-                    provisioning_state:
-                        description:
-                            - "Path rule of URL path map resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
                     name:
                         description:
                             - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    etag:
-                        description:
-                            - A unique read-only string that changes whenever the resource is updated.
                     type:
                         description:
                             - Type of the resource.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the backend http settings resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     request_routing_rules:
         description:
             - Request routing rules of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             rule_type:
                 description:
                     - Rule I(type).
@@ -967,26 +768,14 @@ options:
                     id:
                         description:
                             - Resource ID.
-            provisioning_state:
-                description:
-                    - "Provisioning state of the request routing rule resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     redirect_configurations:
         description:
             - Redirect configurations of the application gateway resource.
         type: list
         suboptions:
-            id:
-                description:
-                    - Resource ID.
             redirect_type:
                 description:
                     - Supported http redirection types - C(permanent), C(temporary), C(found), C(see_other).
@@ -1038,12 +827,6 @@ options:
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            etag:
-                description:
-                    - A unique read-only string that changes whenever the resource is updated.
-            type:
-                description:
-                    - Type of the resource.
     web_application_firewall_configuration:
         description:
             - Web application firewall configuration.
@@ -1086,12 +869,6 @@ options:
     resource_guid:
         description:
             - Resource GUID property of the application gateway resource.
-    provisioning_state:
-        description:
-            - "Provisioning state of the application gateway resource. Possible values are: 'Updating', 'Deleting', and 'Failed'."
-    etag:
-        description:
-            - A unique read-only string that changes whenever the resource is updated.
 
 extends_documentation_fragment:
     - azure
@@ -1203,12 +980,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 type='str'
             ),
             resource_guid=dict(
-                type='str'
-            ),
-            provisioning_state=dict(
-                type='str'
-            ),
-            etag=dict(
                 type='str'
             ),
             state=dict(
@@ -1324,21 +1095,66 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["backend_http_settings_collection"] = ev
                 elif key == "http_listeners":
                     ev = kwargs[key]
-                    if 'protocol' in ev:
-                        if ev['protocol'] == 'http':
-                            ev['protocol'] = 'Http'
-                        elif ev['protocol'] == 'https':
-                            ev['protocol'] = 'Https'
+                    for i in range(len(ev)):
+                        if 'frontend_ip_configuration' in ev:
+                            id = frontend_ip_configuration_id(
+                                    self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    ev['frontend_ip_configuration'])
+                            ev['frontend_ip_configuration'] = { 'id': id }
+
+                        if 'frontend_port' in ev:
+                            id = frontend_port_id(
+                                    self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    ev['frontend_port'])
+                            ev['frontend_port'] = { 'id': id }
+                        if 'protocol' in ev:
+                            if ev['protocol'] == 'http':
+                                ev['protocol'] = 'Http'
+                            elif ev['protocol'] == 'https':
+                                ev['protocol'] = 'Https'
                     self.parameters["http_listeners"] = ev
+
+
                 elif key == "url_path_maps":
                     self.parameters["url_path_maps"] = kwargs[key]
                 elif key == "request_routing_rules":
                     ev = kwargs[key]
-                    if 'rule_type' in ev:
-                        if ev['rule_type'] == 'basic':
-                            ev['rule_type'] = 'Basic'
-                        elif ev['rule_type'] == 'path_based_routing':
-                            ev['rule_type'] = 'PathBasedRouting'
+                    for i in range(len(ev)):
+                        if 'backend_address_pool' in ev:
+                            id = backend_address_pool_id(
+                                    self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    ev['backend_address_pool'])
+                            ev['backend_address_pool'] = { 'id': id }
+                        if 'backend_http_settings' in ev:
+                            id = backend_http_settings_id(
+                                    self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    ev['backend_http_settings'])
+                            ev['backend_http_settings'] = { 'id': id }
+                        if 'http_listener' in ev:
+                            id = http_listener_id(
+                                    self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    ev['backend_http_listener'])
+                            ev['http_listener'] = { 'id': id }
+                        if 'protocol' in ev:
+                            if ev['protocol'] == 'http':
+                                ev['protocol'] = 'Http'
+                            elif ev['protocol'] == 'https':
+                                ev['protocol'] = 'Https'
+                        if 'rule_type' in ev:
+                            if ev['rule_type'] == 'basic':
+                                ev['rule_type'] = 'Basic'
+                            elif ev['rule_type'] == 'path_based_routing':
+                                ev['rule_type'] = 'PathBasedRouting'
                     self.parameters["request_routing_rules"] = ev
                 elif key == "redirect_configurations":
                     ev = kwargs[key]
@@ -1364,8 +1180,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["enable_http2"] = kwargs[key]
                 elif key == "resource_guid":
                     self.parameters["resource_guid"] = kwargs[key]
-                elif key == "provisioning_state":
-                    self.parameters["provisioning_state"] = kwargs[key]
                 elif key == "etag":
                     self.parameters["etag"] = kwargs[key]
 
@@ -1488,6 +1302,51 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_name, name):
+    """Generate the id for a frontend ip configuration"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/frontendIPConfigurations/{}'.format(
+        subscription_id,
+        resource_group_name,
+        appgw_name,
+        name
+    )
+
+def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
+    """Generate the id for a frontend port"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/frontendPorts/{}'.format(
+        subscription_id,
+        resource_group_name,
+        appgw_name,
+        name
+    )
+
+def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, name):
+    """Generate the id for an address pool"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/backendAddressPools/{}'.format(
+        subscription_id,
+        resource_group_name,
+        appgw_name,
+        name
+    )
+
+def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, name):
+    """Generate the id for a http settings"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/backendHttpSettingsCollection/{}'.format(
+        subscription_id,
+        resource_group_name,
+        appgw_name,
+        name
+    )
+
+def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
+    """Generate the id for a http listener"""
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/httpListeners/{}'.format(
+        subscription_id,
+        resource_group_name,
+        appgw_name,
+        name
+    )
 
 
 def main():
