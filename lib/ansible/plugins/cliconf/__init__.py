@@ -53,13 +53,11 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     """
     A base class for implementing cli connections
 
-    .. note:: Unlike most of Ansible, nearly all strings in
-        :class:`CliconfBase` plugins are byte strings.  This is because of
-        how close to the underlying platform these plugins operate.  Remember
-        to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
-        problems.
+    .. note:: String inputs to :meth:`send_command` will be cast to byte strings
+         within this method and as such are not required to be made byte strings
+         beforehand.  Please avoid using literal byte strings (``b'string'``) in
+         :class:`CliConfBase` plugins as this can lead to unexpected errors when
+         running on Python 3
 
     List of supported rpc's:
         :get_config: Retrieves the specified configuration from the device
@@ -243,10 +241,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'network_os_image': <str>,
                     'network_os_platform': <str>,
                 },
-                'config_capability': {
-                    'format': [list of supported configuration format],
-                    'match': ['line', 'strict', 'exact', 'none'],
-                    'replace': ['line', 'block', 'config'],
+                'device_operations': {
                     'supports_replace': <bool>,            # identify if config should be merged or replaced is supported
                     'supports_commit': <bool>,             # identify if commit is supported by device or not
                     'supports_rollback': <bool>,           # identify if rollback is supported or not
@@ -258,6 +253,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'support_match: <bool>,                # identify if match is supported
                     'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
                 }
+                'format': [list of supported configuration format],
+                'match': ['line', 'strict', 'exact', 'none'],
+                'replace': ['line', 'block', 'config'],
             }
         :return: capability as json string
         """

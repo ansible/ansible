@@ -89,9 +89,9 @@ class Cliconf(CliconfBase):
 
         """
         diff = {}
-        config_capability = self.get_config_capability()
+        device_operations = self.get_device_operations()
 
-        if candidate is None and not config_capability['supports_onbox_diff']:
+        if candidate is None and not device_operations['supports_onbox_diff']:
             raise ValueError('candidate configuration is required to generate diff')
 
         # prepare candidate configuration
@@ -126,9 +126,10 @@ class Cliconf(CliconfBase):
         if check_mode not in (True, False):
             raise ValueError('`check_mode` must be a bool, got %s' % check_mode)
 
-        config_capability = self.get_config_capability()
-        if replace and replace not in config_capability['replace']:
-            raise ValueError('`replace` value %s in invalid, valid values are %s' % (replace, config_capability['replace']))
+        device_operations = self.get_device_operations()
+        options = self.get_options()
+        if replace and replace not in options['replace']:
+            raise ValueError('`replace` value %s in invalid, valid values are %s' % (replace, options['replace']))
 
         results = []
         if not check_mode:
@@ -167,11 +168,8 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config_capability(self):
+    def get_device_operations(self):
         return {
-            'format': ['text'],
-            'match': ['line', 'strict', 'exact', 'none'],
-            'replace': ['line', 'block'],
             'supports_replace': True,
             'supports_commit': False,
             'supports_rollback': False,
@@ -184,12 +182,20 @@ class Cliconf(CliconfBase):
             'supports_generate_diff': True,
         }
 
+    def get_options(self):
+        return {
+            'format': ['text'],
+            'match': ['line', 'strict', 'exact', 'none'],
+            'replace': ['line', 'block']
+        }
+
     def get_capabilities(self):
         result = dict()
         result['rpc'] = self.get_base_rpc() + ['edit_banner']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
-        result['config_capability'] = self.get_config_capability()
+        result['device_operations'] = self.get_device_operations()
+        result.update(self.get_options())
         return json.dumps(result)
 
     def edit_banner(self, banners, multiline_delimiter="@", check_mode=False):
