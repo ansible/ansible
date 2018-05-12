@@ -1,0 +1,47 @@
+---
+
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: create GuardDuty detector
+  guardduty_detector:
+    <<: *aws_connection_info
+    state: present
+    enabled: true
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+      - result.detector_id is not none
+
+- name: disable GuardDuty detector
+  guardduty_detector:
+    <<: *aws_connection_info
+    state: present
+    enabled: false
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+      - result.detector_id is not none
+
+- name: destroy GuardDuty detector
+  guardduty_detector:
+    <<: *aws_connection_info
+    state: absent
+    enabled: false
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
