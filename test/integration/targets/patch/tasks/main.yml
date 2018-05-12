@@ -2,6 +2,7 @@
 - name: ensure idempotency installed
   package:
     name: patch
+  when: ansible_distribution != "MacOSX"
 
 - name: create a directory for the result
   file:
