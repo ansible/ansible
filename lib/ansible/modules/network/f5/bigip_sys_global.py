@@ -383,26 +383,25 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         self.states = ['present']
-        self.on_off_choices = ['enabled', 'disabled', 'True', 'False'] + list(BOOLEANS)
         argument_spec = dict(
             security_banner=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             banner_text=dict(),
             gui_setup=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             lcd_display=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             mgmt_dhcp=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             net_reboot=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             quiet_boot=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             console_timeout=dict(required=False, type='int', default=None),
             state=dict(default='present', choices=['present'])
