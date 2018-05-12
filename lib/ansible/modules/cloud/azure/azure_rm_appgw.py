@@ -1100,16 +1100,16 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                         if 'frontend_ip_configuration' in item:
                             id = frontend_ip_configuration_id(
                                     self.subscription_id,
-                                    self.resource_group,
-                                    self.name,
+                                    kwargs['resource_group'],
+                                    kwargs['name'],
                                     item['frontend_ip_configuration'])
                             item['frontend_ip_configuration'] = { 'id': id }
 
                         if 'frontend_port' in item:
                             id = frontend_port_id(
                                     self.subscription_id,
-                                    self.resource_group,
-                                    self.name,
+                                    kwargs['resource_group'],
+                                    kwargs['name'],
                                     item['frontend_port'])
                             item['frontend_port'] = { 'id': id }
                         if 'protocol' in item:
@@ -1130,22 +1130,22 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                         if 'backend_address_pool' in item:
                             id = backend_address_pool_id(
                                     self.subscription_id,
-                                    self.resource_group,
-                                    self.name,
+                                    kwargs['resource_group'],
+                                    kwargs['name'],
                                     item['backend_address_pool'])
                             item['backend_address_pool'] = { 'id': id }
                         if 'backend_http_settings' in item:
                             id = backend_http_settings_id(
                                     self.subscription_id,
-                                    self.resource_group,
-                                    self.name,
+                                    kwargs['resource_group'],
+                                    kwargs['name'],
                                     item['backend_http_settings'])
                             item['backend_http_settings'] = { 'id': id }
                         if 'http_listener' in item:
                             id = http_listener_id(
                                     self.subscription_id,
-                                    self.resource_group,
-                                    self.name,
+                                    kwargs['resource_group'],
+                                    kwargs['name'],
                                     item['http_listener'])
                             item['http_listener'] = { 'id': id }
                         if 'protocol' in item:
