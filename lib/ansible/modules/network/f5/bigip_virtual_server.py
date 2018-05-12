@@ -224,11 +224,10 @@ options:
       - When C(type) is C(dhcp), this parameter is ignored.
       - When C(type) is C(reject), this parameter will be ignored.
       - When C(type) is C(internal), this parameter will be ignored.
-    choices:
-      - None
-      - Automap
-      - Name of a SNAT pool (eg "/Common/snat_pool_name") to enable SNAT
-        with the specific pool
+      - The name of a SNAT pool (eg "/Common/snat_pool_name") can be specified to enable SNAT
+        with the specific pool.
+      - To remove SNAT, specify the word C(none).
+      - To specify automap, use the word C(automap).
   default_persistence_profile:
     description:
       - Default Profile which manages the session persistence.

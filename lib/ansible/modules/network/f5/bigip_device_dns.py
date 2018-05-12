@@ -26,10 +26,11 @@ options:
         operation each time a lookup is needed. Please note that this applies
         only to Access Policy Manager features, such as ACLs, web application
         rewrites, and authentication.
-    default: disable
     choices:
        - enabled
        - disabled
+       - enable
+       - disable
   name_servers:
     description:
       - A list of name servers that the system uses to validate DNS lookups
@@ -320,18 +321,12 @@ class ArgumentSpec(object):
                 choices=['disabled', 'enabled', 'disable', 'enable']
             ),
             name_servers=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             search=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             ip_version=dict(
-                required=False,
-                default=None,
                 choices=[4, 6],
                 type='int'
             ),
