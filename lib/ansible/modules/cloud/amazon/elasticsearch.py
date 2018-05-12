@@ -15,7 +15,7 @@ short_description: Manage hosted Elasticsearch in Amazon Web Services.
 description:
   - Manage hosted Elasticsearch in Amazon Web Services.
   - Returns information about the hosted Elasticsearch.
-version_added: "2.5"
+version_added: "2.6"
 requirements: [ boto3 ]
 author: "Zach Steindler (@steiza)"
 options:
@@ -45,19 +45,19 @@ options:
   zone_awareness:
     description:
       - Should cluster be aware of AWS availability zones.
+    type: bool
     required: false
     default: true
   dedicated_master_enabled:
     description:
       - If cluster have dedicated master nodes.
-    choices: [true, false]
+    type: bool
     required: false
     default: false
   dedicated_master_type:
     description:
       - Instance type of dedicated master nodes. Ignored if dedicated_master_enabled is False.
     required: false
-    default: t2.medium.elasticsearch
   dedicated_master_count:
     description:
       - Number of dedicated master nodes. Ignored if dedicated_master_enabled is False.
@@ -79,6 +79,7 @@ options:
   wait:
     description:
       - Wait for cluster creation to finish
+    type: bool
   tags:
     description:
       - Dictionary of tags to ensure are present on resource. Will not remove other tags.
@@ -384,7 +385,7 @@ def main():
             arn = domain['DomainStatus']['ARN']
 
             tag_list = []
-            for each_key, each_value in module.params['tags'].iteritems():
+            for each_key, each_value in module.params['tags'].items():
                 tag_list.append({'Key': each_key, 'Value': each_value})
 
             client.add_tags(ARN=arn, TagList=tag_list)
