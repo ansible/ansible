@@ -1901,11 +1901,6 @@ class PyVmomiHelper(PyVmomi):
         host_name = host or self.params['esxi_hostname']
         resource_pool_name = resource_pool or self.params['resource_pool']
 
-        # if folder is given, only keep name
-        cluster_name = cluster_name.rsplit('/')[-1]
-        host_name = host_name.rsplit('/')[-1]
-        resource_pool_name = resource_pool_name.rsplit('/')[-1]
-
         # get the datacenter object
         datacenter_list = find_objs(self.content, [vim.Datacenter], None, self.params['datacenter'])
         if not datacenter_list:
