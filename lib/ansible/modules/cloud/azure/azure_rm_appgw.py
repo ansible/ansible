@@ -1146,7 +1146,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                     self.subscription_id,
                                     self.resource_group,
                                     self.name,
-                                    item['backend_http_listener'])
+                                    item['http_listener'])
                             item['http_listener'] = { 'id': id }
                         if 'protocol' in item:
                             if item['protocol'] == 'http':
