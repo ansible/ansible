@@ -1215,6 +1215,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
 
             if self.check_mode:
                 self.results['changed'] = True
+                self.results["parameters"] = self.parameters
                 return self.results
 
             response = self.create_update_applicationgateway()
@@ -1243,8 +1244,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
 
         if response:
             self.results["id"] = response["id"]
-
-        self.results["parameters"] = self.parameters
 
         return self.results
 
