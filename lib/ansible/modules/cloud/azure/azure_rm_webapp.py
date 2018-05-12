@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Yunge Zhu, <yungez@microsoft.com>
+# Copyright (c) 2018 Yunge Zhu, <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -40,22 +40,22 @@ options:
             - App Service Plan.
         suboptions:
             name:
-                description: 
+                description:
                     - Name of app service lan.
                 required: true
             resoruce_group:
-                description: 
+                description:
                     - Resource group name of app service plan.
             sku:
-                description: 
-                    - Sku of app service plan. Eg. B1, B2, B3, D1, F1, FREE, P1, P1V2, P2, P2V2, P3, P3V2, S1, S2, S3, SHARED. 
+                description:
+                    - Sku of app service plan. Eg. B1, B2, B3, D1, F1, FREE, P1, P1V2, P2, P2V2, P3, P3V2, S1, S2, S3, SHARED.
                     - Please refer to https://azure.microsoft.com/en-us/pricing/details/app-service/linux/ for detail.
             is_linux:
-                description: 
+                description:
                     - Indicate is linux app service plan.
                 default: False
             number_of_workers:
-                description: 
+                description:
                     - Number of workers.
     net_framework_version:
         description:
@@ -66,7 +66,7 @@ options:
         description:
             - The version used to run your web app if using Java, e.g., '1.7' for Java 7, '1.8' for Java 8.
             - Only applys for windows web app.
-    
+
     php_version:
         description:
             - The version used to run your web app if using PHP, e.g., 5.5, 5.6, 7.0.
@@ -79,7 +79,7 @@ options:
 
     linux_fx_version:
         description:
-            - The runtime stack used for your linux-based webapp, e.g., "RUBY|2.3", "NODE|6.6", "PHP|5.6", "DOTNETCORE|1.1.0". 
+            - The runtime stack used for your linux-based webapp, e.g., "RUBY|2.3", "NODE|6.6", "PHP|5.6", "DOTNETCORE|1.1.0".
             - Only applys for linx web app. See https://aka.ms/linux-stacks for more info.
 
     java_container_settings:
@@ -102,11 +102,11 @@ options:
             registry_server_password:
                 description:
                     - The container registry server password.
-    
+
     scm_type:
         description:
             - Repository type of deployment source. Eg. LocalGit, GitHub.
-    
+
     deployment_source:
         description:
             - Deployment source for git
@@ -115,7 +115,7 @@ options:
                 url:
                     description:
                         - Repository url of deployment source.
-                
+
                 branch:
                     description:
                         - The branch name of the repository.
@@ -123,7 +123,7 @@ options:
         description:
             - The web's startup file.
             - This only applys for linux web app.
-        
+
 
     client_affinity_enabled:
         description:
@@ -151,11 +151,11 @@ options:
     ttl_in_seconds:
         description:
             - Time to live in seconds for web app's default domain name.
-    
+
     app_settings:
         description:
-            - Configure web app application settings. Suboptions are in format: <yourKey>: <yourValue>.
-    
+            - Configure web app application settings. Suboptions are in format "<yourKey>: <yourValue>"
+
     purge_app_settings:
         description:
             - Purge any existing application settings. Replace web app application settings with app_settings.
@@ -178,8 +178,8 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: 1 - Create a windows web app with non-exist app service plan
-    azure_rm_webapp:
+    - name: 1 - Create a windows web app with non-exist app service plan
+      azure_rm_webapp:
         resource_group: "{{ resource_group }}"
         name: "{{ win_app_name }}1"
         plan:
@@ -187,9 +187,9 @@ EXAMPLES = '''
           name: "{{ win_plan_name }}"
           is_linux: false
           sku: S1
-  
-  - name: 2 - create a docker web app with some app settings, with docker image
-    azure_rm_webapp:
+
+    - name: 2 - create a docker web app with some app settings, with docker image
+      azure_rm_webapp:
         resource_group: myresourcegroup
         name: mydockerwebapp
         plan:
@@ -203,9 +203,9 @@ EXAMPLES = '''
           testkey2: "testvalue2"
         container_settings:
           name: "ansible/ansible:ubuntu1404"
-    
-  - name: 6 - create a docker web app with private acr registry
-    azure_rm_webapp:
+
+    - name: 3 - create a docker web app with private acr registry
+      azure_rm_webapp:
         resource_group: myresourcegroup
         name: mydockerwebapp
         plan:
@@ -217,9 +217,9 @@ EXAMPLES = '''
           registry_server_url: myregistry.io
           registry_server_user: user
           registry_server_password: pass
-    
-  - name: 3 - create a linux web app with Node 6.6 framework
-    azure_rm_webapp:
+
+    - name: 4 - create a linux web app with Node 6.6 framework
+      azure_rm_webapp:
         resource_group: myresourcegroup
         name: mylinuxwebapp
         plan:
@@ -227,7 +227,7 @@ EXAMPLES = '''
           name: myappplan
         app_settings:
           testkey: "testvalue"
-        linux_fx_version: "node|6.6"    
+        linux_fx_version: "node|6.6"
 
 '''
 
@@ -916,7 +916,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             return response
         except CloudError as ex:
             self.log("Failed to get configuration for web app {0} in resource group {1}: {2}".format(
-                self.name, self.resource_group), ex)
+                self.name, self.resource_group, ex)
 
             return False
 
