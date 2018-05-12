@@ -19,6 +19,7 @@
     virtual_network_name: vnet{{ rpfx }}
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: 10.1.0.0/24
+  register: output
 
 - name: Create instance of Application Gateway -- check mode
   azure_rm_appgw:
