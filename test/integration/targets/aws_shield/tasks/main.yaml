@@ -20,7 +20,7 @@
   assert:
     that:
        - result.failed
-       - 'result.msg.startswith("missing required arguments: name, state, resource")'
+       - 'result.msg.startswith("missing required arguments:")'
 
 - name: test with missing parameters
   aws_shield:
@@ -33,7 +33,7 @@
   assert:
     that:
        - result.failed
-       - 'result.msg.startswith("missing required arguments: state, resource")'
+       - 'result.msg.startswith("missing required arguments:")'
 
 - name: test with missing parameters
   aws_shield:
@@ -47,7 +47,7 @@
   assert:
     that:
        - result.failed
-       - 'result.msg.startswith("missing required arguments: resource")'
+       - 'result.msg.startswith("missing required arguments:")'
 
 # ============================================================
 # Creation/Deletion testing
