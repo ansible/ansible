@@ -1,0 +1,107 @@
+---
+- name: ensure idempotency installed
+  package:
+    name: patch
+  when: ansible_distribution != "MacOSX"
+
+- name: create a directory for the result
+  file:
+    dest: "{{ output_dir }}/patch"
+    state: directory
+  register: result
+
+- name: assert the directory was created
+  assert:
+    that:
+    - "result.state == 'directory'"
+
+- name: copy the origin file
+  copy:
+    src: "./origin.txt"
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  register: result
+
+- name: patch the origin file in check mode
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  check_mode: yes
+  register: result
+
+- name: verify patch the origin file in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: patch the origin file
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  register: result
+
+- name: verify patch the origin file
+  assert:
+    that:
+    - result is changed
+
+- name: test patch the origin file idempotency
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  register: result
+
+- name: verify test patch the origin file idempotency
+  assert:
+    that:
+    - result is not changed
+
+- name: verify the resulted file matches expectations
+  copy:
+    src: "./result.txt"
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  register: result
+  failed_when: result is changed
+
+- name: patch the workfile file in check mode state absent
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+    state: absent
+  check_mode: yes
+  register: result
+
+- name: verify patch the workfile file in check mode state absent
+  assert:
+    that:
+    - result is changed
+
+- name: patch the workfile file state absent
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+    state: absent
+  register: result
+
+- name: verify patch the workfile file state absent
+  assert:
+    that:
+    - result is changed
+
+- name: patch the workfile file state absent idempotency
+  patch:
+    src: result.patch
+    dest: "{{ output_dir }}/patch/workfile.txt"
+    state: absent
+  register: result
+
+- name: verify patch the workfile file state absent idempotency
+  assert:
+    that:
+    - result is not changed
+
+- name: verify the resulted file matches expectations
+  copy:
+    src: "./origin.txt"
+    dest: "{{ output_dir }}/patch/workfile.txt"
+  register: result
+  failed_when: result is changed
