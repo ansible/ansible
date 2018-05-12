@@ -68,9 +68,9 @@ class OpenNebulaModule:
 
         # context required for not validating SSL, old python versions won't validate anyway.
         if hasattr(ssl, '_create_unverified_context'):
-            no_ssl_validation_context=ssl._create_unverified_context()
+            no_ssl_validation_context = ssl._create_unverified_context()
         else:
-            no_ssl_validation_context=None
+            no_ssl_validation_context = None
 
         # Check if the module can run
         if not HAS_PYONE:
@@ -87,12 +87,12 @@ class OpenNebulaModule:
             self.fail("Either session or the environment vairable PYONE_SESSION must be provided")
 
         if not test_fixture:
-            if not self.module.params.get("validate_certs") and not "PYTHONHTTPSVERIFY" in environ:
+            if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
                 return pyone.OneServer(endpoint, session=session, context=no_ssl_validation_context)
             else:
                 return pyone.OneServer(endpoint, session)
         else:
-            if not self.module.params.get("validate_certs") and not "PYTHONHTTPSVERIFY" in environ:
+            if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
                 one = OneServerTester(endpoint,
                                       fixture_file=test_fixture_file,
                                       fixture_replay=test_fixture_replay,
@@ -110,7 +110,7 @@ class OpenNebulaModule:
         """
         Closing is only require in the event of fixture recording, as fixtures will be dumped to file
         """
-        if environ.get("PYONE_TEST_FIXTURE", False):
+        if self.is_fixture_writing():
             self.one._close_fixtures()
 
     def fail(self, msg):
@@ -164,8 +164,16 @@ class OpenNebulaModule:
         Returns: true if we are currently running fixtures in replay mode.
 
         """
+        return (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
+               (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
+
+    def is_fixture_writing(self):
+        """
+        Returns: true if we are currently running fixtures in write mode.
+
+        """
         return  (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-                (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
+                (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
 
     def get_host_by_name(self, name):
         '''

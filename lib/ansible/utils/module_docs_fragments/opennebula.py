@@ -22,6 +22,7 @@ options:
         description:
             - Whether to validate the SSL certificates or not.
               This parameter is ignored if PYTHONHTTPSVERIFY environment variable is used.
+        type: bool
         default: true
     wait_timeout:
         description:

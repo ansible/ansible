@@ -22,6 +22,9 @@ short_description: Manages OpenNebula Hosts
 
 version_added: "2.6"
 
+requirements:
+    - pyone
+
 description:
     - "Manages OpenNebula Hosts"
 
@@ -100,7 +103,7 @@ from ansible.module_utils.opennebula import OpenNebulaModule
 try:
     from pyone import HOST_STATES, HOST_STATUS
 except ImportError:
-    pass  #handled at module utils
+    pass  # handled at module utils
 
 
 # Pseudo definitions...
@@ -255,5 +258,10 @@ class HostModule(OpenNebulaModule):
         # return
         self.exit()
 
-if __name__ == '__main__':
+
+def main():
     HostModule().run_module()
+
+
+if __name__ == '__main__':
+    main()
