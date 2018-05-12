@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2018 Davinder Pal <dpsangwal@gmail.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -20,7 +21,8 @@ version_added: "0.1"
 author: "Davinder Pal (@116davinder)"
 short_description: Notify newrelic about app deployments using newrelic v2 api
 description:
-   - Notify newrelic about app deployments (see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/record-deployments)
+   - Notify newrelic about app deployments
+        (https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/record-deployments)
 options:
   token:
     description:
@@ -28,11 +30,13 @@ options:
     required: true
   app_name:
     description:
-      - (one of app_name or application_id are required) The value of app_name in the newrelic.yml file used by the application
+      - (one of app_name or application_id are required)
+        The value of app_name in the newrelic.yml file used by the application
     required: false
   application_id:
     description:
-      - (one of app_name or application_id are required) The application id, found in the URL when viewing the application in RPM
+      - (one of app_name or application_id are required)
+        (see https://rpm.newrelic.com/api/explore/applications/list)
     required: false
   changelog:
     description:
@@ -52,8 +56,8 @@ options:
     required: false
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
+      - If C(no), SSL certificates will not be validated.
+        This should only be used for personal self-signed certificates.
     required: false
     default: 'yes'
     type: bool
@@ -79,6 +83,7 @@ import json
 # Module execution.
 #
 
+
 def main():
 
     module = AnsibleModule(
@@ -98,44 +103,51 @@ def main():
     # testing params
     params = {}
     if module.params["app_name"] and module.params["application_id"]:
-        module.fail_json(msg="only one of 'app_name' or 'application_id' can be set")
+        module.fail_json(msg="only one of 'app_name' or\
+        'application_id' can be set")
     if module.params["app_name"]:
         params["app_name"] = module.params["app_name"]
     elif module.params["application_id"]:
         params["application_id"] = module.params["application_id"]
     else:
-        module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
+        module.fail_json(msg="you must set one of 'app_name' or\
+        'application_id'")
 
     if module.params["app_name"]:
-        data="filter[name]=" + str(module.params["app_name"])
+        data = "filter[name]=" + str(module.params["app_name"])
         resp, info = fetch_url(module,
-                             "https://api.newrelic.com/v2/applications.json",
-                             headers={'x-api-key': module.params["token"],
-                             'Content-type': 'application/x-www-form-urlencoded'},
-                             data=data,
-                             method="GET")
+                               "https://api.newrelic.com/v2/applications.json",
+                                headers={
+                                'x-api-key': module.params["token"],
+                                'Content-type':
+                                'application/x-www-form-urlencoded'},
+                                data=data,
+                                method="GET")
         if info['status'] != 200:
-            module.fail_json(msg="unable to get application list from newrelic: %s" % info['msg'])
+            module.fail_json(msg="unable to get application list from\
+            newrelic: %s" % info['msg'])
         else:
             body = json.loads(resp.read())
-        if body == None:
+        if body:
             module.fail_json(msg="No Data for applications")
         else:
             app_id = body["applications"][0]["id"]
-            if app_id == None:
-                module.fail_json(msg="App not found in NewRelic Registerd Applications List")
+            if app_id:
+                module.fail_json(msg="App not found in\
+                NewRelic Registerd Applications List")
     else:
         app_id = module.params["application_id"]
 
     # Send the data to NewRelic
-    url = "https://api.newrelic.com/v2/applications/" + str(app_id) + "/deployments.json"
-    data={"deployment": {
+    url = "https://api.newrelic.com/v2/applications/"\
+        + str(app_id) + "/deployments.json"
+    data = {"deployment": {
                         "revision": str(module.params["revision"]),
                         "changelog": str(module.params["changelog"]),
                         "description": str(module.params["description"]),
                         "user": str(module.params["user"])
                         }
-         }
+            }
     headers = {
         'x-api-key': module.params["token"],
         'Content-Type': 'application/json',
