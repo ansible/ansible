@@ -74,7 +74,9 @@ options:
     version_added: "2.1"
 notes:
   - Not tested on any Debian based system.
-  - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3
+  - Requires the python2 bindings of firewalld, which may not be installed by default.
+  - For distributions where the python2 firewalld bindings are unavailable (e.g Fedora 28 and later) you will have to set the
+    ansible_python_interpreter for these hosts to the python3 interpreter path and install the python3 bindings.
   - Zone transactions (creating, deleting) can be performed by using only the zone and state parameters "present" or "absent".
     Note that zone transactions must explicitly be permanent. This is a limitation in firewalld.
     This also means that you will have to reload firewalld after adding a zone that you wish to perform immediate actions on.
