@@ -382,9 +382,7 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-.. code-block:: yaml
-
-  {{ output | parse_cli('path/to/spec') }}
+    {{ output | parse_cli('path/to/spec') }}
 
 
 The ``parse_cli`` filter will load the spec file and pass the command output
@@ -470,7 +468,7 @@ The network filters also support parsing the output of a CLI command using the
 TextFSM library.  To parse the CLI output with TextFSM use the following
 filter::
 
-  {{ output | parse_cli_textfsm('path/to/fsm') }}
+  {{ output.stdout[0] | parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 

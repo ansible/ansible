@@ -18,7 +18,7 @@ module: bigip_gtm_facts
 short_description: Collect facts from F5 BIG-IP GTM devices
 description:
   - Collect facts from F5 BIG-IP GTM devices.
-version_added: "2.3"
+version_added: 2.3
 options:
   include:
     description:
@@ -169,51 +169,34 @@ server:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-
-HAS_DEVEL_IMPORTS = False
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from distutils.version import LooseVersion
 
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.module_utils.six import iteritems
-from distutils.version import LooseVersion
-
-try:
-    from f5.utils.responses.handlers import Stats
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
 
 
 class BaseManager(object):
@@ -600,6 +583,14 @@ class ServerParameters(BaseParameters):
     ]
 
     @property
+    def product(self):
+        if self._values['product'] is None:
+            return None
+        if self._values['product'] in ['single-bigip', 'redundant-bigip']:
+            return 'bigip'
+        return self._values['product']
+
+    @property
     def devices(self):
         result = []
         if self._values['devices'] is None or 'items' not in self._values['devices']:
@@ -920,7 +911,15 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = False
         argument_spec = dict(
-            include=dict(type='list', required=True),
+            include=dict(
+                type='list',
+                choices=[
+                    'pool',
+                    'wide_ip',
+                    'server',
+                ],
+                required=True
+            ),
             filter=dict()
         )
         self.argument_spec = {}

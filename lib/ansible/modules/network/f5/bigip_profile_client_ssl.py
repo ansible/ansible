@@ -29,7 +29,7 @@ options:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(clientssl)
         parent on the C(Common) partition.
-    default: "/Common/clientssl"
+    default: /Common/clientssl
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
@@ -480,7 +480,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         argument_spec = dict(
             name=dict(required=True),
-            parent=dict(),
+            parent=dict(default='/Common/clientssl'),
             ciphers=dict(),
             cert_key_chain=dict(
                 type='list',

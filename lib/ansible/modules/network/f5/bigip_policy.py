@@ -47,6 +47,7 @@ options:
       - present
       - absent
       - draft
+    default: present
   strategy:
     description:
       - Specifies the method to determine which actions get executed in the

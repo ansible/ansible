@@ -48,7 +48,7 @@ options:
     description:
     - The encap type of C(pool).
     required: yes
-    choices: [ vlan, vsan, vxsan ]
+    choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

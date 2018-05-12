@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import atexit
 import os
 import ssl
@@ -1020,7 +1023,7 @@ class PyVmomi(object):
         if not self.is_vcenter():
             hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
             if hosts:
-                host_obj_list.append(hosts[0])
+                host_obj_list.append(list(hosts)[0])
         else:
             if cluster_name:
                 cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
