@@ -172,8 +172,8 @@ class OpenNebulaModule:
         Returns: true if we are currently running fixtures in write mode.
 
         """
-        return  (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-                (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
+        return (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
+               (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
 
     def get_host_by_name(self, name):
         '''
