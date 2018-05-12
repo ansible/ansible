@@ -105,6 +105,10 @@ def find_objs(content, vimtypes, container=None, name=None):
     items = []
     cv = content.viewManager.CreateContainerView(container or content.rootFolder,
                                                  vimtypes, recursive=True)
+    # make sure name does not contain a path
+    if name:
+        name = name.split('/')[-1]
+
     for item in cv.view:
         if not name or item.name == name:
             items.append(item)
