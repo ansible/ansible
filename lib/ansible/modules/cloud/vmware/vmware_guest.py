@@ -2153,8 +2153,7 @@ def main():
                 )
                 module.exit_json(**result)
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest',
-                                        'rebootguest']:
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             if module.check_mode:
                 result.update(
                     vm_name=vm.name,
@@ -2164,8 +2163,7 @@ def main():
                 )
                 module.exit_json(**result)
             # set powerstate
-            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'],
-                                            module.params['state_change_timeout'])
+            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:
