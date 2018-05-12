@@ -1,0 +1,82 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+# ============================================================
+# Module requirement testing
+# ============================================================
+- name: test with no parameters
+  aws_shield:
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with no parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments: name, state, resource")'
+
+- name: test with missing parameters
+  aws_shield:
+    name: 'shield_test'
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with missing parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments: state, resource")'
+
+- name: test with missing parameters
+  aws_shield:
+    name: 'shield_test'
+    state: present
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with missing parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments: resource")'
+
+# ============================================================
+# Creation/Deletion testing
+# ============================================================
+- name: add AWS Shield protection to an ELB
+  aws_shield:
+    <<: *aws_connection_info
+    name: 'shield_test'
+    state: present
+    resource: 'arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/my-load-balancer'
+  check_mode: true
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+      - result.protection_id is not none
+
+- name: remove AWS Shield protection from an ELB
+  aws_shield:
+    <<: *aws_connection_info
+    name: 'shield_test'
+    state: absent
+    resource: 'arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/my-load-balancer'
+  check_mode: true
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
