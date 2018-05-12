@@ -56,6 +56,7 @@ options:
     required: false
     default: yes
     type: bool
+    version_added: 2.8
 
 notes:
   - Infinibox Admin level access is required for pool modifications

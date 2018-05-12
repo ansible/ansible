@@ -41,6 +41,7 @@ options:
       - Whether the volume should be thin provisioned
     type: bool
     required: false
+    version_added: 2.8
   pool:
     description:
       - Pool that volume will reside on
