@@ -68,6 +68,18 @@
     that:
       - "{{ result['output'] is defined}}"
 
+- name: get configuration data in xml with namespace stripped
+  netconf_get:
+    source: running
+    display: xml
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output'] is defined}}"
+      - "{{ 'xmlns' not in result.output }}"
+
 - name: Failure scenario, unsupported filter
   netconf_get:
     filter: configuration/state

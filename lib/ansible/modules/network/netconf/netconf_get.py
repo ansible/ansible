@@ -45,11 +45,12 @@ options:
         else it will result in an error.
   display:
     description:
-      - Encoding scheme to use when serializing output from the device. Currently supported option
-        value is I(json) and I(pretty).  The option I(pretty) is similar to I(xml) but is using human
-        readable format (spaces, new lines). The option I(json) will serialize the output as JSON data.
-        If the option value is I(json) it requires jxmlease to be installed on control node.
-    choices: ['json', 'pretty']
+      - Encoding scheme to use when serializing output from the device. The option I(json) will
+        serialize the output as JSON data. If the option value is I(json) it requires jxmlease
+        to be installed on control node. The option I(pretty) is similar to received XML response
+        but is using human readable format (spaces, new lines). The option value I(xml) is similar
+        to received XML response but removes all XML namespaces.
+    choices: ['json', 'pretty', 'xml']
   lock:
     description:
       - Instructs the module to explicitly lock the datastore specified as C(source). If no
@@ -97,9 +98,9 @@ EXAMPLES = """
     format: json
     filter: /netconf-state/schemas/schema
 
-  - name: get interface confiugration with filter (iosxr)
-    netconf_get:
-      filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+- name: get interface confiugration with filter (iosxr)
+  netconf_get:
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
 """
 
 RETURN = """
@@ -115,11 +116,13 @@ stdout_lines:
   type: list
   sample: ['...', '...']
 output:
-  description: The set of transformed XML to JSON format from the RPC responses
-               or pretty XML based on the value of C(display) option.
+  description: Based on the value of display option will return either the set of
+               transformed XML to JSON format from the RPC response with type dict
+               or pretty XML string response (human-readable) or response with
+               namespace removed from XML string.
   returned: when the display format is selected as JSON os pretty apart from low-level
             errors (such as action plugin)
-  type: dict
+  type: dict or string
   sample: {'...'}
 xml:
   description: The transformed XML string after removing namespace.
@@ -166,7 +169,7 @@ def main():
     argument_spec = dict(
         source=dict(choices=['running', 'candidate', 'startup']),
         filter=dict(),
-        display=dict(choices=['json', 'pretty']),
+        display=dict(choices=['json', 'pretty', 'xml']),
         lock=dict(default=False, type=bool)
     )
 
@@ -211,24 +214,25 @@ def main():
         response = conn.get(filter=filter_spec)
 
     xml_resp = tostring(response)
-    transformed_resp = remove_namespaces(xml_resp)
     output = None
-    if display == 'json':
+
+    if display == 'xml':
+        output = remove_namespaces(xml_resp)
+    elif display == 'json':
         if not HAS_JXMLEASE:
             module.fail_json(msg='jxmlease is required to display response in json format'
                                  'but does not appear to be installed. '
                                  'It can be installed using `pip install jxmlease`')
 
         try:
-            output = jxmlease.parse(transformed_resp)
+            output = jxmlease.parse(xml_resp)
         except:
-            raise ValueError(transformed_resp)
+            raise ValueError(xml_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)
 
     result = {
         'stdout': xml_resp,
-        'xml': transformed_resp,
         'output': output
     }
 
