@@ -3,6 +3,11 @@
 # Copyright 2018 www.privaz.io Valletech AB
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -92,8 +97,6 @@ RETURN = '''
 
 from ansible.module_utils.opennebula import OpenNebulaModule
 
-# Host State Constants, for request change and reported
-
 try:
     from pyone import HOST_STATES, HOST_STATUS
 except ImportError:
@@ -117,13 +120,13 @@ class HostModule(OpenNebulaModule):
             cluster_id=dict(type='int', default=0),
             cluster_name=dict(type='str'),
             template=dict(type='dict'),
-            )
+        )
 
         mutually_exclusive = [
             ['cluster_id', 'cluster_name']
         ]
 
-        OpenNebulaModule.__init__(self,argument_spec, mutually_exclusive=mutually_exclusive)
+        OpenNebulaModule.__init__(self, argument_spec, mutually_exclusive=mutually_exclusive)
 
     def allocate_host(self):
         """
@@ -254,4 +257,3 @@ class HostModule(OpenNebulaModule):
 
 if __name__ == '__main__':
     HostModule().run_module()
-

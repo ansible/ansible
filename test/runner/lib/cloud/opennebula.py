@@ -14,6 +14,7 @@ from lib.util import (
     is_shippable,
 )
 
+
 class OpenNebulaCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
 
@@ -43,6 +44,9 @@ class OpenNebulaCloudProvider(CloudProvider):
 
 
 class OpenNebulaCloudEnvironment(CloudEnvironment):
+    """
+    Updates integration test environment after delegation. Will setup the config file as parameter.
+    """
 
     def configure_environment(self, env, cmd):
         """

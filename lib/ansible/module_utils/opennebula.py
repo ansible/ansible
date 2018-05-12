@@ -1,13 +1,12 @@
-#!/usr/bin/python
 #
 # Copyright 2018 www.privaz.io Valletech AB
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 import time
+import ssl
 from os import environ
-from ssl import _create_unverified_context
-from six import string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -38,7 +37,7 @@ class OpenNebulaModule:
         wait_timeout=dict(type='int', default=300),
     )
 
-    def __init__(self, argument_spec, supports_check_mode=False, mutually_exclusive=[]):
+    def __init__(self, argument_spec, supports_check_mode=False, mutually_exclusive=None):
 
         module_args = OpenNebulaModule.common_args
         module_args.update(argument_spec)
@@ -61,27 +60,35 @@ class OpenNebulaModule:
         Returns: the new xmlrpc client.
 
         """
-        endpoint = self.module.params.get("endpoint", environ.get("PYONE_ENDPOINT", False))
-        session = self.module.params.get("session", environ.get("PYONE_SESSION", False))
 
         test_fixture = (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"])
         test_fixture_file = environ.get("PYONE_TEST_FIXTURE_FILE", "undefined")
         test_fixture_replay = (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
         test_fixture_unit = environ.get("PYONE_TEST_FIXTURE_UNIT", "init")
 
+        # context required for not validating SSL, old python versions won't validate anyway.
+        if hasattr(ssl, '_create_unverified_context'):
+            no_ssl_validation_context=ssl._create_unverified_context()
+        else:
+            no_ssl_validation_context=None
+
         # Check if the module can run
         if not HAS_PYONE:
             self.fail("pyone is required for this module")
 
-        if not endpoint:
+        if 'endpoint' in self.module.params:
+            endpoint = self.module.params.get("endpoint", environ.get("PYONE_ENDPOINT", False))
+        else:
             self.fail("Either endpoint or the environment variable PYONE_ENDPOINT must be provided")
 
-        if not session:
+        if 'session' in self.module.params:
+            session = self.module.params.get("session", environ.get("PYONE_SESSION", False))
+        else:
             self.fail("Either session or the environment vairable PYONE_SESSION must be provided")
 
         if not test_fixture:
             if not self.module.params.get("validate_certs") and not "PYTHONHTTPSVERIFY" in environ:
-                return pyone.OneServer(endpoint, session=session, context=_create_unverified_context())
+                return pyone.OneServer(endpoint, session=session, context=no_ssl_validation_context)
             else:
                 return pyone.OneServer(endpoint, session)
         else:
@@ -90,7 +97,7 @@ class OpenNebulaModule:
                                       fixture_file=test_fixture_file,
                                       fixture_replay=test_fixture_replay,
                                       session=session,
-                                      context=_create_unverified_context())
+                                      context=no_ssl_validation_context)
             else:
                 one = OneServerTester(endpoint,
                                       fixture_file=test_fixture_file,
@@ -149,12 +156,6 @@ class OpenNebulaModule:
         """
         Utility method for accessing parameters that includes resolved ID
         parameters from provided Name parameters.
-
-        Args:
-            name:
-
-        Returns:
-
         """
         return self.resolved_parameters.get(name)
 
@@ -164,7 +165,7 @@ class OpenNebulaModule:
 
         """
         return  (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-                (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1","yes","true"])
+                (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
 
     def get_host_by_name(self, name):
         '''
@@ -262,7 +263,7 @@ class OpenNebulaModule:
         return not (desired == intersection)
 
     def wait_for_state(self, element_name, state, state_name, target_states,
-                       invalid_states=[], transition_states=None,
+                       invalid_states=None, transition_states=None,
                        wait_timeout=None):
         """
         Args:
