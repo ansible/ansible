@@ -180,7 +180,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                 except:
                     self.log('Could not extract subnet name')
-                    pass
+
                 try:
                     backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
@@ -188,13 +188,12 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
                 except:
                     self.log('Could not extract load balancer / virtual network name')
-                    pass
+
                 try:
                     ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
                 except:
                     self.log('Could not extract SSH password enabled')
-                    pass
 
                 data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])
 
