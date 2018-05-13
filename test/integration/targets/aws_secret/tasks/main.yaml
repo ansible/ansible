@@ -1,0 +1,113 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+# ============================================================
+# Module parameter testing
+# ============================================================
+- name: test with no parameters
+  aws_secret:
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with no parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments:")'
+
+- name: test with missing parameters
+  aws_secret:
+    name: 'test_secret_string'
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with missing parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments:")'
+
+- name: test with missing parameters
+  aws_secret:
+    name: 'test_secret_string'
+    state: present
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with missing parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments:")'
+
+- name: test with missing parameters
+  aws_secret:
+    name: 'test_secret_string'
+    state: present
+    secret_type: 'string'
+  register: result
+  ignore_errors: true
+  check_mode: true
+
+- name: assert failure when called with missing parameters
+  assert:
+    that:
+       - result.failed
+       - 'result.msg.startswith("missing required arguments:")'
+
+# ============================================================
+# Creation/Deletion testing
+# ============================================================
+- name: add secret to AWS Secrets Manager
+  aws_secret:
+    <<: *aws_connection_info
+    name: "{{ resource_prefix }}-test-secret-string"
+    state: present
+    secret_type: 'string'
+    secret: "{{ super_secret_string }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+      - result.secret_arn is not none
+      - result.version_id is not none
+
+- name: no changes to secret
+  aws_secret:
+    <<: *aws_connection_info
+    name: "{{ resource_prefix }}-test-secret-string"
+    state: present
+    secret_type: 'string'
+    secret: "{{ super_secret_string }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - not result.changed
+      - result.secret_arn is not none
+
+- name: remove secret to AWS Secrets Manager
+  aws_secret:
+    <<: *aws_connection_info
+    name: "{{ resource_prefix }}-test-secret-string"
+    state: absent
+    secret_type: 'string'
+    secret: "{{ super_secret_string }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
