@@ -99,16 +99,14 @@ def main():
     params = {}
     if module.params['app_name'] and module.params['application_id']:
         module.fail_json(msg="only one of 'app_name' or\
-        'application_id' can be set"
-                         )
+        'application_id' can be set")
     if module.params['app_name']:
         params['app_name'] = module.params['app_name']
     elif module.params['application_id']:
         params['application_id'] = module.params['application_id']
     else:
         module.fail_json(msg="you must set one of 'app_name' or\
-        'application_id'"
-                         )
+        'application_id'")
 
     if module.params['app_name']:
         data = 'filter[name]=' + str(module.params['app_name'])
