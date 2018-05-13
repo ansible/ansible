@@ -215,9 +215,9 @@ def update_secret(client, module, params, result):
 
     if module.params.get('rotation_lambda') and 'RotationLambdaARN' in secret_details:
         changes_detected = []
-        if secret_details['RotationLambdaARN'] != module.params.get('rotation_lambda'):
+        if secret_details.get('RotationLambdaARN') != module.params.get('rotation_lambda'):
             changes_detected.append(True)
-        if secret_details['RotationRules']['AutomaticallyAfterDays'] != module.params.get('rotation_interval'):
+        if secret_details.get('RotationRules').get('AutomaticallyAfterDays') != module.params.get('rotation_interval'):
             changes_detected.append(True)
 
         if any(changes_detected):
