@@ -53,6 +53,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_scaleset_facts:
         resource_group: Testing
         name: testvmss001
+        format: curated
 
     - name: Get facts for all virtual networks
       azure_rm_virtualmachine_scaleset_facts:
@@ -71,77 +72,36 @@ azure_vmss:
     returned: always
     type: list
     example: [{
-        "location": "eastus",
-        "properties": {
-            "overprovision": true,
-            "singlePlacementGroup": true,
-            "upgradePolicy": {
-                "mode": "Manual"
-            },
-            "virtualMachineProfile": {
-                "networkProfile": {
-                    "networkInterfaceConfigurations": [
-                        {
-                            "name": "testvmss",
-                            "properties": {
-                                "dnsSettings": {
-                                    "dnsServers": []
-                                },
-                                "enableAcceleratedNetworking": false,
-                                "ipConfigurations": [
-                                    {
-                                        "name": "default",
-                                        "properties": {
-                                            "privateIPAddressVersion": "IPv4",
-                                            "subnet": {
-                                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet"
-                                            }
-                                        }
-                                    }
-                                ],
-                                "primary": true
-                            }
-                        }
-                    ]
-                },
-                "osProfile": {
-                    "adminUsername": "testuser",
-                    "computerNamePrefix": "testvmss",
-                    "linuxConfiguration": {
-                        "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "keyData": "",
-                                    "path": "/home/testuser/.ssh/authorized_keys"
-                                }
-                            ]
-                        }
-                    },
-                    "secrets": []
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "offer": "CoreOS",
-                        "publisher": "CoreOS",
-                        "sku": "Stable",
-                        "version": "899.17.0"
-                    },
-                    "osDisk": {
-                        "caching": "ReadWrite",
-                        "createOption": "fromImage",
-                        "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
-                        }
-                    }
-                }
+        "admin_username": "testuser",
+        "capacity": 2,
+        "data_disks": [
+            {
+                "caching": "ReadWrite",
+                "disk_size_gb": 64,
+                "lun": 0,
+                "managed_disk_type": "Standard_LRS"
             }
+        ],
+        "image": {
+            "offer": "CoreOS",
+            "publisher": "CoreOS",
+            "sku": "Stable",
+            "version": "899.17.0"
         },
-        "sku": {
-            "capacity": 1,
-            "name": "Standard_DS1_v2",
-            "tier": "Standard"
-        }
+        "load_balancer": null,
+        "location": "eastus",
+        "managed_disk_type": "Standard_LRS",
+        "name": "testVMSSeb4fd3c704",
+        "os_disk_caching": "ReadWrite",
+        "os_type": "Linux",
+        "resource_group": "myresourcegroup",
+        "ssh_password_enabled": false,
+        "state": "present",
+        "subnet_name": null,
+        "tier": "Standard",
+        "upgrade_policy": "Manual",
+        "virtual_network_name": null,
+        "vm_size": "Standard_DS1_v2"
     }]
 '''  # NOQA
 
@@ -171,7 +131,8 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
             format=dict(
                 type='str',
                 choices=['curated',
-                         'raw']
+                         'raw'],
+                default='raw'
             )
         )
 
@@ -216,20 +177,23 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                 try:
                     subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
                                  ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
+                    subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                 except:
+                    self.log('Could not extract subnet name')
                     pass
                 try:
                     backend_address_pool_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
-                    subnet_name = re.sub('.*subnets\\/', '', subnet_id)
                     load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
                 except:
+                    self.log('Could not extract load balancer / virtual network name')
                     pass
                 try:
                     ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
                 except:
+                    self.log('Could not extract SSH password enabled')
                     pass
 
                 data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])
