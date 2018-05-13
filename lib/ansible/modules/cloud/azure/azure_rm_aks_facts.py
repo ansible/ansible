@@ -36,7 +36,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"

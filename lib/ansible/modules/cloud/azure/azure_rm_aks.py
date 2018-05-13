@@ -491,7 +491,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     self.results = self.create_update_aks()
                     self.log("Creation / Update done")
 
-                self.results['changed'] = True                
+                self.results['changed'] = True
                 return self.results
 
         elif self.state == 'absent' and response:
