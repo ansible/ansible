@@ -144,8 +144,8 @@ def main():
         'revision': str(module.params['revision']),
         'changelog': str(module.params['changelog']),
         'description': str(module.params['description']),
-        'user': str(module.params['user']),
-        }}
+        'user': str(module.params['user']), }
+        }
 
     headers = {'x-api-key': module.params['token'],
                'Content-Type': 'application/json'}
