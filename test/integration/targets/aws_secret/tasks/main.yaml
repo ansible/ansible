@@ -98,6 +98,23 @@
       - not result.changed
       - result.secret_arn is not none
 
+- name: make change to secret
+  aws_secret:
+    <<: *aws_connection_info
+    name: "{{ resource_prefix }}-test-secret-string"
+    description: 'this is a change to this secret'
+    state: present
+    secret_type: 'string'
+    secret: "{{ super_secret_string }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+      - result.secret_arn is not none
+      - result.version_id is not none
+
 - name: remove secret to AWS Secrets Manager
   aws_secret:
     <<: *aws_connection_info
