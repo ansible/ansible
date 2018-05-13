@@ -195,6 +195,28 @@ def update_secret(client, module, params, result):
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to update secret")
 
+    rotation_updater(client, module, result, secret_details)
+    tag_updater(client, module, result, secret_details)
+
+    return result
+
+
+def delete_secret(client, module, result):
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    try:
+        response = client.delete_secret(
+            SecretId=result['secret_arn']
+        )
+        result['changed'] = True
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to delete secret")
+
+    return result
+
+
+def rotation_updater(client, module, result, secret_details):
     if module.params.get('rotation_lambda') and 'RotationLambdaARN' not in secret_details:
         rs_params = {}
         rs_params['SecretId'] = result['secret_arn']
@@ -247,22 +269,56 @@ def update_secret(client, module, params, result):
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to remove rotation policy from secret")
 
-    return result
 
+def tag_updater(client, module, result, secret_details):
+    if module.params.get('tags') and 'Tags' not in secret_details:
+        tag_params = {}
+        tag_params['SecretId'] = result['secret_arn']
+        tag_params['Tags'] = module.params.get('tags')
 
-def delete_secret(client, module, result):
-    if module.check_mode:
-        module.exit_json(changed=True)
+        try:
+            rs_response = client.tag_resource(**tag_params)
+            result['changed'] = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to add tag(s) to secret")
 
-    try:
-        response = client.delete_secret(
-            SecretId=result['secret_arn']
-        )
-        result['changed'] = True
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg="Failed to delete secret")
+    if module.params.get('tags') and 'Tags' in secret_details:
+        changes_detected = []
+        if secret_details.get('Tags') != module.params.get('tags'):
+            changes_detected.append(True)
 
-    return result
+        if any(changes_detected):
+            tag_params = {}
+            tag_params['SecretId'] = result['secret_arn']
+
+            tags_to_add = list(set(module.params.get('tags').items()).difference(set(secret_details.get('Tags').items())))
+            tags_to_remove = list(set(secret_details.get('Tags').items()).difference(set(module.params.get('tags').items())))
+
+            if len(tags_to_add) > 0:
+                tag_params['Tags'] = dict(tags_to_add)
+                try:
+                    tag_response = client.tag_resource(**tag_params)
+                    result['changed'] = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Failed to add tag(s) to secret")
+
+            if len(tags_to_remove) > 0:
+                tag_params['Tags'] = dict(tags_to_remove)
+                try:
+                    tag_response = client.untag_resource(**tag_params)
+                    result['changed'] = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Failed to remove tag(s) from secret")
+
+    if not module.params.get('tags') and 'Tags' in secret_details:
+        try:
+            tag_response = client.untag_resource(
+                SecretId=result['secret_arn'],
+                TagKeys=list(secret_details['Tags'].keys())
+            )
+            result['changed'] = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to remove tag(s) from secret")
 
 
 def main():
