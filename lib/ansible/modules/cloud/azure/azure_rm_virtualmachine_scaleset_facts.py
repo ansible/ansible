@@ -218,13 +218,11 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     'tier': vmss['sku']['tier'],
                     'upgrade_policy': vmss['properties']['upgradePolicy']['mode'],
                     'admin_username': vmss['properties']['virtualMachineProfile']['osProfile']['adminUsername'],
-                    # updated['admin_password']
+                    'admin_password': vmss['properties']['virtualMachineProfile']['osProfile'].get('adminPassword'),
                     'ssh_password_enabled': ssh_password_enabled,
-                    # updated['ssh_public_keys']
-                    # image could be a dict, string,
                     'image': vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference'],
                     'os_disk_caching': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'],
-                    'os_type': 'Linux',  # vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']
+                    'os_type': 'Linux' if (vmss['properties']['virtualMachineProfile']['osProfile'].get('linuxConfiguration') is not None) else 'Windows',
                     'managed_disk_type': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['managedDisk']['storageAccountType'],
                     'data_disks': data_disks,
                     'virtual_network_name': virtual_network_name,
