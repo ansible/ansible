@@ -1355,10 +1355,16 @@ class AnsibleModule(object):
 
         existing = self.get_file_attributes(b_path)
 
-        if existing.get('attr_flags', '') != attributes:
+        if attributes.startswith(('-', '+')):
+            attr_mod = attributes[0]
+            attributes = attributes[1:]
+        else:
+            attr_mod = '='
+
+        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
-                attrcmd = [attrcmd, '=%s' % attributes, b_path]
+                attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
                 changed = True
 
                 if diff is not None:
