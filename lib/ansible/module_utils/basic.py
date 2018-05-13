@@ -2,6 +2,8 @@
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import absolute_import, division, print_function
+
 SIZE_RANGES = {
     'Y': 1 << 80,
     'Z': 1 << 70,
@@ -621,7 +623,7 @@ def bytes_to_human(size, isbits=False, unit=None):
     else:
         suffix = base
 
-    return '%.2f %s' % (float(size) / limit, suffix)
+    return '%.2f %s' % (size / limit, suffix)
 
 
 def human_to_bytes(number, default_unit=None, isbits=False):
