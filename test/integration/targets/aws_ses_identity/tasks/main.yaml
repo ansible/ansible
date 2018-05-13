@@ -328,3 +328,71 @@
         identity: "{{ domain_identity }}"
         state: absent
         <<: *aws_connection_info
+# ============================================================
+- name: test disable feedback forwarding fails if no complaint topic
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-bounce"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        bounce_notifications:
+          topic: "{{ topic_info.sns_arn }}"
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      failed_when: result.failed == False
+    - name: assert error message starts with "Invalid Parameter Value"
+      assert:
+        that:
+          - '"Invalid Parameter Value" in result.msg'
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-bounce"
+        state: absent
+        <<: *aws_connection_info
+    - name: cleanup identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+# ============================================================
+- name: test disable feedback forwarding fails if no bounce topic
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-complaint"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        complaint_notifications:
+          topic: "{{ topic_info.sns_arn }}"
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      failed_when: result.failed == False
+    - name: assert error message starts with "Invalid Parameter Value"
+      assert:
+        that:
+          - '"Invalid Parameter Value" in result.msg'
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-complaint"
+        state: absent
+        <<: *aws_connection_info
+    - name: cleanup identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
