@@ -83,17 +83,19 @@ import json
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
-        token=dict(required=True, no_log=True),
-        app_name=dict(required=False),
-        application_id=dict(required=False),
-        changelog=dict(required=False),
-        description=dict(required=False),
-        revision=dict(required=True),
-        user=dict(required=False),
-        validate_certs=dict(default='True', type='bool'),
-        ), required_one_of=[['app_name', 'application_id']])
-
+    module = AnsibleModule(
+        argument_spec=dict(
+            token=dict(required=True, no_log=True),
+            app_name=dict(required=False),
+            application_id=dict(required=False),
+            changelog=dict(required=False),
+            description=dict(required=False),
+            revision=dict(required=True),
+            user=dict(required=False),
+            validate_certs=dict(default='True', type='bool'),
+        ),
+        required_one_of=[['app_name', 'application_id']]
+    )
     # testing params
 
     params = {}
