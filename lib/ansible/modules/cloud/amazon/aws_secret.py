@@ -172,19 +172,19 @@ def update_secret(client, module, params, result):
 
     changes_detected = []
     if 'ClientRequestToken' in params:
-        if secret_details['ClientRequestToken'] != params['ClientRequestToken']:
+        if secret_details.get('ClientRequestToken') != params['ClientRequestToken']:
             changes_detected.append(True)
     if 'Description' in params:
-        if secret_details['Description'] != params['Description']:
+        if secret_details.get('Description') != params['Description']:
             changes_detected.append(True)
     if 'KmsKeyId' in params:
-        if secret_details['KmsKeyId'] != params['KmsKeyId']:
+        if secret_details.get('KmsKeyId') != params['KmsKeyId']:
             changes_detected.append(True)
     if 'SecretBinary' in params:
-        if secret_value['SecretBinary'] != params['SecretBinary']:
+        if secret_value.get('SecretBinary') != params['SecretBinary']:
             changes_detected.append(True)
     if 'SecretString' in params:
-        if secret_value['SecretString'] != params['SecretString']:
+        if secret_value.get('SecretString') != params['SecretString']:
             changes_detected.append(True)
 
     if any(changes_detected):
