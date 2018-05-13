@@ -66,17 +66,32 @@
     format: curated
   register: output_scaleset
 
-- name: Modify scaleset (set upgradePolicy to Automatic and capacity to 3)
+- name: Get scaleset body
   set_fact:
-    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] | combine({'capacity': 1}, recursive=True) }}"
+    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] }}"
 
-- name: Update VMSS
-  azure_rm_virtualmachine_scaleset: "{{ body }}"
+- name: Try to update VMSS using output as input
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ body.resource_group }}"
+    name: "{{ body.name }}"
+    vm_size: "{{ body.vm_size }}"
+    admin_username: "{{ body.admin_username }}"
+    ssh_password_enabled: "{{ body.ssh_password_enabled }}"
+    admin_password: "Password1234!"
+    capacity: "{{ body.capacity }}"
+    virtual_network_name: "{{ body.virtual_network_name }}"
+    subnet_name: "{{ body.subnet_name }}"
+    upgrade_policy: "{{ body.upgrade_policy }}"
+    tier: "{{ body.tier }}"
+    managed_disk_type: "{{ body.managed_disk_type }}"
+    os_disk_caching: "{{ body.os_disk_caching }}"
+    image: "{{ body.image }}"
+    data_disks: "{{ body.data_disks }}"
   register: results
 
 - name: Assert that VMSS was updated
   assert:
-    that: results.changed
+    that: not results.changed
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:

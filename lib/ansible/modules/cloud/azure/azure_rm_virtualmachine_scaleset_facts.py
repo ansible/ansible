@@ -26,15 +26,15 @@ options:
     name:
         description:
             - Limit results to a specific virtual machine scale set
-        required: false
-        default: null
     resource_group:
         description:
             - The resource group to search for the desired virtual machine scale set
-        required: false
     format:
         description:
-            - What data should be returned?
+            - Format of the data returned.
+            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
+            - In Ansible 2.5 and lower facts are always returned in raw format.
         default: 'raw'
         choices:
             - 'curated'
@@ -172,7 +172,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                 type='str',
                 choices=['curated',
                          'raw']
-            ),
+            )
         )
 
         self.results = dict(
