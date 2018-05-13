@@ -84,7 +84,7 @@ def subprocess_with_retry(cmd, retry_count=3, retry_wait=1):
         return std_out
     else:
         retry_count -= 1
-        if retry_count < 0:
+        if retry_count <= 0:
             raise Exception(std_err.strip())
         time.sleep(retry_wait)
         return subprocess_with_retry(cmd, retry_count, retry_wait)
