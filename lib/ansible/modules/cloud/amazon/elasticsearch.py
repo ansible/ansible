@@ -335,7 +335,7 @@ def main():
             instance_type={'required': True},
             zone_awareness={'type': 'bool', 'default': True},
             dedicated_master_enabled={
-                'type': 'bool', 'default': False, 'choices': [True, False]
+                'type': 'bool', 'default': False
             },
             dedicated_master_type={},
             dedicated_master_count={'type': 'int'},
