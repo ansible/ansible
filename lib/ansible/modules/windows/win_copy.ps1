@@ -368,7 +368,7 @@ if ($copy_mode -eq "query") {
     }
 
     # the dest parameter is a directory, we need to append original_basename
-    if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
+    if ($dest.EndsWith("/") -or $dest.EndsWith("`\") -or (Test-Path -Path $dest -PathType Container)) {
         $remote_dest = Join-Path -Path $dest -ChildPath $original_basename
         $parent_dir = Split-Path -Path $remote_dest
 
