@@ -62,11 +62,11 @@ options:
     description:
       - The path to the client private key.
 requirements:
-   - MySQLdb
+   - PyMySQL
 notes:
-   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-mysqldb. (See M(apt).) For CentOS/Fedora, this
-     is as easy as yum install MySQL-python. (See M(yum).)
+   - Requires the PyMySQL Python package on the remote host. For Ubuntu, this
+     is as easy as apt-get install python-pymysql. (See M(apt).) For CentOS/Fedora, this
+     is as easy as yum install python2-PyMySQL. (See M(yum).)
    - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL

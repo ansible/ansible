@@ -77,12 +77,12 @@ from ansible.module_utils.mysql import mysql_connect
 from ansible.module_utils._text import to_native
 
 try:
-    import MySQLdb
-    import MySQLdb.cursors
+    import pymysql as mysql_driver
 except ImportError:
-    MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
+    try:
+        import MySQLdb as mysql_driver
+    except ImportError:
+        mysql_driver = None
 
 # ===========================================
 # proxysql module specific support methods.
@@ -96,10 +96,8 @@ def perform_checks(module):
             msg="login_port must be a valid unix port number (0-65535)"
         )
 
-    if not MYSQLDB_FOUND:
-        module.fail_json(
-            msg="the python mysqldb module is required"
-        )
+    if mysql_driver is None:
+        module.fail_json(msg="The PyMySQL or MySQL-python module is required.")
 
 
 def save_config_to_disk(variable, cursor):
@@ -211,8 +209,8 @@ def main():
                                login_user,
                                login_password,
                                config_file,
-                               cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error as e:
+                               cursor_class=mysql_driver.cursors.DictCursor)
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
@@ -231,7 +229,7 @@ def main():
                     msg="The variable \"%s\" was not found" % variable
                 )
 
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to get config.. %s" % to_native(e)
             )
@@ -264,7 +262,7 @@ def main():
                     msg="The variable \"%s\" was not found" % variable
                 )
 
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to set config.. %s" % to_native(e)
             )

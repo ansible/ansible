@@ -30,10 +30,12 @@
 import os
 
 try:
-    import MySQLdb
-    mysqldb_found = True
+    import pymysql as mysql_driver
 except ImportError:
-    mysqldb_found = False
+    try:
+        import MySQLdb as mysql_driver
+    except ImportError:
+        mysql_driver = None
 
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
@@ -69,8 +71,8 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
-    db_connection = MySQLdb.connect(**config)
+    db_connection = mysql_driver.connect(**config)
     if cursor_class is not None:
-        return db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+        return db_connection.cursor(cursorclass=mysql_driver.cursors.DictCursor)
     else:
         return db_connection.cursor()

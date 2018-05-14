@@ -27,7 +27,7 @@ options:
         are to be read.
     default: ''
 requirements:
-   - MySQLdb
+   - PyMySQL
 '''
 
     # Documentation fragment for managing ProxySQL configuration
