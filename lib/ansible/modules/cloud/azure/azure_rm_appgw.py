@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_appgw
-version_added: "2.5"
+version_added: "2.6"
 short_description: Manage Application Gateway instance.
 description:
     - Create, update and delete instance of Application Gateway.
@@ -547,6 +547,15 @@ options:
     resource_guid:
         description:
             - Resource GUID property of the application gateway resource.
+    state:
+        description:
+            - Assert the state of the Public IP. Use 'present' to create or update a and
+              'absent' to delete.
+        default: present
+        choices:
+            - absent
+            - present
+        required: false
 
 extends_documentation_fragment:
     - azure
@@ -635,9 +644,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            id=dict(
-                type='str'
             ),
             location=dict(
                 type='str'
