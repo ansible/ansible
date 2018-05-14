@@ -126,8 +126,8 @@ options:
 
     client_affinity_enabled:
         description:
-            - True to enable client affinity; False to stop sending session affinity cookies, which route client requests in the
-              same session to the same instance.
+            - "True to enable client affinity; False to stop sending session affinity cookies, which route client requests in the
+              same session to the same instance."
         default: True
 
     https_only:
@@ -273,7 +273,7 @@ ok: [localhost] => {
                 "reserved": false,
                 "resource_group": "ansiblewebapp1",
                 "scm_site_also_stopped": false,
-                "server_farm_id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/ansiblewebapp1_plan/providers/Microsoft.Web/serverfarms/win_appplan1",
+                "server_farm_id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
                 "state": "Running",
                 "tags": {},
                 "type": "Microsoft.Web/sites",
@@ -962,13 +962,15 @@ class AzureRMWebApps(AzureRMModuleBase):
             return response
         except CloudError as ex:
             self.log("Failed to get configuration for web app {0} in resource group {1}: {2}".format(
-                self.name, self.resource_group, str(ex))
+                self.name, self.resource_group, str(ex)))
 
             return False
+
 
 def main():
     """Main execution"""
     AzureRMWebApps()
+
 
 if __name__ == '__main__':
     main()
