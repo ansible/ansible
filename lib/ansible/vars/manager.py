@@ -37,13 +37,14 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, text_type
-from ansible.plugins.loader import lookup_loader, vars_loader
+from ansible.plugins.loader import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts
+from ansible.vars.plugin import get_plugin_vars
 
 try:
     from __main__ import display
@@ -212,24 +213,6 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            def _get_plugin_vars(plugin, path, entities):
-                data = {}
-                try:
-                    data = plugin.get_vars(self._loader, path, entities)
-                except AttributeError:
-                    try:
-                        for entity in entities:
-                            if isinstance(entity, Host):
-                                data.update(plugin.get_host_vars(entity.name))
-                            else:
-                                data.update(plugin.get_group_vars(entity.name))
-                    except AttributeError:
-                        if hasattr(plugin, 'run'):
-                            raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                        else:
-                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                return data
-
             # internal fuctions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
@@ -240,18 +223,14 @@ class VariableManager:
                     elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
-                    for plugin in vars_loader.all():
-
-                        data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
+                    data = combine_vars(data, get_plugin_vars(self._loader, inventory_dir, entities))
                 return data
 
             def _plugins_play(entities):
                 ''' merges all entities adjacent to play '''
                 data = {}
-                for plugin in vars_loader.all():
-
-                    for path in basedirs:
-                        data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
+                for path in basedirs:
+                    data = combine_vars(data, get_plugin_vars(self._loader, path, entities))
                 return data
 
             # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list

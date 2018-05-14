@@ -22,11 +22,11 @@ from operator import attrgetter
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.inventory.host import Host
-from ansible.plugins.loader import vars_loader
+from ansible.errors import AnsibleOptionsError
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
+from ansible.vars.plugin import get_plugin_vars
+
 
 try:
     from __main__ import display
@@ -199,33 +199,6 @@ class InventoryCLI(CLI):
 
         return results
 
-    # FIXME: refactor to use same for VM
-    def get_plugin_vars(self, path, entity):
-
-        data = {}
-
-        def _get_plugin_vars(plugin, path, entities):
-            data = {}
-            try:
-                data = plugin.get_vars(self.loader, path, entity)
-            except AttributeError:
-                try:
-                    if isinstance(entity, Host):
-                        data = combine_vars(data, plugin.get_host_vars(entity.name))
-                    else:
-                        data = combine_vars(data, plugin.get_group_vars(entity.name))
-                except AttributeError:
-                    if hasattr(plugin, 'run'):
-                        raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                    else:
-                        raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-            return data
-
-        for plugin in vars_loader.all():
-            data = combine_vars(data, _get_plugin_vars(plugin, path, entity))
-
-        return data
-
     def _get_group_variables(self, group):
 
         # get info from inventory source
@@ -233,7 +206,7 @@ class InventoryCLI(CLI):
 
         # FIXME: add switch to skip vars plugins, add vars plugin info
         for inventory_dir in self.inventory._sources:
-            res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
+            res = combine_vars(res, get_plugin_vars(self.loader, inventory_dir, group))
 
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
@@ -248,7 +221,7 @@ class InventoryCLI(CLI):
             # FIXME: add switch to skip vars plugins
             # add vars plugin info
             for inventory_dir in self.inventory._sources:
-                hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
+                hostvars = combine_vars(hostvars, get_plugin_vars(self.loader, inventory_dir, host))
         else:
             if self._new_api:
                 hostvars = self.vm.get_vars(host=host, include_hostvars=False)
