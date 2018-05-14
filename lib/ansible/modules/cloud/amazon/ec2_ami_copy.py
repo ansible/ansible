@@ -221,21 +221,11 @@ def main():
         tag_equality=dict(type='bool', default=False))
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
-
+    # TODO: Check botocore version
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-<<<<<<< HEAD
-    if not region:
-        module.fail_json(msg='AWS Region is required')
-    try:
     ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
                      **aws_connect_params)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json_aws(e)
-=======
-    ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
-                     **aws_connect_params)
->>>>>>> Remove exception handling from ec2_ami_copy connection
-
+    
     copy_image(module, ec2)
 
 
