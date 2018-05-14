@@ -293,13 +293,21 @@ def main():
     policy_name = module.params.get('policy_name')
     skip = module.params.get('skip_duplicates')
 
-    if module.params.get('policy_document') is not None and module.params.get('policy_json') is not None:
+    policy_document = module.params.get('policy_document')
+    if policy_document is not None and module.params.get('policy_json') is not None:
         module.fail_json(msg='Only one of "policy_document" or "policy_json" may be set')
 
-    if module.params.get('policy_document') is not None:
-        with open(module.params.get('policy_document'), 'r') as json_data:
-            pdoc = json.dumps(json.load(json_data))
-            json_data.close()
+    if policy_document is not None:
+        try:
+            with open(policy_document, 'r') as json_data:
+                pdoc = json.dumps(json.load(json_data))
+                json_data.close()
+        except IOError:
+            if e.errno == 2:
+                module.fail_json(
+                    msg='policy_document {0:!r} does not exist'.format(policy_document))
+            else:
+                raise
     elif module.params.get('policy_json') is not None:
         pdoc = module.params.get('policy_json')
         # if its a string, assume it is already JSON
