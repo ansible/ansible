@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: memset_zone
 author: "Simon Weald (@analbeard)"
 version_added: "2.6"
-short_description: Manage zones.
+short_description: Creates and deletes Memset DNS zones.
 notes:
   - Zones can be thought of as a logical group of domains, all of which share the
     same DNS records (i.e. they point to the same IP). An API key generated via the
@@ -43,7 +43,6 @@ options:
               value has at most 250 characters.
         aliases: [ nickname ]
     ttl:
-        required: false
         description:
             - The default TTL for all records created in the zone. This must be a
               valid int from U(https://www.memset.com/apidocs/methods_dns.html#dns.zone_create).
@@ -111,15 +110,10 @@ memset_api:
       sample: 300
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.memset import check_zone
 from ansible.module_utils.memset import get_zone_id
 from ansible.module_utils.memset import memset_api_call
-
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
 
 
 def api_validation(args=None):
@@ -128,8 +122,8 @@ def api_validation(args=None):
     https://www.memset.com/apidocs/methods_dns.html#dns.zone_record_create)
     '''
     # zone domain length must be less than 250 chars.
-    if len(args['domain']) > 250:
-        stderr = 'Zone domain must be less than 250 characters in length.'
+    if len(args['name']) > 250:
+        stderr = 'Zone name must be less than 250 characters in length.'
         module.fail_json(failed=True, msg=stderr, stderr=stderr)
 
 
@@ -300,9 +294,6 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_REQUESTS:
-        module.fail_json(msg='requests required for this module')
-
     # populate the dict with the user-provided vars.
     args = dict()
     for key, arg in module.params.items():
@@ -322,7 +313,6 @@ def main():
     else:
         module.exit_json(**retvals)
 
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

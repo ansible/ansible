@@ -25,11 +25,22 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import open_url, urllib_error
+from ansible.module_utils.basic import json
+
+
+class Response(object):
+    '''
+    Create a response object to mimic that of requests.
+    '''
+
+    def __init__(self):
+        self.content = None
+        self.status_code = None
+
+    def json(self):
+        return json.loads(self.content)
 
 
 def memset_api_call(api_key, api_method, payload=None):
@@ -39,6 +50,9 @@ def memset_api_call(api_key, api_method, payload=None):
     Requires an API key and an API method to assemble the API URL.
     Returns response text to be analysed.
     '''
+    # instantiate a response object
+    response = Response()
+
     # if we've already started preloading the payload then copy it
     # and use that, otherwise we need to isntantiate it.
     if payload is None:
@@ -49,25 +63,32 @@ def memset_api_call(api_key, api_method, payload=None):
     payload['api_key'] = api_key
     # set some sane defaults
     has_failed = False
-    response, msg = None, None
+    msg = None
+
+    data = urlencode(payload)
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     api_uri_base = 'https://api.memset.com/v1/json/'
     api_uri = '{0}{1}/' . format(api_uri_base, api_method)
 
-    # make the request and capture any error to be returned
-    # in the correct Ansible way.
-    error_codes = [400, 403, 404, 412, 500, 503]
-
     try:
-        response = requests.post(api_uri, data=payload)
-    except Exception as e:
+        resp = open_url(api_uri, data=data, headers=headers, method="POST")
+        response.content = resp.read().decode('utf-8')
+        response.status_code = resp.getcode()
+    except urllib_error.HTTPError as e:
+        try:
+            errorcode = e.code
+        except AttributeError:
+            errorcode = None
+
         has_failed = True
-        msg = e
-    else:
-        if response.status_code in error_codes:
-            has_failed = True
-            msg = "Memset API returned a {0} response ({1}, {2})" . format(response.status_code, response.json()['error_type'], response.json()['error'])
-        elif response.status_code in [201, 200]:
-            pass
+        error_json = json.loads(e.read().decode('utf-8'))
+        response.content = e.read().decode('utf8')
+        response.status_code = e.code
+
+        if response.status_code is not None:
+            msg = "Memset API returned a {0} response ({1}, {2})." . format(response.status_code, error_json['error_type'], error_json['error'])
+        else:
+            msg = "Memset API returned an error ({0}, {1})." . format(error_json['error_type'], error_json['error'])
 
     del payload['api_key']
 
