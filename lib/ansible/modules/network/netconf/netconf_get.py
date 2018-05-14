@@ -120,15 +120,11 @@ output:
                transformed XML to JSON format from the RPC response with type dict
                or pretty XML string response (human-readable) or response with
                namespace removed from XML string.
-  returned: when the display format is selected as JSON os pretty apart from low-level
-            errors (such as action plugin)
-  type: complex
-  sample: {'...'}
-xml:
-  description: The transformed XML string after removing namespace.
-  returned: always apart from low level errors (such as action plugin)
-  type: string
-  sample: '...'
+  returned: when the display format is selected as JSON it is returned as dict type, if the
+            display format is xml or pretty pretty it is retured as a string apart from low-level
+            errors (such as action plugin).
+  type: dict or string
+  sample: {'...'} or '...'
 """
 import sys
 
