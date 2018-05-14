@@ -233,6 +233,7 @@ import os
 import os.path
 import shutil
 import stat
+import errno
 import tempfile
 import traceback
 
@@ -408,9 +409,17 @@ def main():
                 b_mysrc = b_src
                 if remote_src:
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
-                    shutil.copy2(b_src, b_mysrc)
+
+                    shutil.copyfile(b_src, b_mysrc)
+                    try:
+                        shutil.copystat(b_src, b_mysrc)
+                    except OSError as err:
+                        if err.errno == errno.ENOSYS and mode == "preserve":
+                            module.warn("Unable to copy stats {0}".format(to_native(b_src)))
+                        else:
+                            raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
-            except IOError:
+            except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
     else:
