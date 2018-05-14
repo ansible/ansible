@@ -414,12 +414,16 @@ class TestActionBase(unittest.TestCase):
                 to_run.append(arg_path)
             return " ".join(to_run)
 
+        def get_option(option):
+            return {}.get(option)
+
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
         mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
         mock_connection._shell.tmpdir = '/var/tmp/mytempdir'
+        mock_connection._shell.get_option = get_option
 
         # we're using a real play context here
         play_context = PlayContext()
