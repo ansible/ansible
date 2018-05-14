@@ -43,7 +43,7 @@ class ActionModule(_ActionModule):
 
         socket_path = None
 
-        if self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi' \
+        if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
                 and self._task.action == 'nxos_nxapi':
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
 
