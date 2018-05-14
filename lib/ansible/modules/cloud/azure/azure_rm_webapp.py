@@ -110,15 +110,14 @@ options:
     deployment_source:
         description:
             - Deployment source for git
+        suboptions:
+            url:
+                description:
+                    - Repository url of deployment source.
 
-            suboptions:
-                url:
-                    description:
-                        - Repository url of deployment source.
-
-                branch:
-                    description:
-                        - The branch name of the repository.
+            branch:
+                description:
+                    - The branch name of the repository.
     startup_file:
         description:
             - The web's startup file.
@@ -128,32 +127,37 @@ options:
         description:
             - "True to enable client affinity; False to stop sending session affinity cookies, which route client requests in the
               same session to the same instance."
+        type: bool
         default: True
 
     https_only:
         description:
             - Configures web site to accept only https requests.
+        type: bool
 
     skip_dns_registration:
         description:
             - If true web app hostname is not registered with DNS on creation. This parameter is
             - only used for app creation.
+        type: bool
 
     skip_custom_domain_verification:
         description:
             - If true, custom (non *.azurewebsites.net) domains associated with web app are not verified.
+        type: bool
 
     force_dns_registration:
         description:
             - If true, web app hostname is force registered with DNS.
+        type: bool
 
     ttl_in_seconds:
         description:
-            - Time to live in seconds for web app's default domain name.
+            - Time to live in seconds for web app default domain name.
 
     app_settings:
         description:
-            - Configure web app application settings. Suboptions are in format "<yourKey>: <yourValue>"
+            - Configure web app application settings. Suboptions are in key value pair format.
 
     purge_app_settings:
         description:
@@ -199,10 +203,10 @@ EXAMPLES = '''
           sku: S1
           number_of_workers: 2
         app_settings:
-          testkey: "testvalue"
-          testkey2: "testvalue2"
+          testkey: testvalue
+          testkey2: testvalue2
         container_settings:
-          name: "ansible/ansible:ubuntu1404"
+          name: ansible/ansible:ubuntu1404
 
     - name: Create a docker web app with private acr registry
       azure_rm_webapp:
@@ -211,9 +215,9 @@ EXAMPLES = '''
         plan:
           name: myappplan
         app_settings:
-          testkey: "testvalue"
+          testkey: testvalue
         container_settings:
-          name: "ansible:ubuntu1404"
+          name: ansible/ubuntu1404
           registry_server_url: myregistry.io
           registry_server_user: user
           registry_server_password: pass
@@ -226,13 +230,11 @@ EXAMPLES = '''
           resource_group: appserviceplan_test
           name: myappplan
         app_settings:
-          testkey: "testvalue"
-        linux_fx_version: "node|6.6"
-
+          testkey: testvalue
+        linux_fx_version: node|6.6
 '''
 
 RETURN = '''
-ok: [localhost] => {
     "results": {
         "ansible_facts": {
             "azure_webapp": {
@@ -263,7 +265,7 @@ ok: [localhost] => {
                     "ansiblewindowsaaa.azurewebsites.net"
                 ],
                 "host_names_disabled": false,
-                "id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
+                "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
                 "kind": "app",
                 "last_modified_time_utc": "2018-05-14T04:50:54.473333Z",
                 "location": "East US",
@@ -273,7 +275,7 @@ ok: [localhost] => {
                 "reserved": false,
                 "resource_group": "ansiblewebapp1",
                 "scm_site_also_stopped": false,
-                "server_farm_id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
+                "server_farm_id": "/subscriptions/<subscription_id>/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
                 "state": "Running",
                 "tags": {},
                 "type": "Microsoft.Web/sites",
@@ -283,7 +285,6 @@ ok: [localhost] => {
         "changed": true,
         "failed": false,
     }
-}
 '''
 
 import time
