@@ -106,7 +106,7 @@ class LookupModule(LookupBase):
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if row[0] == key:
+                if len(row) and row[0] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
