@@ -81,7 +81,7 @@ def subprocess_with_retry(cmd, retry_count=3, retry_wait=10):
     std_out, std_err = pipes.communicate()
 
     if pipes.returncode == 0:
-        return std_out
+        return to_text(std_out, errors='surrogate_or_strict')
     else:
         retry_count -= 1
         if retry_count <= 0:
@@ -98,7 +98,7 @@ def get_ssh_config():
 # list all the running boxes
 def list_running_boxes():
 
-    output = to_text(subprocess_with_retry(["vagrant", "status"]), errors='surrogate_or_strict').split('\n')
+    output = subprocess_with_retry(["vagrant", "status"]).split('\n')
 
     boxes = []
 
@@ -114,7 +114,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = to_text(subprocess_with_retry(["vagrant", "ssh-config", box_name]), errors='surrogate_or_strict')
+    output = subprocess_with_retry(["vagrant", "ssh-config", box_name])
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
