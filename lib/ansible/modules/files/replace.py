@@ -142,6 +142,22 @@ EXAMPLES = r"""
     dest: /etc/hosts
     regexp: '\b(localhost)(\d*)\b'
     replace: '\1\2.localdomain\2 \1\2'
+    
+# replace using a backreference containing numeric value
+# in this situation the replace backreference must be defined as `/g<number>`
+  vars:
+    parameters:
+      - name: text_value
+        value: some-text
+      - name: int_value
+        value: "3306"
+
+  tasks:
+    - replace:
+        path: /var/tmp/test.txt
+        regexp: '(\s+{{ item.name }}\:\s)(.*)'
+        replace:  '\g<1>{{ item.value }}'
+      with_items: '{{ parameters }}'
 """
 
 import os
