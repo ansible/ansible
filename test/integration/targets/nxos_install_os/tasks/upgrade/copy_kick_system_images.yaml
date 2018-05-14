@@ -1,0 +1,32 @@
+---
+- name: "Setup - Turn on feature scp-server"
+  nxos_feature:
+    feature: scp-server
+    state: enabled
+    provider: "{{ connection }}"
+
+- name: "Copy {{ si }} to bootflash"
+  nxos_file_copy:
+    local_file: "{{image_dir}}{{ si }}"
+    file_system: "bootflash:"
+    provider: "{{ connection }}"
+    host: "{{ inventory_hostname }}"
+  register: result
+
+- debug:
+    msg: "{{ item.key }} {{ item.value }}"
+  with_dict: "{{ result }}"
+
+- name: "Copy {{ ki }} to bootflash"
+  nxos_file_copy:
+    local_file: "{{image_dir}}/{{ ki }}"
+    file_system: "bootflash:"
+    provider: "{{ connection }}"
+    host: "{{ inventory_hostname }}"
+  register: result
+  when: ki is defined
+
+- debug:
+    msg: "{{ item.key }} {{ item.value }}"
+  with_dict: "{{ result }}"
+  when: ki is defined
