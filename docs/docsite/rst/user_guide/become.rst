@@ -342,7 +342,7 @@ module execution.
 To determine the type of token that Ansible was able to get, run the following
 task and check the output::
 
-    - win_shell: cmd.exe /c whoami && whoami /groups && whoami /priv
+    - win_whoami:
       become: yes
 
 Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
@@ -453,7 +453,11 @@ or with this Ansible task:
 
 Become Flags
 ------------
-Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method. This parameter can be set using the ``become_flags`` task directive or set in Ansible's configuration using ``ansible_become_flags``. The two valid values that are initially supported for this parameter are ``logon_type`` and ``logon_flags``.
+Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method.
+This parameter can be set using the ``become_flags`` task directive or set in
+Ansible's configuration using ``ansible_become_flags``. The two valid values
+that are initially supported for this parameter are ``logon_type`` and
+``logon_flags``.
 
 
 .. Note:: These flags should only be set when becoming a normal user account, not a local service account like LocalSystem.
@@ -490,7 +494,7 @@ For more information, see
 `dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
 
 The ``logon_flags`` key specifies how Windows will log the user on when creating
-the new process. The value can be set to one of the following:
+the new process. The value can be set to none or multiple of the following:
 
 * ``with_profile``: The default logon flag set. The process will load the
   user's profile in the ``HKEY_USERS`` registry key to ``HKEY_CURRENT_USER``.
@@ -499,6 +503,10 @@ the new process. The value can be set to one of the following:
   but will use the ``become_user`` and ``become_password`` when accessing a remote
   resource. This is useful in inter-domain scenarios where there is no trust
   relationship, and should be used with the ``new_credentials`` ``logon_type``.
+
+By default ``logon_flags=with_profile`` is set, if the profile should not be
+loaded set ``logon_flags=`` or if the profile should be loaded with
+``netcredentials_only``, set ``logon_flags=with_profile,netcredentials_only``.
 
 For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
 
@@ -519,9 +527,14 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
       ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
 
   - name: run a command under a batch logon
-    win_command: whoami
+    win_whoami:
     become: yes
     become_flags: logon_type=batch
+
+  - name: run a command and not load the user profile
+    win_whomai:
+    become: yes
+    become_flags: logon_flags=
 
 
 Limitations
@@ -535,7 +548,8 @@ Be aware of the following limitations with ``become`` on Windows:
 * By default, the become user logs on with an interactive session, so it must
   have the right to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
-  privilege, the become process will fail.
+  privilege, the become process will fail. Either add the privilege or set the
+  ``logon_type`` flag to change the logon type used.
 
 * Prior to Ansible version 2.3, become only worked when
   ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
