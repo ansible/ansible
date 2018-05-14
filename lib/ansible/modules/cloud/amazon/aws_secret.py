@@ -112,6 +112,10 @@ def secret_exists(client, module, result):
 
     try:
         response = client.list_secrets()
+        while 'NextToken' in response:
+            response = client.list_secrets(
+                NextToken=response['NextToken']
+            )
         for i in response['SecretList']:
             if i['Name'] == module.params.get('name'):
                 result['secret_arn'] = i['ARN']
@@ -314,7 +318,7 @@ def tag_updater(client, module, result, secret_details):
         try:
             tag_response = client.untag_resource(
                 SecretId=result['secret_arn'],
-                TagKeys=list(secret_details['Tags'].keys())
+                TagKeys=list(set().union(*(d.keys() for d in list(secret_details['Tags']))))
             )
             result['changed'] = True
         except (BotoCoreError, ClientError) as e:
