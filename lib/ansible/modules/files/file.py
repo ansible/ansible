@@ -335,6 +335,7 @@ def execute_touch(path, follow):
                                                   'path': path})
 
         elif prev_state == 'link' and follow:
+            # Update the timestamp of the pointed to file
             b_link_target = os.readlink(b_path)
             try:
                 os.utime(b_link_target, None)
@@ -348,7 +349,7 @@ def execute_touch(path, follow):
                                                      ' hardlinks (%s is %s)' % (path, prev_state)})
 
         # Update the attributes on the file
-        diff = initial_diff(path, 'absent', prev_state)
+        diff = initial_diff(path, 'touch', prev_state)
         file_args = module.load_file_common_arguments(module.params)
         try:
             module.set_fs_attributes_if_different(file_args, True, diff, expand=False)
