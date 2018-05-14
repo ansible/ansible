@@ -76,7 +76,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to
 
 # this waits for an IAM role to become fully available, at the cost of
 # taking a long time to fail when the IAM role/policy really is invalid
-retry_unavailable_iam_on_put_delivery = retry_decorator=AWSRetry.backoff(
+retry_unavailable_iam_on_put_delivery = AWSRetry.backoff(
     catch_extra_error_codes=['InsufficientDeliveryPolicyException'],
 )
 
@@ -108,7 +108,7 @@ def create_resource(client, module, params, result):
         module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
     except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
         module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
-            "Make sure the bucket exists and is available")
+                "Make sure the bucket exists and is available")
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
@@ -133,7 +133,7 @@ def update_resource(client, module, params, result):
             module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
         except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
             module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
-                "Make sure the bucket exists and is available")
+                    "Make sure the bucket exists and is available")
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 

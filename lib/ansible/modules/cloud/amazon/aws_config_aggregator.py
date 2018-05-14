@@ -120,7 +120,7 @@ def resource_exists(client, module, resource_type, params):
         return aggregator['ConfigurationAggregators'][0]
     except client.exceptions.from_code('NoSuchConfigurationAggregatorException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e)
 
 
