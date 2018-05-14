@@ -1,3 +1,2 @@
 boto
 boto3
-botocore>=1.9.23
