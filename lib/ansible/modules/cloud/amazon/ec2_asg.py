@@ -529,9 +529,17 @@ def delete_asg(autoscaling_connection, asg_name, force_delete):
 
 
 @AWSRetry.backoff(**backoff_params)
-def terminate_asg_instance(autoscaling_connection, instance_id, decrement_capacity):
-    autoscaling_connection.terminate_instance_in_auto_scaling_group(InstanceId=instance_id,
-                                                        ShouldDecrementDesiredCapacity=decrement_capacity)
+def terminate_asg_instances(
+        autoscaling_connection,
+        ec2_connection,
+        asg_name,
+        instance_ids,
+        decrement_capacity):
+    autoscaling_connection.detach_instances(
+        InstanceIds=instance_ids,
+        AutoScalingGroupName=asg_name,
+        ShouldDecrementDesiredCapacity=decrement_capacity)
+    ec2_connection.terminate_instances(InstanceIds=instance_ids)
 
 
 def enforce_required_arguments():
@@ -616,7 +624,7 @@ def get_properties(autoscaling_group):
     return properties
 
 
-def elb_dreg(asg_connection, group_name, instance_id):
+def wait_for_elb_deregistration(asg_connection, group_name, instance_ids):
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
     wait_timeout = module.params.get('wait_timeout')
@@ -631,17 +639,13 @@ def elb_dreg(asg_connection, group_name, instance_id):
     else:
         return
 
-    for lb in as_group['LoadBalancerNames']:
-        deregister_lb_instances(elb_connection, lb, instance_id)
-        module.debug("De-registering %s from ELB %s" % (instance_id, lb))
-
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:
         count = 0
         for lb in as_group['LoadBalancerNames']:
             lb_instances = describe_instance_health(elb_connection, lb, [])
             for i in lb_instances['InstanceStates']:
-                if i['InstanceId'] == instance_id and i['State'] == "InService":
+                if i['InstanceId'] in instance_ids and i['State'] == "InService":
                     count += 1
                     module.debug("%s: %s, %s" % (i['InstanceId'], i['State'], i['Description']))
         time.sleep(10)
@@ -1161,7 +1165,7 @@ def update_size(autoscaling_connection, group, max_size, min_size, dc):
     update_asg(autoscaling_connection, **updated_group)
 
 
-def replace(autoscaling_connection):
+def replace(autoscaling_connection, ec2_connection):
     batch_size = module.params.get('replace_batch_size')
     wait_timeout = module.params.get('wait_timeout')
     group_name = module.params.get('name')
@@ -1193,7 +1197,12 @@ def replace(autoscaling_connection):
     if lc_check:
         if num_new_inst_needed == 0 and old_instances:
             module.debug("No new instances needed, but old instances are present. Removing old instances")
-            terminate_batch(autoscaling_connection, old_instances, instances, True)
+            terminate_batch(
+                autoscaling_connection,
+                ec2_connection,
+                old_instances,
+                instances,
+                leftovers=True)
             as_group = describe_autoscaling_groups(autoscaling_connection, group_name)[0]
             props = get_properties(as_group)
             changed = True
@@ -1230,7 +1239,12 @@ def replace(autoscaling_connection):
     module.debug("beginning main loop")
     for i in get_chunks(instances, batch_size):
         # break out of this loop if we have enough new instances
-        break_early, desired_size, term_instances = terminate_batch(autoscaling_connection, i, instances, False)
+        break_early, desired_size, term_instances = terminate_batch(
+            autoscaling_connection,
+            ec2_connection,
+            i,
+            instances,
+            leftovers=False)
         wait_for_term_inst(autoscaling_connection, term_instances)
         wait_for_new_inst(autoscaling_connection, group_name, wait_timeout, desired_size, 'viable_instances')
         wait_for_elb(autoscaling_connection, group_name)
@@ -1289,7 +1303,12 @@ def list_purgeable_instances(props, lc_check, replace_instances, initial_instanc
     return instances_to_terminate
 
 
-def terminate_batch(autoscaling_connection, replace_instances, initial_instances, leftovers=False):
+def terminate_batch(
+        autoscaling_connection,
+        ec2_connection,
+        replace_instances,
+        initial_instances,
+        leftovers=False):
     batch_size = module.params.get('replace_batch_size')
     min_size = module.params.get('min_size')
     desired_capacity = module.params.get('desired_capacity')
@@ -1340,10 +1359,15 @@ def terminate_batch(autoscaling_connection, replace_instances, initial_instances
 
     module.debug("decrementing capacity: %s" % decrement_capacity)
 
-    for instance_id in instances_to_terminate:
-        elb_dreg(autoscaling_connection, group_name, instance_id)
-        module.debug("terminating instance: %s" % instance_id)
-        terminate_asg_instance(autoscaling_connection, instance_id, decrement_capacity)
+    terminate_asg_instances(
+        autoscaling_connection,
+        ec2_connection,
+        group_name,
+        instances_to_terminate,
+        decrement_capacity)
+    module.debug("terminating instances: %s" % instances_to_terminate)
+
+    wait_for_elb_deregistration(autoscaling_connection, group_name, instances_to_terminate)
 
     # we wait to make sure the machines we marked as Unhealthy are
     # no longer in the list
@@ -1466,12 +1490,20 @@ def main():
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    autoscaling_connection = boto3_conn(module,
-                            conn_type='client',
-                            resource='autoscaling',
-                            region=region,
-                            endpoint=ec2_url,
-                            **aws_connect_params)
+    autoscaling_connection = boto3_conn(
+        module,
+        conn_type='client',
+        resource='autoscaling',
+        region=region,
+        endpoint=ec2_url,
+        **aws_connect_params)
+    ec2_connection = boto3_conn(
+        module,
+        conn_type='client',
+        resource='ec2',
+        region=region,
+        endpoint=ec2_url,
+        **aws_connect_params)
     changed = create_changed = replace_changed = False
     exists = asg_exists(autoscaling_connection)
 
@@ -1483,7 +1515,7 @@ def main():
 
     # Only replace instances if asg existed at start of call
     if exists and (replace_all_instances or replace_instances):
-        replace_changed, asg_properties = replace(autoscaling_connection)
+        replace_changed, asg_properties = replace(autoscaling_connection, ec2_connection)
     if create_changed or replace_changed:
         changed = True
     module.exit_json(changed=changed, **asg_properties)
