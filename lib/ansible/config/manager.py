@@ -343,11 +343,20 @@ class ConfigManager(object):
 
             # set default if we got here w/o a value
             if value is None:
-                value = defs[config].get('default')
-                origin = 'default'
-                # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
-                if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
-                    return value, origin
+                if defs[config].get('required', False):
+                    entry = ''
+                    if plugin_type:
+                        entry += 'plugin_type: %s ' % plugin_type
+                        if plugin_name:
+                            entry += 'plugin: %s ' % plugin_name
+                    entry += 'setting: %s ' % config
+                    raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                else:
+                    value = defs[config].get('default')
+                    origin = 'default'
+                    # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                    if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
+                        return value, origin
 
             # ensure correct type
             try:
