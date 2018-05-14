@@ -14,8 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 RETURN = '''
 ---
-hostgroups:
-  description: List of hostgroups.
+host_groups:
+  description: List of Zabbix groups.
   returned: success
   type: dict
   sample: [ { "flags": "0", "groupid": "33", "internal": "0", "name": "Hostgruup A" } ]
@@ -23,7 +23,7 @@ hostgroups:
 
 DOCUMENTATION = '''
 ---
-module: zabbix_hostgroup_facts
+module: zabbix_group_facts
 short_description: Gather facts about Zabbix hostgroup
 description:
    - This module allows you to search for Zabbix hostgroup entries.
@@ -71,7 +71,7 @@ options:
 EXAMPLES = '''
 - name: Get hostgroup info
   local_action:
-    module: zabbix_hostgroup_facts
+    module: zabbix_group_facts
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
@@ -147,8 +147,8 @@ def main():
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     host = Host(module, zbx)
-    hostgroups = host.get_group_ids_by_group_names(hostgroup_name)
-    module.exit_json(hostgroups=hostgroups)
+    host_groups = host.get_group_ids_by_group_names(hostgroup_name)
+    module.exit_json(host_groups=host_groups)
 
 if __name__ == '__main__':
     main()
