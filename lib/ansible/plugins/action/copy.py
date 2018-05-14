@@ -337,13 +337,17 @@ class ActionModule(ActionBase):
             new_module_args = _create_remote_file_args(self._task.args)
             new_module_args.update(
                 dict(
-                    src=source_rel,
                     dest=dest,
                     original_basename=source_rel,
                     recurse=False,
                     state='file',
                 )
             )
+            # src is sent to the file module in _original_basename, not in src
+            try:
+                del new_module_args['src']
+            except KeyError:
+                pass
 
             if lmode:
                 new_module_args['mode'] = lmode
