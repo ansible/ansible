@@ -41,13 +41,15 @@ PASS_VARS = {
     'check_mode': 'check_mode',
     'debug': '_debug',
     'diff': '_diff',
+    'keep_remote_files': '_keep_remote_files',
     'module_name': '_name',
     'no_log': 'no_log',
+    'remote_tmp': '_remote_tmp',
     'selinux_special_fs': '_selinux_special_fs',
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
-    'tmpdir': 'tmpdir',
+    'tmpdir': '_tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
 }
@@ -58,6 +60,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import atexit
 import locale
 import os
 import re
@@ -853,6 +856,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
         self._options_context = list()
+        self._tmpdir = None
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -927,6 +931,20 @@ class AnsibleModule(object):
             self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
                            ' Update the code for this module  In the future, AnsibleModule will'
                            ' always check for invalid arguments.', version='2.9')
+
+    @property
+    def tmpdir(self):
+        # if _ansible_tmpdir was not set, the module needs to create it and
+        # clean it up once finished.
+        if self._tmpdir is None:
+            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+            basefile = "ansible-moduletmp-%s-" % time.time()
+            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            if not self._keep_remote_files:
+                atexit.register(shutil.rmtree, tmpdir)
+            self._tmpdir = tmpdir
+
+        return self._tmpdir
 
     def warn(self, warning):
 
