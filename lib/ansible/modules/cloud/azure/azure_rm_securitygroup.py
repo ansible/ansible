@@ -400,7 +400,7 @@ def compare_rules(r, rule):
         matched = True
         if rule.get('description', None) != r['description']:
             changed = True
-            r['description'] = rule['description']
+            r['description'] = rule.get('description', None)
         if rule['protocol'] != r['protocol']:
             changed = True
             r['protocol'] = rule['protocol']
