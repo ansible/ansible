@@ -1,4 +1,4 @@
-# (c) 2015, Ansible Inc,
+# (c) 2018, Ansible Inc,
 #
 # This file is part of Ansible
 #
@@ -21,7 +21,6 @@ import copy
 import os
 import time
 import re
-import q
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
@@ -63,7 +62,6 @@ class ActionModule(ActionBase):
             dest = self._get_default_dest(src)
         else:
             dest = self._handle_dest_path(dest)
-            q(dest)
 
         # Get proto
         proto = self._task.args.get('protocol')
