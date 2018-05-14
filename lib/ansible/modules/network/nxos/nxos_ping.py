@@ -43,10 +43,10 @@ options:
     count:
         description:
             - Number of packets to send.
-        default: 2
+        default: 5
     source:
         description:
-            - Source IP Address.
+            - Source IP Address or hostname (resolvable by switch)
     vrf:
         description:
             - Outgoing VRF.
@@ -178,7 +178,7 @@ def get_ping_results(command, module):
 def main():
     argument_spec = dict(
         dest=dict(required=True),
-        count=dict(required=False, default=2),
+        count=dict(required=False, default=5),
         vrf=dict(required=False),
         source=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'], default='present'),
@@ -194,9 +194,6 @@ def main():
     destination = module.params['dest']
     count = module.params['count']
     state = module.params['state']
-
-    if count and not 1 <= int(count) <= 655350:
-        module.fail_json(msg="'count' must be an integer between 1 and 655350.", count=count)
 
     ping_command = 'ping {0}'.format(destination)
     for command in ['count', 'source', 'vrf']:
