@@ -147,6 +147,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def copy_image(module, ec2):
     """
     Copies an AMI
