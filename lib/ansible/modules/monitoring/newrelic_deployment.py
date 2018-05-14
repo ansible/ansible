@@ -66,14 +66,13 @@ EXAMPLES = \
     '''
 - newrelic_deployment:
     token: XXXXXXXXX
-    app_name: ansibleApp
-    user: ansible deployment user
+    app_name: ansible_app
+    user: ansible_deployment_user
     revision: '1.X'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 import json
 
 
@@ -96,40 +95,31 @@ def main():
         ),
         required_one_of=[['app_name', 'application_id']]
     )
-    # testing params
 
-    params = {}
     if module.params['app_name'] and module.params['application_id']:
-        module.fail_json(msg="only one of 'app_name' or\
-        'application_id' can be set")
-    if module.params['app_name']:
-        params['app_name'] = module.params['app_name']
-    elif module.params['application_id']:
-        params['application_id'] = module.params['application_id']
-    else:
-        module.fail_json(msg="you must set one of 'app_name' or\
-        'application_id'")
+        module.fail_json(msg="both app_name' and 'application_id'\
+        are defined")
 
     if module.params['app_name']:
         data = 'filter[name]=' + str(module.params['app_name'])
+        newrelic_api = 'https://api.newrelic.com/v2/applications.json'
+        headers = {'x-api-key': module.params['token'],
+                   'Content-Type': 'application/x-www-form-urlencoded'}
         (resp, info) = fetch_url(module,
-                                 'https://api.newrelic.com/v2/\
-                                 applications.json',
-                                 headers={
-                                     'x-api-key': module.params['token'],
-                                     'Content-type':
-                                     'application/x-www-form-urlencoded'
-                                 }, data=data, method='GET')
+                                 newrelic_api,
+                                 headers=headers,
+                                 data=data,
+                                 method='GET')
         if info['status'] != 200:
             module.fail_json(msg="unable to get application list from\
             newrelic: %s" % info['msg'])
         else:
             body = json.loads(resp.read())
-        if body:
+        if body is None:
             module.fail_json(msg='No Data for applications')
         else:
             app_id = body['applications'][0]['id']
-            if app_id:
+            if app_id is None:
                 module.fail_json(msg="App not found in\
                 NewRelic Registerd Applications List")
     else:
