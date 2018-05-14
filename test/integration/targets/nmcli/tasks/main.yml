@@ -1,0 +1,80 @@
+- name: Detect Docker environment
+  stat:
+    path: /.dockerenv
+  register: is_docker
+  ignore_errors: true
+
+- block:
+  - name: Install Network Manager
+    package:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - NetworkManager-glib
+      - libsemanage-python
+      - policycoreutils-python
+      - dbus-python
+
+  - name: Create dummy interface
+    nmcli:
+      type: dummy
+      conn_name: my-dummy0
+      ifname: dummy0
+      ip4: 192.0.2.100/24
+      gw4: 192.0.2.1
+      state: present
+    register: output
+  - name: Re-gather facts
+    setup:
+
+  - assert:
+      that:
+        - output.changed
+        - output.conn_name == 'my-dummy0'
+        - "'dummy0' in ansible_interfaces"
+        - ansible_dummy0.mtu == 1500
+
+## https://bugzilla.redhat.com/show_bug.cgi?id=1566502
+  - name: Restaring Network-Manager
+    service:
+      name: NetworkManager
+      state: restarted
+
+  - name: Modify dummy interface
+    nmcli:
+      conn_name: my-dummy0
+      mtu: 9000
+      type: dummy
+      state: present
+    register: output
+
+## https://bugzilla.redhat.com/show_bug.cgi?id=1274570
+  - name: Restaring Network-Manager
+    service:
+      name: NetworkManager
+      state: restarted
+
+  - name: Re-gather facts
+    setup:
+
+  - assert:
+      that:
+        - output.changed
+        - output.conn_name == 'my-dummy0'
+        - ansible_dummy0.mtu == 9000
+
+  - name: try nmcli del dummy interface
+    nmcli:
+      conn_name: my-dummy0
+      type: dummy
+      state: absent
+
+  - name: Re-gather facts
+    setup:
+
+  - assert:
+      that:
+        - "'dummy0' not in ansible_interfaces"
+
+
+  when: not is_docker.stat.exists and ansible_distribution in ['RedHat', 'CentOS', 'Fedora']
