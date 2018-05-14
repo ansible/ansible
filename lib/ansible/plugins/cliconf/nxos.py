@@ -23,7 +23,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -97,3 +97,32 @@ class Cliconf(CliconfBase):
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    # Migrated from module_utils
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        responses = list()
+
+        for item in to_list(commands):
+            if item['output'] == 'json' and not item['command'].endswith('| json'):
+                cmd = '%s | json' % item['command']
+            elif item['output'] == 'text' and item['command'].endswith('| json'):
+                cmd = item['command'].rsplit('|', 1)[0]
+            else:
+                cmd = item['command']
+
+            out = self.get(cmd)
+
+            try:
+                out = to_text(out, errors='surrogate_or_strict').strip()
+            except UnicodeError:
+                raise ConnectionError(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
+            try:
+                out = json.loads(out)
+            except ValueError:
+                pass
+
+            responses.append(out)
+        return responses

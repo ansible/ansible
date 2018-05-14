@@ -8,6 +8,7 @@ import json
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import to_list
 
 try:
     from __main__ import display
@@ -27,20 +28,62 @@ class HttpApi:
 
         output = message_kwargs.get('output', 'text')
         request = request_builder(data, output)
-        headers = {'Content-Type': 'application/json-rpc'}
+        headers = {'Content-Type': 'application/json'}
 
         response = self.connection.send('/ins', request, headers=headers, method='POST')
         response = json.loads(to_text(response.read()))
         return handle_response(response)
 
+    # Migrated from module_utils
+    def edit_config(self, command):
+        responses = self.send_request(command, output='config')
+        return json.dumps(responses)
+
+    def run_commands(self, commands, check_rc=True):
+        """Runs list of commands on remote device and returns results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        def run_queue(queue, output):
+            response = to_list(self.send_request(queue, output=output))
+            if output == 'json':
+                response = [json.loads(item) for item in response]
+            return response
+
+        for item in to_list(commands):
+            if item['command'].endswith('| json'):
+                item['command'] = item['command'].rsplit('|', 1)[0]
+                item['output'] = 'json'
+
+            if output and output != item['output']:
+                responses.extend(run_queue(queue, output))
+                queue = list()
+
+            output = item['output'] or 'json'
+            queue.append(item['command'])
+
+        if queue:
+            responses.extend(run_queue(queue, output))
+
+        return responses
+
 
 def handle_response(response):
+    results = []
+
     if response['ins_api'].get('outputs'):
-        output = response['ins_api']['outputs']['output']
-        if output['code'] != '200':
-            raise ConnectionError('%s: %s' % (output['input'], output['msg']))
-        elif 'body' in output:
-            return json.dumps(output['body']).strip()
+        for output in to_list(response['ins_api']['outputs']['output']):
+            if output['code'] != '200':
+                raise ConnectionError('%s: %s' % (output['input'], output['msg']))
+            elif 'body' in output:
+                result = output['body']
+                if isinstance(result, dict):
+                    result = json.dumps(result)
+
+                results.append(result.strip())
+    return results
 
 
 def request_builder(commands, output, version='1.0', chunk='0', sid=None):
@@ -76,6 +119,4 @@ def request_builder(commands, output, version='1.0', chunk='0', sid=None):
         'input': commands,
         'output_format': 'json'
     }
-    headers = {'Content-Type': 'application/json'}
-
     return json.dumps(dict(ins_api=msg))
