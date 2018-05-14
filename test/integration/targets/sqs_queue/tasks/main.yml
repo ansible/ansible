@@ -1,5 +1,4 @@
 ---
-
 - name: set up aws connection info
   set_fact:
     aws_connection_info: &aws_connection_info
@@ -8,7 +7,6 @@
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: yes
-
 - block:
   - name: Test creating SQS queue
     sqs_queue:
@@ -43,7 +41,6 @@
     assert:
       that:
         - delete_result.changed == False
-
 - name: Test queue features
   block:
     - name: Test create queue with attributes
@@ -84,8 +81,6 @@
       retries: 3
       delay: 3
       until: delete_result.changed
-
-
 - name: Test queue with redrive
   block:
     - name: Creating dead letter queue
@@ -117,4 +112,3 @@
       with_items:
         - { name: "{{ create_result.name }}" }
         - { name: "{{ dead_letter_queue.name }}" }
-
