@@ -181,7 +181,6 @@ def main():
             'organization_source': dict(type='dict', required=True)
         },
         supports_check_mode=False,
-        required_if=requirements,
     )
 
     result = {
@@ -192,8 +191,8 @@ def main():
     state = module.params.get('state')
 
     params = {}
-    if module.params.get('name'):
-        params['ConfigurationAggregatorName'] = module.params.get('name')
+    if name:
+        params['ConfigurationAggregatorName'] = name
     if module.params.get('account_sources'):
         params['AccountAggregationSources'] = []
         for i in module.params.get('account_sources'):

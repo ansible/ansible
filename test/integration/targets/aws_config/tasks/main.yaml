@@ -171,10 +171,9 @@
            - 'output.msg.startswith("resource_type is aggregation_authorization but all of the following are missing: authorized_aws_region")'
 
     - name: test resource_type configuration_aggregator with no account_sources parameter
-      aws_config:
+      aws_config_aggregator:
         name: random_name
         state: present
-        resource_type: configuration_aggregator
       register: output
       ignore_errors: true
 
@@ -182,13 +181,12 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is configuration_aggregator but all of the following are missing: account_sources")'
+           - 'output.msg.startswith("missing required arguments: account_sources")'
 
     - name: test resource_type configuration_aggregator with no organization_source parameter
-      aws_config:
+      aws_config_aggregator:
         name: random_name
         state: present
-        resource_type: configuration_aggregator
         account_sources: []
       register: output
       ignore_errors: true
@@ -197,7 +195,7 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is configuration_aggregator but all of the following are missing: organization_source")'
+           - 'output.msg.startswith("missing required arguments: organization_source")'
 
     # ============================================================
     # Creation testing
