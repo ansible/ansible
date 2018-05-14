@@ -107,7 +107,8 @@ def create_resource(client, module, params, result):
     except client.exceptions.from_code('InvalidS3KeyPrefixException') as e:
         module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
     except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
-        module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. Make sure the bucket exists and is available")
+        module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
+            "Make sure the bucket exists and is available")
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
@@ -128,6 +129,11 @@ def update_resource(client, module, params, result):
             result['changed'] = True
             result['channel'] = camel_dict_to_snake_dict(resource_exists(client, module, params))
             return result
+        except client.exceptions.from_code('InvalidS3KeyPrefixException') as e:
+            module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
+        except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
+            module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
+                "Make sure the bucket exists and is available")
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
