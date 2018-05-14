@@ -140,10 +140,8 @@
            - 'output.msg.startswith("state is present but all of the following are missing")'
 
     - name: test resource_type aggregation_authorization with no authorized_account_id parameter
-      aws_config:
-        name: random_name
+      aws_config_aggregation_authorization:
         state: present
-        resource_type: aggregation_authorization
       register: output
       ignore_errors: true
 
@@ -151,13 +149,11 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is aggregation_authorization but all of the following are missing: authorized_account_id")'
+           - 'output.msg.startswith("missing required arguments:")'
 
     - name: test resource_type aggregation_authorization with no authorized_aws_region parameter
-      aws_config:
-        name: random_name
+      aws_config_aggregation_authorization:
         state: present
-        resource_type: aggregation_authorization
         authorized_account_id: '123456789012'
       register: output
       ignore_errors: true
@@ -166,7 +162,7 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is aggregation_authorization but all of the following are missing: authorized_aws_region")'
+           - 'output.msg.startswith("missing required arguments:")'
 
     - name: test resource_type configuration_aggregator with no account_sources parameter
       aws_config_aggregator:
