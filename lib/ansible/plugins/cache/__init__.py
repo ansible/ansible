@@ -306,8 +306,7 @@ class InventoryCacheModule(FactCache, AnsiblePlugin):
 
         plugin_name = kwargs.pop('cache_plugin')
         plugin_path = cache_loader.find_plugin(plugin_name)
-        # FIXME figure out why get is not sufficient when it calls _load_config_defs itself
-        self._plugin = cache_loader._load_config_defs(plugin_name, plugin_path)
+        # FIXME Right now individual cache plugins are setting self._load_name because the line below only sets _load_name after set_options is called, which blows up
         self._plugin = cache_loader.get(plugin_name, *args, **kwargs)
 
         if not self._plugin:
