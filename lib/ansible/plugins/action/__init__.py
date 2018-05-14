@@ -931,7 +931,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         out = self._strip_success_message(out)
 
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
-        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
