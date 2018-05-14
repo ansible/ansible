@@ -38,9 +38,9 @@ class Cliconf(CliconfBase):
         reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
-        match = re.search(r'Version (\S+),', data)
+        match = re.search(r'Version (\S+)', data)
         if match:
-            device_info['network_os_version'] = match.group(1)
+            device_info['network_os_version'] = match.group(1).strip(',')
 
         match = re.search(r'^Cisco (.+) \(revision', data, re.M)
         if match:
