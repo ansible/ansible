@@ -237,7 +237,6 @@
       state: absent
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
-    register: result
     ignore_errors: yes
 
   - name: remove lambda policy
@@ -248,8 +247,7 @@
       statement_id: lambda-secretsmanager-test-policy
       action: lambda:InvokeFunction
       principal: secretsmanager.amazonaws.com
-      source_arn: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:{{ resource_prefix }}-hello-world"
-      source_account: "{{ test_caller_facts.account }}"
+    ignore_errors: yes
 
   - name: remove dummy lambda
     lambda:
@@ -271,3 +269,4 @@
       create_instance_profile: no
       managed_policy:
         - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
+    ignore_errors: yes
