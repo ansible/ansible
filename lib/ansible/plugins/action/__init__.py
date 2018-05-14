@@ -241,7 +241,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
-            remote_tmp = '~/ansible'
+            remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -650,8 +650,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
-        # make sure all commands use the designated temporary directory
+        # make sure modules are aware if they need to keep the remote files
+        module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
+
+        # make sure all commands use the designated temporary directory if created
         module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+
+        # make sure the remote_tmp value is sent through in case modules needs to create their own
+        try:
+            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
+        except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
+            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
@@ -683,6 +693,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                             ' if they are responsible for removing it.')
         del delete_remote_tmp  # No longer used
 
+        tmpdir = self._connection._shell.tmpdir
+
+        # We set the module_style to new here so the remote_tmp is created
+        # before the module args are built if remote_tmp is needed (async).
+        # If the module_style turns out to not be new and we didn't create the
+        # remote tmp here, it will still be created. This must be done before
+        # calling self._update_module_args() so the module wrapper has the
+        # correct remote_tmp value set
+        if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
+            self._make_tmp_path()
+            tmpdir = self._connection._shell.tmpdir
+
         if task_vars is None:
             task_vars = dict()
 
@@ -700,7 +722,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        tmpdir = self._connection._shell.tmpdir
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
