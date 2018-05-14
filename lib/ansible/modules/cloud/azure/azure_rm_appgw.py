@@ -61,8 +61,7 @@ options:
         suboptions:
             disabled_ssl_protocols:
                 description:
-                    - Ssl protocols to be disabled on application gateway.
-                type: list
+                    - List of SSL protocols to be disabled on application gateway.
             policy_type:
                 description:
                     - Type of Ssl Policy.
@@ -78,8 +77,7 @@ options:
                     - 'app_gw_ssl_policy20170401_s'
             cipher_suites:
                 description:
-                    - Ssl cipher suites to be enabled in the specified order to application gateway.
-                type: list
+                    - List of SSL cipher suites to be enabled in the specified order to application gateway.
             min_protocol_version:
                 description:
                     - Minimum version of Ssl protocol to be supported on application gateway.
@@ -90,7 +88,6 @@ options:
     gateway_ip_configurations:
         description:
             - List of subnets used by the application gateway.
-        type: list
         suboptions:
             subnet:
                 description:
@@ -105,7 +102,6 @@ options:
     authentication_certificates:
         description:
             - Authentication certificates of the application gateway resource.
-        type: list
         suboptions:
             data:
                 description:
@@ -116,7 +112,6 @@ options:
     ssl_certificates:
         description:
             - SSL certificates of the application gateway resource.
-        type: list
         suboptions:
             data:
                 description:
@@ -133,7 +128,6 @@ options:
     frontend_ip_configurations:
         description:
             - Frontend IP addresses of the application gateway resource.
-        type: list
         suboptions:
             private_ip_address:
                 description:
@@ -163,8 +157,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     frontend_ports:
         description:
-            - Frontend ports of the application gateway resource.
-        type: list
+            - List of frontend ports of the application gateway resource.
         suboptions:
             port:
                 description:
@@ -174,8 +167,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     probes:
         description:
-            - Probes of the application gateway resource.
-        type: list
+            - List of probes of the application gateway resource.
         suboptions:
             protocol:
                 description:
@@ -216,20 +208,17 @@ options:
                             - Body that must be contained in the health response. Default value is empty.
                     status_codes:
                         description:
-                            - Allowed ranges of healthy status codes. Default range of healthy status codes is 200-399.
-                        type: list
+                            - List of allowed ranges of healthy status codes. Default range of healthy status codes is 200-399.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     backend_address_pools:
         description:
-            - Backend address pool of the application gateway resource.
-        type: list
+            - List of backend address pool of the application gateway resource.
         suboptions:
             backend_addresses:
                 description:
-                    - Backend addresses
-                type: list
+                    - List of backend addresses
                 suboptions:
                     fqdn:
                         description:
@@ -246,7 +235,6 @@ options:
     backend_http_settings_collection:
         description:
             - Backend http settings of the application gateway resource.
-        type: list
         suboptions:
             port:
                 description:
@@ -276,8 +264,7 @@ options:
                             - Resource ID.
             authentication_certificates:
                 description:
-                    - Array of references to application gateway authentication certificates.
-                type: list
+                    - List of references to application gateway authentication certificates.
                 suboptions:
                     id:
                         description:
@@ -317,8 +304,7 @@ options:
                     - Type of the resource.
     http_listeners:
         description:
-            - Http listeners of the application gateway resource.
-        type: list
+            - List of HTTP listeners of the application gateway resource.
         suboptions:
             frontend_ip_configuration:
                 description:
@@ -358,8 +344,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     url_path_maps:
         description:
-            - URL path map of the application gateway resource.
-        type: list
+            - List of URL path map entries of the application gateway resource.
         suboptions:
             default_backend_address_pool:
                 description:
@@ -384,16 +369,14 @@ options:
                             - Resource ID.
             path_rules:
                 description:
-                    - Path rule of URL path map resource.
-                type: list
+                    - List of path rules of URL path map resource.
                 suboptions:
                     id:
                         description:
                             - Resource ID.
                     paths:
                         description:
-                            - Path rules of URL path map.
-                        type: list
+                            - List of path rules of URL path map.
                     backend_address_pool:
                         description:
                             - Backend address pool resource of URL path map path rule.
@@ -426,8 +409,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     request_routing_rules:
         description:
-            - Request routing rules of the application gateway resource.
-        type: list
+            - List of request routing rules of the application gateway resource.
         suboptions:
             rule_type:
                 description:
@@ -475,8 +457,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     redirect_configurations:
         description:
-            - Redirect configurations of the application gateway resource.
-        type: list
+            - List of redirect configurations of the application gateway resource.
         suboptions:
             redirect_type:
                 description:
@@ -505,7 +486,6 @@ options:
             request_routing_rules:
                 description:
                     - Request routing specifying redirect configuration.
-                type: list
                 suboptions:
                     id:
                         description:
@@ -513,7 +493,6 @@ options:
             url_path_maps:
                 description:
                     - Url path maps specifying default redirect configuration.
-                type: list
                 suboptions:
                     id:
                         description:
@@ -521,7 +500,6 @@ options:
             path_rules:
                 description:
                     - Path rules specifying redirect configuration.
-                type: list
                 suboptions:
                     id:
                         description:
@@ -555,7 +533,6 @@ options:
             disabled_rule_groups:
                 description:
                     - The disabled rule groups.
-                type: list
                 suboptions:
                     rule_group_name:
                         description:
@@ -564,7 +541,6 @@ options:
                     rules:
                         description:
                             - The list of rules that will be disabled. If null, all rules of the rule group will be disabled.
-                        type: list
     enable_http2:
         description:
             - Whether HTTP2 is enabled on the application gateway resource.
@@ -844,7 +820,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                                   kwargs['resource_group'],
                                                   kwargs['name'],
                                                   item['frontend_port'])
-                            item['frontend_port'] = { 'id': id }
+                            item['frontend_port'] = {'id': id}
                         if 'protocol' in item:
                             if item['protocol'] == 'http':
                                 item['protocol'] = 'Http'
@@ -852,8 +828,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                 item['protocol'] = 'Https'
                         ev[i] = item
                     self.parameters["http_listeners"] = ev
-
-
                 elif key == "url_path_maps":
                     self.parameters["url_path_maps"] = kwargs[key]
                 elif key == "request_routing_rules":
@@ -867,11 +841,10 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                                          item['backend_address_pool'])
                             item['backend_address_pool'] = {'id': id}
                         if 'backend_http_settings' in item:
-                            id = backend_http_settings_id(
-                                    self.subscription_id,
-                                    kwargs['resource_group'],
-                                    kwargs['name'],
-                                    item['backend_http_settings'])
+                            id = backend_http_settings_id(self.subscription_id,
+                                                          kwargs['resource_group'],
+                                                          kwargs['name'],
+                                                          item['backend_http_settings'])
                             item['backend_http_settings'] = {'id': id}
                         if 'http_listener' in item:
                             id = http_listener_id(self.subscription_id,
@@ -1042,7 +1015,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a frontend ip configuration"""
-    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/frontendIPConfigurations/{}'.format(
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/frontendIPConfigurations/{3}'.format(
         subscription_id,
         resource_group_name,
         appgw_name,
@@ -1052,7 +1025,7 @@ def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_nam
 
 def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a frontend port"""
-    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/frontendPorts/{}'.format(
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/frontendPorts/{3}'.format(
         subscription_id,
         resource_group_name,
         appgw_name,
@@ -1062,7 +1035,7 @@ def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
 
 def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for an address pool"""
-    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/backendAddressPools/{}'.format(
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/backendAddressPools/{3}'.format(
         subscription_id,
         resource_group_name,
         appgw_name,
@@ -1072,7 +1045,7 @@ def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, na
 
 def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a http settings"""
-    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/backendHttpSettingsCollection/{}'.format(
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/backendHttpSettingsCollection/{3}'.format(
         subscription_id,
         resource_group_name,
         appgw_name,
@@ -1082,7 +1055,7 @@ def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, n
 
 def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a http listener"""
-    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/httpListeners/{}'.format(
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/httpListeners/{3}'.format(
         subscription_id,
         resource_group_name,
         appgw_name,
