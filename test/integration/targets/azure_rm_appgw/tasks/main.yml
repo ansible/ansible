@@ -26,8 +26,8 @@
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
-      name: Standard_Small
-      tier: Standard
+      name: standard_small
+      tier: standard
       capacity: 2
     gateway_ip_configurations:
       - subnet:
@@ -46,15 +46,15 @@
         name: test_backend_address_pool
     backend_http_settings_collection:
       - port: 80
-        protocol: Http
-        cookie_based_affinity: Enabled
+        protocol: http
+        cookie_based_affinity: enabled
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
         frontend_port: ag_frontend_port
         name: sample_http_listener
     request_routing_rules:
-      - rule_type: Basic
+      - rule_type: basic
         backend_address_pool: test_backend_address_pool
         backend_http_settings: sample_appgateway_http_settings
         http_listener: sample_http_listener
@@ -75,8 +75,8 @@
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
-      name: Standard_Small
-      tier: Standard
+      name: standard_small
+      tier: standard
       capacity: 2
     gateway_ip_configurations:
       - subnet:
@@ -95,8 +95,8 @@
         name: test_backend_address_pool
     backend_http_settings_collection:
       - port: 80
-        protocol: Http
-        cookie_based_affinity: Enabled
+        protocol: http
+        cookie_based_affinity: enabled
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config

@@ -226,304 +226,6 @@ options:
             - Backend address pool of the application gateway resource.
         type: list
         suboptions:
-            backend_ip_configurations:
-                description:
-                    - Collection of references to IPs defined in network interfaces.
-                type: list
-                suboptions:
-                    application_gateway_backend_address_pools:
-                        description:
-                            - The reference of ApplicationGatewayBackendAddressPool resource.
-                        type: list
-                        suboptions:
-                            backend_ip_configurations:
-                                description:
-                                    - Collection of references to IPs defined in network interfaces.
-                                type: list
-                                suboptions:
-                                    application_gateway_backend_address_pools:
-                                        description:
-                                            - The reference of ApplicationGatewayBackendAddressPool resource.
-                                        type: list
-                                    load_balancer_backend_address_pools:
-                                        description:
-                                            - The reference of LoadBalancerBackendAddressPool resource.
-                                        type: list
-                                    load_balancer_inbound_nat_rules:
-                                        description:
-                                            - A list of references of LoadBalancerInboundNatRules.
-                                        type: list
-                                    private_ip_address:
-                                        description:
-                                            - Private IP address of the IP configuration.
-                                    private_ip_allocation_method:
-                                        description:
-                                            - "Defines how a private IP address is assigned. Possible values are: 'C(static)' and 'C(dynamic)'."
-                                        choices:
-                                            - 'static'
-                                            - 'dynamic'
-                                    private_ip_address_version:
-                                        description:
-                                            - "Available from Api-Version 2016-03-30 onwards, it represents whether the specific ipconfiguration is C(ipv4) o
-                                              r C(ipv6). Default is taken as C(ipv4).  Possible values are: 'C(ipv4)' and 'C(ipv6)'."
-                                        choices:
-                                            - 'ipv4'
-                                            - 'ipv6'
-                                    subnet:
-                                        description:
-                                            - Subnet bound to the IP configuration.
-                                    primary:
-                                        description:
-                                            - Gets whether this is a primary customer address on the network interface.
-                                    public_ip_address:
-                                        description:
-                                            - Public IP address bound to the IP configuration.
-                                    application_security_groups:
-                                        description:
-                                            - Application security groups in which the IP configuration is included.
-                                        type: list
-                                    name:
-                                        description:
-                                            - The name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            backend_addresses:
-                                description:
-                                    - Backend addresses
-                                type: list
-                                suboptions:
-                                    fqdn:
-                                        description:
-                                            - Fully qualified domain name (FQDN).
-                                    ip_address:
-                                        description:
-                                            - IP address
-                            name:
-                                description:
-                                    - Resource that is unique within a resource group. This name can be used to access the resource.
-                    load_balancer_backend_address_pools:
-                        description:
-                            - The reference of LoadBalancerBackendAddressPool resource.
-                        type: list
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                            name:
-                                description:
-                                    - Gets name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    load_balancer_inbound_nat_rules:
-                        description:
-                            - A list of references of LoadBalancerInboundNatRules.
-                        type: list
-                        suboptions:
-                            frontend_ip_configuration:
-                                description:
-                                    - A reference to frontend IP addresses.
-                                suboptions:
-                                    id:
-                                        description:
-                                            - Resource ID.
-                            protocol:
-                                description:
-                                    - "Possible values include: 'C(udp)', 'C(tcp)', 'C(all)'"
-                                choices:
-                                    - 'udp'
-                                    - 'tcp'
-                                    - 'all'
-                            frontend_port:
-                                description:
-                                    - "The port for the external endpoint. Port numbers for each rule must be unique within the Load Balancer. Acceptable val
-                                      ues range from 1 to 65534."
-                            backend_port:
-                                description:
-                                    - The port used for the internal endpoint. Acceptable values range from 1 to 65535.
-                            idle_timeout_in_minutes:
-                                description:
-                                    - "The timeout for the C(tcp) idle connection. The value can be set between 4 and 30 minutes. The default value is 4 minu
-                                      tes. This element is only used when the I(protocol) is set to C(tcp)."
-                            enable_floating_ip:
-                                description:
-                                    - "Configures a virtual machine's endpoint for the floating IP capability required to configure a SQL AlwaysOn Availabili
-                                      ty Group. This setting is required when using the SQL AlwaysOn Availability Groups in SQL server. This setting can't b
-                                      e changed after you create the endpoint."
-                            name:
-                                description:
-                                    - Gets name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    private_ip_address:
-                        description:
-                            - Private IP address of the IP configuration.
-                    private_ip_allocation_method:
-                        description:
-                            - "Defines how a private IP address is assigned. Possible values are: 'C(static)' and 'C(dynamic)'."
-                        choices:
-                            - 'static'
-                            - 'dynamic'
-                    private_ip_address_version:
-                        description:
-                            - "Available from Api-Version 2016-03-30 onwards, it represents whether the specific ipconfiguration is C(ipv4) or C(ipv6). Defau
-                              lt is taken as C(ipv4).  Possible values are: 'C(ipv4)' and 'C(ipv6)'."
-                        choices:
-                            - 'ipv4'
-                            - 'ipv6'
-                    subnet:
-                        description:
-                            - Subnet bound to the IP configuration.
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                            address_prefix:
-                                description:
-                                    - The address prefix for the subnet.
-                            network_security_group:
-                                description:
-                                    - The reference of the NetworkSecurityGroup resource.
-                                suboptions:
-                                    id:
-                                        description:
-                                            - Resource ID.
-                                    location:
-                                        description:
-                                            - Resource location.
-                                    security_rules:
-                                        description:
-                                            - A collection of security rules of the network security group.
-                                        type: list
-                                    default_security_rules:
-                                        description:
-                                            - The default security rules of network security group.
-                                        type: list
-                                    resource_guid:
-                                        description:
-                                            - The resource GUID property of the network security group resource.
-                            route_table:
-                                description:
-                                    - The reference of the RouteTable resource.
-                                suboptions:
-                                    id:
-                                        description:
-                                            - Resource ID.
-                                    location:
-                                        description:
-                                            - Resource location.
-                                    routes:
-                                        description:
-                                            - Collection of routes contained within a route table.
-                                        type: list
-                                    disable_bgp_route_propagation:
-                                        description:
-                                            - Gets or sets whether to disable the I(routes) learned by BGP on that route table. True means disable.
-                            service_endpoints:
-                                description:
-                                    - An array of service endpoints.
-                                type: list
-                                suboptions:
-                                    service:
-                                        description:
-                                            - The type of the endpoint service.
-                                    locations:
-                                        description:
-                                            - A list of locations.
-                                        type: list
-                            resource_navigation_links:
-                                description:
-                                    - Gets an array of references to the external resources using subnet.
-                                type: list
-                                suboptions:
-                                    id:
-                                        description:
-                                            - Resource ID.
-                                    linked_resource_type:
-                                        description:
-                                            - Resource type of the linked resource.
-                                    link:
-                                        description:
-                                            - Link to the external resource
-                                    name:
-                                        description:
-                                            - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-                            name:
-                                description:
-                                    - The name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    primary:
-                        description:
-                            - Gets whether this is a primary customer address on the network interface.
-                    public_ip_address:
-                        description:
-                            - Public IP address bound to the IP configuration.
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                            location:
-                                description:
-                                    - Resource location.
-                            sku:
-                                description:
-                                    - The public IP address SKU.
-                                suboptions:
-                                    name:
-                                        description:
-                                            - Name of a public IP address SKU.
-                                        choices:
-                                            - 'basic'
-                                            - 'standard'
-                            public_ip_allocation_method:
-                                description:
-                                    - "The public IP allocation method. Possible values are: 'C(static)' and 'C(dynamic)'."
-                                choices:
-                                    - 'static'
-                                    - 'dynamic'
-                            public_ip_address_version:
-                                description:
-                                    - "The public IP address version. Possible values are: 'C(ipv4)' and 'C(ipv6)'."
-                                choices:
-                                    - 'ipv4'
-                                    - 'ipv6'
-                            dns_settings:
-                                description:
-                                    - The FQDN of the DNS record associated with the public IP address.
-                                suboptions:
-                                    domain_name_label:
-                                        description:
-                                            - "Gets or sets the Domain name label.The concatenation of the domain name label and the regionalized DNS zone ma
-                                              ke up the fully qualified domain name associated with the public IP address. If a domain name label is specifi
-                                              ed, an A DNS record is created for the public IP in the Microsoft Azure DNS system."
-                                    fqdn:
-                                        description:
-                                            - "Gets the FQDN, Fully qualified domain name of the A DNS record associated with the public IP. This is the conc
-                                              atenation of the I(domain_name_label) and the regionalized DNS zone."
-                                    reverse_fqdn:
-                                        description:
-                                            - "Gets or Sets the Reverse I(fqdn). A user-visible, fully qualified domain name that resolves to this public IP
-                                              address. If the reverseFqdn is specified, then a PTR DNS record is created pointing from the IP address in the
-                                               in-addr.arpa domain to the reverse I(fqdn). "
-                            ip_address:
-                                description:
-                                    - The IP address associated with the public IP address resource.
-                            idle_timeout_in_minutes:
-                                description:
-                                    - The idle timeout of the public IP address.
-                            resource_guid:
-                                description:
-                                    - The resource GUID property of the public IP resource.
-                            zones:
-                                description:
-                                    - A list of availability zones denoting the IP allocated for the resource needs to come from.
-                                type: list
-                    application_security_groups:
-                        description:
-                            - Application security groups in which the IP configuration is included.
-                        type: list
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                            location:
-                                description:
-                                    - Resource location.
-                    name:
-                        description:
-                            - The name of the resource that is unique within a resource group. This name can be used to access the resource.
             backend_addresses:
                 description:
                     - Backend addresses
@@ -879,11 +581,44 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Application Gateway
-    azure_rm_appgw:
-      resource_group: NOT FOUND
-      name: NOT FOUND
-      location: eastus
+- name: Create instance of Application Gateway
+  azure_rm_appgw:
+    resource_group: myresourcegroup
+    name: myappgateway
+    sku:
+      name: standard_small
+      tier: standard
+      capacity: 2
+    gateway_ip_configurations:
+      - subnet:
+          id: "{{ subnet_id }}"
+        name: app_gateway_ip_config
+    frontend_ip_configurations:
+      - subnet:
+          id: "{{ subnet_id }}"
+        name: sample_gateway_frontend_ip_config
+    frontend_ports:
+      - port: 90
+        name: ag_frontend_port
+    backend_address_pools:
+      - backend_addresses:
+          - ip_address: 10.0.0.4
+        name: test_backend_address_pool
+    backend_http_settings_collection:
+      - port: 80
+        protocol: http
+        cookie_based_affinity: enabled
+        name: sample_appgateway_http_settings
+    http_listeners:
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: ag_frontend_port
+        name: sample_http_listener
+    request_routing_rules:
+      - rule_type: Basic
+        backend_address_pool: test_backend_address_pool
+        backend_http_settings: sample_appgateway_http_settings
+        http_listener: sample_http_listener
+        name: rule1
 '''
 
 RETURN = '''
@@ -1036,7 +771,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     ev = kwargs[key]
                     if 'policy_type' in ev:
                         if ev['policy_type'] == 'predefined':
-                            ev['policy_type'] = 'Predefined'
+                            ev['policy_type'] = 'Predefined'-
                         elif ev['policy_type'] == 'custom':
                             ev['policy_type'] = 'Custom'
                     if 'policy_name' in ev:
@@ -1353,6 +1088,11 @@ def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
         name
     )
 
+def snake_to_camel(snake, capitalize_first=False):
+    if capitalize_first:
+        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
+    else:
+        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
 def main():
     """Main execution"""
