@@ -1,2 +1,3 @@
 ---
-config_s3_bucket: 'test-aws-config-bucket'
+config_s3_bucket: '{{ resource_prefix }}-config-records'
+config_sns_name: '{{ resource_prefix }}-delivery-channel-test-topic'

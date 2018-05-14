@@ -183,7 +183,6 @@ def main():
             'input_parameters': dict(type='str'),
             'execution_frequency': dict(
                 type='str',
-                default='Six_Hours',
                 choices=[
                     'One_Hour',
                     'Three_Hours',
@@ -252,13 +251,13 @@ def main():
     existing_rule = rule_exists(client, module, params)
 
     if state == 'present':
-        if not resource_status:
+        if not existing_rule:
             create_resource(client, module, params, result)
-        if resource_status:
+        else:
             update_resource(client, module, params, result)
 
     if state == 'absent':
-        if resource_status:
+        if existing_rule:
             delete_resource(client, module, params, result)
 
     module.exit_json(**result)

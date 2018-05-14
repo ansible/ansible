@@ -74,13 +74,20 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRet
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
+# this waits for an IAM role to become fully available, at the cost of
+# taking a long time to fail when the IAM role/policy really is invalid
+retry_unavailable_iam_on_put_delivery = retry_decorator=AWSRetry.backoff(
+    catch_extra_error_codes=['InsufficientDeliveryPolicyException'],
+)
+
+
 def resource_exists(client, module, params):
     try:
         channel = client.describe_delivery_channels(
             DeliveryChannelNames=[params['name']],
             aws_retry=True,
         )
-        return rule['DeliveryChannels'][0]
+        return channel['DeliveryChannels'][0]
     except client.exceptions.from_code('NoSuchDeliveryChannelException'):
         return
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -89,12 +96,18 @@ def resource_exists(client, module, params):
 
 def create_resource(client, module, params, result):
     try:
-        response = client.put_delivery_channel(
-            DeliveryChannel=params
+        retry_unavailable_iam_on_put_delivery(
+            client.put_delivery_channel,
+        )(
+            DeliveryChannel=params,
         )
         result['changed'] = True
         result['channel'] = camel_dict_to_snake_dict(resource_exists(client, module, params))
         return result
+    except client.exceptions.from_code('InvalidS3KeyPrefixException') as e:
+        module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
+    except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
+        module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. Make sure the bucket exists and is available")
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
@@ -107,8 +120,10 @@ def update_resource(client, module, params, result):
 
     if params != current_params['DeliveryChannels'][0]:
         try:
-            response = client.put_delivery_channel(
-                DeliveryChannel=params
+            retry_unavailable_iam_on_put_delivery(
+                client.put_delivery_channel,
+            )(
+                DeliveryChannel=params,
             )
             result['changed'] = True
             result['channel'] = camel_dict_to_snake_dict(resource_exists(client, module, params))
@@ -166,8 +181,6 @@ def main():
         params['s3KeyPrefix'] = module.params.get('s3_prefix')
     if module.params.get('sns_topic_arn'):
         params['snsTopicARN'] = module.params.get('sns_topic_arn')
-    if module.params.get('s3_prefix'):
-        params['s3KeyPrefix'] = module.params.get('s3_prefix')
     if module.params.get('delivery_frequency'):
         params['configSnapshotDeliveryProperties'] = {
             'deliveryFrequency': module.params.get('delivery_frequency')

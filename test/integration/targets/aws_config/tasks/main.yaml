@@ -26,7 +26,7 @@
     - name: ensure SNS topic exists
       sns_topic:
         <<: *aws_connection_info
-        name: AwsConfigDeliveryChannelTestTopic
+        name: '{{ config_sns_name }}'
         state: present
         subscriptions:
           - endpoint: "rando_email_address@rando.com"
@@ -36,7 +36,7 @@
     - name: ensure S3 bucket exists
       s3_bucket:
         <<: *aws_connection_info
-        name: "{{ config_s3_bucket | to_uuid }}"
+        name: "{{ config_s3_bucket }}"
 
     - name: ensure S3 access for IAM role
       iam_policy:
@@ -97,7 +97,7 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is rule but all of the following are missing: source")'
+           - 'output.msg.startswith("missing required arguments:")'
 
     - name: test resource_type delivery_channel with no s3_bucket parameter
       aws_config_delivery_channel:
@@ -110,7 +110,7 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is delivery_channel but all of the following are missing: s3_bucket")'
+           - 'output.msg.startswith("missing required arguments:")'
 
     - name: test resource_type configuration_recorder with no role_arn parameter
       aws_config:
@@ -223,7 +223,8 @@
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        s3_bucket: "{{ config_s3_bucket | to_uuid }}"
+        s3_bucket: "{{ config_s3_bucket }}"
+        s3_prefix: "foo/bar"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'Twelve_Hours'
       register: output
@@ -276,7 +277,7 @@
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        s3_bucket: "{{ config_s3_bucket | to_uuid }}"
+        s3_bucket: "{{ config_s3_bucket }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
       register: output
@@ -329,7 +330,7 @@
         <<: *aws_connection_info
         name: test_delivery_channel
         state: present
-        s3_bucket: "{{ config_s3_bucket | to_uuid }}"
+        s3_bucket: "{{ config_s3_bucket }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
       register: output
@@ -384,7 +385,7 @@
         <<: *aws_connection_info
         name: test_delivery_channel
         state: absent
-        s3_bucket: "{{ config_s3_bucket | to_uuid }}"
+        s3_bucket: "{{ config_s3_bucket }}"
         sns_topic_arn: "{{ config_sns_topic.sns_arn }}"
         delivery_frequency: 'TwentyFour_Hours'
       register: output
@@ -436,14 +437,14 @@
     - name: remove SNS topic
       sns_topic:
         <<: *aws_connection_info
-        name: AwsConfigDeliveryChannelTestTopic
+        name: '{{ config_sns_name }}'
         state: absent
       ignore_errors: yes
 
     - name: remove S3 bucket
       s3_bucket:
         <<: *aws_connection_info
-        name: "{{ config_s3_bucket | to_uuid }}"
+        name: "{{ config_s3_bucket }}"
         state: absent
         force: yes
       ignore_errors: yes
