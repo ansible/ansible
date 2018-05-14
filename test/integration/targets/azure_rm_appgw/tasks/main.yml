@@ -147,4 +147,3 @@
   assert:
     that:
       - output.changed == false
-

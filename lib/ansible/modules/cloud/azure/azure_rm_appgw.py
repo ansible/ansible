@@ -833,19 +833,17 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     for i in range(len(ev)):
                         item = ev[i]
                         if 'frontend_ip_configuration' in item:
-                            id = frontend_ip_configuration_id(
-                                    self.subscription_id,
-                                    kwargs['resource_group'],
-                                    kwargs['name'],
-                                    item['frontend_ip_configuration'])
-                            item['frontend_ip_configuration'] = { 'id': id }
+                            id = frontend_ip_configuration_id(self.subscription_id,
+                                                              kwargs['resource_group'],
+                                                              kwargs['name'],
+                                                              item['frontend_ip_configuration'])
+                            item['frontend_ip_configuration'] = {'id': id}
 
                         if 'frontend_port' in item:
-                            id = frontend_port_id(
-                                    self.subscription_id,
-                                    kwargs['resource_group'],
-                                    kwargs['name'],
-                                    item['frontend_port'])
+                            id = frontend_port_id(self.subscription_id,
+                                                  kwargs['resource_group'],
+                                                  kwargs['name'],
+                                                  item['frontend_port'])
                             item['frontend_port'] = { 'id': id }
                         if 'protocol' in item:
                             if item['protocol'] == 'http':
@@ -863,26 +861,24 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     for i in range(len(ev)):
                         item = ev[i]
                         if 'backend_address_pool' in item:
-                            id = backend_address_pool_id(
-                                    self.subscription_id,
-                                    kwargs['resource_group'],
-                                    kwargs['name'],
-                                    item['backend_address_pool'])
-                            item['backend_address_pool'] = { 'id': id }
+                            id = backend_address_pool_id(self.subscription_id,
+                                                         kwargs['resource_group'],
+                                                         kwargs['name'],
+                                                         item['backend_address_pool'])
+                            item['backend_address_pool'] = {'id': id}
                         if 'backend_http_settings' in item:
                             id = backend_http_settings_id(
                                     self.subscription_id,
                                     kwargs['resource_group'],
                                     kwargs['name'],
                                     item['backend_http_settings'])
-                            item['backend_http_settings'] = { 'id': id }
+                            item['backend_http_settings'] = {'id': id}
                         if 'http_listener' in item:
-                            id = http_listener_id(
-                                    self.subscription_id,
-                                    kwargs['resource_group'],
-                                    kwargs['name'],
-                                    item['http_listener'])
-                            item['http_listener'] = { 'id': id }
+                            id = http_listener_id(self.subscription_id,
+                                                  kwargs['resource_group'],
+                                                  kwargs['name'],
+                                                  item['http_listener'])
+                            item['http_listener'] = {'id': id}
                         if 'protocol' in item:
                             if item['protocol'] == 'http':
                                 item['protocol'] = 'Http'
@@ -1043,6 +1039,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
 
         return False
 
+
 def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a frontend ip configuration"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/frontendIPConfigurations/{}'.format(
@@ -1051,6 +1048,7 @@ def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_nam
         appgw_name,
         name
     )
+
 
 def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a frontend port"""
@@ -1061,6 +1059,7 @@ def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
         name
     )
 
+
 def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for an address pool"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/backendAddressPools/{}'.format(
@@ -1069,6 +1068,7 @@ def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, na
         appgw_name,
         name
     )
+
 
 def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a http settings"""
@@ -1079,6 +1079,7 @@ def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, n
         name
     )
 
+
 def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
     """Generate the id for a http listener"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/applicationGateways/{}/httpListeners/{}'.format(
@@ -1088,11 +1089,13 @@ def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
         name
     )
 
+
 def snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
         return ''.join(x.capitalize() or '_' for x in snake.split('_'))
     else:
         return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
+
 
 def main():
     """Main execution"""
