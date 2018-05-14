@@ -5,6 +5,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
+import pipes
+
 __metaclass__ = type
 
 
@@ -23,7 +26,7 @@ description:
 version_added: "1.1"
 options:
   command:
-    choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
+    choices: [ 'cleanup', 'collectstatic', 'flush', 'dumpdata, 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
       - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb,
         test, and validate.
@@ -48,7 +51,7 @@ options:
     aliases: [virtualenv]
   apps:
     description:
-      - A list of space-delimited apps to target. Used by the 'test' command.
+      - A list of space-delimited apps to target. Used by the 'test' or 'dumpdata' command.
     required: false
   cache_table:
     description:
@@ -70,19 +73,29 @@ options:
     required: false
   skip:
     description:
-     - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
+      - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
     required: false
     version_added: "1.3"
   merge:
     description:
-     - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
+      - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
     required: false
     version_added: "1.3"
   link:
     description:
-     - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
+      - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
     required: false
     version_added: "1.3"
+  indent:
+    description:
+      - Will create dumped data to file with indentation, you can only use this parameter with 'dumpdata' command
+    required: false
+    version_added: "2.6"
+  output:
+    description:
+      - Will create dumped data to file, you can only use this parameter with 'dumpdata' command
+    required: false
+    version_added: "2.6"
 notes:
   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
@@ -100,6 +113,13 @@ EXAMPLES = """
 - django_manage:
     command: cleanup
     app_path: "{{ django_dir }}"
+
+# Create a dumped file from database or specific app.
+- django_manage
+    command: dumpdata
+    apps: main.Smoke
+    indent: 4
+    output: output.dump
 
 # Load the initial_data fixture into the application
 - django_manage:
@@ -171,6 +191,10 @@ def flush_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
 
+def dumpdata_filter_output(line):
+    return "Dumped" in line and "Dumped 0 object" not in line
+
+
 def loaddata_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
@@ -192,6 +216,7 @@ def main():
         cleanup=(),
         createcachetable=('cache_table', 'database', ),
         flush=('database', ),
+        dumpdata=('database', 'apps', 'output', 'indent', ),
         loaddata=('database', 'fixtures', ),
         syncdb=('database', ),
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
@@ -201,6 +226,7 @@ def main():
     )
 
     command_required_param_map = dict(
+        dumpdata=('output', ),
         loaddata=('fixtures', ),
     )
 
@@ -214,12 +240,14 @@ def main():
     )
 
     # These params are allowed for certain commands only
-    specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
+    specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures',
+                       'liveserver', 'testrunner', 'output', 'indent', )
 
     # These params are automatically added to the command if present
-    general_params = ('settings', 'pythonpath', 'database',)
-    specific_boolean_params = ('clear', 'failfast', 'skip', 'merge', 'link')
-    end_of_command_params = ('apps', 'cache_table', 'fixtures')
+    general_params = ('settings', 'pythonpath', 'database', 'indent', )
+    can_use_output_param_command = ('dumpdata', )
+    specific_boolean_params = ('clear', 'failfast', 'skip', 'merge', 'link', )
+    end_of_command_params = ('apps', 'cache_table', 'fixtures', )
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -240,6 +268,8 @@ def main():
             skip=dict(default=None, required=False, type='bool'),
             merge=dict(default=None, required=False, type='bool'),
             link=dict(default=None, required=False, type='bool'),
+            output=dict(default=None, required=False, type='path'),
+            indent=dict(default=None, required=False, type='int'),
         ),
     )
 
@@ -278,7 +308,12 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd, cwd=app_path)
+    command_kwargs = {'cwd': app_path}
+    if 'output' in module.params and command in can_use_output_param_command:
+        command_kwargs['use_unsafe_shell'] = True
+        cmd = "%s > %s" % (cmd, pipes.quote(module.params['output']))
+
+    rc, out, err = module.run_command(cmd, **command_kwargs)
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
