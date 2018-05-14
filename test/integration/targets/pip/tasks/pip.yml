@@ -209,6 +209,17 @@
     that:
       - "venv_chdir.changed"
 
+# ansible#38785
+- name: allow empty list of packages
+  pip:
+    name: []
+  register: pip_install_empty
+
+- name: ensure empty install is successful
+  assert:
+    that:
+      - not pip_install_empty.changed
+
 # https://github.com/ansible/ansible/issues/37912
 - name: install pip throught pip into fresh virtualenv for test pip without virtualenv
   pip:
