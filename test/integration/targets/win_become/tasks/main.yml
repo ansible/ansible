@@ -125,6 +125,18 @@
   - name: test with module that will return non-zero exit code (https://github.com/ansible/ansible/issues/30468)
     vars: *become_vars
     setup:
+
+  - name: test become with invalid password
+    win_whoami:
+    vars:
+      ansible_become_pass: '{{ gen_pw }}abc'
+    become: yes
+    become_method: runas
+    become_user: '{{ become_test_username }}'
+    register: become_invalid_pass
+    failed_when:
+    - '"Failed to become user " + become_test_username not in become_invalid_pass.msg'
+    - '"LogonUser failed (The user name or password is incorrect, Win32ErrorCode 1326)" not in become_invalid_pass.msg'
     
   - name: test become with SYSTEM account
     win_whoami:
@@ -215,21 +227,21 @@
     become_flags: logon_type=batch invalid_flags=a
     become_method: runas
     register: failed_flags_invalid_key
-    failed_when: failed_flags_invalid_key.msg != "become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+    failed_when: "failed_flags_invalid_key.msg != \"Failed to parse become_flags 'logon_type=batch invalid_flags=a': become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'\""
 
   - name: test failure with invalid logon_type
     vars: *become_vars
     win_whoami:
     become_flags: logon_type=invalid
     register: failed_flags_invalid_type
-    failed_when: "failed_flags_invalid_type.msg != \"become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials\""
+    failed_when: "failed_flags_invalid_type.msg != \"Failed to parse become_flags 'logon_type=invalid': become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials\""
 
   - name: test failure with invalid logon_flag
     vars: *become_vars
     win_whoami:
     become_flags: logon_flags=with_profile,invalid
     register: failed_flags_invalid_flag
-    failed_when: "failed_flags_invalid_flag.msg != \"become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
+    failed_when: "failed_flags_invalid_flag.msg != \"Failed to parse become_flags 'logon_flags=with_profile,invalid': become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
 
   # Server 2008 doesn't work with network and network_cleartext, there isn't really a reason why you would want this anyway
   - name: become different types
@@ -265,6 +277,34 @@
       # new_credentials still come up as the ansible_user so we can't test that
       - become_netcredentials.label.account_name == 'High Mandatory Level'
       - become_netcredentials.label.sid == 'S-1-16-12288'
+
+  - name: become logon_flags bitwise tests when loading the profile
+    # Error code of 2 means no file found == no profile loaded
+    win_shell: |
+      Add-Type -Name "Native" -Namespace "Ansible" -MemberDefinition '[DllImport("Userenv.dll", SetLastError=true)]public static extern bool GetProfileType(out UInt32 pdwFlags);'
+      $profile_type = $null
+      $res = [Ansible.Native]::GetProfileType([ref]$profile_type)
+      if (-not $res) {
+          $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+          if ($last_err -eq 2) {
+              return $false
+          } else {
+              throw [System.ComponentModel.Win32Exception]$last_err
+          }
+      } else {
+          return $true
+      }
+    vars: *admin_become_vars
+    become_flags: logon_flags={{item.flags}}
+    register: become_logon_flags
+    failed_when: become_logon_flags.stdout_lines[0]|bool != item.actual
+    with_items:
+    - flags:
+      actual: False
+    - flags: netcredentials_only
+      actual: False
+    - flags: with_profile,netcredentials_only
+      actual: True
 
   - name: echo some non ascii characters
     win_command: cmd.exe /c echo über den Fußgängerübergang gehen
