@@ -20,6 +20,8 @@ $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
+$user = Get-AnsibleParam -obj $params -name "user" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($user -ne $null)
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
@@ -173,6 +175,8 @@ Function Choco-Upgrade
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
+        [string] $user,
+        [string] $password,
         [string] $installargs,
         [string] $packageparams,
         [bool] $allowemptychecksums,
@@ -205,6 +209,16 @@ Function Choco-Upgrade
     if ($source)
     {
         $options += "--source", $source
+    }
+
+    if ($user)
+    {
+        $options += "--user=`"'$user'`""
+    }
+
+    if ($password)
+    {
+        $options += "--password=`"'$password'`""
     }
 
     if ($force)
@@ -308,6 +322,8 @@ Function Choco-Install
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
+        [string] $user,
+        [string] $password,
         [string] $installargs,
         [string] $packageparams,
         [bool] $allowemptychecksums,
@@ -356,6 +372,16 @@ Function Choco-Install
         $options += "--source", $source
     }
 
+    if ($user)
+    {
+        $options += "--user=`"'$user'`""
+    }
+
+    if ($password)
+    {
+        $options += "--password=`"'$password'`""
+    }
+    
     if ($force)
     {
         $options += "--force"
@@ -519,7 +545,7 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
         -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease
+        -allowprerelease $allowprerelease -user $user -password $password
 }
 
 Exit-Json -obj $result
