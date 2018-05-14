@@ -49,6 +49,7 @@ options:
   https:
       description:
       - Enable and disabled https
+      type: bool
       default: false
 
 requirements:
