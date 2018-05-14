@@ -33,6 +33,16 @@
     assert:
       that:
         - delete_result.changed
+  - name: Test delete SQS queue that doesn't exist
+    sqs_queue:
+      name: "{{ resource_prefix }}{{ 1000 | random }}"
+      state: absent
+      <<: *aws_connection_info
+    register: delete_result
+  - name: Assert delete non-existant queue returns cleanly
+    assert:
+      that:
+        - delete_result.changed == False
 
 - name: Test queue features
   block:
@@ -107,3 +117,4 @@
       with_items:
         - { name: "{{ create_result.name }}" }
         - { name: "{{ dead_letter_queue.name }}" }
+
