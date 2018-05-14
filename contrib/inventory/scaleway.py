@@ -9,7 +9,7 @@ Shamelessly copied from an existing inventory script.
 
 This script generates an inventory that Ansible can understand by making API requests to Scaleway API
 
-Requires some python libraries, ensure to have them installed when using this script. (pip install requests https://pypi.python.org/pypi/requests)
+Requires some python libraries, ensure to have them installed when using this script. (pip install requests https://pypi.org/project/requests/)
 
 Before using this script you may want to modify scaleway.ini config file.
 
