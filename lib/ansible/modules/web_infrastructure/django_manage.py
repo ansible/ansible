@@ -6,8 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pipes
-
 __metaclass__ = type
 
 
@@ -26,7 +24,7 @@ description:
 version_added: "1.1"
 options:
   command:
-    choices: [ 'cleanup', 'collectstatic', 'flush', 'dumpdata, 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
+    choices: [ 'cleanup', 'collectstatic', 'flush', 'dumpdata', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate']
     description:
       - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb,
         test, and validate.
@@ -115,7 +113,7 @@ EXAMPLES = """
     app_path: "{{ django_dir }}"
 
 # Create a dumped file from database or specific app.
-- django_manage
+- django_manage:
     command: dumpdata
     apps: main.Smoke
     indent: 4
@@ -148,6 +146,7 @@ EXAMPLES = """
 """
 
 import os
+import pipes
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
