@@ -23,7 +23,8 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file', 'msi']
+        choices=['auto', 'cli', 'env', 'credential_file', 'msi'],
+        default='auto'
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -32,7 +33,7 @@ AZURE_COMMON_ARGS = dict(
     tenant=dict(type='str', no_log=True),
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
-    cloud_environment=dict(type='str'),
+    cloud_environment=dict(type='str', default='AzureCloud'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
     api_profile=dict(type='str', default='latest')
     # debug=dict(type='bool', default=False),
