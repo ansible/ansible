@@ -53,7 +53,7 @@ options:
         description:
             - This is the type of device or network connection that you wish to create or modify.
             - "type C(generic) is added in version 2.5."
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, generic ]
+        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, generic, dummy ]
     mode:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
@@ -774,6 +774,16 @@ class Nmcli(object):
     def create_connection_generic(self):
         return self.create_connection_ethernet()
 
+    def create_connection_dummy(self):
+        # format for creating dummy interface
+        # To add a dummy interface
+        # - nmcli: name=add conn_name=dummy0 type=dummy state=present
+        # nmcli conn add type dummy ifname dummy0 con-name dummy0
+        return self.create_connection_ethernet()
+
+    def modify_connection_dummy(self):
+        return self.modify_connection_ethernet()
+
     def modify_connection_ethernet(self):
         # format for modifying ethernet interface
         # To modify an Ethernet connection with static IP configuration, issue a command as follows
@@ -785,10 +795,7 @@ class Nmcli(object):
         return self._prepare_cmd(cmd, options)
 
     def modify_connection_generic(self):
-        cmd = [self.nmcli_bin, 'con', 'mod', self.options['con-name']]
-        options = ['connection.autoconnect', 'ipv4.addresses', 'ipv4.gateway', 'ipv4.dns', 'ipv6.addresses', 'ipv6.gateway', 'ipv6.dns', 'ipv4.dns-search',
-                   'ipv6.dns-search', 'ipv4.dhcp-client-id']
-        return self._prepare_cmd(cmd, options)
+        return self.modify_connection_ethernet()
 
     def create_connection_bridge(self):
         # format for creating bridge interface
@@ -917,7 +924,7 @@ def main():
             type=dict(required=False, default=None,
                       choices=['ethernet', 'team', 'team-slave', 'bond',
                                'bond-slave', 'bridge', 'bridge-slave',
-                               'vlan', 'generic'],
+                               'vlan', 'generic', 'dummy'],
                       type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),

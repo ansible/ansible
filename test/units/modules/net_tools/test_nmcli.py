@@ -23,6 +23,12 @@ TESTCASE_CONNECTION = [
         '_ansible_check_mode': True,
     },
     {
+        'type': 'dummy',
+        'conn_name': 'non_existent_nw_device',
+        'state': 'absent',
+        '_ansible_check_mode': True,
+    },
+    {
         'type': 'team',
         'conn_name': 'non_existent_nw_device',
         'state': 'absent',
@@ -144,6 +150,19 @@ TESTCASE_ETHERNET_DHCP = [
         '_ansible_check_mode': False,
         'dhcp_client_id': '00:11:22:AA:BB:CC:DD',
     }
+]
+
+
+TESTCASE_DUMMY = [
+    {
+        'type': 'dummy',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'dummy_non_existant',
+        'ip4': '10.10.10.10',
+        'gw4': '10.10.10.1',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    },
 ]
 
 
@@ -437,3 +456,50 @@ def test_eth_dhcp_client_id_con_create(mocked_generic_connection_create):
     args, kwargs = arg_list[0]
 
     assert 'ipv4.dhcp-client-id' in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_DUMMY, indirect=['patch_ansible_module'])
+def test_create_dummy(mocked_generic_connection_create):
+    """
+    Test if Dummy created
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'dummy'
+    assert args[0][5] == 'con-name'
+    assert args[0][6] == 'non_existent_nw_device'
+    assert args[0][7] == 'ifname'
+    assert args[0][8] == 'dummy_non_existant'
+
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_DUMMY, indirect=['patch_ansible_module'])
+def test_mod_dummy(mocked_generic_connection_modify):
+    """
+    Test if Bridge modified
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+    for param in ['ipv4.addresses', '10.10.10.10', 'ipv4.gateway', '10.10.10.1']:
+        assert param in args[0]
