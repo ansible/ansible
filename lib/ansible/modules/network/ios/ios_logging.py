@@ -390,7 +390,7 @@ def main():
                            supports_check_mode=True)
 
     device_info = get_capabilities(module)
-    os_version = device_info['device_info']['network_os_version']
+    os_version = device_info['device_info']['network_os']
 
     warnings = list()
     check_args(module, warnings)
