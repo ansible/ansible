@@ -610,10 +610,10 @@ def check_dependencies():
 
     if not pyhcl_installed:
         raise ImportError("pyhcl required for this module. "
-                          "See: https://pypi.python.org/pypi/pyhcl")
+                          "See: https://pypi.org/project/pyhcl/")
 
     if not has_requests:
-        raise ImportError("requests required for this module. See https://pypi.python.org/pypi/requests")
+        raise ImportError("requests required for this module. See https://pypi.org/project/requests/")
 
 
 def main():
