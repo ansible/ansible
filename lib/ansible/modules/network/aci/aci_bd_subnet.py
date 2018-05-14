@@ -104,14 +104,14 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: create a tenant
+- name: Create a tenant
   aci_tenant:
     host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
 
-- name: create a bridge domain
+- name: Create a bridge domain
   aci_bd:
     host: apic
     username: admin
@@ -119,7 +119,7 @@ EXAMPLES = r'''
     tenant: production
     bd: database
 
-- name: create a subnet
+- name: Create a subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -129,7 +129,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: create a subnet with options
+- name: Create a subnet with options
   aci_bd_subnet:
     host: apic
     username: admin
@@ -144,7 +144,7 @@ EXAMPLES = r'''
     route_profile_l3_out: corp
     route_profile: corp_route_profile
 
-- name: update a subnets scope to private and shared
+- name: Update a subnets scope to private and shared
   aci_bd_subnet:
     host: apic
     username: admin
@@ -155,14 +155,14 @@ EXAMPLES = r'''
     mask: 24
     scope: [private, shared]
 
-- name: get all subnets
+- name: Get all subnets
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
-- name: get all subnets of specific gateway in specified tenant
+- name: Get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
     host: apic
     username: admin
@@ -172,7 +172,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: get specific subnet
+- name: Get specific subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -183,7 +183,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: delete a subnet
+- name: Delete a subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -304,7 +304,7 @@ SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip
 
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule, SEQUENCETYPE
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -355,11 +355,10 @@ def main():
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
-    if isinstance(scope, SEQUENCETYPE):
-        if 'private' in scope and 'public' in scope:
-            module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
-        else:
-            scope = ','.join(sorted(scope))
+    if 'private' in scope and 'public' in scope:
+        module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
+    else:
+        scope = ','.join(sorted(scope))
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:
