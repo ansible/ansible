@@ -44,8 +44,6 @@ options:
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
@@ -55,8 +53,6 @@ options:
   kms_key_id:
     description:
       - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
-    required: false
-    default: null
     version_added: "2.2"
   wait:
     description:
@@ -72,14 +68,12 @@ options:
   tags:
     description:
       - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
   tag_equality:
     description:
       - Whether to use tags if the source AMI already exists in the target region. If this is set, and all tags match
         in an existing AMI, the AMI will not be copied again.
     default: false
-    version_added: 2.5
+    version_added: 2.6
 author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
@@ -190,7 +184,6 @@ def copy_image(module, ec2):
             changed = True
 
         if module.params.get('wait'):
-            ec2.get_waiter('image_available').wait(ImageIds=[image['ImageId']])
             max_attempts = module.params.get('wait_timeout') // delay
             ec2.get_waiter('image_available').wait(
                 ImageIds=[image_id],
