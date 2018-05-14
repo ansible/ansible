@@ -112,7 +112,12 @@ class Cliconf(CliconfBase):
             else:
                 cmd = item['command']
 
-            out = self.get(cmd)
+            try:
+                out = self.get(cmd)
+            except ConnectionError as e:
+                if check_rc:
+                    raise
+                out = e
 
             try:
                 out = to_text(out, errors='surrogate_or_strict').strip()
