@@ -472,6 +472,7 @@ def flatten(mylist, levels=None):
 
     return ret
 
+
 def pluck(data, keypath):
     ''' takes a dictionary or list and collects the values of the
         properties defined in the 'keypath', ignoring null values '''
@@ -491,6 +492,7 @@ def pluck(data, keypath):
         else:
             # when we reach the last key, exit the recursion
             yield data
+
 
 def dict_to_list_of_dict_key_value_elements(mydict):
     ''' takes a dictionary and transforms it into a list of dictionaries,
