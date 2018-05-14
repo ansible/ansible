@@ -31,6 +31,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         expiration_days: 30
         prefix: /pre
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -42,6 +43,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         expiration_days: 30
         prefix: /pre
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -53,6 +55,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -64,6 +67,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -75,6 +79,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         transition_days: 300
         prefix: /something/else
+        <<: *aws_connection_info
       register: output
       failed_when: false
 
@@ -88,6 +93,7 @@
         status: disabled
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -100,6 +106,7 @@
         status: disabled
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -112,6 +119,7 @@
         status: enabled
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -124,6 +132,7 @@
         status: enabled
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -135,6 +144,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         state: absent
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -146,6 +156,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         state: absent
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -158,6 +169,7 @@
         transition_days: 300
         storage_class: standard_ia
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -170,6 +182,7 @@
         storage_class: standard_ia
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -181,6 +194,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -192,6 +206,7 @@
         name: "{{ resource_prefix }}-testbucket-ansible"
         transition_days: 300
         prefix: /something
+        <<: *aws_connection_info
       register: output
 
     - assert:
