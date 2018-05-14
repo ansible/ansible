@@ -771,7 +771,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     ev = kwargs[key]
                     if 'policy_type' in ev:
                         if ev['policy_type'] == 'predefined':
-                            ev['policy_type'] = 'Predefined'-
+                            ev['policy_type'] = 'Predefined'
                         elif ev['policy_type'] == 'custom':
                             ev['policy_type'] = 'Custom'
                     if 'policy_name' in ev:
