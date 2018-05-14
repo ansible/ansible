@@ -140,11 +140,12 @@ image_id:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
-    from botocore.exceptions import ClientError, NoCredentialsError, WaiterError
-    import botocore
-except ImportError:
-    pass  # caught by AnsibleAWSModule
 
+try:
+    from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 def copy_image(module, ec2):
     """
@@ -156,6 +157,8 @@ def copy_image(module, ec2):
 
     image = None
     changed = False
+    tags = module.params.get('tags')
+
     params = {'SourceRegion': module.params.get('source_region'),
               'SourceImageId': module.params.get('source_image_id'),
               'Name': module.params.get('name'),
@@ -181,6 +184,7 @@ def copy_image(module, ec2):
             changed = True
 
         if module.params.get('wait'):
+            delay = 15
             max_attempts = module.params.get('wait_timeout') // delay
             ec2.get_waiter('image_available').wait(
                 ImageIds=[image_id],
@@ -188,9 +192,9 @@ def copy_image(module, ec2):
             )
 
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(image))
-    except botocore.exceptions.WaiterError as e:
+    except WaiterError as e:
         module.fail_json_aws(e, msg='An error occurred waiting for the image to become available')
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Could not copy AMI")
     except Exception as e:
         module.fail_json(msg='Unhandled exception. (%s)' % str(e))
