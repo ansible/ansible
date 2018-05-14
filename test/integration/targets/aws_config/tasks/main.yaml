@@ -113,10 +113,9 @@
            - 'output.msg.startswith("missing required arguments:")'
 
     - name: test resource_type configuration_recorder with no role_arn parameter
-      aws_config:
+      aws_config_recorder:
         name: random_name
         state: present
-        resource_type: configuration_recorder
       register: output
       ignore_errors: true
 
@@ -124,13 +123,12 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is configuration_recorder but all of the following are missing: role_arn")'
+           - 'output.msg.startswith("state is present but all of the following are missing")'
 
     - name: test resource_type configuration_recorder with no recording_group parameter
-      aws_config:
+      aws_config_recorder:
         name: random_name
         state: present
-        resource_type: configuration_recorder
         role_arn: 'arn:aws:iam::123456789012:role/AwsConfigRecorder'
       register: output
       ignore_errors: true
@@ -139,7 +137,7 @@
       assert:
         that:
            - output.failed
-           - 'output.msg.startswith("resource_type is configuration_recorder but all of the following are missing: recording_group")'
+           - 'output.msg.startswith("state is present but all of the following are missing")'
 
     - name: test resource_type aggregation_authorization with no authorized_account_id parameter
       aws_config:
@@ -201,11 +199,10 @@
     # Creation testing
     # ============================================================
     - name: Create Configuration Recorder for AWS Config
-      aws_config:
+      aws_config_recorder:
         <<: *aws_connection_info
         name: test_configuration_recorder
         state: present
-        resource_type: configuration_recorder
         role_arn: "{{ config_iam_role.arn }}"
         recording_group:
             all_supported: true
@@ -253,11 +250,10 @@
     # Update testing
     # ============================================================
     - name: Update Configuration Recorder
-      aws_config:
+      aws_config_recorder:
         <<: *aws_connection_info
         name: test_configuration_recorder
         state: present
-        resource_type: configuration_recorder
         role_arn: "{{ config_iam_role.arn }}"
         recording_group:
             all_supported: false
@@ -306,11 +302,10 @@
     # Read testing
     # ============================================================
     - name: Don't update Configuration Recorder
-      aws_config:
+      aws_config_recorder:
         <<: *aws_connection_info
         name: test_configuration_recorder
         state: present
-        resource_type: configuration_recorder
         role_arn: "{{ config_iam_role.arn }}"
         recording_group:
             all_supported: false
@@ -360,17 +355,10 @@
     # Destroy testing
     # ============================================================
     - name: Destroy Configuration Recorder
-      aws_config:
+      aws_config_recorder:
         <<: *aws_connection_info
         name: test_configuration_recorder
         state: absent
-        resource_type: configuration_recorder
-        role_arn: "{{ config_iam_role.arn }}"
-        recording_group:
-            all_supported: false
-            include_global_types: false
-            resource_types:
-              - 'AWS::S3::Bucket'
       register: output
       ignore_errors: yes
 
