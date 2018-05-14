@@ -1,0 +1,2 @@
+bugfixes:
+- windows become - Show better error messages when the become process fails
