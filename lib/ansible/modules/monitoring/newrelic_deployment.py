@@ -131,8 +131,7 @@ def main():
             app_id = body['applications'][0]['id']
             if app_id:
                 module.fail_json(msg="App not found in\
-                NewRelic Registerd Applications List"
-                                 )
+                NewRelic Registerd Applications List")
     else:
         app_id = module.params['application_id']
 
@@ -140,12 +139,13 @@ def main():
 
     url = 'https://api.newrelic.com/v2/applications/' + str(app_id) \
         + '/deployments.json'
-    data = {'deployment': {
-        'revision': str(module.params['revision']),
-        'changelog': str(module.params['changelog']),
-        'description': str(module.params['description']),
-        'user': str(module.params['user']), }
-        }
+    data = {
+        'deployment': {
+            'revision': str(module.params['revision']),
+            'changelog': str(module.params['changelog']),
+            'description': str(module.params['description']),
+            'user': str(module.params['user']), }
+    }
 
     headers = {'x-api-key': module.params['token'],
                'Content-Type': 'application/json'}
