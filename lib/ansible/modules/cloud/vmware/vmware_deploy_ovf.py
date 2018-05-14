@@ -481,7 +481,7 @@ class VMwareDeployOvf:
                     facts.update(_facts)
 
         if not facts:
-            gather_vm_facts(self.si, self.entity)
+            facts.update(gather_vm_facts(self.si, self.entity))
 
         return facts
 
