@@ -83,6 +83,9 @@ def handle_response(response):
                     result = json.dumps(result)
 
                 results.append(result.strip())
+
+    if len(results) == 1:
+        return results[0]
     return results
 
 
