@@ -109,8 +109,7 @@ def core(module):
     ssh_pub_key = module.params['ssh_pub_key']
     state = module.params["state"]
     account_api = ScalewayAPI(module,
-                              headers={'X-Auth-Token': api_token,
-                                       'Content-type': 'application/json'},
+                              headers={'X-Auth-Token': api_token},
                               base_url=module.params["base_url"])
     response = account_api.get('organizations')
 
