@@ -241,7 +241,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
-            remote_tmp = '~/ansible'
+            remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -661,7 +661,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
         except KeyError:
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
-            module_args['_ansible_remote_tmp'] = '~/ansible'
+            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
