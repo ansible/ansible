@@ -142,7 +142,7 @@ EXAMPLES = r"""
     dest: /etc/hosts
     regexp: '\b(localhost)(\d*)\b'
     replace: '\1\2.localdomain\2 \1\2'
-    
+
 # replace using a backreference containing numeric value
 # in this situation the replace backreference must be defined as `/g<number>`
   vars:
