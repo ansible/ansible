@@ -5,7 +5,7 @@
     win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
     linux_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}lnxplan"
 
-- name: 1 - Create a windows web app with non-exist app service plan
+- name: Create a windows web app with non-exist app service plan
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}1"
@@ -15,7 +15,7 @@
       is_linux: false
       sku: S1
 
-- name: 1 - Create a windows web app with existing app service plan, try to update some root level params
+- name: Create a windows web app with existing app service plan, try to update some root level params
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}2"
@@ -25,7 +25,7 @@
     https_only: true
   register: output
 
-- name: create a win web app with java run time specific
+- name: Create a win web app with java run time specific
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}3"
@@ -43,7 +43,7 @@
   assert:
     that: output.changed
 
-- name: update app settings
+- name: Update app settings
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}3"
@@ -57,11 +57,11 @@
       testkey2: "testvalue2"
   register: output
 
-- name: assert the function was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-- name: purge all existing web app
+- name: Purge all existing app settings
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}3"
@@ -70,11 +70,11 @@
     purge_app_settings: true
   register: output
 
-- name: assert the web app was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-- name: 1 - create a win web app with python run time
+- name: Create a win web app with python run time
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
@@ -83,11 +83,11 @@
     python_version: "2.7"
   register: output
 
-- name: assert the web app was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-- name: 1 - create a docker web app with some app settings, with docker image
+- name: Create a docker web app with some app settings, with docker image
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}5"
@@ -101,11 +101,11 @@
       name: "ansible/ansible:ubuntu1404"
   register: output
 
-- name: assert the web app was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-- name: 1 - create a docker web app with private acr registry
+- name: Create a docker web app with private acr registry
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}6"
@@ -119,12 +119,11 @@
       registry_server_password: password
   register: output
 
-- name: assert the web app was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-
-- name: 1 - create a linux web app with nodejs framework
+- name: Create a linux web app with nodejs framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}7"
@@ -134,11 +133,24 @@
     linux_fx_version: "node|6.6"
   register: output
 
-- name: assert the web app was created
+- name: Should be idempotent with linux web app created
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}7"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    linux_fx_version: "node|6.6"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Assert the web app was created
   assert:
     that: output.changed
     
-- name: 1 - update nodejs framework
+- name: Update nodejs framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}7"
@@ -148,11 +160,11 @@
     linux_fx_version: "node|6.9"
   register: output
 
-- name: assert the web app was created
+- name: Assert the web app was created
   assert:
     that: output.changed
 
-- name: 1 - create a linux web app with deployment source github
+- name: Create a linux web app with deployment source github
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}8"
@@ -169,3 +181,13 @@
   assert:
     that: output.changed
 
+- name: Delete web app
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+      state: absent      
+  register: output
+
+- name: Assert the web app was deleted
+  assert:
+    that: output.changed

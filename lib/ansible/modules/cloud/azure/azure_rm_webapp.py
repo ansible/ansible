@@ -124,11 +124,10 @@ options:
             - The web's startup file.
             - This only applys for linux web app.
 
-
     client_affinity_enabled:
         description:
             - True to enable client affinity; False to stop sending session affinity cookies, which route client requests in the
-            - same session to the same instance.
+              same session to the same instance.
         default: True
 
     https_only:
@@ -171,6 +170,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Yunge Zhu(@yungezz)"
@@ -178,17 +178,17 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: 1 - Create a windows web app with non-exist app service plan
+    - name: Create a windows web app with non-exist app service plan
       azure_rm_webapp:
-        resource_group: "{{ resource_group }}"
-        name: "{{ win_app_name }}1"
+        resource_group: myresourcegroup
+        name: mywinwebapp
         plan:
-          resource_group: "{{ plan_resource_group }}"
-          name: "{{ win_plan_name }}"
+          resource_group: myappserviceplan_rg
+          name: myappserviceplan
           is_linux: false
           sku: S1
 
-    - name: 2 - create a docker web app with some app settings, with docker image
+    - name: Create a docker web app with some app settings, with docker image
       azure_rm_webapp:
         resource_group: myresourcegroup
         name: mydockerwebapp
@@ -204,7 +204,7 @@ EXAMPLES = '''
         container_settings:
           name: "ansible/ansible:ubuntu1404"
 
-    - name: 3 - create a docker web app with private acr registry
+    - name: Create a docker web app with private acr registry
       azure_rm_webapp:
         resource_group: myresourcegroup
         name: mydockerwebapp
@@ -218,7 +218,7 @@ EXAMPLES = '''
           registry_server_user: user
           registry_server_password: pass
 
-    - name: 4 - create a linux web app with Node 6.6 framework
+    - name: Create a linux web app with Node 6.6 framework
       azure_rm_webapp:
         resource_group: myresourcegroup
         name: mylinuxwebapp
@@ -232,18 +232,58 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-id:
-    description:
-        - Resource Id.
-    returned: always
-    type: str
-    sample: id
-state:
-    description:
-        - Current state of the app.
-    returned: always
-    type: str
-    sample: state
+ok: [localhost] => {
+    "results": {
+        "ansible_facts": {
+            "azure_webapp": {
+                "availability_state": "Normal",
+                "client_affinity_enabled": true,
+                "client_cert_enabled": false,
+                "container_size": 0,
+                "daily_memory_time_quota": 0,
+                "default_host_name": "ansiblewindowsaaa.azurewebsites.net",
+                "enabled": true,
+                "enabled_host_names": [
+                    "ansiblewindowsaaa.azurewebsites.net",
+                    "ansiblewindowsaaa.scm.azurewebsites.net"
+                ],
+                "host_name_ssl_states": [
+                    {
+                        "host_type": "Standard",
+                        "name": "ansiblewindowsaaa.azurewebsites.net",
+                        "ssl_state": "Disabled"
+                    },
+                    {
+                        "host_type": "Repository",
+                        "name": "ansiblewindowsaaa.scm.azurewebsites.net",
+                        "ssl_state": "Disabled"
+                    }
+                ],
+                "host_names": [
+                    "ansiblewindowsaaa.azurewebsites.net"
+                ],
+                "host_names_disabled": false,
+                "id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
+                "kind": "app",
+                "last_modified_time_utc": "2018-05-14T04:50:54.473333Z",
+                "location": "East US",
+                "name": "ansiblewindowsaaa",
+                "outbound_ip_addresses": "52.170.7.25,52.168.75.147,52.179.5.98,52.179.1.81,52.179.4.232",
+                "repository_site_name": "ansiblewindowsaaa",
+                "reserved": false,
+                "resource_group": "ansiblewebapp1",
+                "scm_site_also_stopped": false,
+                "server_farm_id": "/subscriptions/685ba005-af8d-4b04-8f16-a7bf38b2eb5a/resourceGroups/ansiblewebapp1_plan/providers/Microsoft.Web/serverfarms/win_appplan1",
+                "state": "Running",
+                "tags": {},
+                "type": "Microsoft.Web/sites",
+                "usage_state": "Normal"
+            }
+        },
+        "changed": true,
+        "failed": false,
+    }
+}
 '''
 
 import time
@@ -256,17 +296,15 @@ try:
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
         AppServicePlan, SkuDescription, NameValuePair
-
     )
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-
 app_service_plan_spec = dict(
     resource_group=dict(type='str'),
     name=dict(type='str', required=True),
-    is_linux=dict(type='bool'),
+    is_linux=dict(type='bool', default=False),
     number_of_workers=dict(type='int'),
     sku=dict(type='str')
 )
@@ -444,7 +482,10 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         self.purge_app_settings = False
 
-        self.results = dict(changed=False)
+        self.results = dict(
+            changed=False,
+            ansible_facts=dict(azure_webapp=None)
+        )
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -470,9 +511,7 @@ class AzureRMWebApps(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        setattr(self, 'tags', kwargs['tags'])
-
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -591,7 +630,8 @@ class AzureRMWebApps(AzureRMModuleBase):
                     self.site_config['app_settings'] = app_settings
 
                 # create web app
-                response = self.create_update_webapp()
+                if not self.check_mode:
+                    response = self.create_update_webapp()
 
         else:
             # existing web app, do update
@@ -609,50 +649,60 @@ class AzureRMWebApps(AzureRMModuleBase):
                 update_tags, old_response['tags'] = self.update_tags(
                     old_response.get('tags', dict()))
 
-                if old_response['state'] == "Running":
-                    if update_tags:
-                        to_be_updated = True
+                if update_tags:
+                    to_be_updated = True
 
-                    self.site = Site(location=self.location,
-                                     site_config=self.site_config)
+                self.site = Site(location=self.location,
+                                 site_config=self.site_config)
 
-                    # if root level property changed, call create_or_update
-                    if self.is_updatable_property_changed(old_response):
+                # if root level property changed, call create_or_update
+                if self.is_updatable_property_changed(old_response):
 
-                        to_be_updated = True
+                    to_be_updated = True
+                    if not self.check_mode:
                         response = self.create_update_webapp()
 
-                    # check if site_config changed
-                    old_config = self.get_webapp_configuration()
+                # check if site_config changed
+                old_config = self.get_webapp_configuration()
 
-                    if (old_config):
-                        if self.is_site_config_changed(old_config):
-
-                            to_be_updated = True
-                            response = self.create_update_webapp()
-
-                    # get existing app_settings
-                    self.app_settings_strDic = self.list_app_settings()
-
-                    # purge existing app_settings:
-                    if self.purge_app_settings:
-                        self.app_settings_strDic.properties = dict()
-
-                        if self.app_settings is not None:
-                            for key in self.app_settings.keys():
-                                self.app_settings_strDic.properties[key] = self.app_settings[key]
+                if (old_config):
+                    if self.is_site_config_changed(old_config):
 
                         to_be_updated = True
-                        update_as_response = self.update_app_settings()
+                        if not self.check_mode:
+                            response = self.create_update_webapp()
 
-                    # merge app_settings
-                    elif self.is_app_settings_changed():
-                        # if app_settings changed, call create_or_update_appsetting
+                # get existing app_settings
+                self.app_settings_strDic = self.list_app_settings()
+
+                # purge existing app_settings:
+                if self.purge_app_settings:
+                    self.app_settings_strDic.properties = dict()
+
+                    if self.app_settings is not None:
                         for key in self.app_settings.keys():
                             self.app_settings_strDic.properties[key] = self.app_settings[key]
 
-                        to_be_updated = True
+                    to_be_updated = True
+
+                    if not self.check_mode:
+                    update_as_response = self.update_app_settings()
+
+                # merge app_settings
+                elif self.is_app_settings_changed():
+                    # if app_settings changed, call create_or_update_appsetting
+                    for key in self.app_settings.keys():
+                        self.app_settings_strDic.properties[key] = self.app_settings[key]
+
+                    to_be_updated = True
+
+                    if not self.check_mode:
                         update_as_response = self.update_app_settings()
+
+        if response:
+            self.results['ansible_facts']['azure_webapp'] = response
+        elif old_response:
+            self.results['ansible_facts']['azure_webapp'] = old_response
 
         if to_be_updated:
             self.log('Need to Create/Update web app')
@@ -660,10 +710,6 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if self.check_mode:
                 return self.results
-
-            if response:
-                self.results["id"] = response["id"]
-                self.results["state"] = response["state"]
 
         if self.to_do == Actions.Delete:
             self.log("Web App instance deleted")
@@ -916,15 +962,13 @@ class AzureRMWebApps(AzureRMModuleBase):
             return response
         except CloudError as ex:
             self.log("Failed to get configuration for web app {0} in resource group {1}: {2}".format(
-                self.name, self.resource_group, ex)
+                self.name, self.resource_group, str(ex))
 
             return False
-
 
 def main():
     """Main execution"""
     AzureRMWebApps()
-
 
 if __name__ == '__main__':
     main()
