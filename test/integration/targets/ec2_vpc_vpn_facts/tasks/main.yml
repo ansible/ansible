@@ -74,6 +74,8 @@
         - 'result.vpn_connections != []'
 
   # ============================================================
+  always:
+
   - name: delete vpn connection
     ec2_vpc_vpn:
       state: absent
