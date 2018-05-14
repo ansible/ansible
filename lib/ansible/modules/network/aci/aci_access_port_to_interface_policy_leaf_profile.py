@@ -61,6 +61,7 @@ options:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
     aliases: [ policy_group_name ]
   policy_group_type:
+    version_added: '2.6'
     description:
     - The type of interface for the static EPG deployement.
     choices: [ port_channel, switch_port, vpc ]
@@ -240,7 +241,7 @@ def main():
         'from': dict(type='str', aliases=['fromPort', 'from_port_range']),
         'to': dict(type='str', aliases=['toPort', 'to_port_range']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
-        'policy_group_type': dict(type='str'),        
+        'policy_group_type': dict(type='str', default='switch_port', choices=['port_channel', 'switch_port', 'vpc']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
     })
 
