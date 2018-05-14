@@ -472,6 +472,25 @@ def flatten(mylist, levels=None):
 
     return ret
 
+def pluck(data, keypath):
+    ''' takes a dictionary or list and collects the values of the
+        properties defined in the 'keypath', ignoring null values '''
+
+    if isinstance(data, list):
+        # when one of the items is a list, simply pluck the items in it
+        for item in data:
+            for result in pluck(item, keypath):
+                yield result
+    elif data:
+        # take the first key of the keypath and pass the rest down the recursion
+        keys = keypath if isinstance(keypath, list) else keypath.split('.')
+        if len(keys) > 0:
+            subdata = data.get(keys[0]) if isinstance(data, dict) else getattr(data, keys[0])
+            for result in pluck(subdata, keys[1:]):
+                yield result
+        else:
+            # when we reach the last key, exit the recursion
+            yield data
 
 def dict_to_list_of_dict_key_value_elements(mydict):
     ''' takes a dictionary and transforms it into a list of dictionaries,
@@ -573,5 +592,6 @@ class FilterModule(object):
             'combine': combine,
             'extract': extract,
             'flatten': flatten,
+            'pluck': pluck,
             'dict2items': dict_to_list_of_dict_key_value_elements,
         }
