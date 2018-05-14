@@ -40,6 +40,52 @@ class HttpApi:
         return '#'
 
     # Imported from module_utils
+    def edit_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+        banner_cmd = None
+        banner_input = []
+
+        commands = ['configure session %s' % session]
+        if replace:
+            commands.append('rollback clean-config')
+
+        for command in config:
+            if command.startswith('banner'):
+                banner_cmd = command
+                banner_input = []
+            elif banner_cmd:
+                if command == 'EOF':
+                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
+                    banner_cmd = None
+                    commands.append(command)
+                else:
+                    banner_input.append(command)
+                    continue
+            else:
+                commands.append(command)
+
+        response = self.send_request(commands)
+
+        commands = ['configure session %s' % session, 'show session-config diffs']
+        if commit:
+            commands.append('commit')
+        else:
+            commands.append('abort')
+
+        response = self.send_request(commands, output='text')
+        diff = response[1].strip()
+        if diff:
+            result['diff'] = diff
+
+        return result
+
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
@@ -85,44 +131,7 @@ class HttpApi:
         fallback to using configure() to load the commands.  If that happens,
         there will be no returned diff or session values
         """
-        session = 'ansible_%s' % int(time.time())
-        result = {'session': session}
-        banner_cmd = None
-        banner_input = []
-
-        commands = ['configure session %s' % session]
-        if replace:
-            commands.append('rollback clean-config')
-
-        for command in config:
-            if command.startswith('banner'):
-                banner_cmd = command
-                banner_input = []
-            elif banner_cmd:
-                if command == 'EOF':
-                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
-                    banner_cmd = None
-                    commands.append(command)
-                else:
-                    banner_input.append(command)
-                    continue
-            else:
-                commands.append(command)
-
-        response = self.send_request(commands)
-
-        commands = ['configure session %s' % session, 'show session-config diffs']
-        if commit:
-            commands.append('commit')
-        else:
-            commands.append('abort')
-
-        response = self.send_request(commands, output='text')
-        diff = response[1].strip()
-        if diff:
-            result['diff'] = diff
-
-        return result
+        return self.edit_config(config, commit, replace)
 
 
 def handle_response(response):
