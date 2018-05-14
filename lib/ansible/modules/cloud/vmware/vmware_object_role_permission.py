@@ -17,9 +17,8 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_object_role_permission
-short_description: This module can be used to manage object permissions on the given host.
-description:
-    - Manage local roles on an ESXi host
+short_description: Manage local roles on an ESXi host
+description: This module can be used to manage object permissions on the given host.
 version_added: "2.6"
 author:
 - Derek Rushing (@kryptsi) <drush@kryptsi.com>
@@ -48,8 +47,9 @@ options:
         description:
             - The object type being targeted.
         default: 'Folder'
-        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool', 'Datastore', 'Network', 'HostSystem',
-                  'cluster', 'ClusterComputeResource', 'DistributedVirtualSwitch']
+        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
+                  'Datastore', 'Network', 'HostSystem', 'ComputeResource',
+                  'ClusterComputeResource', 'DistributedVirtualSwitch']
     recursive:
         description:
             - Should the permissions be recursively applied.
@@ -57,7 +57,8 @@ options:
         type: bool
     state:
         description:
-            - Indicate desired state of the object's permission. When C(state=present), the permission will be added if it doesn't already exist.
+            - Indicate desired state of the object's permission. When C(state=present), the permission will be added
+              if it doesn't already exist.
             - When C(state=absent), the permission is removed if it exists.
         choices: ['present', 'absent']
         default: present
@@ -102,9 +103,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec,
-                                         find_obj, connect_to_api,
-                                         wait_for_task)
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 
 class VMwareObjectRolePermission(PyVmomi):
@@ -115,7 +114,6 @@ class VMwareObjectRolePermission(PyVmomi):
 
         if self.params.get('principal', None) is not None:
             self.applied_to = self.params['principal']
-            self.is_group = False
         elif self.params.get('group', None) is not None:
             self.applied_to = self.params['group']
             self.is_group = True
@@ -206,11 +204,9 @@ def main():
     argument_spec.update(dict(role=dict(required=True, type='str'),
                               object_name=dict(required=True, type='str'),
                               object_type=dict(type='str', default='Folder',
-                                               choices=['Folder', 'VirtualMachine', 'Datacenter',
-                                                        'ResourcePool', 'Datastore', 'Network',
-                                                        'HostSystem', 'cluster',
-                                                        'ClusterComputeResource',
-                                                        'DistributedVirtualSwitch']),
+                                               choices=['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
+                                                        'Datastore', 'Network', 'HostSystem', 'ComputeResource',
+                                                        'ClusterComputeResource', 'DistributedVirtualSwitch']),
                               principal=dict(type='str'),
                               group=dict(type='str'),
                               recursive=dict(type='bool', default=True),
@@ -218,9 +214,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
-                           mutually_exclusive=[
-                               ['principal', 'group'],
-                           ])
+                           mutually_exclusive=[['principal', 'group'],],
+                           required_one_of=[['principal', 'group'],])
 
     vmware_object_permission = VMwareObjectRolePermission(module)
     vmware_object_permission.process_state()
