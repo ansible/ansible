@@ -176,6 +176,16 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
+    # Make sure that src makes sense with the state
+    if params['src'] and params['state'] not in ('link', 'hard'):
+        params['src'] = None
+        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
+                    " error in Ansible 2.10")
+
+        # In 2.10, switch to this
+        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
+        #                               "path": params["path"]})
+
     # When path is a directory, rewrite the pathname to be the file inside of the directory
     # TODO: Why do we exclude link?  Why don't we exclude directory?  Should we exclude touch?
     if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
