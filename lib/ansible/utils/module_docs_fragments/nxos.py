@@ -57,6 +57,25 @@ options:
             the remote device.  This is a common argument used for either I(cli)
             or I(nxapi) transports. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
+      authorize:
+        description:
+          - Instructs the module to enter privileged mode on the remote device
+            before sending any commands.  If not specified, the device will
+            attempt to execute all commands in non-privileged mode. If the value
+            is not specified in the task, the value of environment variable
+            C(ANSIBLE_NET_AUTHORIZE) will be used instead.
+        type: bool
+        default: no
+        choices: ['yes', 'no']
+        version_added: 2.5.3
+      auth_pass:
+        description:
+          - Specifies the password to use if required to enter privileged mode
+            on the remote device.  If I(authorize) is false, then this argument
+            does nothing. If the value is not specified in the task, the value of
+            environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
+        default: none
+        version_added: 2.5.3
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
