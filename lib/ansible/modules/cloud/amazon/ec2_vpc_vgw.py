@@ -220,7 +220,6 @@ def create_vgw(client, module):
     except botocore.exceptions.WaiterError as e:
         module.fail_json(msg="Failed to wait for Vpn Gateway {0} to be available".format(response['VpnGateway']['VpnGatewayId']),
                          exception=traceback.format_exc())
-        response = client.create_vpn_gateway(Type=params['Type'], AmazonSideAsn=params['AmazonSideAsn'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
