@@ -390,10 +390,10 @@ class CronTab(object):
         if job:
             blank_trimmed_job = " ".join(job.split())
             for i, l in enumerate(self.lines):
-                if len(l) and l[0] == '#': 
+                if len(l) and l[0] == '#':
                     continue
                 blank_trimmed_lin = " ".join(l.split())
-                if blank_trimmed_lin == blank_trimmed_job: 
+                if blank_trimmed_lin == blank_trimmed_job:
                     # if no leading ansible header, insert one
                     if not re.match(r'%s' % self.ansible, self.lines[i - 1]):
                         self.lines.insert(i, self.do_comment(name))
