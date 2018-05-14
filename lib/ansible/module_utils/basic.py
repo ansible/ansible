@@ -197,13 +197,6 @@ except NameError:
     unicode = text_type
 
 try:
-    # Python 2.6+
-    bytes
-except NameError:
-    # Python 2.4
-    bytes = binary_type
-
-try:
     # Python 2
     basestring
 except NameError:
