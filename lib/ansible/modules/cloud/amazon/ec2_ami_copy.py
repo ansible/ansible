@@ -39,7 +39,6 @@ options:
   name:
     description:
       - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
-    required: false
     default: "default"
   description:
     description:
@@ -47,8 +46,6 @@ options:
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
-    required: false
-    default: null
     version_added: "2.2"
   kms_key_id:
     description:
