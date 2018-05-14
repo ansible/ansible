@@ -37,7 +37,7 @@ options:
             - absent
             - present
         default: present
-        version_added: 2.6
+        version_added: 2.7
     host_type_index:
         description:
             - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
@@ -77,7 +77,7 @@ options:
             - Allow ports that are already assigned to be re-assigned to your current host
         required: false
         type: bool
-        version_added: 2.6
+        version_added: 2.7
     group:
         description:
             - The unique identifier of the host-group you want the host to be a member of; this is used for clustering.
@@ -88,7 +88,7 @@ options:
         description:
             - A local path to a file to be used for debug logging
         required: False
-        version_added: 2.6
+        version_added: 2.7
 
 """
 
