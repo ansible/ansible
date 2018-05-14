@@ -1,6 +1,4 @@
 ---
-- set_fact: home="{{ lookup('env', 'HOME') }}"
-
 - name: Clean up sockets with file module
   file:
     state: absent

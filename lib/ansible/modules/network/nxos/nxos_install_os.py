@@ -131,18 +131,16 @@ from ansible.module_utils.basic import AnsibleModule
 
 def check_ansible_timer(module):
     '''Check Ansible Timer Values'''
-    msg = "The 'timeout' provider param value for this module to execute\n"
-    msg = msg + 'properly is too low.\n'
-    msg = msg + 'Upgrades can take a long time so the value needs to be set\n'
-    msg = msg + 'to the recommended value of 500 seconds or higher in the\n'
-    msg = msg + 'ansible playbook for the nxos_install_os module.\n'
-    msg = msg + '\n'
-    msg = msg + 'provider: "{{ connection | combine({\'timeout\': 500}) }}"'
-    data = module.params.get('provider')
+    import os
+    command_timer = os.environ.get('ANSIBLE_PERSISTENT_COMMAND_TIMEOUT')
+    connect_timer = os.environ.get('ANSIBLE_PERSISTENT_CONNECT_TIMEOUT')
+    msg = "The 'ANSIBLE_PERSISTENT_COMMAND_TIMEOUT' and 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT'\n"
+    msg = msg + "timers need to be set to 500 seconds or higher when using this module\n"
+    msg = msg + "\nPlease set the timers and re-run the playbook"
     timer_low = False
-    if data.get('timeout') is None:
+    if command_timer is None or connect_timer is None:
         timer_low = True
-    if data.get('timeout') is not None and data.get('timeout') < 500:
+    elif command_timer < 500 or connect_timer < 500:
         timer_low = True
     if timer_low:
         module.fail_json(msg=msg.split('\n'))
