@@ -123,8 +123,10 @@ output:
   returned: when the display format is selected as JSON it is returned as dict type, if the
             display format is xml or pretty pretty it is retured as a string apart from low-level
             errors (such as action plugin).
-  type: dict or string
-  sample: {'...'} or '...'
+  type: complex
+  contains:
+    formatted_output:
+      - Contains formatted response received from remote host as per the value in display format.
 """
 import sys
 
