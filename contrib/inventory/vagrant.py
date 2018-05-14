@@ -73,7 +73,7 @@ parser.add_option('--host', default=None, dest="host",
 
 # Given Vagrant's locking situation when communicating with instances, it's
 # possible to recover from some errors if we just wait and retry.
-def subprocess_with_retry(cmd, retry_count=3, retry_wait=1):
+def subprocess_with_retry(cmd, retry_count=3, retry_wait=10):
     pipes = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
