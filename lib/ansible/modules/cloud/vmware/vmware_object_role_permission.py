@@ -214,8 +214,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
-                           mutually_exclusive=[['principal', 'group'],],
-                           required_one_of=[['principal', 'group'],])
+                           mutually_exclusive=[['principal', 'group'], ],
+                           required_one_of=[['principal', 'group'], ])
 
     vmware_object_permission = VMwareObjectRolePermission(module)
     vmware_object_permission.process_state()
