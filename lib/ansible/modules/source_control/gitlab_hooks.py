@@ -25,7 +25,7 @@ version_added: "2.6"
 options:
   api_url:
     description:
-      - GitLab API url, example: https://gitlab.example.com/api
+      - GitLab API url, e.g. https://gitlab.example.com/api
     required: true
   access_token:
     description:
@@ -53,7 +53,7 @@ options:
     description:
       - Trigger hook on push events
     type: bool
-    default: 'no'
+    default: 'yes'
   issues_events:
     description:
       - Trigger hook on issues events
@@ -143,6 +143,31 @@ EXAMPLES = '''
     hook_url: "https://my-ci-server.example.com/gitlab-hook"
     state: absent
 '''
+
+RETURN = '''
+msg:
+    description: Success or failure message
+    returned: always
+    type: string
+    sample: "Success"
+
+result:
+    description: json parsed response from the server
+    returned: always
+    type: dict
+
+error:
+    description: the error message returned by the Gitlab API
+    returned: failed
+    type: string
+    sample: "400: key is already in use"
+
+previous_version:
+    description: object describing the state prior to this task
+    returned: changed
+    type: dict
+'''
+
 
 import json
 
@@ -288,7 +313,7 @@ def main():
     if success:
         module.exit_json(changed=changed, msg='Success', result=response, previous_version=existing)
     else:
-        module.fail_json(msg='Failure', result=response)
+        module.fail_json(msg='Failure', error=response)
 
 if __name__ == '__main__':
     main()
