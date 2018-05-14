@@ -176,6 +176,11 @@ def format_resource_id(val, subscription_id, namespace, types, resource_group):
                        type=types,
                        subscription=subscription_id) if not is_valid_resource_id(val) else val
 
+
+def normalize_location_name(name):
+    return name.replace(' ', '').lower()
+
+
 # FUTURE: either get this from the requirements file (if we can be sure it's always available at runtime)
 # or generate the requirements files from this so we only have one source of truth to maintain...
 AZURE_PKG_VERSIONS = {
