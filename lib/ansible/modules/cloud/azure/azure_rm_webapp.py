@@ -686,7 +686,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                     to_be_updated = True
 
                     if not self.check_mode:
-                    update_as_response = self.update_app_settings()
+                        update_as_response = self.update_app_settings()
 
                 # merge app_settings
                 elif self.is_app_settings_changed():
