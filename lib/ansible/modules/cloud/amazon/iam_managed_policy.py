@@ -186,22 +186,26 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
     # Rather than assume that it is 5, we'll try to create the policy
     # and if that doesn't work, delete the oldest non default policy version
     # and try again.
-    try:
-        version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
-        return version, True
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == 'LimitExceeded':
-            delete_oldest_non_default_version(module, iam, policy)
-            try:
-                version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
-                return version, True
-            except botocore.exceptions.ClientError as e:
-                pass
-        # Handle both when the exception isn't LimitExceeded or
-        # the second attempt still failed
-        module.fail_json(msg="Couldn't create policy version: %s" % str(e),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    if not module.check_mode:
+        try:
+            version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
+            return version, True
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'LimitExceeded':
+                delete_oldest_non_default_version(module, iam, policy)
+                try:
+                    version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
+                    return version, True
+                except botocore.exceptions.ClientError as e:
+                    pass
+            # Handle both when the exception isn't LimitExceeded or
+            # the second attempt still failed
+            module.fail_json(msg="Couldn't create policy version: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    else:     
+        module.exit_json(changed=True)
+
 
 
 def set_if_default(module, iam, policy, policy_version, is_default):
@@ -283,7 +287,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_if=[['state', 'present', ['policy']]]
+        required_if=[['state', 'present', ['policy']]],
+        supports_check_mode=True
     )
 
     if not HAS_BOTO3:
@@ -312,6 +317,9 @@ def main():
     if state == 'present':
         if p is None:
             # No Policy so just create one
+            if module.check_mode:
+                module.exit_json(changed=True)
+
             try:
                 rvalue = iam.create_policy(PolicyName=name, Path='/',
                                            PolicyDocument=policy, Description=description)
