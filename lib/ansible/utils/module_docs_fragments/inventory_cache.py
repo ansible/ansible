@@ -47,4 +47,12 @@ options:
     ini:
       - section: inventory
         key: cache_connection
+  _prefix:
+    description:
+      - Prefix to use for cache plugin files/tables
+    env:
+      - name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX
+    ini:
+      - section: inventory
+        key: cache_prefix
 """

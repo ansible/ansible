@@ -25,6 +25,7 @@ DOCUMENTATION = '''
             section: defaults
       _prefix:
         description: User defined prefix to use when creating the JSON files
+        default: ansible_facts
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:

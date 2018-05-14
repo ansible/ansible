@@ -24,6 +24,7 @@ DOCUMENTATION = '''
             section: defaults
       _prefix:
         description: User defined prefix to use when creating the DB entries
+        default: ansible_facts
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
@@ -43,7 +44,6 @@ DOCUMENTATION = '''
 import time
 import json
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.basic import jsonify
 from ansible.plugins.cache import BaseCacheModule
@@ -74,7 +74,7 @@ class CacheModule(BaseCacheModule):
             connection = []
 
         self._timeout = float(self.get_option('_timeout'))
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        self._prefix = self.get_option('_prefix')
         self._cache = {}
         self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'

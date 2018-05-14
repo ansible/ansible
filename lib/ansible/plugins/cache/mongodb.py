@@ -27,6 +27,7 @@ DOCUMENTATION = '''
             section: defaults
       _prefix:
         description: User defined prefix to use when creating the DB entries
+        default: ansible_facts
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
@@ -47,7 +48,6 @@ import datetime
 
 from contextlib import contextmanager
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import BaseCacheModule
 
@@ -62,8 +62,11 @@ class CacheModule(BaseCacheModule):
     A caching module backed by mongodb.
     """
     def __init__(self, *args, **kwargs):
-        self._timeout = int(C.CACHE_PLUGIN_TIMEOUT)
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        self._load_name = 'mongodb'
+        super(CacheModule, self).__init__()
+        self.set_options(var_options=args, direct=kwargs)
+        self._timeout = int(self.get_option('_timeout'))
+        self._prefix = self.get_option('_prefix')
         self._cache = {}
         self._managed_indexes = False
 
