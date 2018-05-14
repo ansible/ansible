@@ -207,4 +207,3 @@
       ignore_errors: yes
       with_items:
         - "{{ resource_prefix }}-testbucket-ansible"
-
