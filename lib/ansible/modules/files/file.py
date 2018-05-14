@@ -176,6 +176,20 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
+    # When path is a directory, rewrite the pathname to be the file inside of the directory
+    # TODO: Why do we exclude link?  Why don't we exclude directory?  Should we exclude touch?
+    if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
+        basename = None
+
+        # original_basename is used by other modules that depend on file
+        if params['original_basename']:
+            basename = params['original_basename']
+        elif params['src'] is not None:
+            basename = os.path.basename(params['src'])
+
+        if basename:
+            params['path'] = params['path'] = os.path.join(params['path'], basename)
+
 
 def get_state(path):
     ''' Find out current state '''
@@ -669,16 +683,6 @@ def main():
     if params['_diff_peek'] is not None:
         appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
-
-    # original_basename is used by other modules that depend on file.
-    if state not in ("link", "absent") and os.path.isdir(to_bytes(path, errors='surrogate_or_strict')):
-        basename = None
-        if params['original_basename']:
-            basename = params['original_basename']
-        elif src is not None:
-            basename = os.path.basename(src)
-        if basename:
-            params['path'] = path = os.path.join(path, basename)
 
     if state == 'file':
         result = ensure_file_attributes(path, follow)
