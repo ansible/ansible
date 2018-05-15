@@ -30,7 +30,7 @@
       name: "{{ resource_prefix }}-vgw"
       <<: *aws_connection_info
     register: vgw
-    
+
   - name: create customer gateway
     ec2_customer_gateway:
       bgp_asn: 12345
