@@ -50,43 +50,7 @@
     # ============================================================
     # Module requirement testing
     # ============================================================
-    - name: test with no parameters
-      aws_config:
-      register: output
-      ignore_errors: true
-
-    - name: assert failure when called with no parameters
-      assert:
-        that:
-           - output.failed
-           - 'output.msg.startswith("missing required arguments: name")'
-
-    - name: test with no name parameter
-      aws_config:
-        state: present
-      register: output
-      ignore_errors: true
-
-    - name: assert failure when called with no name parameter
-      assert:
-        that:
-           - output.failed
-           - 'output.msg.startswith("missing required arguments: name")'
-
-    - name: test with no resource_type parameter
-      aws_config:
-        name: random_name
-        state: present
-      register: output
-      ignore_errors: true
-
-    - name: assert failure when called with no resource_type parameter
-      assert:
-        that:
-           - output.failed
-           - 'output.msg.startswith("missing required arguments: resource_type")'
-
-    - name: test resource_type rule with no source parameter
+    - name: test rule with no source parameter
       aws_config_rule:
         name: random_name
         state: present
