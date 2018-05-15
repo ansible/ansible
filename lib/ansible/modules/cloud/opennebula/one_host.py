@@ -65,7 +65,9 @@ options:
             - The cluster specified by name.
     template:
         description:
-            - The template changes to merge into the host template.
+            - The template or attribute changes to merge into the host template.
+        aliases:
+            - attributes
 
 extends_documentation_fragment: opennebula
 
@@ -78,7 +80,7 @@ EXAMPLES = '''
   one_host:
     name: host1
     cluster_id: 1
-    endpoint: http://127.0.0.1:2633/RPC2
+    api_url: http://127.0.0.1:2633/RPC2
 
 - name: Create a host and adjust its template
   one_host:

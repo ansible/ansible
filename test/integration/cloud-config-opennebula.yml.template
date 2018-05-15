@@ -13,7 +13,8 @@
 # run in @REPLAY mode (true) or, record mode (false).
 
 
-opennebula_endpoint: @ENDPOINT
-opennebula_session: @SESSION
+opennebula_url: @URL
+opennebula_username: @USERNAME
+opennebula_password: @PASSWORD
 opennebula_test_fixture: @FIXTURES
 opennebula_test_fixture_replay: @REPLAY

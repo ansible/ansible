@@ -22,8 +22,9 @@
   one_host:
     name: "{{ item }}"
     state: absent
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_endpoint: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_token: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
@@ -41,8 +42,9 @@
   one_host:
     name: badhost
     state: "{{item}}"
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
@@ -70,8 +72,9 @@
   one_host:
     name: badhost
     state: absent
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
@@ -94,8 +97,9 @@
   one_host:
     name: "{{ item }}"
     state: enabled
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
@@ -118,8 +122,9 @@
   one_host:
     name: "{{ item }}"
     state: enabled
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
     template:
       LABELS:
@@ -147,8 +152,9 @@
   one_host:
     name: "{{ item }}"
     state: enabled
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
     template:
       LABELS: "test, custom"
@@ -174,8 +180,9 @@
   one_host:
     name: "{{ item }}"
     state: disabled
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
@@ -198,8 +205,9 @@
   one_host:
     name: "{{ item }}"
     state: offline
-    endpoint: "{{ opennebula_endpoint }}"
-    session: "{{ opennebula_session }}"
+    api_url: "{{ opennebula_url }}"
+    api_username: "{{ opennebula_username }}"
+    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"

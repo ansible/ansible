@@ -31,8 +31,9 @@ class OpenNebulaModule:
     """
 
     common_args = dict(
-        endpoint=dict(type='str'),
-        session=dict(type='str', no_log=True),
+        api_url=dict(type='str', aliases=['api_endpoint']),
+        api_username=dict(type='str'),
+        api_password=dict(type='str', no_log=True, aliases=['api_token']),
         validate_certs=dict(default=True, type='bool'),
         wait_timeout=dict(type='int', default=300),
     )
@@ -76,30 +77,37 @@ class OpenNebulaModule:
         if not HAS_PYONE:
             self.fail("pyone is required for this module")
 
-        if 'endpoint' in self.module.params:
-            endpoint = self.module.params.get("endpoint", environ.get("PYONE_ENDPOINT", False))
+        if 'api_url' in self.module.params:
+            url = self.module.params.get("api_url", environ.get("ONE_URL", False))
         else:
-            self.fail("Either endpoint or the environment variable PYONE_ENDPOINT must be provided")
+            self.fail("Either api_url or the environment variable ONE_URL must be provided")
 
-        if 'session' in self.module.params:
-            session = self.module.params.get("session", environ.get("PYONE_SESSION", False))
+        if 'api_username' in self.module.params:
+            username = self.module.params.get("api_username", environ.get("ONE_USERNAME", False))
         else:
-            self.fail("Either session or the environment vairable PYONE_SESSION must be provided")
+            self.fail("Either api_username or the environment vairable ONE_USERNAME must be provided")
+
+        if 'api_password' in self.module.params:
+            password = self.module.params.get("api_password", environ.get("ONE_PASSWORD", False))
+        else:
+            self.fail("Either api_password or the environment vairable ONE_PASSWORD must be provided")
+
+        session="%s:%s" % (username, password)
 
         if not test_fixture:
             if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
-                return pyone.OneServer(endpoint, session=session, context=no_ssl_validation_context)
+                return pyone.OneServer(url, session=session, context=no_ssl_validation_context)
             else:
-                return pyone.OneServer(endpoint, session)
+                return pyone.OneServer(url, session)
         else:
             if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
-                one = OneServerTester(endpoint,
+                one = OneServerTester(url,
                                       fixture_file=test_fixture_file,
                                       fixture_replay=test_fixture_replay,
                                       session=session,
                                       context=no_ssl_validation_context)
             else:
-                one = OneServerTester(endpoint,
+                one = OneServerTester(url,
                                       fixture_file=test_fixture_file,
                                       fixture_replay=test_fixture_replay,
                                       session=session)

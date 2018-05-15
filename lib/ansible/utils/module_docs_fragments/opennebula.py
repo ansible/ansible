@@ -8,16 +8,21 @@ class ModuleDocFragment(object):
     # OpenNebula common documentation
     DOCUMENTATION = '''
 options:
-    endpoint:
+    api_url:
         description:
-            - The URL of the XMLRPC server.
-              If not specified then the value of the PYONE_ENDPOINT environment variable, if any, is used.
-    session:
+            - The ENDPOINT URL of the XMLRPC server.
+              If not specified then the value of the ONE_URL environment variable, if any, is used.
+        aliases:
+            - api_endpoint
+    api_username:
         description:
-            - Session string associated to the connected user.
-              It has to be formed with the contents of OpenNebula's ONE_AUTH file, which is <username>:<password>
-              with the default "core" auth driver.
-              If not specified then the value of the PYONE_SESSION environment variable, if any, is used.
+            - The name of the user for XMLRPC authentication.
+              If not specified then the value of the ONE_USERNAME environment variable, if any, is used.
+    api_password:
+        description:
+            - The password or token for XMLRPC authentication.
+        aliases:
+            - api_token
     validate_certs:
         description:
             - Whether to validate the SSL certificates or not.
