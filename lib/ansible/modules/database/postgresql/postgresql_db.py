@@ -83,6 +83,11 @@ options:
     type: str
     default: postgres
     version_added: "2.5"
+  conn_limit:
+    description:
+      - Specifies the database connection limit.
+    type: str
+    version_added: '2.8'
 notes:
 - State C(dump) and C(restore) don't require I(psycopg2) since version 2.8.
 author: "Ansible Core Team"
@@ -161,6 +166,12 @@ def set_owner(cursor, db, owner):
     cursor.execute(query)
     return True
 
+def set_conn_limit(cursor, db, conn_limit):
+    query = "ALTER DATABASE %s CONNECTION_LIMIT %s" % (
+            pg_quote_identifier(db, 'database'),
+            conn_limit)
+    cursor.execute(query)
+    return True
 
 def get_encoding_id(cursor, encoding):
     query = "SELECT pg_char_to_encoding(%(encoding)s) AS encoding_id;"
@@ -172,7 +183,7 @@ def get_db_info(cursor, db):
     query = """
     SELECT rolname AS owner,
     pg_encoding_to_char(encoding) AS encoding, encoding AS encoding_id,
-    datcollate AS lc_collate, datctype AS lc_ctype
+    datcollate AS lc_collate, datctype AS lc_ctype, pg_database.datconnlimit AS conn_limit
     FROM pg_database JOIN pg_roles ON pg_roles.oid = pg_database.datdba
     WHERE datname = %(db)s
     """
@@ -195,8 +206,8 @@ def db_delete(cursor, db):
         return False
 
 
-def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
-    params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype)
+def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit):
+    params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype, conn_limit=conn_limit)
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
@@ -209,6 +220,8 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
             query_fragments.append('LC_COLLATE %(collate)s')
         if lc_ctype:
             query_fragments.append('LC_CTYPE %(ctype)s')
+        if conn_limit:
+            query_fragments.append("CONNECTION_LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
         query = ' '.join(query_fragments)
         cursor.execute(query, params)
         return True
@@ -230,13 +243,27 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
                 'Changing LC_CTYPE is not supported.'
                 'Current LC_CTYPE: %s' % db_info['lc_ctype']
             )
-        elif owner and owner != db_info['owner']:
-            return set_owner(cursor, db, owner)
         else:
-            return False
+            if owner and owner != db_info['owner']:
+                owner_change = set_owner(cursor, db, owner)
+            else:
+                owner_change = False
+
+            if conn_limit and conn_limit != str(db_info['conn_limit']):
+                conn_limit_change = set_conn_limit(cursor, db, conn_limit)
+            else:
+                conn_limit_change = False
 
 
-def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
+            if owner_change or conn_limit_change:
+                return True
+            else:
+                return False
+
+
+
+
+def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit):
     if not db_exists(cursor, db):
         return False
     else:
@@ -249,6 +276,8 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         elif lc_ctype and lc_ctype != db_info['lc_ctype']:
             return False
         elif owner and owner != db_info['owner']:
+            return False
+        elif conn_limit and conn_limit != str(db_info['conn_limit']):
             return False
         else:
             return True
@@ -397,6 +426,7 @@ def main():
         target_opts=dict(type='str', default=''),
         maintenance_db=dict(type='str', default="postgres"),
         session_role=dict(type='str'),
+        conn_limit=dict(type='str', default="-1")
     )
 
     module = AnsibleModule(
@@ -416,6 +446,7 @@ def main():
     changed = False
     maintenance_db = module.params['maintenance_db']
     session_role = module.params["session_role"]
+    conn_limit = module.params['conn_limit']
 
     raw_connection = state in ("dump", "restore")
 
@@ -481,7 +512,7 @@ def main():
             if state == "absent":
                 changed = db_exists(cursor, db)
             elif state == "present":
-                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
+                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit)
             module.exit_json(changed=changed, db=db)
 
         if state == "absent":
@@ -492,7 +523,7 @@ def main():
 
         elif state == "present":
             try:
-                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
+                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
