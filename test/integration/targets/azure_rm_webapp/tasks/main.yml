@@ -3,7 +3,7 @@
     linux_app_plan_resource_group: "{{ (resource_prefix | replace('-','x'))[-10:] }}linuxappplan"
     win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winapp"
     win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
-    linux_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}lnxplan"
+    linux_plan_name: "{{ resource_group_secondary }}"
 
 - name: Create a windows web app with non-exist app service plan
   azure_rm_webapp:

@@ -287,7 +287,7 @@ azure_webapp:
         "state": "Running",
         "tags": {},
         "type": "Microsoft.Web/sites",
-        "usage_state": "Normal"        
+        "usage_state": "Normal"
     }
 '''
 
@@ -583,7 +583,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                         "Please specify app service plan in plan parameter.")
 
                 # if not specify resource group in plan, then use same one as webapp
-                if "resource_group" not in self.plan:
+                if self.plan['resource_group'] is None:
                     self.plan['resource_group'] = self.resource_group
 
                 # get app service plan
@@ -591,9 +591,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 if not old_plan:
                     # no existing service plan, create one
-                    if ('name' not in self.plan or
-                        'is_linux' not in self.plan or
-                            'sku' not in self.plan):
+                    if (self.plan['name'] is None or self.plan['is_linux'] is None or self.plan['sku'] is None):
                         self.fail(
                             'Please specify name, is_linux, sku in plan')
 
