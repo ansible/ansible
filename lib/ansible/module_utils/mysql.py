@@ -28,6 +28,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+from ansible.module_utils.six import (
+    PY2
+)
 
 try:
     import pymysql as mysql_driver
@@ -44,6 +47,24 @@ from ansible.module_utils._text import to_native
 
 mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
 
+if PY2:
+    try:
+        import configparser
+    except ImportError:
+        import ConfigParser as configparser
+else:
+    import configparser
+
+
+def _parse_from_mysql_config_file(cnf):
+    if not cnf:
+        return None
+
+    cp = configparser.ConfigParser()
+    cp.read(cnf)
+
+    return cp
+
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
                   connect_timeout=30):
@@ -51,6 +72,12 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
         config['ssl'] = {}
+
+    cp = _parse_from_mysql_config_file(config_file)
+    if cp:
+        module.params['login_unix_socket'] = cp.get('client', 'socket', fallback=module.params['login_unix_socket'])
+        module.params['login_host'] = cp.get('client', 'host', fallback=module.params['login_host'])
+        module.params['login_port'] = cp.getint('client', 'port', fallback=module.params['login_port'])
 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
