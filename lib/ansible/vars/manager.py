@@ -37,8 +37,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, text_type
-from ansible.plugins.loader import lookup_loader, vars_loader
-from ansible.plugins.cache import FactCache
+from ansible.plugins.loader import lookup_loader, vars_loader, cache_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
@@ -93,7 +92,7 @@ class VariableManager:
 
         # bad cache plugin is not fatal error
         try:
-            self._fact_cache = FactCache()
+            self._fact_cache = cache_loader.get(C.CACHE_PLUGIN)
         except AnsibleError as e:
             display.warning(to_native(e))
             # fallback to a dict as in memory cache
