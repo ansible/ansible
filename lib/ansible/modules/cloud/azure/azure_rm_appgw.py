@@ -64,7 +64,7 @@ options:
                     - List of SSL protocols to be disabled on application gateway.
             policy_type:
                 description:
-                    - Type of Ssl Policy.
+                    - Type of SSL Policy.
                 choices:
                     - 'predefined'
                     - 'custom'
@@ -92,10 +92,7 @@ options:
             subnet:
                 description:
                     - Reference of the subnet resource. A subnet from where application gateway gets its private address.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -141,17 +138,11 @@ options:
             subnet:
                 description:
                     - Reference of the subnet resource.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             public_ip_address:
                 description:
                     - Reference of the PublicIP resource.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -162,53 +153,6 @@ options:
             port:
                 description:
                     - Frontend port
-            name:
-                description:
-                    - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-    probes:
-        description:
-            - List of probes of the application gateway resource.
-        suboptions:
-            protocol:
-                description:
-                    - Protocol.
-                choices:
-                    - 'http'
-                    - 'https'
-            host:
-                description:
-                    - Host name to send the probe to.
-            path:
-                description:
-                    - "Relative path of probe. Valid path starts from '/'. Probe is sent to <I(protocol)>://<I(host)>:<port><path>"
-            interval:
-                description:
-                    - "The probing interval in seconds. This is the time interval between two consecutive probes. Acceptable values are from 1 second to 8640
-                      0 seconds."
-            timeout:
-                description:
-                    - "the probe timeout in seconds. Probe marked as failed if valid response is not received with this timeout period. Acceptable values are
-                       from 1 second to 86400 seconds."
-            unhealthy_threshold:
-                description:
-                    - "The probe retry count. Backend server is marked down after consecutive probe failure count reaches UnhealthyThreshold. Acceptable valu
-                      es are from 1 second to 20."
-            pick_host_name_from_backend_http_settings:
-                description:
-                    - Whether the I(host) header should be picked from the backend C(http) settings. Default value is false.
-            min_servers:
-                description:
-                    - Minimum number of servers that are always marked healthy. Default value is 0.
-            match:
-                description:
-                    - Criterion for classifying a healthy probe response.
-                suboptions:
-                    body:
-                        description:
-                            - Body that must be contained in the health response. Default value is empty.
-                    status_codes:
-                        description:
-                            - List of allowed ranges of healthy status codes. Default range of healthy status codes is 200-399.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -255,13 +199,6 @@ options:
                 description:
                     - "Request timeout in seconds. Application Gateway will fail the request if response is not received within RequestTimeout. Acceptable va
                       lues are from 1 second to 86400 seconds."
-            probe:
-                description:
-                    - Probe resource of an application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
@@ -290,9 +227,6 @@ options:
             affinity_cookie_name:
                 description:
                     - Cookie name to use for the affinity cookie.
-            probe_enabled:
-                description:
-                    - Whether the I(probe) is C(enabled). Default value is false.
             path:
                 description:
                     - Path which should be used as a prefix for all C(http) requests. Null means no path will be prefixed. Default value is null.
@@ -342,71 +276,6 @@ options:
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-    url_path_maps:
-        description:
-            - List of URL path map entries of the application gateway resource.
-        suboptions:
-            default_backend_address_pool:
-                description:
-                    - Default backend address pool resource of URL path map.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            default_backend_http_settings:
-                description:
-                    - Default backend http settings resource of URL path map.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            default_redirect_configuration:
-                description:
-                    - Default redirect configuration resource of URL path map.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            path_rules:
-                description:
-                    - List of path rules of URL path map resource.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-                    paths:
-                        description:
-                            - List of path rules of URL path map.
-                    backend_address_pool:
-                        description:
-                            - Backend address pool resource of URL path map path rule.
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                    backend_http_settings:
-                        description:
-                            - Backend http settings resource of URL path map path rule.
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                    redirect_configuration:
-                        description:
-                            - Redirect configuration resource of URL path map path rule.
-                        suboptions:
-                            id:
-                                description:
-                                    - Resource ID.
-                    name:
-                        description:
-                            - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-                    type:
-                        description:
-                            - Type of the resource.
-            name:
-                description:
-                    - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     request_routing_rules:
         description:
             - List of request routing rules of the application gateway resource.
@@ -438,115 +307,9 @@ options:
                     id:
                         description:
                             - Resource ID.
-            url_path_map:
-                description:
-                    - URL path map resource of the application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            redirect_configuration:
-                description:
-                    - Redirect configuration resource of the application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-    redirect_configurations:
-        description:
-            - List of redirect configurations of the application gateway resource.
-        suboptions:
-            redirect_type:
-                description:
-                    - Supported http redirection types - C(permanent), C(temporary), C(found), C(see_other).
-                choices:
-                    - 'permanent'
-                    - 'found'
-                    - 'see_other'
-                    - 'temporary'
-            target_listener:
-                description:
-                    - Reference to a listener to redirect the request to.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            target_url:
-                description:
-                    - Url to redirect the request to.
-            include_path:
-                description:
-                    - Include path in the redirected url.
-            include_query_string:
-                description:
-                    - Include query string in the redirected url.
-            request_routing_rules:
-                description:
-                    - Request routing specifying redirect configuration.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            url_path_maps:
-                description:
-                    - Url path maps specifying default redirect configuration.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            path_rules:
-                description:
-                    - Path rules specifying redirect configuration.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
-            name:
-                description:
-                    - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-    web_application_firewall_configuration:
-        description:
-            - Web application firewall configuration.
-        suboptions:
-            enabled:
-                description:
-                    - Whether the web application firewall is enabled or not.
-                required: True
-            firewall_mode:
-                description:
-                    - Web application firewall mode.
-                required: True
-                choices:
-                    - 'detection'
-                    - 'prevention'
-            rule_set_type:
-                description:
-                    - "The type of the web application firewall rule set. Possible values are: 'OWASP'."
-                required: True
-            rule_set_version:
-                description:
-                    - The version of the rule set type.
-                required: True
-            disabled_rule_groups:
-                description:
-                    - The disabled rule groups.
-                suboptions:
-                    rule_group_name:
-                        description:
-                            - The name of the rule group that will be disabled.
-                        required: True
-                    rules:
-                        description:
-                            - The list of rules that will be disabled. If null, all rules of the rule group will be disabled.
-    enable_http2:
-        description:
-            - Whether HTTP2 is enabled on the application gateway resource.
-    resource_guid:
-        description:
-            - Resource GUID property of the application gateway resource.
     state:
         description:
             - Assert the state of the Public IP. Use 'present' to create or update a and
@@ -670,9 +433,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             frontend_ports=dict(
                 type='list'
             ),
-            probes=dict(
-                type='list'
-            ),
             backend_address_pools=dict(
                 type='list'
             ),
@@ -682,23 +442,8 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             http_listeners=dict(
                 type='list'
             ),
-            url_path_maps=dict(
-                type='list'
-            ),
             request_routing_rules=dict(
                 type='list'
-            ),
-            redirect_configurations=dict(
-                type='list'
-            ),
-            web_application_firewall_configuration=dict(
-                type='dict'
-            ),
-            enable_http2=dict(
-                type='str'
-            ),
-            resource_guid=dict(
-                type='str'
             ),
             state=dict(
                 type='str',
@@ -788,14 +533,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["frontend_ip_configurations"] = ev
                 elif key == "frontend_ports":
                     self.parameters["frontend_ports"] = kwargs[key]
-                elif key == "probes":
-                    ev = kwargs[key]
-                    if 'protocol' in ev:
-                        if ev['protocol'] == 'http':
-                            ev['protocol'] = 'Http'
-                        elif ev['protocol'] == 'https':
-                            ev['protocol'] = 'Https'
-                    self.parameters["probes"] = ev
                 elif key == "backend_address_pools":
                     self.parameters["backend_address_pools"] = kwargs[key]
                 elif key == "backend_http_settings_collection":
@@ -835,8 +572,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                 item['protocol'] = 'Https'
                         ev[i] = item
                     self.parameters["http_listeners"] = ev
-                elif key == "url_path_maps":
-                    self.parameters["url_path_maps"] = kwargs[key]
                 elif key == "request_routing_rules":
                     ev = kwargs[key]
                     for i in range(len(ev)):
@@ -871,30 +606,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                 item['rule_type'] = 'PathBasedRouting'
                         ev[i] = item
                     self.parameters["request_routing_rules"] = ev
-                elif key == "redirect_configurations":
-                    ev = kwargs[key]
-                    if 'redirect_type' in ev:
-                        if ev['redirect_type'] == 'permanent':
-                            ev['redirect_type'] = 'Permanent'
-                        elif ev['redirect_type'] == 'found':
-                            ev['redirect_type'] = 'Found'
-                        elif ev['redirect_type'] == 'see_other':
-                            ev['redirect_type'] = 'SeeOther'
-                        elif ev['redirect_type'] == 'temporary':
-                            ev['redirect_type'] = 'Temporary'
-                    self.parameters["redirect_configurations"] = ev
-                elif key == "web_application_firewall_configuration":
-                    ev = kwargs[key]
-                    if 'firewall_mode' in ev:
-                        if ev['firewall_mode'] == 'detection':
-                            ev['firewall_mode'] = 'Detection'
-                        elif ev['firewall_mode'] == 'prevention':
-                            ev['firewall_mode'] = 'Prevention'
-                    self.parameters["web_application_firewall_configuration"] = ev
-                elif key == "enable_http2":
-                    self.parameters["enable_http2"] = kwargs[key]
-                elif key == "resource_guid":
-                    self.parameters["resource_guid"] = kwargs[key]
                 elif key == "etag":
                     self.parameters["etag"] = kwargs[key]
 
