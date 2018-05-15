@@ -51,7 +51,16 @@ class TestAnsibleModuleTmpDir:
     def test_tmpdir_property(self, am, monkeypatch, expected):
         def mock_mkdtemp(prefix, dir):
             return os.path.join(dir, prefix)
+
+        def mock_makedirs(path, mode):
+            expected = os.path.expanduser(os.path.expandvars(am._remote_tmp))
+            assert path == expected
+            assert mode == 0o700
+            return
+
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
+        monkeypatch.setattr(os.path, 'exists', lambda x: False)
+        monkeypatch.setattr(os, 'makedirs', mock_makedirs)
         monkeypatch.setattr(shutil, 'rmtree', lambda x: None)
 
         with patch('time.time', return_value=42):
