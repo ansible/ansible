@@ -140,7 +140,7 @@ except ImportError:
         from xml.etree.ElementTree import ParseError as XMLSyntaxError
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.netconf.netconf import get_connection, get_capabilities, locked_config
+from ansible.module_utils.network.netconf.netconf import get_capabilities, locked_config, get_config, get
 from ansible.module_utils.network.common.netconf import remove_namespaces
 
 try:
@@ -174,7 +174,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    conn = get_connection(module)
     capabilities = get_capabilities(module)
     operations = capabilities['device_operations']
 
@@ -199,17 +198,17 @@ def main():
     if lock and source not in operations.get('lock_datastore', []):
         module.fail_json(msg="lock operation on '%s' source is not supported on this device" % source)
 
+    if display == 'json' and not HAS_JXMLEASE:
+        module.fail_json(msg='jxmlease is required to display response in json format'
+                             'but does not appear to be installed. '
+                             'It can be installed using `pip install jxmlease`')
+
     filter_spec = (filter_type, filter) if filter_type else None
 
     if source is not None:
-        if lock:
-            with locked_config(module, target=source):
-                response = conn.get_config(source=source, filter=filter_spec)
-        else:
-            response = conn.get_config(source=source, filter=filter_spec)
-
+        response = get_config(module, source, filter_spec, lock)
     else:
-        response = conn.get(filter=filter_spec)
+        response = get(module, source, filter_spec, lock)
 
     xml_resp = tostring(response)
     output = None
@@ -217,11 +216,6 @@ def main():
     if display == 'xml':
         output = remove_namespaces(xml_resp)
     elif display == 'json':
-        if not HAS_JXMLEASE:
-            module.fail_json(msg='jxmlease is required to display response in json format'
-                                 'but does not appear to be installed. '
-                                 'It can be installed using `pip install jxmlease`')
-
         try:
             output = jxmlease.parse(xml_resp)
         except:

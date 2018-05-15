@@ -20,8 +20,8 @@
 
 - assert:
     that:
-      - "'<description>this is test interface Loopback999</description>' in result.xml"
-      - "'<usernames>' not in result.xml"
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
 
 - name: Failure scenario, fetch config from startup
   netconf_get:

@@ -64,3 +64,27 @@ def locked_config(module, target=None):
         yield
     finally:
         unlock_configuration(module, target=target)
+
+
+def get_config(module, source, filter, lock=False):
+    conn = get_connection(module)
+
+    if lock:
+        with locked_config(module, target=source):
+            response = conn.get_config(source=source, filter=filter)
+    else:
+        response = conn.get_config(source=source, filter=filter)
+
+    return response
+
+
+def get(module, source, filter, lock=False):
+    conn = get_connection(module)
+
+    if lock:
+        with locked_config(module, target=source):
+            response = conn.get(filter=filter)
+    else:
+        response = conn.get(filter=filter)
+
+    return response
