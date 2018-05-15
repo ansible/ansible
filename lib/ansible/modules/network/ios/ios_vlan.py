@@ -229,9 +229,9 @@ def map_config_to_obj(module):
             vlanID_sup = lines[index + 1][0:4].strip().replace(",", "").split()
             if (len(interfaces_sup) > 0) and (len(vlanID_sup) < 1):
                 interfaces.extend(interfaces_sup)
-		        index += 1
+                index += 1
 	    else:
-                break
+            break
         if (vlanID == ""):
             continue
 
