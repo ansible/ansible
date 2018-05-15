@@ -535,6 +535,9 @@ class AzureRMWebApps(AzureRMModuleBase):
         response = None
         to_be_updated = False
 
+        if self.app_settings is None:
+            self.app_settings = dict()
+
         if self.container_settings is not None:
 
             if hasattr(self.site_config, 'linux_fx_version'):
