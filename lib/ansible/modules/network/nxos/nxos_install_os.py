@@ -124,6 +124,7 @@ install_state:
 
 import re
 from time import sleep
+from ansible import constants as C
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -131,12 +132,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 def check_ansible_timer(module):
     '''Check Ansible Timer Values'''
-    import os
-    command_timer = os.environ.get('ANSIBLE_PERSISTENT_COMMAND_TIMEOUT')
-    connect_timer = os.environ.get('ANSIBLE_PERSISTENT_CONNECT_TIMEOUT')
+    command_timer = C.PERSISTENT_COMMAND_TIMEOUT
+    connect_timer = C.PERSISTENT_CONNECT_TIMEOUT
     msg = "The 'ANSIBLE_PERSISTENT_COMMAND_TIMEOUT' and 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT'\n"
     msg = msg + "timers need to be set to 500 seconds or higher when using this module\n"
-    msg = msg + "\nPlease set the timers and re-run the playbook"
+    msg = msg + "in order to allow enough time for the upgrade to complete\n"
+    msg = msg + "\nPlease set the timers and re-run the playbook."
     timer_low = False
     if command_timer is None or connect_timer is None:
         timer_low = True
