@@ -114,6 +114,94 @@
     that:
       - output.changed
 
+- name: Try to update instance of Application Gateway - no change
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    sku:
+      name: standard_small
+      tier: standard
+      capacity: 2
+    gateway_ip_configurations:
+      - subnet:
+          id: "{{ subnet_output.state.id }}"
+        name: app_gateway_ip_config
+    frontend_ip_configurations:
+      - subnet:
+          id: "{{ subnet_output.state.id }}"
+        name: sample_gateway_frontend_ip_config
+    frontend_ports:
+      - port: 90
+        name: ag_frontend_port
+    backend_address_pools:
+      - backend_addresses:
+          - ip_address: 10.0.0.4
+        name: test_backend_address_pool
+    backend_http_settings_collection:
+      - port: 80
+        protocol: http
+        cookie_based_affinity: enabled
+        name: sample_appgateway_http_settings
+    http_listeners:
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: ag_frontend_port
+        name: sample_http_listener
+    request_routing_rules:
+      - rule_type: Basic
+        backend_address_pool: test_backend_address_pool
+        backend_http_settings: sample_appgateway_http_settings
+        http_listener: sample_http_listener
+        name: rule1
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to update instance of Application Gateway - single change
+  azure_rm_appgw:
+    resource_group: "{{ resource_group }}"
+    name: "appgateway{{ rpfx }}"
+    sku:
+      name: standard_small
+      tier: standard
+      capacity: 2
+    gateway_ip_configurations:
+      - subnet:
+          id: "{{ subnet_output.state.id }}"
+        name: app_gateway_ip_config
+    frontend_ip_configurations:
+      - subnet:
+          id: "{{ subnet_output.state.id }}"
+        name: sample_gateway_frontend_ip_config
+    frontend_ports:
+      - port: 90
+        name: ag_frontend_port
+    backend_address_pools:
+      - backend_addresses:
+          - ip_address: 10.0.0.4
+        name: test_backend_address_pool
+    backend_http_settings_collection:
+      - port: 81
+        protocol: http
+        cookie_based_affinity: enabled
+        name: sample_appgateway_http_settings
+    http_listeners:
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: ag_frontend_port
+        name: sample_http_listener
+    request_routing_rules:
+      - rule_type: Basic
+        backend_address_pool: test_backend_address_pool
+        backend_http_settings: sample_appgateway_http_settings
+        http_listener: sample_http_listener
+        name: rule1
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
 - name: Delete instance of Application Gateway -- check mode
   azure_rm_appgw:
     resource_group: "{{ resource_group }}"

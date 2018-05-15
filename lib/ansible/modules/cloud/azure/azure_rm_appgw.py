@@ -170,9 +170,6 @@ options:
             name:
                 description:
                     - Resource that is unique within a resource group. This name can be used to access the resource.
-            type:
-                description:
-                    - Type of the resource.
     backend_http_settings_collection:
         description:
             - Backend http settings of the application gateway resource.
@@ -218,9 +215,6 @@ options:
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
-            type:
-                description:
-                    - Type of the resource.
     http_listeners:
         description:
             - List of HTTP listeners of the application gateway resource.
@@ -597,6 +591,31 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 self.log("Need to check if Application Gateway instance has to be deleted or may be updated")
                 self.to_do = Actions.Update
 
+        if (self.to_do == Actions.Update):
+            ag_dict = old_response.to_dict()
+
+            if (self.parameters['location'] != ag_dict['location'] or
+                self.parameters['sku']['name'] != ag_dict['sku']['name'] or
+                self.parameters['sku']['tier'] != ag_dict['sku']['tier'] or
+                self.parameters['sku']['capacity'] != ag_dict['sku']['capacity'] or
+                self.parameters['ssl_policy']['policy_type'] != ag_dict['ssl_policy']['policy_type'] or
+                self.parameters['ssl_policy']['policy_name'] != ag_dict['ssl_policy']['policy_name'] or
+                self.parameters['ssl_policy']['min_protocol_version'] != ag_dict['ssl_policy']['min_protocol_version']:
+                !compare_arrays(self.parameters, ag_dict, 'authentication_certificates') or
+                !compare_arrays(self.parameters, ag_dict, 'gateway_ip_configurations') or
+                !compare_arrays(self.parameters, ag_dict, 'ssl_certificates') or
+                !compare_arrays(self.parameters, ag_dict, 'frontend_ip_configurations') or
+                !compare_arrays(self.parameters, ag_dict, 'frontend_ports') or
+                !compare_arrays(self.parameters, ag_dict, 'backend_address_pools') or
+                !compare_arrays(self.parameters, ag_dict, 'backend_http_settings_collections') or
+                !compare_arrays(self.parameters, ag_dict, 'http_listeners') or
+                !compare_arrays(self.parameters, ag_dict, 'request_routing_rules')):
+                
+                self.to_do = Action.Update
+            else:
+                self.to_do = Actions.NoAction
+
+
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Application Gateway instance")
 
@@ -748,6 +767,25 @@ def snake_to_camel(snake, capitalize_first=False):
     else:
         return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
+
+def compare_arrays(old_params, new_params, param_name):
+
+    a = old_params.get(param_name)
+    b = new_params.get(param_name)
+
+    if not (a is None or b is None):
+        ad = {}
+        for item in a:
+            name = item['name']
+            ad[name] = item
+        bd = {}
+        for item in b:
+            name = item['name']
+            bd[name] = item
+
+        return ad == bd
+
+    return (a is None and b is None)
 
 def main():
     """Main execution"""
