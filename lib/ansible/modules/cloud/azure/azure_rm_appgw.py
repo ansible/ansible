@@ -610,7 +610,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 not compare_arrays(self.parameters, ag_dict, 'backend_http_settings_collections') or
                 not compare_arrays(self.parameters, ag_dict, 'http_listeners') or
                 not compare_arrays(self.parameters, ag_dict, 'request_routing_rules')):
-                
+
                 self.to_do = Actions.Update
             else:
                 self.to_do = Actions.NoAction
