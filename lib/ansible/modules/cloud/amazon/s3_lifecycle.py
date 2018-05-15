@@ -144,6 +144,7 @@ try:
     from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
     from boto.exception import BotoServerError, S3ResponseError
+
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -280,10 +281,23 @@ def compare_rule(rule_a, rule_b):
         rule1_expiration = Expiration()
     if rule2_expiration is None:
         rule2_expiration = Expiration()
+    rule1_storage_class = None
+    rule2_storage_class = None
+    try:
+        rule1_storage_class = rule1_transition.storage_class
+    except AttributeError:
+        pass
+
+    try:
+        rule2_storage_class = rule2_transition.storage_class
+    except AttributeError:
+        pass
 
     if (rule1.__dict__ == rule2.__dict__ and
             rule1_expiration.__dict__ == rule2_expiration.__dict__ and
-            rule1_transition.__dict__ == rule2_transition.__dict__):
+            rule1_transition.__dict__ == rule2_transition.__dict__ and
+            rule1_storage_class == rule2_storage_class):
+
         return True
     else:
         return False
