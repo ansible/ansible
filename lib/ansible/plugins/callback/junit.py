@@ -58,6 +58,12 @@ DOCUMENTATION = '''
         description: Should the setup tasks be included in the final report
         env:
           - name: JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT
+      hide_task_arguments:
+        name: Hide the arguments for a task
+        default: False
+        description: Hide the arguments for a task
+        env:
+          - name: JUNIT_HIDE_TASK_ARGUMENTS
     requirements:
       - whitelist in configuration
       - junit_xml (python lib)
@@ -113,6 +119,8 @@ class CallbackModule(CallbackBase):
                                      Default: False
         JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT (optional): Should the setup tasks be included in the final report
                                      Default: True
+        JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
+                                     Default: False
 
     Requires:
         junit_xml
@@ -133,6 +141,7 @@ class CallbackModule(CallbackBase):
         self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
+        self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -168,7 +177,7 @@ class CallbackModule(CallbackBase):
         path = task.get_path()
         action = task.action
 
-        if not task.no_log:
+        if not task.no_log and self._hide_task_arguments == 'false':
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             if args:
                 name += ' ' + args
