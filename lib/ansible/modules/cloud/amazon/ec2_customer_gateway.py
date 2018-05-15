@@ -148,6 +148,7 @@ class Ec2CustomerGatewayManager:
         except ClientError as e:
             module.fail_json(msg=e.message)
 
+    @AWSRetry.jittered_backoff(delay=2, max_delay=30, retries=6, catch_extra_error_codes=['IncorrectState'])
     def ensure_cgw_absent(self, gw_id):
         response = self.ec2.delete_customer_gateway(
             DryRun=False,
