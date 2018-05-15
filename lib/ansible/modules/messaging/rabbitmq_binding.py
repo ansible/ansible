@@ -1,16 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+# Copyright (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -20,69 +22,59 @@ version_added: "2.0"
 
 short_description: This module manages rabbitMQ bindings
 description:
-  - This module uses rabbitMQ Rest API to create/delete bindings
+  - This module uses rabbitMQ REST APIs to create / delete bindings.
 requirements: [ "requests >= 1.0.0" ]
 options:
     state:
-        description:
-            - Whether the exchange should be present or absent
-            - Only present implemented atm
-        choices: [ "present", "absent" ]
-        required: false
-        default: present
+      description:
+      - Whether the bindings should be present or absent.
+      - Only present implemented at the momemt.
+      choices: [ "present", "absent" ]
+      default: present
     name:
-        description:
-            - source exchange to create binding on
-        required: true
-        aliases: [ "src", "source" ]
+      description:
+      - source exchange to create binding on.
+      required: true
+      aliases: [ "src", "source" ]
     login_user:
-        description:
-            - rabbitMQ user for connection
-        required: false
-        default: guest
+      description:
+      - rabbitMQ user for the connection.
+      default: guest
     login_password:
-        description:
-            - rabbitMQ password for connection
-        required: false
-        default: false
+      description:
+      - rabbitMQ password for the connection.
+      default: false
     login_host:
-        description:
-            - rabbitMQ host for connection
-        required: false
-        default: localhost
+      description:
+      - rabbitMQ host for the connection.
+      default: localhost
     login_port:
-        description:
-            - rabbitMQ management api port
-        required: false
-        default: 15672
+      description:
+      - rabbitMQ management API port.
+      default: 15672
     vhost:
-        description:
-            - rabbitMQ virtual host
-            - default vhost is /
-        required: false
-        default: "/"
+      description:
+      - rabbitMQ virtual host.
+      default: "/"
     destination:
-        description:
-            - destination exchange or queue for the binding
-        required: true
-        aliases: [ "dst", "dest" ]
+      description:
+      - destination exchange or queue for the binding.
+      required: true
+      aliases: [ "dst", "dest" ]
     destination_type:
-        description:
-            - Either queue or exchange
-        required: true
-        choices: [ "queue", "exchange" ]
-        aliases: [ "type", "dest_type" ]
+      description:
+      - Either queue or exchange.
+      required: true
+      choices: [ "queue", "exchange" ]
+      aliases: [ "type", "dest_type" ]
     routing_key:
-        description:
-            - routing key for the binding
-            - default is #
-        required: false
-        default: "#"
+      description:
+      - routing key for the binding.
+      default: "#"
     arguments:
-        description:
-            - extra arguments for exchange. If defined this argument is a key/value dictionary
-        required: false
-        default: {}
+      description:
+      - extra arguments for exchange. If defined this argument is a key/value dictionary.
+      default: {}
 '''
 
 EXAMPLES = '''
