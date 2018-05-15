@@ -160,6 +160,17 @@ class OpenNebulaModule:
 
         return resolved_params
 
+    def is_parameter(self, name):
+        """
+        Utility method to check if a parameter was provided or is resolved
+        Args:
+            name: the parameter to check
+        """
+        if name in self.resolved_parameters:
+            return self.get_parameter(name) is not None
+        else:
+            return False
+
     def get_parameter(self, name):
         """
         Utility method for accessing parameters that includes resolved ID
