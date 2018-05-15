@@ -26,7 +26,6 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
 
-import q
 try:
     from ncclient.operations import RPCError
     from ncclient.xml_ import to_xml, to_ele

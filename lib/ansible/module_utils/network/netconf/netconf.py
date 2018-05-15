@@ -20,7 +20,8 @@ import json
 
 from contextlib import contextmanager
 
-from ansible.module_utils.connection import Connection
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 
@@ -68,23 +69,38 @@ def locked_config(module, target=None):
 
 def get_config(module, source, filter, lock=False):
     conn = get_connection(module)
-
-    if lock:
-        with locked_config(module, target=source):
-            response = conn.get_config(source=source, filter=filter)
-    else:
+    try:
+        locked = False
+        if lock:
+            conn.lock(target=source)
+            locked = True
         response = conn.get_config(source=source, filter=filter)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    finally:
+        if locked:
+            conn.unlock(target=source)
 
     return response
 
 
 def get(module, source, filter, lock=False):
     conn = get_connection(module)
+    try:
+        locked = False
+        if lock:
+            conn.lock(target=source)
+            locked = True
 
-    if lock:
-        with locked_config(module, target=source):
-            response = conn.get(filter=filter)
-    else:
         response = conn.get(filter=filter)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    finally:
+        if locked:
+            conn.unlock(target=source)
 
     return response
