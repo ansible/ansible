@@ -427,10 +427,14 @@ def main():
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
+    executable = module.params['executable']
 
     venv_created = False
     if chdir:
-        env = os.path.join(chdir, env)
+        if env:
+            env = os.path.join(chdir, env)
+        elif executable:
+            executable = os.path.join(chdir, executable)
 
     if umask and not isinstance(umask, int):
         try:
@@ -458,7 +462,7 @@ def main():
                 venv_created = True
                 out, err = setup_virtualenv(module, env, chdir, out, err)
 
-        pip = _get_pip(module, env, module.params['executable'])
+        pip = _get_pip(module, env, executable)
 
         cmd = '%s %s' % (pip, state_map[state])
 
