@@ -50,16 +50,10 @@ options:
         aliases: [ daemon-reload ]
     scope:
         description:
-            - run systemctl within a given service manager scope, either as the default system scope (None),
+            - run systemctl within a given service manager scope, either as the default system scope (system),
               the current user's scope (user), or the scope of all users (global).
         choices: [ system, user, global ]
         default: 'system'
-    user:
-        description:
-            - run systemctl talking to the service manager of the calling user, rather than the service manager
-              of the system.
-        type: bool
-        default: 'no'
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
