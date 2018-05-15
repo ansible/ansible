@@ -600,18 +600,18 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 self.parameters['sku']['capacity'] != ag_dict['sku']['capacity'] or
                 self.parameters['ssl_policy']['policy_type'] != ag_dict['ssl_policy']['policy_type'] or
                 self.parameters['ssl_policy']['policy_name'] != ag_dict['ssl_policy']['policy_name'] or
-                self.parameters['ssl_policy']['min_protocol_version'] != ag_dict['ssl_policy']['min_protocol_version']:
-                !compare_arrays(self.parameters, ag_dict, 'authentication_certificates') or
-                !compare_arrays(self.parameters, ag_dict, 'gateway_ip_configurations') or
-                !compare_arrays(self.parameters, ag_dict, 'ssl_certificates') or
-                !compare_arrays(self.parameters, ag_dict, 'frontend_ip_configurations') or
-                !compare_arrays(self.parameters, ag_dict, 'frontend_ports') or
-                !compare_arrays(self.parameters, ag_dict, 'backend_address_pools') or
-                !compare_arrays(self.parameters, ag_dict, 'backend_http_settings_collections') or
-                !compare_arrays(self.parameters, ag_dict, 'http_listeners') or
-                !compare_arrays(self.parameters, ag_dict, 'request_routing_rules')):
+                self.parameters['ssl_policy']['min_protocol_version'] != ag_dict['ssl_policy']['min_protocol_version'] or
+                not compare_arrays(self.parameters, ag_dict, 'authentication_certificates') or
+                not compare_arrays(self.parameters, ag_dict, 'gateway_ip_configurations') or
+                not compare_arrays(self.parameters, ag_dict, 'ssl_certificates') or
+                not compare_arrays(self.parameters, ag_dict, 'frontend_ip_configurations') or
+                not compare_arrays(self.parameters, ag_dict, 'frontend_ports') or
+                not compare_arrays(self.parameters, ag_dict, 'backend_address_pools') or
+                not compare_arrays(self.parameters, ag_dict, 'backend_http_settings_collections') or
+                not compare_arrays(self.parameters, ag_dict, 'http_listeners') or
+                not compare_arrays(self.parameters, ag_dict, 'request_routing_rules')):
                 
-                self.to_do = Action.Update
+                self.to_do = Actions.Update
             else:
                 self.to_do = Actions.NoAction
 
