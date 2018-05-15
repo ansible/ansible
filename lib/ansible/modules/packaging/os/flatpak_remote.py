@@ -24,32 +24,39 @@ author:
 - Alexander Bethke (@oolongbrothers)
 short_description: Manage flatpak repository remotes
 description:
-- Manage flatpak repository remotes.
+- The C(flatpak_remote) module adds or removes flatpak repository remotes.
+notes:
+- The C(flatpak_remote) requires the C(flatpak) binary the be installed on the managed host.
 options:
   name:
     description:
+    - The name of the flatpak repository to manage
     - When I(state) is set to C(present), I(name) is added as a remote for installing flatpaks.
-      When used with I(state=absent) the remote with thet name will be removed.
+    - When used with I(state=absent) the remote with that name will be removed.
     required: true
   remote:
     description:
-    - When I(state) is set to C(present), I(remote) url is added as a flatpak remote for the
+    - The URL of the flatpak remote to add
+    - When I(state) is set to C(present), I(remote) URL is added as a flatpak remote for the
       specified installation C(method).
-      When used with I(state=absent), this is not required.
+    - When used with I(state=absent), this is not required.
   method:
     description:
-    - Determines the type of installation to work on. Can be C(user) or C(system) installations.
+    - The installation method to use
+    - Defines if the I(flatpak_remote) is to installed for the globally for the whole C(system)
+      or for the current C(user) only.
     choices: [ system, user ]
     default: system
   executable:
     description:
-    - The path to the C(flatpak) executable to use. The default will look for
-      the c(flatpak) executable on the path
+    - The path to the C(flatpak) executable to use
+    - By defaultm the C(flatpak_remote) module looks for the C(flatpak) executable on the path.
     default: flatpak
   state:
     description:
-      - Set to C(present) will install the flatpak remote.
-      - Set to C(absent) will remove the flatpak remote.
+      - Wether the flatpak_remote should be present on the managed host or not
+      - Setting this to C(present) will install the flatpak remote.
+      - Setting this to C(absent) will remove the flatpak remote.
     choices: [ absent, present ]
     default: present
 '''
