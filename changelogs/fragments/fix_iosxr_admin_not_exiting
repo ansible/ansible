@@ -1,0 +1,2 @@
+bugfixes:
+   - Fix iosxr_config admin mode not exiting properly https://github.com/ansible/ansible/pull/39594
