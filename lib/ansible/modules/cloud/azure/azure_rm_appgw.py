@@ -592,24 +592,22 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 self.to_do = Actions.Update
 
         if (self.to_do == Actions.Update):
-            ag_dict = old_response.as_dict()
-
-            if (self.parameters['location'] != ag_dict['location'] or
-                    self.parameters['sku']['name'] != ag_dict['sku']['name'] or
-                    self.parameters['sku']['tier'] != ag_dict['sku']['tier'] or
-                    self.parameters['sku']['capacity'] != ag_dict['sku']['capacity'] or
-                    self.parameters['ssl_policy']['policy_type'] != ag_dict['ssl_policy']['policy_type'] or
-                    self.parameters['ssl_policy']['policy_name'] != ag_dict['ssl_policy']['policy_name'] or
-                    self.parameters['ssl_policy']['min_protocol_version'] != ag_dict['ssl_policy']['min_protocol_version'] or
-                    not compare_arrays(self.parameters, ag_dict, 'authentication_certificates') or
-                    not compare_arrays(self.parameters, ag_dict, 'gateway_ip_configurations') or
-                    not compare_arrays(self.parameters, ag_dict, 'ssl_certificates') or
-                    not compare_arrays(self.parameters, ag_dict, 'frontend_ip_configurations') or
-                    not compare_arrays(self.parameters, ag_dict, 'frontend_ports') or
-                    not compare_arrays(self.parameters, ag_dict, 'backend_address_pools') or
-                    not compare_arrays(self.parameters, ag_dict, 'backend_http_settings_collections') or
-                    not compare_arrays(self.parameters, ag_dict, 'http_listeners') or
-                    not compare_arrays(self.parameters, ag_dict, 'request_routing_rules')):
+            if (self.parameters['location'] != old_response['location'] or
+                    self.parameters['sku']['name'] != old_response['sku']['name'] or
+                    self.parameters['sku']['tier'] != old_response['sku']['tier'] or
+                    self.parameters['sku']['capacity'] != old_response['sku']['capacity'] or
+                    self.parameters['ssl_policy']['policy_type'] != old_response['ssl_policy']['policy_type'] or
+                    self.parameters['ssl_policy']['policy_name'] != old_response['ssl_policy']['policy_name'] or
+                    self.parameters['ssl_policy']['min_protocol_version'] != old_response['ssl_policy']['min_protocol_version'] or
+                    not compare_arrays(self.parameters, old_response, 'authentication_certificates') or
+                    not compare_arrays(self.parameters, old_response, 'gateway_ip_configurations') or
+                    not compare_arrays(self.parameters, old_response, 'ssl_certificates') or
+                    not compare_arrays(self.parameters, old_response, 'frontend_ip_configurations') or
+                    not compare_arrays(self.parameters, old_response, 'frontend_ports') or
+                    not compare_arrays(self.parameters, old_response, 'backend_address_pools') or
+                    not compare_arrays(self.parameters, old_response, 'backend_http_settings_collections') or
+                    not compare_arrays(self.parameters, old_response, 'http_listeners') or
+                    not compare_arrays(self.parameters, old_response, 'request_routing_rules')):
 
                 self.to_do = Actions.Update
             else:
