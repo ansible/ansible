@@ -741,21 +741,21 @@ def ipsubnet(value, query='', index='x'):
     elif str(query):
         try:
             vtype = ipaddr(query, 'type')
-            if vtype == 'address' :
+            if vtype == 'address':
                 v = ipaddr(query, 'cidr)
-            elif vtype == 'network' :
-                v = ipaddr(query, 'sunet')
-                           
+            elif vtype == 'network':
+                v = ipaddr(query, 'subnet')
+
             query = netaddr.IPNetwork(v)
         except:
             return false
-                           
+
         if network_in_network(query, value):
             subnetlist = list(query.subnet(value.prefixlen))
             for i in range (0, len(subnetlist)):
                 if (subnetlist[i] == value):
                     return str(i + 1)
-                           
+
     return False
 
 
