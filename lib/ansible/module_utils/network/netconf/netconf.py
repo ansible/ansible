@@ -48,13 +48,13 @@ def get_capabilities(module):
     return module._netconf_capabilities
 
 
-def lock_configuration(x, target=None):
-    conn = get_connection(x)
+def lock_configuration(module, target=None):
+    conn = get_connection(module)
     return conn.lock(target=target)
 
 
-def unlock_configuration(x, target=None):
-    conn = get_connection(x)
+def unlock_configuration(module, target=None):
+    conn = get_connection(module)
     return conn.unlock(target=target)
 
 
@@ -86,12 +86,12 @@ def get_config(module, source, filter, lock=False):
     return response
 
 
-def get(module, source, filter, lock=False):
+def get(module, filter, lock=False):
     conn = get_connection(module)
     try:
         locked = False
         if lock:
-            conn.lock(target=source)
+            conn.lock(target='running')
             locked = True
 
         response = conn.get(filter=filter)
@@ -101,6 +101,6 @@ def get(module, source, filter, lock=False):
 
     finally:
         if locked:
-            conn.unlock(target=source)
+            conn.unlock(target='running')
 
     return response

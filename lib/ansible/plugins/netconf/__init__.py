@@ -277,15 +277,15 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def get_device_operations(self, server_capabilities):
         operations = {}
         capabilities = '\n'.join(server_capabilities)
-        operations['supports_commit'] = True if ':candidate' in capabilities else False
-        operations['supports_defaults'] = True if ':with-defaults' in capabilities else False
-        operations['supports_confirm_commit'] = True if ':confirmed-commit' in capabilities else False
-        operations['supports_startup'] = True if ':startup' in capabilities else False
-        operations['supports_xpath'] = True if ':xpath' in capabilities else False
-        operations['supports_writeable_running'] = True if ':writable-running' in capabilities else False
+        operations['supports_commit'] = ':candidate' in capabilities
+        operations['supports_defaults'] = ':with-defaults' in capabilities
+        operations['supports_confirm_commit'] = ':confirmed-commit' in capabilities
+        operations['supports_startup'] = ':startup' in capabilities
+        operations['supports_xpath'] = ':xpath' in capabilities
+        operations['supports_writable_running'] = ':writable-running' in capabilities
 
         operations['lock_datastore'] = []
-        if operations['supports_writeable_running']:
+        if operations['supports_writable_running']:
             operations['lock_datastore'].append('running')
 
         if operations['supports_commit']:

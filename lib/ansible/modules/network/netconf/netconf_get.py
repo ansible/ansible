@@ -30,10 +30,8 @@ options:
   source:
     description:
       - This argument specifies the datastore from which configuration data should be fetched.
-        Valid values are I(running), I(candidate) and I(auto). If the value is I(auto) it fetches
-        configuration data from I(candidate) datastore and if candidate datastore is not supported
-        it fallback to I(running) datastore. If the C(source) value is not mentioned in that case
-        both configuration and state information is returned in the response from running datastore.
+        Valid values are I(running), I(candidate) and I(startup). If the C(source) value is not
+        set both configuration and state information are returned in response from running datastore.
     choices: ['running', 'candidate', 'startup']
   filter:
     description:
@@ -55,11 +53,12 @@ options:
     description:
       - Instructs the module to explicitly lock the datastore specified as C(source). If no
         I(source) is defined, the I(running) datastore will be locked. By setting the option
-        value I(True) is will always lock the datastore mentioned in C(source) option provided
-        the platform supports it else module will report error By setting the option value I(False)
-        it will never lock the C(source) datastore.
-    default: False
-    type: bool
+        value I(always) is will explicitly lock the datastore mentioned in C(source) option.
+        By setting the option value I(never) it will not lock the C(source) datastore. The
+        value I(if-supported) allows better interworking with NETCONF servers, which do not
+        support the (un)lock operation for all supported datastores.
+    default: never
+    choices: ['never', 'always', 'if-supported']
 requirements:
   - ncclient (>=v0.5.2)
   - jxmlease
@@ -89,18 +88,36 @@ EXAMPLES = """
 
 - name: get schema list using subtree w/ namespaces
   netconf_get:
-    format: json
+    display: json
     filter: <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"><schemas><schema/></schemas></netconf-state>
-    lock: False
+    lock: never
 
 - name: get schema list using xpath
   netconf_get:
-    format: json
+    display: xml
     filter: /netconf-state/schemas/schema
 
 - name: get interface confiugration with filter (iosxr)
   netconf_get:
+    display: pretty
     filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+    lock: if-supported
+
+- name: Get system configuration data from running datastore state (junos)
+  netconf_get:
+    source: running
+    filter: <configuration><system></system></configuration>
+    lock: if-supported
+
+- name: Get complete configuration data from running datastore (SROS)
+  netconf_get:
+    source: running
+    filter: <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf"/>
+
+- name: Get complete state data (SROS)
+  netconf_get:
+    filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:state"/>
+    
 """
 
 RETURN = """
@@ -168,7 +185,7 @@ def main():
         source=dict(choices=['running', 'candidate', 'startup']),
         filter=dict(),
         display=dict(choices=['json', 'pretty', 'xml']),
-        lock=dict(default=False, type=bool)
+        lock=dict(choices=['never', 'always', 'if-supported'], default="never")
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -180,7 +197,6 @@ def main():
     source = module.params['source']
     filter = module.params['filter']
     filter_type = get_filter_type(filter)
-    lock = module.params['lock']
     display = module.params['display']
 
     if source == 'candidate' and not operations.get('supports_commit', False):
@@ -192,11 +208,21 @@ def main():
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
         module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
 
-    if lock and not operations.get('supports_lock', False):
-        module.fail_json(msg='lock operation is not supported on this device')
+# Changed by @wisotzky 2018/05/15
+#
+# Introducing 'lock:if-supported' for better interworking with devices non-compliant
+# to RFC6241. As per IETF specification lock/unlock operation has no feature dependency
+# other than :startup and :candidate. Locking the running datastore should always be
+# supported, independent of supporting the :writable-running feature.
 
-    if lock and source not in operations.get('lock_datastore', []):
-        module.fail_json(msg="lock operation on '%s' source is not supported on this device" % source)
+    if module.params['lock'] == 'never':
+        lock = False
+    elif (source or 'running') in operations.get('lock_datastore', []):
+        lock = True
+    elif module.params['lock'] == 'if-supported':
+        lock = False
+    else:
+        module.fail_json(msg="lock operation on '%s' source is not supported on this device" % (source or 'running'))
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
@@ -208,7 +234,7 @@ def main():
     if source is not None:
         response = get_config(module, source, filter_spec, lock)
     else:
-        response = get(module, source, filter_spec, lock)
+        response = get(module, filter_spec, lock)
 
     xml_resp = tostring(response)
     output = None

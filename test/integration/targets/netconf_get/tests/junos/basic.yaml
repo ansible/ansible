@@ -33,7 +33,7 @@
 
 - name: Failure scenario, fetch config from running with lock
   netconf_get:
-    lock: True
+    lock: always
     source: running
   register: result
   ignore_errors: True

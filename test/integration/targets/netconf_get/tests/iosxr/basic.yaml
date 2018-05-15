@@ -11,7 +11,7 @@
     match: none
   connection: network_cli
 
-- name: get running interface confiugration with filter
+- name: get running interface configuration with filter
   netconf_get:
     source: running
     filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
@@ -36,7 +36,7 @@
 
 - name: Failure scenario, fetch config from running with lock
   netconf_get:
-    lock: True
+    lock: always
     source: running
   register: result
   ignore_errors: True
