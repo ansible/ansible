@@ -752,7 +752,7 @@ def ipsubnet(value, query='', index='x'):
 
         if network_in_network(query, value):
             subnetlist = list(query.subnet(value.prefixlen))
-            for i in range (0, len(subnetlist)):
+            for i in range(0, len(subnetlist)):
                 if (subnetlist[i] == value):
                     return str(i + 1)
 
