@@ -54,6 +54,7 @@ options:
               the current user's scope (user), or the scope of all users (global).
         choices: [ system, user, global ]
         default: 'system'
+        version_added: "2.6"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
