@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/badtransport.yaml"
+- debug: msg="START nxapi/badtransport.yaml"
 
 - name: Sending transport other than cli should fail
   nxos_nxapi:
@@ -12,6 +12,6 @@
 
 - assert:
      that:
-        - result.failed and result.msg is search('transport')
+        - result.failed and result.msg is search('Transport')
 
-- debug: msg="END cli/badtransport.yaml"
+- debug: msg="END nxapi/badtransport.yaml"

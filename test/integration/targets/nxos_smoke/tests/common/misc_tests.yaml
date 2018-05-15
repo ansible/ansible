@@ -22,3 +22,9 @@
 - assert:
     that:
       - result.stdout|length == 10
+
+- name: combine with provider
+  nxos_command:
+    commands:
+      - show hostname
+    provider: "{{ connection | combine({'timeout': 500}) }}"
