@@ -116,12 +116,10 @@ Parameters
                 <td>
                     <div class="cell-border">
                         {# Turn boolean values in 'yes' and 'no' values #}
-                        {% if value.default is defined %}
-                            {% if value.default is sameas true %}
-                                {% set _x = value.update({'default': 'yes'}) %}
-                            {% elif value.default is sameas false %}
-                                {% set _x = value.update({'default': 'no'}) %}
-                            {% endif %}
+                        {% if value.default is sameas true %}
+                            {% set _x = value.update({'default': 'yes'}) %}
+                        {% elif value.default is sameas false %}
+                            {% set _x = value.update({'default': 'no'}) %}
                         {% endif %}
                         {% if value.type == 'bool' %}
                             {% set _x = value.update({'choices': ['no', 'yes']}) %}
