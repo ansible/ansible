@@ -66,6 +66,24 @@
 
 
 # Check cutom gem directory
+- name: Install gem in a custom directory with incorrect options
+  gem:
+    name: gist
+    state: present
+    install_dir: "{{ output_dir }}/gems"
+  ignore_errors: yes
+  register: install_gem_fail_result
+
+- debug:
+    var: install_gem_fail_result
+  tags: debug
+
+- name: Ensure previous task failed
+  assert:
+    that:
+      - install_gem_fail_result is failed
+      - install_gem_fail_result.msg == 'install_dir requires user_install=false'
+
 - name: Install a gem in a custom directory
   gem:
     name: gist
