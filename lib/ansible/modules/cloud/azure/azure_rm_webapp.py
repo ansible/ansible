@@ -77,9 +77,14 @@ options:
             - The version used to run your web app if using Python, e.g., 2.7, 3.4.
             - Only applys for windows web app.
 
+    node_version:
+        description:
+            - The version used to run your web app if using nodejs, e.g., 6.6, 6.9.
+            - Only applys for windows web app.
+
     linux_fx_version:
         description:
-            - The runtime stack used for your linux-based webapp, e.g., "RUBY|2.3", "NODE|6.6", "PHP|5.6", "DOTNETCORE|1.1.0".
+            - The runtime stack used for your linux-based webapp, e.g., 'RUBY|2.3', 'NODE|6.6', 'PHP|5.6', 'DOTNETCORE|1.1.0'.
             - Only applys for linx web app. See https://aka.ms/linux-stacks for more info.
 
     java_container_settings:
@@ -162,6 +167,7 @@ options:
     purge_app_settings:
         description:
             - Purge any existing application settings. Replace web app application settings with app_settings.
+        type: bool
 
     state:
       description:
@@ -235,55 +241,53 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    "results": {
-        "ansible_facts": {
-            "azure_webapp": {
-                "availability_state": "Normal",
-                "client_affinity_enabled": true,
-                "client_cert_enabled": false,
-                "container_size": 0,
-                "daily_memory_time_quota": 0,
-                "default_host_name": "ansiblewindowsaaa.azurewebsites.net",
-                "enabled": true,
-                "enabled_host_names": [
-                    "ansiblewindowsaaa.azurewebsites.net",
-                    "ansiblewindowsaaa.scm.azurewebsites.net"
-                ],
-                "host_name_ssl_states": [
-                    {
-                        "host_type": "Standard",
-                        "name": "ansiblewindowsaaa.azurewebsites.net",
-                        "ssl_state": "Disabled"
-                    },
-                    {
-                        "host_type": "Repository",
-                        "name": "ansiblewindowsaaa.scm.azurewebsites.net",
-                        "ssl_state": "Disabled"
-                    }
-                ],
-                "host_names": [
-                    "ansiblewindowsaaa.azurewebsites.net"
-                ],
-                "host_names_disabled": false,
-                "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
-                "kind": "app",
-                "last_modified_time_utc": "2018-05-14T04:50:54.473333Z",
-                "location": "East US",
-                "name": "ansiblewindowsaaa",
-                "outbound_ip_addresses": "52.170.7.25,52.168.75.147,52.179.5.98,52.179.1.81,52.179.4.232",
-                "repository_site_name": "ansiblewindowsaaa",
-                "reserved": false,
-                "resource_group": "ansiblewebapp1",
-                "scm_site_also_stopped": false,
-                "server_farm_id": "/subscriptions/<subscription_id>/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
-                "state": "Running",
-                "tags": {},
-                "type": "Microsoft.Web/sites",
-                "usage_state": "Normal"
+azure_webapp:
+    description: Facts about the current state of the web app.
+    returned: always
+    type: dict
+    sample: {
+        "availability_state": "Normal",
+        "client_affinity_enabled": true,
+        "client_cert_enabled": false,
+        "container_size": 0,
+        "daily_memory_time_quota": 0,
+        "default_host_name": "ansiblewindowsaaa.azurewebsites.net",
+        "enabled": true,
+        "enabled_host_names": [
+            "ansiblewindowsaaa.azurewebsites.net",
+            "ansiblewindowsaaa.scm.azurewebsites.net"
+        ],
+        "host_name_ssl_states": [
+            {
+                "host_type": "Standard",
+                "name": "ansiblewindowsaaa.azurewebsites.net",
+                "ssl_state": "Disabled"
+            },
+            {
+                "host_type": "Repository",
+                "name": "ansiblewindowsaaa.scm.azurewebsites.net",
+                "ssl_state": "Disabled"
             }
-        },
-        "changed": true,
-        "failed": false,
+        ],
+        "host_names": [
+            "ansiblewindowsaaa.azurewebsites.net"
+        ],
+        "host_names_disabled": false,
+        "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
+        "kind": "app",
+        "last_modified_time_utc": "2018-05-14T04:50:54.473333Z",
+        "location": "East US",
+        "name": "ansiblewindowsaaa",
+        "outbound_ip_addresses": "52.170.7.25,52.168.75.147,52.179.5.98,52.179.1.81,52.179.4.232",
+        "repository_site_name": "ansiblewindowsaaa",
+        "reserved": false,
+        "resource_group": "ansiblewebapp1",
+        "scm_site_also_stopped": false,
+        "server_farm_id": "/subscriptions/<subscription_id>/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
+        "state": "Running",
+        "tags": {},
+        "type": "Microsoft.Web/sites",
+        "usage_state": "Normal"        
     }
 '''
 
