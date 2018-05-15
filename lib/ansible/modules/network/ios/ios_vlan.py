@@ -241,13 +241,7 @@ def map_config_to_obj(module):
         obj['state'] = state
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
-
-        obj['interfaces'] = []
-        if len(interfaces) > 0:
-            interface = []
-            for i in interfaces:
-                interface.append(i.replace('Gi', 'GigabitEthernet'))
-            obj['interfaces'].extend(interface)
+        obj['interfaces'] = [i.replace('Gi', 'GigabitEthernet') for i in interfaces]
 
         objs.append(obj)
     return objs
