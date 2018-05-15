@@ -57,7 +57,7 @@
 - assert: 
       that:
           - "{{ output.state.rules | length }} == 3"
-          - output.state.rules[1].source_address_prefix == '174.108.158.0/24'
+          - output.state.rules[0].source_address_prefix == '174.108.158.0/24'
 
 - name: Test idempotence
   azure_rm_securitygroup:
