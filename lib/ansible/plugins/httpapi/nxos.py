@@ -21,18 +21,44 @@ class HttpApi:
     def __init__(self, connection):
         self.connection = connection
 
-    def send_request(self, data, **message_kwargs):
-        if 'become' in message_kwargs:
-            display.vvvv('firing event: on_become')
-            # TODO ??? self._terminal.on_become(passwd=auth_pass)
+    def _run_queue(self, queue, output):
+        request = request_builder(queue, output)
 
-        output = message_kwargs.get('output', 'text')
-        request = request_builder(data, output)
         headers = {'Content-Type': 'application/json'}
-
         response = self.connection.send('/ins', request, headers=headers, method='POST')
         response = json.loads(to_text(response.read()))
         return handle_response(response)
+
+    def send_request(self, data, **message_kwargs):
+        output = None
+        queue = list()
+        responses = list()
+
+        for item in to_list(data):
+            cmd_output = message_kwargs.get('output', 'json')
+            if isinstance(item, dict):
+                command = item['command']
+                if command.endswith('| json'):
+                    command = command.rsplit('|', 1)[0]
+                    cmd_output = 'json'
+                elif 'output' in item:
+                    cmd_output = item['output']
+            else:
+                command = item
+
+            if output and output != cmd_output:
+                responses.extend(self._run_queue(queue, output))
+                queue = list()
+
+            output = cmd_output or 'json'
+            queue.append(command)
+
+        if queue:
+            responses.extend(self._run_queue(queue, output))
+
+        if len(responses) == 1:
+            return responses[0]
+        return responses
 
     # Migrated from module_utils
     def edit_config(self, command):
@@ -42,32 +68,18 @@ class HttpApi:
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
-        output = None
-        queue = list()
-        responses = list()
+        try:
+            out = self.send_request(commands)
+        except ConnectionError as exc:
+            if check_rc:
+                raise
+            out = to_text(exc)
 
-        def run_queue(queue, output):
-            response = to_list(self.send_request(queue, output=output))
-            if output == 'json':
-                response = [json.loads(item) for item in response]
-            return response
-
-        for item in to_list(commands):
-            if item['command'].endswith('| json'):
-                item['command'] = item['command'].rsplit('|', 1)[0]
-                item['output'] = 'json'
-
-            if output and output != item['output']:
-                responses.extend(run_queue(queue, output))
-                queue = list()
-
-            output = item['output'] or 'json'
-            queue.append(item['command'])
-
-        if queue:
-            responses.extend(run_queue(queue, output))
-
-        return responses
+        out = to_list(out)
+        for index, response in enumerate(out):
+            if response[0] == '{':
+                out[index] = json.loads(response)
+        return out
 
 
 def handle_response(response):
@@ -84,8 +96,6 @@ def handle_response(response):
 
                 results.append(result.strip())
 
-    if len(results) == 1:
-        return results[0]
     return results
 
 
