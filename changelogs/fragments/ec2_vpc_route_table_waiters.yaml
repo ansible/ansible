@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Add a custom waiter for the ec2_vpc_route_table module that waits for a route table to exist
+  - Wait for route table to be present before attempting to use it
