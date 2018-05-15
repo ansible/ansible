@@ -556,9 +556,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not module.params['power_on'] and (module.params['wait_for_ip_address'] or module.params['wait']):
-        module.fail_json(msg='Cannot wait for VM when power_on=False')
-
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi python library not found')
 
