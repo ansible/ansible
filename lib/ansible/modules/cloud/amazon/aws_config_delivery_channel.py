@@ -108,7 +108,7 @@ def create_resource(client, module, params, result):
         module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
     except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
         module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
-                "Make sure the bucket exists and is available")
+                             "Make sure the bucket exists and is available")
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
@@ -133,7 +133,7 @@ def update_resource(client, module, params, result):
             module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
         except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
             module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
-                    "Make sure the bucket exists and is available")
+                                 "Make sure the bucket exists and is available")
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
