@@ -198,8 +198,7 @@ options:
         version_added: "2.4"
     force_pw:
         description:
-            - Forces you to change password in next login, it will be ignored on platforms that do not support this.
-              Currently supported on Linux and FreeBSD.
+            - Forces you to change password in next login. This takes into account the user's password expiration date.
         type: bool
         default: False
         version_added: "2.6"
@@ -212,23 +211,27 @@ EXAMPLES = '''
     comment: John Doe
     uid: 1040
     group: admin
+
 - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
   user:
     name: james
     shell: /bin/bash
     groups: admins,developers
     append: yes
+
 - name: Remove the user 'johnd'
   user:
     name: johnd
     state: absent
     remove: yes
+
 - name: Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
   user:
     name: jsmith
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
+
 - name: Added a consultant whose account you want to expire
   user:
     name: james18
@@ -259,6 +262,7 @@ class User(object):
     """
     This is a generic User manipulation class that is subclassed
     based on platform.
+
     A subclass may wish to override the following action methods:-
       - create_user()
       - remove_user()
@@ -266,6 +270,7 @@ class User(object):
       - ssh_key_gen()
       - ssh_key_fingerprint()
       - user_exists()
+
     All subclasses MUST define platform and distribution (which may be None).
     """
 
@@ -348,7 +353,14 @@ class User(object):
             cmd.append('-r')
         cmd.append(self.name)
 
-        return self.execute_command(cmd)
+        (rc, out, err) = self.execute_command(cmd)
+        results = {}
+        results['changed'] = True
+        results['stderr'] = err
+        results['stdout'] = out
+        if rc != 0:
+            self.module.fail_json(name=user.name, msg=err, rc=rc)
+        return results
 
     def create_user_useradd(self):
 
@@ -435,24 +447,20 @@ class User(object):
             cmd.append('-r')
 
         cmd.append(self.name)
-        first_tuple = self.execute_command(cmd)
         
-        
+        (rc, out, err) = self.execute_command(cmd)
+        results = {}
+        results['changed'] = True
+
         if self.force_pw:
-            second_tuple = self._expire_password()
-            
-            return self._compare_outputs(first_tuple, second_tuple)
+            (rc_chage, out_chage, err_chage) = self._expire_password()
+            results['stdout']= out +' | '+ results['stdout']
+            results['stderr']= err +' | '+ results['stderr']
 
-        return self._compare_outputs(first_tuple)
+        return results
 
-    def _compare_outputs(self, first_tuple, second_tuple=(None,' ',' ')):
-        if first_tuple[0] == 0 or second_tuple[0] == 0:
-            overall_rc=0
-        else:
-            overall_rc=None
-        overall_out=first_tuple[1]+' | '+second_tuple[1]
-        overall_err=first_tuple[2]+' | '+second_tuple[2]
-        return (overall_rc, overall_out, overall_err)  
+    
+
 
     def _expire_password(self):
         chage_cmd=[self.module.get_bin_path('chage', True)]
@@ -489,7 +497,8 @@ class User(object):
         return False
 
     def modify_user_usermod(self):
-
+        results = {}
+        results['changed'] = False
         if self.local:
             command_name = 'lusermod'
         else:
@@ -581,22 +590,28 @@ class User(object):
             cmd.append('-p')
             cmd.append(self.password)
 
-        first_tuple = (None, " ", " ")
+        # skip if no changes to be made
+        out, err = ['', '']
         if len(cmd) > 1:
+            
             cmd.append(self.name)
-            first_tuple = self.execute_command(cmd)
-
+            (rc, out, err) = self.execute_command(cmd)
+            results['changed'] = True
+            results['stdout'] = out
+            results['stderr'] = err
         
         if self.force_pw:
-            second_tuple = (None, " ", " ")
+
             current_lastday = self.user_password()[2]
             q(current_lastday)
             if current_lastday != 0:
-                second_tuple = self._expire_password()
-                
-            return self._compare_outputs(first_tuple,second_tuple)
-
-        return self._compare_outputs(first_tuple)
+                (rc_chage, out_chage, err_chage) = self._expire_password()
+                results['changed'] = True 
+                results['stdout'] = out +' | '+ out_chage
+                results['stderr'] = err +' | '+ err_chage
+        
+        
+        return results
 
     def group_exists(self, group):
         try:
@@ -811,6 +826,7 @@ class FreeBsdUser(User):
     This is a FreeBSD User manipulation class - it uses the pw command
     to manipulate the user database, followed by the chpass command
     to change the password.
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -821,9 +837,7 @@ class FreeBsdUser(User):
     distribution = None
     SHADOWFILE = '/etc/master.passwd'
     SHADOWFILE_EXPIRE_INDEX = 6
-    SHADOWFILE_LASTDAY_INDEX = 5
     DATE_FORMAT = '%d-%b-%Y'
-
 
     def remove_user(self):
         cmd = [
@@ -889,10 +903,6 @@ class FreeBsdUser(User):
         if self.expires:
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
-
-        if self.force_pw:
-            cmd.append('-p')
-            cmd.append('1')
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -999,12 +1009,6 @@ class FreeBsdUser(User):
                 cmd.append('-e')
                 cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
-        if self.force_pw:
-            current_lastday = self.user_password()[2]
-            if current_lastday != 0:
-                cmd.append('-p')
-                cmd.append('1')   
-
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
@@ -1066,6 +1070,7 @@ class OpenBSDUser(User):
     Main differences are that OpenBSD:-
      - has no concept of "system" account.
      - has no force delete user
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -1230,6 +1235,8 @@ class NetBSDUser(User):
     Main differences are that NetBSD:-
      - has no concept of "system" account.
      - has no force delete user
+
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -1388,6 +1395,7 @@ class SunOS(User):
     this class and the generic user class is that Solaris-type distros
     don't support the concept of a "system" account and we need to
     edit the /etc/shadow file manually to set a password. (Ugh)
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -1608,6 +1616,7 @@ class DarwinUser(User):
       - User password must be cleartext
       - UID must be given
       - System users must ben under 500
+
     This overrides the following methods from the generic class:-
       - user_exists()
       - create_user()
@@ -1714,6 +1723,7 @@ class DarwinUser(User):
 
     def _change_user_password(self):
         '''Change password for SELF.NAME against SELF.PASSWORD.
+
         Please note that password must be cleartext.
         '''
         # some documentation on how is stored passwords on OSX:
@@ -1792,6 +1802,7 @@ class DarwinUser(User):
 
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
+
         Returns 0 if a change has been made, None otherwise.'''
 
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
@@ -1953,6 +1964,7 @@ class DarwinUser(User):
 class AIX(User):
     """
     This is a AIX User manipulation class.
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -2102,6 +2114,7 @@ class AIX(User):
 class HPUX(User):
     """
     This is a HP-UX User manipulation class.
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -2309,16 +2322,15 @@ def main():
         if user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = user.remove_user()
-            if rc != 0:
-                module.fail_json(name=user.name, msg=err, rc=rc)
+            result.update(user.remove_user())
+          
             result['force'] = user.force
             result['remove'] = user.remove
     elif user.state == 'present':
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = user.create_user()
+            result.update(user.create_user())
             if module.check_mode:
                 result['system'] = user.name
             else:
@@ -2326,7 +2338,8 @@ def main():
                 result['create_home'] = user.create_home
         else:
             # modify user (note: this function is check mode aware)
-            (rc, out, err) = user.modify_user()
+            
+            result.update(user.modify_user())
             result['append'] = user.append
             result['move_home'] = user.move_home
         if rc is not None and rc != 0:
@@ -2334,14 +2347,8 @@ def main():
         if user.password is not None:
             result['password'] = 'NOT_LOGGING_PASSWORD'
 
-    if rc is None:
-        result['changed'] = False
-    else:
-        result['changed'] = True
-    if out:
-        result['stdout'] = out
-    if err:
-        result['stderr'] = err
+    
+    
 
     if user.user_exists():
         info = user.user_info()

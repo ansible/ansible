@@ -33,6 +33,7 @@
     name: ansibulluser
     state: absent
 
+
 - name: try to create a user
   user:
     name: ansibulluser
@@ -223,26 +224,74 @@
           - bsd_account_expiration.stdout == '2529878400'
   when: ansible_os_family == 'FreeBSD'
 
-- name: Change timezone
-  timezone:
-    name: America/Denver
-  register: original_timezone
+#- name: Change timezone
+#  timezone:
+#    name: America/Denver
+#  register: original_timezone
 
-- name: Change system timezone to make sure expiration comparison works properly
+#- name: Change system timezone to make sure expiration comparison works properly
+#  block:
+#    - name: Create user with expiration again to ensure no change is made in a new timezone
+#      user:
+#        name: ansibulluser
+#        state: present
+#        expires: 2529881062
+#      register: user_test_different_tz
+
+#    - name: Ensure that no change was reported
+#      assert:
+#        that:
+#          - user_test_different_tz is not changed
+
+#  always:
+#    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+#      timezone:
+#        name: "{{ original_timezone.diff.before.name }}"
+
+## password expiration
+
+- name: Create user with force password reset
+  user:
+    name: ansibulluser
+    state: present
+    force_pw: True
+  register: user_test_force_pw1
+
+- name: Create user with password reset again to ensure no change is made
+  user:
+    name: ansibulluser
+    state: present
+    force_pw: True
+  register: user_test_force_pw2
+
+- name: Ensure that account with force password reset was created and did not change on subsequent run
+  assert:
+    that:
+      - user_test_force_pw1 is changed
+      - user_test_force_pw2 is not changed
+
+- name: Verify password expiration date for Linux
   block:
-    - name: Create user with expiration again to ensure no change is made in a new timezone
-      user:
-        name: ansibulluser
-        state: present
-        expires: 2529881062
-      register: user_test_different_tz
+    - name: LINUX | Get password expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
 
-    - name: Ensure that no change was reported
+    - name: LINUX | Ensure proper password expiration date was set
       assert:
         that:
-          - user_test_different_tz is not changed
+          - getent_shadow['ansibulluser'][1] == '0'
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
 
-  always:
-    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
-      timezone:
-        name: "{{ original_timezone.diff.before.name }}"
+- name: Verify password expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 6'
+      changed_when: no
+      register: bsd_password_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        that:
+          - bsd_password_expiration.stdout == '1'
+  when: ansible_os_family == 'FreeBSD'
