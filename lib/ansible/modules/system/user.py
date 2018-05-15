@@ -5,7 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-import q
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -590,7 +590,7 @@ class User(object):
         if self.force_pw:
             second_tuple = (None, " ", " ")
             current_lastday = self.user_password()[2]
-            q(current_lastday)
+            
             if current_lastday != 0:
                 second_tuple = self._expire_password()
                 
