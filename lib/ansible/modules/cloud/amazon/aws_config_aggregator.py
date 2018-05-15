@@ -64,38 +64,16 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Create Configuration Recorder for AWS Config
-  aws_config:
-    name: test_configuration_recorder
-    state: present
-    resource_type: configuration_recorder
-    role_arn: 'arn:aws:iam::123456789012:role/AwsConfigRecorder'
-    recording_group:
-        all_supported: true
-        include_global_types: true
-
-- name: Create Delivery Channel for AWS Config
-  aws_config:
-    name: test_delivery_channel
-    state: present
-    resource_type: delivery_channel
-    s3_bucket: 'test_aws_config_bucket'
-    sns_topic_arn: 'arn:aws:sns:us-east-1:123456789012:aws_config_topic:1234ab56-cdef-7g89-01hi-2jk34l5m67no'
-    delivery_frequency: 'Twelve_Hours'
-
-- name: Create Config Rule for AWS Config
-  aws_config:
+- name: Create cross-account aggregator
+  aws_config_aggregator:
     name: test_config_rule
     state: present
-    resource_type: rule
-    description: 'This AWS Config rule checks for public write access on S3 buckets'
-    scope:
-        compliance_types:
-            - 'AWS::S3::Bucket'
-    source:
-        owner: AWS
-        identifier: 'S3_BUCKET_PUBLIC_WRITE_PROHIBITED'
-
+    account_sources:
+      account_ids
+      - 1234567890
+      - 0123456789
+      - 9012345678
+      all_aws_regions: yes
 '''
 
 RETURN = r'''#'''

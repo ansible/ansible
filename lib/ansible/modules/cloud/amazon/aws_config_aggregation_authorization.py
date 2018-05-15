@@ -43,7 +43,7 @@ EXAMPLES = r'''
 - name: Get current account ID
   aws_caller_facts:
   register: whoami
-- aws_config:
+- aws_config_aggregation_authorization:
     state: present
     authorized_account_id: '{{ whoami.account }}'
     authorzed_aws_region: us-east-1

@@ -53,6 +53,7 @@
     # ============================================================
     - name: test rule with no source parameter
       aws_config_rule:
+        <<: *aws_connection_info
         name: random_name
         state: present
       register: output
@@ -66,6 +67,7 @@
 
     - name: test resource_type delivery_channel with no s3_bucket parameter
       aws_config_delivery_channel:
+        <<: *aws_connection_info
         name: random_name
         state: present
       register: output
@@ -79,6 +81,7 @@
 
     - name: test resource_type configuration_recorder with no role_arn parameter
       aws_config_recorder:
+        <<: *aws_connection_info
         name: random_name
         state: present
       register: output
@@ -92,6 +95,7 @@
 
     - name: test resource_type configuration_recorder with no recording_group parameter
       aws_config_recorder:
+        <<: *aws_connection_info
         name: random_name
         state: present
         role_arn: 'arn:aws:iam::123456789012:role/AwsConfigRecorder'
@@ -107,6 +111,7 @@
     - name: test resource_type aggregation_authorization with no authorized_account_id parameter
       aws_config_aggregation_authorization:
         state: present
+        <<: *aws_connection_info
       register: output
       ignore_errors: true
 
@@ -118,6 +123,7 @@
 
     - name: test resource_type aggregation_authorization with no authorized_aws_region parameter
       aws_config_aggregation_authorization:
+        <<: *aws_connection_info
         state: present
         authorized_account_id: '123456789012'
       register: output
@@ -131,6 +137,7 @@
 
     - name: test resource_type configuration_aggregator with no account_sources parameter
       aws_config_aggregator:
+        <<: *aws_connection_info
         name: random_name
         state: present
       register: output
@@ -144,6 +151,7 @@
 
     - name: test resource_type configuration_aggregator with no organization_source parameter
       aws_config_aggregator:
+        <<: *aws_connection_info
         name: random_name
         state: present
         account_sources: []
