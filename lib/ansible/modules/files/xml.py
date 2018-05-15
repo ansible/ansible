@@ -40,7 +40,6 @@ options:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
-    default: /
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
