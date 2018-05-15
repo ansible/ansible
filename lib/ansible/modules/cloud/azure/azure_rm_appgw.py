@@ -775,7 +775,7 @@ def compare_arrays(old_params, new_params, param_name):
         for item in old:
             name = item['name']
             oldd[name] = item
-        newdd = {}
+        newd = {}
         for item in new:
             name = item['name']
             newd[name] = item
