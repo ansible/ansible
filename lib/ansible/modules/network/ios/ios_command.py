@@ -47,7 +47,8 @@ options:
         the number of retries has expired. If a command sent to the
         device requires answering a prompt, it is possible to pass
         a dict containing I(command), I(answer) and I(prompt).
-        See examples.
+        Common answers: 'y' or "\\r" (carriage return, must be
+        double quotes). See examples.
     required: true
   wait_for:
     description:
@@ -110,12 +111,15 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
-  - name: run command that requires answering a prompt
+  - name: run commands that require answering a prompt
     ios_command:
       commands:
-        - command: 'clear counters GigabitEthernet0/2'
+        - command: 'clear counters GigabitEthernet0/1'
           prompt: 'Clear "show interface" counters on this interface \[confirm\]'
           answer: 'y'
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: '[confirm]'
+          answer: "\r"
 """
 
 RETURN = """
