@@ -206,18 +206,6 @@ options:
                     id:
                         description:
                             - Resource ID.
-            connection_draining:
-                description:
-                    - Connection draining of the backend C(http) settings resource.
-                suboptions:
-                    enabled:
-                        description:
-                            - Whether connection draining is enabled or not.
-                        required: True
-                    drain_timeout_in_sec:
-                        description:
-                            - The number of seconds connection draining is active. Acceptable values are from 1 second to 3600 seconds.
-                        required: True
             host_name:
                 description:
                     - Host header to be sent to the backend servers.
@@ -243,17 +231,11 @@ options:
             frontend_ip_configuration:
                 description:
                     - Frontend IP configuration resource of an application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             frontend_port:
                 description:
                     - Frontend port resource of an application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             protocol:
                 description:
                     - Protocol.
@@ -266,10 +248,7 @@ options:
             ssl_certificate:
                 description:
                     - SSL certificate resource of an application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             require_server_name_indication:
                 description:
                     - Applicable only if I(protocol) is C(https). Enables SNI for multi-hosting.
@@ -289,24 +268,15 @@ options:
             backend_address_pool:
                 description:
                     - Backend address pool resource of the application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             backend_http_settings:
                 description:
                     - Frontend port resource of the application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             http_listener:
                 description:
                     - Http listener resource of the application gateway.
-                suboptions:
-                    id:
-                        description:
-                            - Resource ID.
+                type: string
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
