@@ -255,7 +255,7 @@ def create_lifecycle_rule(client, module):
             if transition.get('storage_class'):
                 t_out['StorageClass'] = transition['storage_class'].upper()
                 rule['Transitions'].append(t_out)
-    
+
     if noncurrent_version_transition_days is not None:
         rule['NoncurrentVersionTransitions'] = [dict(NoncurrentDays=noncurrent_version_transition_days, StorageClass=noncurrent_version_storage_class.upper()), ]
 
