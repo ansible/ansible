@@ -11,7 +11,7 @@ DOCUMENTATION = """
     description:
       - Retrieves the value of an Ansible variable.
     options:
-      _term:
+      _terms:
         description: The variable names to look up.
         required: True
       default:
@@ -69,6 +69,7 @@ class LookupModule(LookupBase):
             self._templar.set_available_variables(variables)
         myvars = getattr(self._templar, '_available_variables', {})
 
+        self.set_option('_terms', terms)
         self.set_options(direct=kwargs)
         default = self.get_option('default')
 
