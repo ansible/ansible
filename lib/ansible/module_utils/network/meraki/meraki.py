@@ -76,7 +76,7 @@ class MerakiModule(object):
 
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
         self.get_urls = {'organizations': '/organizations',
-                         'networks': '/organizations/{org_id}/networks',
+                         'network': '/organizations/{org_id}/networks',
                          'admins': '/organizations/{org_id}/admins',
                          'configTemplates': '/organizations/{org_id}/configTemplates',
                          'samlRoles': '/organizations/{org_id}/samlRoles',
@@ -88,7 +88,7 @@ class MerakiModule(object):
                          }
 
         self.get_one_urls = {'organizations': '/organizations/{org_id}',
-                             'networks': '/networks/{net_id}',
+                             'network': '/networks/{net_id}',
                              }
 
         # Module should add URLs which are required by the module
@@ -184,16 +184,30 @@ class MerakiModule(object):
                     # self.fail_json(msg=i['id'])
                     return str(i['id'])
 
+    def get_nets(self, org_name=None, org_id=None):
+        if org_name:
+            org_id = self.get_org_id(org_name)
+        path = self.construct_path('get_all', org_id=org_id)
+        r = self.request(path, method='GET')
+        return json.loads(r)
+
     def get_net(self, org_name, net_name, data=None):
         ''' Return network information '''
-        if not data:
-            org_id = self.get_org_id(org_name)
-            path = '/organizations/{org_id}/networks/{net_id}'.format(org_id=org_id, net_id=self.get_net_id(org_name=org_name, net_name=net_name, data=data))
-            return json.loads(self.request('GET', path))
-        else:
-            for n in data:
-                if n['name'] == net_name:
-                    return n
+        # if not data:
+        #     org_id = self.get_org_id(org_name)
+        #     path = '/organizations/{org_id}/networks/{net_id}'.format(
+        #         org_id=org_id,
+        #         net_id=self.get_net_id(
+        #             org_name=org_name,
+        #             net_name=net_name,
+        #             data=data)
+        #     )
+        #     return json.loads(self.request('GET', path))
+        # else:
+        for n in data:
+            if n['name'] == net_name:
+                return n
+        return False
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Return network id from lookup or existing data '''
