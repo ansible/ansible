@@ -69,7 +69,7 @@ EXAMPLES = r'''
     name: test_config_rule
     state: present
     account_sources:
-      account_ids
+      account_ids:
       - 1234567890
       - 0123456789
       - 9012345678
