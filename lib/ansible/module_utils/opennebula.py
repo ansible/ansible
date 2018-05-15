@@ -62,10 +62,10 @@ class OpenNebulaModule:
 
         """
 
-        test_fixture = (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"])
-        test_fixture_file = environ.get("PYONE_TEST_FIXTURE_FILE", "undefined")
-        test_fixture_replay = (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
-        test_fixture_unit = environ.get("PYONE_TEST_FIXTURE_UNIT", "init")
+        test_fixture = (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"])
+        test_fixture_file = environ.get("ONE_TEST_FIXTURE_FILE", "undefined")
+        test_fixture_replay = (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
+        test_fixture_unit = environ.get("ONE_TEST_FIXTURE_UNIT", "init")
 
         # context required for not validating SSL, old python versions won't validate anyway.
         if hasattr(ssl, '_create_unverified_context'):
@@ -183,16 +183,16 @@ class OpenNebulaModule:
         Returns: true if we are currently running fixtures in replay mode.
 
         """
-        return (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-               (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
+        return (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
+               (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
 
     def is_fixture_writing(self):
         """
         Returns: true if we are currently running fixtures in write mode.
 
         """
-        return (environ.get("PYONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-               (environ.get("PYONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
+        return (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
+               (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
 
     def get_host_by_name(self, name):
         '''
