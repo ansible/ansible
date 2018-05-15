@@ -16,6 +16,8 @@ DOCUMENTATION = '''
     options:
         zones:
           description: A list of regions in which to describe GCE instances.
+        projects:
+          description: A list of projects in which to describe GCE instances.
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list)
@@ -27,6 +29,9 @@ simple_config_file:
     plugin: gcp_compute
     zones: # populate inventory with instances in these regions
       - us-east1-a
+    projects:
+      - gcp-prod-gke-100
+      - gcp-cicd-101
     filters:
       machine-type:
         eq:
@@ -156,14 +161,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise AnsibleParserError("Zones must be included in inventory YAML file")
 
         # get user specifications
-        if 'project' not in config_data:
-            raise AnsibleParserError("Project must be included in inventory YAML file")
+        if 'projects' not in config_data:
+            raise AnsibleParserError("Projects must be included in inventory YAML file")
 
         zones = config_data['zones']
+        projects = config_data['projects']
         query = self._get_query_options(config_data)
 
-        for zone in zones:
-            config_data['zone'] = zone
-            link = self.self_link(config_data)
-            resp = self.fetch_list(config_data, link, query)
-            self._populate(resp['items'])
+        for project in projects:
+            for zone in zones:
+                config_data['zone'] = zone
+                congig_data['project'] = project
+                link = self.self_link(config_data)
+                resp = self.fetch_list(config_data, link, query)
+                self._populate(resp['items'])
