@@ -217,19 +217,19 @@ Become and Networks
 network_cli and become
 ----------------------
 
-Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
+Ansible 2.5 added support for ``become`` to be used to enter ``enable`` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
 
-This functionality requires the host connection type to be using ``connection: network_cli``. In Ansible 2.5 this is limited to ``eos`` and ``ios``.
+You must set the host connection type to ``connection: network_cli`` to use ``become`` for privilege escalation on network devices. Ansible 2.5.3 supports ``become`` for privilege escalation on ``eos``, ``ios``, and ``nxos``.
 
-This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
+You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook.
 
-If a task fails with the following then it's an indicator that `enable` mode is required:
+If you see this error message, the task that generated it requires ``enable`` mode to succeed:
 
 .. code-block:: console
 
    Invalid input (privileged mode required)
 
-The following example shows how to set enable mode for a specific task:
+To set ``enable`` mode for a specific task, add ``become`` at the task level:
 
 .. code-block:: yaml
 
@@ -240,7 +240,7 @@ The following example shows how to set enable mode for a specific task:
      become: yes
      become_method: enable
 
-The following example shows how to set enable mode for `all` tests in this play:
+To set enable mode for all tasks in a single play, add ``become`` at the play level:
 
 .. code-block:: yaml
 
@@ -256,7 +256,7 @@ The following example shows how to set enable mode for `all` tests in this play:
 Setting enable mode for all tasks
 ---------------------------------
 
-Often you wish for all tasks to run using privilege mode, that is best achieved by using ``group_vars``:
+Often you wish for all tasks in all plays to run using privilege mode, that is best achieved by using ``group_vars``:
 
 **group_vars/eos.yml**
 
@@ -272,14 +272,14 @@ Often you wish for all tasks to run using privilege mode, that is best achieved 
 Passwords for enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a password is required to enter enable mode this can be specified by doing one of the following:
+If you need a password to enter ``enable`` mode, you can specify it in one of two ways:
 
 * providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
 * setting the ``ansible_become_pass`` connection variable
 
 .. warning::
 
-   As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
+   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
 
 
 .. _become-network-auth-and-auth-password:
@@ -287,7 +287,7 @@ If a password is required to enter enable mode this can be specified by doing on
 authorize and auth_pass
 -----------------------
 
-For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
+For HTTPS connections that cannot use ``connection: network_cli``, you can enter ``enable`` mode using the module options ``authorize`` and ``auth_pass``:
 
 .. code-block:: yaml
 
@@ -302,7 +302,7 @@ For network platforms that do not currently support ``connection: network_cli`` 
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-Note that over time more platforms will move to support ``become``. Check the :ref:`network_modules` for details.
+Note that over time more platforms and connections will support ``become``. As this happens, the use of ``authorize`` and of ``provider`` dictionaries will be deprecated. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
 .. _become-windows:
 
