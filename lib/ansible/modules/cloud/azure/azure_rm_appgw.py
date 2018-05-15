@@ -92,7 +92,6 @@ options:
             subnet:
                 description:
                     - Reference of the subnet resource. A subnet from where application gateway gets its private address.
-                type: str
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -138,11 +137,9 @@ options:
             subnet:
                 description:
                     - Reference of the subnet resource.
-                type: str
             public_ip_address:
                 description:
                     - Reference of the PublicIP resource.
-                type: str
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -231,11 +228,9 @@ options:
             frontend_ip_configuration:
                 description:
                     - Frontend IP configuration resource of an application gateway.
-                type: str
             frontend_port:
                 description:
                     - Frontend port resource of an application gateway.
-                type: str
             protocol:
                 description:
                     - Protocol.
@@ -248,7 +243,6 @@ options:
             ssl_certificate:
                 description:
                     - SSL certificate resource of an application gateway.
-                type: str
             require_server_name_indication:
                 description:
                     - Applicable only if I(protocol) is C(https). Enables SNI for multi-hosting.
@@ -268,15 +262,12 @@ options:
             backend_address_pool:
                 description:
                     - Backend address pool resource of the application gateway.
-                type: str
             backend_http_settings:
                 description:
                     - Frontend port resource of the application gateway.
-                type: str
             http_listener:
                 description:
                     - Http listener resource of the application gateway.
-                type: str
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
