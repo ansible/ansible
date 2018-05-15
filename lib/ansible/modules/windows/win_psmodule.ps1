@@ -124,6 +124,7 @@ Function Install-PsModule {
             Name      = $Name;
             WhatIf    = $CheckMode;
             ErrorAction = "Stop";
+            Force     = $true;
         };
 
         # If specified, use repository name to select module source
