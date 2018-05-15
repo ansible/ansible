@@ -7,6 +7,33 @@
   fail:
     msg: Please define an API key
   when: auth_key is not defined
+  
+- name: Use an invalid domain
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    host: marrrraki.com
+    state: present
+    org_name: IntTestOrg
+    output_level: debug
+  delegate_to: localhost
+  register: invalid_domain
+  ignore_errors: yes
+  
+- name: Disable HTTP
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    use_https: false
+    state: query
+    output_level: debug
+  delegate_to: localhost
+  register: http
+  ignore_errors: yes
+
+- name: Connection assertions
+  assert:
+    that:
+      - '"Failed to connect to" in invalid_domain.msg'
+      - '"http" in http.url'
 
 - name: Create a new organization named IntTestOrg
   meraki_organization:
@@ -16,6 +43,54 @@
     output_level: debug
   delegate_to: localhost
   register: new_org
+
+- debug:
+    msg: '{{new_org}}'
+
+- name: Clone IntTestOrg
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    clone: IntTestOrg
+    org_name: IntTestOrgCloned
+    state: present
+  delegate_to: localhost
+  register: cloned_org
+
+- debug:
+    msg: '{{cloned_org}}'
+
+- name: Rename IntTestOrg
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrgRenamed
+    org_id: '{{ new_org.data.id }}'
+    state: present
+  delegate_to: localhost
+  register: modify_org
+
+- debug:
+    msg: '{{ modify_org }}'
+
+- name: Rename IntTestOrg idempotent
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrgRenamed
+    org_id: '{{ new_org.data.id }}'
+    state: present
+  delegate_to: localhost
+  register: modify_org_idempotent
+
+- name: Present assertions
+  assert:
+    that:
+      - '"https" in new_org.url'
+      - new_org.changed == True
+      - new_org.data.id is defined
+      - cloned_org.changed == True
+      - cloned_org.data.id is defined
+      - modify_org.changed == True
+      - 'modify_org.data.name == "IntTestOrgRenamed"'
+      - modify_org_idempotent.changed == False
 
 - name: List all organizations
   meraki_organization:
@@ -27,10 +102,13 @@
 - name: Query information about a single organization named IntTestOrg
   meraki_organization:
     auth_key: '{{ auth_key }}'
-    org_name: IntTestOrg
+    org_name: IntTestOrgRenamed
     state: query
   delegate_to: localhost
   register: query_org
+
+- debug:
+    msg: '{{query_org}}'
 
 - name: Query information about IntTestOrg by organization ID
   meraki_organization:
@@ -40,21 +118,11 @@
   delegate_to: localhost
   register: query_org_id
 
-- name: Clone IntTestOrg
-  meraki_organization:
-    auth_key: '{{ auth_key }}'
-    clone: IntTestOrg
-    org_name: IntTestOrgCloned
-    state: present
-  delegate_to: localhost
-  register: cloned_org
-
-- name: Present assertions
+- name: Query assertions
   assert:
     that:
-      - new_org.data.id is defined
-      - '{{ query_all | length}} > 0'
       - query_org.data.id is defined
-      - 'query_org.data.name == "IntTestOrg"'
-      - cloned_org.data.id is defined
+      - query_all.changed == False
+      - query_all.data | length >= 1
+      - 'query_org.data.name == "IntTestOrgRenamed"'
       - 'query_org_id.data.id == query_org.data.id'
