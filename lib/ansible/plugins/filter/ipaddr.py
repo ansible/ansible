@@ -748,7 +748,7 @@ def ipsubnet(value, query='', index='x'):
 
             query = netaddr.IPNetwork(v)
         except:
-            return false
+            return False
 
         if network_in_network(query, value):
             subnetlist = list(query.subnet(value.prefixlen))
