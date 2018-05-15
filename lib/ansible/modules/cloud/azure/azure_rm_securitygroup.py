@@ -373,11 +373,11 @@ def compare_rules_change(old_list, new_list, purge_list):
 
     for old_rule in old_list:
         matched = next((x for x in new_list if x['name'] == old_rule['name']), [])
-        if matched: # if the new one is in the old list, check whether it is updated
+        if matched:  # if the new one is in the old list, check whether it is updated
             changed = changed or compare_rules(old_rule, matched)
-        elif not purge_list: # keep this rule
+        elif not purge_list:  # keep this rule
             new_list.append(old_rule)
-        else: # one rule is removed
+        else:  # one rule is removed
             changed = True
     return changed, new_list
 
