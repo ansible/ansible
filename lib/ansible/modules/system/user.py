@@ -655,7 +655,7 @@ class User(object):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
-                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
