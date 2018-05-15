@@ -1,0 +1,18 @@
+---
+- name: Read datasource
+  jboss_command:
+    operation: read-resource
+    path: "/subsystem=datasources/data-source=ExampleDS"
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_PORT: 9990
+  register: result
+
+- name: assert output message that hawtio was deployed
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.meta.outcome == 'success'"
+       - "result.meta.result['jndi-name'] == 'java:jboss/datasources/ExampleDS'"
