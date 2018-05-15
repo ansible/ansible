@@ -4,7 +4,7 @@
   nxos_install_os:
     system_image_file: "{{ si }}"
     issu: "{{ issu }}"
-    provider: "{{ connection }}"
+    provider: "{{ connection | combine({'timeout': 500}) }}"
   register: result
 
 - debug: msg=" {{ result['install_state'] }}"
