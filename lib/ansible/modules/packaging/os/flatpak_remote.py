@@ -36,12 +36,10 @@ options:
     - When I(state) is set to C(present), I(remote) url is added as a flatpak remote for the
       specified installation C(method).
       When used with I(state=absent), this is not required.
-    required: false
   method:
     description:
     - Determines the type of installation to work on. Can be C(user) or C(system) installations.
-    choices: [ user, system ]
-    required: false
+    choices: [ system, user ]
     default: system
   executable:
     description:
@@ -101,91 +99,55 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def add_remote(module, binary, name, remote, method):
-    """
-    Add a new remote.
-
-    returns:
-        result, type: int
-            The result status of the operation
-            Possible values:
-            0 - operation successful
-            1 - operation failed
-        output, type: str
-            Output of the operation
-            Especially helpful to know that's wrong when the operation failed
-    """
-    if module.check_mode:
-        # Check if any changes would be made but don't actually make
-        # those changes
-        module.exit_json(changed=True)
+    """Add a new remote."""
+    global result
     command = "{0} remote-add --{1} {2} {3}".format(
         binary, method, name, remote)
-
-    return_code, output = _flatpak_command(command)
-    if return_code != 0:
-        return 1, output
-
-    return 0, output
+    _flatpak_command(module, module.check_mode, command)
+    result['changed'] = True
 
 
 def remove_remote(module, binary, name, method):
-    """
-    Remove an existing remote.
-
-    returns:
-        result, type: int
-            The result status of the operation
-            Possible values:
-            0 - operation successful
-            1 - operation failed
-        output, type: str
-            Output of the operation
-            Especially helpful to know that's wrong when the operation failed
-    """
-    if module.check_mode:
-        # Check if any changes would be made but don't actually make
-        # those changes
-        module.exit_json(changed=True)
-
+    """Remove an existing remote."""
+    global result
     command = "{0} remote-delete --{1} --force {2} ".format(
         binary, method, name)
-    return_code, output = _flatpak_command(command)
-    if return_code != 0:
-        return 1, output
-
-    return 0, output
+    _flatpak_command(module, module.check_mode, command)
+    result['changed'] = True
 
 
-def check_remote_status(binary, name, remote, method):
-    """
-    Check the remote status.
-
-    returns:
-        status, type: int
-            The status of the queried remote
-            Possible values:
-            0 - remote with name exists
-            1 - remote with name doesn't exist
-    """
+def remote_exists(module, binary, name, remote, method):
+    """Check if the remote exists."""
     command = "{0} remote-list -d --{1}".format(binary, method)
-    return_code, output = _flatpak_command(command)
+    # The query operation for the remote needs to be run even in check mode
+    output = _flatpak_command(module, False, command)
     for line in output.splitlines():
         listed_remote = line.split()
         if listed_remote[0] == name:
-            return 0
-    return 1
+            return True
+    return False
 
 
-def _flatpak_command(command):
+def _flatpak_command(module, noop, command):
+    global result
+    if noop:
+        result['rc'] = 0
+        result['command'] = command
+        return ""
+
     process = subprocess.Popen(
-        command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = process.communicate()[0]
-
-    return process.returncode, output
+        command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout_data, stderr_data = process.communicate()
+    result['rc'] = process.returncode
+    result['command'] = command
+    result['stdout'] = stdout_data
+    result['stderr'] = stderr_data
+    if result['rc'] != 0:
+        module.fail_json(msg="Failed to execute flatpak command", **result)
+    return stdout_data
 
 
 def main():
-    # This module supports check mode
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
@@ -196,6 +158,7 @@ def main():
                        choices=['absent', 'present']),
             executable=dict(type='str', default="flatpak")
         ),
+        # This module supports check mode
         supports_check_mode=True,
     )
 
@@ -204,41 +167,26 @@ def main():
     method = module.params['method']
     state = module.params['state']
     executable = module.params['executable']
-
-    # We want to know if the user provided it or not, so we set default here
-    if executable is None:
-        executable = 'flatpak'
-
     binary = module.get_bin_path(executable, None)
 
-    # When executable was provided and binary not found, warn user !
-    if module.params['executable'] is not None and not binary:
-        module.warn("Executable '%s' is not found on the system." % executable)
-
-    binary = module.get_bin_path(executable, required=True)
     if remote is None:
         remote = ''
 
-    status = check_remote_status(binary, name, remote, method)
-    changed = False
-    result = 0
-    if state == 'present':
-        if status == 0:
-            changed = False
-        else:
-            result, output = add_remote(module, binary, name, remote, method)
-            changed = True
-    else:
-        if status == 0:
-            result, output = remove_remote(module, binary, name, method)
-            changed = True
-        else:
-            changed = False
+    global result
+    result = dict(
+        changed=False
+    )
 
-    if result == 0:
-        module.exit_json(changed=changed)
-    else:
-        module.fail_json(msg=output, changed=changed)
+    # If the binary was not found, fail the operation
+    if not binary:
+        module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
+
+    if state == 'present' and not remote_exists(module, binary, name, remote, method):
+        add_remote(module, binary, name, remote, method)
+    elif state == 'absent' and remote_exists(module, binary, name, remote, method):
+        remove_remote(module, binary, name, method)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
