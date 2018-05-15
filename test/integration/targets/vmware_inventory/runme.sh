@@ -20,8 +20,7 @@ validate_certs: False
 with_tags: False
 VMWARE_YAML
 
-echo "Installing Pyvmomi"
-${ANSIBLE_TEST_PYTHON_INTERPRETER} -m pip install pyvmomi
+trap 'rm -f "${VMWARE_CONFIG}"' INT TERM EXIT
 
 echo "Kill all previous instances"
 curl "http://${vcenter_host}:5000/killall" > /dev/null 2>&1
