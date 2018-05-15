@@ -26,6 +26,12 @@
           - recover
           - backup
           - restore
+          - encrypt
+          - decrypt
+          - wrapkey
+          - unwrapkey
+          - sign
+          - verify
         secrets:
           - get
           - list
