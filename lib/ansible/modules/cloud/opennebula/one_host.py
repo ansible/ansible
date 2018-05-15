@@ -63,6 +63,9 @@ options:
     cluster_name:
         description:
             - The cluster specified by name.
+    labels:
+        description:
+            - The labels for this host.
     template:
         description:
             - The template or attribute changes to merge into the host template.
@@ -124,7 +127,8 @@ class HostModule(OpenNebulaModule):
             vmm_mad_name=dict(type='str', default="kvm"),
             cluster_id=dict(type='int', default=0),
             cluster_name=dict(type='str'),
-            template=dict(type='dict'),
+            labels=dict(type='list'),
+            template=dict(type='dict', aliases=['attributes']),
         )
 
         mutually_exclusive = [
@@ -239,9 +243,16 @@ class HostModule(OpenNebulaModule):
         # if we reach this point we can assume that the host was taken to the desired state
 
         if desired_state != "absent":
-
             # manipulate or modify the template
             desired_template_changes = self.get_parameter('template')
+
+            if desired_template_changes is None:
+                desired_template_changes = dict()
+
+            # complete the template with speficic ansible parameters
+            if self.is_parameter('labels'):
+                desired_template_changes['LABELS'] = self.get_parameter('labels')
+
             if self.requires_template_update(host.TEMPLATE, desired_template_changes):
                 # setup the root element so that pyone will generate XML instead of attribute vector
                 desired_template_changes = {"TEMPLATE": desired_template_changes}
