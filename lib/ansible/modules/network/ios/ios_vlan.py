@@ -230,7 +230,7 @@ def map_config_to_obj(module):
             if (len(interfaces_sup) > 0) and (len(vlanID_sup) < 1):
                 interfaces.extend(interfaces_sup)
                 index += 1
-	    else:
+            else:
                 break
         if (vlanID == ""):
             continue
