@@ -752,7 +752,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             elif self.app_settings_strDic.properties is not None and len(self.app_settings_strDic.properties) > 0:
                 for key in self.app_settings.keys():
-                    if self.app_settings_strDic.properties[key] is None \
+                    if self.app_settings_strDic.properties.get(key, None) is None \
                             or self.app_settings[key] != self.app_settings_strDic.properties[key]:
                         return True
         return False
