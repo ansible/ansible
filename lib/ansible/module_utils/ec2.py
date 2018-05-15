@@ -127,10 +127,13 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
-
-    config = botocore.config.Config(
-        user_agent_extra='Ansible/{0}'.format(__version__),
-    )
+    if params.get('config'):
+        config = params.pop('config')
+        config.user_agent_extra='Ansible/{0}'.format(__version__),
+    else:
+        config = botocore.config.Config(
+            user_agent_extra='Ansible/{0}'.format(__version__),
+        )
     session = boto3.session.Session(
         profile_name=profile,
     )
