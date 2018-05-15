@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix regression in aws_s3 to allow uploading files on the remote host to an S3 bucket
