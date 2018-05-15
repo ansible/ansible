@@ -46,7 +46,7 @@
   assert:
     that:
       - install_gem_result is changed
-      - current_gems.stdout | search('gist\s+\([0-9.]+\)')
+      - current_gems.stdout is search('gist\s+\([0-9.]+\)')
 
 - name: Remove a gem
   gem:
@@ -62,7 +62,7 @@
   assert:
     that:
       - remove_gem_results is changed
-      - not current_gems.stdout | search('gist\s+\([0-9.]+\)')
+      - current_gems.stdout is not search('gist\s+\([0-9.]+\)')
 
 
 # Check cutom gem directory
@@ -85,7 +85,7 @@
   assert:
     that:
       - install_gem_result is changed
-      - gem_search.files[0].path | search('gist-[0-9.]+')
+      - gem_search.files[0].path is search('gist-[0-9.]+')
   ignore_errors: yes
 
 - name: Remove a gem in a custom directory
