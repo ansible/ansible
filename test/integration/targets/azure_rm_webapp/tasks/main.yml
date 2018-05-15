@@ -1,9 +1,9 @@
 - name: Fix resource prefix
   set_fact:
-    linux_app_plan_resource_group: "{{ (resource_prefix | replace('-','x'))[-10:] }}linuxappplan"
-    win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winapp"
+    linux_app_plan_resource_group: "{{ resource_group_secondary }}"
+    win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}{{ 1000 | random}}winapp"
     win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
-    linux_plan_name: "{{ resource_group_secondary }}"
+    linux_plan_name: "{{ resource_group_secondary }}linplan"
 
 - name: Create a windows web app with non-exist app service plan
   azure_rm_webapp:
@@ -145,10 +145,6 @@
 
 - assert:
     that: not output.changed
-
-- name: Assert the web app was created
-  assert:
-    that: output.changed
     
 - name: Update nodejs framework
   azure_rm_webapp:
