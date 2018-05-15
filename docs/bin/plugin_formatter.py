@@ -94,7 +94,7 @@ def rst_ify(text):
         t = _MODULE.sub(r":ref:`\1 <\1_module>`", t)
         t = _LINK.sub(r"`\1 <\2>`_", t)
         t = _URL.sub(r"\1", t)
-        t = _CONST.sub(r"`\1`", t)
+        t = _CONST.sub(r"``\1``", t)
         t = _RULER.sub(r"------------", t)
     except Exception as e:
         raise AnsibleError("Could not process (%s) : %s" % (text, e))
