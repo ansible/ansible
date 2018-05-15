@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nested noop block padding in dynamic includes (https://github.com/ansible/ansible/pull/38814)
