@@ -7,10 +7,12 @@
     state: absent
     path: '{{ checkout_dir }}'
 
+- name: create a tempdir for separate git dir
+  local_action: shell mktemp -du
+  register: tempdir
+
 - name: SEPARATE-GIT-DIR | clone with a separate git dir
-  command: git clone {{ repo_format1 }} git --separate-git-dir=separate.git
-  args:
-    chdir: "{{ output_dir }}"
+  command: git clone {{ repo_format1 }} {{ checkout_dir }} --separate-git-dir={{ tempdir.stdout }}
 
 - name: SEPARATE-GIT-DIR | update repo the usual way
   git:
@@ -54,7 +56,7 @@
 - name: SEPARATE-GIT-DIR | clear separate git dir
   file:
     state: absent
-    path: '{{ output_dir }}/separate.git'
+    path: "{{ tempdir.stdout }}"
 
 - name: SEPARATE-GIT-DIR | clear checkout_dir
   file:
