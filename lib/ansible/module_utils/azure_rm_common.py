@@ -24,7 +24,7 @@ AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
         choices=['auto', 'cli', 'env', 'credential_file', 'msi'],
-        default='auto',
+        default='auto'
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
