@@ -815,7 +815,7 @@ class VaultEditor:
 
                     os.fsync(fh)
 
-    def _shred_file(self, tmp_path):
+    def _shred_file(self, tmp_path, remove=True):
         """Securely destroy a decrypted file
 
         Note standard limitations of GNU shred apply (For flash, overwriting would have no effect
@@ -846,7 +846,8 @@ class VaultEditor:
             # we could not successfully execute unix shred; therefore, do custom shred.
             self._shred_file_custom(tmp_path)
 
-        os.remove(tmp_path)
+        if remove:
+            os.remove(tmp_path)
 
     def _edit_file_helper(self, filename, secret,
                           existing_data=None, force_save=False, vault_id=None):
@@ -878,10 +879,8 @@ class VaultEditor:
         # An existing vaultfile will always be UTF-8,
         # so decode to unicode here
         b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
-        self.write_data(b_ciphertext, tmp_path)
+        self.write_data(b_ciphertext, filename)
 
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, filename)
         display.vvvvv('Saved edited file "%s" encrypted using %s and  vault id "%s"' % (filename, secret, vault_id))
 
     def _real_path(self, filename):
@@ -991,7 +990,6 @@ class VaultEditor:
         # follow the symlink
         filename = self._real_path(filename)
 
-        prev = os.stat(filename)
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
@@ -1018,10 +1016,6 @@ class VaultEditor:
         b_new_vaulttext = new_vault.encrypt(plaintext, new_vault_secret, vault_id=new_vault_id)
 
         self.write_data(b_new_vaulttext, filename)
-
-        # preserve permissions
-        os.chmod(filename, prev.st_mode)
-        os.chown(filename, prev.st_uid, prev.st_gid)
 
         display.vvvvv('Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
                       (filename, vault_id_used, new_vault_id, new_vault_secret))
@@ -1074,26 +1068,9 @@ class VaultEditor:
         else:
             if os.path.isfile(filename):
                 if shred:
-                    self._shred_file(filename)
-                else:
-                    os.remove(filename)
+                    self._shred_file(filename, remove=False)
             with open(filename, "wb") as fh:
                 fh.write(b_file_data)
-
-    def shuffle_files(self, src, dest):
-        prev = None
-        # overwrite dest with src
-        if os.path.isfile(dest):
-            prev = os.stat(dest)
-            # old file 'dest' was encrypted, no need to _shred_file
-            os.remove(dest)
-        shutil.move(src, dest)
-
-        # reset permissions if needed
-        if prev is not None:
-            # TODO: selinux, ACLs, xattr?
-            os.chmod(dest, prev.st_mode)
-            os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
         env_editor = os.environ.get('EDITOR', 'vi')

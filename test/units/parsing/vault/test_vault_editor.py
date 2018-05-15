@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import stat
 import tempfile
 
 import pytest
@@ -571,6 +572,71 @@ class TestVaultEditor(unittest.TestCase):
 
         res = ve._real_path(file_link_path)
         self.assertEqual(res, file_path)
+
+    def _create_test_file(self):
+        self._test_dir = self._create_test_dir()
+        return self._create_file(self._test_dir, 'test_file', content=b'this is a test file')
+
+    def _test_command_retains_original(self, src_file_path, command_func):
+        os.chmod(src_file_path, stat.S_IRUSR | stat.S_IWUSR)
+        stat_data = os.stat(src_file_path)
+        src_file_mode = stat_data.st_mode
+        src_file_owner = [stat_data.st_uid, stat_data.st_gid]
+        src_file_inode = stat_data.st_ino
+
+        command_func()
+
+        stat_data = os.stat(src_file_path)
+        self.assertEqual(stat_data.st_mode, src_file_mode)
+        self.assertEqual([stat_data.st_uid, stat_data.st_gid], src_file_owner)
+        self.assertEqual(stat_data.st_ino, src_file_inode)
+
+    def test_encrypt_retains_original(self):
+        ve = self._vault_editor()
+        src_file_path = self._create_test_file()
+
+        def command_func():
+            ve.encrypt_file(src_file_path, self.vault_secret)
+
+        self._test_command_retains_original(src_file_path, command_func)
+
+    def test_decrypt_retains_original(self):
+        ve = self._vault_editor()
+        src_file_path = self._create_test_file()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        def command_func():
+            ve.decrypt_file(src_file_path)
+
+        self._test_command_retains_original(src_file_path, command_func)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_retains_original(self, mock_sp_call):
+        ve = self._vault_editor()
+        src_file_path = self._create_test_file()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, b'new file contents')
+
+        mock_sp_call.side_effect = faux_editor
+
+        def command_func():
+            ve.edit_file(src_file_path)
+
+        self._test_command_retains_original(src_file_path, command_func)
+
+    def test_rekey_retains_original(self):
+        ve = self._vault_editor()
+        src_file_path = self._create_test_file()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        new_secrets = self._secrets("ansible2")
+
+        def command_func():
+            ve.rekey_file(src_file_path, vault.match_encrypt_secret(new_secrets)[1])
+
+        self._test_command_retains_original(src_file_path, command_func)
 
 
 @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
