@@ -214,11 +214,11 @@ def map_params_to_obj(module):
 def map_config_to_obj(module):
     output = run_commands(module, ['show vlan brief'])
     lines = output[0].strip().splitlines()[2:-1]
-    
+
     if not lines:
         return list()
     objs = list()
-    
+
     for index in range(len(lines)):
         vlanID = lines[index][0:4].strip().replace(",", "")
         name = lines[index][5:37].strip().replace(",", "")
@@ -229,19 +229,19 @@ def map_config_to_obj(module):
             vlanID_sup = lines[index + 1][0:4].strip().replace(",", "").split()
             if (len(interfaces_sup) > 0) and (len(vlanID_sup) < 1):
                 interfaces.extend(interfaces_sup)
-	        index += 1
-            else:
+		        index += 1
+	    else:
                 break
-        if (vlanID == "") :
+        if (vlanID == ""):
             continue
-            
+
         obj = {}
         obj['vlan_id'] = vlanID
-	      obj['name'] = name
+        obj['name'] = name
         obj['state'] = state
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
-
+	
         obj['interfaces'] = []
         if len(interfaces) > 0:
             interface = []
