@@ -608,6 +608,28 @@ def spec_singleton(spec, request, vm):
     return spec
 
 
+def get_floppy_params(module, s, vm_floppy):
+    floppy_image_path = None
+    floppy_type = None
+    try:
+        floppy_type = vm_floppy['type']
+    except KeyError:
+        s.disconnect()
+        module.fail_json(
+            msg="Error on %s definition. floppy type needs to be"
+            " specified." % vm_floppy)
+    if floppy_type == 'image':
+        try:
+            floppy_image_path = vm_floppy['image_path']
+        except KeyError:
+            s.disconnect()
+            module.fail_json(
+                msg="Error on %s definition. floppy image_path needs"
+                " to be specified." % vm_floppy)
+
+    return floppy_type, floppy_image_path
+
+
 def get_cdrom_params(module, s, vm_cdrom):
     cdrom_type = None
     cdrom_iso_path = None
@@ -966,6 +988,49 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         devices.append(dev_change)
 
         changes['cdrom'] = vm_hardware['vm_cdrom']
+
+    # Change Floppy
+    if 'vm_floppy' in vm_hardware:
+        spec = spec_singleton(spec, request, vm)
+
+        floppy_type, floppy_image_path = get_floppy_params(module, vsphere_client, vm_hardware['vm_floppy'])
+
+        floppy = None
+        current_devices = vm.properties.config.hardware.device
+
+        for dev in current_devices:
+            if dev._type == 'VirtualFloppy':
+                floppy = dev._obj
+                break
+
+        if floppy_type == 'image':
+            image_location = floppy_image_path.split('/', 1)
+            datastore, ds = find_datastore(
+                module, vsphere_client, image_location[0], None)
+            image_path = image_location[1]
+            image = VI.ns0.VirtualFloppyImageBackingInfo_Def('image').pyclass()
+            image.set_element_fileName('%s %s' % (datastore, image_path))
+            floppy.set_element_backing(image)
+            floppy.Connectable.set_element_connected(True)
+            floppy.Connectable.set_element_startConnected(True)
+        elif floppy_type == 'client':
+            client = VI.ns0.VirtualFloppyRemoteDeviceBackingInfo_Def('client').pyclass()
+            client.set_element_deviceName('/dev/fd0')
+            floppy.set_element_backing(client)
+            floppy.Connectable.set_element_connected(True)
+            floppy.Connectable.set_element_startConnected(True)
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(
+                msg="Error adding floppy of type %s to vm spec. "
+                " floppy type can either be image or client" % (floppy_type))
+
+        dev_change = spec.new_deviceChange()
+        dev_change.set_element_device(floppy)
+        dev_change.set_element_operation('edit')
+        devices.append(dev_change)
+
+        changes['floppy'] = vm_hardware['vm_floppy']
 
     # Resize hard drives
     if vm_disk:
@@ -1384,23 +1449,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         add_cdrom(module, vsphere_client, config_target, config, devices,
                   default_devs, cdrom_type, cdrom_iso_path)
     if 'vm_floppy' in vm_hardware:
-        floppy_image_path = None
-        floppy_type = None
-        try:
-            floppy_type = vm_hardware['vm_floppy']['type']
-        except KeyError:
-            vsphere_client.disconnect()
-            module.fail_json(
-                msg="Error on %s definition. floppy type needs to be"
-                " specified." % vm_hardware['vm_floppy'])
-        if floppy_type == 'image':
-            try:
-                floppy_image_path = vm_hardware['vm_floppy']['image_path']
-            except KeyError:
-                vsphere_client.disconnect()
-                module.fail_json(
-                    msg="Error on %s definition. floppy image_path needs"
-                    " to be specified." % vm_hardware['vm_floppy'])
+        floppy_type, floppy_image_path = get_floppy_params(module, vsphere_client, vm_hardware['vm_floppy'])
         # Add a floppy to the VM.
         add_floppy(module, vsphere_client, config_target, config, devices,
                    default_devs, floppy_type, floppy_image_path)
