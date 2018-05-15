@@ -48,22 +48,24 @@ options:
         replaced with the new transition(s)
     default: true
     type: bool
+    version_added: 2.6
   noncurrent_version_expiration_days:
-    description: 
+    description:
       - 'Delete noncurrent versions this many days after they become noncurrent'
-    type: int
     required: false
+    version_added: 2.6
   noncurrent_version_storage_class:
     description:
       - 'Transition noncurrent versions to this storage class'
     default: glacier
     choices: ['glacier', 'onezone_ia', 'standard_ia']
     required: false
+    version_added: 2.6
   noncurrent_version_transition_days:
-    description: 
+    description:
       - 'Transition noncurrent versions this many days after they become noncurrent'
-    type: int
     required: false
+    version_added: 2.6
   noncurrent_version_transitions:
     description:
       - >
@@ -71,6 +73,7 @@ options:
         behavior contains these elements
           I(transition_days)
           I(storage_class)
+    version_added: 2.6      
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -106,6 +109,7 @@ options:
           I(transition_days)
           I(transition_date)
           I(storage_class)
+    version_added: 2.6      
 extends_documentation_fragment:
     - aws
     - ec2
@@ -175,7 +179,6 @@ EXAMPLES = '''
         storage_class: standard_ia
       - transition_days: 90
         storage_class: glacier
-
 '''
 
 from copy import deepcopy
@@ -257,7 +260,8 @@ def create_lifecycle_rule(client, module):
                 rule['Transitions'].append(t_out)
 
     if noncurrent_version_transition_days is not None:
-        rule['NoncurrentVersionTransitions'] = [dict(NoncurrentDays=noncurrent_version_transition_days, StorageClass=noncurrent_version_storage_class.upper()), ]
+        rule['NoncurrentVersionTransitions'] = [dict(NoncurrentDays=noncurrent_version_transition_days,
+                                                     StorageClass=noncurrent_version_storage_class.upper()), ]
 
     if noncurrent_version_transitions is not None:
         if not rule.get('NoncurrentVersionTransitions'):
@@ -422,7 +426,7 @@ def main():
         expiration_days=dict(default=None, required=False, type='int'),
         expiration_date=dict(default=None, required=False, type='str'),
         noncurrent_version_expiration_days=dict(default=None, required=False, type='int'),
-        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
         noncurrent_version_transition_days=dict(default=None, required=False, type='int'),
         noncurrent_version_transitions=dict(default=None, required=False, type='list'),
         prefix=dict(default=None, required=False),
@@ -430,7 +434,7 @@ def main():
         rule_id=dict(required=False, type='str'),
         state=dict(default='present', choices=['present', 'absent']),
         status=dict(default='enabled', choices=['enabled', 'disabled']),
-        storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+        storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
         transition_days=dict(default=None, required=False, type='int'),
         transition_date=dict(default=None, required=False, type='str'),
         transitions=dict(default=None, required=False, type='list'),
