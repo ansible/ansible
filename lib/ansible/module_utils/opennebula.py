@@ -92,7 +92,7 @@ class OpenNebulaModule:
         else:
             self.fail("Either api_password or the environment vairable ONE_PASSWORD must be provided")
 
-        session="%s:%s" % (username, password)
+        session = "%s:%s" % (username, password)
 
         if not test_fixture:
             if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
