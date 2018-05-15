@@ -767,22 +767,22 @@ def snake_to_camel(snake, capitalize_first=False):
 
 def compare_arrays(old_params, new_params, param_name):
 
-    a = old_params.get(param_name)
-    b = new_params.get(param_name)
+    old = old_params.get(param_name)
+    new = new_params.get(param_name)
 
-    if not (a is None or b is None):
-        ad = {}
-        for item in a:
+    if not (old is None or new is None):
+        oldd = {}
+        for item in old:
             name = item['name']
-            ad[name] = item
-        bd = {}
-        for item in b:
+            oldd[name] = item
+        newdd = {}
+        for item in new:
             name = item['name']
-            bd[name] = item
+            newd[name] = item
 
-        return ad == bd
+        return dict(oldd, **newd) == oldd
 
-    return (a is None and b is None)
+    return (old is None and new is None)
 
 
 def main():
