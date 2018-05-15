@@ -285,7 +285,7 @@ class Vlan(object):
 
     def init_module(self):
         """
-        init ansilbe NetworkModule.
+        init ansible NetworkModule.
         """
 
         required_one_of = [["vlan_id", "vlan_range"]]
