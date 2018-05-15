@@ -171,7 +171,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for project in projects:
             for zone in zones:
                 config_data['zone'] = zone
-                congig_data['project'] = project
+                config_data['project'] = project
                 link = self.self_link(config_data)
                 resp = self.fetch_list(config_data, link, query)
                 self._populate(resp['items'])
