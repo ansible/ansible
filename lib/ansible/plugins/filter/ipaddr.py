@@ -686,6 +686,9 @@ def ipv6(value, query=''):
 #
 #  - address | ipsubnet(cidr, index)
 #      returns next indexed subnet which contains given address
+#
+#  - address/prefix | ipsubnet(subnet/prefix)
+#      return the index of the subnet in the subnet
 def ipsubnet(value, query='', index='x'):
     ''' Manipulate IPv4/IPv6 subnets '''
 
@@ -735,7 +738,24 @@ def ipsubnet(value, query='', index='x'):
                     return str(value.supernet(query)[0])
                 except:
                     return False
-
+    elif str(query):
+        try:
+            vtype = ipaddr(query, 'type')
+            if vtype == 'address' :
+                v = ipaddr(query, 'cidr)
+            elif vtype == 'network' :
+                v = ipaddr(query, 'sunet')
+                           
+            query = netaddr.IPNetwork(v)
+        except:
+            return false
+                           
+        if network_in_network(query, value):
+            subnetlist = list(query.subnet(value.prefixlen))
+            for i in range (0, len(subnetlist)):
+                if (subnetlist[i] == value):
+                    return str(i + 1)
+                           
     return False
 
 
