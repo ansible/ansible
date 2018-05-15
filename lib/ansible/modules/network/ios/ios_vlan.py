@@ -212,34 +212,44 @@ def map_params_to_obj(module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show vlan'])
+    output = run_commands(module, ['show vlan brief'])
     lines = output[0].strip().splitlines()[2:-1]
-
+    
     if not lines:
         return list()
-
     objs = list()
-
-    for l in lines:
-        splitted_line = l.strip().replace(",", "").split()
-        if splitted_line == []:
-            break
+    
+    for index in range(len(lines)):
+        vlanID = lines[index][0:4].strip().replace(",", "")
+        name = lines[index][5:37].strip().replace(",", "")
+        state = lines[index][38:47].strip().replace(",", "")
+        interfaces = lines[index][48:].strip().replace(",", "").split()
+        while ((index + 1) < len(lines)):
+            interfaces_sup = lines[index + 1][48:].strip().replace(",", "").split()
+            vlanID_sup = lines[index + 1][0:4].strip().replace(",", "").split()
+            if (len(interfaces_sup) > 0) and (len(vlanID_sup) < 1):
+                interfaces.extend(interfaces_sup)
+	        index += 1
+            else:
+                break
+        if (vlanID == "") :
+            continue
+            
         obj = {}
-        obj['vlan_id'] = splitted_line[0]
-        obj['name'] = splitted_line[1]
-        obj['state'] = splitted_line[2]
-
+        obj['vlan_id'] = vlanID
+	      obj['name'] = name
+        obj['state'] = state
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
 
         obj['interfaces'] = []
-        if len(splitted_line) > 3:
+        if len(interfaces) > 0:
             interface = []
-            for i in range(3, len(splitted_line)):
-                interface.append(splitted_line[i].replace('Gi', 'GigabitEthernet'))
+            for i in interfaces:
+                interface.append(i.replace('Gi', 'GigabitEthernet'))
             obj['interfaces'].extend(interface)
-        objs.append(obj)
 
+        objs.append(obj)
     return objs
 
 
