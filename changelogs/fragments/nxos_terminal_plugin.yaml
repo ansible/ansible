@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix nxos terminal plugin regex (https://github.com/ansible/ansible/pull/39659)

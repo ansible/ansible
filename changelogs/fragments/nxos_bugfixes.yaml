@@ -29,3 +29,6 @@ bugfixes:
 - nxos_snmp_traps - Fix nxos_snmp_traps issues (https://github.com/ansible/ansible/pull/39444)
 - nxos_linkagg - nxos_linkagg abbreviated form issue (https://github.com/ansible/ansible/pull/39591)
 - nxos_snmp_user - Fix nxos_snmp_user (https://github.com/ansible/ansible/pull/39760)
+- nxos_logging - remove purge from nxos_logging doc, argspec (https://github.com/ansible/ansible/pull/39947)
+- nxos_ping - Fix nxos_ping issues (https://github.com/ansible/ansible/pull/40028)
+- nxos_vxlan_vtep_vni - Fix nxos_vxlan_vtep_vni test (https://github.com/ansible/ansible/pull/39968)

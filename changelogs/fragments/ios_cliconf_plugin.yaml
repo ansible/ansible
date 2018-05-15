@@ -1,0 +1,2 @@
+bugfixes:
+  - ios cliconf plugin fix regex for version (https://github.com/ansible/ansible/pull/40066)
