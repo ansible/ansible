@@ -58,7 +58,7 @@ options:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
-        default: balence-rr
+        default: balance-rr
     master:
         description:
             - master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
