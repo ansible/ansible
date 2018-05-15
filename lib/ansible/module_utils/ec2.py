@@ -129,7 +129,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
 
     if params.get('config'):
         config = params.pop('config')
-        config.user_agent_extra='Ansible/{0}'.format(__version__),
+        config.user_agent_extra = 'Ansible/{0}'.format(__version__)
     else:
         config = botocore.config.Config(
             user_agent_extra='Ansible/{0}'.format(__version__),
