@@ -60,11 +60,11 @@ options:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
     aliases: [ policy_group_name ]
-  policy_group_type:
+  interface_type:
     version_added: '2.6'
     description:
     - The type of interface for the static EPG deployement.
-    choices: [ port_channel, switch_port, vpc ]
+    choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
   state:
     description:
@@ -241,7 +241,7 @@ def main():
         'from': dict(type='str', aliases=['fromPort', 'from_port_range']),
         'to': dict(type='str', aliases=['toPort', 'to_port_range']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
-        'policy_group_type': dict(type='str', default='switch_port', choices=['port_channel', 'switch_port', 'vpc']),
+        'interface_type': dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
     })
 
@@ -262,7 +262,7 @@ def main():
     from_ = module.params['from']
     to_ = module.params['to']
     policy_group = module.params['policy_group']
-    policy_group_type = module.params['policy_group_type']
+    interface_type = module.params['interface_type']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -283,7 +283,8 @@ def main():
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp']
     )
 
-    POLICY_GROUP_TYPE_MAPPING = dict(
+    INTERFACE_TYPE_MAPPING = dict(
+        fex='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
         port_channel='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
         switch_port='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
         vpc='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
@@ -312,7 +313,7 @@ def main():
                 dict(
                     infraRsAccBaseGrp=dict(
                         attributes=dict(
-                            tDn=POLICY_GROUP_TYPE_MAPPING[policy_group_type],
+                            tDn=INTERFACE_TYPE_MAPPING[interface_type],
                         ),
                     ),
                 ),
