@@ -156,8 +156,10 @@
     api_username: "{{ opennebula_username }}"
     api_password: "{{ opennebula_password }}"
     validate_certs: false
-    template:
-      LABELS: "test, custom"
+    labels:
+      - test
+      - custom
+    attributes:
       TEST_VALUE: "2"
   environment:
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
