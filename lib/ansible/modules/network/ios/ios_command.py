@@ -47,7 +47,7 @@ options:
         the number of retries has expired. If a command sent to the
         device requires answering a prompt, it is possible to pass
         a dict containing I(command), I(answer) and I(prompt).
-        Common answers are "y" and "\\r". See examples.
+        See examples.
     required: true
   wait_for:
     description:
@@ -85,7 +85,7 @@ options:
     default: 1
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 tasks:
   - name: run show version on remote devices
     ios_command:
@@ -114,8 +114,8 @@ tasks:
     ios_command:
       commands:
         - command: 'clear counters GigabitEthernet0/2'
-          prompt: 'Clear "show interface" counters on this interface [confirm]'
-          answer: y
+          prompt: 'Clear "show interface" counters on this interface \[confirm\]'
+          answer: 'y'
 """
 
 RETURN = """
