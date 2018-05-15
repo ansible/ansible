@@ -244,7 +244,116 @@
     - assert:
         that:
           - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent expiration
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_expiration_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
 
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent expiration
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_expiration_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transition
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions and expirations
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transition
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        noncurrent_version_storage_class: standard_ia
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions and expirations
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_storage_class: standard_ia
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transitions:
+          - transition_days: 30
+            storage_class: standard_ia
+          - transition_days: 60
+            storage_class: onezone_ia
+          - transition_days: 90
+            storage_class: glacier
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transitions:
+          - transition_days: 30
+            storage_class: standard_ia
+          - transition_days: 60
+            storage_class: onezone_ia
+          - transition_days: 90
+            storage_class: glacier
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
   # ============================================================
   # test all the examples
   # Configure a lifecycle rule on a bucket to expire (delete) items with a prefix of /logs/ after 30 days

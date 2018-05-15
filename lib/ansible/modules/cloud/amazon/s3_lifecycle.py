@@ -48,6 +48,29 @@ options:
         replaced with the new transition(s)
     default: true
     type: bool
+  noncurrent_version_expiration_days:
+    description: 
+      - 'Delete noncurrent versions this many days after they become noncurrent'
+    type: int
+    required: false
+  noncurrent_version_storage_class:
+    description:
+      - 'Transition noncurrent versions to this storage class'
+    default: glacier
+    choices: ['glacier', 'onezone_ia', 'standard_ia']
+    required: false
+  noncurrent_version_transition_days:
+    description: 
+      - 'Transition noncurrent versions this many days after they become noncurrent'
+    type: int
+    required: false
+  noncurrent_version_transitions:
+    description:
+      - >
+        A list of transition behaviors to be applied to noncurrent versions for the rule. Each storage class may be used only once. Each transition
+        behavior contains these elements
+          I(transition_days)
+          I(storage_class)
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -141,7 +164,7 @@ EXAMPLES = '''
     state: present
     status: enabled
 
-# Configure a lifecycle rule to tranision files to infrequent access after 30 days and glacier after 90
+# Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
 - s3_lifecycle:
     name: mybucket
     prefix: /logs/
@@ -178,6 +201,10 @@ def create_lifecycle_rule(client, module):
     name = module.params.get("name")
     expiration_date = module.params.get("expiration_date")
     expiration_days = module.params.get("expiration_days")
+    noncurrent_version_expiration_days = module.params.get("noncurrent_version_expiration_days")
+    noncurrent_version_transition_days = module.params.get("noncurrent_version_transition_days")
+    noncurrent_version_transitions = module.params.get("noncurrent_version_transitions")
+    noncurrent_version_storage_class = module.params.get("noncurrent_version_storage_class")
     prefix = module.params.get("prefix")
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
@@ -207,6 +234,9 @@ def create_lifecycle_rule(client, module):
     elif expiration_date is not None:
         rule['Expiration'] = dict(Date=expiration_date)
 
+    if noncurrent_version_expiration_days is not None:
+        rule['NoncurrentVersionExpiration'] = dict(NoncurrentDays=noncurrent_version_expiration_days)
+
     if transition_days is not None:
         rule['Transitions'] = [dict(Days=transition_days, StorageClass=storage_class.upper()), ]
 
@@ -225,6 +255,19 @@ def create_lifecycle_rule(client, module):
             if transition.get('storage_class'):
                 t_out['StorageClass'] = transition['storage_class'].upper()
                 rule['Transitions'].append(t_out)
+    
+    if noncurrent_version_transition_days is not None:
+        rule['NoncurrentVersionTransitions'] = [dict(NoncurrentDays=noncurrent_version_transition_days, StorageClass=noncurrent_version_storage_class.upper()), ]
+
+    if noncurrent_version_transitions is not None:
+        if not rule.get('NoncurrentVersionTransitions'):
+            rule['NoncurrentVersionTransitions'] = []
+        for noncurrent_version_transition in noncurrent_version_transitions:
+            t_out = dict()
+            t_out['NoncurrentDays'] = noncurrent_version_transition['transition_days']
+            if noncurrent_version_transition.get('storage_class'):
+                t_out['StorageClass'] = noncurrent_version_transition['storage_class'].upper()
+                rule['NoncurrentVersionTransitions'].append(t_out)
 
     lifecycle_configuration = dict(Rules=[])
     appended = False
@@ -265,6 +308,8 @@ def update_or_append_rule(new_rule, existing_rule, purge_transitions, lifecycle_
             new_rule['Transitions'] = existing_rule['Transitions']
         if not new_rule.get('Expiration') and existing_rule.get('Expiration'):
             new_rule['Expiration'] = existing_rule['Expiration']
+        if not new_rule.get('NoncurrentVersionExpiration') and existing_rule.get('NoncurrentVersionExpiration'):
+            new_rule['NoncurrentVersionExpiration'] = existing_rule['NoncurrentVersionExpiration']
         lifecycle_obj['Rules'].append(new_rule)
         changed = True
         appended = True
@@ -290,12 +335,17 @@ def compare_rule(rule_a, rule_b, purge_transitions):
     if purge_transitions:
         return rule1 == rule2
     else:
-        transitions1 = rule1.pop('Transitions')
-        transitions2 = rule2.pop('Transitions')
+        transitions1 = rule1.pop('Transitions', [])
+        transitions2 = rule2.pop('Transitions', [])
+        noncurrent_transtions1 = rule1.pop('NoncurrentVersionTransitions', [])
+        noncurrent_transtions2 = rule2.pop('NoncurrentVersionTransitions', [])
         if rule1 != rule2:
             return False
         for transition in transitions1:
             if transition not in transitions2:
+                return False
+        for transition in noncurrent_transtions1:
+            if transition not in noncurrent_transtions2:
                 return False
         return True
 
@@ -371,6 +421,10 @@ def main():
         name=dict(required=True, type='str'),
         expiration_days=dict(default=None, required=False, type='int'),
         expiration_date=dict(default=None, required=False, type='str'),
+        noncurrent_version_expiration_days=dict(default=None, required=False, type='int'),
+        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+        noncurrent_version_transition_days=dict(default=None, required=False, type='int'),
+        noncurrent_version_transitions=dict(default=None, required=False, type='list'),
         prefix=dict(default=None, required=False),
         requester_pays=dict(default='no', type='bool'),
         rule_id=dict(required=False, type='str'),
@@ -390,7 +444,8 @@ def main():
                                   ['transition_days', 'transition_date'],
                                   ['transition_days', 'expiration_date'],
                                   ['transition_days', 'transitions'],
-                                  ['transition_date', 'transitions']
+                                  ['transition_date', 'transitions'],
+                                  ['noncurrent_version_transition_days', 'noncurrent_version_transitions'],
                               ]
                               )
 
