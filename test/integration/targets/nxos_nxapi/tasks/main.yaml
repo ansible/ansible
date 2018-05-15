@@ -1,4 +1,3 @@
 ---
-# Only cli tests for this module since cli is used
-# to test nxapi
 - { include: cli.yaml, tags: ['cli'] }
+- { include: nxapi.yaml, tags: ['nxapi'] }
