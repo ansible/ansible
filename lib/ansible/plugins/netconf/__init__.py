@@ -106,7 +106,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             resp = self.m.rpc(obj)
             return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
         except RPCError as exc:
-            msg = exc.data_xml if hasattr(exc, 'data_xml') else exc.xml
+            msg = exc.xml
             raise Exception(to_xml(msg))
 
     @ensure_connected
@@ -226,13 +226,6 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :timeout: specifies the confirm timeout in seconds
         """
         resp = self.m.commit(*args, **kwargs)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
-
-    @ensure_connected
-    def validate(self, *args, **kwargs):
-        """Validate the contents of the specified configuration.
-           :source: name of configuration data store"""
-        resp = self.m.validate(*args, **kwargs)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
