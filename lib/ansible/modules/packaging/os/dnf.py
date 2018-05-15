@@ -329,7 +329,7 @@ def ensure(module, base, state, names, autoremove):
 
     # Autoremove is called alone
     # Jump to remove path where base.autoremove() is run
-    if not names and autoremove is not None:
+    if not names and autoremove:
         names = []
         state = 'absent'
 
@@ -415,7 +415,7 @@ def ensure(module, base, state, names, autoremove):
 
         else:
             # state == absent
-            if autoremove is not None:
+            if autoremove:
                 base.conf.clean_requirements_on_remove = autoremove
 
             if filenames:
@@ -503,7 +503,7 @@ def main():
     _ensure_dnf(module)
 
     # Check if autoremove is called correctly
-    if params['autoremove'] is not None:
+    if params['autoremove']:
         if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
             module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
         if params['state'] not in ["absent", None]:
