@@ -241,7 +241,7 @@ def map_config_to_obj(module):
         obj['state'] = state
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
-	
+
         obj['interfaces'] = []
         if len(interfaces) > 0:
             interface = []
