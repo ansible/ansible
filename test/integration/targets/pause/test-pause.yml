@@ -1,0 +1,17 @@
+- name: Test pause
+  hosts: testhost
+  gather_facts: no
+  become: no
+
+  tasks:
+    - pause:
+        seconds: 5
+      register: results
+
+    - debug:
+        var: results
+      tags: debug
+
+    - assert:
+        that:
+          - results.stdout == 'Paused for 1.0 seconds'

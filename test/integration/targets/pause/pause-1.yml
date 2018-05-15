@@ -1,0 +1,10 @@
+- name: Test pause module in default state
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - pause:
+
+    - debug:
+        msg: Task after pause

@@ -1,0 +1,11 @@
+- name: Test pause module with custom prompt
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - pause:
+        prompt: Custom prompt
+
+    - debug:
+        msg: Task after pause
