@@ -1,5 +1,5 @@
 ---
-- name: collect common nxapi test cases
+- name: collect common test cases
   find:
     paths: "{{ role_path }}/tests/common"
     patterns: "{{ testcase }}.yaml"
