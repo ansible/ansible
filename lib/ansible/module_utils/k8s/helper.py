@@ -75,10 +75,6 @@ AUTH_ARG_SPEC = {
     'api_key': {
         'no_log': True,
     },
-    'username': {},
-    'password': {
-        'no_log': True,
-    },
     'verify_ssl': {
         'type': 'bool',
     },

@@ -84,7 +84,7 @@ class K8sInventoryHelper(object):
     def authenticate(self, connection=None):
         auth_options = {}
         if connection:
-            auth_args = ('host', 'api_key', 'kubeconfig', 'context', 'username', 'password',
+            auth_args = ('host', 'api_key', 'kubeconfig', 'context',
                          'cert_file', 'key_file', 'ssl_ca_cert', 'verify_ssl')
             for key, value in iteritems(connection):
                 if key in auth_args and value is not None:

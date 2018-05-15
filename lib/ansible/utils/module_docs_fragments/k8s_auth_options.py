@@ -38,14 +38,6 @@ options:
   context:
     description:
     - The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment variable.
-  username:
-    description:
-    - Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME environment
-      variable.
-  password:
-    description:
-    - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD environment
-      variable.
   cert_file:
     description:
     - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE environment
