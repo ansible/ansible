@@ -73,7 +73,7 @@ options:
         behavior contains these elements
           I(transition_days)
           I(storage_class)
-    version_added: 2.6      
+    version_added: 2.6
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -109,7 +109,7 @@ options:
           I(transition_days)
           I(transition_date)
           I(storage_class)
-    version_added: 2.6      
+    version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -196,7 +196,6 @@ except ImportError:
     pass  # handled by AnsibleAwsModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import HAS_BOTO3
 
 
 def create_lifecycle_rule(client, module):
@@ -211,7 +210,7 @@ def create_lifecycle_rule(client, module):
     prefix = module.params.get("prefix")
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
-    storage_class = module.params.get("storage_class", )
+    storage_class = module.params.get("storage_class")
     transition_date = module.params.get("transition_date")
     transition_days = module.params.get("transition_days")
     transitions = module.params.get("transitions")
@@ -222,11 +221,13 @@ def create_lifecycle_rule(client, module):
     try:
         current_lifecycle = client.get_bucket_lifecycle_configuration(Bucket=name)
         current_lifecycle_rules = current_lifecycle['Rules']
-    except (ClientError, BotoCoreError) as e:
-        if "NoSuchLifecycleConfiguration" in str(e):
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchLifecycleConfiguration':
             current_lifecycle_rules = []
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e)
+    except BotoCoreError as e:
+        module.fail_json_aws(e)
 
     rule = dict(Filter=dict(Prefix=prefix), Status=status.title())
     if rule_id is not None:
@@ -299,10 +300,10 @@ def create_lifecycle_rule(client, module):
     # Write lifecycle to bucket
     try:
         client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_configuration)
-    except ClientError as e:
-        module.fail_json(msg=e.message, lifecycle=lifecycle_configuration)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e)
 
-    module.exit_json(changed=changed, lifecycle=lifecycle_configuration)
+    module.exit_json(changed=changed)
 
 
 def update_or_append_rule(new_rule, existing_rule, purge_transitions, lifecycle_obj):
@@ -383,10 +384,12 @@ def destroy_lifecycle_rule(client, module):
     try:
         current_lifecycle_rules = client.get_bucket_lifecycle_configuration(Bucket=name)['Rules']
     except ClientError as e:
-        if "NoSuchLifecycleConfiguration" in str(e):
-            module.exit_json(changed=changed)
+        if e.response['Error']['Code'] == 'NoSuchLifecycleConfiguration':
+            current_lifecycle_rules = []
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e)
+    except BotoCoreError as e:
+        module.fail_json_aws(e)
 
     # Create lifecycle
     lifecycle_obj = dict(Rules=[])
@@ -414,31 +417,30 @@ def destroy_lifecycle_rule(client, module):
             client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_obj)
         else:
             client.delete_lifecycle_configuration(Bucket=name)
-    except ClientError as e:
-        module.fail_json(msg=e.message)
-
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e)
     module.exit_json(changed=changed)
 
 
 def main():
     argument_spec = dict(
         name=dict(required=True, type='str'),
-        expiration_days=dict(default=None, required=False, type='int'),
-        expiration_date=dict(default=None, required=False, type='str'),
-        noncurrent_version_expiration_days=dict(default=None, required=False, type='int'),
+        expiration_days=dict(type='int'),
+        expiration_date=dict(),
+        noncurrent_version_expiration_days=dict(type='int'),
         noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
-        noncurrent_version_transition_days=dict(default=None, required=False, type='int'),
-        noncurrent_version_transitions=dict(default=None, required=False, type='list'),
-        prefix=dict(default=None, required=False),
+        noncurrent_version_transition_days=dict(type='int'),
+        noncurrent_version_transitions=dict(type='list'),
+        prefix=dict(),
         requester_pays=dict(default='no', type='bool'),
-        rule_id=dict(required=False, type='str'),
+        rule_id=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         status=dict(default='enabled', choices=['enabled', 'disabled']),
         storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
-        transition_days=dict(default=None, required=False, type='int'),
-        transition_date=dict(default=None, required=False, type='str'),
-        transitions=dict(default=None, required=False, type='list'),
-        purge_transitions=dict(default='yes', required=False, type='bool')
+        transition_days=dict(type='int'),
+        transition_date=dict(),
+        transitions=dict(type='list'),
+        purge_transitions=dict(default='yes', type='bool')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -453,16 +455,10 @@ def main():
                               ]
                               )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
-    try:
-        client = module.client('s3')
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json(msg=str(e))
+    client = module.client('s3')
 
     expiration_date = module.params.get("expiration_date")
     transition_date = module.params.get("transition_date")
