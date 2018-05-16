@@ -15,6 +15,18 @@ def is_string(seq):
     return isinstance(seq, (text_type, binary_type))
 
 
+def is_iterable(seq, include_strings=False):
+    """Identify whether the input is an iterable."""
+    if not include_strings and is_string(seq):
+        return False
+
+    try:
+        iter(seq)
+        return True
+    except TypeError:
+        return False
+
+
 def is_sequence(seq, include_strings=False):
     """Identify whether the input is a sequence.
 
