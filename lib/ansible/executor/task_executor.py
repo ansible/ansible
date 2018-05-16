@@ -810,7 +810,7 @@ class TaskExecutor:
         self._play_context.set_options_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
-            self._play_context.timeout = C.PERSISTENT_COMMAND_TIMEOUT
+            self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
             socket_path = self._start_connection()
