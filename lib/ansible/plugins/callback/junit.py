@@ -129,8 +129,8 @@ class CallbackModule(CallbackBase):
         JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
                                      Default: False
         JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
-				     test cases.
-				     Default: <empty>
+                                     test cases.
+                                     Default: <empty>
 
     Requires:
         junit_xml
