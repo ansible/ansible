@@ -610,7 +610,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     # not compare_arrays(self.parameters, old_response, 'backend_address_pools') or
                     not compare_arrays(old_response, self.parameters, 'backend_http_settings_collection')):  # or
                     # not compare_arrays(self.parameters, old_response, 'request_routing_rules')):
-                    #(not compare_arrays(self.parameters, old_response, 'http_listeners'))):
+                    # (not compare_arrays(self.parameters, old_response, 'http_listeners'))):
 
                 self.to_do = Actions.Update
             else:
@@ -795,7 +795,7 @@ def dict_merge(a, b):
     if not isinstance(b, dict):
         return b
     result = deepcopy(a)
-    for k, v in b.iteritems():
+    for k, v in b.items():
         if k in result and isinstance(result[k], dict):
                 result[k] = dict_merge(result[k], v)
         else:
