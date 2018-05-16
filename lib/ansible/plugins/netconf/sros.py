@@ -41,9 +41,7 @@ try:
 except ImportError:
     raise AnsibleError("lxml is not installed")
 
-
 class Netconf(NetconfBase):
-
     def get_text(self, ele, tag):
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
@@ -62,7 +60,6 @@ class Netconf(NetconfBase):
         device_info['network_os_version'] = reply.findtext('.//{%s}state/{*}system/{*}version/{*}version-number' % xmlns)
         device_info['network_os_model'] = reply.findtext('.//{%s}state/{*}system/{*}platform' % xmlns)
         device_info['network_os_platform'] = 'Nokia 7x50'
-
         return device_info
 
     def get_capabilities(self):
@@ -75,7 +72,6 @@ class Netconf(NetconfBase):
         result['session_id'] = self.m.session_id
         result['device_operations'] = self.get_device_operations(result['server_capabilities'])
         return json.dumps(result)
-
 
     @staticmethod
     def guess_network_os(obj):

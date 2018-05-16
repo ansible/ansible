@@ -117,7 +117,6 @@ EXAMPLES = """
 - name: Get complete state data (SROS)
   netconf_get:
     filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:state"/>
-    
 """
 
 RETURN = """
