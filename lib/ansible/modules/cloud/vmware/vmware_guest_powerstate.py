@@ -19,7 +19,7 @@ description:
 - Power on / Power off / Restart a virtual machine.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 requirements:
 - python >= 2.6
 - PyVmomi

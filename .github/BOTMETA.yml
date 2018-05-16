@@ -594,7 +594,7 @@ files:
   $modules/source_control/git_config.py: djmattyg007
   $modules/source_control/github_deploy_key.py: bincyber
   $modules/source_control/github_hooks.py: pcgentry
-  $modules/source_control/github_issue.py: akasurde
+  $modules/source_control/github_issue.py: Akasurde
   $modules/source_control/github_key.py:
     ignored: erydo
   $modules/source_control/github_release.py: adrianmoisey
@@ -625,7 +625,7 @@ files:
   $modules/system/facter.py: $team_ansible
   $modules/system/filesystem.py: abulimov pilou-
   $modules/system/firewalld.py: maxamillion
-  $modules/system/gconftool2.py: akasurde kevensen
+  $modules/system/gconftool2.py: Akasurde kevensen
   $modules/system/getent.py: bcoca
   $modules/system/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
@@ -665,7 +665,7 @@ files:
     maintainers: $team_ansible
   $modules/system/solaris_zone.py: pmarkham
   $modules/system/svc.py: bcoca
-  $modules/system/sysctl.py: akasurde davixx
+  $modules/system/sysctl.py: Akasurde davixx
   $modules/system/systemd.py: $team_ansible
   $modules/system/timezone.py: jasperla tmshn
   $modules/system/ufw.py: ahtik ovcharenko pyykkis
@@ -1164,7 +1164,7 @@ macros:
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
   team_extreme: bigmstone LindsayHill
-  team_ipa: Nosmoht akasurde
+  team_ipa: Nosmoht Akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice broncofan amit0701 schmots1 carchi8py
@@ -1180,6 +1180,6 @@ macros:
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
-  team_vmware: akasurde dav1x warthog9
+  team_vmware: Akasurde dav1x warthog9
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

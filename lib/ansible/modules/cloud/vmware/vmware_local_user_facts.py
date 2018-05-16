@@ -24,7 +24,7 @@ description:
     - User must hold the 'Authorization.ModifyPermissions' privilege to invoke this module.
 version_added: "2.6"
 author:
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on ESXi 6.5
 requirements:
