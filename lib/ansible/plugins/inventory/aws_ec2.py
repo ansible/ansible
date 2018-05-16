@@ -452,6 +452,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.aws_security_token = self._options.get('aws_security_token')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
+            session = botocore.session.get_session()
+            if session.get_credentials() is not None:
+                self.aws_access_key_id = session.get_credentials().access_key
+                self.aws_secret_access_key = session.get_credentials().secret_key
+                self.aws_security_token = session.get_credentials().token
+
+        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
 
