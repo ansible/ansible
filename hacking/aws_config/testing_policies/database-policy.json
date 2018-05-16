@@ -63,6 +63,14 @@
             "Resource": [
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:*"
             ]
-        }
+        },
+		  {
+            "Sid": "AllowElasticache",
+            "Effect": "Allow",
+            "Action": [
+                "elasticache:*"
+            ]
+            "Resource": "arn:aws:elasticache:{{aws_region}}:{{aws_account}}:*"
+}
     ]
 }
