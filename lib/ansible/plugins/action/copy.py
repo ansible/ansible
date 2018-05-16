@@ -492,6 +492,10 @@ class ActionModule(ActionBase):
             if module_return is None:
                 continue
 
+            if module_return.get('failed'):
+                result.update(module_return)
+                return result
+
             paths = os.path.split(source_rel)
             dir_path = ''
             for dir_component in paths:
@@ -517,6 +521,11 @@ class ActionModule(ActionBase):
             del new_module_args['src']
 
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+
+            if module_return.get('failed'):
+                result.update(module_return)
+                return result
+
             module_executed = True
             changed = changed or module_return.get('changed', False)
 
