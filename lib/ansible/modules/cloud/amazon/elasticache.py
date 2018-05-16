@@ -76,12 +76,12 @@ options:
       - Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state
     type: bool
     default: 'no'
- tags:
+  tags:
     description:
       - Set instance tags
     required: false
     default: none
-    version_added: "2.5"
+    version_added: "2.6"
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
@@ -89,7 +89,7 @@ options:
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
-    version_added: "2.5"
+    version_added: "2.6"
 
 extends_documentation_fragment:
     - aws
@@ -205,22 +205,15 @@ class ElastiCacheManager(object):
         return arn
 
     def compare_and_update_tags(self):
-        if self.tags:
-            self.tags = ansible_dict_to_boto3_tag_list(self.tags)
-            tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-            add, remove = compare_aws_tags(tags, self.tags, self.purge_tags)
-            if add:
-                self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
-                self.changed = True
-
-            if remove:
-                self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
-                self.changed = True
-        else:
-            tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-            if tags and self.purge_tags:
-                self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=list(tags.keys()))
-                self.changed = True
+        self.tags = ansible_dict_to_boto3_tag_list(self.tags)
+        tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
+        add, remove = compare_aws_tags(tags, self.tags, self.purge_tags)
+        if add:
+            self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
+            self.changed = True
+        if remove:
+            self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
+            self.changed = True
 
     def ensure_absent(self):
         """Ensure cache cluster is gone or delete it if not"""
@@ -432,7 +425,7 @@ class ElastiCacheManager(object):
             'EngineVersion': self.cache_engine_version
         }
         for key, value in modifiable_data.items():
-            if value and self.data[key] != value:
+            if value is not None and self.data[key] != value:
                 return True
 
         # Check cache security groups
@@ -466,7 +459,7 @@ class ElastiCacheManager(object):
         if self.zone is not None:
             unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
         for key, value in unmodifiable_data.items():
-            if getattr(self, key) and getattr(self, key) != value:
+            if getattr(self, key) is not None and getattr(self, key) != value:
                 return True
         return False
 
