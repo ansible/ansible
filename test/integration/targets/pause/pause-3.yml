@@ -4,7 +4,8 @@
   gather_facts: no
 
   tasks:
-    - pause:
+    - name: EXPECT FAILURE
+      pause:
         seconds: 2
 
     - debug:
