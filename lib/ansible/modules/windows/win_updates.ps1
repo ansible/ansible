@@ -149,6 +149,7 @@ $update_script_block = {
             foreach ($kb in $update_info.kb) {
                 if ("KB$kb" -imatch $blacklist_entry) {
                     $kb_match = $true
+                }
                 foreach ($blacklist_entry in $blacklist) {
                     $kb_match = $false
                     foreach ($kb in $update_info.kb) {
@@ -266,7 +267,7 @@ $update_script_block = {
             # FUTURE: configurable download retry
             if ($download_result.ResultCode -ne 2) { # OperationResultCode orcSucceeded
                 $result.failed = $true
-                $result.msg = "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResuleCode)"
+                $result.msg = "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResultCode)"
                 return $result
             }
         
@@ -498,19 +499,12 @@ Function Start-AsScheduledTask($common_functions, $script) {
         Start-Sleep -Milliseconds 500
     }
     
-<<<<<<< HEAD
-    Write-DebugLog -msg "Download result code for $update_number $($update.Identity.UpdateId) = $($download_result.ResultCode)"
-    # FUTURE: configurable download retry
-    if ($download_result.ResultCode -ne 2) { # OperationResultCode orcSucceeded
-        Fail-Json -obj $result -message "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResultCode)"
-=======
     # NB: fallthru on both timeout and success
     $ret = @{
         ErrorOutput = $job.Error
         WarningOutput = $job.Warning
         VerboseOutput = $job.Verbose
         DebugOutput = $job.Debug
->>>>>>> win_updates: add scheduled tasks back in for older hosts
     }
 
     if ($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) {
