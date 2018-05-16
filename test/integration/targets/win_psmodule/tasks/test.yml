@@ -137,12 +137,6 @@
     path: "{{custom_repo_path}}"
     state: directory
 
-- name: Register custom PS repository
-  win_psmodule:
-    repository: "{{custom_repo_name}}"
-    url: "{{custom_repo_path}}"
-  register: custom_repo_registered
-
 - name: Make sure sample module is uninstalled
   win_psmodule:
     name: "{{ powershell_module }}"
@@ -152,7 +146,7 @@
 - name: Copy some module to custom repo
   win_shell: |
     Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path "{{custom_repo_path}}";
-    Find-Module "{{powershell_module}}" -Repository "{{custom_repo_name}}" | % Name
+    Get-ChildItem "{{custom_repo_path}}" | ? Name -eq "{{powershell_module}}" | % Name
   register: saved_package
 
 - name: Validate sample module in custom repo
@@ -165,6 +159,7 @@
     name: "{{ powershell_module }}"
     state: present
     repository: "{{custom_repo_name}}"
+    url: "{{custom_repo_path}}"
   register: module_from_custom_repo
 
 - name: Test custom Powershell repository module install
