@@ -9,7 +9,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.collections import is_iterable, is_sequence
 
 
 class SeqStub:
@@ -22,6 +22,16 @@ class SeqStub:
 
 
 Sequence.register(SeqStub)
+
+
+class IteratorStub:
+    def __next__(self):
+        raise StopIteration
+
+
+class IterableStub:
+    def __iter__(self):
+        return IteratorStub()
 
 
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
@@ -65,3 +75,28 @@ def test_sequence_string_types_with_strings(string_input):
 def test_sequence_string_types_without_strings(string_input):
     """Test that ``is_sequence`` can separate string and non-string."""
     assert not is_sequence(string_input, include_strings=False)
+
+
+@pytest.mark.parametrize(
+    'seq',
+    ([], (), {}, set(), frozenset(), IterableStub()),
+)
+def test_iterable_positive(seq):
+    assert is_iterable(seq)
+
+
+@pytest.mark.parametrize(
+    'seq', (IteratorStub(), object(), 5, 9.)
+)
+def test_iterable_negative(seq):
+    assert not is_iterable(seq)
+
+
+@pytest.mark.parametrize('string_input', TEST_STRINGS)
+def test_iterable_including_strings(string_input):
+    assert is_iterable(string_input, include_strings=True)
+
+
+@pytest.mark.parametrize('string_input', TEST_STRINGS)
+def test_iterable_excluding_strings(string_input):
+    assert not is_iterable(string_input, include_strings=False)
