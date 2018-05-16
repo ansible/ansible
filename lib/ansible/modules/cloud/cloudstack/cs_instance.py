@@ -299,6 +299,7 @@ default_ip6:
   returned: success
   type: string
   sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
+  version_added: '2.6'
 public_ip:
   description: Public IP address with instance via static NAT rule.
   returned: success
