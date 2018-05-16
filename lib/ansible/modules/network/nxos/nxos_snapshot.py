@@ -372,7 +372,7 @@ def main():
                 result['commands'] = action_results
                 result['changed'] = True
 
-            if action == 'create' and module.params['path']:
+            if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
                 command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
