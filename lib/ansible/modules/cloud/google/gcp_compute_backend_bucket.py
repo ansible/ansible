@@ -34,7 +34,7 @@ module: gcp_compute_backend_bucket
 description:
     - Backend buckets allow you to use Google Cloud Storage buckets with HTTP(S) load
       balancing.
-    - An HTTP(S) load balancing can direct traffic to specified URLs to a backend bucket
+    - An HTTP(S) load balancer can direct traffic to specified URLs to a backend bucket
       rather than a backend service. It can send requests for static content to a Cloud
       Storage bucket and requests for dynamic content a virtual machine instance.
 short_description: Creates a GCP BackendBucket
@@ -48,7 +48,6 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     bucket_name:
