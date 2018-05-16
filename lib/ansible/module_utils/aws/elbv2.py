@@ -355,7 +355,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         if self.subnets is not None:
             params['Subnets'] = self.subnets
         params['Scheme'] = self.scheme
-        if self.tags is not None:
+        if self.tags:
             params['Tags'] = self.tags
 
         try:
