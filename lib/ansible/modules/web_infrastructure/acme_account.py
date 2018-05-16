@@ -242,6 +242,7 @@ def main():
                 payload = {
                     "account": account.uri,
                     "newKey": new_key_data['jwk'],
+                    "oldKey": account.jwk,
                 }
                 data = account.sign_request(protected, payload, new_key_data, new_key)
                 # Send request and verify result
