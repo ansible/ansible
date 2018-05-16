@@ -132,5 +132,52 @@
       - "module_uninstall_2 is not changed"
       - "module_uninstall_3 is changed"
 
-      
-      
+- name: Create repository path
+  win_file:
+    path: "{{custom_repo_path}}"
+    state: directory
+
+- name: Register custom PS repository
+  win_psmodule:
+    repository: "{{custom_repo_name}}"
+    url: "{{custom_repo_path}}"
+  register: custom_repo_registered
+
+- name: Make sure sample module is uninstalled
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_4
+
+- name: Copy some module to custom repo
+  win_shell: |
+    Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path "{{custom_repo_path}}";
+    Find-Module "{{powershell_module}}" -Repository "{{custom_repo_name}}" | % Name
+  register: saved_package
+
+- name: Validate sample module in custom repo
+  assert:
+    that:
+      - "saved_package == '{{powershell_module}}'"
+
+- name: Install module from custom Powershell repository
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    repository: "{{custom_repo_name}}"
+  register: module_from_custom_repo
+
+- name: Test custom Powershell repository module install
+  assert:
+    that:
+      - "module_from_custom_repo is changed"
+      - "module_from_custom_repo.output == 'Module {{ powershell_module }} installed'"
+
+- name: Copy some module to custom repo
+  win_shell: (Get-InstalledModule -Name "{{powershell_module}}").Repository
+  register: is_package_customrepo
+
+- name: Validate sample module is installed from custom repo
+  assert:
+    that:
+      - "is_package_customrepo == '{{custom_repo_name}}'"
