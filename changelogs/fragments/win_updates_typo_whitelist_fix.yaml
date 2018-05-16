@@ -1,0 +1,3 @@
+bugfixes:
+- win_updates - Fix typo that hid the download error when a download failed
+- win_updates - Fix logic when using a whitelist for multiple updates
