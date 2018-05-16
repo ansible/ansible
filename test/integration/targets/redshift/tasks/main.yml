@@ -13,7 +13,7 @@
         aws_connection_info: &aws_connection_info
           aws_access_key: "{{ aws_access_key }}"
           aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
+          security_token: "{{ security_token | default(omit) }}"
           region: "{{ aws_region }}"
       no_log: yes
 
@@ -118,8 +118,8 @@
         password: "{{ reshift_master_password }}"
         node_type: "{{ node_type }}"
         wait: yes
+        wait_timeout: 1000
         <<: *aws_connection_info
-        wait: true
       register: result
     - debug:
         msg: "{{ result }}"
@@ -182,10 +182,13 @@
         command: delete
         identifier: "{{ redshift_cluster_name }}"
         skip_final_cluster_snapshot: true
+        wait: yes
         <<: *aws_connection_info
       register: result
-      wait: true
       ignore_errors: true
+      retries: 30
+      delay: 30
+      until: result.changed
 
     - name: assert delete
       assert:
@@ -194,38 +197,34 @@
           #- 'result.cluster.status == "deleting"'
 
     # ============================================================
-
+    # - name: wait to avoid aws api getting angry at me
+    #   pause:
+    #     seconds: 15
     #
-    - name: test create multi-node cluster
-      redshift:
-        command: create
-        identifier: "{{ redshift_cluster_name }}"
-        cluster_type: multi-node
-        number_of_nodes: 3
-        wait: true
-        <<: *aws_connection_info
-      register: result
-      ignore_errors: true
-
-    - name: assert create
-      assert:
-        that:
-          - 'result.changed'
+    # #
+    # - name: test create multi-node cluster
+    #   redshift:
+    #     command: create
+    #     identifier: "{{ redshift_cluster_name }}-multinode"
+    #     username: "{{ redshift_master_username }}"
+    #     password: "{{ reshift_master_password }}"
+    #     node_type: "{{ node_type }}"
+    #     cluster_type: multi-node
+    #     number_of_nodes: 3
+    #     wait: yes
+    #     <<: *aws_connection_info
+    #   register: result
+    #
+    #
+    # - name: assert create
+    #   assert:
+    #     that:
+    #       - 'result.changed'
 
     # ============================================================
 
   always:
 
-    - name: wait until cluster is available
-      redshift:
-        command: facts
-        identifier: "{{ redshift_cluster_name }}"
-      register: result
-      until: result.cluster.status in ['available']
-      retries: 100
-      delay: 15
-
-    # ============================================================
     - name: clenup test cluster
       redshift:
         command: delete
@@ -233,7 +232,7 @@
         skip_final_cluster_snapshot: true
         <<: *aws_connection_info
       register: removed_cluster
-      tries: 10
+      retries: 10
       delay: 5
       until: removed_cluster is not failed
       ignore_errors: yes
