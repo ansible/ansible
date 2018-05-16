@@ -21,7 +21,7 @@ module: digital_ocean_domain_facts
 short_description: Gather facts about DigitalOcean Domains
 description:
     - This module can be used to gather facts about DigitalOcean provided Domains.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   domain_name:

@@ -24,7 +24,7 @@ description:
 - If C(esxi_hostname) is provided, then vmnic facts about given host system will be returned.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:

@@ -23,7 +23,7 @@ version_added: '2.2'
 author:
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
 - Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
