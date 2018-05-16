@@ -139,7 +139,7 @@ options:
     default: 30
     ini:
       section: persistent_connection
-      key: persistent_connect_timeout
+      key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
