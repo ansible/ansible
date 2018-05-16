@@ -22,7 +22,7 @@ options:
       - Indicates whether deletion protection for the ELB is enabled.
     required: false
     default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
   listeners:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
@@ -38,14 +38,14 @@ options:
       - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
         not set then listeners will not be modified
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
         tags will not be modified.
     required: false
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   subnet_mappings:
     description:
       - A list of dicts containing the IDs of the subnets to attach to the load balancer. You can also specify the allocation ID of an Elastic IP
@@ -71,6 +71,13 @@ options:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
     required: false
+  wait:
+    description:
+      - Whether or not to wait for the network load balancer to reach the desired state.
+    type: bool
+  wait_timeout:
+    description:
+      - The duration in seconds to wait, used in conjunction with I(wait).
 extends_documentation_fragment:
     - aws
     - ec2
@@ -268,15 +275,8 @@ vpc_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, \
-    boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.elbv2 import NetworkLoadBalancer, ELBListeners, ELBListener
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
-except ImportError:
-    HAS_BOTO3 = False
 
 
 def create_or_update_elb(elb_obj):
@@ -290,7 +290,7 @@ def create_or_update_elb(elb_obj):
             elb_obj.modify_subnets()
 
         # Tags - only need to play with tags if tags parameter has been set to something
-        if elb_obj.tags:
+        if elb_obj.tags is not None:
 
             # Delete necessary tags
             tags_need_modify, tags_to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(elb_obj.elb['tags']),
@@ -368,33 +368,29 @@ def delete_elb(elb_obj):
 
 
 def main():
-
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            deletion_protection=dict(type='bool'),
-            listeners=dict(type='list',
-                           elements='dict',
-                           options=dict(
-                               Protocol=dict(type='str', required=True),
-                               Port=dict(type='int', required=True),
-                               SslPolicy=dict(type='str'),
-                               Certificates=dict(type='list'),
-                               DefaultActions=dict(type='list', required=True),
-                               Rules=dict(type='list')
-                           )
-                           ),
-            name=dict(required=True, type='str'),
-            purge_listeners=dict(default=True, type='bool'),
-            purge_tags=dict(default=True, type='bool'),
-            subnets=dict(type='list'),
-            subnet_mappings=dict(type='list'),
-            scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], type='str'),
-            tags=dict(default={}, type='dict'),
-            wait_timeout=dict(type='int'),
-            wait=dict(type='bool')
-        )
+    argument_spec = dict(
+        deletion_protection=dict(type='bool'),
+        listeners=dict(type='list',
+                       elements='dict',
+                       options=dict(
+                           Protocol=dict(type='str', required=True),
+                           Port=dict(type='int', required=True),
+                           SslPolicy=dict(type='str'),
+                           Certificates=dict(type='list'),
+                           DefaultActions=dict(type='list', required=True),
+                           Rules=dict(type='list')
+                       )
+                       ),
+        name=dict(required=True, type='str'),
+        purge_listeners=dict(default=True, type='bool'),
+        purge_tags=dict(default=True, type='bool'),
+        subnets=dict(type='list'),
+        subnet_mappings=dict(type='list'),
+        scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
+        state=dict(choices=['present', 'absent'], type='str'),
+        tags=dict(default={}, type='dict'),
+        wait_timeout=dict(type='int'),
+        wait=dict(type='bool', default=False)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -414,10 +410,8 @@ def main():
                 if key == 'Protocol' and listener[key] != 'TCP':
                     module.fail_json(msg="'Protocol' must be 'TCP'")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_params)
-    connection_ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('elbv2')
+    connection_ec2 = module.client('ec2')
 
     elb = NetworkLoadBalancer(connection, connection_ec2, module)
 
