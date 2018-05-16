@@ -595,7 +595,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             if (self.parameters['location'] != old_response['location'] or
                     self.parameters['sku']['name'] != old_response['sku']['name'] or
                     self.parameters['sku']['tier'] != old_response['sku']['tier'] or
-                    self.parameters['sku']['capacity'] != old_response['sku']['capacity']: # or
+                    self.parameters['sku']['capacity'] != old_response['sku']['capacity']): # or
                     # self.parameters['ssl_policy']['policy_type'] != old_response['ssl_policy']['policy_type'] or
                     # self.parameters['ssl_policy']['policy_name'] != old_response['ssl_policy']['policy_name'] or
                     # self.parameters['ssl_policy']['min_protocol_version'] != old_response['ssl_policy']['min_protocol_version'] or
