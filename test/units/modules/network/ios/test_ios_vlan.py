@@ -48,7 +48,7 @@ class TestIosUserModule(TestIosModule):
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('ios_vlan_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
-        
+
     def test_ios_vlan_create(self):
         set_module_args(dict(vlan_id='2', name='test', state='present'))
         result = self.execute_module(changed=True)
