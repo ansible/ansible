@@ -13,6 +13,7 @@
       action: create
       snapshot_name: test_snapshot1
       description: Ansible
+      save_snapshot_locally: true
       provider: "{{ connection }}"
 
   - name: create another snapshot
@@ -24,6 +25,7 @@
       show_command: show ip interface brief
       row_id: ROW_intf
       element_key1: intf-name
+      save_snapshot_locally: true
       provider: "{{ connection }}"
 
   - name: compare snapshots
