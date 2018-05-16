@@ -119,19 +119,24 @@ foreach ($update in $search_result.Updates) {
 
     # validate update again blacklist/whitelist
     $skipped = $false
+    $whitelist_match = $false
     foreach ($whitelist_entry in $whitelist) {
-        $kb_match = $false
-        foreach ($kb in $update_info.kb) {
-            if ("KB$kb" -imatch $whitelist_entry) {
-                $kb_match = $true
-            }
-        }
-        if (-not ($kb_match -or $update_info.title -imatch $whitelist_entry)) {
-            Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was not found in the whitelist"
-            $skipped = $true
+        if ($update_info.title -imatch $whitelist_entry) {
+            $whitelist_match = $true
             break
         }
+        foreach ($kb in $update_info.kb) {
+            if ("KB$kb" -imatch $whitelist_entry) {
+                $whitelist_match = $true
+                break
+            }
+        }
     }
+    if ($whitelist.Length -gt 0 -and -not $whitelist_match) {
+        Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was not found in the whitelist"
+        $skipped = $true
+    }
+
     foreach ($blacklist_entry in $blacklist) {
         $kb_match = $false
         foreach ($kb in $update_info.kb) {
@@ -237,7 +242,7 @@ foreach ($update in $updates_to_install) {
     Write-DebugLog -msg "Download result code for $update_number $($update.Identity.UpdateId) = $($download_result.ResultCode)"
     # FUTURE: configurable download retry
     if ($download_result.ResultCode -ne 2) { # OperationResultCode orcSucceeded
-        Fail-Json -obj $result -message "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResuleCode)"
+        Fail-Json -obj $result -message "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResultCode)"
     }
 
     $result.changed = $true
