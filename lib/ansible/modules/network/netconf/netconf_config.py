@@ -58,6 +58,12 @@ options:
     default: true
     required: false
     version_added: "2.4"
+  key_filename:
+    description:
+     - if true, sets the path to ssh key to be used to connect to host
+     - if false, use default usual ssh keys (e.g. ~/.ssh/id_*)
+    default: false
+    required: false
   datastore:
     description:
      - auto, uses candidate and fallback to running
@@ -223,6 +229,7 @@ def main():
             look_for_keys=dict(type='bool', default=True),
 
             allow_agent=dict(type='bool', default=True),
+            key_filename=dict(type='path', required=False),
         ),
         mutually_exclusive=[('xml', 'src')]
     )
@@ -254,6 +261,7 @@ def main():
             look_for_keys=module.params['look_for_keys'],
             username=module.params['username'],
             password=module.params['password'],
+            key_filename=module.params['key_filename'],
         )
 
         try:
