@@ -3,5 +3,4 @@ jinja2
 junit-xml
 ordereddict ; python_version < '2.7'
 paramiko
-pexpect
 pyyaml
