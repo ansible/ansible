@@ -79,7 +79,6 @@ class VariableManager:
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
     def __init__(self, loader=None, inventory=None):
-
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -90,6 +89,7 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+        self._templar = Templar(loader=self._loader)
 
         # bad cache plugin is not fatal error
         try:
@@ -325,7 +325,7 @@ class VariableManager:
                     # and magic vars so we can properly template the vars_files entries
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
-                    templar = Templar(loader=self._loader, variables=temp_vars)
+                    self._templar.set_available_variables(temp_vars)
 
                     # we assume each item in the list is itself a list, as we
                     # support "conditional includes" for vars_files, which mimics
@@ -339,7 +339,7 @@ class VariableManager:
                     # raise an error, which is silently ignored at this point.
                     try:
                         for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
+                            vars_file = self._templar.template(vars_file)
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
@@ -449,8 +449,7 @@ class VariableManager:
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
-                templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
+                if self._templar.is_template(play.hosts):
                     pattern = 'all'
                 else:
                     pattern = play.hosts or 'all'
@@ -479,15 +478,15 @@ class VariableManager:
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
         vars_copy = existing_variables.copy()
-        templar = Templar(loader=self._loader, variables=vars_copy)
+        self._templar.set_available_variables(vars_copy)
 
         items = []
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=self._templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
@@ -495,7 +494,7 @@ class VariableManager:
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
-            items = templar.template(task.loop)
+            items = self._templar.template(task.loop)
         else:
             items = [None]
 
@@ -506,8 +505,8 @@ class VariableManager:
             if item is not None:
                 vars_copy[item_var] = item
 
-            templar.set_available_variables(vars_copy)
-            delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+            self._templar.set_available_variables(vars_copy)
+            delegated_host_name = self._templar.template(task.delegate_to, fail_on_undefined=False)
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
             if delegated_host_name in delegated_host_vars:
