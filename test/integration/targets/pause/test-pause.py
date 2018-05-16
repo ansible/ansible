@@ -5,7 +5,7 @@ import sys
 import termios
 import os
 
-from six import PY2
+from ansible.module_utils.six import PY2
 
 args = sys.argv[1:]
 
@@ -14,7 +14,10 @@ env_vars = {
     'ANSIBLE_NOCOLOR': 'True'
 }
 
-backspace = termios.tcgetattr(sys.stdin.fileno())[6][termios.VERASE]
+try:
+    backspace = termios.tcgetattr(sys.stdin.fileno())[6][termios.VERASE]
+except Exception:
+    backspace = b'\x7f'
 
 if PY2:
     log_buffer = sys.stdout
