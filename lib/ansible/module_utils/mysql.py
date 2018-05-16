@@ -28,9 +28,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-from ansible.module_utils.six import (
-    PY2
-)
+from ansible.module_utils.six.moves import configparser
 
 try:
     import pymysql as mysql_driver
@@ -46,14 +44,6 @@ except ImportError:
 from ansible.module_utils._text import to_native
 
 mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
-
-if PY2:
-    try:
-        import configparser
-    except ImportError:
-        import ConfigParser as configparser
-else:
-    import configparser
 
 
 def _parse_from_mysql_config_file(cnf):
