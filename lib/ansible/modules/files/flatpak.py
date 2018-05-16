@@ -16,53 +16,55 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: flatpak
+version_added: '2.6'
 short_description: Manage flatpaks
 description:
-    - Allows users to add or remove flatpaks.
-    - See the M(flatpak_remote) module for managing flatpak remotes.
-version_added: '2.6'
+- Allows users to add or remove flatpaks.
+- See the M(flatpak_remote) module for managing flatpak remotes.
 author:
 - John Kwiatkoski (@jaykayy)
-- Alexander Bethke Kwiatkoski (@oolongbrothers)
+- Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
-notes:
-- The C(flatpak_remote) requires the C(flatpak) binary the be installed on the managed host.
 options:
+  executable:
+    description:
+    - The path to the C(flatpak) executable to use.
+    - By default, this module looks for the C(flatpak) executable on the path.
+    default: flatpak
+  method:
+    description:
+    - The installation method to use.
+    - Defines if the I(flatpak) is supposed to be installed globally for the whole C(system)
+      or only for the current C(user).
+    choices: [ system, user ]
+    default: system
   name:
     description:
-    - The name of the flatpak to manage
-    - When I(state) is set to C(present), I(name) can be specified as an C(http(s)) URL to a
-      C(flatpakref)-file or the unique reverse DNS name that identifies a flatpak.
-    - An example for a reverse DNS name is I(org.gnome.gedit).
-    - When set to C(absent), it is recommended to specify the name in the reverse DNS format.
-    - When supplying an C(http(s)) URL with C(state=absent), the module will try to match the
+    - The name of the flatpak to manage.
+    - When used with I(state=present), I(name) can be specified as an C(http(s)) URL to a
+      C(flatpakref) file or the unique reverse DNS name that identifies a flatpak.
+    - When suppying a reverse DNS name, you can use the I(remote) option to specify on what remote
+      to look for the flatpak. An example for a reverse DNS name is C(org.gnome.gedit).
+    - When used with I(state=absent), it is recommended to specify the name in the reverse DNS
+      format.
+    - When supplying an C(http(s)) URL with I(state=absent), the module will try to match the
       installed flatpak based on the name of the flatpakref to remove it. However, there is no
       guarantee that the names of the flatpakref file and the reverse DNS name of the installed
       flatpak do match.
     required: true
-  executable:
-    description:
-    - The path to the C(flatpak) executable to use
-    default: flatpak
-  state:
-    description:
-    - Set to C(present) will install the flatpak and/or I(remote).
-    - Set to C(absent) will remove the flatpak and/or I(remote).
-    choices: [ absent, present ]
-    default: present
   remote:
     description:
-    - The repository remote to install the flatpak from
-      See the M(flatpak_remote) module for managing flatpak remotes.
+    - The flatpak remote (repository) to install the flatpak from.
+    - By default, C(flathub) is assumed, but you do need to add the flathub flatpak_remote before
+      you can use this.
+    - See the M(flatpak_remote) module for managing flatpak remotes.
     default: flathub
-  method:
+  state:
     description:
-    - The installation method to use
-    - Defines if the I(flatpak) is supposed to be installed globally for the whole C(system)
-      or for the current C(user) only.
-    choices: [ system, user ]
-    default: system
+    - Indicates the desired package state.
+    choices: [ absent, present ]
+    default: present
 '''
 
 EXAMPLES = r'''
@@ -76,31 +78,50 @@ EXAMPLES = r'''
     name: https://git.gnome.org/browse/gnome-apps-nightly/plain/gedit.flatpakref
     state: present
 
-- name: Remove the gedit flatpak package
-  flatpak:
-    name: org.gnome.gedit
-    state: absent
-
 - name: Install the gedit package from flathub for current user
   flatpak:
     name: org.gnome.gedit
     state: present
-    remote: flathub
   method: user
 
-- name: Install a flatpack stored in another remote
+- name: Install the Gnome Calendar flatpak from the gnome remote system-wide
   flatpak:
-    name: org.test.myapp
+    name: org.gnome.Calendar
     state: present
-    remote: myrepository
+    remote: gnome
+
+- name: Remove the gedit flatpak
+  flatpak:
+    name: org.gnome.gedit
+    state: absent
 '''
 
 RETURN = r'''
-reason:
-  description: On failure, the output for the failure
-  returned: failed
+command:
+  description: The exact flatpak command that was executed
+  returned: When a flatpak command has been executed
   type: string
-  sample: error while installing...
+  sample: "/usr/bin/flatpak install --user -y flathub org.gnome.Calculator"
+msg:
+  description: Module error message
+  returned: failure
+  type: string
+  sample: "Executable '/usr/local/bin/flatpak' was not found on the system."
+rc:
+  description: Return code from flatpak binary
+  returned: When a flatpak command has been executed
+  type: int
+  sample: 0
+stderr:
+  description: Error output from flatpak binary
+  returned: When a flatpak command has been executed
+  type: string
+  sample: "error: Error searching remote flathub: Can't find ref org.gnome.KDE"
+stdout:
+  description: Output from flatpak binary
+  returned: When a flatpak command has been executed
+  type: string
+  sample: "org.gnome.Calendar/x86_64/stable\tcurrent\norg.gnome.gitg/x86_64/stable\tcurrent\n"
 '''
 
 import subprocess
