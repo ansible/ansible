@@ -143,7 +143,8 @@ def check_command(module, commandline):
     if type(commandline) == list:
         command = commandline[0]
     else:
-        command = os.path.basename(commandline.split()[0])
+        command = commandline.split()[0]
+    command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
                      " warn=False to this command task or set command_warnings=False in" \
