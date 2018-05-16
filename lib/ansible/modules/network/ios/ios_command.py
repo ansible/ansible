@@ -47,7 +47,7 @@ options:
         the number of retries has expired. If a command sent to the
         device requires answering a prompt, it is possible to pass
         a dict containing I(command), I(answer) and I(prompt).
-        Common answers: 'y' or "\\r" (carriage return, must be
+        Common answers are 'y' or "\\r" (carriage return, must be
         double quotes). See examples.
     required: true
   wait_for:
