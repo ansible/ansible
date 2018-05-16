@@ -13,10 +13,10 @@
   when: (platform is not match("N35|N7K")) and ((imagetag != 'I2'))
 
 - set_fact: vnind="5000"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3K")
 
 - set_fact: vnid="default"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3K")
 
 - name: "Enable feature BGP"
   nxos_feature:
