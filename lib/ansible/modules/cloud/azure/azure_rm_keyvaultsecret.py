@@ -134,8 +134,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
         # Create KeyVault Client using KeyVault auth class and auth_callback
         def auth_callback(server, resource, scope):
-            if self.credentials['client_id'] is None or \
-                self.credentials['secret'] is None:
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
                 self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
 
             tenant = self.credentials.get('tenant')

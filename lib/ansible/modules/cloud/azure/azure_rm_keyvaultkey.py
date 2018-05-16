@@ -138,10 +138,8 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         # Create KeyVaultClient
-
         def auth_callback(server, resource, scope):
-            if self.credentials['client_id'] is None or \
-                self.credentials['secret'] is None:
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
                 self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
 
             tenant = self.credentials.get('tenant')
@@ -196,7 +194,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
                 self.results['state']['status'] = 'Deleted'
 
         return self.results
-        
+
     def get_key(self, name, version=''):
         ''' Gets an existing key '''
         key_bundle = self.client.get_key(self.keyvault_uri, name, version)
