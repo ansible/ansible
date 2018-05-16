@@ -32,6 +32,11 @@ options:
       - The command module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: yes
+  argv:
+    description:
+      - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
+        provided, not both.  One or the other must be provided.
+    version_added: "2.6"
   creates:
     description:
       - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
@@ -81,6 +86,13 @@ EXAMPLES = '''
     chdir: somedir/
     creates: /path/to/database
 
+- name: use argv to send the command as a list.  Be sure to leave command empty
+  command:
+  args:
+    argv:
+      - echo
+      - testing
+
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
   register: myoutput
@@ -129,7 +141,11 @@ def check_command(module, commandline):
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
-    command = os.path.basename(commandline.split()[0])
+    if isinstance(commandline, list):
+        command = commandline[0]
+    else:
+        command = commandline.split()[0]
+    command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
                      " warn=False to this command task or set command_warnings=False in" \
@@ -159,6 +175,7 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
+            argv=dict(type='list'),
             chdir=dict(type='path'),
             executable=dict(),
             creates=dict(type='path'),
@@ -168,11 +185,11 @@ def main():
             stdin=dict(required=False),
         )
     )
-
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
     args = module.params['_raw_params']
+    argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
     warn = module.params['warn']
@@ -182,8 +199,16 @@ def main():
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
-    if not args or args.strip() == '':
+    if (not args or args.strip() == '') and not argv:
         module.fail_json(rc=256, msg="no command given")
+
+    if args and argv:
+        module.fail_json(rc=256, msg="only command or argv can be given, not both")
+
+    if not shell and args:
+        args = shlex.split(args)
+
+    args = args or argv
 
     if chdir:
         chdir = os.path.abspath(chdir)
@@ -216,8 +241,6 @@ def main():
     if warn:
         check_command(module, args)
 
-    if not shell:
-        args = shlex.split(args)
     startd = datetime.datetime.now()
 
     rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
