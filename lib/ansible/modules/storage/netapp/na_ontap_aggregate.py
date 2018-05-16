@@ -19,7 +19,7 @@ module: na_ontap_aggregate
 short_description: Manage NetApp ONTAP aggregates.
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 
 description:
@@ -28,13 +28,11 @@ description:
 options:
 
   state:
-    required: true
     description:
     - Whether the specified aggregate should exist or not.
     choices: ['present', 'absent']
     default: 'present'
-    required: false
-  
+
   service_state:
     description:
     - Whether the specified aggregate should be enabled or disabled. Creates aggregate if doesnt exist.
@@ -58,12 +56,12 @@ options:
     - The smallest disks in this pool join the aggregate first, unless the C(disk-size) argument is provided.
     - Either C(disk-count) or C(disks) must be supplied. Range [0..2^31-1].
     - Required when C(state=present).
-  
+
   unmount_volumes:
     required: false
     description:
-    - If set to "TRUE", this option specifies that all of the volumes hosted by the given aggregate are to be unmounted 
-    - before the offline operation is executed. 
+    - If set to "TRUE", this option specifies that all of the volumes hosted by the given aggregate are to be unmounted
+    - before the offline operation is executed.
     - By default, the system will reject any attempt to offline an aggregate that hosts one or more online volumes.
     choices: ['true', 'false']
 

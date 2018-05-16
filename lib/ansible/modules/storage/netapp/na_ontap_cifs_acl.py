@@ -17,16 +17,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
-description: 
+description:
   - "Create or destroy or modify cifs-share-access-controls on ONTAP"
-extends_documentation_fragment: 
+extends_documentation_fragment:
   - netapp.na_ontap
 module: na_ontap_cifs_acl
-options: 
-  permission: 
+options:
+  permission:
     choices: ['no_access', 'read', 'change', 'full_control']
-    description: 
-      - 
+    description:
+      -
         ? "The access rights that the user or group has on the defined CIFS share. Possible values"
         : ~
         change: "Change,"
@@ -34,13 +34,13 @@ options:
         no_access: "No access,"
         read: "Read,"
     required: false
-  share_name: 
-    description: 
+  share_name:
+    description:
       - "The name of the cifs-share-access-control to manage."
     required: true
-  state: 
+  state:
     choices: ['present', 'absent']
-    description: 
+    description:
       - "Whether the specified CIFS share acl should exist or not."
     required: false
     default: present
@@ -49,12 +49,12 @@ options:
     - Name of the vserver to use.
     required: true
     default: None
-  user_or_group: 
-    description: 
+  user_or_group:
+    description:
       - "The user or group name for which the permissions are listed."
     required: true
 short_description: "Manage NetApp cifs-share-access-control"
-version_added: "1.0"
+version_added: "2.6"
 
 '''
 
@@ -139,8 +139,7 @@ class NetAppONTAPCifsAcl(object):
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) == 1:
 
-            cifs_acl = result.get_child_by_name('attributes-list').\
-                                   get_child_by_name('cifs-share-access-control')
+            cifs_acl = result.get_child_by_name('attributes-list').get_child_by_name('cifs-share-access-control')
             return_value = {
                 'share': cifs_acl.get_child_content('share'),
                 'user-or-group': cifs_acl.get_child_content('user-or-group'),

@@ -9,7 +9,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
- 
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -22,7 +22,7 @@ module: na_ontap_cifs_server
 short_description: cifs server configuration
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.4'
+version_added: '2.6'
 author: chhaya gunawat (chhayag@netapp.com)
 
 description:
@@ -70,7 +70,7 @@ options:
     description:
     - The name of the vserver to use.
     required: true
-   
+
 '''
 
 EXAMPLES = '''
@@ -94,7 +94,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    changed: True/False 
+    changed: True/False
 '''
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -216,7 +216,7 @@ class NetAppOntapcifsServer(object):
     def modify_cifs_server(self, admin_status):
         """
         RModify the cifs_server.
-        """    
+        """
         cifs_server_modify = netapp_utils.zapi.NaElement.create_node_with_children(
             'cifs-server-modify', **{'cifs-server': self.cifs_server_name,
                                      'administrative-status': admin_status, 'vserver': self.vserver})
@@ -230,7 +230,7 @@ class NetAppOntapcifsServer(object):
     def start_cifs_server(self):
         """
         RModify the cifs_server.
-        """    
+        """
         cifs_server_modify = netapp_utils.zapi.NaElement.create_node_with_children(
             'cifs-server-start')
         try:
@@ -243,7 +243,7 @@ class NetAppOntapcifsServer(object):
     def stop_cifs_server(self):
         """
         RModify the cifs_server.
-        """    
+        """
         cifs_server_modify = netapp_utils.zapi.NaElement.create_node_with_children(
             'cifs-server-stop')
         try:
@@ -257,7 +257,7 @@ class NetAppOntapcifsServer(object):
         """
         calling all cifs_server features
         """
-        
+
         changed = False
         cifs_server_exists = False
         netapp_utils.ems_log_event("na_ontap_cifs_server", self.server)
@@ -271,9 +271,9 @@ class NetAppOntapcifsServer(object):
                 if self.service_state == 'started' and administrative_status == 'down':
                     changed = True
                 if self.service_state == 'stopped' and administrative_status == 'up':
-                    changed = True  
+                    changed = True
             else:
-                # we will delete the CIFs server 
+                # we will delete the CIFs server
                 changed = True
         else:
             if self.state == 'present':

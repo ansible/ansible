@@ -1,4 +1,3 @@
-'''cifs-share module'''
 #!/usr/bin/python
 
 # (c) 2018, NetApp, Inc
@@ -21,30 +20,33 @@ DOCUMENTATION = '''
 author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
 description: 
   - "Create or destroy or modify(path) cifs-share on ONTAP"
-extends_documentation_fragment: 
+extends_documentation_fragment:
   - netapp.na_ontap
-module: na_ontap_cifs
-options: 
-  path: 
-    description: 
-      - "The file system path that is shared through this CIFS share. The path is the full, user visible path relative to the vserver root, and it might be crossing junction mount points. The path is in UTF8 and uses forward slash as directory separator"
+module: na_ontap_cif
+options:
+  path:
+    description:
+      - "The file system path that is shared through this CIFS share. The path is the full, user visible path relative "
+      - "to the vserver root, and it might be crossing junction mount points. The path is in UTF8 and uses forward "
+      - "slash as directory separator"
     required: false
   vserver:
     description:
       - "Vserver containing the CIFS share."
     required: true
-  share_name: 
-    description: 
-      - "The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)"
+  share_name:
+    description:
+      - "The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being " 
+      - "illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)"
     required: true
-  state: 
+  state:
     choices: ['present', 'absent']
-    description: 
+    description:
       - "Whether the specified CIFS share should exist or not."
     required: false
     default: present
 short_description: "Manage NetApp cifs-share"
-version_added: "1.0"
+version_added: "2.6"
 
 '''
 

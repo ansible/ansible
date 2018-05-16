@@ -18,7 +18,7 @@ short_description: Manage NetApp Ontap broadcast domain ports
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: 
+author:
 - Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 description:
 - Modify Ontap broadcast domain ports
@@ -137,8 +137,7 @@ class NetAppOntapBroadcastDomainPorts(object):
         # check if broadcast domain exists
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) == 1:
-            domain_info = result.get_child_by_name('attributes-list').\
-                                get_child_by_name('net-port-broadcast-domain-info')
+            domain_info = result.get_child_by_name('attributes-list').get_child_by_name('net-port-broadcast-domain-info')
             domain_name = domain_info.get_child_content('broadcast-domain')
             domain_ports = domain_info.get_child_content('port-info')
             domain_exists = {
