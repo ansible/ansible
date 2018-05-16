@@ -118,7 +118,7 @@ class TestJunosConfigModule(TestJunosModule):
         set_module_args(dict(src=src, confirm=40))
         self.execute_module(changed=True)
         args, kwargs = self.commit_configuration.call_args
-        self.assertEqual(kwargs['confirm_timeout'], 40)
+        self.assertEqual(kwargs['confirm_timeout'], '40')
 
     def test_junos_config_rollback(self):
         rollback = 10
