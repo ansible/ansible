@@ -63,7 +63,7 @@ options:
     description:
       - The device's new hostname
     required: false
-        
+
   install_config:
     description:
       - Tells FMGR to attempt to install the config after making it.
@@ -102,7 +102,7 @@ EXAMPLES = '''
     interface: "port3"
     interface_ip: "10.1.1.1/24"
     interface_allow_access: "ping, telnet, https"
-    
+
 - name: INSTALL CONFIG
   fmgr_device_config:
     host: "{{inventory_hostname}}"
@@ -163,6 +163,7 @@ def update_device_interface(fmg, device_name, interface, ip, allow_access_list, 
           "/{interface}".format(device_name=device_name, interface=interface)
     response = fmg.update(url, datagram)
     return response
+
 
 def exec_config(fmg, device_unique_name, adom):
     """
