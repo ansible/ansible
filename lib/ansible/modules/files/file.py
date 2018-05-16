@@ -159,9 +159,6 @@ def _ansible_excepthook(exc_type, exc_value, tb):
 
 def additional_parameter_handling(params):
     """Additional parameter validation and reformatting"""
-
-    params['b_src'] = to_bytes(params['src'], errors='surrogate_or_strict', nonstring='passthru')
-
     # state should default to file, but since that creates many conflicts,
     # default state to 'current' when it exists.
     prev_state = get_state(to_bytes(params['path'], errors='surrogate_or_strict'))
@@ -178,6 +175,30 @@ def additional_parameter_handling(params):
     if params['recurse'] and params['state'] != 'directory':
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
+
+    # Make sure that src makes sense with the state
+    if params['src'] and params['state'] not in ('link', 'hard'):
+        params['src'] = None
+        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
+                    " error in Ansible 2.10")
+
+        # In 2.10, switch to this
+        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
+        #                               "path": params["path"]})
+
+    # When path is a directory, rewrite the pathname to be the file inside of the directory
+    # TODO: Why do we exclude link?  Why don't we exclude directory?  Should we exclude touch?
+    if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
+        basename = None
+
+        # original_basename is used by other modules that depend on file
+        if params['original_basename']:
+            basename = params['original_basename']
+        elif params['src'] is not None:
+            basename = os.path.basename(params['src'])
+
+        if basename:
+            params['path'] = params['path'] = os.path.join(params['path'], basename)
 
 
 def get_state(path):
@@ -426,8 +447,9 @@ def ensure_directory(path, follow, recurse):
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_symlink(path, src, b_src, follow, force):
+def ensure_symlink(path, src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
 
@@ -437,7 +459,7 @@ def ensure_symlink(path, src, b_src, follow, force):
         if follow:
             # use the current target of the link as the source
             src = to_native(os.path.realpath(b_path), errors='strict')
-            b_src = to_bytes(os.path.realpath(b_path), errors='strict')
+            b_src = to_bytes(src, errors='surrogate_or_strict')
 
     if not os.path.islink(b_path) and os.path.isdir(b_path):
         relpath = path
@@ -537,8 +559,9 @@ def ensure_symlink(path, src, b_src, follow, force):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
-def ensure_hardlink(path, src, b_src, follow, force):
+def ensure_hardlink(path, src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
 
@@ -665,31 +688,20 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
-    b_src = params['b_src']
 
     # short-circuit for diff_peek
     if params['_diff_peek'] is not None:
         appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    # original_basename is used by other modules that depend on file.
-    if state not in ("link", "absent") and os.path.isdir(to_bytes(path, errors='surrogate_or_strict')):
-        basename = None
-        if params['original_basename']:
-            basename = params['original_basename']
-        elif b_src is not None:
-            basename = os.path.basename(b_src)
-        if basename:
-            params['path'] = path = os.path.join(path, basename)
-
     if state == 'file':
         result = ensure_file_attributes(path, follow)
     elif state == 'directory':
         result = ensure_directory(path, follow, recurse)
     elif state == 'link':
-        result = ensure_symlink(path, src, b_src, follow, force)
+        result = ensure_symlink(path, src, follow, force)
     elif state == 'hard':
-        result = ensure_hardlink(path, src, b_src, follow, force)
+        result = ensure_hardlink(path, src, follow, force)
     elif state == 'touch':
         result = execute_touch(path, follow)
     elif state == 'absent':
