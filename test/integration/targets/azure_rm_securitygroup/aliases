@@ -3,3 +3,4 @@ posix/ci/cloud/group2/azure
 unstable
 destructive
 azure_rm_securitygroup_facts
+posix/ci/cloud/group2/azure
