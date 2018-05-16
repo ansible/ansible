@@ -31,7 +31,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_bgp
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Manage BGP resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with Border Gateway Protocol (BGP) related configurations.
@@ -117,8 +117,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - neighbor
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -133,8 +133,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - BFD
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -147,8 +147,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - address-family - dampening
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -165,8 +165,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - address-family - network
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -180,8 +180,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - bestpath - always-compare-med
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -192,8 +192,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - bestpath-compare-confed-aspat
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -204,8 +204,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - bgp
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -216,8 +216,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - cluster-id
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -228,8 +228,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - confederation-identifier
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -241,8 +241,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - enforce-first-as
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -252,8 +252,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - fast-external-failover
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -263,8 +263,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - graceful-restart
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -275,8 +275,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - graceful-restart-helper
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -286,8 +286,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - maxas-limit
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -298,8 +298,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP  - neighbor
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -314,8 +314,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - router-id
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -326,8 +326,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - synchronization
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -337,8 +337,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - timers
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -350,8 +350,8 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 - name: Test BGP - vrf
   cnos_bgp:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_bgp_{{ inventory_hostname }}_output.txt"
@@ -449,7 +449,7 @@ def main():
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
     # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
 
     # Send the CLi command
     output = output + cnos.routerConfig(remote_conn, deviceType, "(config)#", 2, "bgp", asNum,
