@@ -24,7 +24,7 @@ description:
 - Please specify C(hostname) as vCenter IP or hostname only, as lockdown operations are not possible from standalone ESXi server.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
