@@ -237,19 +237,26 @@ import errno
 import tempfile
 import traceback
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
+
+
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
 
 
 def split_pre_existing_dir(dirname):
     '''
     Return the first pre-existing directory and a list of the new directories that will be created.
     '''
-
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
+    if head == '':
+        return ('.', [tail])
     if not os.path.exists(b_head):
+        if head == '/':
+            raise AnsibleModuleError(results={'msg': "The '/' directory doesn't exist on this machine."})
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return (head, [tail])
@@ -342,8 +349,13 @@ def main():
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
         dirname = os.path.dirname(dest)
         b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
-        if not os.path.exists(b_dirname) and os.path.isabs(b_dirname):
-            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
+        if not os.path.exists(b_dirname):
+            try:
+                (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
+            except AnsibleModuleError as e:
+                e.result['msg'] += ' Could not copy to {0}'.format(dest)
+                module.fail_json(**e.results)
+
             os.makedirs(b_dirname)
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
@@ -437,6 +449,7 @@ def main():
         res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
+
 
 if __name__ == '__main__':
     main()
