@@ -2,6 +2,8 @@
 # Copyright (C) 2017 Lenovo.
 #
 # GNU General Public License v3.0+
+# Copyright (C) 2017 Lenovo.
+# All rights reserved.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
