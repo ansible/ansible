@@ -38,7 +38,7 @@ options:
         - ['get_status']
 
 author:
-    - Abhijeet Kasurde (@akasurde)
+    - Abhijeet Kasurde (@Akasurde)
 requirements:
     - "github3.py >= 1.0.0a4"
 '''

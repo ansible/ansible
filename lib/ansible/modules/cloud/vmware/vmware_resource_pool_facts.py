@@ -20,7 +20,7 @@ description:
 - This module can be used to gather facts about all resource configuration information.
 version_added: '2.6'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
