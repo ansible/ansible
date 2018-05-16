@@ -36,6 +36,7 @@ options:
     description:
       - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
         provided, not both.  One or the other must be provided.
+    version_added: "2.6"
   creates:
     description:
       - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
@@ -140,7 +141,7 @@ def check_command(module, commandline):
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
-    if type(commandline) == list:
+    if isinstance(commandline, list):
         command = commandline[0]
     else:
         command = commandline.split()[0]
@@ -194,9 +195,6 @@ def main():
     warn = module.params['warn']
     stdin = module.params['stdin']
 
-    import q
-    q.q("argv %s " % argv)
-
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
@@ -206,7 +204,6 @@ def main():
 
     if args and argv:
         module.fail_json(rc=256, msg="only command or argv can be given, not both")
-
 
     if chdir:
         chdir = os.path.abspath(chdir)
