@@ -73,14 +73,12 @@ options:
             source_port_range:
                 description:
                   - Port or range of ports from which traffic originates.
-                aliases:
-                  - source_port_ranges
+                  - It can accept string type or a list of string type.
                 default: "*"
             destination_port_range:
                 description:
                   - Port or range of ports to which traffic is headed.
-                aliases:
-                  - destination_port_ranges
+                  - It can accept string type or a list of string type.
                 default: "*"
             source_address_prefix:
                 description:
@@ -88,18 +86,16 @@ options:
                   - Asterix C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - If this is an ingress rule, specifies where network traffic originates from.
+                  - It can accept string type or a list of string type.
                 default: "*"
-                aliases:
-                  - source_address_prefixes
             destination_address_prefix:
                 description:
                   - The destination address prefix.
                   - CIDR or destination IP range.
                   - Asterix C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                  - It can accept string type or a list of string type.
                 default: "*"
-                aliases:
-                  - destination_address_prefixes
             access:
                 description:
                   - Whether or not to allow the traffic flow.
@@ -153,7 +149,9 @@ EXAMPLES = '''
             direction: Inbound
           - name: 'AllowSSH'
             protocol: TCP
-            source_address_prefix: '174.109.158.0/24'
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
             destination_port_range: 22
             access: Allow
             priority: 101
@@ -505,10 +503,10 @@ rule_spec = dict(
     name=dict(type='str', required=True),
     description=dict(type='str'),
     protocol=dict(type='str', choices=['Udp', 'Tcp', '*'], default='*'),
-    source_port_range=dict(type='raw', default='*', aliases=['source_port_ranges']),
-    destination_port_range=dict(type='raw', default='*', aliases=['destination_port_ranges']),
-    source_address_prefix=dict(type='raw', default='*', aliases=['source_address_prefixes']),
-    destination_address_prefix=dict(type='raw', default='*', aliases=['destination_address_prefixes']),
+    source_port_range=dict(type='raw', default='*'),
+    destination_port_range=dict(type='raw', default='*'),
+    source_address_prefix=dict(type='raw', default='*'),
+    destination_address_prefix=dict(type='raw', default='*'),
     access=dict(type='str', choices=['Allow', 'Deny'], default='Allow'),
     priority=dict(type='int', required=True),
     direction=dict(type='str', choices=['Inbound', 'Outbound'], default='Inbound')

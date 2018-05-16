@@ -140,7 +140,7 @@
       rules:
           - name: AllowSSH
             protocol: Tcp
-            source_address_prefixes:
+            source_address_prefix:
             - 52.100.120.240
             - 53.100.250.190
             - 54.110.200.200
