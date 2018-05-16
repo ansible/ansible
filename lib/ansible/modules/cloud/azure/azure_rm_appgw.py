@@ -606,8 +606,8 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     not compare_arrays(self.parameters, old_response, 'frontend_ports') or
                     #not compare_arrays(self.parameters, old_response, 'backend_address_pools') or
                     #not compare_arrays(self.parameters, old_response, 'backend_http_settings_collections') or
-                    not compare_arrays(self.parameters, old_response, 'http_listeners'):
                     #not compare_arrays(self.parameters, old_response, 'request_routing_rules')):
+                    not compare_arrays(self.parameters, old_response, 'http_listeners'):
 
                 self.to_do = Actions.Update
             else:
