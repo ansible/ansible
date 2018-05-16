@@ -57,7 +57,7 @@
 - assert: 
       that:
           - "{{ output.state.rules | length }} == 3"
-          - output.state.rules[1].source_address_prefix == '174.108.158.0/24'
+          - output.state.rules[0].source_address_prefix == '174.108.158.0/24'
 
 - name: Test idempotence
   azure_rm_securitygroup:
@@ -127,6 +127,59 @@
 - assert:
       that:
           - azure_securitygroups | length > 0
+
+- name: Create security group with source_address_prefixes
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: mysecgroup
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      purge_rules: yes
+      rules:
+          - name: AllowSSH
+            protocol: Tcp
+            source_address_prefix:
+            - 52.100.120.240
+            - 53.100.250.190
+            - 54.110.200.200
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+  register: output
+
+- assert:
+    that:
+    - "{{ output.state.rules | length }} == 1"
+    - "{{ output.state.rules[0].source_address_prefixes | length }} == 3"
+    - not output.state.rules[0].source_address_prefix
+
+- name: Create security group with source_address_prefixes(idempontent)
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: mysecgroup
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      purge_rules: yes
+      rules:
+          - name: AllowSSH
+            protocol: Tcp
+            source_address_prefix:
+            - 52.100.120.240
+            - 53.100.250.190
+            - 54.110.200.200
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+  register: output
+
+- assert:
+      that: not output.changed
 
 - name: Delete all security groups
   azure_rm_securitygroup:

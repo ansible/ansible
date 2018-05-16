@@ -73,10 +73,12 @@ options:
             source_port_range:
                 description:
                   - Port or range of ports from which traffic originates.
+                  - It can accept string type or a list of string type.
                 default: "*"
             destination_port_range:
                 description:
                   - Port or range of ports to which traffic is headed.
+                  - It can accept string type or a list of string type.
                 default: "*"
             source_address_prefix:
                 description:
@@ -84,6 +86,7 @@ options:
                   - Asterix C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - If this is an ingress rule, specifies where network traffic originates from.
+                  - It can accept string type or a list of string type.
                 default: "*"
             destination_address_prefix:
                 description:
@@ -91,6 +94,7 @@ options:
                   - CIDR or destination IP range.
                   - Asterix C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                  - It can accept string type or a list of string type.
                 default: "*"
             access:
                 description:
@@ -145,7 +149,9 @@ EXAMPLES = '''
             direction: Inbound
           - name: 'AllowSSH'
             protocol: TCP
-            source_address_prefix: '174.109.158.0/24'
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
             destination_port_range: 22
             access: Allow
             priority: 101
@@ -343,86 +349,68 @@ def validate_rule(self, rule, rule_type=None):
     :param rule_type: Set to 'default' if the rule is part of the default set of rules.
     :return: None
     '''
-
-    if not rule.get('name'):
-        raise Exception("Rule name value is required.")
-
-    priority = rule.get('priority', None)
-    if not priority:
-        raise Exception("Rule priority is required.")
-    if not isinstance(priority, integer_types):
-        try:
-            priority = int(priority)
-            rule['priority'] = priority
-        except:
-            raise Exception("Rule priority attribute must be an integer.")
+    priority = rule.get('priority', 0)
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
 
-    if not rule.get('access'):
-        rule['access'] = 'Allow'
+    def check_plural(src, dest):
+        if isinstance(rule.get(src), list):
+            rule[dest] = rule[src]
+            rule[src] = None
 
-    access_names = [member.value for member in self.nsg_models.SecurityRuleAccess]
-    if rule['access'] not in access_names:
-        raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
-
-    if not rule.get('destination_address_prefix'):
-        rule['destination_address_prefix'] = '*'
-
-    if not rule.get('source_address_prefix'):
-        rule['source_address_prefix'] = '*'
-
-    if not rule.get('protocol'):
-        rule['protocol'] = '*'
-
-    protocol_names = [member.value for member in self.nsg_models.SecurityRuleProtocol]
-    if rule['protocol'] not in protocol_names:
-        raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
-
-    if not rule.get('direction'):
-        rule['direction'] = 'Inbound'
-
-    direction_names = [member.value for member in self.nsg_models.SecurityRuleDirection]
-    if rule['direction'] not in direction_names:
-        raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
-
-    if not rule.get('source_port_range'):
-        rule['source_port_range'] = '*'
-
-    if not rule.get('destination_port_range'):
-        rule['destination_port_range'] = '*'
+    check_plural('destination_address_prefix', 'destination_address_prefixes')
+    check_plural('source_address_prefix', 'source_address_prefixes')
+    check_plural('source_port_range', 'source_port_ranges')
+    check_plural('destination_port_range', 'destination_port_ranges')
 
 
-def compare_rules(r, rule):
-    matched = False
+def compare_rules_change(old_list, new_list, purge_list):
+    old_list = old_list or []
+    new_list = new_list or []
     changed = False
-    if r['name'] == rule['name']:
-        matched = True
-        if rule.get('description', None) != r['description']:
+
+    for old_rule in old_list:
+        matched = next((x for x in new_list if x['name'] == old_rule['name']), [])
+        if matched:  # if the new one is in the old list, check whether it is updated
+            changed = changed or compare_rules(old_rule, matched)
+        elif not purge_list:  # keep this rule
+            new_list.append(old_rule)
+        else:  # one rule is removed
             changed = True
-            r['description'] = rule.get('description', None)
-        if rule['protocol'] != r['protocol']:
-            changed = True
-            r['protocol'] = rule['protocol']
-        if str(rule['source_port_range']) != str(r['source_port_range']):
-            changed = True
-            r['source_port_range'] = str(rule['source_port_range'])
-        if str(rule['destination_port_range']) != str(r['destination_port_range']):
-            changed = True
-            r['destination_port_range'] = str(rule['destination_port_range'])
-        if rule['access'] != r['access']:
-            changed = True
-            r['access'] = rule['access']
-        if rule['priority'] != r['priority']:
-            changed = True
-            r['priority'] = rule['priority']
-        if rule['direction'] != r['direction']:
-            changed = True
-            r['direction'] = rule['direction']
-        if rule['source_address_prefix'] != str(r['source_address_prefix']):
-            changed = True
-            r['source_address_prefix'] = rule['source_address_prefix']
-    return matched, changed
+    return changed, new_list
+
+
+def compare_rules(old_rule, rule):
+    changed = False
+    if old_rule['name'] != rule['name']:
+        changed = True
+    if rule.get('description', None) != old_rule['description']:
+        changed = True
+    if rule['protocol'] != old_rule['protocol']:
+        changed = True
+    if str(rule['source_port_range']) != str(old_rule['source_port_range']):
+        changed = True
+    if str(rule['destination_port_range']) != str(old_rule['destination_port_range']):
+        changed = True
+    if rule['access'] != old_rule['access']:
+        changed = True
+    if rule['priority'] != old_rule['priority']:
+        changed = True
+    if rule['direction'] != old_rule['direction']:
+        changed = True
+    if str(rule['source_address_prefix']) != str(old_rule['source_address_prefix']):
+        changed = True
+    if str(rule['destination_address_prefix']) != str(old_rule['destination_address_prefix']):
+        changed = True
+    if set(rule.get('source_address_prefixes') or []) != set(old_rule.get('source_address_prefixes') or []):
+        changed = True
+    if set(rule.get('destination_address_prefixes') or []) != set(old_rule.get('destination_address_prefixes') or []):
+        changed = True
+    if set(rule.get('source_port_ranges') or []) != set(old_rule.get('source_port_ranges') or []):
+        changed = True
+    if set(rule.get('destination_port_ranges') or []) != set(old_rule.get('destination_port_ranges') or []):
+        changed = True
+    return changed
 
 
 def create_rule_instance(self, rule):
@@ -433,16 +421,19 @@ def create_rule_instance(self, rule):
     :return: SecurityRule
     '''
     return self.nsg_models.SecurityRule(
-        protocol=rule['protocol'],
-        source_address_prefix=rule['source_address_prefix'],
-        destination_address_prefix=rule['destination_address_prefix'],
-        access=rule['access'],
-        direction=rule['direction'],
-        id=rule.get('id', None),
         description=rule.get('description', None),
+        protocol=rule.get('protocol', None),
         source_port_range=rule.get('source_port_range', None),
         destination_port_range=rule.get('destination_port_range', None),
+        source_address_prefix=rule.get('source_address_prefix', None),
+        source_address_prefixes=rule.get('source_address_prefixes', None),
+        destination_address_prefix=rule.get('destination_address_prefix', None),
+        destination_address_prefixes=rule.get('destination_address_prefixes', None),
+        source_port_ranges=rule.get('source_port_ranges', None),
+        destination_port_ranges=rule.get('destination_port_ranges', None),
+        access=rule.get('access', None),
         priority=rule.get('priority', None),
+        direction=rule.get('direction', None),
         provisioning_state=rule.get('provisioning_state', None),
         name=rule.get('name', None),
         etag=rule.get('etag', None)
@@ -465,6 +456,10 @@ def create_rule_dict_from_obj(rule):
         destination_port_range=rule.destination_port_range,
         source_address_prefix=rule.source_address_prefix,
         destination_address_prefix=rule.destination_address_prefix,
+        source_port_ranges=rule.source_port_ranges,
+        destination_port_ranges=rule.destination_port_ranges,
+        source_address_prefixes=rule.source_address_prefixes,
+        destination_address_prefixes=rule.destination_address_prefixes,
         access=rule.access,
         priority=rule.priority,
         direction=rule.direction,
@@ -504,18 +499,32 @@ def create_network_security_group_dict(nsg):
     return results
 
 
+rule_spec = dict(
+    name=dict(type='str', required=True),
+    description=dict(type='str'),
+    protocol=dict(type='str', choices=['Udp', 'Tcp', '*'], default='*'),
+    source_port_range=dict(type='raw', default='*'),
+    destination_port_range=dict(type='raw', default='*'),
+    source_address_prefix=dict(type='raw', default='*'),
+    destination_address_prefix=dict(type='raw', default='*'),
+    access=dict(type='str', choices=['Allow', 'Deny'], default='Allow'),
+    priority=dict(type='int', required=True),
+    direction=dict(type='str', choices=['Inbound', 'Outbound'], default='Inbound')
+)
+
+
 class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            default_rules=dict(type='list'),
+            default_rules=dict(type='list', elements='dict', options=rule_spec),
             location=dict(type='str'),
             name=dict(type='str', required=True),
             purge_default_rules=dict(type='bool', default=False),
             purge_rules=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str'),
-            rules=dict(type='list'),
+            rules=dict(type='list', elements='dict', options=rule_spec),
             state=dict(type='str', default='present', choices=['present', 'absent']),
         )
 
@@ -591,52 +600,18 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             # update the security group
             self.log("Update security group {0}".format(self.name))
 
-            if self.rules:
-                for rule in self.rules:
-                    rule_matched = False
-                    for r in results['rules']:
-                        match, changed = compare_rules(r, rule)
-                        if changed:
-                            changed = True
-                        if match:
-                            rule_matched = True
-
-                    if not rule_matched:
-                        changed = True
-                        results['rules'].append(rule)
-
-            if self.purge_rules:
-                new_rules = []
-                for rule in results['rules']:
-                    for r in self.rules:
-                        if rule['name'] == r['name']:
-                            new_rules.append(rule)
-                results['rules'] = new_rules
-
-            if self.default_rules:
-                for rule in self.default_rules:
-                    rule_matched = False
-                    for r in results['default_rules']:
-                        match, changed = compare_rules(r, rule)
-                        if changed:
-                            changed = True
-                        if match:
-                            rule_matched = True
-                    if not rule_matched:
-                        changed = True
-                        results['default_rules'].append(rule)
-
-            if self.purge_default_rules:
-                new_default_rules = []
-                for rule in results['default_rules']:
-                    for r in self.default_rules:
-                        if rule['name'] == r['name']:
-                            new_default_rules.append(rule)
-                results['default_rules'] = new_default_rules
-
             update_tags, results['tags'] = self.update_tags(results['tags'])
             if update_tags:
                 changed = True
+
+            rule_changed, new_rule = compare_rules_change(results['rules'], self.rules, self.purge_rules)
+            if rule_changed:
+                changed = True
+                results['rules'] = new_rule
+            rule_changed, new_rule = compare_rules_change(results['default_rules'], self.default_rules, self.purge_default_rules)
+            if rule_changed:
+                changed = True
+                results['default_rules'] = new_rule
 
             self.results['changed'] = changed
             self.results['state'] = results
