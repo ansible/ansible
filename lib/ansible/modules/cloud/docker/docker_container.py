@@ -1269,50 +1269,72 @@ class Container(DockerBaseClass):
             working_dir=host_config.get('WorkingDir')
         )
 
+        def deep_empty(v):
+            """Given a value that may or may not be a dict or iterable, check if its contents are truthy"""
+            if not v and v != False:
+                return True
+            if isinstance(v, list):
+                for i in v:
+                    if deep_empty(i):
+                        return True
+            if isinstance(v, dict):
+                if not v:
+                    return True
+                for _, i in v.items():
+                    if deep_empty(i):
+                        return True
+            return False
+
+        # these are parameters that are frequently unset and who's defauts are false-y. Unsetting these potentially indicates
+        # a change
+        interesting_unset_params = ('expected_volumes', 'expected_ports', 'log_options', 'dns_servers',
+                                    'dns_search_domains', 'security_opts', 'user', 'groups', 'expected_devices',
+                                    'expected_etc_hosts', 'expected_links', )
         differences = []
-        for key, value in config_mapping.items():
-            self.log('check differences %s %s vs %s' % (key, getattr(self.parameters, key), str(value)))
+        for key, current_value in config_mapping.items():
+            desired_value = getattr(self.parameters, key)
+            self.log('check differences %s %s vs %s' % (key, desired_value, str(current_value)))
+            match = True
             if getattr(self.parameters, key, None) is not None:
-                if isinstance(getattr(self.parameters, key), list) and isinstance(value, list):
-                    if len(getattr(self.parameters, key)) > 0 and isinstance(getattr(self.parameters, key)[0], dict):
+                if isinstance(desired_value, list) and isinstance(current_value, list):
+                    if len(desired_value) > 0 and isinstance(desired_value[0], dict):
                         # compare list of dictionaries
                         self.log("comparing list of dict: %s" % key)
-                        match = self._compare_dictionary_lists(getattr(self.parameters, key), value)
+                        match = self._compare_dictionary_lists(desired_value, current_value)
                     else:
                         # compare two lists. Is list_a in list_b?
                         self.log("comparing lists: %s" % key)
-                        set_a = set(getattr(self.parameters, key))
-                        set_b = set(value)
+                        set_a = set(desired_value)
+                        set_b = set(current_value)
                         match = (set_b >= set_a)
-                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
-                        and value is None:
-                    # an empty list and None are ==
+                elif deep_empty(desired_value) and deep_empty(current_value):
                     continue
-                elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
+                elif isinstance(desired_value, dict) and isinstance(current_value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
-                    match = self._compare_dicts(getattr(self.parameters, key), value)
-
-                elif isinstance(getattr(self.parameters, key), dict) and \
-                        not len(list(getattr(self.parameters, key).keys())) and value is None:
-                    # an empty dict and None are ==
-                    continue
+                    match = self._compare_dicts(desired_value, current_value)
                 else:
                     # primitive compare
                     self.log("primitive compare: %s" % key)
-                    match = (getattr(self.parameters, key) == value)
+                    match = (desired_value == current_value)
 
-                if not match:
-                    # no match. record the differences
-                    item = dict()
-                    item[key] = dict(
-                        parameter=getattr(self.parameters, key),
-                        container=value
-                    )
-                    differences.append(item)
+            elif key in interesting_unset_params and current_value:
+                self.log('%s is None in parameters, and %s in running container' % (key, str(current_value)))
+                match = False
+
+            if not match:
+                # no match. record the differences
+                item = dict()
+                item[key] = dict(
+                    parameter=getattr(self.parameters, key),
+                    container=current_value
+                )
+                differences.append(item)
+
 
         has_differences = True if len(differences) > 0 else False
         return has_differences, differences
+
 
     def _compare_dictionary_lists(self, list_a, list_b):
         '''
