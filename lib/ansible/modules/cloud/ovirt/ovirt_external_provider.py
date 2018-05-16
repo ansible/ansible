@@ -95,10 +95,6 @@ options:
             - "Applicable for I(os_volume)."
         default: []
         version_added: "2.6"
-    authentication_key_value:
-        description:
-            - "Authentication key UUID openstack volume provider."
-            - "Applicable for I(os_volume)."
 extends_documentation_fragment: ovirt
 '''
 
