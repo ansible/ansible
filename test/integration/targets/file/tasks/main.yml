@@ -134,7 +134,9 @@
       - "file6_result.changed == true"
 
 - name: touch a hard link
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=touch
+  file:
+    dest: '{{ output_dir }}/hard.txt'
+    state: 'touch'
   register: file6_touch_result
 
 - name: verify that the hard link was touched
