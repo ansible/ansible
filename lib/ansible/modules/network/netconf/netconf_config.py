@@ -60,10 +60,9 @@ options:
     version_added: "2.4"
   key_filename:
     description:
-     - if true, sets the path to ssh key to be used to connect to host
-     - if false, use default usual ssh keys (e.g. ~/.ssh/id_*)
-    default: false
+     - Specifies the path to ssh key to be used to connect to host
     required: false
+    version_added: "2.6"
   datastore:
     description:
      - auto, uses candidate and fallback to running
