@@ -28,7 +28,7 @@ description:
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates.
   - Access to the full range of K8s APIs.
-  - Authenticate using either a config file, certificates, password or token.
+  - Authenticate using either a config file, certificates or token.
   - Supports check mode.
 
 extends_documentation_fragment:

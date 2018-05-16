@@ -142,7 +142,7 @@ class KubernetesAnsibleModule(AnsibleModule):
     def authenticate(self):
         try:
             auth_options = {}
-            auth_args = ('host', 'api_key', 'kubeconfig', 'context', 'username', 'password',
+            auth_args = ('host', 'api_key', 'kubeconfig', 'context',
                          'cert_file', 'key_file', 'ssl_ca_cert', 'verify_ssl')
             for key, value in iteritems(self.params):
                 if key in auth_args and value is not None:
