@@ -434,7 +434,7 @@ class F5BaseClient(object):
         elif os.environ.get('ANSIBLE_NET_USERNAME', None):
             result['user'] = os.environ.get('ANSIBLE_NET_USERNAME', None)
         else:
-            result['user'] = True
+            result['user'] = None
 
         if provider.get('password', None):
             result['password'] = provider.get('password', None)
@@ -445,7 +445,7 @@ class F5BaseClient(object):
         elif os.environ.get('ANSIBLE_NET_PASSWORD', None):
             result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD', None)
         else:
-            result['password'] = True
+            result['password'] = None
 
         if result['validate_certs'] in BOOLEANS_TRUE:
             result['validate_certs'] = True
