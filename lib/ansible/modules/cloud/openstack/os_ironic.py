@@ -96,13 +96,13 @@ options:
         capabilities:
           description:
             - special capabilities for the node, such as boot_option, node_role etc
-              (see U(https://docs.openstack.org/ironic/pike/install/advanced.html)
+              (see U(https://docs.openstack.org/ironic/latest/install/advanced.html)
               for more information)
           default: ""
         root_device:
           description:
             - Root disk device hints for deployment.
-              (see U(https://docs.openstack.org/ironic/pike/install/include/root-device-hints.html)
+              (see U(https://docs.openstack.org/ironic/latest/install/include/root-device-hints.html)
               for allowed hints)
           default: ""
     skip_update_of_driver_password:
@@ -134,7 +134,7 @@ EXAMPLES = '''
       disk_size: 64
       capabilities: "boot_option:local"
       root_device:
-        name: "/dev/md0"
+        wwn: "0x4000cca77fc4dba1"
     nics:
       - mac: "aa:bb:cc:aa:bb:cc"
       - mac: "dd:ee:ff:dd:ee:ff"
