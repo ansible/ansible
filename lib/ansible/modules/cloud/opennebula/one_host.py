@@ -167,7 +167,7 @@ class HostModule(OpenNebulaModule):
 
     def run(self, one, module, result):
 
-        # Get the list of hots
+        # Get the list of hosts
         host_name = self.get_parameter("name")
         host = self.get_host_by_name(host_name)
 
