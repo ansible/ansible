@@ -8,6 +8,9 @@ DOCUMENTATION = '''
     name: gcp_compute
     plugin_type: inventory
     short_description: Google Cloud Compute Engine inventory source
+    requirements:
+        - requests >= 2.18.4
+        - google-auth >= 1.3.0
     extends_documentation_fragment:
         - gcp
         - constructed
@@ -69,16 +72,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self.group_prefix = 'gcp_'
 
-    def _populate(self, resp):
+    def _populate_host(self, item):
         '''
-            :param resp: A JSON response
+            :param item: A GCP instance
         '''
-        for item in resp:
-            hostname = item['name']
-            self.inventory.add_host(hostname)
-            for key in item:
-                self.inventory.set_variable(hostname, key, item[key])
-            self.inventory.add_child('all', hostname)
+        hostname = self._get_hostname(item)
+        self.inventory.add_host(hostname)
+        for key in item:
+            self.inventory.set_variable(hostname, key, item[key])
+        self.inventory.add_child('all', hostname)
 
     def _validate_file(self, path):
         '''
@@ -108,6 +110,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         auth = GcpSession(module, 'compute')
         response = auth.get(link, params={'filter': query})
         return self._return_if_object(module, response)
+
+    def _get_zones(self, config_data):
+        '''
+            :param config_data: dict of info from inventory file
+            :return an array of zones that this project has access to
+        '''
+        link = "https://www.googleapis.com/compute/v1/projects/{project}/zones".format(**config_data)
+        zones = []
+        zones_response = self.fetch_list(config_data, link, '')
+        for item in zones_response['items']:
+            zones.append(item['name'])
+        return zones
 
     def _get_query_options(self, filters):
         '''
@@ -154,7 +168,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if navigate_hash(result, ['error', 'errors']):
             module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-        if result['kind'] != 'compute#instanceList':
+        if result['kind'] != 'compute#instanceList' and result['kind'] != 'compute#zoneList':
             module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
         return result
@@ -163,12 +177,73 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param items: A list of hosts
             :param config_data: configuration data
-            :param hostnames: a list of hostnames
         '''
         if not items:
             return
 
-        self._populate(items)
+        for host in items:
+            if 'zone' in host:
+                host['zone_selflink'] = host['zone']
+                host['zone'] = host['zone'].split('/')[-1]
+            if 'machineType' in host:
+                host['machineType_selflink'] = host['machineType']
+                host['machineType'] = host['machineType'].split('/')[-1]
+
+            if 'networkInterfaces' in host:
+                for network in host['networkInterfaces']:
+                    if 'network' in network:
+                        network['network'] = self._format_network_info(network['network'])
+                    if 'subnetwork' in network:
+                        network['subnetwork'] = self._format_network_info(network['subnetwork'])
+
+            host['project'] = host['selfLink'].split('/')[6]
+            self._populate_host(host)
+
+            hostname = self._get_hostname(host)
+            if self._options.get('compose'):
+                self._set_composite_vars(self.get_option('compose'), host, hostname)
+            if self._options.get('groups'):
+                self._add_host_to_composed_groups(self.get_option('groups'), host, hostname)
+            if self._options.get('keyed_groups'):
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname)
+
+    def _format_network_info(self, address):
+        '''
+            :param address: A GCP network address
+            :return a dict with network shortname and region
+        '''
+        split = address.split('/')
+        region = ''
+        if 'global' in split:
+            region = 'global'
+        else:
+            region = split[8]
+        return {
+            'region': region,
+            'name': split[-1],
+            'selfLink': address
+        }
+
+    def _get_hostname(self, item):
+        '''
+            :param item: A host response from GCP
+            :return the hostname of this instance
+        '''
+        # Get public IP if exists
+        for interface in item['networkInterfaces']:
+            if 'accessConfigs' in interface:
+                for accessConfig in interface['accessConfigs']:
+                    if 'natIP' in accessConfig:
+                        return accessConfig['natIP']
+
+        # Fallback: Get private IP
+        for interface in item['networkInterfaces']:
+            if 'networkIP' in interface:
+                return interface['networkIP']
+
+        # Fallback: host name.
+        # This is for completion and should not be necessary.
+        return item['name']
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
@@ -178,11 +253,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             config_data = self._read_config_data(path)
 
         # get user specifications
-        if 'zones' not in config_data:
-            raise AnsibleParserError("Zones must be included in inventory YAML file")
-
-        if not isinstance(config_data['zones'], list):
-            raise AnsibleParserError("Zones must be a list in GCP inventory YAML files")
+        if 'zones' in config_data:
+            if not isinstance(config_data['zones'], list):
+                raise AnsibleParserError("Zones must be a list in GCP inventory YAML files")
 
         # get user specifications
         if 'projects' not in config_data:
@@ -191,8 +264,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not isinstance(config_data['projects'], list):
             raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
 
-        zones = config_data['zones']
         projects = config_data['projects']
+        zones = config_data.get('zones')
         config_data['scopes'] = ['https://www.googleapis.com/auth/compute']
 
         query = self._get_query_options(config_data['filters'])
@@ -213,9 +286,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not cache or cache_needs_update:
             for project in projects:
+                config_data['project'] = project
+                if not zones:
+                    zones = self._get_zones(config_data)
                 for zone in zones:
                     config_data['zone'] = zone
-                    config_data['project'] = project
                     link = self.self_link(config_data)
                     resp = self.fetch_list(config_data, link, query)
                     self._add_hosts(resp.get('items'), config_data)
