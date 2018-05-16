@@ -18,6 +18,7 @@
       that:
         - create_result.changed
         - create_result.region == "{{ aws_region }}"
+  always:
   - name: Test deleting SQS queue
     sqs_queue:
       name: "{{ create_result.name }}"
