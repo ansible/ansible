@@ -55,8 +55,6 @@ Connection work
 Modules
 =======
 
-* New ``network_config`` - platform agnostic module for sending text based config over network_cli
-* New ``network_command`` - platform agnostic command module
 * New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
 * New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
 
