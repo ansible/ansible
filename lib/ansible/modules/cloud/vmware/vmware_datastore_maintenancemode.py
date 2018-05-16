@@ -22,7 +22,7 @@ short_description: Place a datastore into maintenance mode
 description:
     - This module can be used to manage maintenance mode of a datastore.
 author:
-- "Abhijeet Kasurde (@akasurde)"
+- "Abhijeet Kasurde (@Akasurde)"
 version_added: 2.6
 notes:
     - Tested on vSphere 5.5, 6.0 and 6.5

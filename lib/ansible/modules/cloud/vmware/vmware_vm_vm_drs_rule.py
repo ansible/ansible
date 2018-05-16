@@ -21,7 +21,7 @@ description:
 - This module can be used to configure VMware DRS Affinity rule for virtual machine in given cluster.
 version_added: 2.5
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
