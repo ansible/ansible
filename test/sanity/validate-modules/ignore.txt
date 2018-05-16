@@ -1730,7 +1730,6 @@ lib/ansible/modules/network/nxos/nxos_linkagg.py E324
 lib/ansible/modules/network/nxos/nxos_linkagg.py E325
 lib/ansible/modules/network/nxos/nxos_linkagg.py E326
 lib/ansible/modules/network/nxos/nxos_lldp.py E326
-lib/ansible/modules/network/nxos/nxos_logging.py E325
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py E324
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E325
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E326
