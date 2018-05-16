@@ -205,6 +205,11 @@ def main():
     if args and argv:
         module.fail_json(rc=256, msg="only command or argv can be given, not both")
 
+    if not shell and args:
+        args = shlex.split(args)
+
+    args = args or argv
+
     if chdir:
         chdir = os.path.abspath(chdir)
         os.chdir(chdir)
@@ -215,7 +220,7 @@ def main():
         # of command executions.
         if glob.glob(creates):
             module.exit_json(
-                cmd=args or argv,
+                cmd=args,
                 stdout="skipped, since %s exists" % creates,
                 changed=False,
                 rc=0
@@ -227,26 +232,24 @@ def main():
         # of command executions.
         if not glob.glob(removes):
             module.exit_json(
-                cmd=args or argv,
+                cmd=args,
                 stdout="skipped, since %s does not exist" % removes,
                 changed=False,
                 rc=0
             )
 
     if warn:
-        check_command(module, args or argv)
+        check_command(module, args)
 
-    if not shell and args:
-        args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args or argv, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
 
     endd = datetime.datetime.now()
     delta = endd - startd
 
     result = dict(
-        cmd=args or argv,
+        cmd=args,
         stdout=out.rstrip(b"\r\n"),
         stderr=err.rstrip(b"\r\n"),
         rc=rc,
