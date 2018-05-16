@@ -146,13 +146,13 @@
 - name: Copy some module to custom repo
   win_shell: |
     Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path "{{custom_repo_path}}";
-    Get-ChildItem "{{custom_repo_path}}" | ? Name -eq "{{powershell_module}}" | % Name
+    Get-ChildItem "{{custom_repo_path}}" | ? Name -eq "{{powershell_module}}" | % Name;
   register: saved_package
 
 - name: Validate sample module in custom repo
   assert:
     that:
-      - "saved_package == '{{powershell_module}}'"
+      - "saved_package.output == '{{powershell_module}}'"
 
 - name: Install module from custom Powershell repository
   win_psmodule:
@@ -175,4 +175,4 @@
 - name: Validate sample module is installed from custom repo
   assert:
     that:
-      - "is_package_customrepo == '{{custom_repo_name}}'"
+      - "is_package_customrepo.output == '{{custom_repo_name}}'"
