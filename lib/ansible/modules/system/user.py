@@ -310,7 +310,7 @@ class User(object):
         self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
-        self.force_pw=module.params['force_pw']
+        self.force_pw = module.params['force_pw']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -437,25 +437,23 @@ class User(object):
         cmd.append(self.name)
         first_tuple = self.execute_command(cmd)
         
-        
         if self.force_pw:
             second_tuple = self._expire_password()
-            
             return self._compare_outputs(first_tuple, second_tuple)
 
         return self._compare_outputs(first_tuple)
 
-    def _compare_outputs(self, first_tuple, second_tuple=(None,' ',' ')):
+    def _compare_outputs(self, first_tuple, second_tuple = (None, ' ', ' ')):
         if first_tuple[0] == 0 or second_tuple[0] == 0:
-            overall_rc=0
+            overall_rc = 0
         else:
-            overall_rc=None
-        overall_out=first_tuple[1]+' | '+second_tuple[1]
-        overall_err=first_tuple[2]+' | '+second_tuple[2]
+            overall_rc = None
+        overall_out = first_tuple[1] + ' | ' + second_tuple[1]
+        overall_err = first_tuple[2] + ' | ' + second_tuple[2]
         return (overall_rc, overall_out, overall_err)  
 
     def _expire_password(self):
-        chage_cmd=[self.module.get_bin_path('chage', True)]
+        chage_cmd = [self.module.get_bin_path('chage', True)]
         chage_cmd.append('-d')
         chage_cmd.append('0')
         chage_cmd.append(self.name)
@@ -585,17 +583,13 @@ class User(object):
         if len(cmd) > 1:
             cmd.append(self.name)
             first_tuple = self.execute_command(cmd)
-
         
         if self.force_pw:
             second_tuple = (None, " ", " ")
-            current_lastday = self.user_password()[2]
-            
+            current_lastday = self.user_password()[2]   
             if current_lastday != 0:
                 second_tuple = self._expire_password()
-                
-            return self._compare_outputs(first_tuple,second_tuple)
-
+            return self._compare_outputs(first_tuple, second_tuple)
         return self._compare_outputs(first_tuple)
 
     def group_exists(self, group):
