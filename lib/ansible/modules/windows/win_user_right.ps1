@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
-$_remote_tmp = Get-AnsibleParam $parsed_args "_ansible_remote_tmp" -type "path" -default $env:TMP
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $users = Get-AnsibleParam -obj $params -name "users" -type "list" -failifempty $true

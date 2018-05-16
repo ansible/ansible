@@ -8,7 +8,7 @@
 #Requires -Module Ansible.ModuleUtils.SID
 
 $params = Parse-Args -arguments $args
-$_remote_tmp = Get-AnsibleParam $parsed_args "_ansible_remote_tmp" -type "path" -default $env:TMP
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str"

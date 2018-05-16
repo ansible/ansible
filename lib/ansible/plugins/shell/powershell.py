@@ -1277,7 +1277,7 @@ Function Run($payload) {
     if ($null -eq $remote_tmp) {
         $remote_tmp = $original_tmp
     }
-    
+
     # become process is run under a different console to the WinRM one so we
     # need to set the UTF-8 codepage again
     $env:TMP = $remote_tmp

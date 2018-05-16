@@ -19,7 +19,7 @@
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params "_ansible_check_mode" -type 'bool' -default $false
-$_remote_tmp = Get-AnsibleParam $parsed_args "_ansible_remote_tmp" -type "path" -default $env:TMP
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $location = Get-AnsibleParam -obj $params -name 'location' -type 'str'
 $format = Get-AnsibleParam -obj $params -name 'format' -type 'str'
