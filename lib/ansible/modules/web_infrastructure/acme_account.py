@@ -232,7 +232,7 @@ def main():
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.3.6
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3.6
                 url = account.directory['keyChange']
                 protected = {
                     "alg": new_key_data['alg'],
@@ -241,8 +241,9 @@ def main():
                 }
                 payload = {
                     "account": account.uri,
-                    "newKey": new_key_data['jwk'],
-                    "oldKey": account.jwk,
+                    "newKey": new_key_data['jwk'],  # specified in draft 12
+                    "oldKey": account.jwk,  # discussed in https://github.com/ietf-wg-acme/acme/pull/425,
+                                            # might be required in draft 13
                 }
                 data = account.sign_request(protected, payload, new_key_data, new_key)
                 # Send request and verify result
