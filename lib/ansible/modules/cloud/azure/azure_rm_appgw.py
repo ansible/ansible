@@ -336,6 +336,7 @@ id:
 
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from copy import deepcopy
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -492,16 +493,18 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["backend_address_pools"] = kwargs[key]
                 elif key == "backend_http_settings_collection":
                     ev = kwargs[key]
-                    if 'protocol' in ev:
-                        if ev['protocol'] == 'http':
-                            ev['protocol'] = 'Http'
-                        elif ev['protocol'] == 'https':
-                            ev['protocol'] = 'Https'
-                    if 'cookie_based_affinity' in ev:
-                        if ev['cookie_based_affinity'] == 'enabled':
-                            ev['cookie_based_affinity'] = 'Enabled'
-                        elif ev['cookie_based_affinity'] == 'disabled':
-                            ev['cookie_based_affinity'] = 'Disabled'
+                    for i in range(len(ev)):
+                        item = ev[i]
+                        if 'protocol' in item:
+                            if item['protocol'] == 'http':
+                                item['protocol'] = 'Http'
+                            elif item['protocol'] == 'https':
+                                item['protocol'] = 'Https'
+                        if 'cookie_based_affinity' in item:
+                            if item['cookie_based_affinity'] == 'enabled':
+                                item['cookie_based_affinity'] = 'Enabled'
+                            elif item['cookie_based_affinity'] == 'disabled':
+                                item['cookie_based_affinity'] = 'Disabled'
                     self.parameters["backend_http_settings_collection"] = ev
                 elif key == "http_listeners":
                     ev = kwargs[key]
@@ -605,7 +608,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     # not compare_arrays(self.parameters, old_response, 'frontend_ip_configurations') or
                     #(not compare_arrays(self.parameters, old_response, 'frontend_ports')) or
                     # not compare_arrays(self.parameters, old_response, 'backend_address_pools') or
-                    (not compare_arrays(self.parameters, old_response, 'backend_http_settings_collections'))): # or
+                    not compare_arrays(old_response, self.parameters, 'backend_http_settings_collection')): # or
                     # not compare_arrays(self.parameters, old_response, 'request_routing_rules')):
                     #(not compare_arrays(self.parameters, old_response, 'http_listeners'))):
 
@@ -766,7 +769,6 @@ def snake_to_camel(snake, capitalize_first=False):
 
 
 def compare_arrays(old_params, new_params, param_name):
-
     old = old_params.get(param_name)
     new = new_params.get(param_name)
 
@@ -780,10 +782,24 @@ def compare_arrays(old_params, new_params, param_name):
             name = item['name']
             newd[name] = item
 
-        return dict(oldd, **newd) == oldd
+        newd = dict_merge(oldd, newd)
+        return  newd == oldd
 
     return (old is None and new is None)
 
+def dict_merge(a, b):
+    '''recursively merges dict's. not just simple a['key'] = b['key'], if
+    both a and bhave a key who's value is a dict then dict_merge is called
+    on both values and the result stored in the returned dictionary.'''
+    if not isinstance(b, dict):
+        return b
+    result = deepcopy(a)
+    for k, v in b.iteritems():
+        if k in result and isinstance(result[k], dict):
+                result[k] = dict_merge(result[k], v)
+        else:
+            result[k] = deepcopy(v)
+    return result
 
 def main():
     """Main execution"""
