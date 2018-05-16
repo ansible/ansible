@@ -68,7 +68,7 @@ def fail_json(*args, **kwargs):
 
 @pytest.fixture
 def fetch_url_mock(mocker):
-    return mocker.patch('ansible.modules.source_control.gitlab_hooks.fetch_url')
+    return mocker.patch('ansible.module_utils.gitlab.fetch_url')
 
 
 @pytest.fixture
