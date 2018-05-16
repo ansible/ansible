@@ -96,7 +96,7 @@ EXAMPLES = '''
         RESERVED_CPU: -100
 '''
 
-# TODO: what makes most sense to return?
+# TODO: pending setting guidelines on returned values
 RETURN = '''
 '''
 
