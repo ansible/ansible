@@ -171,7 +171,7 @@ class CallbackModule(CallbackBase):
             path = path.replace(os.getcwd(), '')
 
             if path.startswith('/'):
-                path = path[1:];
+                path = path[1:]
 
         if not task.no_log:
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
