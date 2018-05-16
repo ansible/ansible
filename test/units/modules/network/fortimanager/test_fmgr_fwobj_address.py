@@ -57,4 +57,4 @@ class TestFmgrDeviceConfigModule(TestFortimanagerModule):
                              mode='set', adom='ansible', ipv4='ipmask', ipv4addr='10.7.220.30/32',
                              comment='Ansible is fun!', tags='ansible,ipv4,object', color='26'))
         result = self.execute_module(failed=True)
-        self.assertEqual(result['msg'], 'Host and username are required for connection')
+        self.assertEqual(result['msg'], 'Host and username are required')
