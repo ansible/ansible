@@ -1,0 +1,9 @@
+[sshchroot]
+sshchroot-pipelining    ansible_ssh_pipelining=true
+sshchroot-no-pipelining ansible_ssh_pipelining=false
+[sshchroot:vars]
+ansible_host=localhost
+ansible_connection=sshchroot
+chroot_path=/
+chroot_executable=/usr/sbin/chroot
+ansible_python_interpreter="{{ ansible_playbook_python }}"
