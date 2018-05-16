@@ -779,7 +779,7 @@ def compare_arrays(old_params, new_params, param_name):
         newd[name] = item
 
     newd = dict_merge(oldd, newd)
-    return  newd == oldd
+    return newd == oldd
 
 
 def dict_merge(a, b):
