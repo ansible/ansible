@@ -134,7 +134,7 @@ options:
     lifecycle:
         description:
             - The bucket's lifecycle configuration.
-            - See https://developers.google.com/storage/docs/lifecycle for more information.
+            - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
         required: false
         suboptions:
             rule:
@@ -406,7 +406,7 @@ RETURN = '''
     lifecycle:
         description:
             - The bucket's lifecycle configuration.
-            - See https://developers.google.com/storage/docs/lifecycle for more information.
+            - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
         returned: success
         type: complex
         contains:

@@ -35,7 +35,7 @@ description:
     - Represents a GlobalForwardingRule resource. Global forwarding rules are used to
       forward traffic to the correct load balancer for HTTP load balancing. Global forwarding
       rules can only be used for HTTP load balancing.
-    - For more information, see https://cloud.google.com/compute/docs/load-balancing/http/
+    - For more information, see U(https://cloud.google.com/compute/docs/load-balancing/http/)
       .
 short_description: Creates a GCP GlobalForwardingRule
 version_added: 2.6
@@ -71,7 +71,7 @@ options:
               from the IP range of the subnet or network configured for this forwarding rule.
             - 'An address can be specified either by a literal IP address or a URL reference to
               an existing Address resource. The following examples are all valid:  * 100.1.2.3
-              * https://www.googleapis.com/compute/v1/projects/project     /regions/region/addresses/address
+              * U(https://www.googleapis.com/compute/v1/projects/project/regions/region/addresses/address)
               * projects/project/regions/region/addresses/address * regions/region/addresses/address
               * global/addresses/address * address .'
         required: false
@@ -270,7 +270,7 @@ RETURN = '''
               from the IP range of the subnet or network configured for this forwarding rule.
             - 'An address can be specified either by a literal IP address or a URL reference to
               an existing Address resource. The following examples are all valid:  * 100.1.2.3
-              * https://www.googleapis.com/compute/v1/projects/project     /regions/region/addresses/address
+              * U(https://www.googleapis.com/compute/v1/projects/project/regions/region/addresses/address)
               * projects/project/regions/region/addresses/address * regions/region/addresses/address
               * global/addresses/address * address .'
         returned: success
