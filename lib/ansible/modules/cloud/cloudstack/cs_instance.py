@@ -152,6 +152,7 @@ options:
   details:
     description:
       - Map to specify custom parameters.
+    version_added: '2.6'
 extends_documentation_fragment: cloudstack
 '''
 
