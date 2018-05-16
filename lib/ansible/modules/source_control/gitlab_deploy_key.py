@@ -120,37 +120,8 @@ previous_version:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
 from copy import deepcopy
-
-try:
-    from urllib import quote_plus  # Python 2.X
-except ImportError:
-    from urllib.parse import quote_plus  # Python 3+
-
-
-def request(module, api_url, project, path, access_token, private_token, rawdata='', method='GET'):
-    url = "%s/v4/projects/%s%s" % (api_url, quote_plus(project), path)
-    headers = {}
-    if access_token:
-        headers['Authorization'] = "Bearer %s" % access_token
-    else:
-        headers['Private-Token'] = private_token
-
-    headers['Accept'] = "application/json"
-    headers['Content-Type'] = "application/json"
-
-    response, info = fetch_url(module=module, url=url, headers=headers, data=rawdata, method=method)
-    status = info['status']
-    content = ""
-    if response:
-        content = response.read()
-    if status == 204:
-        return True, content
-    elif status == 200 or status == 201:
-        return True, json.loads(content)
-    else:
-        return False, str(status) + ": " + content
+from ansible.module_utils.gitlab import request
 
 
 def _list(module, api_url, project, access_token, private_token):
@@ -206,7 +177,14 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             can_push=dict(default='no', type='bool'),
             title=dict(required=True),
-        )
+        ),
+        mutually_exclusive=[
+            ['access_token', 'private_token']
+        ],
+        required_one_of=[
+            ['access_token', 'private_token']
+        ],
+        supports_check_mode=True,
     )
 
     api_url = module.params['api_url']
@@ -237,11 +215,13 @@ def main():
 
     if state == 'present':
         if not existing or not _are_equivalent(existing, input):
-            success, response = _publish(module, api_url, project, input, access_token, private_token)
+            if not module.check_mode:
+                success, response = _publish(module, api_url, project, input, access_token, private_token)
             changed = True
     else:
         if existing:
-            success, response = _delete(module, api_url, project, existing['id'], access_token, private_token)
+            if not module.check_mode:
+                success, response = _delete(module, api_url, project, existing['id'], access_token, private_token)
             changed = True
 
     if success:
