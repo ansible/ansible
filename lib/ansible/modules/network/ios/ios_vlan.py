@@ -216,10 +216,10 @@ def logical_rows(out):
     cur_row = []
     for l in out.splitlines()[2:]:
         if not l:
-            #"""Skip empty lines."""
+            """Skip empty lines."""
             continue
         if '0' < l[0] < '9':
-            #"""Line starting with a number."""
+            """Line starting with a number."""
             if started_yielding:
                 yield cur_row
                 cur_row = []  # Reset it to hold a next chunk
@@ -249,6 +249,7 @@ def parse_vlan_brief(vlan_out):
         row_object = parse_logical_row(r)
         objs.append(row_object)
     return objs
+
 
 def map_config_to_obj(module):
     return parse_vlan_brief(run_commands(module, ['show vlan brief']))
