@@ -21,7 +21,6 @@ options:
     description:
       - Host running the database.
     type: str
-    default: localhost
   login_port:
     description:
       - Port of the MySQL server. Requires I(login_host) be defined as other than localhost if login_port is used.
