@@ -8,7 +8,6 @@
     server_type: radius
     address: 8.8.8.8
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -17,7 +16,6 @@
       server_type: radius
       address: 8.8.8.8
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -52,7 +50,6 @@
       auth_port: 2083
       acct_port: 2084
       state: present
-      provider: "{{ connection }}"
     register: result
  
   - assert: *true
@@ -71,7 +68,6 @@
       auth_port: 1000
       acct_port: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -92,7 +88,6 @@
       encrypt_type: 0
       key: hello
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -119,7 +114,6 @@
       encrypt_type: 7
       key: hello
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -140,7 +134,6 @@
       encrypt_type: 7
       key: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -160,7 +153,6 @@
       acct_port: default
       key: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

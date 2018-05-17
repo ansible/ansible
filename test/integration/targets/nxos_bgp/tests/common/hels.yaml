@@ -13,7 +13,6 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ connection }}"
   ignore_errors: yes
   when: test_helsinki
 
@@ -21,7 +20,6 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
   when: test_helsinki
 
@@ -38,7 +36,6 @@
       reconnect_interval: 55
       timer_bgp_hold: 110
       timer_bgp_keepalive: 45
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     when: test_helsinki
@@ -70,7 +67,6 @@
       reconnect_interval: default
       timer_bgp_hold: default
       timer_bgp_keepalive: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     when: test_helsinki
@@ -95,7 +91,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
     when: test_helsinki
 

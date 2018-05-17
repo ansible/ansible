@@ -4,7 +4,6 @@
 
 - name: test not hardware
   eos_facts:
-    provider: "{{ cli }}"
     gather_subset:
       - "!hardware"
   become: yes

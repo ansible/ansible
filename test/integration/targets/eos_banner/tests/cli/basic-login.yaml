@@ -45,8 +45,8 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-  
-- name: remove login
+
+- name: Remove login
   eos_banner:
     banner: login
     state: absent
@@ -62,7 +62,7 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: remove login (idempotent)
+- name: Remove login again (idempotent)
   eos_banner:
     banner: login
     state: absent
@@ -77,7 +77,6 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:

@@ -5,11 +5,9 @@
   eos_config:
     lines: lldp run
     authorize: yes
-    provider: "{{ eapi }}"
 
 - name: test getting default facts
   eos_facts:
-    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -37,6 +35,5 @@
   eos_config:
     lines: lldp run
     authorize: yes
-    provider: "{{ eapi }}"
 
 - debug: msg="END eapi/default.yaml"

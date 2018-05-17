@@ -23,7 +23,6 @@
       report_supp: false
       v3_report_supp: true
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -43,7 +42,6 @@
     nxos_igmp_snooping: &defgt
       group_timeout: "{{def_group_timeout|default(omit)}}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -60,7 +58,6 @@
   - name: Configure igmp snooping with default values
     nxos_igmp_snooping: &default
       state: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

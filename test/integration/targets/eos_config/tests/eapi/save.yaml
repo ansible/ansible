@@ -9,13 +9,11 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ eapi }}"
 
 
 - name: save config
   eos_config:
     save_when: always
-    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -25,7 +23,6 @@
 - name: save should always run
   eos_config:
     save_when: always
-    provider: "{{ eapi }}"
   register: result
 
 - assert:
