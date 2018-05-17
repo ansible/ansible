@@ -202,3 +202,24 @@
     that:
       - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
       - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"
+
+# The following test cases are to ensure that we don't have a regression on
+# GitHub Issue https://github.com/ansible/ansible/issues/35481
+#
+# This should execute and not cause a RuntimeError
+- debug:
+    msg: "with_dict passed a list: {{item}}"
+  with_dict: "{{ a_list }}"
+  register: with_dict_passed_a_list
+  ignore_errors: True
+- assert:
+    that:
+      - with_dict_passed_a_list is failed
+- debug:
+    msg: "with_list passed a dict: {{item}}"
+  with_list: "{{ a_dict }}"
+  register: with_list_passed_a_dict
+  ignore_errors: True
+- assert:
+    that:
+      - with_list_passed_a_dict is failed
