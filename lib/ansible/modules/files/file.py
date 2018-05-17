@@ -191,11 +191,10 @@ def additional_parameter_handling(params):
     if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
         basename = None
 
-        # _original_basename is used by other modules that depend on file
+        # _original_basename is used by other modules that depend on file to construct a correct
+        # destination path when the destination path was a directory
         if params['_original_basename']:
             basename = params['_original_basename']
-        #elif params['src'] is not None:
-        #    basename = os.path.basename(params['src'])
 
         if basename:
             params['path'] = params['path'] = os.path.join(params['path'], basename)
