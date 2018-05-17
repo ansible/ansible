@@ -7,13 +7,11 @@
   nxos_config:
     lines:
       - interface Loopback1
-    provider: "{{ connection }}"
 
 - name: set state=absent
   nxos_interface:
     interface: Loopback1
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -24,7 +22,6 @@
   nxos_interface:
     interface: Loopback1
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:

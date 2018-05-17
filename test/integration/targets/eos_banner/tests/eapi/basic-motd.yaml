@@ -21,8 +21,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "result.commands.0.cmd == 'banner motd'"
-      - "result.commands.0.input == 'this is my motd banner\nthat has a multiline\nstring'"
+      - "'this is my motd banner' in result.commands"
+      - "'that has a multiline' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
@@ -60,7 +60,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "result.commands.0.cmd == 'no banner motd'"
+      - "'no banner motd' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 

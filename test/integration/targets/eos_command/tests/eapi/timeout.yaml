@@ -8,7 +8,6 @@
     wait_for:
       - "result[0].version foo 4.15"
     retries: 1
-    provider: "{{ eapi }}"
   register: result
   ignore_errors: yes
 

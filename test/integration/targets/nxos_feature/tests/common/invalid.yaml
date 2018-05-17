@@ -1,12 +1,9 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/invalid.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: configure invalid feature name
   nxos_feature:
     feature: invalid
-    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 

@@ -7,21 +7,18 @@
   nxos_gir_profile_management: &remove_maintenance
     mode: maintenance
     state: absent    
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup - Remove normal mode profiles"
   nxos_gir_profile_management: &remove_normal
     mode: normal
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup - Turn on feature eigrp"
   nxos_feature: 
     feature: eigrp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -32,7 +29,6 @@
         - router eigrp 11
         - isolate
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -54,7 +50,6 @@
         - router eigrp 11
         - isolate
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -107,6 +102,5 @@
     nxos_feature:
       feature: eigrp
       state: disabled
-      provider: "{{ connection }}"
 
   - debug: msg="END connection={{ ansible_connection }} nxos_gir_profile_management sanity test"  

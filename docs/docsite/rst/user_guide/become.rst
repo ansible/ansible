@@ -213,15 +213,11 @@ module.
 Become and Networks
 ===================
 
+As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all :ref:`Ansible-maintained platforms<network_supported>` that support ``enable`` mode: `eos``, ``ios``, and ``nxos``. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
-network_cli and become
-----------------------
+You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
-Ansible 2.5 added support for ``become`` to be used to enter ``enable`` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
-
-You must set the host connection type to ``connection: network_cli`` to use ``become`` for privilege escalation on network devices. Ansible 2.5.3 supports ``become`` for privilege escalation on ``eos``, ``ios``, and ``nxos``.
-
-You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook.
+You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
 
 If you see this error message, the task that generated it requires ``enable`` mode to succeed:
 
@@ -281,13 +277,10 @@ If you need a password to enter ``enable`` mode, you can specify it in one of tw
 
    As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
 
-
-.. _become-network-auth-and-auth-password:
-
 authorize and auth_pass
 -----------------------
 
-For HTTPS connections that cannot use ``connection: network_cli``, you can enter ``enable`` mode using the module options ``authorize`` and ``auth_pass``:
+Ansible still supports ``enable`` mode with ``connection: local`` for legacy playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
 
 .. code-block:: yaml
 
@@ -302,7 +295,7 @@ For HTTPS connections that cannot use ``connection: network_cli``, you can enter
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-Note that over time more platforms and connections will support ``become``. As this happens, the use of ``authorize`` and of ``provider`` dictionaries will be deprecated. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
 .. _become-windows:
 

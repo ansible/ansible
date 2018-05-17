@@ -16,14 +16,12 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
   register: result
 
@@ -33,7 +31,6 @@
       asn: 65535
       router_id: 1.1.1.1
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -95,7 +92,6 @@
       event_history_periodic: size_small
       suppress_fib_pending: true
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -122,7 +118,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
 
   rescue:
   - name: "Cleanup BGP"
@@ -133,7 +128,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   always:

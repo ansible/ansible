@@ -8,7 +8,6 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.name foo Management"
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 
