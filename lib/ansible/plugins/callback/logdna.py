@@ -199,7 +199,6 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
         self.playbook_name = playbook._file_name
-        self.sendLog(self.conf_hostname, 'START', {'info': self.playbook_name})
 
     def v2_playbook_on_stats(self, stats):
         result = dict()
