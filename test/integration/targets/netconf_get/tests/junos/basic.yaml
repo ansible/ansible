@@ -1,0 +1,126 @@
+---
+- debug: msg="START netconf_get junos/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Configure syslog file - setup
+  junos_config:
+    lines:
+    - set system syslog file test1 any any
+  register: result
+
+- name: Get system configuration data from running datastore state
+  netconf_get:
+    source: running
+    filter: <configuration><system><syslog></syslog></system></configuration>
+  register: result
+
+- assert:
+    that:
+      - "'<name>test1</name>' in result.stdout"
+      - "'<name>any</name>' in result.stdout"
+      - "'<any/>' in result.stdout"
+      - "'<login>' not in result.stdout"
+      - "'<interface>' not in result.stdout"
+
+- name: Failure scenario, fetch config from startup
+  netconf_get:
+    source: startup
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'startup source is not supported' in result.msg"
+
+- name: Failure scenario, fetch config from running with lock
+  netconf_get:
+    lock: always
+    source: running
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'syntax error' in result.msg"
+
+- name: Get system configuration data from running datastore state and lock if-supported
+  netconf_get:
+    source: running
+    filter: <configuration><system><syslog></syslog></system></configuration>
+    lock: if-supported
+  register: result
+
+- assert:
+    that:
+      - "'<name>test1</name>' in result.stdout"
+      - "'<name>any</name>' in result.stdout"
+      - "'<any/>' in result.stdout"
+      - "'<login>' not in result.stdout"
+      - "'<interface>' not in result.stdout"
+
+- name: get configuration and state data in json format
+  netconf_get:
+    source: running
+    display: json
+  register: result
+
+- assert:
+    that:
+      - "{{ result['output']['rpc-reply']['data']['configuration'] is defined}}"
+
+- name: get configuration and state data in xml pretty format
+  netconf_get:
+    source: running
+    display: pretty
+  register: result
+
+- assert:
+    that:
+      - "{{ result['output'] is defined}}"
+
+- name: get configuration data in xml with namespace stripped
+  netconf_get:
+    source: running
+    display: xml
+  register: result
+
+- assert:
+    that:
+      - "{{ result['output'] is defined}}"
+      - "{{ 'xmlns' not in result.output }}"
+
+- name: get configuration and state data without datastore lock
+  netconf_get:
+    lock: never
+  register: result
+
+- assert:
+    that:
+      - "'<database-status-information>' in result.stdout"
+      - "'</configuration>' in result.stdout"
+
+- name: get configuration and state data and lock data-store if supported
+  netconf_get:
+    lock: if-supported
+  register: result
+
+- assert:
+    that:
+      - "'<database-status-information>' in result.stdout"
+      - "'</configuration>' in result.stdout"
+
+- name: Failure scenario, unsupported filter
+  netconf_get:
+    filter: configuration/state
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'filter value \\'configuration/state\\' of type xpath is not supported' in result.msg"
+
+- name: Configure syslog file - teardown
+  junos_config:
+    lines:
+    - delete system syslog file test1 any any
+
+- debug: msg="END netconf_get junos/basic.yaml on connection={{ ansible_connection }}"

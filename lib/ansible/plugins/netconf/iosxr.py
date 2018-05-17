@@ -22,12 +22,10 @@ __metaclass__ = type
 
 import json
 import re
-import sys
 import collections
-from io import BytesIO
-from ansible.module_utils.six import StringIO
 
 from ansible import constants as C
+from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
@@ -45,45 +43,6 @@ try:
     from lxml import etree
 except ImportError:
     raise AnsibleError("lxml is not installed")
-
-
-def transform_reply():
-    reply = '''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-    <xsl:output method="xml" indent="no"/>
-
-    <xsl:template match="/|comment()|processing-instruction()">
-        <xsl:copy>
-            <xsl:apply-templates/>
-        </xsl:copy>
-    </xsl:template>
-
-    <xsl:template match="*">
-        <xsl:element name="{local-name()}">
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:element>
-    </xsl:template>
-
-    <xsl:template match="@*">
-        <xsl:attribute name="{local-name()}">
-            <xsl:value-of select="."/>
-        </xsl:attribute>
-    </xsl:template>
-    </xsl:stylesheet>
-    '''
-    if sys.version < '3':
-        return reply
-    else:
-        return reply.encode('UTF-8')
-
-
-# Note: Workaround for ncclient 0.5.3
-def remove_namespaces(rpc_reply):
-    xslt = transform_reply()
-    parser = etree.XMLParser(remove_blank_text=True)
-    xslt_doc = etree.parse(BytesIO(xslt), parser)
-    transform = etree.XSLT(xslt_doc)
-
-    return etree.fromstring(str(transform(etree.parse(StringIO(str(rpc_reply))))))
 
 
 class Netconf(NetconfBase):
@@ -129,7 +88,7 @@ class Netconf(NetconfBase):
         result['server_capabilities'] = [c for c in self.m.server_capabilities]
         result['client_capabilities'] = [c for c in self.m.client_capabilities]
         result['session_id'] = self.m.session_id
-
+        result['device_operations'] = self.get_device_operations(result['server_capabilities'])
         return json.dumps(result)
 
     @staticmethod
@@ -161,18 +120,22 @@ class Netconf(NetconfBase):
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
     @ensure_connected
-    def get(self, *args, **kwargs):
+    def get(self, filter=None):
+        if isinstance(filter, list):
+            filter = tuple(filter)
         try:
-            response = self.m.get(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            response = self.m.get(filter=filter)
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def get_config(self, *args, **kwargs):
+    def get_config(self, source=None, filter=None):
+        if isinstance(filter, list):
+            filter = tuple(filter)
         try:
-            response = self.m.get_config(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            response = self.m.get_config(source=source, filter=filter)
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -180,7 +143,7 @@ class Netconf(NetconfBase):
     def edit_config(self, *args, **kwargs):
         try:
             response = self.m.edit_config(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -188,7 +151,7 @@ class Netconf(NetconfBase):
     def commit(self, *args, **kwargs):
         try:
             response = self.m.commit(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -196,14 +159,14 @@ class Netconf(NetconfBase):
     def validate(self, *args, **kwargs):
         try:
             response = self.m.validate(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def discard_changes(self, *args, **kwargs):
+    def discard_changes(self):
         try:
-            response = self.m.discard_changes(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            response = self.m.discard_changes()
+            return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
