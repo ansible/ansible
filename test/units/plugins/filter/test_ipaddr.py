@@ -20,7 +20,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.compat.tests import unittest
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, ipsubnet, nthhost, next_nth_usable,
                                            previous_nth_usable, network_in_usable, network_in_network)
 netaddr = pytest.importorskip('netaddr')
 
@@ -457,3 +457,12 @@ class TestIpFilter(unittest.TestCase):
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
         self.assertEqual(network_in_network(subnet, address), False)
+
+    def test_ipsubnet(self):
+        address = '1.1.1.1/24'
+        self.assertEqual(ipsubnet(address, '30'), '64')
+        address = '1.1.1.1/25'
+        self.assertEqual(ipsubnet(address, '24'), False)
+        address = '1.12.1.34/32'
+        subnet = '1.12.1.34/24'
+        self.assertEqual(ipsubnet(address, subnet), '34')
