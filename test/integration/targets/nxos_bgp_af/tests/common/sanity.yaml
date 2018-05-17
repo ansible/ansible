@@ -10,21 +10,18 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature nv overlay"
   nxos_feature:
     feature: nv overlay
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -32,7 +29,6 @@
     nxos_config:
       lines:
         - nv overlay evpn
-      provider: "{{ connection }}"
     when: platform is search('N9K')
 
   - name: "Configure BGP_AF 1"
@@ -43,7 +39,6 @@
       safi: unicast
       advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -65,7 +60,6 @@
       afi: ipv4
       safi: unicast
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -84,7 +78,6 @@
       client_to_client: False
       default_information_originate: true
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -111,7 +104,6 @@
       client_to_client: True
       default_information_originate: False
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -131,7 +123,6 @@
       afi: ipv4
       safi: unicast
       state: absent
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -155,7 +146,6 @@
       table_map: RouteMap
       table_map_filter: true
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -186,7 +176,6 @@
       table_map: default
       table_map_filter: False
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -221,7 +210,6 @@
       networks: [['10.0.0.0/16', 'routemap_LA'], ['192.168.1.1/32', 'Chicago'], ['192.168.2.0/24'], ['192.168.3.0/24', 'routemap_NYC']]
       redistribute: [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -249,7 +237,6 @@
       networks: [['192.168.2.0/24']]
       redistribute: [['lisp', 'rm_lisp']]
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -277,7 +264,6 @@
       networks: default
       redistribute: default
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -314,13 +300,11 @@
     nxos_feature: &disable_bgp
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
 
   - name: "Disable feature nv overlay"
     nxos_feature: &disable_nvoverlay
       feature: nv overlay
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   # Some platforms will timeout if the
@@ -333,7 +317,6 @@
     nxos_config:
       lines:
         - no nv overlay evpn
-      provider: "{{ connection }}"
     when: platform is search('N9K')
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp_af sanity test"
