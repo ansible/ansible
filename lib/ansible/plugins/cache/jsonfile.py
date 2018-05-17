@@ -49,7 +49,7 @@ try:
 except ImportError:
     import json
 
-from ansible.module_utils.basic import jsonify
+from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule
 
 
@@ -61,8 +61,8 @@ class CacheModule(BaseFileCacheModule):
     def _load(self, filepath):
         # Valid JSON is always UTF-8 encoded.
         with codecs.open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            return json.load(f, cls=AnsibleJSONDecoder)
 
     def _dump(self, value, filepath):
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
-            f.write(jsonify(value, sort_keys=True, indent=4))
+            f.write(json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
