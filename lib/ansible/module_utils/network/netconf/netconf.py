@@ -48,13 +48,13 @@ def get_capabilities(module):
     return module._netconf_capabilities
 
 
-def lock_configuration(x, target=None):
-    conn = get_connection(x)
+def lock_configuration(module, target=None):
+    conn = get_connection(module)
     return conn.lock(target=target)
 
 
-def unlock_configuration(x, target=None):
-    conn = get_connection(x)
+def unlock_configuration(module, target=None):
+    conn = get_connection(module)
     return conn.unlock(target=target)
 
 
@@ -72,7 +72,7 @@ def get_config(module, source, filter, lock=False):
     try:
         locked = False
         if lock:
-            conn.lock(target='running')
+            conn.lock(target=source)
             locked = True
         response = conn.get_config(source=source, filter=filter)
 
@@ -81,7 +81,7 @@ def get_config(module, source, filter, lock=False):
 
     finally:
         if locked:
-            conn.unlock(target='running')
+            conn.unlock(target=source)
 
     return response
 
@@ -102,5 +102,14 @@ def get(module, filter, lock=False):
     finally:
         if locked:
             conn.unlock(target='running')
+
+    return response
+
+def dispatch(module, request):
+    conn = get_connection(module)
+    try:
+        response = conn.dispatch(request)
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
 
     return response
