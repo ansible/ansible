@@ -21,30 +21,27 @@ short_description: Manage Swarm cluster.
 version_added: "2.6"
 
 description:
-     - Init a new Swarm cluster
-     - Add/Remove nodes or managers to an existing cluster
+     - Init a new Swarm cluster.
+     - Add/Remove nodes or managers to an existing cluster.
 options:
     advertise_addr:
         description:
-            - Externally reachable address advertised
-                to other nodes. This can either be an address/port combination
+            - Externally reachable address advertised to other nodes. 
+            - This can either be an address/port combination
                 in the form ``192.168.1.1:4567``, or an interface followed by a
                 port number, like ``eth0:4567``. If the port number is omitted,
                 the port number from the listen address is used. If
                 ``advertise_addr`` is not specified, it will be automatically
                 detected when possible.
-        required: false
     listen_addr:
         description:
-            - Listen address used for inter-manager
-                communication, as well as determining the networking interface
-                used for the VXLAN Tunnel Endpoint (VTEP). This can either be
-                an address/port combination in the form ``192.168.1.1:4567``,
+            - Listen address used for inter-manager communication.
+            - This can either be an address/port combination in the form 
+                ``192.168.1.1:4567``,
                 or an interface followed by a port number, like ``eth0:4567``.
                 If the port number is omitted, the default swarm listening port
                 is used.
-        default: '0.0.0.0:2377'
-        required: false
+        default: 0.0.0.0:2377
     force:
         description:
             - Use with state C(init) to force creating a new Swarm, even if already part of one.
