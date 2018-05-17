@@ -556,7 +556,8 @@ class RhsmPools(object):
             args += " --consumed"
         else:
             args += " --available"
-        rc, stdout, stderr = self.module.run_command(args, check_rc=True)
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, stdout, stderr = self.module.run_command(args, check_rc=True, environ_update=lang_env)
 
         products = []
         for line in stdout.split('\n'):
