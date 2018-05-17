@@ -211,40 +211,47 @@ def map_params_to_obj(module):
     return obj
 
 
-def map_config_to_obj(module):
-    output = run_commands(module, ['show vlan brief'])
-    lines = output[0].strip().splitlines()[2:-1]
-
-    if not lines:
-        return list()
-    objs = list()
-
-    for index in range(len(lines)):
-        vlanID = lines[index][0:4].strip().replace(",", "")
-        name = lines[index][5:37].strip().replace(",", "")
-        state = lines[index][38:47].strip().replace(",", "")
-        interfaces = lines[index][48:].strip().replace(",", "").split()
-        while ((index + 1) < len(lines)):
-            interfaces_sup = lines[index + 1][48:].strip().replace(",", "").split()
-            vlanID_sup = lines[index + 1][0:4].strip().replace(",", "").split()
-            if (len(interfaces_sup) > 0) and (len(vlanID_sup) < 1):
-                interfaces.extend(interfaces_sup)
-                index += 1
-            else:
-                break
-        if (vlanID == ""):
+def logical_rows(out):
+    started_yielding = False
+    cur_row = []
+    for l in out.splitlines()[2:]:
+        if not l:
+            #"""Skip empty lines."""
             continue
+        if '0' < l[0] < '9':
+            #"""Line starting with a number."""
+            if started_yielding:
+                yield cur_row
+                cur_row = []  # Reset it to hold a next chunk
+            started_yielding = True
+        cur_row.append(l)
 
-        obj = {}
-        obj['vlan_id'] = vlanID
-        obj['name'] = name
-        obj['state'] = state
-        if obj['state'] == 'suspended':
-            obj['state'] = 'suspend'
-        obj['interfaces'] = [i.replace('Gi', 'GigabitEthernet') for i in interfaces]
+    # Return the rest of it:
+    yield cur_row
 
-        objs.append(obj)
+
+def ports_str_to_list(ports_str):
+    return list(filter(bool, (p.strip() for p in ports_str.split(', '))))
+
+
+def parse_logical_row(r):
+    first_row = r[0]
+    rest_rows = r[1:]
+    vals = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
+    vals['interfaces'] = ports_str_to_list(vals['interfaces'])
+    vals['interfaces'].extend(prts_r for prts in rest_rows for prts_r in ports_str_to_list(prts))
+    return vals
+
+
+def parse_vlan_brief(vlan_out):
+    objs = []
+    for r in logical_rows(vlan_out):
+        row_object = parse_logical_row(r)
+        objs.append(row_object)
     return objs
+
+def map_config_to_obj(module):
+    return parse_vlan_brief(run_commands(module, ['show vlan brief']))
 
 
 def check_declarative_intent_params(want, module, result):
