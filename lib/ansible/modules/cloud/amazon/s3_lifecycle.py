@@ -452,11 +452,9 @@ def main():
                                   ['transition_days', 'transitions'],
                                   ['transition_date', 'transitions'],
                                   ['noncurrent_version_transition_days', 'noncurrent_version_transitions'],
-                              ],
-                              required_one_of=['expiration_date', 'expiration_days', 'transition_date',
-                                               'transition_days', 'transitions', 'noncurrent_version_transition_days',
-                                               'noncurrent_version_transitions']
-                              )
+                              ],)
+
+
 
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
@@ -467,6 +465,18 @@ def main():
     transition_date = module.params.get("transition_date")
     state = module.params.get("state")
 
+    if state == 'present' and module.params.get("status", "enabled") == "enabled":  # allow deleting/disabling a rule by id/prefix
+
+        required_when_present = ('expiration_date', 'expiration_days', 'transition_date',
+                                 'transition_days', 'transitions', 'noncurrent_version_expiration_days',
+                                 'noncurrent_version_transition_days',
+                                 'noncurrent_version_transitions')
+        for param in required_when_present:
+            if module.params.get(param):
+                break
+        else:
+            msg = "one of the following is required when 'state' is 'present': %s" % ', '.join(required_when_present)
+            module.fail_json(msg=msg)
     # If expiration_date set, check string is valid
     if expiration_date is not None:
         try:
