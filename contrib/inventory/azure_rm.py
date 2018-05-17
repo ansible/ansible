@@ -667,7 +667,7 @@ class AzureInventory(object):
             try:
                 virtual_machines = self._compute_client.virtual_machines.list_all()
                 if self.include_vm_scale_sets:
-                    virtual_machines = list(virtual_machines) + self.get_vmss_vm_inventory() 
+                    virtual_machines = list(virtual_machines) + self.get_vmss_vm_inventory()
             except Exception as exc:
                 sys.exit("Error: fetching virtual machines - {0}".format(str(exc)))
 
@@ -683,7 +683,7 @@ class AzureInventory(object):
         vmss_vms = []
         for scale_set in selected_scale_sets:
             vmss_vms += self.get_vm_instances_in_vmss(scale_set)
-        return vmss_vms 
+        return vmss_vms
 
     def get_vm_instances_in_vmss(self, vmss):
         id_dict = azure_id_to_dict(vmss.id)
@@ -698,14 +698,14 @@ class AzureInventory(object):
                    vm_id["virtualMachines"] == nic_id["virtualMachines"] and \
                    vm_id["resourceGroups"].lower() == nic_id["resourceGroups"].lower():
                     vm.private_ip_address = nic_config["private_ip_address"]
-                    vm.hardware_profile = type('obj', (object,), {'vm_size' : vmss.sku.name})
+                    vm.hardware_profile = type('obj', (object,), {'vm_size': vmss.sku.name})
                     vm.vmss_vm = True
                     vms.append(vm)
         return vms
 
     def get_vm_nics_for_vmss(self, resource_group, name):
         vmss_nics = self._network_client.network_interfaces.list_virtual_machine_scale_set_network_interfaces(resource_group, name)
-        vm_ids = [{"id": vm.id, "private_ip_address": vm.ip_configurations[0].private_ip_address} for vm in vmss_nics ]
+        vm_ids = [{"id": vm.id, "private_ip_address": vm.ip_configurations[0].private_ip_address} for vm in vmss_nics]
         return vm_ids
 
     def _load_machines(self, machines):
