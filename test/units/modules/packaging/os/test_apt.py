@@ -20,9 +20,10 @@ class AptExpandPkgspecTestCase(unittest.TestCase):
 
     def setUp(self):
         FakePackage = collections.namedtuple("Package", ("name",))
-        self.fake_cache = [ FakePackage("apt"),
-                            FakePackage("apt-utils"),
-                            FakePackage("not-selected"),
+        self.fake_cache = [
+            FakePackage("apt"),
+            FakePackage("apt-utils"),
+            FakePackage("not-selected"),
         ]
 
     def test_trivial(self):

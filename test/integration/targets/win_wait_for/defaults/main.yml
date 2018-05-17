@@ -1,0 +1,2 @@
+test_win_wait_for_path: C:\ansible\win_wait_for
+test_win_wait_for_port: 1234

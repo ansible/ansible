@@ -1,65 +1,52 @@
 #!/usr/bin/python
 # encoding: utf-8 -*-
 
-# (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: kernel_blacklist
-author: "Matthias Vogelgesang (@matze)"
-version_added: 1.4
+author:
+- Matthias Vogelgesang (@matze)
+version_added: '1.4'
 short_description: Blacklist kernel modules
 description:
     - Add or remove kernel modules from blacklist.
 options:
     name:
-        required: true
         description:
             - Name of kernel module to black- or whitelist.
+        required: true
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the module should be present in the blacklist or absent.
+        choices: [ absent, present ]
+        default: present
     blacklist_file:
-        required: false
         description:
             - If specified, use this blacklist file instead of
               C(/etc/modprobe.d/blacklist-ansible.conf).
-        default: null
-requirements: []
 '''
 
 EXAMPLES = '''
-# Blacklist the nouveau driver module
-- kernel_blacklist:
+- name: Blacklist the nouveau driver module
+  kernel_blacklist:
     name: nouveau
     state: present
 '''
 
 import os
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Blacklist(object):
@@ -79,7 +66,7 @@ class Blacklist(object):
             return False
 
     def get_pattern(self):
-        return '^blacklist\s*' + self.module + '$'
+        return r'^blacklist\s*' + self.module + '$'
 
     def readlines(self):
         f = open(self.filename, 'r')
@@ -126,13 +113,13 @@ class Blacklist(object):
 
         f.close()
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(required=False, choices=['present', 'absent'],
-                       default='present'),
-            blacklist_file=dict(required=False, default=None)
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            blacklist_file=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -163,8 +150,6 @@ def main():
 
     module.exit_json(**args)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

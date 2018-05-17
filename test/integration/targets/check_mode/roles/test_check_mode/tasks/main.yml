@@ -27,7 +27,7 @@
 - name: verify that the file was marked as changed in check mode
   assert: 
     that: 
-      - "template_result|changed"
+      - "template_result is changed"
       - "not foo.stat.exists"
 
 - name: Actually create the file, disable check mode
@@ -46,5 +46,5 @@
 - name: verify that the file was not changed
   assert: 
     that: 
-      - "checkmode_disabled|changed"
-      - "not template_result2|changed"
+      - "checkmode_disabled is changed"
+      - "template_result2 is not changed"

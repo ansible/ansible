@@ -1,0 +1,144 @@
+---
+- debug: msg="START ios cli/ios_static_route.yaml on connection={{ ansible_connection }}"
+
+- name: Clear all static routes
+  ios_static_route: &delete_all
+    aggregate:
+      - { prefix: 172.16.31.0 }
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0 }
+      - { prefix: 172.16.34.0 }
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: absent
+    provider: "{{ cli }}"
+
+- name: create static route
+  ios_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8"]'
+
+- name: Verify idempotence with default admin_distance
+  ios_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 1
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: modify admin distance of static route
+  ios_static_route: &admin2
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8 2"]'
+
+- name: modify admin distance of static route again (idempotent)
+  ios_static_route: *admin2
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Verify idempotence with unspecified admin_distance
+  ios_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: delete static route
+  ios_static_route: &delete
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.31.0 255.255.255.0 10.0.0.8"]'
+
+- name: delete static route again (idempotent)
+  ios_static_route: *delete
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add static route aggregates
+  ios_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0 }
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.32.0 255.255.255.0 10.0.0.8", "ip route 172.16.33.0 255.255.255.0 10.0.0.8"]'
+
+- name: Add and remove static route aggregates with overrides
+  ios_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0, state: absent }
+      - { prefix: 172.16.34.0 }
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.33.0 255.255.255.0 10.0.0.8", "ip route 172.16.34.0 255.255.255.0 10.0.0.8"]'
+
+- name: Remove static route aggregates
+  ios_static_route: *delete_all
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.32.0 255.255.255.0 10.0.0.8", "no ip route 172.16.34.0 255.255.255.0 10.0.0.8"]'
+
+- debug: msg="END ios cli/ios_static_route.yaml on connection={{ ansible_connection }}"

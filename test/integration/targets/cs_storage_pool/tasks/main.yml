@@ -1,0 +1,465 @@
+---
+- name: setup host is present
+  cs_host:
+    name: sim
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-adv
+    pod: POD0-adv
+    username: root
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    zone: "{{ cs_common_zone_adv }}"
+  register: host
+- name: verify setup host is present
+  assert:
+    that:
+      - host is successful
+
+- name: setup storage pool is absent
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+- name: verify setup storage pool is absent
+  assert:
+    that:
+      - sp is successful
+
+- name: test fail if missing params
+  cs_storage_pool:
+  register: sp
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+      - sp is failed
+      - "sp.msg == 'missing required arguments: name'"
+
+- name: test fail if provider unknown
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    provider: DNE
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+  register: sp
+  ignore_errors: true
+- name: verify test fail if provider unknown
+  assert:
+    that:
+      - sp is failed
+      - "sp.msg == 'Storage provider DNE not found'"
+
+- name: test fail if cluster unknown
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: DNE
+    pod: POD0-adv
+  register: sp
+  ignore_errors: true
+- name: verify test fail if cluster unknown
+  assert:
+    that:
+      - sp is failed
+      - "sp.msg == 'Cluster DNE not found'"
+
+- name: test fail if pod unknown
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: DNE
+  register: sp
+  ignore_errors: true
+- name: verify test fail if pod unknown
+  assert:
+    that:
+      - sp is failed
+      - "sp.msg == 'Pod DNE not found'"
+
+- name: create storage pool in check mode
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+  register: sp
+  check_mode: true
+- name: verify create storage pool in check mode
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+
+- name: create storage pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+  register: sp
+- name: verify create storage pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: create storage pool idempotence
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    cluster: C0-adv
+    pod: POD0-adv
+  register: sp
+- name: verify create storage pool idempotence
+  assert:
+    that:
+      - sp is successful
+      - sp is not changed
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: disable storage pool in check mode
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: disabled
+  check_mode: true
+  register: sp
+- name: verify disable storage pool in check mode
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'enabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: disable storage pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: disabled
+  register: sp
+- name: verify disable storage pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: disable storage pool idempotence
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: disabled
+  register: sp
+- name: verify disable storage pool idempotence
+  assert:
+    that:
+      - sp is successful
+      - sp is not changed
+      - sp.allocation_state == 'disabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: update while storage pool disabled in check mode
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    storage_tags:
+      - eco
+      - ssd
+  check_mode: true
+  register: sp
+- name: verify update while storage pool disabled in check mode
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.storage_tags == []
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: update while storage pool disabled
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    storage_tags:
+      - eco
+      - ssd
+  register: sp
+- name: verify update while storage pool disabled
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.storage_tags == ['eco', 'ssd']
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: update while storage pool disabled idempotence
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    storage_tags:
+      - eco
+      - ssd
+  register: sp
+- name: verify update while storage pool disabled idempotence
+  assert:
+    that:
+      - sp is successful
+      - sp is not changed
+      - sp.allocation_state == 'disabled'
+      - sp.storage_tags == ['eco', 'ssd']
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: put storage in maintenance pool in check mode
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: maintenance
+  check_mode: true
+  register: sp
+- name: verify put storage in maintenance pool in check mode
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: put storage in maintenance pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: maintenance
+  register: sp
+- name: verify put storage in maintenance pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'maintenance'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: put storage in maintenance pool idempotence
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: maintenance
+  register: sp
+- name: verify put storage in maintenance pool idempotence
+  assert:
+    that:
+      - sp is successful
+      - sp is not changed
+      - sp.allocation_state == 'maintenance'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: update while in maintenance pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    storage_tag: perf
+  register: sp
+- name: verify update while in maintenance pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'maintenance'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+      - sp.storage_tags == ['perf']
+
+- name: remove storage pool in check mode
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+  check_mode: true
+- name: verify remove storage pool in check mode
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: remove storage pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+- name: verify remove storage pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: remove storage pool idempotence
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+- name: verify remove storage pool idempotence
+  assert:
+    that:
+      - sp is successful
+      - sp is not changed
+
+- name: create storage pool in maintenance
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: maintenance
+  register: sp
+- name: verify create storage pool in maintenance
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'maintenance'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: remove storage pool in maintenance
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+- name: verify storage pool in maintenance
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'maintenance'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: create storage pool disabled
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
+    scope: cluster
+    cluster: C0-adv
+    pod: POD0-adv
+    allocation_state: disabled
+  register: sp
+- name: verify create storage pool in disabled
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"
+
+- name: verify remove disabled storag e pool
+  cs_storage_pool:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sp
+- name: verify remove disabled storage pool
+  assert:
+    that:
+      - sp is successful
+      - sp is changed
+      - sp.allocation_state == 'disabled'
+      - sp.cluster == "C0-adv"
+      - sp.pod == "POD0-adv"
+      - sp.storage_url == "RBD://ceph-mons.domain/poolname"

@@ -1,0 +1,23 @@
+{
+    "status_code": 200,
+    "data": {
+        "connectionState": "deleted",
+        "connectionId": "dxcon-fgbw50lg",
+        "location": "EqSe2",
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "dfccd47d-5b55-11e7-8bdd-db27cb754a2c",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Tue, 27 Jun 2017 16:30:03 GMT",
+                "content-length": "185"
+            },
+            "RequestId": "dfccd47d-5b55-11e7-8bdd-db27cb754a2c",
+            "HTTPStatusCode": 200
+        },
+        "connectionName": "ansible-test-2",
+        "bandwidth": "1Gbps",
+        "ownerAccount": "448830907657",
+        "region": "us-west-2"
+    }
+}

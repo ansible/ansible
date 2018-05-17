@@ -23,17 +23,18 @@ from collections import MutableMapping
 
 from ansible.utils.vars import merge_hash
 
+
 class AggregateStats:
     ''' holds stats about per-host activity during playbook runs '''
 
     def __init__(self):
 
         self.processed = {}
-        self.failures  = {}
-        self.ok        = {}
-        self.dark      = {}
-        self.changed   = {}
-        self.skipped   = {}
+        self.failures = {}
+        self.ok = {}
+        self.dark = {}
+        self.changed = {}
+        self.skipped = {}
 
         # user defined stats, which can be per host or global
         self.custom = {}
@@ -43,17 +44,27 @@ class AggregateStats:
 
         self.processed[host] = 1
         prev = (getattr(self, what)).get(host, 0)
-        getattr(self, what)[host] = prev+1
+        getattr(self, what)[host] = prev + 1
+
+    def decrement(self, what, host):
+        _what = getattr(self, what)
+        try:
+            if _what[host] - 1 < 0:
+                # This should never happen, but let's be safe
+                raise KeyError("Don't be so negative")
+            _what[host] -= 1
+        except KeyError:
+            _what[host] = 0
 
     def summarize(self, host):
         ''' return information about a particular host '''
 
         return dict(
-            ok          = self.ok.get(host, 0),
-            failures    = self.failures.get(host, 0),
-            unreachable = self.dark.get(host,0),
-            changed     = self.changed.get(host, 0),
-            skipped     = self.skipped.get(host, 0)
+            ok=self.ok.get(host, 0),
+            failures=self.failures.get(host, 0),
+            unreachable=self.dark.get(host, 0),
+            changed=self.changed.get(host, 0),
+            skipped=self.skipped.get(host, 0)
         )
 
     def set_custom_stats(self, which, what, host=None):
@@ -79,8 +90,7 @@ class AggregateStats:
             return None
 
         if isinstance(what, MutableMapping):
-            self.custom[host][which] =  merge_hash(self.custom[host][which], what)
+            self.custom[host][which] = merge_hash(self.custom[host][which], what)
         else:
             # let overloaded + take care of other types
             self.custom[host][which] += what
-

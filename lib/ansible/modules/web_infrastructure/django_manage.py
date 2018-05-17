@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Scott Anderson <scottanderson42@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -56,7 +45,7 @@ options:
   virtualenv:
     description:
       - An optional path to a I(virtualenv) installation to use while running the manage application.
-    required: false
+    aliases: [virtualenv]
   apps:
     description:
       - A list of space-delimited apps to target. Used by the 'test' command.
@@ -74,7 +63,7 @@ options:
       - Fail the command immediately if a test fails. Used by the 'test' command.
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   fixtures:
     description:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.
@@ -138,8 +127,11 @@ EXAMPLES = """
     app_path: "{{ django_dir }}"
 """
 
-
 import os
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def _fail(module, cmd, out, err, **kwargs):
     msg = ''
@@ -156,7 +148,7 @@ def _ensure_virtualenv(module):
     if venv_param is None:
         return
 
-    vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
+    vbin = os.path.join(venv_param, 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
@@ -170,23 +162,30 @@ def _ensure_virtualenv(module):
     os.environ["PATH"] = "%s:%s" % (vbin, os.environ["PATH"])
     os.environ["VIRTUAL_ENV"] = venv_param
 
+
 def createcachetable_filter_output(line):
     return "Already exists" not in line
+
 
 def flush_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
+
 def loaddata_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
+
 
 def syncdb_filter_output(line):
     return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
+
 def migrate_filter_output(line):
     return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line) or ("Applying" in line)
 
+
 def collectstatic_filter_output(line):
     return line and "0 static files" not in line
+
 
 def main():
     command_allowed_param_map = dict(
@@ -199,11 +198,11 @@ def main():
         validate=(),
         migrate=('apps', 'skip', 'merge', 'database',),
         collectstatic=('clear', 'link', ),
-        )
+    )
 
     command_required_param_map = dict(
         loaddata=('fixtures', ),
-        )
+    )
 
     # forces --noinput on every command that needs it
     noinput_commands = (
@@ -212,7 +211,7 @@ def main():
         'migrate',
         'test',
         'collectstatic',
-        )
+    )
 
     # These params are allowed for certain commands only
     specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
@@ -224,28 +223,28 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            command     = dict(default=None, required=True),
-            app_path    = dict(default=None, required=True),
-            settings    = dict(default=None, required=False),
-            pythonpath  = dict(default=None, required=False, aliases=['python_path']),
-            virtualenv  = dict(default=None, required=False, aliases=['virtual_env']),
+            command=dict(default=None, required=True),
+            app_path=dict(default=None, required=True, type='path'),
+            settings=dict(default=None, required=False),
+            pythonpath=dict(default=None, required=False, aliases=['python_path']),
+            virtualenv=dict(default=None, required=False, type='path', aliases=['virtual_env']),
 
-            apps        = dict(default=None, required=False),
-            cache_table = dict(default=None, required=False),
-            clear       = dict(default=None, required=False, type='bool'),
-            database    = dict(default=None, required=False),
-            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
-            fixtures    = dict(default=None, required=False),
-            liveserver  = dict(default=None, required=False, aliases=['live_server']),
-            testrunner  = dict(default=None, required=False, aliases=['test_runner']),
-            skip        = dict(default=None, required=False, type='bool'),
-            merge       = dict(default=None, required=False, type='bool'),
-            link        = dict(default=None, required=False, type='bool'),
+            apps=dict(default=None, required=False),
+            cache_table=dict(default=None, required=False),
+            clear=dict(default=None, required=False, type='bool'),
+            database=dict(default=None, required=False),
+            failfast=dict(default='no', required=False, type='bool', aliases=['fail_fast']),
+            fixtures=dict(default=None, required=False),
+            liveserver=dict(default=None, required=False, aliases=['live_server']),
+            testrunner=dict(default=None, required=False, aliases=['test_runner']),
+            skip=dict(default=None, required=False, type='bool'),
+            merge=dict(default=None, required=False, type='bool'),
+            link=dict(default=None, required=False, type='bool'),
         ),
     )
 
     command = module.params['command']
-    app_path = os.path.expanduser(module.params['app_path'])
+    app_path = module.params['app_path']
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
@@ -279,7 +278,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd, cwd=os.path.expanduser(app_path))
+    rc, out, err = module.run_command(cmd, cwd=app_path)
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
@@ -300,8 +299,6 @@ def main():
     module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,
                      settings=module.params['settings'], pythonpath=module.params['pythonpath'])
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

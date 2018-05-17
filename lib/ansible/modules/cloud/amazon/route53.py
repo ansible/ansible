@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -29,7 +21,8 @@ description:
 options:
   state:
     description:
-      - Specifies the state of the resource record.
+      - Specifies the state of the resource record. As of Ansible 2.4, the I(command) option has been changed
+        to I(state) as default and the choices 'present' and 'absent' have been added, but I(command) still works as well.
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
@@ -40,9 +33,7 @@ options:
   hosted_zone_id:
     description:
       - The Hosted Zone ID of the DNS zone to modify
-    required: false
     version_added: "2.0"
-    default: null
   record:
     description:
       - The full DNS record to create or delete
@@ -50,63 +41,52 @@ options:
   ttl:
     description:
       - The TTL to give the new record
-    required: false
     default: 3600 (one hour)
   type:
     description:
       - The type of DNS record to create
     required: true
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA' ]
   alias:
     description:
       - Indicates if this is an alias record.
-    required: false
     version_added: "1.9"
-    default: False
-    choices: [ 'True', 'False' ]
+    type: bool
+    default: 'no'
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
-    required: false
     version_added: "1.9"
-    default: null
   alias_evaluate_target_health:
     description:
       - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
-    required: false
+    type: bool
+    default: no
     version_added: "2.1"
-    default: false
   value:
     description:
       - The new value when creating a DNS record.  YAML lists or multiple comma-spaced values are allowed for non-alias records.
       - When deleting a record all values for the record must be specified or Route53 will not delete it.
-    required: false
-    default: null
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
-    required: false
-    default: null
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
         domain names, the default of 500 seconds may be too long.
-    required: false
     default: 500
   private_zone:
     description:
-      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones.
+      - If set to C(yes), the private zone matching the requested name within the domain will be used if there are both public and private zones.
         The default is to use the public zone.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "1.9"
   identifier:
     description:
       - Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier
         that differentiates among multiple resource record sets that have the
         same combination of DNS name and type.
-    required: false
-    default: null
     version_added: "2.0"
   weight:
     description:
@@ -114,8 +94,6 @@ options:
         have the same combination of DNS name and type, a value that
         determines what portion of traffic for the current resource record set
         is routed to the associated location.
-    required: false
-    default: null
     version_added: "2.0"
   region:
     description:
@@ -123,39 +101,30 @@ options:
         that have the same combination of DNS name and type, a value that
         determines which region this should be associated with for the
         latency-based routing
-    required: false
-    default: null
     version_added: "2.0"
   health_check:
     description:
       - Health check to associate with this record
-    required: false
-    default: null
     version_added: "2.0"
   failover:
     description:
       - Failover resource record sets only. Whether this is the primary or
         secondary resource record set. Allowed values are PRIMARY and SECONDARY
-    required: false
-    default: null
     version_added: "2.0"
   vpc_id:
     description:
       - "When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC."
       - This allows you to have multiple private hosted zones, all with the same name, attached to different VPCs.
-    required: false
-    default: null
     version_added: "2.0"
   wait:
     description:
       - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.1"
   wait_timeout:
     description:
       - How long to wait for the changes to be replicated, in seconds.
-    required: false
     default: 300
     version_added: "2.1"
 author:
@@ -164,6 +133,83 @@ author:
 extends_documentation_fragment: aws
 '''
 
+RETURN = '''
+nameservers:
+  description: nameservers associated with the zone
+  returned: when state is 'get'
+  type: list
+  sample:
+  - ns-1036.awsdns-00.org.
+  - ns-516.awsdns-00.net.
+  - ns-1504.awsdns-00.co.uk.
+  - ns-1.awsdns-00.com.
+set:
+  description: info specific to the resource record
+  returned: when state is 'get'
+  type: complex
+  contains:
+    alias:
+      description: whether this is an alias
+      returned: always
+      type: bool
+      sample: false
+    failover:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    health_check:
+      description: health_check associated with this record
+      returned: always
+      type: NoneType
+      sample: null
+    identifier:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    record:
+      description: domain name for the record set
+      returned: always
+      type: string
+      sample: new.foo.com.
+    region:
+      description: ""
+      returned: always
+      type:
+      sample:
+    ttl:
+      description: resource record cache TTL
+      returned: always
+      type: string
+      sample: '3600'
+    type:
+      description: record set type
+      returned: always
+      type: string
+      sample: A
+    value:
+      description: value
+      returned: always
+      type: string
+      sample: 52.43.18.27
+    values:
+      description: values
+      returned: always
+      type: list
+      sample:
+      - 52.43.18.27
+    weight:
+      description: weight of the record
+      returned: always
+      type: string
+      sample: '3'
+    zone:
+      description: zone this record set belongs to
+      returned: always
+      type: string
+      sample: foo.bar.com.
+'''
 
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
@@ -299,29 +345,38 @@ EXAMPLES = '''
       weight: 100
       health_check: "d994b780-3150-49fd-9205-356abdd42e75"
 
+# Add a CAA record (RFC 6844):
+- route53:
+      state: present
+      zone: example.com
+      record: example.com
+      type: CAA
+      value:
+        - 0 issue "ca.example.net"
+        - 0 issuewild ";"
+        - 0 iodef "mailto:security@example.com"
+
 '''
-
-MINIMUM_BOTO_VERSION = '2.28.0'
-WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
-
 
 import time
 import distutils.version
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
-
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+
+
+MINIMUM_BOTO_VERSION = '2.28.0'
+WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
 
 class TimeoutError(Exception):
@@ -380,6 +435,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             raise TimeoutError()
         return result
 
+
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES = 5
@@ -406,7 +462,7 @@ def main():
         hosted_zone_id=dict(required=False, default=None),
         record=dict(required=True),
         ttl=dict(required=False, type='int', default=3600),
-        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA'], required=True),
+        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA'], required=True),
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
@@ -435,7 +491,7 @@ def main():
     mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together, required_if=required_if,
-                           mutually_exclusive=mutually_exclusive)
+                           mutually_exclusive=mutually_exclusive, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -455,7 +511,7 @@ def main():
     ttl_in = module.params.get('ttl')
     record_in = module.params.get('record').lower()
     type_in = module.params.get('type')
-    value_in = module.params.get('value')
+    value_in = module.params.get('value') or []
     alias_in = module.params.get('alias')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
@@ -520,7 +576,12 @@ def main():
 
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
-    for rset in sets:
+    sets_iter = iter(sets)
+    while True:
+        try:
+            rset = invoke_with_throttling_retries(next, sets_iter)
+        except StopIteration:
+            break
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
@@ -560,11 +621,18 @@ def main():
                 record['values'] = sorted(rset.resource_records)
             if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
                 module.exit_json(changed=False)
-            break
+
+        # We need to look only at the first rrset returned by the above call,
+        # so break here. The returned elements begin with the one matching our
+        # requested name, type, and identifier, if such an element exists,
+        # followed by all others that come after it in alphabetical order.
+        # Therefore, if the first set does not match, no subsequent set will
+        # match either.
+        break
 
     if command_in == 'get':
         if type_in == 'NS':
-            ns = record['values']
+            ns = record.get('values', [])
         else:
             # Retrieve name servers associated to the zone.
             z = invoke_with_throttling_retries(conn.get_zone, zone_in)
@@ -586,19 +654,21 @@ def main():
             command = command_in.upper()
         changes.add_change_record(command, wanted_rset)
 
-    try:
-        result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
-    except boto.route53.exception.DNSServerError as e:
-        txt = e.body.split("<Message>")[1]
-        txt = txt.split("</Message>")[0]
-        if "but it already exists" in txt:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json(msg=txt)
-    except TimeoutError:
-        module.fail_json(msg='Timeout waiting for changes to replicate')
+    if not module.check_mode:
+        try:
+            invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
+        except boto.route53.exception.DNSServerError as e:
+            txt = e.body.split("<Message>")[1]
+            txt = txt.split("</Message>")[0]
+            if "but it already exists" in txt:
+                module.exit_json(changed=False)
+            else:
+                module.fail_json(msg=txt)
+        except TimeoutError:
+            module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
+
 
 if __name__ == '__main__':
     main()

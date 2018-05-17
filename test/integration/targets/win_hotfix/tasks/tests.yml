@@ -1,0 +1,35 @@
+# only basic tests, doesn't actually install/uninstall and hotfixes
+---
+- name: fail when source isn't set
+  win_hotfix:
+    state: present
+  register: fail_no_source
+  failed_when: fail_no_source.msg != 'source must be set when state=present'
+
+- name: fail when identifier or kb isn't set on absent
+  win_hotfix:
+    state: absent
+  register: fail_no_key
+  failed_when: fail_no_key.msg != 'either hotfix_identifier or hotfix_kb needs to be set when state=absent'
+
+- name: remove an identifier that isn't installed
+  win_hotfix:
+    hotfix_identifier: fake~identifier
+    state: absent
+  register: remove_missing_hotfix_identifier
+
+- name: assert remove an identifier that isn't installed
+  assert:
+    that:
+    - remove_missing_hotfix_identifier is not changed
+
+- name: remove a kb that isn't installed
+  win_hotfix:
+    hotfix_kb: KB123456
+    state: absent
+  register: remove_missing_hotfix_kb
+
+- name: assert remove a kb that isn't installed
+  assert:
+    that:
+    - remove_missing_hotfix_kb is not changed

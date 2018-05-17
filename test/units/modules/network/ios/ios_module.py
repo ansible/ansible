@@ -22,18 +22,12 @@ __metaclass__ = type
 import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
+
 
 def load_fixture(name):
     path = os.path.join(fixture_path, name)
@@ -53,16 +47,9 @@ def load_fixture(name):
     return data
 
 
-class AnsibleExitJson(Exception):
-    pass
+class TestIosModule(ModuleTestCase):
 
-class AnsibleFailJson(Exception):
-    pass
-
-class TestIosModule(unittest.TestCase):
-
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
 
         self.load_fixtures(commands)
 
@@ -73,7 +60,7 @@ class TestIosModule(unittest.TestCase):
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
 
-        if commands:
+        if commands is not None:
             if sort:
                 self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
             else:
@@ -82,27 +69,16 @@ class TestIosModule(unittest.TestCase):
         return result
 
     def failed(self):
-        def fail_json(*args, **kwargs):
-            kwargs['failed'] = True
-            raise AnsibleFailJson(kwargs)
-
-        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
-            with self.assertRaises(AnsibleFailJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleFailJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result
 
     def changed(self, changed=False):
-        def exit_json(*args, **kwargs):
-            if 'changed' not in kwargs:
-                kwargs['changed'] = False
-            raise AnsibleExitJson(kwargs)
-
-        with patch.object(basic.AnsibleModule, 'exit_json', exit_json):
-            with self.assertRaises(AnsibleExitJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleExitJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)
@@ -110,4 +86,3 @@ class TestIosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None):
         pass
-

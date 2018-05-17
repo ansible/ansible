@@ -16,10 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
-
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -28,21 +27,21 @@ extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manage features in NX-OS switches.
 description:
-    - Offers ability to enable and disable features in NX-OS.
+  - Offers ability to enable and disable features in NX-OS.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 options:
-    feature:
-        description:
-            - Name of feature.
-        required: true
-    state:
-        description:
-            - Desired state of the feature.
-        required: false
-        default: 'enabled'
-        choices: ['enabled','disabled']
+  feature:
+    description:
+      - Name of feature.
+    required: true
+  state:
+    description:
+      - Desired state of the feature.
+    required: false
+    default: 'enabled'
+    choices: ['enabled','disabled']
 '''
 
 EXAMPLES = '''
@@ -50,20 +49,16 @@ EXAMPLES = '''
   nxos_feature:
     feature: lacp
     state: enabled
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure ospf is disabled
   nxos_feature:
     feature: ospf
     state: disabled
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure vpc is enabled
   nxos_feature:
     feature: vpc
     state: enabled
-    host: "{{ inventory_hostname }}"
-
 '''
 
 RETURN = '''
@@ -73,30 +68,25 @@ commands:
     type: list
     sample: ['nv overlay evpn']
 '''
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
-
-def check_args(module, warnings):
-    nxos_check_args(module, warnings)
-
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 
 
 def get_available_features(feature, module):
     available_features = {}
-    feature_regex = '(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
-    command = 'show feature'
+    feature_regex = r'(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
+    command = {'command': 'show feature', 'output': 'text'}
 
-    command = {'command': command, 'output': 'text'}
-
-    body = run_commands(module, [command])
-    split_body = body[0].splitlines()
+    try:
+        body = run_commands(module, [command])[0]
+        split_body = body.splitlines()
+    except (KeyError, IndexError):
+        return {}
 
     for line in split_body:
         try:
@@ -115,12 +105,10 @@ def get_available_features(feature, module):
             if feature not in available_features:
                 available_features[feature] = state
             else:
-                if (available_features[feature] == 'disabled' and
-                        state == 'enabled'):
+                if available_features[feature] == 'disabled' and state == 'enabled':
                     available_features[feature] = state
 
     return available_features
-
 
 
 def get_commands(proposed, existing, state, module):
@@ -144,36 +132,75 @@ def validate_feature(module, mode='show'):
 
     feature = module.params['feature']
 
-    feature_to_be_mapped = {
-        'show': {
-            'nv overlay': 'nve',
-            'vn-segment-vlan-based': 'vnseg_vlan',
-            'hsrp': 'hsrp_engine',
-            'fabric multicast': 'fabric_mcast',
-            'scp-server': 'scpServer',
-            'sftp-server': 'sftpServer',
-            'sla responder': 'sla_responder',
-            'sla sender': 'sla_sender',
-            'ssh': 'sshServer',
-            'tacacs+': 'tacacs',
-            'telnet': 'telnetServer',
-            'ethernet-link-oam': 'elo',
-            'port-security': 'eth_port_sec'
+    try:
+        info = get_capabilities(module)
+        device_info = info.get('device_info', {})
+        os_version = device_info.get('network_os_version', '')
+    except ConnectionError:
+        os_version = ''
+
+    if '8.1' in os_version:
+        feature_to_be_mapped = {
+            'show': {
+                'nv overlay': 'nve',
+                'vn-segment-vlan-based': 'vnseg_vlan',
+                'hsrp': 'hsrp_engine',
+                'fabric multicast': 'fabric_mcast',
+                'scp-server': 'scpServer',
+                'sftp-server': 'sftpServer',
+                'sla responder': 'sla_responder',
+                'sla sender': 'sla_sender',
+                'ssh': 'sshServer',
+                'tacacs+': 'tacacs',
+                'telnet': 'telnetServer',
+                'ethernet-link-oam': 'elo'
             },
-        'config': {
-            'nve': 'nv overlay',
-            'vnseg_vlan': 'vn-segment-vlan-based',
-            'hsrp_engine': 'hsrp',
-            'fabric_mcast': 'fabric multicast',
-            'scpServer': 'scp-server',
-            'sftpServer': 'sftp-server',
-            'sla_sender': 'sla sender',
-            'sla_responder': 'sla responder',
-            'sshServer': 'ssh',
-            'tacacs': 'tacacs+',
-            'telnetServer': 'telnet',
-            'elo': 'ethernet-link-oam',
-            'eth_port_sec': 'port-security'
+            'config': {
+                'nve': 'nv overlay',
+                'vnseg_vlan': 'vn-segment-vlan-based',
+                'hsrp_engine': 'hsrp',
+                'fabric_mcast': 'fabric multicast',
+                'scpServer': 'scp-server',
+                'sftpServer': 'sftp-server',
+                'sla_sender': 'sla sender',
+                'sla_responder': 'sla responder',
+                'sshServer': 'ssh',
+                'tacacs': 'tacacs+',
+                'telnetServer': 'telnet',
+                'elo': 'ethernet-link-oam'
+            }
+        }
+    else:
+        feature_to_be_mapped = {
+            'show': {
+                'nv overlay': 'nve',
+                'vn-segment-vlan-based': 'vnseg_vlan',
+                'hsrp': 'hsrp_engine',
+                'fabric multicast': 'fabric_mcast',
+                'scp-server': 'scpServer',
+                'sftp-server': 'sftpServer',
+                'sla responder': 'sla_responder',
+                'sla sender': 'sla_sender',
+                'ssh': 'sshServer',
+                'tacacs+': 'tacacs',
+                'telnet': 'telnetServer',
+                'ethernet-link-oam': 'elo',
+                'port-security': 'eth_port_sec'
+            },
+            'config': {
+                'nve': 'nv overlay',
+                'vnseg_vlan': 'vn-segment-vlan-based',
+                'hsrp_engine': 'hsrp',
+                'fabric_mcast': 'fabric multicast',
+                'scpServer': 'scp-server',
+                'sftpServer': 'sftp-server',
+                'sla_sender': 'sla sender',
+                'sla_responder': 'sla responder',
+                'sshServer': 'ssh',
+                'tacacs': 'tacacs+',
+                'telnetServer': 'telnet',
+                'elo': 'ethernet-link-oam',
+                'eth_port_sec': 'port-security'
             }
         }
 
@@ -186,21 +213,15 @@ def validate_feature(module, mode='show'):
 def main():
     argument_spec = dict(
         feature=dict(type='str', required=True),
-        state=dict(choices=['enabled', 'disabled'], default='enabled'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
+        state=dict(choices=['enabled', 'disabled'], default='enabled')
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    results = dict(changed=False, warnings=warnings)
 
     feature = validate_feature(module)
     state = module.params['state'].lower()
@@ -216,25 +237,21 @@ def main():
 
         existing = dict(state=existstate)
         proposed = dict(state=state)
-        changed = False
-        end_state = existing
+        results['changed'] = False
 
         cmds = get_commands(proposed, existing, state, module)
 
         if cmds:
+            # On N35 A8 images, some features return a yes/no prompt
+            # on enablement or disablement. Bypass using terminal dont-ask
+            cmds.insert(0, 'terminal dont-ask')
             if not module.check_mode:
                 load_config(module, cmds)
-            changed = True
+            results['changed'] = True
 
-    results = {
-        'commands': cmds,
-        'changed': changed,
-        'warnings': warnings
-    }
-
+    results['commands'] = cmds
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

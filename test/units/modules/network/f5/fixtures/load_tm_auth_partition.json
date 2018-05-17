@@ -1,0 +1,9 @@
+{
+  "kind": "tm:auth:partition:partitionstate",
+  "name": "foo",
+  "fullPath": "foo",
+  "generation": 212,
+  "selfLink": "https://localhost/mgmt/tm/auth/partition/foo?ver=13.0.0",
+  "defaultRouteDomain": 0,
+  "description": "my description"
+}

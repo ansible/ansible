@@ -1,24 +1,14 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -35,47 +25,34 @@ options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with
-              given NTP server or peer.
-        required: false
-        default: null
+              given NTP server or peer or keyword 'default'.
     prefer:
         description:
             - Makes given NTP server or peer the preferred
               NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enabled', 'disabled']
     vrf_name:
         description:
             - Makes the device communicate with the given
-              NTP server or peer over a specific VRF.
-        required: false
-        default: null
+              NTP server or peer over a specific VRF or
+              keyword 'default'.
     source_addr:
         description:
-            - Local source address from which NTP messages are sent.
-        required: false
-        default: null
+            - Local source address from which NTP messages are sent
+              or keyword 'default'
     source_int:
         description:
             - Local source interface from which NTP messages are sent.
-              Must be fully qualified interface name.
-        required: false
-        default: null
+              Must be fully qualified interface name or keyword 'default'
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -127,24 +104,23 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import check_args, load_config, nxos_argument_spec, run_commands
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
 
-    return body
+    commands = [{
+        'command': command,
+        'output': output,
+    }]
+    return run_commands(module, commands)
 
 
 def flatten_list(command_lists):
@@ -170,7 +146,7 @@ def get_ntp_source(module):
             else:
                 source_type = 'source'
             source = output[0].split()[2].lower()
-        except AttributeError:
+        except (AttributeError, IndexError):
             source_type = None
             source = None
 
@@ -180,52 +156,58 @@ def get_ntp_source(module):
 def get_ntp_peer(module):
     command = 'show run | inc ntp.(server|peer)'
     ntp_peer_list = []
-    ntp = execute_show_command(
+    response = execute_show_command(
         command, module, command_type='cli_show_ascii')
-    if ntp:
-        ntp = ntp[0]
 
-        ntp_regex = (
-            ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
-            "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
-            "(key\s(?P<key_id>\d+))?.*"
+    if response:
+        if isinstance(response, list):
+            ntp = response[0]
+        else:
+            ntp = response
+        if ntp:
+            ntp_regex = (
+                r".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
+                r"\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
+                r"(key\s(?P<key_id>\d+))?.*"
             )
 
-        split_ntp = ntp.splitlines()
-        for peer_line in split_ntp:
-            ntp_peer = {}
-            try:
-                peer_address = None
-                vrf_name = None
-                prefer = None
-                key_id = None
-                match_ntp = re.match(ntp_regex, peer_line, re.DOTALL)
-                group_ntp = match_ntp.groupdict()
+            split_ntp = ntp.splitlines()
+            for peer_line in split_ntp:
+                if 'access-group' in peer_line:
+                    continue
+                ntp_peer = {}
+                try:
+                    peer_address = None
+                    vrf_name = 'default'
+                    prefer = None
+                    key_id = None
+                    match_ntp = re.match(ntp_regex, peer_line, re.DOTALL)
+                    group_ntp = match_ntp.groupdict()
 
-                address = group_ntp["address"]
-                peer_address = group_ntp['peer_address']
-                prefer = group_ntp['prefer']
-                vrf_name = group_ntp['vrf_name']
-                key_id = group_ntp['key_id']
+                    address = group_ntp["address"]
+                    peer_address = group_ntp['peer_address']
+                    prefer = group_ntp['prefer']
+                    vrf_name = group_ntp['vrf_name']
+                    key_id = group_ntp['key_id']
 
-                if prefer is not None:
-                    prefer = 'enabled'
-                else:
-                    prefer = 'disabled'
+                    if prefer is not None:
+                        prefer = 'enabled'
+                    else:
+                        prefer = 'disabled'
 
-                if address is not None:
-                    peer_type = 'server'
-                elif peer_address is not None:
-                    peer_type = 'peer'
-                    address = peer_address
+                    if address is not None:
+                        peer_type = 'server'
+                    elif peer_address is not None:
+                        peer_type = 'peer'
+                        address = peer_address
 
-                args = dict(peer_type=peer_type, address=address, prefer=prefer,
-                            vrf_name=vrf_name, key_id=key_id)
+                    args = dict(peer_type=peer_type, address=address, prefer=prefer,
+                                vrf_name=vrf_name, key_id=key_id)
 
-                ntp_peer = dict((k, v) for k, v in args.items())
-                ntp_peer_list.append(ntp_peer)
-            except AttributeError:
-                ntp_peer_list = []
+                    ntp_peer = dict((k, v) for k, v in args.items())
+                    ntp_peer_list.append(ntp_peer)
+                except AttributeError:
+                    ntp_peer_list = []
 
     return ntp_peer_list
 
@@ -268,11 +250,18 @@ def set_ntp_server_peer(peer_type, address, prefer, key_id, vrf_name):
 
 
 def config_ntp(delta, existing):
-    address = delta.get('address', existing.get('address'))
-    peer_type = delta.get('peer_type', existing.get('peer_type'))
-    vrf_name = delta.get('vrf_name', existing.get('vrf_name'))
-    key_id = delta.get('key_id', existing.get('key_id'))
-    prefer = delta.get('prefer', existing.get('prefer'))
+    if (delta.get('address') or delta.get('peer_type') or delta.get('vrf_name') or
+            delta.get('key_id') or delta.get('prefer')):
+        address = delta.get('address', existing.get('address'))
+        peer_type = delta.get('peer_type', existing.get('peer_type'))
+        key_id = delta.get('key_id', existing.get('key_id'))
+        prefer = delta.get('prefer', existing.get('prefer'))
+        vrf_name = delta.get('vrf_name', existing.get('vrf_name'))
+        if delta.get('key_id') == 'default':
+            key_id = None
+    else:
+        peer_type = None
+        prefer = None
 
     source_type = delta.get('source_type')
     source = delta.get('source')
@@ -288,6 +277,9 @@ def config_ntp(delta, existing):
 
     ntp_cmds = []
     if peer_type:
+        if existing.get('peer_type') and existing.get('address'):
+            ntp_cmds.append('no ntp {0} {1}'.format(existing.get('peer_type'),
+                                                    existing.get('address')))
         ntp_cmds.append(set_ntp_server_peer(
             peer_type, address, prefer, key_id, vrf_name))
     if source:
@@ -295,7 +287,11 @@ def config_ntp(delta, existing):
         existing_source = existing.get('source')
         if existing_source_type and source_type != existing_source_type:
             ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
-        ntp_cmds.append('ntp {0} {1}'.format(source_type, source))
+        if source == 'default':
+            if existing_source_type and existing_source:
+                ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
+        else:
+            ntp_cmds.append('ntp {0} {1}'.format(source_type, source))
 
     return ntp_cmds
 
@@ -315,14 +311,13 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[
-                                    ['server','peer'],
-                                    ['source_addr','source_int']],
-                                supports_check_mode=True)
+                           mutually_exclusive=[
+                               ['server', 'peer'],
+                               ['source_addr', 'source_int']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     server = module.params['server'] or None
     peer = module.params['peer'] or None
@@ -332,6 +327,7 @@ def main():
     source_addr = module.params['source_addr']
     source_int = module.params['source_int']
     state = module.params['state']
+
     if source_int is not None:
         source_int = source_int.lower()
 
@@ -373,6 +369,9 @@ def main():
 
     if state == 'present':
         delta = dict(set(proposed.items()).difference(existing.items()))
+        if delta.get('key_id') and delta.get('key_id') == 'default':
+            if not existing.get('key_id'):
+                delta.pop('key_id')
         if delta:
             command = config_ntp(delta, existing)
             if command:
@@ -421,7 +420,5 @@ def main():
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
-

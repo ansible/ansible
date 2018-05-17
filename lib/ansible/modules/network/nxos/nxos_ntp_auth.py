@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,45 +33,36 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - If C(state=absent), the module will attempt to remove the given key configuration.
-      If a matching key configuration isn't found on the device, the module will fail.
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+    - If C(state=absent), the module will remove the given key configuration if it exists.
     - If C(state=absent) and C(authentication=on), authentication will be turned off.
-    - If C(state=absent) and C(authentication=off), authentication will be turned on.
 options:
     key_id:
         description:
             - Authentication key identifier (numeric).
-        required: true
     md5string:
         description:
             - MD5 String.
-        required: true
-        default: null
     auth_type:
         description:
             - Whether the given md5string is in cleartext or
               has been encrypted. If in cleartext, the device
               will encrypt it before storing it.
-        required: false
         default: text
         choices: ['text', 'encrypt']
     trusted_key:
         description:
             - Whether the given key is required to be supplied by a time source
               for the device to synchronize to the time source.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        choices: [ 'false', 'true' ]
+        default: 'false'
     authentication:
         description:
             - Turns NTP authentication on or off.
-        required: false
-        default: null
         choices: ['on', 'off']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -82,67 +73,37 @@ EXAMPLES = '''
     key_id: 32
     md5string: hello
     auth_type: text
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"auth_type": "text", "authentication": "off",
-            "key_id": "32", "md5string": "helloWorld",
-            "trusted_key": "true"}
-existing:
-    description:
-        - k/v pairs of existing ntp authentication
-    returned: always
-    type: dict
-    sample: {"authentication": "off", "trusted_key": "false"}
-end_state:
-    description: k/v pairs of ntp authentication after module execution
-    returned: always
-    type: dict
-    sample: {"authentication": "off", "key_id": "32",
-            "md5string": "kapqgWjwdg", "trusted_key": "true"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: ["ntp authentication-key 32 md5 helloWorld 0", "ntp trusted-key 32"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-
 import re
 
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
-    return body
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        command = {
+            'command': command,
+            'output': 'json',
+        }
+    else:
+        command = {
+            'command': command,
+            'output': 'text',
+        }
+
+    return run_commands(module, [command])
 
 
 def flatten_list(command_lists):
@@ -173,8 +134,7 @@ def get_ntp_trusted_key(module):
     trusted_key_list = []
     command = 'show run | inc ntp.trusted-key'
 
-    trusted_key_str = execute_show_command(
-        command, module, command_type='cli_show_ascii')[0]
+    trusted_key_str = execute_show_command(command, module)[0]
     if trusted_key_str:
         trusted_keys = trusted_key_str.splitlines()
 
@@ -191,18 +151,20 @@ def get_ntp_trusted_key(module):
 def get_ntp_auth_key(key_id, module):
     authentication_key = {}
     command = 'show run | inc ntp.authentication-key.{0}'.format(key_id)
-    auth_regex = (".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
-                  "md5\s(?P<md5string>\S+).*")
+    auth_regex = (r".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
+                  r"md5\s(?P<md5string>\S+)\s(?P<atype>\S+).*")
 
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = execute_show_command(command, module)[0]
 
     try:
-        match_authentication = re.match(auth_regex, body[0], re.DOTALL)
+        match_authentication = re.match(auth_regex, body, re.DOTALL)
         group_authentication = match_authentication.groupdict()
-        key_id = group_authentication["key_id"]
-        md5string = group_authentication['md5string']
-        authentication_key['key_id'] = key_id
-        authentication_key['md5string'] = md5string
+        authentication_key['key_id'] = group_authentication['key_id']
+        authentication_key['md5string'] = group_authentication['md5string']
+        if group_authentication['atype'] == '7':
+            authentication_key['auth_type'] = 'encrypt'
+        else:
+            authentication_key['auth_type'] = 'text'
     except (AttributeError, TypeError):
         authentication_key = {}
 
@@ -228,7 +190,7 @@ def get_ntp_auth_info(key_id, module):
 
 
 def auth_type_to_num(auth_type):
-    if auth_type == 'encrypt' :
+    if auth_type == 'encrypt':
         return '7'
     else:
         return '0'
@@ -236,10 +198,11 @@ def auth_type_to_num(auth_type):
 
 def set_ntp_auth_key(key_id, md5string, auth_type, trusted_key, authentication):
     ntp_auth_cmds = []
-    auth_type_num = auth_type_to_num(auth_type)
-    ntp_auth_cmds.append(
-        'ntp authentication-key {0} md5 {1} {2}'.format(
-            key_id, md5string, auth_type_num))
+    if key_id and md5string:
+        auth_type_num = auth_type_to_num(auth_type)
+        ntp_auth_cmds.append(
+            'ntp authentication-key {0} md5 {1} {2}'.format(
+                key_id, md5string, auth_type_num))
 
     if trusted_key == 'true':
         ntp_auth_cmds.append(
@@ -260,25 +223,22 @@ def set_ntp_auth_key(key_id, md5string, auth_type, trusted_key, authentication):
 
 def remove_ntp_auth_key(key_id, md5string, auth_type, trusted_key, authentication):
     auth_remove_cmds = []
-    auth_type_num = auth_type_to_num(auth_type)
-    auth_remove_cmds.append(
-        'no ntp authentication-key {0} md5 {1} {2}'.format(
-            key_id, md5string, auth_type_num))
+    if key_id:
+        auth_type_num = auth_type_to_num(auth_type)
+        auth_remove_cmds.append(
+            'no ntp authentication-key {0} md5 {1} {2}'.format(
+                key_id, md5string, auth_type_num))
 
-    if authentication == 'on':
+    if authentication:
         auth_remove_cmds.append(
             'no ntp authenticate')
-    elif authentication == 'off':
-        auth_remove_cmds.append(
-            'ntp authenticate')
-
     return auth_remove_cmds
 
 
 def main():
     argument_spec = dict(
-        key_id=dict(required=True, type='str'),
-        md5string=dict(required=True, type='str'),
+        key_id=dict(type='str'),
+        md5string=dict(type='str'),
         auth_type=dict(choices=['text', 'encrypt'], default='text'),
         trusted_key=dict(choices=['true', 'false'], default='false'),
         authentication=dict(choices=['on', 'off']),
@@ -288,11 +248,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     key_id = module.params['key_id']
     md5string = module.params['md5string']
@@ -300,6 +259,10 @@ def main():
     trusted_key = module.params['trusted_key']
     authentication = module.params['authentication']
     state = module.params['state']
+
+    if key_id:
+        if not trusted_key and not md5string:
+            module.fail_json(msg='trusted_key or md5string MUST be specified')
 
     args = dict(key_id=key_id, md5string=md5string,
                 auth_type=auth_type, trusted_key=trusted_key,
@@ -317,29 +280,27 @@ def main():
     if state == 'present':
         if delta:
             command = set_ntp_auth_key(
-                key_id, md5string, auth_type, trusted_key, delta.get('authentication'))
+                key_id, md5string, delta.get('auth_type'),
+                delta.get('trusted_key'), delta.get('authentication'))
             if command:
                 commands.append(command)
     elif state == 'absent':
-        if existing:
-            auth_toggle = None
-            if authentication == existing.get('authentication'):
-                auth_toggle = authentication
-            command = remove_ntp_auth_key(
-                key_id, md5string, auth_type, trusted_key, auth_toggle)
-            if command:
-                commands.append(command)
+        auth_toggle = None
+        if existing.get('authentication') == 'on':
+            auth_toggle = True
+        if not existing.get('key_id'):
+            key_id = None
+        command = remove_ntp_auth_key(
+            key_id, md5string, auth_type, trusted_key, auth_toggle)
+        if command:
+            commands.append(command)
 
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            try:
-                load_config(module, cmds)
-            except ShellError:
-                clie = get_exception()
-                module.fail_json(msg=str(clie) + ": " + cmds)
+            load_config(module, cmds)
             end_state = get_ntp_auth_info(key_id, module)
             delta = dict(set(end_state.items()).difference(existing.items()))
             if delta or (len(existing) != len(end_state)):
@@ -359,4 +320,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

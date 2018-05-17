@@ -1,0 +1,245 @@
+# ============================================================
+- name: Test rax_keypair with no args
+  rax_keypair:
+  ignore_errors: true
+  register: rax_keypair
+
+- name: Validate results of rax_keypair with no args
+  assert:
+    that:
+      - rax_keypair is failed
+      - 'rax_keypair.msg == "missing required arguments: name"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with name
+  rax_keypair:
+    name: fail
+  ignore_errors: true
+  register: rax_keypair
+
+- name: Validate results of rax_keypair with no args
+  assert:
+    that:
+      - rax_keypair is failed
+      - rax_keypair.msg == 'No credentials supplied!'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with name and credentials
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    name: fail
+  ignore_errors: true
+  register: rax_keypair
+
+- name: Validate results of rax_keypair with name and credentials
+  assert:
+    that:
+      - rax_keypair is failed
+      - rax_keypair.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Create public key file for tests
+  copy:
+    content: "{{ rackspace_keypair_pub }}"
+    dest: "{{ output_dir|expanduser }}/{{ resource_prefix }}.pub"
+
+- name: Set variable for public key path
+  set_fact:
+    rackspace_keypair_pub_path: "{{ output_dir|expanduser }}/{{ resource_prefix }}.pub"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with creds, region, name and public_key string
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    public_key: "{{ rackspace_keypair_pub }}"
+  register: rax_keypair
+
+- name: Validate rax_keypair creds, region, name and public_key string
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-1"
+      - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
+
+- name: Delete integration 1
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    public_key: "{{ rackspace_keypair_pub }}"
+    state: absent
+  register: rax_keypair
+
+- name: Validate delete integration 1
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-1"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with creds, region, name and public_key path
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    public_key: "{{ rackspace_keypair_pub_path }}"
+  register: rax_keypair
+
+- name: Validate rax_keypair creds, region, name and public_key path
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-2"
+      - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
+
+- name: Delete integration 2
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    public_key: "{{ rackspace_keypair_pub }}"
+    state: absent
+  register: rax_keypair
+
+- name: Validate delete integration 2
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-2"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with idempotency 1
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    public_key: "{{ rackspace_keypair_pub }}"
+  register: rax_keypair
+
+- name: Validate rax_keypair with idempotency 1
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
+      - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
+
+- name: Test rax_keypair with idempotency 2
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    public_key: "{{ rackspace_keypair_pub }}"
+  register: rax_keypair
+
+- name: Validate rax_keypair with idempotency 1
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is not changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
+      - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
+
+- name: Delete integration 3
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    public_key: "{{ rackspace_keypair_pub }}"
+    state: absent
+  register: rax_keypair
+
+- name: Validate delete integration 3
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_keypair with creds, region and name
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+  register: rax_keypair
+
+- name: Validate rax_keypair creds, region and name
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
+      - rax_keypair.keypair.private_key is defined
+      - rax_keypair.keypair.public_key is defined
+
+- name: Test rax_keypair with creds, region and name idempotency
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+  register: rax_keypair
+
+- name: Validate rax_keypair creds, region and name
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is not changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
+      - rax_keypair.keypair.private_key is not defined
+      - rax_keypair.keypair.public_key is defined
+
+- name: Delete integration 4
+  rax_keypair:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    public_key: "{{ rackspace_keypair_pub }}"
+    state: absent
+  register: rax_keypair
+
+- name: Validate delete integration 4
+  assert:
+    that:
+      - rax_keypair is successful
+      - rax_keypair is changed
+      - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
+# ============================================================

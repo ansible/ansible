@@ -1,0 +1,2 @@
+- debug:
+    var: where_am_i_defined

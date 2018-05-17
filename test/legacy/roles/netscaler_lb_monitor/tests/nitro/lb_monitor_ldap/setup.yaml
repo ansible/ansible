@@ -1,0 +1,19 @@
+---
+
+- name: setup lb monitor
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    monitorname: lb-monitor-ldap
+    type: LDAP
+
+    basedn: example.com
+    binddn: example.com
+    filter: somefilter
+    attribute: cn

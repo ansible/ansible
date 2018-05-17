@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_system
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosSystemModule(TestIosModule):
@@ -32,6 +31,8 @@ class TestIosSystemModule(TestIosModule):
     module = ios_system
 
     def setUp(self):
+        super(TestIosSystemModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_system.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -39,10 +40,11 @@ class TestIosSystemModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosSystemModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commnads=None):
+    def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_system_config.cfg')
         self.load_config.return_value = None
 
@@ -50,7 +52,6 @@ class TestIosSystemModule(TestIosModule):
         set_module_args(dict(hostname='foo'))
         commands = ['hostname foo']
         self.execute_module(changed=True, commands=commands)
-
 
     def test_ios_system_domain_name(self):
         set_module_args(dict(domain_name=['test.com']))
@@ -120,4 +121,3 @@ class TestIosSystemModule(TestIosModule):
         name_servers = dict(server='8.8.8.8', vrf='missing')
         set_module_args(dict(name_servers=name_servers))
         self.execute_module(failed=True)
-

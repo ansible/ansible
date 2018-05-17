@@ -1,0 +1,62 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/configure.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: setup
+  nxos_config:
+    lines: no feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- name: enable bgp
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify bgp
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: disable bgp
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify bgp
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- debug: msg="END connection={{ ansible_connection }}/configure.yaml"

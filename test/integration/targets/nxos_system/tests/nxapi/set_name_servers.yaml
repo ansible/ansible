@@ -28,7 +28,6 @@
 - assert:
     that:
       - result.changed == true
-      - result.commands|length == 3
       - "'ip name-server 1.1.1.1' in result.commands"
       - "'ip name-server 2.2.2.2' in result.commands"
       - "'ip name-server 3.3.3.3' in result.commands"

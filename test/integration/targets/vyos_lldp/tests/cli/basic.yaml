@@ -1,0 +1,44 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Make sure LLDP is not running before tests
+  vyos_config:
+    lines: delete service lldp
+
+- name: Enable LLDP service
+  vyos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp" in result.commands'
+
+- name: Enable LLDP service again (idempotent)
+  vyos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable LLDP service
+  vyos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete service lldp" in result.commands'
+
+- name:
+  vyos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

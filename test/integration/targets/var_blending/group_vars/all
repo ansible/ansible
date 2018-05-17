@@ -1,0 +1,9 @@
+a: 999
+b: 998
+c: 997
+d: 996
+uno: 1
+dos: 2
+tres: 3
+etest: 'from group_vars'
+inventory_beats_default: 'narf'

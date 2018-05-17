@@ -1,0 +1,18 @@
+Dell Real Time Operating System Software
+Dell Operating System Version:  2.0
+Dell Application Software Version:  9.10(0.1P13)
+Copyright (c) 1999-2016 by Dell Inc. All Rights Reserved.
+Build Time: Wed Sep  7 23:48:35 2016
+Build Path: /sites/eqx/work/swbuild01_1/build01/E9-10-0/SW/SRC
+Dell Networking OS uptime is 12 week(s), 6 day(s), 9 hour(s), 20 minute(s)
+
+System image file is "system://A"
+
+System Type: S6000-ON
+Control Processor: Intel Centerton with 3 Gbytes (3203911680 bytes) of memory, core(s) 2.
+
+16G bytes of boot flash memory.
+
+  1 32-port TE/FG (SI-ON)
+ 32 Forty GigabitEthernet/IEEE 802.3 interface(s)
+

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_name_servers.yaml"
+- debug: msg="START cli/set_name_servers.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -40,35 +40,6 @@
     that:
       - result.changed == false
 
-#- name: change to vrf
-#  iosxr_system:
-#    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#    provider: "{{ cli }}"
-#  register: result
-
-#- assert:
-#    that:
-#      - result.changed == true
-#      - result.commands|length == 2
-#      - "'no ip name-server 2.2.2.2' in result.commands"
-#      - "'ip name-server 2.2.2.2 vrf ansible' in result.commands"
-
-#- name: verify change to vrf
-#  iosxr_system:
-#    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#    provider: "{{ cli }}"
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == false
-
 - name: remove one
   iosxr_system:
     name_servers:
@@ -83,6 +54,12 @@
       - result.commands|length == 1
       - "'no domain name-server 3.3.3.3' in result.commands"
 
-# FIXME: No teardown
-#
-- debug: msg="END cli/set_name_servers.yaml"
+- name: setup
+  iosxr_config:
+    lines:
+      - no ip name-server 1.1.1.1
+      - no ip name-server 2.2.2.2
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"

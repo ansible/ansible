@@ -1,7 +1,0 @@
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  tags:
-    - cloudscale
-  roles:
-    - { role: cloudscale_server,            tags: cloudscale_server }

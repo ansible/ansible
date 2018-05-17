@@ -1,0 +1,86 @@
+---
+- name: setup ssh key
+  cs_sshkeypair: name={{ cs_resource_prefix }}-sshkey
+  register: sshkey
+- name: verify setup ssh key
+  assert:
+    that:
+    - sshkey is successful
+
+- name: setup affinity group
+  cs_affinitygroup: name={{ cs_resource_prefix }}-ag
+  register: ag
+- name: verify setup affinity group
+  assert:
+    that:
+    - ag is successful
+
+- name: setup security group
+  cs_securitygroup: name={{ cs_resource_prefix }}-sg
+  register: sg
+- name: verify setup security group
+  assert:
+    that:
+    - sg is successful
+
+- name: setup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag"
+    security_group: "{{ cs_resource_prefix }}-sg"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    tags: []
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful
+
+- name: test instance facts in check mode
+  cs_instance_facts:
+    name: "{{ cs_resource_prefix }}-vm"
+  register: instance_facts
+  check_mode: true
+- name: verify test instance facts in check mode
+  assert:
+    that:
+    - instance_facts is successful
+    - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
+    - cloudstack_instance.id == instance.id
+    - cloudstack_instance.domain == instance.domain
+    - cloudstack_instance.account == instance.account
+    - cloudstack_instance.zone == instance.zone
+    - cloudstack_instance.name == instance.name
+    - cloudstack_instance.service_offering == instance.service_offering
+
+- name: test instance facts
+  cs_instance_facts:
+    name: "{{ cs_resource_prefix }}-vm"
+  register: instance_facts
+- name: verify test instance facts
+  assert:
+    that:
+    - instance_facts is successful
+    - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
+    - cloudstack_instance.id == instance.id
+    - cloudstack_instance.domain == instance.domain
+    - cloudstack_instance.account == instance.account
+    - cloudstack_instance.zone == instance.zone
+    - cloudstack_instance.name == instance.name
+    - cloudstack_instance.service_offering == instance.service_offering

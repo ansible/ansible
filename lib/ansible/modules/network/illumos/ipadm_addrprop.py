@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Adam Števko <adam.stevko@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -62,11 +51,11 @@ options:
 '''
 
 EXAMPLES = '''
-name: Mark address on addrobj as deprecated
-ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
+- name: Mark address on addrobj as deprecated
+  ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
 
-name: Set network prefix length for addrobj
-ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
+- name: Set network prefix length for addrobj
+  ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
 '''
 
 RETURN = '''
@@ -202,7 +191,7 @@ class AddrProp(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            addrobj=dict(required=True, default=None, aliases=['nic, interface']),
+            addrobj=dict(required=True, default=None, aliases=['nic', 'interface']),
             property=dict(required=True, aliases=['name']),
             value=dict(required=False),
             temporary=dict(default=False, type='bool'),

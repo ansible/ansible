@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,8 +32,6 @@ options:
   names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
-    required: false
-    default: null
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -208,13 +206,12 @@ class ElbInformation(object):
                 elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
-
     def list_elbs(self):
         elb_array, token = [], None
         get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
         while True:
             all_elbs = get_elb_with_backoff(marker=token)
-            token = all_elbs.next_token
+            token = all_elbs.next_marker
 
             if all_elbs:
                 if self.names:
@@ -257,8 +254,8 @@ def main():
                                 elbs=elb_information.list_elbs())
 
     except BotoServerError as err:
-        self.module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
-                              exception=traceback.format_exc())
+        module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
+                         exception=traceback.format_exc())
 
     module.exit_json(**ec2_facts_result)
 

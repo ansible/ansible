@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -61,7 +61,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_quotas:
     description: "List of dictionaries describing the quotas. Quota attribues are mapped to dictionary keys,
-                  all quotas attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+                  all quotas attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success.
     type: list
 '''

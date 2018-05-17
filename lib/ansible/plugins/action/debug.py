@@ -42,11 +42,10 @@ class ActionModule(ActionBase):
             return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
-        verbosity = 0
         # get task verbosity
-        if 'verbosity' in self._task.args:
-            verbosity = int(self._task.args['verbosity'])
+        verbosity = int(self._task.args.get('verbosity', 0))
 
         if verbosity <= self._display.verbosity:
             if 'msg' in self._task.args:
@@ -61,8 +60,10 @@ class ActionModule(ActionBase):
                             raise AnsibleUndefinedVariable
                         # If var name is same as result, try to template it
                         results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
-                except AnsibleUndefinedVariable:
-                    results = "VARIABLE IS NOT DEFINED!"
+                except AnsibleUndefinedVariable as e:
+                    results = u"VARIABLE IS NOT DEFINED!"
+                    if self._display.verbosity > 0:
+                        results += u": %s" % to_text(e)
 
                 if isinstance(self._task.args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display

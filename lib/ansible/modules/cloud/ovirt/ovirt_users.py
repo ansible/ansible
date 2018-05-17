@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Name of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
         required: true
     state:
         description:
@@ -55,18 +55,18 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add user user1 from authorization provider example.com-authz
-ovirt_users:
+- ovirt_users:
     name: user1
     domain: example.com-authz
 
 # Add user user1 from authorization provider example.com-authz
 # In case of Active Directory specify UPN:
-ovirt_users:
+- ovirt_users:
     name: user1@ad2.example.com
     domain: example.com-authz
 
 # Remove user user1 with authorization provider example.com-authz
-ovirt_users:
+- ovirt_users:
     state: absent
     name: user1
     authz_name: example.com-authz
@@ -80,8 +80,9 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 user:
     description: "Dictionary of all the user attributes. User attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/user."
     returned: On success if user is found.
+    type: dict
 '''
 
 import traceback

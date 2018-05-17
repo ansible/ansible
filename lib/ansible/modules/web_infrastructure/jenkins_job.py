@@ -1,19 +1,13 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -151,6 +145,8 @@ url:
   sample: https://jenkins.mydomain.com
 '''
 
+import traceback
+
 try:
     import jenkins
     python_jenkins_installed = True
@@ -163,7 +159,12 @@ try:
 except ImportError:
     python_lxml_installed = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
 class JenkinsJob:
+
     def __init__(self, module):
         self.module = module
 
@@ -189,9 +190,6 @@ class JenkinsJob:
             }
         }
 
-        # This kind of jobs do not have a property that makes them enabled/disabled
-        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder"]
-
         self.EXCL_STATE = "excluded state"
 
     def get_jenkins_connection(self):
@@ -204,31 +202,26 @@ class JenkinsJob:
                 return jenkins.Jenkins(self.jenkins_url, self.user)
             else:
                 return jenkins.Jenkins(self.jenkins_url)
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
-
-    def job_class_excluded(self, response):
-        return response['_class'] in self.job_classes_exceptions
+        except Exception as e:
+            self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % to_native(e), exception=traceback.format_exc())
 
     def get_job_status(self):
         try:
             response = self.server.get_job_info(self.name)
-            if self.job_class_excluded(response):
+            if "color" not in response:
                 return self.EXCL_STATE
             else:
                 return response['color'].encode('utf-8')
 
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Unable to fetch job information, %s' % str(e))
+        except Exception as e:
+            self.module.fail_json(msg='Unable to fetch job information, %s' % to_native(e), exception=traceback.format_exc())
 
     def job_exists(self):
         try:
             return bool(self.server.job_exists(self.name))
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Unable to validate if job exists, %s for %s' % (str(e), self.jenkins_url))
+        except Exception as e:
+            self.module.fail_json(msg='Unable to validate if job exists, %s for %s' % (to_native(e), self.jenkins_url),
+                                  exception=traceback.format_exc())
 
     def get_config(self):
         return job_config_to_string(self.config)
@@ -265,7 +258,7 @@ class JenkinsJob:
         if self.enabled is None:
             return False
 
-        if ( (self.enabled is False and status != "disabled") or (self.enabled is True and status == "disabled") ):
+        if ((self.enabled is False and status != "disabled") or (self.enabled is True and status == "disabled")):
             return True
         return False
 
@@ -291,9 +284,9 @@ class JenkinsJob:
                 if not self.module.check_mode:
                     self.switch_state()
 
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Unable to reconfigure job, %s for %s' % (str(e), self.jenkins_url))
+        except Exception as e:
+            self.module.fail_json(msg='Unable to reconfigure job, %s for %s' % (to_native(e), self.jenkins_url),
+                                  exception=traceback.format_exc())
 
     def create_job(self):
         if self.config is None:
@@ -305,9 +298,9 @@ class JenkinsJob:
             self.result['diff']['after'] = config_file
             if not self.module.check_mode:
                 self.server.create_job(self.name, config_file)
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Unable to create job, %s for %s' % (str(e), self.jenkins_url))
+        except Exception as e:
+            self.module.fail_json(msg='Unable to create job, %s for %s' % (to_native(e), self.jenkins_url),
+                                  exception=traceback.format_exc())
 
     def absent_job(self):
         if self.job_exists():
@@ -316,9 +309,9 @@ class JenkinsJob:
             if not self.module.check_mode:
                 try:
                     self.server.delete_job(self.name)
-                except Exception:
-                    e = get_exception()
-                    self.module.fail_json(msg='Unable to delete job, %s for %s' % (str(e), self.jenkins_url))
+                except Exception as e:
+                    self.module.fail_json(msg='Unable to delete job, %s for %s' % (to_native(e), self.jenkins_url),
+                                          exception=traceback.format_exc())
 
     def get_result(self):
         result = self.result
@@ -328,31 +321,34 @@ class JenkinsJob:
             result['enabled'] = None
         return result
 
+
 def test_dependencies(module):
     if not python_jenkins_installed:
-        module.fail_json(msg="python-jenkins required for this module. "\
-              "see http://python-jenkins.readthedocs.io/en/latest/install.html")
+        module.fail_json(msg="python-jenkins required for this module. "
+                         "see http://python-jenkins.readthedocs.io/en/latest/install.html")
 
     if not python_lxml_installed:
-        module.fail_json(msg="lxml required for this module. "\
-              "see http://lxml.de/installation.html")
+        module.fail_json(msg="lxml required for this module. "
+                         "see http://lxml.de/installation.html")
+
 
 def job_config_to_string(xml_str):
     return ET.tostring(ET.fromstring(xml_str))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            config      = dict(required=False),
-            name        = dict(required=True),
-            password    = dict(required=False, no_log=True),
-            state       = dict(required=False, choices=['present', 'absent'], default="present"),
-            enabled     = dict(required=False, type='bool'),
-            token       = dict(required=False, no_log=True),
-            url         = dict(required=False, default="http://localhost:8080"),
-            user        = dict(required=False)
+        argument_spec=dict(
+            config=dict(required=False),
+            name=dict(required=True),
+            password=dict(required=False, no_log=True),
+            state=dict(required=False, choices=['present', 'absent'], default="present"),
+            enabled=dict(required=False, type='bool'),
+            token=dict(required=False, no_log=True),
+            url=dict(required=False, default="http://localhost:8080"),
+            user=dict(required=False)
         ),
-        mutually_exclusive = [
+        mutually_exclusive=[
             ['password', 'token'],
             ['config', 'enabled'],
         ],
@@ -371,6 +367,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

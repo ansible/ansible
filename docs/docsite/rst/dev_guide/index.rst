@@ -1,8 +1,6 @@
-Developer Information
-=====================
-
-Ansible Developer Guide
-```````````````````````
+***************
+Developer Guide
+***************
 
 Welcome to the Ansible Developer Guide!
 
@@ -12,18 +10,20 @@ To get started, select one of the following topics.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    overview_architecture
    developing_modules
-   developing_python3
+   developing_program_flow_modules
+   developing_module_utilities
    developing_plugins
    developing_inventory
-   developing_api
-   developing_module_utilities
    developing_core
-   developing_test_pr
+   developing_python_3
+   developing_api
    developing_rebasing
+   testing
    repomerge
-   developing_releases
-   ../committer_guidelines
+   ../reference_appendices/release_and_maintenance
+   ../community/committer_guidelines
+   ./style_guide/index

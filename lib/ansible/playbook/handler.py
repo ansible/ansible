@@ -19,9 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
+
 
 class Handler(Task):
 
@@ -42,7 +42,7 @@ class Handler(Task):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def flag_for_host(self, host):
-        #assert instanceof(host, Host)
+        # assert instanceof(host, Host)
         if host not in self._flagged_hosts:
             self._flagged_hosts.append(host)
 

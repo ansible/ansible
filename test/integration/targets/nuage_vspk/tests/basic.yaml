@@ -1,0 +1,226 @@
+---
+# Getting the CSP enterprise
+- name: Get CSP Enterprise
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    command: get_csp_enterprise
+  register: nuage_csp_enterprise
+
+- name: Check if CSP enterprise was found
+  assert:
+    that:
+    - nuage_csp_enterprise.id is defined
+    - nuage_csp_enterprise.entities is defined
+    - nuage_csp_enterprise.entities[0].name == "CSP"
+
+- name: Create Enterprise
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    state: present
+    properties:
+      name: "Ansible-Enterprise"
+  register: nuage_enterprise
+
+- name: Check Enterprise was created
+  assert:
+    that:
+    - nuage_enterprise.changed
+    - nuage_enterprise.id is defined
+    - nuage_enterprise.entities is defined
+    - nuage_enterprise.entities[0].name == "Ansible-Enterprise"
+
+- name: Finding Enterprise
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    command: find
+    properties:
+      name: "Ansible-Enterprise"
+  register: nuage_enterprise
+
+- name: Check Enterprise was found
+  assert:
+    that:
+    - not nuage_enterprise.changed
+    - nuage_enterprise.id is defined
+    - nuage_enterprise.entities is defined
+    - nuage_enterprise.entities[0].name == "Ansible-Enterprise"
+
+- name: Create Enterprise again to confirm idempoteny
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    state: present
+    properties:
+      name: "Ansible-Enterprise"
+  register: nuage_enterprise
+
+- name: Check Enterprise was not created again
+  assert:
+    that:
+    - not nuage_enterprise.changed
+    - nuage_enterprise.id is defined
+    - nuage_enterprise.entities is defined
+    - nuage_enterprise.entities[0].name == "Ansible-Enterprise"
+
+- name: Create admin user
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    parent_id: "{{ nuage_enterprise.id }}"
+    parent_type: Enterprise
+    state: present
+    match_filter: "userName == 'ansible-admin'"
+    properties:
+      email: "ansible@localhost.local"
+      first_name: "Ansible"
+      last_name: "Admin"
+      password: "ansible-password"
+      user_name: "ansible-admin"
+  register: nuage_user
+
+- name: Check the user was created
+  assert:
+    that:
+    - nuage_user.changed
+    - nuage_user.id is defined
+    - nuage_user.entities is defined
+    - nuage_user.entities[0].userName == "ansible-admin"
+
+- name: Update admin password
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    command: change_password
+    properties:
+      password: "ansible-new-password"
+  ignore_errors: yes
+
+- name: Check the user was created
+  assert:
+    that:
+    - nuage_user.changed
+    - nuage_user.id is defined
+    - nuage_user.entities is defined
+    - nuage_user.entities[0].userName == "ansible-admin"
+
+- name: Create group in Enterprise
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Group
+    parent_id: "{{ nuage_enterprise.id }}"
+    parent_type: Enterprise
+    state: present
+    properties:
+      name: "Ansible-Group"
+  register: nuage_group
+
+- name: Check the group was created
+  assert:
+    that:
+    - nuage_group.changed
+    - nuage_group.id is defined
+    - nuage_group.entities is defined
+    - nuage_group.entities[0].name == "Ansible-Group"
+
+- name: Assign admin user to group
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    parent_id: "{{ nuage_group.id }}"
+    parent_type: Group
+    state: present
+  register: nuage_assign
+
+- name: Check the admin was added to the group
+  assert:
+    that:
+    - nuage_assign.changed
+
+- name: Assign admin user to administrators again to test idempotency
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    parent_id: "{{ nuage_group.id }}"
+    parent_type: Group
+    state: present
+  register: nuage_assign
+
+- name: Check the group was not changed
+  assert:
+    that:
+    - not nuage_assign.changed
+
+- name: Unassign admin user to administrators
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    parent_id: "{{ nuage_group.id }}"
+    parent_type: Group
+    state: absent
+  register: nuage_unassign
+
+- name: Check the admin was removed from the group
+  assert:
+    that:
+    - nuage_unassign.changed
+
+- name: Unassign admin user to administrators again to test idempotency
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    parent_id: "{{ nuage_group.id }}"
+    parent_type: Group
+    state: absent
+  register: nuage_unassign
+
+- name: Check the group was not changed
+  assert:
+    that:
+    - not nuage_unassign.changed
+
+- name: Delete User
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: User
+    id: "{{ nuage_user.id }}"
+    state: absent
+  register: nuage_user
+
+- name: Check the user was deleted
+  assert:
+    that:
+    - nuage_user.changed
+
+- name: Delete Enterprise
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    id: "{{ nuage_enterprise.id }}"
+    state: absent
+  register: nuage_enterprise
+
+- name: Check the enterprise was deleted
+  assert:
+    that:
+    - nuage_enterprise.changed
+
+- name: Delete Enterprise again to test idempotency
+  nuage_vspk:
+    auth: "{{ nuage_auth }}"
+    type: Enterprise
+    match_filter: 'name == "Ansible-Enterprise"'
+    state: absent
+  register: nuage_enterprise
+
+- name: Check the delete idempotency
+  assert:
+    that:
+    - not nuage_enterprise.changed

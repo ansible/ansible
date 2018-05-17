@@ -1,0 +1,12 @@
+- name: Try with nonexistent path
+  alternatives:
+    name: dummy
+    path: '/non/existent/path/there'
+    link: '/usr/bin/dummy'
+  ignore_errors: True
+  register: alternative
+
+- name: Check previous task failed
+  assert:
+    that:
+      - 'alternative is failed'

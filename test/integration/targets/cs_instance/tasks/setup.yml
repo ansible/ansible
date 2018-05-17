@@ -1,0 +1,24 @@
+---
+- name: setup ssh key
+  cs_sshkeypair: name={{ cs_resource_prefix }}-sshkey
+  register: sshkey
+- name: verify setup ssh key
+  assert:
+    that:
+    - sshkey is successful
+
+- name: setup affinity group
+  cs_affinitygroup: name={{ cs_resource_prefix }}-ag
+  register: ag
+- name: verify setup affinity group
+  assert:
+    that:
+    - ag is successful
+
+- name: setup security group
+  cs_securitygroup: name={{ cs_resource_prefix }}-sg
+  register: sg
+- name: verify setup security group
+  assert:
+    that:
+    - sg is successful

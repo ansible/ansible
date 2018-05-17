@@ -32,11 +32,12 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.pycompat24 import get_exception
+import re
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import env_fallback
 
 
 class IPAClient(object):
@@ -69,9 +70,8 @@ class IPAClient(object):
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'Cookie': resp.info().get('Set-Cookie')}
-        except Exception:
-            e = get_exception()
-            self._fail('login', str(e))
+        except Exception as e:
+            self._fail('login', to_native(e))
 
     def _fail(self, msg, e):
         if 'message' in e:
@@ -80,19 +80,35 @@ class IPAClient(object):
             err_string = e
         self.module.fail_json(msg='%s: %s' % (msg, err_string))
 
+    def get_ipa_version(self):
+        response = self.ping()['summary']
+        ipa_ver_regex = re.compile(r'IPA server version (\d\.\d\.\d).*')
+        version_match = ipa_ver_regex.match(response)
+        ipa_version = None
+        if version_match:
+            ipa_version = version_match.groups()[0]
+        return ipa_version
+
+    def ping(self):
+        return self._post_json(method='ping', name=None)
+
     def _post_json(self, method, name, item=None):
         if item is None:
             item = {}
         url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
+        data = dict(method=method)
+        if method != 'ping':
+            data['params'] = [[name], item]
+        else:
+            data['params'] = [[], {}]
+
         try:
             resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)
             status_code = info['status']
             if status_code not in [200, 201, 204]:
                 self._fail(method, info['msg'])
-        except Exception:
-            e = get_exception()
-            self._fail('post %s' % method, str(e))
+        except Exception as e:
+            self._fail('post %s' % method, to_native(e))
 
         if PY3:
             charset = resp.headers.get_content_charset('latin-1')
@@ -105,7 +121,7 @@ class IPAClient(object):
         resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
         err = resp.get('error')
         if err is not None:
-            self._fail('repsonse %s' % method, err)
+            self._fail('response %s' % method, err)
 
         if 'result' in resp:
             result = resp.get('result')
@@ -158,3 +174,14 @@ class IPAClient(object):
                     add_method(name=name, item=diff)
 
         return changed
+
+
+def ipa_argument_spec():
+    return dict(
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https'], fallback=(env_fallback, ['IPA_PROT'])),
+        ipa_host=dict(type='str', default='ipa.example.com', fallback=(env_fallback, ['IPA_HOST'])),
+        ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
+        ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
+        ipa_pass=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
+        validate_certs=dict(type='bool', default=True),
+    )

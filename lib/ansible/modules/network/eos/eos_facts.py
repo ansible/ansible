@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -34,6 +34,8 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   gather_subset:
     description:
@@ -137,8 +139,9 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+
 
 class FactsBase(object):
 
@@ -188,6 +191,7 @@ class Default(FactsBase):
             value = None
         return dict(image=value)
 
+
 class Hardware(FactsBase):
 
     COMMANDS = [
@@ -215,6 +219,7 @@ class Hardware(FactsBase):
             memfree_mb=int(values['memFree']) / 1024,
             memtotal_mb=int(values['memTotal']) / 1024
         )
+
 
 class Config(FactsBase):
 
@@ -309,6 +314,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """main entry point for module execution

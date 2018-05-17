@@ -1,0 +1,19 @@
+Product name:      MLNX-OS
+Product release:   3.6.5000
+Build ID:          #1-dev
+Build date:        2017-11-10 18:14:32
+Target arch:       x86_64
+Target hw:         x86_64
+Built by:          jenkins@cc45f26cd083
+Version summary:   X86_64 3.6.5000 2017-11-10 18:14:32 x86_64
+
+Product model:     x86onie
+Host ID:           248A073D505C
+System serial num: \"MT1632X00205\"
+System UUID:       0b19d6d0-5eca-11e6-8000-7cfe90fadc40
+
+Uptime:            1d 16h 31m 43.856s
+CPU load averages: 0.06 / 0.12 / 0.13
+Number of CPUs:    4
+System memory:     2597 MB used / 5213 MB free / 7810 MB total
+Swap:              0 MB used / 0 MB free / 0 MB total

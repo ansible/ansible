@@ -2,25 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -71,7 +61,7 @@ options:
     description: Creates a new disk label.
     choices: [
        'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98',
-       'sun', ''
+       'sun'
     ]
     default: msdos
   part_type:
@@ -81,6 +71,7 @@ options:
        'gpt' partition table. Neither part-type nor name may be used with a
        'sun' partition table.
     choices: ['primary', 'extended', 'logical']
+    default: primary
   part_start:
     description:
      - Where the partition will start as offset from the beginning of the disk,
@@ -135,14 +126,16 @@ partition_info:
           "begin": 0.0,
           "end": 1.0,
           "flags": ["boot", "lvm"],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 1,
           "size": 1.0
         }, {
           "begin": 1.0,
           "end": 5.0,
           "flags": [],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 2,
           "size": 4.0
         }]
@@ -192,14 +185,13 @@ EXAMPLES = """
 
 
 from ansible.module_utils.basic import AnsibleModule
-import locale
 import math
 import re
 import os
 
 
 # Reference prefixes (International System of Units and IEC)
-units_si  = ['B', 'KB', 'MB', 'GB', 'TB']
+units_si = ['B', 'KB', 'MB', 'GB', 'TB']
 units_iec = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
 parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
 
@@ -219,8 +211,8 @@ def parse_unit(size_str, unit=''):
 
         size = {
             'cylinder': int(matches.group(1)),
-            'head':     int(matches.group(2)),
-            'sector':   int(matches.group(3))
+            'head': int(matches.group(2)),
+            'sector': int(matches.group(3))
         }
         unit = 'chs'
 
@@ -266,12 +258,12 @@ def parse_partition_info(parted_output, unit):
     size, unit = parse_unit(generic_params[1], unit)
 
     generic = {
-        'dev':   generic_params[0],
-        'size':  size,
-        'unit':  unit.lower(),
+        'dev': generic_params[0],
+        'size': size,
+        'unit': unit.lower(),
         'table': generic_params[5],
         'model': generic_params[6],
-        'logical_block':  int(generic_params[3]),
+        'logical_block': int(generic_params[3]),
         'physical_block': int(generic_params[4])
     }
 
@@ -281,9 +273,9 @@ def parse_partition_info(parted_output, unit):
         cyl_size, cyl_unit = parse_unit(chs_info[3])
         generic['chs_info'] = {
             'cylinders': int(chs_info[0]),
-            'heads':     int(chs_info[1]),
-            'sectors':   int(chs_info[2]),
-            'cyl_size':  cyl_size,
+            'heads': int(chs_info[1]),
+            'sectors': int(chs_info[2]),
+            'cyl_size': cyl_size,
             'cyl_size_unit': cyl_unit.lower()
         }
         lines = lines[1:]
@@ -297,23 +289,26 @@ def parse_partition_info(parted_output, unit):
         # behaviour down to parted version 1.8.3, which is the first version
         # that supports the machine parseable output.
         if unit != 'chs':
-            size   = parse_unit(part_params[3])[0]
+            size = parse_unit(part_params[3])[0]
             fstype = part_params[4]
-            flags  = part_params[6]
+            name = part_params[5]
+            flags = part_params[6]
 
         else:
-            size   = ""
+            size = ""
             fstype = part_params[3]
-            flags  = part_params[5]
+            name = part_params[4]
+            flags = part_params[5]
 
         parts.append({
-            'num':    int(part_params[0]),
-            'begin':  parse_unit(part_params[1])[0],
-            'end':    parse_unit(part_params[2])[0],
-            'size':   size,
+            'num': int(part_params[0]),
+            'begin': parse_unit(part_params[1])[0],
+            'end': parse_unit(part_params[2])[0],
+            'size': size,
             'fstype': fstype,
-            'flags':  [f.strip() for f in flags.split(', ') if f != ''],
-            'unit':  unit.lower(),
+            'name': name,
+            'flags': [f.strip() for f in flags.split(', ') if f != ''],
+            'unit': unit.lower(),
         })
 
     return {'generic': generic, 'partitions': parts}
@@ -350,7 +345,7 @@ def format_disk_size(size_bytes, unit):
     elif unit in units_iec:
         multiplier = 1024.0 ** units_iec.index(unit)
 
-    output = size_bytes / multiplier * (1 + 1E-16)
+    output = size_bytes // multiplier * (1 + 1E-16)
 
     # Corrections to round up as per IEEE754 standard
     if output < 10:
@@ -380,23 +375,23 @@ def get_unlabeled_device_info(device, unit):
     device_name = os.path.basename(device)
     base = "/sys/block/%s" % device_name
 
-    vendor      = read_record(base + "/device/vendor", "Unknown")
-    model       = read_record(base + "/device/model", "model")
+    vendor = read_record(base + "/device/vendor", "Unknown")
+    model = read_record(base + "/device/model", "model")
     logic_block = int(read_record(base + "/queue/logical_block_size", 0))
-    phys_block  = int(read_record(base + "/queue/physical_block_size", 0))
-    size_bytes  = int(read_record(base + "/size", 0)) * logic_block
+    phys_block = int(read_record(base + "/queue/physical_block_size", 0))
+    size_bytes = int(read_record(base + "/size", 0)) * logic_block
 
-    size, unit  = format_disk_size(size_bytes, unit)
+    size, unit = format_disk_size(size_bytes, unit)
 
     return {
         'generic': {
-            'dev':            device,
-            'table':          "unknown",
-            'size':           size,
-            'unit':           unit,
-            'logical_block':  logic_block,
+            'dev': device,
+            'table': "unknown",
+            'size': size,
+            'unit': unit,
+            'logical_block': logic_block,
             'physical_block': phys_block,
-            'model':          "%s %s" % (vendor, model),
+            'model': "%s %s" % (vendor, model),
         },
         'partitions': []
     }
@@ -472,7 +467,7 @@ def parted_version():
     # Convert version to numbers
     major = int(matches.group(1))
     minor = int(matches.group(2))
-    rev   = 0
+    rev = 0
     if matches.group(3) is not None:
         rev = int(matches.group(3))
 
@@ -554,9 +549,10 @@ def main():
 
             # mklabel <label-type> command
             'label': {
+                'default': 'msdos',
                 'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
-                    'pc98', 'sun', ''
+                    'pc98', 'sun'
                 ],
                 'type': 'str'
             },
@@ -583,28 +579,33 @@ def main():
                 'type': 'str'
             }
         },
+        required_if=[
+            ['state', 'present', ['number']],
+            ['state', 'absent', ['number']],
+        ],
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
 
     # Data extraction
-    device      = module.params['device']
-    align       = module.params['align']
-    number      = module.params['number']
-    unit        = module.params['unit']
-    label       = module.params['label']
-    part_type   = module.params['part_type']
-    part_start  = module.params['part_start']
-    part_end    = module.params['part_end']
-    name        = module.params['name']
-    state       = module.params['state']
-    flags       = module.params['flags']
+    device = module.params['device']
+    align = module.params['align']
+    number = module.params['number']
+    unit = module.params['unit']
+    label = module.params['label']
+    part_type = module.params['part_type']
+    part_start = module.params['part_start']
+    part_end = module.params['part_end']
+    name = module.params['name']
+    state = module.params['state']
+    flags = module.params['flags']
 
     # Parted executable
     parted_exec = module.get_bin_path('parted', True)
 
     # Conditioning
-    if number and number < 0:
-        module.fail_json(msg="The partition number must be non negative.")
+    if number is not None and number < 1:
+        module.fail_json(msg="The partition number must be greater then 0.")
     if not check_size_format(part_start):
         module.fail_json(
             msg="The argument 'part_start' doesn't respect required format."
@@ -623,14 +624,9 @@ def main():
     current_parts = current_device['partitions']
 
     if state == 'present':
-        # Default value for the label
-        if not current_device['generic']['table'] or \
-           current_device['generic']['table'] == 'unknown' and \
-           not label:
-            label = 'msdos'
 
         # Assign label if required
-        if label:
+        if current_device['generic'].get('table', None) != label:
             script += "mklabel %s " % label
 
         # Create partition if required
@@ -660,15 +656,15 @@ def main():
             if not module.check_mode:
                 partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Assign name to the the partition
-            if name:
+            # Assign name to the partition
+            if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 
             # Manage flags
             if flags:
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
-                flags_on  = list(set(flags) - set(partition['flags']))
+                flags_on = list(set(flags) - set(partition['flags']))
 
                 for f in flags_on:
                     script += "set %s %s on " % (number, f)

@@ -1,5 +1,3 @@
-postgresql_service: "postgresql"
-
 postgresql_packages:
   - "postgresql"
   - "postgresql-common"

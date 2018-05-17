@@ -1,12 +1,11 @@
 ---
-- debug: msg="START cli/set_name_servers.yaml"
+- debug: msg="START cli/set_name_servers.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
     lines:
       - no ip name-server
     match: none
-    authorize: yes
     provider: "{{ cli }}"
 
 - name: configure name_servers
@@ -15,7 +14,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -33,7 +31,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -75,7 +72,6 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -88,9 +84,8 @@
 - name: teardown
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip name-server
     match: none
-    authorize: yes
     provider: "{{ cli }}"
 
-- debug: msg="END cli/set_name_servers.yaml"
+- debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"

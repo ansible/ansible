@@ -1,20 +1,42 @@
-# Ansible CallBack module for Jabber (XMPP)
 # Copyright (C) 2016 maxn nikolaev.makc@gmail.com
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see http://www.gnu.org/licenses/
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: jabber
+    type: notification
+    short_description: post task events to a jabber server
+    description:
+      - The chatty part of ChatOps with a Hipchat server as a target
+      - This callback plugin sends status updates to a HipChat channel during playbook execution.
+    version_added: "2.2"
+    requirements:
+      - xmpp (python lib https://github.com/ArchipelProject/xmpppy)
+    options:
+      server:
+        description: connection info to jabber server
+        required: True
+        env:
+          - name: JABBER_SERV
+      user:
+        description: Jabber user to authenticate as
+        required: True
+        env:
+          - name: JABBER_USER
+      password:
+        description: Password for the user to the jabber server
+        required: True
+        env:
+          - name: JABBER_PASS
+      to:
+        description: chat identifier that will recieve the message
+        required: True
+        env:
+          - name: JABBER_TO
+'''
 
 import os
 
@@ -39,8 +61,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(display=display)
 
         if not HAS_XMPP:
-            self._display.warning("The required python xmpp library (xmpppy) is not installed."
-                " pip install git+https://github.com/ArchipelProject/xmpppy")
+            self._display.warning("The required python xmpp library (xmpppy) is not installed. "
+                                  "pip install git+https://github.com/ArchipelProject/xmpppy")
             self.disabled = True
 
         self.serv = os.getenv('JABBER_SERV')
@@ -48,15 +70,15 @@ class CallbackModule(CallbackBase):
         self.j_pass = os.getenv('JABBER_PASS')
         self.j_to = os.getenv('JABBER_TO')
 
-        if (self.j_user or self.j_pass or self.serv ) is None:
+        if (self.j_user or self.j_pass or self.serv or self.j_to) is None:
             self.disabled = True
-            self._display.warning ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
+            self._display.warning('Jabber CallBack wants the JABBER_SERV, JABBER_USER, JABBER_PASS and JABBER_TO environment variables')
 
     def send_msg(self, msg):
         """Send message"""
         jid = xmpp.JID(self.j_user)
-        client = xmpp.Client(self.serv,debug=[])
-        client.connect(server=(self.serv,5222))
+        client = xmpp.Client(self.serv, debug=[])
+        client.connect(server=(self.serv, 5222))
         client.auth(jid.getNode(), self.j_pass, resource=jid.getResource())
         message = xmpp.Message(self.j_to, msg)
         message.setAttr('type', 'chat')
@@ -93,5 +115,4 @@ class CallbackModule(CallbackBase):
             self.send_msg("%s: Failures detected \n%s \nHost: %s\n Failed at:\n%s" % (name, self.task, h, out))
         else:
             out = self.debug
-            self.send_msg("Great! \n Playbook %s completed:\n%s \n Last task debug:\n %s" % (name,s, out))
-
+            self.send_msg("Great! \n Playbook %s completed:\n%s \n Last task debug:\n %s" % (name, s, out))

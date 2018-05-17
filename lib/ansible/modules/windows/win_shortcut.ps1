@@ -1,44 +1,31 @@
 #!powershell
-# (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
+#Requires -Module Ansible.ModuleUtils.Legacy
+
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src" -type "path"
+$orig_src = Get-AnsibleParam -obj $params -name "src"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "present","absent"
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "absent","present"
 $orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
 $directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
 $hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string"
 $icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
 $orig_description = Get-AnsibleParam -obj $params -name "description" -type "string"
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "normal","maximized","minimized"
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "maximized","minimized","normal"
 
 # Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
 $description = Expand-Environment($orig_description)
+$src = Expand-Environment($orig_src)
 
 $result = @{
     changed = $false
@@ -63,7 +50,7 @@ If ($state -eq "absent") {
             Remove-Item -Path $dest -WhatIf:$check_mode
         } Catch {
             # Report removal failure
-            Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
+            Fail-Json -obj $result -message "Failed to remove shortcut '$dest'. ($($_.Exception.Message))"
         }
         # Report removal success
         $result.changed = $true
@@ -81,6 +68,11 @@ If ($state -eq "absent") {
         # Windows translates executables to absolute path, so do we
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
+        }
+        If (-not (Test-Path -Path $src -IsValid)) {
+            If (-not (Split-Path -Path $src -IsAbsolute)) {
+                Fail-Json -obj $result -message "Source '$src' is not found in PATH and not a valid or absolute path."
+            }
         }
     }
 
@@ -138,9 +130,9 @@ If ($state -eq "absent") {
         Try {
             $ShortCut.Save()
         } Catch {
-            Fail-Json $result "Failed to create shortcut $dest. (" + $_.Exception.Message + ")"
+            Fail-Json -obj $result -message "Failed to create shortcut '$dest'. ($($_.Exception.Message))"
         }
     }
 }
 
-Exit-Json $result
+Exit-Json -obj $result

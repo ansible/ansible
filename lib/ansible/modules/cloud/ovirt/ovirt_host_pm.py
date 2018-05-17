@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the host to manage."
+            - "Name of the host to manage."
         required: true
         aliases: ['host']
     state:
@@ -75,6 +75,7 @@ options:
     order:
         description:
             - "Integer value specifying, by default it's added at the end."
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -110,8 +111,9 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 agent:
     description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/agent."
     returned: On success if agent is found.
+    type: dict
 '''
 
 import traceback
@@ -170,7 +172,8 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
-            equal(self._module.params.get('type'), entity.type)
+            equal(self._module.params.get('type'), entity.type) and
+            equal(self._module.params.get('order'), entity.order)
         )
 
 
@@ -186,6 +189,7 @@ def main():
         password=dict(default=None, no_log=True),
         type=dict(default=None),
         port=dict(default=None, type='int'),
+        order=dict(default=None, type='int'),
         slot=dict(default=None),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),

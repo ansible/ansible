@@ -1,0 +1,85 @@
+- name: Download PSTools
+  win_get_url:
+    url: https://download.sysinternals.com/files/PSTools.zip
+    dest: C:\Windows\Temp\PSTools.zip
+    force: no
+
+- name: Create sysinternals directory
+  win_file:
+    path: C:\Windows\Temp\sysinternals
+    state: directory
+
+- name: Unzip PSTools
+  win_unzip:
+    src: C:\Windows\Temp\PSTools.zip
+    dest: C:\Windows\Temp\sysinternals
+
+- name: Add sysinternals to PATH
+  win_path:
+    name: PATH
+    elements: C:\Windows\Temp\sysinternals
+    scope: machine
+    state: present
+
+- name: Run whoami
+  win_psexec:
+    command: whoami.exe
+    nobanner: true
+  register: whoami
+
+- name: Test whoami
+  assert:
+    that:
+    - whoami.rc == 0
+    - whoami.stdout == ''
+    # FIXME: Standard output does not work or is truncated
+    #- whoami.stdout == '{{ ansible_hostname|lower }}'
+
+- name: Run whoami as SYSTEM
+  win_psexec:
+    command: whoami.exe
+    system: yes
+    nobanner: true
+  register: whoami_as_system
+
+- name: Test whoami as SYSTEM
+  assert:
+    that:
+    - whoami_as_system.rc == 0
+    - whoami_as_system.stdout == 'nt authority\system'
+
+# FIXME: Behaviour is not consistent on all Windows systems
+#- name: Run whoami as ELEVATED
+#  win_psexec:
+#    command: whoami.exe
+#    elevated: yes
+#  register: whoami_as_elevated
+#
+## Ensure we have basic facts
+#- setup:
+#
+#- debug:
+#    msg: '{{ whoami_as_elevated.stdout|lower }} == {{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
+#
+#- name: Test whoami
+#  assert:
+#    that:
+#    - whoami_as_elevated.rc == 0
+#    - whoami_as_elevated.stdout|lower == '{{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
+
+- name: Remove sysinternals from PATH
+  win_path:
+    name: PATH
+    elements: C:\Windows\Temp\sysinternals
+    scope: machine
+    state: absent
+
+- name: Remove sysinternals directory
+  win_file:
+    path: C:\Windows\Temp\sysinternals
+    state: absent
+
+- name: Remove sysinternals directory
+  win_file:
+    path: C:\Windows\Temp\PSTools.zip
+    state: absent

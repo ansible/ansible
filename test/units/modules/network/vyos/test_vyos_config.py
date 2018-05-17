@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_config
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosConfigModule(TestVyosModule):
@@ -32,6 +31,8 @@ class TestVyosConfigModule(TestVyosModule):
     module = vyos_config
 
     def setUp(self):
+        super(TestVyosConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.vyos.vyos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -42,6 +43,8 @@ class TestVyosConfigModule(TestVyosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestVyosConfigModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
@@ -72,15 +75,6 @@ class TestVyosConfigModule(TestVyosModule):
         set_module_args(dict(backup=True))
         result = self.execute_module()
         self.assertIn('__backup__', result)
-
-    def test_vyos_config_save(self):
-        set_module_args(dict(save=True))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
-        self.assertEqual(self.get_config.call_count, 0)
-        self.assertEqual(self.load_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
-        self.assertIn('save', args)
 
     def test_vyos_config_lines(self):
         commands = ['set system host-name foo']

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -28,300 +28,484 @@ extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages global VRF configuration.
 description:
-    - Manages global VRF configuration.
+  - This module provides declarative management of VRFs
+    on CISCO NXOS network devices.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
+  - Trishna Guha (@trishnaguha)
 notes:
-    - Cisco NX-OS creates the default VRF by itself. Therefore,
-      you're not allowed to use default as I(vrf) name in this module.
-    - C(vrf) name must be shorter than 32 chars.
-    - VRF names are not case sensible in NX-OS. Anyway, the name is stored
-      just like it's inserted by the user and it'll not be changed again
-      unless the VRF is removed and re-created. i.e. C(vrf=NTC) will create
-      a VRF named NTC, but running it again with C(vrf=ntc) will not cause
-      a configuration change.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - Cisco NX-OS creates the default VRF by itself. Therefore,
+    you're not allowed to use default as I(vrf) name in this module.
+  - C(vrf) name must be shorter than 32 chars.
+  - VRF names are not case sensible in NX-OS. Anyway, the name is stored
+    just like it's inserted by the user and it'll not be changed again
+    unless the VRF is removed and re-created. i.e. C(vrf=NTC) will create
+    a VRF named NTC, but running it again with C(vrf=ntc) will not cause
+    a configuration change.
 options:
-    vrf:
-        description:
-            - Name of VRF to be managed.
-        required: true
-    admin_state:
-        description:
-            - Administrative state of the VRF.
-        required: false
-        default: up
-        choices: ['up','down']
-    vni:
-        description:
-            - Specify virtual network identifier. Valid values are Integer
-              or keyword 'default'.
-        required: false
-        default: null
-        version_added: "2.2"
-    route_distinguisher:
-        description:
-            -  VPN Route Distinguisher (RD). Valid values are a string in
-               one of the route-distinguisher formats (ASN2:NN, ASN4:NN, or
-               IPV4:NN); the keyword 'auto', or the keyword 'default'.
-        required: false
-        default: null
-        version_added: "2.2"
-    state:
-        description:
-            - Manages desired state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  name:
     description:
-        description:
-            - Description of the VRF.
-        required: false
-        default: null
+      - Name of VRF to be managed.
+    required: true
+    aliases: [vrf]
+  admin_state:
+    description:
+      - Administrative state of the VRF.
+    default: up
+    choices: ['up','down']
+  vni:
+    description:
+      - Specify virtual network identifier. Valid values are Integer
+        or keyword 'default'.
+    version_added: "2.2"
+  rd:
+    description:
+      - VPN Route Distinguisher (RD). Valid values are a string in
+        one of the route-distinguisher formats (ASN2:NN, ASN4:NN, or
+        IPV4:NN); the keyword 'auto', or the keyword 'default'.
+    version_added: "2.2"
+  interfaces:
+    description:
+      - List of interfaces to check the VRF has been
+        configured correctly or keyword 'default'.
+    version_added: 2.5
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vrf C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vrf interfaces on device it will result in failure.
+    version_added: "2.5"
+  aggregate:
+    description: List of VRFs definitions.
+    version_added: 2.5
+  purge:
+    description:
+      - Purge VRFs not defined in the I(aggregate) parameter.
+    type: bool
+    default: 'no'
+    version_added: 2.5
+  state:
+    description:
+      - Manages desired state of the resource.
+    default: present
+    choices: ['present','absent']
+  description:
+    description:
+      - Description of the VRF or keyword 'default'.
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
 '''
 
 EXAMPLES = '''
 - name: Ensure ntc VRF exists on switch
   nxos_vrf:
-    vrf: ntc
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+    name: ntc
+    description: testing
+    state: present
+
+- name: Aggregate definition of VRFs
+  nxos_vrf:
+    aggregate:
+      - { name: test1, description: Testing, admin_state: down }
+      - { name: test2, interfaces: Ethernet1/2 }
+
+- name: Aggregate definitions of VRFs with Purge
+  nxos_vrf:
+    aggregate:
+      - { name: ntc1, description: purge test1 }
+      - { name: ntc2, description: purge test2 }
+    state: present
+    purge: yes
+
+- name: Delete VRFs exist on switch
+  nxos_vrf:
+    aggregate:
+      - { name: ntc1 }
+      - { name: ntc2 }
+    state: absent
+
+- name: Assign interfaces to VRF declaratively
+  nxos_vrf:
+    name: test1
+    interfaces:
+      - Ethernet2/3
+      - Ethernet2/5
+
+- name: Check interfaces assigend to VRF
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
+      - Ethernet2/3
+      - Ethernet2/5
+
+- name: Ensure VRF is tagged with interface Ethernet2/5 only (Removes from Ethernet2/3)
+  nxos_vrf:
+    name: test1
+    interfaces:
+      - Ethernet2/5
+
+- name: Delete VRF
+  nxos_vrf:
+    name: ntc
+    state: absent
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"admin_state": "Up", "description": "Test test",
-            "vrf": "ntc"}
-existing:
-    description: k/v pairs of existing vrf
-    returned: always
-    type: dict
-    sample: {"admin_state": "Up", "description": "Old test",
-            "vrf": "old_ntc"}
-end_state:
-    description: k/v pairs of vrf info after module execution
-    returned: always
-    type: dict
-    sample: {"admin_state": "Up", "description": "Test test",
-            "vrf": "ntc"}
-updates:
-    description: commands sent to the device
-    returned: always
-    type: list
-    sample: ["vrf context ntc", "shutdown"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample:
+    - vrf context ntc
+    - no shutdown
+    - interface Ethernet1/2
+    - no switchport
+    - vrf member test2
 '''
+
 import re
+import time
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
 
-def execute_show_command(command, module, command_type='cli_show'):
-    transport = module.params['provider']['transport']
-    if transport in ['cli', None]:
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
+
+def search_obj_in_list(name, lst):
+    for o in lst:
+        if o['name'] == name:
+            return o
+
+
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        output = 'json'
     else:
-        cmds = [command]
-        body = run_commands(module, cmds)
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
+def get_existing_vrfs(module):
+    objs = list()
+    command = "show vrf all"
+    try:
+        body = execute_show_command(command, module)[0]
+    except IndexError:
+        return list()
+    try:
+        vrf_table = body['TABLE_vrf']['ROW_vrf']
+    except (TypeError, IndexError, KeyError):
+        return list()
+
+    if isinstance(vrf_table, list):
+        for vrf in vrf_table:
+            obj = {}
+            obj['name'] = vrf['vrf_name']
+            objs.append(obj)
+
+    elif isinstance(vrf_table, dict):
+        obj = {}
+        obj['name'] = vrf_table['vrf_name']
+        objs.append(obj)
+
+    return objs
+
+
+def map_obj_to_commands(updates, module):
+    commands = list()
+    want, have = updates
+    state = module.params['state']
+    purge = module.params['purge']
+
+    args = ('rd', 'description', 'vni')
+
+    for w in want:
+        name = w['name']
+        admin_state = w['admin_state']
+        vni = w['vni']
+        interfaces = w.get('interfaces') or []
+        state = w['state']
+        del w['state']
+
+        obj_in_have = search_obj_in_list(name, have)
+
+        if state == 'absent' and obj_in_have:
+            commands.append('no vrf context {0}'.format(name))
+
+        elif state == 'present':
+            if not obj_in_have:
+                commands.append('vrf context {0}'.format(name))
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate and candidate != 'default':
+                        cmd = item + ' ' + str(candidate)
+                        commands.append(cmd)
+                if admin_state == 'up':
+                    commands.append('no shutdown')
+                elif admin_state == 'down':
+                    commands.append('shutdown')
+                commands.append('exit')
+
+                if interfaces and interfaces[0] != 'default':
+                    for i in interfaces:
+                        commands.append('interface {0}'.format(i))
+                        commands.append('no switchport')
+                        commands.append('vrf member {0}'.format(name))
+
             else:
-                new_dict[new_key] = value
-    return new_dict
+                # If vni is already configured on vrf, unconfigure it first.
+                if vni:
+                    if obj_in_have.get('vni') and vni != obj_in_have.get('vni'):
+                        commands.append('no vni {0}'.format(obj_in_have.get('vni')))
 
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate == 'default':
+                        if obj_in_have.get(item):
+                            cmd = 'no ' + item + ' ' + obj_in_have.get(item)
+                            commands.append(cmd)
+                    elif candidate and candidate != obj_in_have.get(item):
+                        cmd = item + ' ' + str(candidate)
+                        commands.append(cmd)
+                if admin_state and admin_state != obj_in_have.get('admin_state'):
+                    if admin_state == 'up':
+                        commands.append('no shutdown')
+                    elif admin_state == 'down':
+                        commands.append('shutdown')
 
-def get_commands_to_config_vrf(delta, vrf):
-    commands = []
-    for param, value in delta.items():
-        command = ''
-        if param == 'description':
-            command = 'description {0}'.format(value)
-        elif param == 'admin_state':
-            if value.lower() == 'up':
-                command = 'no shutdown'
-            elif value.lower() == 'down':
-                command = 'shutdown'
-        elif param == 'rd':
-            command = 'rd {0}'.format(value)
-        elif param == 'vni':
-            command = 'vni {0}'.format(value)
-        if command:
-            commands.append(command)
-    if commands:
-        commands.insert(0, 'vrf context {0}'.format(vrf))
+                if commands:
+                    commands.insert(0, 'vrf context {0}'.format(name))
+                    commands.append('exit')
+
+                if interfaces and interfaces[0] != 'default':
+                    if not obj_in_have['interfaces']:
+                        for i in interfaces:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('vrf member {0}'.format(name))
+
+                    elif set(interfaces) != set(obj_in_have['interfaces']):
+                        missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
+                        for i in missing_interfaces:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('vrf member {0}'.format(name))
+
+                        superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
+                        for i in superfluous_interfaces:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('no vrf member {0}'.format(name))
+                elif interfaces and interfaces[0] == 'default':
+                    if obj_in_have['interfaces']:
+                        for i in obj_in_have['interfaces']:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('no vrf member {0}'.format(name))
+
+    if purge:
+        existing = get_existing_vrfs(module)
+        if existing:
+            for h in existing:
+                if h['name'] in ('default', 'management'):
+                    pass
+                else:
+                    obj_in_want = search_obj_in_list(h['name'], want)
+                    if not obj_in_want:
+                        commands.append('no vrf context {0}'.format(h['name']))
+
     return commands
 
 
-def get_vrf_description(vrf, module):
-    command_type = 'cli_show_ascii'
-    command = (r'show run section vrf | begin ^vrf\scontext\s{0} | end ^vrf.*'.format(vrf))
+def validate_vrf(name, module):
+    if name == 'default':
+        module.fail_json(msg='cannot use default as name of a VRF')
+    elif len(name) > 32:
+        module.fail_json(msg='VRF name exceeded max length of 32', name=name)
+    else:
+        return name
 
-    description = ''
-    descr_regex = r".*description\s(?P<descr>[\S+\s]+).*"
-    body = execute_show_command(command, module, command_type)
 
-    try:
-        body = body[0]
-        splitted_body = body.split('\n')
-    except (AttributeError, IndexError):
-        return description
+def map_params_to_obj(module):
+    obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    for element in splitted_body:
-        if 'description' in element:
-            match_description = re.match(descr_regex, element,
-                                         re.DOTALL)
-            group_description = match_description.groupdict()
-            description = group_description["descr"]
-
-    return description
+            d = item.copy()
+            d['name'] = validate_vrf(d['name'], module)
+            obj.append(d)
+    else:
+        obj.append({
+            'name': validate_vrf(module.params['name'], module),
+            'description': module.params['description'],
+            'vni': module.params['vni'],
+            'rd': module.params['rd'],
+            'admin_state': module.params['admin_state'],
+            'state': module.params['state'],
+            'interfaces': module.params['interfaces'],
+            'associated_interfaces': module.params['associated_interfaces']
+        })
+    return obj
 
 
 def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(arg), re.M)
+    extra_arg_regex = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(arg), re.M)
     value = ''
     if arg in config:
-        value = REGEX.search(config).group('value')
+        value = extra_arg_regex.search(config).group('value')
     return value
 
 
-def get_vrf(vrf, module):
-    command = 'show vrf {0}'.format(vrf)
-    vrf_key = {
-        'vrf_name': 'vrf',
-        'vrf_state': 'admin_state'
-        }
+def map_config_to_obj(want, element_spec, module):
+    objs = list()
 
-    body = execute_show_command(command, module)
-    try:
-        vrf_table = body[0]['TABLE_vrf']['ROW_vrf']
-    except (TypeError, IndexError):
-        return {}
+    for w in want:
+        obj = deepcopy(element_spec)
+        del obj['delay']
+        del obj['state']
 
-    parsed_vrf = apply_key_map(vrf_key, vrf_table)
+        command = 'show vrf {0}'.format(w['name'])
+        try:
+            body = execute_show_command(command, module)[0]
+            vrf_table = body['TABLE_vrf']['ROW_vrf']
+        except (TypeError, IndexError):
+            return list()
 
-    command = 'show run all | section vrf.context.{0}'.format(vrf)
-    body = execute_show_command(command, module, 'cli_show_ascii')
-    extra_params = ['vni', 'rd', 'description']
-    for param in extra_params:
-        parsed_vrf[param] = get_value(param, body[0], module)
+        name = vrf_table['vrf_name']
+        obj['name'] = name
+        obj['admin_state'] = vrf_table['vrf_state'].lower()
 
-    return parsed_vrf
+        command = 'show run all | section vrf.context.{0}'.format(name)
+        body = execute_show_command(command, module)[0]
+        extra_params = ['vni', 'rd', 'description']
+        for param in extra_params:
+            obj[param] = get_value(param, body, module)
+
+        obj['interfaces'] = []
+        command = 'show vrf {0} interface'.format(name)
+        try:
+            body = execute_show_command(command, module)[0]
+            vrf_int = body['TABLE_if']['ROW_if']
+        except (TypeError, IndexError):
+            vrf_int = None
+
+        if vrf_int:
+            if isinstance(vrf_int, list):
+                for i in vrf_int:
+                    intf = i['if_name']
+                    obj['interfaces'].append(intf)
+            elif isinstance(vrf_int, dict):
+                intf = vrf_int['if_name']
+                obj['interfaces'].append(intf)
+
+        objs.append(obj)
+    return objs
+
+
+def check_declarative_intent_params(want, module, element_spec, result):
+
+    have = None
+    is_delay = False
+
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(want, element_spec, module)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['name'], have)
+
+            if obj_in_have:
+                interfaces = obj_in_have.get('interfaces')
+                if interfaces is not None and i not in interfaces:
+                    module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
 def main():
-    argument_spec = dict(
-        vrf=dict(required=True),
-        description=dict(default=None, required=False),
-        vni=dict(required=False, type='str'),
-        rd=dict(required=False, type='str'),
-        admin_state=dict(default='up', choices=['up', 'down'],
-                             required=False),
-        state=dict(default='present', choices=['present', 'absent'],
-                       required=False),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+    """ main entry point for module execution
+    """
+    element_spec = dict(
+        name=dict(aliases=['vrf']),
+        description=dict(),
+        vni=dict(type=str),
+        rd=dict(type=str),
+        admin_state=dict(default='up', choices=['up', 'down']),
+        interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
+        delay=dict(default=10, type='int'),
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(want, element_spec, module)
 
-    vrf = module.params['vrf']
-    admin_state = module.params['admin_state'].lower()
-    description = module.params['description']
-    rd = module.params['rd']
-    vni = module.params['vni']
-    state = module.params['state']
+    commands = map_obj_to_commands((want, have), module)
+    result['commands'] = commands
 
-    if vrf == 'default':
-        module.fail_json(msg='cannot use default as name of a VRF')
-    elif len(vrf) > 32:
-        module.fail_json(msg='VRF name exceeded max length of 32',
-                         vrf=vrf)
+    if commands and not module.check_mode:
+        load_config(module, commands)
+        result['changed'] = True
 
-    existing = get_vrf(vrf, module)
-    args = dict(vrf=vrf, description=description, vni=vni,
-                admin_state=admin_state, rd=rd)
+    check_declarative_intent_params(want, module, element_spec, result)
 
-    end_state = existing
-    changed = False
-    proposed = dict((k, v) for k, v in args.items() if v is not None)
-
-    """Since 'admin_state' is either 'Up' or 'Down' from outputs,
-    we use the following to make sure right letter case is used so that delta
-    results will be consistent to the actual configuration."""
-    if existing:
-        if existing['admin_state'].lower() == admin_state:
-            proposed['admin_state'] = existing['admin_state']
-
-    delta = dict(set(proposed.items()).difference(existing.items()))
-    changed = False
-    end_state = existing
-    commands = []
-    if state == 'absent':
-        if existing:
-            command = ['no vrf context {0}'.format(vrf)]
-            commands.extend(command)
-
-    elif state == 'present':
-        if not existing:
-            command = get_commands_to_config_vrf(delta, vrf)
-            commands.extend(command)
-        elif delta:
-            command = get_commands_to_config_vrf(delta, vrf)
-            commands.extend(command)
-
-    if commands:
-        if proposed.get('vni'):
-            if existing.get('vni') and existing.get('vni') != '':
-                commands.insert(1, 'no vni {0}'.format(existing['vni']))
-        if module.check_mode:
-            module.exit_json(changed=True, commands=commands)
-        else:
-            load_config(module, commands)
-            changed = True
-            end_state = get_vrf(vrf, module)
-            if 'configure' in commands:
-                commands.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = commands
-    results['changed'] = changed
-    results['warnings'] = warnings
-
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

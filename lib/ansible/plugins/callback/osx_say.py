@@ -1,35 +1,34 @@
-
-# (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: osx_say
+    type: notification
+    requirements:
+      - whitelising in configuration
+      - the '/usr/bin/say' command line program (standard on OS X)
+    short_description: oneline Ansible screen output
+    version_added: historical
+    description:
+      - This plugin will use the 'say' program to "speak" about play events.
+'''
 
 import subprocess
 import os
 
 from ansible.plugins.callback import CallbackBase
 
-FAILED_VOICE="Zarvox"
-REGULAR_VOICE="Trinoids"
-HAPPY_VOICE="Cellos"
-LASER_VOICE="Princess"
-SAY_CMD="/usr/bin/say"
+FAILED_VOICE = "Zarvox"
+REGULAR_VOICE = "Trinoids"
+HAPPY_VOICE = "Cellos"
+LASER_VOICE = "Princess"
+SAY_CMD = "/usr/bin/say"
+
 
 class CallbackModule(CallbackBase):
     """
@@ -48,7 +47,7 @@ class CallbackModule(CallbackBase):
         # ansible will not call any callback if disabled is set to True
         if not os.path.exists(SAY_CMD):
             self.disabled = True
-            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)) )
+            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)))
 
     def say(self, msg, voice):
         subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])

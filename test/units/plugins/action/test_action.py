@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 
 from ansible import constants as C
 from ansible.compat.tests import unittest
@@ -33,11 +34,12 @@ from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
+from ansible.vars.clean import clean_facts
 
 from units.mock.loader import DictDataLoader
 
 
-python_module_replacers = b"""
+python_module_replacers = br"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
@@ -74,12 +76,12 @@ class TestActionBase(unittest.TestCase):
 
         play_context = PlayContext()
 
-        mock_task.async = None
+        mock_task.async_val = None
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, dict())
 
-        mock_task.async = 0
+        mock_task.async_val = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, {})
@@ -91,6 +93,7 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
         mock_task.action = "copy"
+        mock_task.async_val = 0
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
@@ -227,11 +230,23 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
 
+        def get_shell_opt(opt):
+
+            ret = None
+            if opt == 'admin_users':
+                ret = ['root', 'toor', 'Administrator']
+            elif opt == 'remote_tmp':
+                ret = '~/.ansible/tmp'
+
+            return ret
+
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
         mock_connection.transport = 'ssh'
         mock_connection._shell.mkdtemp.return_value = 'mkdir command'
         mock_connection._shell.join_path.side_effect = os.path.join
+        mock_connection._shell.get_option = get_shell_opt
+        mock_connection._shell.HOMES_RE = re.compile(r'(\'|\")?(~|\$HOME)(.*)')
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -393,18 +408,22 @@ class TestActionBase(unittest.TestCase):
         mock_task.args = dict(a=1, b=2, c=3)
 
         # create a mock connection, so we don't actually try and connect to things
-        def build_module_command(env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+        def build_module_command(env_string, shebang, cmd, arg_path=None):
             to_run = [env_string, cmd]
             if arg_path:
                 to_run.append(arg_path)
-            if rm_tmp:
-                to_run.append(rm_tmp)
             return " ".join(to_run)
+
+        def get_option(option):
+            return {}.get(option)
 
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
+        mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
+        mock_connection._shell.tmpdir = '/var/tmp/mytempdir'
+        mock_connection._shell.get_option = get_option
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -436,10 +455,19 @@ class TestActionBase(unittest.TestCase):
         action_base._make_tmp_path.return_value = '/the/tmp/path'
         action_base._low_level_execute_command.return_value = dict(stdout='{"rc": 0, "stdout": "ok"}')
         self.assertEqual(action_base._execute_module(module_name=None, module_args=None), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-        self.assertEqual(action_base._execute_module(module_name='foo',
-            module_args=dict(z=9, y=8, x=7), task_vars=dict(a=1)),
-            dict(_ansible_parsed=True, rc=0, stdout="ok",
-                stdout_lines=['ok']))
+        self.assertEqual(
+            action_base._execute_module(
+                module_name='foo',
+                module_args=dict(z=9, y=8, x=7),
+                task_vars=dict(a=1)
+            ),
+            dict(
+                _ansible_parsed=True,
+                rc=0,
+                stdout="ok",
+                stdout_lines=['ok'],
+            )
+        )
 
         # test with needing/removing a remote tmp path
         action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data', 'path')
@@ -525,9 +553,9 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
 
         mock_shared_loader_obj.connection_loader = mock_connection_loader
         mock_connection = MagicMock()
-        #mock_connection._shell.env_prefix.side_effect = env_prefix
+        # mock_connection._shell.env_prefix.side_effect = env_prefix
 
-        #action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
+        # action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         action_base = DerivedActionBase(task=None,
                                         connection=mock_connection,
                                         play_context=None,
@@ -535,12 +563,12 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
                                         templar=None,
                                         shared_loader_obj=mock_shared_loader_obj)
         data = {'ansible_playbook_python': '/usr/bin/python',
-                #'ansible_rsync_path': '/usr/bin/rsync',
+                # 'ansible_rsync_path': '/usr/bin/rsync',
                 'ansible_python_interpreter': '/usr/bin/python',
                 'ansible_ssh_some_var': 'whatever',
                 'ansible_ssh_host_key_somehost': 'some key here',
                 'some_other_var': 'foo bar'}
-        action_base._clean_returned_data(data)
+        data = clean_facts(data)
         self.assertNotIn('ansible_playbook_python', data)
         self.assertNotIn('ansible_python_interpreter', data)
         self.assertIn('ansible_ssh_host_key_somehost', data)
@@ -592,7 +620,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        del res['_ansible_parsed'] # we always have _ansible_parsed
+        del res['_ansible_parsed']  # we always have _ansible_parsed
         self.assertEqual(len(res), 0)
         self.assertFalse(res)
 
@@ -610,7 +638,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         self.assertTrue(res['ansible_facts'])
         self.assertIn('ansible_blip', res['ansible_facts'])
         # TODO: Should this be an AnsibleUnsafe?
-        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+        # self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
 
     def test_json_facts_add_host(self):
         action_base = self._action_base()
@@ -630,4 +658,4 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         self.assertIn('ansible_blip', res['ansible_facts'])
         self.assertIn('add_host', res)
         # TODO: Should this be an AnsibleUnsafe?
-        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+        # self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)

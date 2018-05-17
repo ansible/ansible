@@ -25,19 +25,19 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
-import os
-import shlex
-import subprocess
 import glob
-import select
+import os
 import pickle
 import platform
+import select
+import shlex
+import subprocess
 import traceback
 
 from ansible.module_utils.six import PY2, b
 from ansible.module_utils._text import to_bytes, to_text
+
 
 def sysv_is_enabled(name):
     '''
@@ -47,6 +47,7 @@ def sysv_is_enabled(name):
     :arg name: name of the service to test for
     '''
     return bool(glob.glob('/etc/rc?.d/S??%s' % name))
+
 
 def get_sysv_script(name):
     '''
@@ -62,21 +63,23 @@ def get_sysv_script(name):
 
     return result
 
+
 def sysv_exists(name):
     '''
     This function will return True or False depending on
-    the existance of an init script corresponding to the service name supplied.
+    the existence of an init script corresponding to the service name supplied.
 
     :arg name: name of the service to test for
     '''
     return os.path.exists(get_sysv_script(name))
+
 
 def fail_if_missing(module, found, service, msg=''):
     '''
     This function will return an error or exit gracefully depending on check mode status
     and if the service is missing or not.
 
-    :arg module: is an  AnsbileModule object, used for it's utility methods
+    :arg module: is an  AnsibleModule object, used for it's utility methods
     :arg found: boolean indicating if services was found or not
     :arg service: name of service
     :kw msg: extra info to append to error/success msg when missing
@@ -87,33 +90,15 @@ def fail_if_missing(module, found, service, msg=''):
         else:
             module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
-def daemonize(module, cmd):
+
+def fork_process():
     '''
-    Execute a command while detaching as a deamon, returns rc, stdout, and stderr.
-
-    :arg module: is an  AnsbileModule object, used for it's utility methods
-    :arg cmd: is a list or string representing the command and options to run
-
-    This is complex because daemonization is hard for people.
-    What we do is daemonize a part of this module, the daemon runs the command,
-    picks up the return code and output, and returns it to the main process.
+    This function performs the double fork process to detach from the
+    parent process and execute.
     '''
+    pid = os.fork()
 
-    # init some vars
-    chunk = 4096 #FIXME: pass in as arg?
-    errors = 'surrogate_or_strict'
-
-    #start it!
-    try:
-        pipe = os.pipe()
-        pid = os.fork()
-    except OSError:
-        module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
-
-    # we don't do any locking as this should be a unique module/process
     if pid == 0:
-
-        os.close(pipe[0])
         # Set stdin/stdout/stderr to /dev/null
         fd = os.open(os.devnull, os.O_RDWR)
 
@@ -136,7 +121,7 @@ def daemonize(module, cmd):
         # get new process session and detach
         sid = os.setsid()
         if sid == -1:
-            module.fail_json(msg="Unable to detach session while daemonizing")
+            raise Exception("Unable to detach session while daemonizing")
 
         # avoid possible problems with cwd being removed
         os.chdir("/")
@@ -144,6 +129,38 @@ def daemonize(module, cmd):
         pid = os.fork()
         if pid > 0:
             os._exit(0)
+
+    return pid
+
+
+def daemonize(module, cmd):
+    '''
+    Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
+
+    :arg module: is an  AnsibleModule object, used for it's utility methods
+    :arg cmd: is a list or string representing the command and options to run
+
+    This is complex because daemonization is hard for people.
+    What we do is daemonize a part of this module, the daemon runs the command,
+    picks up the return code and output, and returns it to the main process.
+    '''
+
+    # init some vars
+    chunk = 4096  # FIXME: pass in as arg?
+    errors = 'surrogate_or_strict'
+
+    # start it!
+    try:
+        pipe = os.pipe()
+        pid = fork_process()
+    except OSError:
+        module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
+    except Exception as exc:
+        module.fail_json(msg=to_text(exc), exception=traceback.format_exc())
+
+    # we don't do any locking as this should be a unique module/process
+    if pid == 0:
+        os.close(pipe[0])
 
         # if command is string deal with  py2 vs py3 conversions for shlex
         if not isinstance(cmd, list):
@@ -162,7 +179,7 @@ def daemonize(module, cmd):
         fds = [p.stdout, p.stderr]
 
         # loop reading output till its done
-        output = { p.stdout: b(""), p.sterr: b("") }
+        output = {p.stdout: b(""), p.sterr: b("")}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll():
@@ -176,8 +193,8 @@ def daemonize(module, cmd):
         # even after fds close, we might want to wait for pid to die
         p.wait()
 
-        # Return a pickled data o parent
-        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])])
+        # Return a pickled data of parent
+        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])], protocol=pickle.HIGHEST_PROTOCOL)
         os.write(pipe[1], to_bytes(return_data, errors=errors))
 
         # clean up
@@ -202,7 +219,11 @@ def daemonize(module, cmd):
                     break
                 return_data += b(data)
 
-        return pickle.loads(to_text(return_data, errors=errors))
+        # Note: no need to specify encoding on py3 as this module sends the
+        # pickle to itself (thus same python interpreter so we aren't mixing
+        # py2 and py3)
+        return pickle.loads(to_bytes(return_data, errors=errors))
+
 
 def check_ps(module, pattern):
 

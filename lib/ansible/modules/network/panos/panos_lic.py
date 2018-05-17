@@ -32,19 +32,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     auth_code:
         description:
             - authcode to be applied
@@ -54,6 +41,7 @@ options:
             - whether to apply authcode even if device is already licensed
         required: false
         default: "false"
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -80,7 +68,7 @@ serialnumber:
 '''
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 

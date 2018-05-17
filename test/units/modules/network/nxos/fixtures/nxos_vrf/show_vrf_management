@@ -1,0 +1,10 @@
+{
+  "TABLE_vrf": {
+    "ROW_vrf": {
+      "vrf_name": "management", 
+      "vrf_id": 2, 
+      "vrf_state": "Up", 
+      "vrf_reason": "--"
+    }
+  }
+}

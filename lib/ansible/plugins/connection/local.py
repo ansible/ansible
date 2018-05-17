@@ -15,8 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     connection: local
     short_description: execute on controller
     description:
@@ -26,9 +28,6 @@ DOCUMENTATION:
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import shutil
@@ -90,7 +89,7 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, (text_type, binary_type)),
-            executable=executable, #cwd=...
+            executable=executable,  # cwd=...
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

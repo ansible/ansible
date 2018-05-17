@@ -1,0 +1,27 @@
+- name: Get OS version
+  win_shell: '[Environment]::OSVersion.Version.Major'
+  register: os_version
+
+- name: Get logged in user count (using explorer exe as a proxy)
+  win_shell: (get-process -name explorer -EA silentlyContinue).Count
+  register: user_count
+
+- name: debug os_version
+  debug:
+    var: os_version
+    verbosity: 2
+
+- name: debug user_count
+  debug:
+    var: user_count
+    verbosity: 2
+
+- name: Set fact if toast cannot be made
+  set_fact:
+    can_toast: False
+  when: os_version.stdout|int < 10
+
+- name: Set fact if toast can be made
+  set_fact:
+    can_toast: True
+  when: os_version.stdout|int >= 10

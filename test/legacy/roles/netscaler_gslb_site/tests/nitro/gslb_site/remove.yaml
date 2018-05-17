@@ -1,0 +1,13 @@
+---
+
+- name: Setup gslb site
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_gslb_site:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: absent
+    sitename: gslb-site-1

@@ -1,0 +1,115 @@
+{
+    "kind": "tm:ltm:virtual:virtualstate",
+    "name": "my-virtual-server",
+    "partition": "Common",
+    "fullPath": "/Common/my-virtual-server",
+    "generation": 340,
+    "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server?expandSubcollections=true&ver=12.0.0",
+    "addressStatus": "yes",
+    "autoLasthop": "default",
+    "cmpEnabled": "yes",
+    "connectionLimit": 0,
+    "description": "Test Virtual Server",
+    "destination": "/Common/10.10.10.10:443",
+    "enabled": true,
+    "gtmScore": 0,
+    "ipProtocol": "tcp",
+    "mask": "255.255.255.255",
+    "mirror": "disabled",
+    "mobileAppTunnel": "disabled",
+    "nat64": "disabled",
+    "rateLimit": "disabled",
+    "rateLimitDstMask": 0,
+    "rateLimitMode": "object",
+    "rateLimitSrcMask": 0,
+    "serviceDownImmediateAction": "none",
+    "source": "0.0.0.0/0",
+    "sourceAddressTranslation": {
+        "type": "automap"
+    },
+    "sourcePort": "preserve",
+    "synCookieStatus": "not-activated",
+    "translateAddress": "enabled",
+    "translatePort": "enabled",
+    "vlansDisabled": true,
+    "vsIndex": 38,
+    "rules": [
+        "/Common/web_logging"
+    ],
+    "rulesReference": [
+        {
+            "link": "https://localhost/mgmt/tm/ltm/rule/~Common~web_logging?ver=12.0.0"
+        }
+    ],
+    "policiesReference": {
+        "link": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/policies?ver=12.0.0",
+        "isSubcollection": true,
+        "items": [
+            {
+                "kind": "tm:ltm:virtual:policies:policiesstate",
+                "name": "policy1",
+                "partition": "Common",
+                "fullPath": "/Common/policy1",
+                "generation": 340,
+                "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/policies/~Common~policy1?ver=12.0.0",
+                "nameReference": {
+                    "link": "https://localhost/mgmt/tm/ltm/policy/~Common~policy1?ver=12.0.0"
+                }
+            }
+        ]
+    },
+    "profilesReference": {
+        "link": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles?ver=12.0.0",
+        "isSubcollection": true,
+        "items": [
+            {
+                "kind": "tm:ltm:virtual:profiles:profilesstate",
+                "name": "clientssl",
+                "partition": "Common",
+                "fullPath": "/Common/clientssl",
+                "generation": 338,
+                "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles/~Common~clientssl?ver=12.0.0",
+                "context": "clientside",
+                "nameReference": {
+                    "link": "https://localhost/mgmt/tm/ltm/profile/client-ssl/~Common~clientssl?ver=12.0.0"
+                }
+            },
+            {
+                "kind": "tm:ltm:virtual:profiles:profilesstate",
+                "name": "http",
+                "partition": "Common",
+                "fullPath": "/Common/http",
+                "generation": 338,
+                "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles/~Common~http?ver=12.0.0",
+                "context": "all",
+                "nameReference": {
+                    "link": "https://localhost/mgmt/tm/ltm/profile/http/~Common~http?ver=12.0.0"
+                }
+            },
+            {
+                "kind": "tm:ltm:virtual:profiles:profilesstate",
+                "name": "tcp",
+                "partition": "Common",
+                "fullPath": "/Common/tcp",
+                "generation": 338,
+                "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles/~Common~tcp?ver=12.0.0",
+                "context": "clientside",
+                "nameReference": {
+                    "link": "https://localhost/mgmt/tm/ltm/profile/tcp/~Common~tcp?ver=12.0.0"
+                }
+            },
+            {
+                "kind": "tm:ltm:virtual:profiles:profilesstate",
+                "name": "tcp-legacy",
+                "partition": "Common",
+                "fullPath": "/Common/tcp-legacy",
+                "generation": 338,
+                "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles/~Common~tcp-legacy?ver=12.0.0",
+                "context": "serverside",
+                "nameReference": {
+                    "link": "https://localhost/mgmt/tm/ltm/profile/tcp/~Common~tcp-legacy?ver=12.0.0"
+                }
+            }
+        ]
+    }
+}

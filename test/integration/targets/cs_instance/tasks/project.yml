@@ -1,0 +1,560 @@
+---
+- name: setup create project
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+  register: prj
+- name: verify test create project
+  assert:
+    that:
+    - prj is successful
+
+- name: setup instance in project to be absent
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: instance
+- name: verify instance in project to be absent
+  assert:
+    that:
+    - instance is successful
+
+- name: setup ssh key in project
+  cs_sshkeypair:
+    name: "{{ cs_resource_prefix }}-sshkey-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+  register: sshkey
+- name: verify setup ssh key in project
+  assert:
+    that:
+    - sshkey is successful
+
+- name: setup affinity group in project
+  cs_affinitygroup:
+    name: "{{ cs_resource_prefix }}-ag-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+  register: ag
+- name: verify setup affinity group in project
+  assert:
+    that:
+    - ag is successful
+
+- name: setup security group in project
+  cs_securitygroup:
+    name: "{{ cs_resource_prefix }}-sg-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+  register: sg
+- name: verify setup security group in project
+  assert:
+    that:
+    - sg is successful
+
+- name: test create instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag-prj"
+    security_group: "{{ cs_resource_prefix }}-sg-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey-prj"
+    tags: []
+  register: instance
+  check_mode: true
+- name: verify create instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+
+- name: test create instance in project
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag-prj"
+    security_group: "{{ cs_resource_prefix }}-sg-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey-prj"
+    tags: []
+  register: instance
+- name: verify create instance in project
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey-prj"
+    - not instance.tags
+
+- name: test create instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag-prj"
+    security_group: "{{ cs_resource_prefix }}-sg-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey-prj"
+    tags: []
+  register: instance
+- name: verify create instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey-prj"
+    - not instance.tags
+
+- name: test running instance in project not updated in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+    project: "{{ cs_resource_prefix }}-prj"
+  register: instance
+  check_mode: true
+- name: verify running instance in project not updated in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+
+- name: test running instance in project not updated
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+    project: "{{ cs_resource_prefix }}-prj"
+  register: instance
+- name: verify running instance in project not updated
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test stopping instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: stopped
+  register: instance
+  check_mode: true
+- name: verify stopping instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test stopping instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: stopped
+  register: instance
+- name: verify stopping instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Stopped"
+
+- name: test stopping instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: stopped
+  register: instance
+- name: verify stopping instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.state == "Stopped"
+
+- name: test updating stopped instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    display_name: "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+  register: instance
+  check_mode: true
+- name: verify updating stopped instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Stopped"
+
+- name: test updating stopped instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    display_name: "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+  register: instance
+- name: verify updating stopped instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Stopped"
+
+- name: test updating stopped instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    display_name: "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+  register: instance
+- name: verify updating stopped instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Stopped"
+
+- name: test starting instance in project in check mdoe
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: started
+  register: instance
+  check_mode: true
+- name: verify starting instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Stopped"
+
+- name: test starting instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: started
+  register: instance
+- name: verify starting instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Running"
+
+- name: test starting instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: started
+  register: instance
+- name: verify starting instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Running"
+
+- name: test force update running instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    force: true
+  register: instance
+  check_mode: true
+- name: verify force update running instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Running"
+
+- name: test force update running instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    force: true
+  register: instance
+- name: verify force update running instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test force update running instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    force: true
+  register: instance
+- name: verify force update running instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test restore instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: restored
+  register: instance
+  check_mode: true
+- name: verify restore instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test restore instance in project
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: restored
+  register: instance
+- name: verify restore instance in project
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.project == "{{ cs_resource_prefix }}-prj"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test destroy instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: instance
+  check_mode: true
+- name: verify destroy instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state != "Destroyed"
+
+- name: test destroy instance in project
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: instance
+- name: verify destroy instance in project
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Destroyed"
+
+- name: test destroy instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: instance
+- name: verify destroy instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+
+- name: test recover in project to stopped state and update a deleted instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+  check_mode: true
+- name: verify test recover to stopped state and update a deleted instance in project in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+
+- name: test recover to stopped state and update a deleted instance in project
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+- name: verify test recover to stopped state and update a deleted instance in project
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test recover to stopped state and update a deleted instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+- name: verify test recover to stopped state and update a deleted instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance in project in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: expunged
+  register: instance
+  check_mode: true
+- name: verify test expunge instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance in project
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: expunged
+  register: instance
+- name: verify test expunge instance in project
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance in project idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: expunged
+  register: instance
+- name: verify test expunge instance in project idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+
+- name: cleanup ssh key in project
+  cs_sshkeypair:
+    name: "{{ cs_resource_prefix }}-sshkey-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: sshkey
+- name: verify cleanup ssh key in project
+  assert:
+    that:
+    - sshkey is successful
+
+- name: cleanup affinity group in project
+  cs_affinitygroup:
+    name: "{{ cs_resource_prefix }}-ag-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: ag
+  until: ag is successful
+  retries: 20
+  delay: 5
+- name: verify cleanup affinity group in project
+  assert:
+    that:
+    - ag is successful
+
+- name: cleanup security group in project ...take a while unless instance in project is expunged
+  cs_securitygroup:
+    name: "{{ cs_resource_prefix }}-sg-prj"
+    project: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: sg
+  until: sg is successful
+  retries: 100
+  delay: 10
+- name: verify cleanup security group in project
+  assert:
+    that:
+    - sg is successful

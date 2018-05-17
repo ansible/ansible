@@ -1,32 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
-#
-# This file is part of Ansible (sort of)
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = """
 module: gconftool2
 author:
-    - "Kenneth D. Evensen (@kevensen)"
+    - Kenneth D. Evensen (@kevensen)
 short_description: Edit GNOME Configurations
 description:
   - This module allows for the manipulation of GNOME 2 Configuration via
@@ -34,47 +23,35 @@ description:
 version_added: "2.3"
 options:
   key:
-    required: true
     description:
     - A GConf preference key is an element in the GConf repository
       that corresponds to an application preference. See man gconftool-2(1)
+    required: yes
   value:
-    required: false
     description:
     - Preference keys typically have simple values such as strings,
       integers, or lists of strings and integers. This is ignored if the state
       is "get". See man gconftool-2(1)
   value_type:
-    required: false
-    choices:
-    - int
-    - bool
-    - float
-    - string
     description:
     - The type of value being set. This is ignored if the state is "get".
+    choices: [ bool, float, int, string ]
   state:
-    required: true
-    choices:
-    - get
-    - present
-    - absent
     description:
     - The action to take upon the key/value.
+    required: yes
+    choices: [ absent, get, present ]
   config_source:
-    required: false
     description:
     - Specify a configuration source to use rather than the default path.
       See man gconftool-2(1)
   direct:
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
     description:
     - Access the config database directly, bypassing server.  If direct is
       specified then the config_source must be specified as well.
       See man gconftool-2(1)
-
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -90,12 +67,12 @@ RETURN = '''
     description: The key specified in the module parameters
     returned: success
     type: string
-    sample: "/desktop/gnome/interface/font_name"
+    sample: /desktop/gnome/interface/font_name
   value_type:
     description: The type of the value that was changed
     returned: success
     type: string
-    sample: "string"
+    sample: string
   value:
     description: The value of the preference key after executing the module
     returned: success
@@ -104,10 +81,7 @@ RETURN = '''
 ...
 '''
 
-from subprocess import Popen, PIPE
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GConf2Preference(object):
@@ -158,11 +132,7 @@ class GConf2Preference(object):
                 cmd += "--unset {0}".format(self.key)
 
             # Start external command
-            process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
-
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+            rc, out, err = self.ansible.run_command(cmd, use_unsafe_shell=True)
 
             if len(err) > 0:
                 if fail_onerr:
@@ -171,8 +141,7 @@ class GConf2Preference(object):
             else:
                 changed = True
 
-        except OSError:
-            exception = get_exception()
+        except OSError as exception:
             self.ansible.fail_json(msg='gconftool-2 failed with exception: '
                                        '%s' % exception)
         return changed, out.rstrip()
@@ -182,24 +151,18 @@ def main():
     # Setup the Ansible module
     module = AnsibleModule(
         argument_spec=dict(
-            key=dict(required=True, default=None, type='str'),
-            value_type=dict(required=False,
-                            choices=['int', 'bool', 'float', 'string'],
-                            type='str'),
-            value=dict(required=False, default=None, type='str'),
-            state=dict(required=True,
-                       default=None,
-                       choices=['present', 'get', 'absent'],
-                       type='str'),
-            direct=dict(required=False, default=False, type='bool'),
-            config_source=dict(required=False, default=None, type='str')
-            ),
+            key=dict(type='str', required=True),
+            value_type=dict(type='str', choices=['bool', 'float', 'int', 'string']),
+            value=dict(type='str'),
+            state=dict(type='str', required=True, choices=['absent', 'get', 'present']),
+            direct=dict(type='bool', default=False),
+            config_source=dict(type='str'),
+        ),
         supports_check_mode=True
     )
 
     state_values = {"present": "set", "absent": "unset", "get": "get"}
 
-    direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
@@ -211,8 +174,7 @@ def main():
         value = module.params['value']
 
     state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
+    direct = module.params['direct']
     config_source = module.params['config_source']
 
     # Initialize some variables for later
@@ -222,17 +184,17 @@ def main():
     if state != "get":
         if value is None or value == "":
             module.fail_json(msg='State %s requires "value" to be set'
-                             % str(state))
+                                 % str(state))
         elif value_type is None or value_type == "":
             module.fail_json(msg='State %s requires "value_type" to be set'
-                             % str(state))
+                                 % str(state))
 
         if direct and config_source is None:
             module.fail_json(msg='If "direct" is "yes" then the ' +
-                             '"config_source" must be specified')
+                                 '"config_source" must be specified')
         elif not direct and config_source is not None:
             module.fail_json(msg='If the "config_source" is specified ' +
-                             'then "direct" must be "yes"')
+                                 'then "direct" must be "yes"')
 
     # Create a gconf2 preference
     gconf_pref = GConf2Preference(module, key, value_type,
@@ -243,7 +205,7 @@ def main():
     # Check if the current value equals the value we want to set.  If not, make
     # a change
     if current_value != value:
-        # If check mode, we know a change would have occured.
+        # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True
@@ -265,6 +227,7 @@ def main():
                              'playbook_value': module.params['value']})
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

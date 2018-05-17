@@ -1,0 +1,21 @@
+- name: Set timezone to Etc/UTC
+  timezone:
+    name: Etc/UTC
+  register: original_timezone
+
+- block:
+    - name: Set timezone to Australia/Brisbane
+      timezone:
+        name: Australia/Brisbane
+      register: timezone_set
+
+    - name: Ensure timezone changed
+      assert:
+        that:
+          - timezone_set is changed
+          - timezone_set.diff.after.name == 'Australia/Brisbane'
+          - timezone_set.diff.before.name == 'Etc/UTC'
+  always:
+    - name: Restore original system timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"

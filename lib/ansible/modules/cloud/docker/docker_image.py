@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -48,7 +38,6 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
-    default: Dockerfile
     required: false
     version_added: "2.0"
   force:
@@ -58,6 +47,7 @@ options:
     default: false
     required: false
     version_added: "2.1"
+    type: bool
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
@@ -82,23 +72,27 @@ options:
     default: true
     required: false
     version_added: "2.1"
+    type: bool
   push:
     description:
       - Push the image to the registry. Specify the registry as part of the I(name) or I(repository) parameter.
     default: false
     required: false
     version_added: "2.2"
+    type: bool
   rm:
     description:
       - Remove intermediate containers after build.
     default: true
     required: false
     version_added: "2.1"
+    type: bool
   nocache:
     description:
       - Do not use cache when building an image.
     default: false
     required: false
+    type: bool
   repository:
     description:
       - Full path to a repository. Use with state C(present) to tag the image into the repository. Expects
@@ -161,10 +155,10 @@ options:
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that the server's certificate is valid for the
         server. NOTE: If you specify this option, it will set the value of the tls or tls_verify parameters."
     choices:
-      - no
-      - encrypt
-      - verify
-    default: no
+      - 'no'
+      - 'encrypt'
+      - 'verify'
+    default: 'no'
     required: false
     version_added: "2.0"
 
@@ -179,7 +173,6 @@ requirements:
 author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jctanner)
 
 '''
 
@@ -242,14 +235,17 @@ RETURN = '''
 image:
     description: Image inspection results for the affected image.
     returned: success
-    type: complex
+    type: dict
     sample: {}
 '''
+import os
+import re
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils._text import to_native
 
 try:
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.auth import resolve_repository_name
     else:
         from docker.auth.auth import resolve_repository_name
@@ -340,7 +336,9 @@ class ImageManager(DockerBaseClass):
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
+                    self.results['image'], already_latest = self.client.pull_image(self.name, tag=self.tag)
+                    if already_latest:
+                        self.results['changed'] = False
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
@@ -399,8 +397,12 @@ class ImageManager(DockerBaseClass):
 
             try:
                 with open(self.archive_path, 'w') as fd:
-                    for chunk in image.stream(2048, decode_content=False):
-                        fd.write(chunk)
+                    if HAS_DOCKER_PY_3:
+                        for chunk in image:
+                            fd.write(chunk)
+                    else:
+                        for chunk in image.stream(2048, decode_content=False):
+                            fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
@@ -430,7 +432,7 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 status = None
                 try:
-                    for line in self.client.push(repository, tag=tag, stream=True,  decode=True):
+                    for line in self.client.push(repository, tag=tag, stream=True, decode=True):
                         self.log(line, pretty_print=True)
                         if line.get('errorDetail'):
                             raise Exception(line['errorDetail']['message'])
@@ -500,13 +502,14 @@ class ImageManager(DockerBaseClass):
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
-            stream=True,
             timeout=self.http_timeout,
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
             decode=True
         )
+        if not HAS_DOCKER_PY_3:
+            params['stream'] = True
         build_output = []
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)
@@ -514,8 +517,7 @@ class ImageManager(DockerBaseClass):
             params['container_limits'] = self.container_limits
         if self.buildargs:
             for key, value in self.buildargs.items():
-                if not isinstance(value, basestring):
-                    self.buildargs[key] = str(value)
+                self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
 
         for line in self.client.build(**params):
@@ -572,7 +574,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        nocache=dict(type='str', default=False),
+        nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
         push=dict(type='bool', default=False),
@@ -598,9 +600,6 @@ def main():
     ImageManager(client, results)
     client.module.exit_json(**results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

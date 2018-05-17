@@ -1,0 +1,129 @@
+# Test code for the vmware_local_role_manager module
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: Role creation
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is created
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.local_role_name is defined }}"
+
+- name: Create role again
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is not created again
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+
+- name: delete role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: verify if role is not present
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+
+- name: delete role again
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: verify if role is not present again
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+
+- name: Create role with privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['VirtualMachine.State.RenameSnapshot']
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is created with privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+
+- name: Create role with privileges additional privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['VirtualMachine.State.RenameSnapshot', 'Folder.Create']
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is created with updated privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"

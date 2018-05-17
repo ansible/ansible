@@ -105,20 +105,20 @@ def uldap():
     def construct():
         try:
             secret_file = open('/etc/ldap.secret', 'r')
-            bind_dn     = 'cn=admin,{}'.format(base_dn())
+            bind_dn = 'cn=admin,{0}'.format(base_dn())
         except IOError:  # pragma: no cover
             secret_file = open('/etc/machine.secret', 'r')
-            bind_dn     = config_registry()["ldap/hostdn"]
-        pwd_line        = secret_file.readline()
-        pwd             = re.sub('\n', '', pwd_line)
+            bind_dn = config_registry()["ldap/hostdn"]
+        pwd_line = secret_file.readline()
+        pwd = re.sub('\n', '', pwd_line)
 
         import univention.admin.uldap
         return univention.admin.uldap.access(
-            host      = config_registry()['ldap/master'],
-            base      = base_dn(),
-            binddn    = bind_dn,
-            bindpw    = pwd,
-            start_tls = 1
+            host=config_registry()['ldap/master'],
+            base=base_dn(),
+            binddn=bind_dn,
+            bindpw=pwd,
+            start_tls=1,
         )
 
     return _singleton('uldap', construct)
@@ -273,7 +273,8 @@ def umc_module_for_edit(module, object_dn, superordinate=None):
 def create_containers_and_parents(container_dn):
     """Create a container and if needed the parents containers"""
     import univention.admin.uexceptions as uexcp
-    assert container_dn.startswith("cn=")
+    if not container_dn.startswith("cn="):
+        raise AssertionError()
     try:
         parent = ldap_dn_tree_parent(container_dn)
         obj = umc_module_for_add(

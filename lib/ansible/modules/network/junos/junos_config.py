@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -40,8 +32,6 @@ options:
         lines to push into the remote device.  Each line must start with
         either C(set) or C(delete).  This argument is mutually exclusive
         with the I(src) argument.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -49,8 +39,6 @@ options:
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
-    required: false
-    default: null
     version_added: "2.2"
   src_format:
     description:
@@ -58,8 +46,6 @@ options:
         found int I(src).  If the I(src_format) argument is not provided,
         the module will attempt to determine the format of the configuration
         file specified in I(src).
-    required: false
-    default: null
     choices: ['xml', 'set', 'text', 'json']
     version_added: "2.2"
   rollback:
@@ -69,16 +55,12 @@ options:
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail.  To rollback
         to the most recent commit, set the C(rollback) argument to 0.
-    required: false
-    default: null
   zeroize:
     description:
       - The C(zeroize) argument is used to completely sanitize the
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
-    required: false
-    default: null
   confirm:
     description:
       - The C(confirm) argument will configure a time out value for
@@ -86,14 +68,12 @@ options:
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
-    required: false
     default: 0
   comment:
     description:
       - The C(comment) argument specifies a text string to be used
         when committing the configuration.  If the C(confirm) argument
         is set to False, this argument is silently ignored.
-    required: false
     default: configured by junos_config
   replace:
     description:
@@ -105,19 +85,18 @@ options:
         the equivalent, set the I(update) argument to C(replace). This argument
         will be removed in a future release. The C(replace) and C(update) argument
         is mutually exclusive.
-    required: false
-    choices: ['yes', 'no']
-    default: false
+    type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   update:
     description:
@@ -133,17 +112,28 @@ options:
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
-    required: false
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
+  confirm_commit:
+    description:
+      - This argument will execute commit operation on remote device.
+        It can be used to confirm a previous commit.
+    type: bool
+    default: 'no'
+    version_added: "2.4"
 requirements:
-  - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -151,7 +141,6 @@ EXAMPLES = """
   junos_config:
     src: srx.cfg
     comment: update config
-    provider: "{{ netconf }}"
 
 - name: load configure lines into device
   junos_config:
@@ -159,53 +148,75 @@ EXAMPLES = """
       - set interfaces ge-0/0/1 unit 0 description "Test interface"
       - set vlans vlan01 description "Test vlan"
     comment: update config
-    provider: "{{ netconf }}"
 
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
-    provider: "{{ netconf }}"
 
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
-    provider: "{{ netconf }}"
 
 - name: confirm a previous commit
   junos_config:
-    provider: "{{ netconf }}"
+    confirm_commit: yes
+
+- name: for idempotency, use full-form commands
+  junos_config:
+    lines:
+      # - set int ge-0/0/1 unit 0 desc "Test interface"
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
 """
 
 RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
 import re
 import json
 
-from xml.etree import ElementTree
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import get_diff, load_config, get_configuration
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, get_connection, tostring
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native, to_text
+
+try:
+    from lxml.etree import Element, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, fromstring
+
+try:
+    from lxml.etree import ParseError
+except ImportError:
+    try:
+        from xml.etree.ElementTree import ParseError
+    except ImportError:
+        # for Python < 2.7
+        from xml.parsers.expat import ExpatError
+        ParseError = ExpatError
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
 
-def check_args(module, warnings):
-    junos_check_args(module, warnings)
 
+def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
-rollback = lambda x: get_diff(x)
+
+def zeroize(module):
+    return exec_rpc(module, tostring(Element('request-system-zeroize')), ignore_warning=False)
+
+
+def rollback(ele, id='0'):
+    return get_diff(ele, id)
+
 
 def guess_format(config):
     try:
@@ -215,9 +226,9 @@ def guess_format(config):
         pass
 
     try:
-        ElementTree.fromstring(config)
+        fromstring(config)
         return 'xml'
-    except ElementTree.ParseError:
+    except ParseError:
         pass
 
     if config.startswith('set') or config.startswith('delete'):
@@ -225,16 +236,17 @@ def guess_format(config):
 
     return 'text'
 
+
 def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
     match = reply.find('.//configuration-set')
     if match is None:
         # Could not find configuration-set in reply, perhaps device does not support it?
         return candidate
-    config = str(match.text)
+    config = to_native(match.text, encoding='latin-1')
 
     modified_candidate = candidate[:]
-    for index, line in enumerate(candidate):
+    for index, line in reversed(list(enumerate(candidate))):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
@@ -242,20 +254,10 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module, warnings):
-    candidate = module.params['lines'] or module.params['src']
 
-    kwargs = {
-        'comment': module.params['comment'],
-        'commit': not module.check_mode
-    }
+def configure_device(module, warnings, candidate):
 
-    if module.params['confirm'] > 0:
-        kwargs.update({
-            'confirm': True,
-            'confirm_timeout': module.params['confirm']
-        })
-
+    kwargs = {}
     config_format = None
 
     if module.params['src']:
@@ -277,6 +279,7 @@ def configure_device(module, warnings):
 
     return load_config(module, candidate, warnings, **kwargs)
 
+
 def main():
     """ main entry point for module execution
     """
@@ -294,6 +297,7 @@ def main():
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+        confirm_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -313,6 +317,9 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
+    candidate = module.params['lines'] or module.params['src']
+    commit = not module.check_mode
+
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
@@ -324,25 +331,56 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = str(match.text).strip()
+        result['__backup__'] = match.text.strip()
 
-    if module.params['rollback']:
-        if not module.check_mode:
-            diff = rollback(module)
+    rollback_id = module.params['rollback']
+    if rollback_id:
+        diff = rollback(module, rollback_id)
+        if commit:
+            kwargs = {
+                'comment': module.params['comment']
+            }
+            with locked_config(module):
+                load_configuration(module, rollback=rollback_id)
+                commit_configuration(module, **kwargs)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
     elif module.params['zeroize']:
-        if not module.check_mode:
+        if commit:
             zeroize(module)
         result['changed'] = True
 
     else:
-        diff = configure_device(module, warnings)
-        if diff is not None:
-            if module._diff:
-                result['diff'] = {'prepared': diff}
+        if candidate:
+            with locked_config(module):
+                diff = configure_device(module, warnings, candidate)
+                if diff:
+                    if commit:
+                        kwargs = {
+                            'comment': module.params['comment']
+                        }
+
+                        confirm = module.params['confirm']
+                        if confirm > 0:
+                            kwargs.update({
+                                'confirm': True,
+                                'confirm_timeout': to_text(confirm, errors='surrogate_then_replace')
+                            })
+                        commit_configuration(module, **kwargs)
+                    else:
+                        discard_changes(module)
+                    result['changed'] = True
+
+                    if module._diff:
+                        result['diff'] = {'prepared': diff}
+
+        elif module.params['confirm_commit']:
+            with locked_config(module):
+                # confirm a previous commit
+                commit_configuration(module)
+
             result['changed'] = True
 
     module.exit_json(**result)

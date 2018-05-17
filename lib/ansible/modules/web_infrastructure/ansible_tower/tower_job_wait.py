@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -46,7 +38,6 @@ options:
     timeout:
       description:
         - Maximum time in seconds to wait for a job to finish.
-      default: null
 extends_documentation_fragment: tower
 '''
 
@@ -90,36 +81,27 @@ status:
 '''
 
 
+from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import cStringIO as StringIO
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import (
-        tower_auth_config,
-        tower_check_mode,
-        tower_argument_spec,
-    )
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        job_id = dict(type='int', required=True),
-        timeout = dict(type='int'),
-        min_interval = dict(type='float', default=1),
-        max_interval = dict(type='float', default=30),
+        job_id=dict(type='int', required=True),
+        timeout=dict(type='int'),
+        min_interval=dict(type='float', default=1),
+        max_interval=dict(type='float', default=30),
     ))
 
     module = AnsibleModule(
@@ -140,7 +122,7 @@ def main():
         params = module.params.copy()
 
         # tower-cli gets very noisy when monitoring.
-        # We pass in our our outfile to supress the out during our monitor call.
+        # We pass in our our outfile to suppress the out during our monitor call.
         outfile = StringIO()
         params['outfile'] = outfile
 

@@ -1,20 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Copyright: Ansible Project
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -39,55 +33,43 @@ options:
     description:
       - the password to authenticate with
       - you can use PROXMOX_PASSWORD environment variable
-    default: null
-    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
-    default: false
-    required: false
+    default: 'no'
     type: bool
   node:
     description:
       - Proxmox VE node, when you will operate with template
-    default: null
     required: true
   src:
     description:
       - path to uploaded file
       - required only for C(state=present)
-    default: null
-    required: false
     aliases: ['path']
   template:
     description:
       - the template name
       - required only for states C(absent), C(info)
-    default: null
-    required: false
   content_type:
     description:
       - content type
       - required only for C(state=present)
     default: 'vztmpl'
-    required: false
     choices: ['vztmpl', 'iso']
   storage:
     description:
       - target storage
     default: 'local'
-    required: false
   timeout:
     description:
       - timeout for operations
     default: 30
-    required: false
   force:
     description:
       - can be used only with C(state=present), exists template will be overwritten
-    default: false
-    required: false
     type: bool
+    default: 'no'
   state:
     description:
      - Indicate desired state of the template
@@ -145,9 +127,13 @@ try:
 except ImportError:
     HAS_PROXMOXER = False
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_template(proxmox, node, storage, content_type, template):
-    return [ True for tmpl in proxmox.nodes(node).storage(storage).content.get()
-            if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template) ]
+    return [True for tmpl in proxmox.nodes(node).storage(storage).content.get()
+            if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template)]
+
 
 def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
     taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
@@ -163,6 +149,7 @@ def upload_template(module, proxmox, api_host, node, storage, content_type, real
         time.sleep(1)
     return False
 
+
 def delete_template(module, proxmox, node, storage, content_type, template, timeout):
     volid = '%s:%s/%s' % (storage, content_type, template)
     proxmox.nodes(node).storage(storage).content.delete(volid)
@@ -176,22 +163,23 @@ def delete_template(module, proxmox, node, storage, content_type, template, time
         time.sleep(1)
     return False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            api_host = dict(required=True),
-            api_user = dict(required=True),
-            api_password = dict(no_log=True),
-            validate_certs = dict(type='bool', default='no'),
-            node = dict(),
-            src = dict(),
-            template = dict(),
-            content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
-            storage = dict(default='local'),
-            timeout = dict(type='int', default=30),
-            force = dict(type='bool', default='no'),
-            state = dict(default='present', choices=['present', 'absent']),
-            )
+        argument_spec=dict(
+            api_host=dict(required=True),
+            api_user=dict(required=True),
+            api_password=dict(no_log=True),
+            validate_certs=dict(type='bool', default='no'),
+            node=dict(),
+            src=dict(type='path'),
+            template=dict(),
+            content_type=dict(default='vztmpl', choices=['vztmpl', 'iso']),
+            storage=dict(default='local'),
+            timeout=dict(type='int', default=30),
+            force=dict(type='bool', default='no'),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
     )
 
     if not HAS_PROXMOXER:
@@ -223,20 +211,18 @@ def main():
             content_type = module.params['content_type']
             src = module.params['src']
 
-            from ansible import utils
-            realpath = utils.path_dwim(None, src)
-            template = os.path.basename(realpath)
+            template = os.path.basename(src)
             if get_template(proxmox, node, storage, content_type, template) and not module.params['force']:
                 module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already exists' % (storage, content_type, template))
             elif not src:
                 module.fail_json(msg='src param to uploading template file is mandatory')
-            elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
-                module.fail_json(msg='template file on path %s not exists' % realpath)
+            elif not (os.path.exists(src) and os.path.isfile(src)):
+                module.fail_json(msg='template file on path %s not exists' % src)
 
-            if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
+            if upload_template(module, proxmox, api_host, node, storage, content_type, src, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
         except Exception as e:
-            module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
+            module.fail_json(msg="uploading of template %s failed with exception: %s" % (template, e))
 
     elif state == 'absent':
         try:
@@ -251,10 +237,8 @@ def main():
             if delete_template(module, proxmox, node, storage, content_type, template, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
         except Exception as e:
-            module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
+            module.fail_json(msg="deleting of template %s failed with exception: %s" % (template, e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,239 @@
+# Test code for the vmware_dvs_portgroup module.
+# (c) 2017, Philippe Dellaert <philippe@dellaert.org>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: get a list of distributed vswitch from vcsim after adding
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
+  register: new_dvs_0001
+
+- debug:
+    msg: "{{ item | basename }}"
+  with_items: "{{ new_dvs_0001['json'] }}"
+
+# Testcase 0001: Add basic portgroup
+- name: create basic portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0001
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0001.changed == true }}"
+
+# Testcase 0002: Add basic VLAN portgroup
+- name: create basic VLAN portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-vlan10"
+    vlan_id: 10
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0002
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0002.changed == true }}"
+
+# Testcase 0003: Add basic trunk portgroup
+- name: create basic trunk portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-trunk"
+    vlan_id: 1-4096
+    vlan_trunk: True
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0003
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0003.changed == true }}"
+
+# Testcase 0004: Add basic portgroup again
+- name: create basic portgroup again
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0004
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0004.changed == false }}"
+
+# Testcase 0005: Add basic portgroup with all security and policy settings enabled
+- name: create basic portgroup with all security and policy settings enabled
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-all-enabled"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: yes
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  register: dvs_pg_result_0005
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0005.changed == true }}"
+
+# Testcase 0006: Add basic portgroup with some settings enabled
+- name: create basic portgroup with all security and policy settings enabled
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-some-enabled"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: no
+    port_policy:
+      vlan_override: yes
+  register: dvs_pg_result_0006
+
+- name: ensure dvs portgroup is present
+  assert:
+    that:
+        - "{{ dvs_pg_result_0006.changed == true }}"
+
+# Testcase 0007: Delete basic portgroup
+- name: delete basic portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: absent
+  register: dvs_pg_result_0007
+
+- name: ensure dvs portgroup is removed
+  assert:
+    that:
+        - "{{ dvs_pg_result_0007.changed == true }}"
+
+# Testcase 0008: Delete basic portgroup again
+- name: delete basic portgroup again
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: absent
+  register: dvs_pg_result_0008
+
+- name: ensure dvs portgroup is removed
+  assert:
+    that:
+        - "{{ dvs_pg_result_0008.changed == false }}"

@@ -1,0 +1,17 @@
+{
+    "data": {
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "8738f361-b294-47d7-a6d7-82d289db5e5f",
+            "HTTPHeaders": {
+                "vary": "Accept-Encoding",
+                "content-type": "text/xml;charset=UTF-8",
+                "server": "AmazonEC2",
+                "date": "Mon, 16 Apr 2018 13:06:44 GMT",
+                "transfer-encoding": "chunked"
+            },
+            "RetryAttempts": 0
+        }
+    },
+    "status_code": 200
+}

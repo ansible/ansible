@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -31,84 +31,66 @@ description:
     - Manages configuration of a Protocol Independent Multicast (PIM) instance.
 author: Gabriele Gerbino (@GGabriele)
 options:
-    ssm_range:
-        description:
-            - Configure group ranges for Source Specific Multicast (SSM).
-              Valid values are multicast addresses or the keyword 'none'.
-        required: true
+  ssm_range:
+    description:
+      - Configure group ranges for Source Specific Multicast (SSM).
+        Valid values are multicast addresses or the keyword C(none)
+        or keyword C(default). C(none) removes all SSM group ranges.
+        C(default) will set ssm_range to the default multicast address.
+        If you set multicast address, please ensure that it is not the
+        same as the C(default), otherwise use the C(default) option.
+    required: true
 '''
 EXAMPLES = '''
-- nxos_pim:
-    ssm_range: "232.0.0.0/8"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+- name: Configure ssm_range
+  nxos_pim:
+    ssm_range: "224.0.0.0/8"
+
+- name: Set to default
+  nxos_pim:
+    ssm_range: default
+
+- name: Remove all ssm group ranges
+  nxos_pim:
+    ssm_range: none
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": "232.0.0.0/8"}
-existing:
-    description: k/v pairs of existing PIM configuration
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": none}
-end_state:
-    description: k/v pairs of BGP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"ssm_range": "232.0.0.0/8"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip pim ssm range 232.0.0.0/8"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+    sample: ["ip pim ssm range 224.0.0.0/8"]
 '''
 
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
-import re
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 PARAM_TO_COMMAND_KEYMAP = {
     'ssm_range': 'ip pim ssm range'
 }
-PARAM_TO_DEFAULT_KEYMAP = {}
-WARNINGS = []
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
-def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-    value = ''
-    if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-        value = REGEX.search(config).group('value')
-    return value
 
 
 def get_existing(module, args):
     existing = {}
     config = str(get_config(module))
+
     for arg in args:
-        existing[arg] = get_value(arg, config, module)
+        command = PARAM_TO_COMMAND_KEYMAP[arg]
+        has_command = re.search(r'^{0}\s(?P<value>.*)$'.format(command), config, re.M)
+
+        value = ''
+        if has_command:
+            value = has_command.group('value')
+            if value == '232.0.0.0/8':
+                value = ''  # remove the reserved value
+        existing[arg] = value.split()
     return existing
 
 
@@ -116,23 +98,23 @@ def apply_key_map(key_map, table):
     new_dict = {}
     for key, value in table.items():
         new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+        if value:
+            new_dict[new_key] = value
     return new_dict
 
 
 def get_commands(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
-    existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in proposed_commands.items():
-        command = '{0} {1}'.format(key, value)
-        commands.append(command)
+        if key == 'ip pim ssm range' and value == 'default':
+            # no cmd needs a value but the actual value does not matter
+            command = 'no ip pim ssm range none'
+            commands.append(command)
+        else:
+            command = '{0} {1}'.format(key, value)
+            commands.append(command)
 
     if commands:
         candidate.add(commands, parents=[])
@@ -140,59 +122,53 @@ def get_commands(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-        ssm_range=dict(required=True, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        ssm_range=dict(required=True, type='list'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
+    result = {'changed': False, 'commands': [], 'warnings': warnings}
 
+    ssm_range_list = module.params['ssm_range']
+    for item in ssm_range_list:
+        splitted_ssm_range = item.split('.')
+        if len(splitted_ssm_range) != 4 and item != 'none' and item != 'default':
+            module.fail_json(msg="Valid ssm_range values are multicast addresses "
+                                 "or the keyword 'none' or the keyword 'default'.")
 
-    splitted_ssm_range = module.params['ssm_range'].split('.')
-    if len(splitted_ssm_range) != 4 and module.params['ssm_range'] != 'none':
-        module.fail_json(msg="Valid ssm_range values are multicast addresses "
-                             "or the keyword 'none'.")
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
 
-    args =  [
-        'ssm_range'
-    ]
+    existing = get_existing(module, args)
+    proposed_args = dict((k, v) for k, v in module.params.items() if k in args)
 
-    existing = invoke('get_existing', module, args)
-    end_state = existing
-    proposed = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+    proposed = {}
+    for key, value in proposed_args.items():
+        if key == 'ssm_range':
+            if value[0] == 'default':
+                if existing.get(key):
+                    proposed[key] = 'default'
+            else:
+                v = sorted(set([str(i) for i in value]))
+                ex = sorted(set([str(i) for i in existing.get(key)]))
+                if v != ex:
+                    proposed[key] = ' '.join(str(s) for s in v)
 
-    result = {}
     candidate = CustomNetworkConfig(indent=3)
-    invoke('get_commands', module, existing, proposed, candidate)
+    get_commands(module, existing, proposed, candidate)
 
-    try:
-        response = load_config(module, candidate)
-        result.update(response)
-    except ShellError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+    if candidate:
+        candidate = candidate.items_text()
+        result['commands'] = candidate
+        result['changed'] = True
+        load_config(module, candidate)
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

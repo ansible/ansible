@@ -1,0 +1,27 @@
+{
+    "data": {
+        "lagState": "deleted",
+        "location": "EqSe2",
+        "region": "us-west-2",
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "bf437e0e-70a7-11e7-83ab-ef16f9ac5159",
+                "content-length": "266",
+                "date": "Mon, 24 Jul 2017 19:39:02 GMT"
+            },
+            "RequestId": "bf437e0e-70a7-11e7-83ab-ef16f9ac5159"
+        },
+        "lagId": "dxlag-fgkk4dja",
+        "awsDevice": "EqSe2-1bwfvazist2k0",
+        "connections": [],
+        "connectionsBandwidth": "1Gbps",
+        "minimumLinks": 0,
+        "ownerAccount": "448830907657",
+        "numberOfConnections": 0,
+        "lagName": "ansible_lag_1"
+    },
+    "status_code": 200
+}

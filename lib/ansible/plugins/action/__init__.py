@@ -1,19 +1,6 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -31,15 +18,15 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
-from ansible.executor.module_common import modify_module, build_windows_module_payload
+from ansible.executor.module_common import modify_module
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
-from ansible.vars.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
+from ansible.vars.clean import remove_internal_keys
 
 
 try:
@@ -59,18 +46,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     '''
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
-        self._task              = task
-        self._connection        = connection
-        self._play_context      = play_context
-        self._loader            = loader
-        self._templar           = templar
+        self._task = task
+        self._connection = connection
+        self._play_context = play_context
+        self._loader = loader
+        self._templar = templar
         self._shared_loader_obj = shared_loader_obj
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display           = display
-        self._cleanup_remote_tmp  = False
+        self._cleanup_remote_tmp = False
 
         self._supports_check_mode = True
-        self._supports_async      = False
+        self._supports_async = False
+
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
+        self._display = display
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -78,9 +66,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         tasks.  Everything else in this base class is a helper method for the
         action plugin to do that.
 
-        :kwarg tmp: Temporary directory.  Sometimes an action plugin sets up
-            a temporary directory and then calls another module.  This parameter
-            allows us to reuse the same directory for both.
+        :kwarg tmp: Deprecated parameter.  This is no longer used.  An action plugin that calls
+            another one and wants to use the same remote tmp for both should set
+            self._connection._shell.tmpdir rather than this parameter.
         :kwarg task_vars: The variables (host vars, group vars, config vars,
             etc) associated with this task.
         :returns: dictionary of results from the module
@@ -92,12 +80,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         result = {}
 
-        if self._task.async and not self._supports_async:
+        if tmp is not None:
+            result['warning'] = ['ActionModule.run() no longer honors the tmp parameter. Action'
+                                 ' plugins should set self._connection._shell.tmpdir to share'
+                                 ' the tmpdir']
+        del tmp
+
+        if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async and self._play_context.check_mode:
+        elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
+
+        if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
+            self._make_tmp_path()
 
         return result
 
@@ -153,22 +150,23 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git pull --rebase' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                task_vars=task_vars, module_compression=self._play_context.module_compression)
+        final_environment = dict()
+        self._compute_environment_string(final_environment)
 
-        # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
-        if self._connection.transport == "winrm":
-            # WinRM always pipelines, so we need to build up a fancier module payload...
-            final_environment = dict()
-            self._compute_environment_string(final_environment)
-            module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
-                                                   b_module_data=module_data, module_args=module_args,
-                                                   task_vars=task_vars, task=self._task,
-                                                   play_context=self._play_context, environment=final_environment)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+                                                                    task_vars=task_vars,
+                                                                    module_compression=self._play_context.module_compression,
+                                                                    async_timeout=self._task.async_val,
+                                                                    become=self._play_context.become,
+                                                                    become_method=self._play_context.become_method,
+                                                                    become_user=self._play_context.become_user,
+                                                                    become_password=self._play_context.become_pass,
+                                                                    become_flags=self._play_context.become_flags,
+                                                                    environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self, raw_environment_out=dict()):
+    def _compute_environment_string(self, raw_environment_out=None):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
@@ -177,14 +175,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._task.environment is not None:
             environments = self._task.environment
             if not isinstance(environments, list):
-                environments = [ environments ]
+                environments = [environments]
 
-            # the environments as inherited need to be reversed, to make
-            # sure we merge in the parent's values first so those in the
-            # block then task 'win' in precedence
-            environments.reverse()
+            # The order of environments matters to make sure we merge
+            # in the parent's values first so those in the block then
+            # task 'win' in precedence
             for environment in environments:
-                if environment is None:
+                if environment is None or len(environment) == 0:
                     continue
                 temp_environment = self._templar.template(environment)
                 if not isinstance(temp_environment, dict):
@@ -193,7 +190,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(temp_environment)
 
-        final_environment = self._templar.template(final_environment)
+        if len(final_environment) > 0:
+            final_environment = self._templar.template(final_environment)
 
         if isinstance(raw_environment_out, dict):
             raw_environment_out.clear()
@@ -203,7 +201,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _early_needs_tmp_path(self):
         '''
-        Determines if a temp path should be created before the action is executed.
+        Determines if a tmp path should be created before the action is executed.
         '''
 
         return getattr(self, 'TRANSFERS_FILES', False)
@@ -212,16 +210,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Determines if we are required and can do pipelining
         '''
-        if self._connection.always_pipeline_modules:
-            return True #eg, winrm
 
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining,
+            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async,                            # async does not support pipelining
+            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
             self._play_context.become_method != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
@@ -238,20 +234,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._play_context.remote_user
 
+        try:
+            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
+        except AnsibleError:
+            admin_users = ['root', remote_user]  # plugin does not support admin_users
+        try:
+            remote_tmp = self._connection._shell.get_option('remote_tmp')
+        except AnsibleError:
+            remote_tmp = '~/.ansible/tmp'
+
+        # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = False
-
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
-            use_system_tmp = True
-
-        tmp_mode = 0o700
-
-        if use_system_tmp:
-            tmpdir = None
-        else:
-            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
-
-        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
+        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
+        tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -263,18 +259,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if self._play_context.verbosity > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
-                    output = (u'SSH encountered an unknown error during the connection.'
-                            ' We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue')
+                    output = (u'SSH encountered an unknown error during the connection. '
+                              'We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue')
 
             elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
-                output = ('Authentication or permission failure.'
-                        ' In some cases, you may have been able to authenticate and did not have permissions on the target directory.'
-                        ' Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp".'
-                        ' Failed command was: %s, exited with result %d' % (cmd, result['rc']))
+                output = ('Authentication or permission failure. '
+                          'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
+                          'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp". '
+                          'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
-                output = output + u": %s" % result['stdout']
+                output = output + u", stdout output: %s" % result['stdout']
+            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+                output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
             self._cleanup_remote_tmp = True
@@ -291,15 +289,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if rc == '/':
             raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basefile, cmd))
 
+        self._connection._shell.tmpdir = rc
+
+        if not use_system_tmp:
+            self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
         '''Determine if temporary path should be deleted or kept by user request/config'''
-
         return tmp_path and self._cleanup_remote_tmp and not C.DEFAULT_KEEP_REMOTE_FILES and "-tmp-" in tmp_path
 
     def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
+
+        if tmp_path is None and self._connection._shell.tmpdir:
+            tmp_path = self._connection._shell.tmpdir
 
         if self._should_remove_tmp_path(tmp_path):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
@@ -309,8 +313,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             tmp_rm_data = self._parse_returned_data(tmp_rm_res)
             if tmp_rm_data.get('rc', 0) != 0:
-                display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(tmp_rm_res.get('rc'),
-                    tmp_rm_res.get('stderr', 'No error string available.')))
+                display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
+                                % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
+            else:
+                self._connection._shell.tmpdir = None
 
     def _transfer_file(self, local_path, remote_path):
         self._connection.put_file(local_path, remote_path)
@@ -324,7 +330,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if isinstance(data, dict):
             data = jsonify(data)
 
-        afd, afile = tempfile.mkstemp()
+        afd, afile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         afo = os.fdopen(afd, 'wb')
         try:
             data = to_bytes(data, errors='surrogate_or_strict')
@@ -386,7 +392,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * If the chown fails we can set the file to be world readable so that
           the second unprivileged user can read the file.
           Since this could allow other users to get access to private
-          information we only do this ansible is configured with
+          information we only do this if ansible is configured with
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
@@ -397,7 +403,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            admin_users = ['root']  # plugin does not support admin users
+
+        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -408,7 +419,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 setfacl_mode = 'r-x'
             else:
                 chmod_mode = 'rX'
-                ### Note: this form fails silently on freebsd.  We currently
+                # NOTE: this form fails silently on freebsd.  We currently
                 # never call _fixup_perms2() with execute=False but if we
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
@@ -424,24 +435,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user == 'root':
+                if res['rc'] != 0 and remote_user in admin_users:
                     # chown failed even if remove_user is root
-                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.'
-                            '  Unprivileged become user would be unable to read the file.')
+                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
+                                       'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
-                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user.'
-                                ' This may be insecure. For information on securing this, see'
-                                ' https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
+                                        'This may be insecure. For information on securing this, see '
+                                        'https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
                     else:
-                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user'
-                                ' (rc: {0}, err: {1}). For information on working around this,'
-                                ' see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], to_native(res['stderr'])))
+                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user '
+                                           '(rc: %s, err: %s}). For information on working around this, see '
+                                           'https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'
+                                           % (res['rc'], to_native(res['stderr'])))
         elif execute:
             # Can't depend on the file being transferred with execute permissions.
             # Only need user perms because no become was used here
@@ -479,14 +491,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Get information from remote file.
         '''
-        module_args=dict(
+        if tmp is not None:
+            display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
+                            ' plugins should set self._connection._shell.tmpdir to share'
+                            ' the tmpdir')
+        del tmp  # No longer used
+
+        module_args = dict(
             path=path,
             follow=follow,
-            get_md5=False,
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
                                       wrap_async=False)
 
         if mystat.get('failed'):
@@ -518,6 +535,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         2 = permissions issue
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
+        5 = appropriate json module not found
         '''
         x = "0"  # unknown error has occurred
         try:
@@ -532,36 +550,55 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
+            elif 'json' in errormsg or 'simplejson' in errormsg:
+                x = "5"  # json or simplejson modules needed
         finally:
-            return x
+            return x  # pylint: disable=lost-exception
 
-    def _remote_expand_user(self, path, sudoable=True):
-        ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
+    def _remote_expand_user(self, path, sudoable=True, pathsep=None):
+        ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
+
+        # We only expand ~/path and ~username/path
+        if not path.startswith('~'):
             return path
 
-        # FIXME: Can't use os.path.sep for Windows paths.
+        # Per Jborean, we don't have to worry about Windows as we don't have a notion of user's home
+        # dir there.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
 
+        if expand_path == '~':
+            if sudoable and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+            else:
+                # use remote user instead, if none set default to current user
+                expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
+
+        # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
+
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
         except IndexError:
             initial_fragment = None
 
         if not initial_fragment:
-            # Something went wrong trying to expand the path remotely.  Return
+            # Something went wrong trying to expand the path remotely. Try using pwd, if not, return
             # the original string
-            return path
+            cmd = self._connection._shell.pwd()
+            pwd = self._low_level_execute_command(cmd, sudoable=False).get('stdout', '').strip()
+            if pwd:
+                expanded = pwd
+            else:
+                expanded = path
 
-        if len(split_path) > 1:
-            return self._connection._shell.join_path(initial_fragment, *split_path[1:])
+        elif len(split_path) > 1:
+            expanded = self._connection._shell.join_path(initial_fragment, *split_path[1:])
         else:
-            return initial_fragment
+            expanded = initial_fragment
+
+        return expanded
 
     def _strip_success_message(self, data):
         '''
@@ -606,20 +643,70 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         # give the module the socket for persistent connections
-        module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+        module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
+        if not module_args['_ansible_socket']:
+            module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
+        # make sure all commands use the designated shell executable
+        module_args['_ansible_shell_executable'] = self._play_context.executable
 
+        # make sure modules are aware if they need to keep the remote files
+        module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
+        # make sure all commands use the designated temporary directory if created
+        module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+
+        # make sure the remote_tmp value is sent through in case modules needs to create their own
+        try:
+            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
+        except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
+            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
+
+    def _update_connection_options(self, options, variables=None):
+        ''' ensures connections have the appropriate information '''
+        update = {}
+
+        if getattr(self.connection, 'glob_option_vars', False):
+            # if the connection allows for it, pass any variables matching it.
+            if variables is not None:
+                for varname in variables:
+                    if varname.match('ansible_%s_' % self.connection._load_name):
+                        update[varname] = variables[varname]
+
+        # always override existing with options
+        update.update(options)
+        self.connection.set_options(update)
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
         '''
+        if tmp is not None:
+            display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
+                            ' should set self._connection._shell.tmpdir to share the tmpdir')
+        del tmp  # No longer used
+        if delete_remote_tmp is not None:
+            display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
+                            ' Action plugins should check self._connection._shell.tmpdir to'
+                            ' see if a tmpdir existed before they were called to determine'
+                            ' if they are responsible for removing it.')
+        del delete_remote_tmp  # No longer used
+
+        tmpdir = self._connection._shell.tmpdir
+
+        # We set the module_style to new here so the remote_tmp is created
+        # before the module args are built if remote_tmp is needed (async).
+        # If the module_style turns out to not be new and we didn't create the
+        # remote tmp here, it will still be created. This must be done before
+        # calling self._update_module_args() so the module wrapper has the
+        # correct remote_tmp value set
+        if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
+            self._make_tmp_path()
+            tmpdir = self._connection._shell.tmpdir
+
         if task_vars is None:
             task_vars = dict()
-
-        remote_module_path = None
-        args_file_path = None
-        remote_files = []
 
         # if a module name was not specified for this execution, use the action from the task
         if module_name is None:
@@ -635,18 +722,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        if not self._is_pipelining_enabled(module_style, wrap_async):
+        remote_module_path = None
 
+        if not self._is_pipelining_enabled(module_style, wrap_async):
             # we might need remote tmp dir
-            if not tmp or not 'tmp' in tmp:
-                tmp = self._make_tmp_path()
+            if tmpdir is None:
+                self._make_tmp_path()
+                tmpdir = self._connection._shell.tmpdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
-            remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
+            remote_module_path = self._connection._shell.join_path(tmpdir, remote_module_filename)
 
+        args_file_path = None
         if module_style in ('old', 'non_native_want_json', 'binary'):
-            # we'll also need a temp file to hold our module arguments
-            args_file_path = self._connection._shell.join_path(tmp, 'args')
+            # we'll also need a tmp file to hold our module arguments
+            args_file_path = self._connection._shell.join_path(tmpdir, 'args')
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote %s" % remote_module_path)
@@ -658,7 +748,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
-                for k,v in iteritems(module_args):
+                for k, v in iteritems(module_args):
                     args_data += '%s=%s ' % (k, shlex_quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
@@ -667,8 +757,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
-        if tmp and remote_module_path:
-            remote_files = [tmp, remote_module_path]
+        remote_files = []
+        if tmpdir and remote_module_path:
+            remote_files = [tmpdir, remote_module_path]
 
         if args_file_path:
             remote_files.append(args_file_path)
@@ -677,17 +768,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         in_data = None
         cmd = ""
 
-        if wrap_async:
+        if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
                                                                                                          task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
-            remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
+            remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async
-            async_jid   = str(random.randint(0, 999999999999))
+            async_limit = self._task.async_val
+            async_jid = str(random.randint(0, 999999999999))
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
@@ -704,10 +795,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # maintain a fixed number of positional parameters for async_wrapper
                 async_cmd.append('_')
 
-            if not self._should_remove_tmp_path(tmp):
+            if not self._should_remove_tmp_path(tmpdir):
                 async_cmd.append("-preserve_tmp")
 
-            cmd= " ".join(to_text(x) for x in async_cmd)
+            cmd = " ".join(to_text(x) for x in async_cmd)
 
         else:
 
@@ -716,24 +807,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 cmd = remote_module_path
 
-            rm_tmp = None
+            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
 
-            if self._should_remove_tmp_path(tmp) and not persist_files and delete_remote_tmp:
-                if not self._play_context.become or self._play_context.become_user == 'root':
-                    # not sudoing or sudoing to root, so can cleanup files in the same step
-                    rm_tmp = tmp
-
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
-
-            if module_name == "accelerate":
-                # always run the accelerate module as the user
-                # specified in the play, not the sudo_user
-                sudoable = False
-
-        # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
+        # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
+        # files have been transferred.
         if remote_files:
             # remove none/empty
-            remote_files = [ x for x in remote_files if x]
+            remote_files = [x for x in remote_files if x]
             self._fixup_perms2(remote_files, self._play_context.remote_user)
 
         # actually execute
@@ -742,19 +822,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # parse the main result
         data = self._parse_returned_data(res)
 
-        #NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
+        # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
-        tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
+        if data.pop("_ansible_suppress_tmpdir_delete", False):
+            self._cleanup_remote_tmp = False
 
         # remove internal keys
-        self._remove_internal_keys(data)
+        remove_internal_keys(data)
 
-        # cleanup tmp?
-        if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
-            self._remove_tmp_path(tmp)
-
-        #FIXME: for backwards compat, figure out if still makes sense
         if wrap_async:
+            # async_wrapper will clean up its tmpdir on its own so we want the controller side to
+            # forget about it now
+            self._connection._shell.tmpdir = None
+
+            # FIXME: for backwards compat, figure out if still makes sense
             data['changed'] = True
 
         # pre-split stdout/stderr into lines if needed
@@ -770,54 +851,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _remove_internal_keys(self, data):
-        for key in list(data.keys()):
-            if key.startswith('_ansible_') and key != '_ansible_parsed' or key in C.INTERNAL_RESULT_KEYS:
-                display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
-                del data[key]
-
-        # remove bad/empty internal keys
-        for key in ['warnings', 'deprecations']:
-            if key in data and not data[key]:
-                del data[key]
-
-
-    def _clean_returned_data(self, data):
-        remove_keys = set()
-        fact_keys = set(data.keys())
-        # first we add all of our magic variable names to the set of
-        # keys we want to remove from facts
-        for magic_var in MAGIC_VARIABLE_MAPPING:
-            remove_keys.update(fact_keys.intersection(MAGIC_VARIABLE_MAPPING[magic_var]))
-        # next we remove any connection plugin specific vars
-        for conn_path in self._shared_loader_obj.connection_loader.all(path_only=True):
-            try:
-                conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-                re_key = re.compile('^ansible_%s_' % conn_name)
-                for fact_key in fact_keys:
-                    if re_key.match(fact_key):
-                        remove_keys.add(fact_key)
-            except AttributeError:
-                pass
-
-        # remove some KNOWN keys
-        for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
-            if hard in fact_keys:
-                remove_keys.add(hard)
-
-        # finally, we search for interpreter keys to remove
-        re_interp = re.compile('^ansible_.*_interpreter$')
-        for fact_key in fact_keys:
-            if re_interp.match(fact_key):
-                remove_keys.add(fact_key)
-        # then we remove them (except for ssh host keys)
-        for r_key in remove_keys:
-            if not r_key.startswith('ansible_ssh_host_key_'):
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, data[r_key]))
-                del data[r_key]
-
-        self._remove_internal_keys(data)
-
     def _parse_returned_data(self, res):
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
@@ -827,7 +860,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
 
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
@@ -843,7 +875,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -856,6 +888,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             used as a key or is going to be written back out to a file
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
+        :kwarg chdir: cd into this directory before executing the command.
         '''
 
         display.debug("_low_level_execute_command(): starting")
@@ -864,11 +897,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 #            display.debug("_low_level_execute_command(): no command, exiting")
 #           return dict(stdout='', stderr='', rc=254)
 
+        if chdir:
+            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
+            cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
+
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
+                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         if self._connection.allow_executable:
             if executable is None:
@@ -914,13 +952,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         out = self._strip_success_message(out)
 
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
-        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
+        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
@@ -982,9 +1020,5 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
-        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-        if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
-
-        return result
+        # if missing it will return a file not found exception
+        return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

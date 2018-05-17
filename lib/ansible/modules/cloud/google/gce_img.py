@@ -1,24 +1,14 @@
 #!/usr/bin/python
 # Copyright 2015 Google Inc. All Rights Reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 """An Ansible module to utilize GCE image resources."""
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,55 +27,39 @@ options:
     description:
       - the name of the image to create or delete
     required: true
-    default: null
   description:
     description:
       - an optional description
-    required: false
-    default: null
   family:
     description:
       - an optional family name
-    required: false
-    default: null
     version_added: "2.2"
   source:
     description:
       - the source disk or the Google Cloud Storage URI to create the image from
-    required: false
-    default: null
   state:
     description:
       - desired state of the image
-    required: false
     default: "present"
     choices: ["present", "absent"]
   zone:
     description:
       - the zone of the disk specified by source
-    required: false
     default: "us-central1-a"
   timeout:
     description:
       - timeout for the operation
-    required: false
     default: 180
     version_added: "2.0"
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   pem_file:
     description:
       - path to the pem file associated with the service account email
-    required: false
-    default: null
   project_id:
     description:
       - your GCE project ID
-    required: false
-    default: null
 requirements:
     - "python >= 2.6"
     - "apache-libcloud"
@@ -229,6 +203,7 @@ def main():
         changed = delete_image(gce, name, module)
 
     module.exit_json(changed=changed, name=name)
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,15 @@
+- name: Remove leftover directory
+  win_file:
+    path: C:\Program Files\sysinternals
+    state: absent
+
+- name: Create new directory
+  win_file:
+    path: C:\Program Files\sysinternals
+    state: directory
+
+- name: Download sysinternals archive
+  win_get_url:
+    url: https://download.sysinternals.com/files/SysinternalsSuite.zip
+    dest: C:\Windows\Temp\SysinternalsSuite.zip
+    skip_certificate_validation: yes

@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -140,8 +140,8 @@ def main():
             pn_cliusername=dict(required=True, type='str'),
             pn_clipassword=dict(required=True, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent', 'update']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent', 'update']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_ospf_area=dict(required=True, type='str'),
             pn_stub_type=dict(type='str', choices=['none', 'stub', 'nssa',

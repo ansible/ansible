@@ -1,0 +1,173 @@
+# Test code for the sysctl module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_sysctl"
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
+
+##
+## sysctl - file manipulation
+##
+
+- name: copy the example conf to the test dir
+  copy:
+    src: sysctl.conf
+    dest: "{{ output_dir_test }}"
+
+- name: Set vm.swappiness to 5
+  sysctl:
+    name: vm.swappiness
+    value: 5
+    state: present
+    reload: no
+    sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test0
+
+- debug:
+    var: sysctl_test0
+    verbosity: 1
+
+- name: get file content
+  shell: "cat {{ output_dir_test }}/sysctl.conf | egrep -v ^\\#"
+  register: sysctl_content0
+
+- debug:
+    var: sysctl_content0
+    verbosity: 1
+
+- name: Set vm.swappiness to 5 again
+  sysctl:
+      name: vm.swappiness
+      value: 5
+      state: present
+      reload: no
+      sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test1
+
+- name: validate results
+  assert:
+      that:
+        - sysctl_test0 is changed
+        - sysctl_test1 is not changed
+        - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness=5")] == "vm.swappiness=5"'
+
+- name: Remove kernel.panic
+  sysctl:
+    name: kernel.panic
+    value: 2
+    reload: no
+    state: absent
+    sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test2
+
+- name: get file content
+  shell: "cat {{ output_dir_test }}/sysctl.conf | egrep -v ^\\#"
+  register: sysctl_content2
+
+- debug:
+    var: item
+    verbosity: 1
+  with_items:
+    - "{{ sysctl_test2 }}"
+    - "{{ sysctl_content2 }}"
+
+- name: Validate results for key removal
+  assert:
+    that:
+      - sysctl_test2 is changed
+      - "'kernel.panic' not in sysctl_content2.stdout_lines"
+
+- name: Test remove kernel.panic again
+  sysctl:
+    name: kernel.panic
+    value: 2
+    state: absent
+    reload: no
+    sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test2_change_test
+
+- name: Assert that no change was made
+  assert:
+    that:
+      - sysctl_test2_change_test is not changed
+
+##
+## sysctl - sysctl_set
+##
+
+- name: set net.ipv4.ip_forward
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+    reload: no
+  register: sysctl_test3
+
+- name: check with sysctl command
+  shell: sysctl net.ipv4.ip_forward
+  register: sysctl_check3
+
+- debug:
+    var: item
+    verbosity: 1
+  with_items:
+    - "{{ sysctl_test3 }}"
+    - "{{ sysctl_check3 }}"
+
+- name: validate results for test 3
+  assert:
+    that:
+      - sysctl_test3 is changed
+      - 'sysctl_check3.stdout_lines == ["net.ipv4.ip_forward = 1"]'
+
+- name: Try sysctl with no name
+  sysctl:
+    name:
+    value: 1
+    sysctl_set: yes
+  ignore_errors: True
+  register: sysctl_no_name
+
+- name: validate nameless results
+  assert:
+    that:
+      - sysctl_no_name is failed
+      - "sysctl_no_name.msg == 'name cannot be None'"
+
+- name: Try sysctl with no value
+  sysctl:
+    name: Foo
+    value:
+    sysctl_set: yes
+  ignore_errors: True
+  register: sysctl_no_value
+
+- name: validate nameless results
+  assert:
+    that:
+      - sysctl_no_value is failed
+      - "sysctl_no_value.msg == 'value cannot be None'"

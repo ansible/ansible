@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, print_function
 
+# noinspection PyCompatibility
 import argparse
 import errno
 import os

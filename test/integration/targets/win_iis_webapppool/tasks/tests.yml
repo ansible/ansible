@@ -1,0 +1,424 @@
+---
+- name: create default pool check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: started
+  register: create_default_check
+  check_mode: yes
+
+- name: get actual of create default pool check
+  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}"
+  register: create_default_actual_check
+  failed_when: False
+
+- name: assert create default pool check
+  assert:
+    that:
+    - create_default_check is changed
+    - create_default_actual_check.rc == 1
+
+- name: create default pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+  register: create_default
+
+- name: get actual of create default pool
+  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}"
+  register: create_default_actual
+  failed_when: False
+
+- name: assert create default pool
+  assert:
+    that:
+    - create_default is changed
+    - create_default.info.attributes.name == test_iis_webapppool_name
+    - create_default.info.attributes.startMode == 'OnDemand'
+    - create_default.info.attributes.state == 'Started'
+    - create_default_actual.rc == 0
+
+- name: change attributes of pool check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      managedPipelineMode: 1 # Using an enum value
+      cpu.limit: 95 # Nested values
+      processModel.identityType: LocalSystem # Using an enum name
+      processModel.loadUserProfile: True
+  register: change_pool_attributes_check
+  check_mode: yes
+
+- name: assert change attributes of pool check
+  assert:
+    that:
+    - change_pool_attributes_check is changed
+    - change_pool_attributes_check.info == create_default.info
+
+- name: change attributes of pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      managedPipelineMode: 1 # Using an enum value
+      cpu.limit: 95 # Nested values
+      processModel.identityType: LocalSystem # Using an enum name
+      processModel.loadUserProfile: True
+    test: True
+  register: change_pool_attributes
+
+- name: assert change attributes of pool
+  assert:
+    that:
+    - change_pool_attributes is changed
+    - change_pool_attributes.info.attributes.managedPipelineMode == 'Classic'
+    - change_pool_attributes.info.cpu.limit == 95
+    - change_pool_attributes.info.processModel.identityType == 'LocalSystem'
+    - change_pool_attributes.info.processModel.loadUserProfile == True
+
+- name: change attributes of pool again
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      managedPipelineMode: 1 # Using an enum value
+      cpu.limit: 95 # Nested values
+      processModel.identityType: LocalSystem # Using an enum name
+      processModel.loadUserProfile: True
+  register: change_pool_attributes_again
+
+- name: assert change attributes of pool again
+  assert:
+    that:
+    - change_pool_attributes_again is not changed
+    - change_pool_attributes_again.info == change_pool_attributes.info
+
+- name: change more complex variables check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      queueLength: 500
+      recycling.periodicRestart.requests: 10 # Deeply nested attribute
+      recycling.periodicRestart.time: "00:00:05:00.000000" # Timespan with string
+      processModel.pingResponseTime: "00:03:00" # Timespan without days or milliseconds
+  register: change_complex_attributes_check
+  check_mode: yes
+
+- name: assert change more complex variables check
+  assert:
+    that:
+    - change_complex_attributes_check is changed
+    - change_complex_attributes_check.info == change_pool_attributes_again.info
+
+- name: change more complex variables
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      queueLength: 500
+      recycling.periodicRestart.requests: 10 # Deeply nested attribute
+      recycling.periodicRestart.time: "00:00:05:00.000000" # Timespan with string
+      processModel.pingResponseTime: "00:03:00" # Timespan without days or milliseconds
+  register: change_complex_attributes
+
+- name: assert change more complex variables
+  assert:
+    that:
+    - change_complex_attributes is changed
+    - change_complex_attributes.info.attributes.queueLength == 500
+    - change_complex_attributes.info.recycling.periodicRestart.requests == 10
+    - change_complex_attributes.info.recycling.periodicRestart.time.TotalSeconds == 300
+    - change_complex_attributes.info.processModel.pingResponseTime.TotalSeconds == 180
+
+- name: change more complex variables again
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      queueLength: 500
+      recycling.periodicRestart.requests: 10 # Deeply nested attribute
+      recycling.periodicRestart.time: "00:00:05:00.000000" # Timespan with string
+      processModel.pingResponseTime: "00:03:00" # Timespan without days or milliseconds
+  register: change_complex_attributes_again
+
+- name: assert change more complex variables again
+  assert:
+    that:
+    - change_complex_attributes_again is not changed
+    - change_complex_attributes_again.info == change_complex_attributes.info
+
+- name: stop web pool check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: stopped
+  register: stop_pool_check
+  check_mode: yes
+
+- name: get actual status of pool check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: stop_pool_actual_check
+
+- name: assert stop web pool check
+  assert:
+    that:
+    - stop_pool_check is changed
+    - stop_pool_actual_check.stdout == 'Started\r\n'
+
+- name: stop web pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: stopped
+  register: stop_pool
+
+- name: get actual status of pool
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: stop_pool_actual
+
+- name: assert stop web pool
+  assert:
+    that:
+    - stop_pool is changed
+    - stop_pool_actual.stdout == 'Stopped\r\n'
+
+- name: stop web pool again
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: stopped
+  register: stop_pool_again
+
+- name: get actual status of pool again
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: stop_pool_actual_again
+
+- name: assert stop web pool again
+  assert:
+    that:
+    - stop_pool_again is not changed
+    - stop_pool_actual_again.stdout == 'Stopped\r\n'
+
+- name: start web pool check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: started
+  register: start_pool_check
+  check_mode: yes
+
+- name: get actual status of pool check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: start_pool_actual_check
+
+- name: assert start web pool check
+  assert:
+    that:
+    - start_pool_check is changed
+    - start_pool_actual_check.stdout == 'Stopped\r\n'
+
+- name: start web pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: started
+  register: start_pool
+
+- name: get actual status of pool
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: start_pool_actual
+
+- name: assert start web pool
+  assert:
+    that:
+    - start_pool is changed
+    - start_pool_actual.stdout == 'Started\r\n'
+
+- name: start web pool again
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: started
+  register: start_pool_again
+
+- name: get actual status of pool again
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: start_pool_actual_again
+
+- name: assert start web pool again
+  assert:
+    that:
+    - start_pool_again is not changed
+    - start_pool_actual_again.stdout == 'Started\r\n'
+
+- name: restart web pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: restarted
+  register: restart_pool
+
+- name: get actual status of pool
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: restart_pool_actual
+
+- name: assert restart web pool
+  assert:
+    that:
+    - restart_pool is changed
+    - restart_pool_actual.stdout == 'Started\r\n'
+
+- name: stop pool before restart on stop test
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: stopped
+
+- name: restart from stopped web pool check
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: restarted
+  register: restart_from_stop_pool_check
+  check_mode: yes
+
+- name: get actual status of pool check
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: restart_from_stop_pool_actual_check
+
+- name: assert restart from stopped web pool check
+  assert:
+    that:
+    - restart_from_stop_pool_check is changed
+    - restart_from_stop_pool_actual_check.stdout == 'Stopped\r\n'
+
+- name: restart from stopped web pool
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: restarted
+  register: restart_from_stop_pool
+
+- name: get actual status of pool
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  register: restart_from_stop_pool_actual
+
+- name: assert restart from stopped web pool
+  assert:
+    that:
+    - restart_from_stop_pool is changed
+    - restart_from_stop_pool_actual.stdout == 'Started\r\n'
+
+- name: set web pool attribute that is a collection (check mode)
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: "00:10:00,10:10:00"
+  register: collection_change_check
+  check_mode: yes
+
+- name: get result of set web pool attribute that is a collection (check mode)
+  win_shell: |
+    Import-Module WebAdministration
+    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+  register: collection_change_result_check
+
+- name: assert results of set web pool attribute that is a collection (check mode)
+  assert:
+    that:
+    - collection_change_check is changed
+    - collection_change_result_check.stdout == ""
+
+- name: set web pool attribute that is a collection
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: "00:10:00,10:10:00"
+  register: collection_change
+
+- name: get result of set web pool attribute that is a collection
+  win_shell: |
+    Import-Module WebAdministration
+    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+  register: collection_change_result
+
+- name: assert results of set web pool attribute that is a collection
+  assert:
+    that:
+    - collection_change is changed
+    - collection_change_result.stdout_lines == [ "00:10:00", "10:10:00" ]
+
+- name: set web pool attribute that is a collection (idempotent)
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: [ "00:10:00", "10:10:00" ]
+  register: collection_change_again
+
+- name: assert results of set web pool attribute that is a collection (idempotent)
+  assert:
+    that:
+    - collection_change_again is not changed
+
+# The following tests are only for IIS versions 8.0 or newer
+- block:
+  - name: delete test pool
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: absent
+
+  - name: create test pool
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: present
+    register: iis_attributes_blank
+
+  - name: change attributes for newer IIS version check
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: present
+      attributes:
+        startMode: AlwaysRunning
+        processModel.identityType: SpecificUser
+        processModel.userName: '{{ansible_user}}'
+        processModel.password: '{{ansible_password}}'
+    register: iis_attributes_new_check
+    check_mode: yes
+  
+  - name: assert change attributes for newer IIS version check
+    assert:
+      that:
+      - iis_attributes_new_check is changed
+      - iis_attributes_new_check.info == iis_attributes_blank.info
+
+  - name: change attributes for newer IIS version
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: present
+      attributes:
+        startMode: AlwaysRunning
+        processModel.identityType: SpecificUser
+        processModel.userName: '{{ansible_user}}'
+        processModel.password: '{{ansible_password}}'
+    register: iis_attributes_new
+  
+  - name: assert change attributes for newer IIS version
+    assert:
+      that:
+      - iis_attributes_new is changed
+      - iis_attributes_new.info.attributes.startMode == 'AlwaysRunning'
+      - iis_attributes_new.info.processModel.identityType == 'SpecificUser'
+      - iis_attributes_new.info.processModel.userName == ansible_user
+
+  - name: change attributes for newer IIS version again
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: present
+      attributes:
+        startMode: AlwaysRunning
+        processModel.identityType: 3
+        processModel.userName: '{{ansible_user}}'
+        processModel.password: '{{ansible_password}}'
+    register: iis_attributes_new_again
+  
+  - name: assert change attributes for newer IIS version again
+    assert:
+      that:
+      - iis_attributes_new_again is not changed
+      - iis_attributes_new_again.info == iis_attributes_new.info
+
+  when: iis_version.win_file_version.file_major_part|int > 7

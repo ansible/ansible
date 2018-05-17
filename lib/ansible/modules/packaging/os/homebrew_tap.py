@@ -6,22 +6,13 @@
 #
 # Based on homebrew (Andrew Dunham <andrew@du.nham.ca>)
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,6 +69,8 @@ EXAMPLES = '''
 '''
 
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def a_valid_tap(tap):
@@ -239,7 +232,7 @@ def main():
             # When an tap URL is provided explicitly, we allow adding
             # *single* tap only. Validate and proceed to add single tap.
             if len(taps) > 1:
-                msg = "List of muliple taps may not be provided with 'url' option."
+                msg = "List of multiple taps may not be provided with 'url' option."
                 module.fail_json(msg=msg)
             else:
                 failed, changed, msg = add_tap(module, brew_path, taps[0], url)
@@ -257,8 +250,6 @@ def main():
         else:
             module.exit_json(changed=changed, msg=msg)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

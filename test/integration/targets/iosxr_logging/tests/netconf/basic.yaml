@@ -1,0 +1,189 @@
+---
+# Remove old logging entries so that they don't conflict with tests
+- name: remove host logging
+  iosxr_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: remove console logging
+  iosxr_logging:
+    dest: console
+    level: warning
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: remove buffered logging
+  iosxr_logging:
+    dest: buffered
+    size: 2097155
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+# Start tests
+- name: set up syslog host logging
+  iosxr_logging: &addhostlog
+    dest: host
+    name: 172.16.0.1
+    level: errors
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"172.16.0.1" in result.xml[0]'
+
+- name: set up syslog host logging (idempotent)
+  iosxr_logging: *addhostlog
+  register: result
+
+- assert: &false
+    that:
+      - 'result.changed == false'
+
+- name: delete/disable syslog host logging
+  iosxr_logging: &delhostlog
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"172.16.0.1" in result.xml[0]'
+      - '"delete" in result.xml[0]'
+
+- name: delete/disable syslog host logging (idempotent)
+  iosxr_logging: *delhostlog
+  register: result
+
+- assert: *false
+
+- name: add console logging with level warning
+  iosxr_logging: &consolelog
+    dest: console
+    level: warning
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"console" in result.xml[0]'
+      - '"warning" in result.xml[0]'
+
+- name: console logging with level warning (idempotent)
+  iosxr_logging: *consolelog
+  register: result
+
+- assert: *false
+
+- name: remove console logging with level warning
+  iosxr_logging: 
+    dest: console
+    level: warning
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert: &true
+    that:
+      - 'result.changed == true'
+
+- name: configure buffered logging size
+  iosxr_logging: &bufferlog
+    dest: buffered
+    size: 4800000
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"buffered" in result.xml[0]'
+      - '"4800000" in result.xml[0]'
+
+- name: configure buffered logging size (idempotence)
+  iosxr_logging: *bufferlog
+  register: result
+
+- assert: *false
+
+- name: remove buffered logging size
+  iosxr_logging:
+    dest: buffered
+    size: 4800000
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert: *true
+
+- name: change logging parameters using aggregate
+  iosxr_logging:
+    aggregate:
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 4700000 }
+      - { dest: monitor, level: alerts }
+      - { dest: host, name: 10.10.10.1, level: errors }
+      - { dest: host, name: 10.10.10.2 }
+      - { dest: file, name: file1, size: 2048, level: critical}
+      - { dest: file, name: file2, size: 2048 }
+      - { facility: local3 }
+      - { hostnameprefix: host3 }
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"file1" in result.xml[0]'
+      - '"file2" in result.xml[0]'
+      - '"10.10.10.1" in result.xml[1]'
+      - '"10.10.10.2" in result.xml[1]'
+      - '"notice" in result.xml[2]'
+      - '"alert" in result.xml[3]'
+      - '"4700000" in result.xml[4]'
+      - '"info" in result.xml[5]'
+      - '"local3" in result.xml[6]'
+      - '"host3" in result.xml[7]'
+
+- name: remove logging parameters using aggregate
+  iosxr_logging:
+    aggregate:
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 4700000 }
+      - { dest: monitor, level: alerts }
+      - { dest: host, name: 10.10.10.1, level: errors }
+      - { dest: host, name: 10.10.10.2 }
+      - { dest: file, name: file1, size: 2048, level: critical}
+      - { dest: file, name: file2, size: 2048 }
+      - { facility: local3 }
+      - { hostnameprefix: host3 }
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"file1" in result.xml[0]'
+      - '"file2" in result.xml[0]'
+      - '"10.10.10.1" in result.xml[1]'
+      - '"10.10.10.2" in result.xml[1]'
+      - '"notice" in result.xml[2]'
+      - '"alert" in result.xml[3]'
+      - '"4700000" in result.xml[4]'
+      - '"info" in result.xml[5]'
+      - '"local3" in result.xml[6]'
+      - '"host3" in result.xml[7]'

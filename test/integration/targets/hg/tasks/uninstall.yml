@@ -1,0 +1,42 @@
+- name: restore the updated python
+  command: mv "{{ which_python.stdout }}.updated" "{{ which_python.stdout }}"
+
+- name: restore the updated pip
+  command: mv "{{ which_pip.stdout }}.updated" "{{ which_pip.stdout }}"
+
+- name: restore the mercurial python interpreter symlink (if needed)
+  lineinfile:
+    path: "{{ which_hg.stdout }}"
+    regexp: "^#!.*$"
+    line: "#!{{ stat_hg_interpreter.stat.path }}"
+  when: stat_hg_interpreter.stat.islnk
+
+# using the apt module prevents autoremove from working, so call apt-get via shell instead
+- name: uninstall packages which were not originally installed (apt)
+  shell: apt-get -y remove mercurial && apt-get -y autoremove
+  when: ansible_pkg_mgr == 'apt'
+
+- name: uninstall packages which were not originally installed (dnf)
+  dnf:
+    name: mercurial
+    state: absent
+    autoremove: yes
+  when: ansible_pkg_mgr == 'dnf'
+
+# the yum module does not have an autoremove parameter
+- name: uninstall packages which were not originally installed (yum)
+  shell: yum -y autoremove mercurial
+  when: ansible_pkg_mgr == 'yum'
+
+- name: uninstall packages which were not originally installed (pkgng)
+  pkgng:
+    name: mercurial
+    state: absent
+    autoremove: yes
+  when: ansible_pkg_mgr == 'pkgng'
+
+- name: restore the default python
+  raw: mv "{{ which_python.stdout }}.default" "{{ which_python.stdout }}"
+
+- name: restore the default pip
+  raw: mv "{{ which_pip.stdout }}.default" "{{ which_pip.stdout }}"

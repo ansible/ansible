@@ -1,0 +1,54 @@
+---
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- name: configure hostaname and save
+  vyos_config:
+    lines: set system host-name foo
+    save: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: configure hostaname and don't save
+  vyos_config:
+    lines: set system host-name bar
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name bar' in result.commands"
+
+- name: save config
+  vyos_config:
+    save: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: save config again
+  vyos_config:
+    save: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+    save: true
+
+- debug: msg="END cli/simple.yaml on connection={{ ansible_connection }}"

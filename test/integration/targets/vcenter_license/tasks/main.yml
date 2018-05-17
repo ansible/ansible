@@ -1,0 +1,63 @@
+# Test code for the vcenter license module.
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Store the vCenter container IP
+  set_fact:
+    vcenter_host: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug:
+    var: vcenter_host
+
+- name: Wait for vcsim controller to come online {{ vcenter_host }}
+  wait_for:
+    host: "{{ vcenter_host }}"
+    port: 5000
+    state: started
+
+- name: Kill vcsim
+  uri:
+    url: http://{{ vcenter_host }}:5000/killall
+
+- name: Start vcsim
+  uri:
+    url: http://{{ vcenter_host }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online {{ vcenter_host }}
+  wait_for:
+    host: "{{ vcenter_host }}"
+    port: 443
+    state: started
+
+- debug:
+    var: vcsim_instance
+
+# FIXME: ServerFaultCode: LicenseManager:LicenseManager does not implement: AddLicense
+#- name: Add a vCenter evaluation license
+#  vcenter_license:
+#    hostname: '{{ vcenter_host }}'
+#    username: '{{ vcsim_instance["json"]["username"] }}'
+#    password: '{{ vcsim_instance["json"]["password"] }}'
+#    validate_certs: no
+#    license: 00000-00000-00000-00000-00000
+#    state: present
+
+#- name: Remove an (unused) vCenter evaluation license
+#  vcenter_license:
+#    hostname: '{{ vcenter_host }}'
+#    username: '{{ vcsim_instance["json"]["username"] }}'
+#    password: '{{ vcsim_instance["json"]["password"] }}'
+#    validate_certs: no
+#    license: 00000-00000-00000-00000-00000
+#    state: absent
+
+#- name: Add an invalid vCenter license
+#  vcenter_license:
+#    hostname: '{{ vcenter_host }}'
+#    username: '{{ vcsim_instance["json"]["username"] }}'
+#    password: '{{ vcsim_instance["json"]["password"] }}'
+#    validate_certs: no
+#    license: 00000-00000-00000-00000-00001
+#    state: present
+#    ignore_errors: yes

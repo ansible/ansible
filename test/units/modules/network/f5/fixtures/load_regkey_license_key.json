@@ -1,0 +1,96 @@
+{
+    "description": "foo bar baz",
+    "dossier": "5d54d976",
+    "encryptedPrivateKey": [
+        27,
+        -10,
+        12,
+        58,
+        75
+    ],
+    "generation": 2,
+    "internalPrivateKey": "sKpXEU7",
+    "kind": "cm:device:licensing:pool:regkey:licenses:item:offerings:regkeypoollicenseofferingstate",
+    "lastUpdateMicros": 1513107721123304,
+    "licenseState": {
+        "vendor": "F5 Networks, Inc.",
+        "licensedDateTime": "2017-12-12T00:00:00-08:00",
+        "licensedVersion": "5.3.0",
+        "evaluationStartDateTime": "2017-12-11T00:00:00-08:00",
+        "evaluationEndDateTime": "2018-01-12T00:00:00-08:00",
+        "licenseEndDateTime": "2018-01-12T00:00:00-08:00",
+        "licenseStartDateTime": "2017-12-11T00:00:00-08:00",
+        "registrationKey": "XXXX-XXXX-XXXX-XXXX-XXXX",
+        "dossier": "1a44262799bc",
+        "authorization": "03fc41d1e8666",
+        "usage": "F5 Internal Product Development",
+        "platformId": "Z100",
+        "authVers": "5b",
+        "serviceCheckDateTime": "2017-12-12T00:00:00-08:00",
+        "serviceStatus": "As of 2017-12-12 there is no active service contract. This may inhibit your ability to upgrade your software.",
+        "exclusivePlatform": [
+            "Z100",
+            "Z100A",
+            "Z100AzureCloud",
+            "Z100GoogleCloud",
+            "Z100K",
+            "Z100x",
+            "Z100H"
+        ],
+        "activeModules": [
+            "APM, Max, VE (2500 CCU, 10000 Access Sessions)|P961057-1761515|Anti-Virus Checks",
+            "LTM, 10 Gbps, VE|T487107-2453693|, VE|DNSSEC",
+            "PEM, VE|X895364-1851682"
+        ],
+        "optionalModules": [
+            "APM, Base, VE (50 CCU / 200 AS)",
+            "App Mode (TMSH Only, No Root/Bash)",
+            "Concurrent Users",
+            "Concurrent Users and Access Sessions, VE",
+            "FIPS 140-2 Level 1, BIG-IP VE-1G to 10G",
+            "IP Intelligence, 1Yr, VE",
+            "IP Intelligence, 1Yr, VE-10G",
+            "IP Intelligence, 3Yr, VE-10G",
+            "LTM to Better Bundle Upgrade, 10Gbps",
+            "PEM URL Filtering, 1Yr, HIGH PERF",
+            "PEM URL Filtering, 3Yr, HIGH PERF",
+            "Routing Bundle",
+            "Secure Web Gateway, 1Yr, VE",
+            "URL Filtering, 1Yr, VE"
+        ],
+        "moduleEvaluations": [
+            {
+                "moduleName": "IP Intelligence, 3Yr, VE|SUBSCRIPTION",
+                "endDate": "soon"
+            },
+            {
+                "moduleName": "Secure Web Gateway, 3Yr, VE|SUBSCRIPTION",
+                "endDate": "soon"
+            },
+            {
+                "moduleName": "URL Filtering, 3Yr, VE|SUBSCRIPTION",
+                "endDate": "soon"
+            }
+        ],
+        "featureFlags": [
+            {
+                "featureName": "gtm_rate_limit",
+                "featureValue": "12345"
+            }
+        ],
+        "generation": 0,
+        "lastUpdateMicros": 0
+    },
+    "licenseText": "#Auth vers : BIG-IQ Product License File#",
+    "message": "License XXXX-XXXX-XXXX-XXXX-XXXX ready",
+    "name": "License for XXXX-XXXX-XXXX-XXXX-XXXX",
+    "publicKey": [
+        48,
+        0,
+        1
+    ],
+    "regKey": "XXXX-XXXX-XXXX-XXXX-XXXX",
+    "selfLink": "https://localhost/mgmt/cm/device/licensing/pool/regkey/licenses/452f8628-1e56-4b4d-946c-0e68f5780aa1/offerings/XXXX-XXXX-XXXX-XXXX-XXXX",
+    "sortName": "Registration Key Pool Item",
+    "status": "READY"
+}

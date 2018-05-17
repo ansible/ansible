@@ -1,0 +1,228 @@
+---
+- debug: msg="START ios_interface cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Configure interface (setup)
+  ios_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-1
+    speed: 1000
+    mtu: 1800
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: Configure interface
+  ios_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-initial
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"description test-interface-initial" in result.commands'
+
+- name: Confgure interface (idempotent)
+  ios_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-initial
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Confgure interface parameters
+  ios_interface:
+    name: "{{ test_interface }}"
+    description: test-interface
+    mtu: 2000
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"description test-interface" in result.commands'
+      - '"mtu 2000" in result.commands'
+
+- name: Change interface parameters
+  ios_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-1
+    mtu: 1800
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"description test-interface-1" in result.commands'
+      - '"mtu 1800" in result.commands'
+
+- name: Disable interface
+  ios_interface:
+    name: "{{ test_interface }}"
+    enabled: False
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"shutdown" in result.commands'
+
+- name: Enable interface
+  ios_interface:
+    name: "{{ test_interface }}"
+    enabled: True
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"no shutdown" in result.commands'
+
+- name: Confgure second interface (setup)
+  ios_interface:
+    name: "{{ test_interface2 }}"
+    description: test-interface-initial
+    speed: 1000
+    mtu: 1800
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: Add interface aggregate
+  ios_interface:
+    aggregate:
+    - { name: "{{ test_interface }}", mtu: 2000, description: test-interface-1 }
+    - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
+    speed: 1000
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"mtu 2000" in result.commands'
+      - '"interface {{ test_interface2 }}" in result.commands'
+      - '"description test-interface-2" in result.commands'
+      - '"mtu 2000" in result.commands'
+
+- name: Add interface aggregate (idempotent)
+  ios_interface:
+    aggregate:
+    - { name: "{{ test_interface }}", mtu: 2000, description: test-interface-1 }
+    - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
+    speed: 1000
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable interface aggregate
+  ios_interface:
+    aggregate:
+    - { name: "{{ test_interface }}" }
+    - { name: "{{ test_interface2 }}" }
+    enabled: False
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"shutdown" in result.commands'
+      - '"interface {{ test_interface2 }}" in result.commands'
+      - '"shutdown" in result.commands'
+
+- name: Enable interface aggregate
+  ios_interface:
+    aggregate:
+    - { name: "{{ test_interface }}" }
+    - { name: "{{ test_interface2 }}" }
+    enabled: True
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"no shutdown" in result.commands'
+      - '"interface {{ test_interface2 }}" in result.commands'
+      - '"no shutdown" in result.commands'
+
+- name: loopback interface setup
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Create loopback interface aggregate
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface Loopback9" in result.commands'
+      - '"interface Loopback10" in result.commands'
+
+- name: Delete loopback interface aggregate
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no interface Loopback9" in result.commands'
+      - '"no interface Loopback10" in result.commands'
+
+- name: Delete loopback interface aggregate (idempotent)
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END ios_interface cli/basic.yaml on connection={{ ansible_connection }}"

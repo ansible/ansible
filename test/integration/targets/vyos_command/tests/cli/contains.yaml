@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/contains.yaml"
+- debug: msg="START cli/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   vyos_command:
@@ -9,7 +9,6 @@
     wait_for:
       - result[0] contains VyOS
       - result[1] contains eth0
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,4 +17,4 @@
       - result.stdout is defined
       - result.stdout_lines is defined
 
-- debug: msg="END cli/contains.yaml"
+- debug: msg="END cli/contains.yaml on connection={{ ansible_connection }}"

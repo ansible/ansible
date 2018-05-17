@@ -1,0 +1,167 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Make sure LLDP is not running before tests
+  vyos_config:
+    lines: delete service lldp
+
+- name: Create LLDP configuration
+  vyos_lldp_interface:
+    name: eth1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp interface eth1" in result.commands'
+
+- name: Create LLDP configuration again (idempotent)
+  vyos_lldp_interface:
+    name: eth1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable LLDP configuration
+  vyos_lldp_interface:
+    name: eth1
+    state: disabled
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp interface eth1 disable" in result.commands'
+
+- name: Disable LLDP configuration again (idempotent)
+  vyos_lldp_interface:
+    name: eth1
+    state: disabled
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Enable LLDP configuration
+  vyos_lldp_interface:
+    name: eth1
+    state: enabled
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete service lldp interface eth1 disable" in result.commands'
+
+- name: Enable LLDP configuration again (idempotent)
+  vyos_lldp_interface:
+    name: eth1
+    state: enabled
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete LLDP configuration
+  vyos_lldp_interface:
+    name: eth1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete service lldp interface eth1" in result.commands'
+
+- name: Delete LLDP configuration again (idempotent)
+  vyos_lldp_interface:
+    name: eth1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Create aggregate of LLDP interface configurations
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp interface eth1" in result.commands'
+      - '"set service lldp interface eth2" in result.commands'
+
+- name: Create aggregate of LLDP interface configurations again (idempotent)
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Override LLDP interface configuration on aggregate
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - { name: eth2, state: disabled }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp interface eth2 disable" in result.commands'
+
+- name: Override LLDP interface configuration on aggregate again (idempotent)
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - { name: eth2, state: disabled }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete aggregate of LLDP interface configurations
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete service lldp interface eth1" in result.commands'
+      - '"delete service lldp interface eth2" in result.commands'
+
+- name: Delete aggregate of LLDP interface configurations (idempotent)
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

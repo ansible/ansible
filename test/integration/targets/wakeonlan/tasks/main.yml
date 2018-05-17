@@ -1,0 +1,48 @@
+- name: Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
+  wakeonlan:
+    mac: 00:00:5E:00:53:66
+    broadcast: 192.0.2.255
+
+- name: Send a magic Wake-on-LAN packet on port 9 to 00-00-5E-00-53-66
+  wakeonlan:
+    mac: 00-00-5E-00-53-66
+    port: 9
+
+- name: Provide an incorrect MAC length
+  wakeonlan:
+    mac: 00-00-5E-00-53-66-AB
+    port: 9
+  ignore_errors: yes
+  register: incorrect_mac_length
+
+- name: Check error message
+  assert:
+    that:
+    - incorrect_mac_length is failed
+    - incorrect_mac_length.msg is search('Incorrect MAC address length')
+
+- name: Provide an incorrect MAC format
+  wakeonlan:
+    mac: ZW-YX-WV-UT-SR-QP
+    port: 9
+  ignore_errors: yes
+  register: incorrect_mac_format
+
+- name: Check error message
+  assert:
+    that:
+    - incorrect_mac_format is failed
+    - incorrect_mac_format.msg is search('Incorrect MAC address format')
+
+- name: Cause a socket error
+  wakeonlan:
+    mac: 00-00-5E-00-53-66
+    broadcast: 345.567.678.890
+  ignore_errors: yes
+  register: incorrect_broadcast_address
+
+- name: Check error message
+  assert:
+    that:
+    - incorrect_broadcast_address is failed
+    - incorrect_broadcast_address.msg is search('not known')

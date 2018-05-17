@@ -28,7 +28,6 @@ from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 
@@ -37,6 +36,7 @@ PY3 = sys.version_info[0] == 3
 builtin_import = __import__
 
 mock_ncclient = MagicMock(name='ncclient')
+
 
 def import_mock(name, *args):
     if name.startswith('ncclient'):
@@ -50,6 +50,7 @@ else:
     with patch('__builtin__.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
 
+
 class TestNetconfConnectionClass(unittest.TestCase):
 
     def test_netconf_init(self):
@@ -62,21 +63,23 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 
-    def test_netconf__connect(self):
+    @patch("ansible.plugins.connection.netconf.netconf_loader")
+    def test_netconf__connect(self, mock_netconf_loader):
         pc = PlayContext()
         new_stdin = StringIO()
 
         conn = netconf.Connection(pc, new_stdin)
 
-        mock_manager = MagicMock(name='self._manager.connect')
-        type(mock_manager).session_id = PropertyMock(return_value='123456789')
-        netconf.manager.connect.return_value = mock_manager
+        mock_manager = MagicMock()
+        mock_manager.session_id = '123456789'
+        netconf.manager.connect = MagicMock(return_value=mock_manager)
+        conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
 
         self.assertEqual(0, rc)
-        self.assertEqual('123456789', out)
-        self.assertEqual('', err)
+        self.assertEqual(b'123456789', out)
+        self.assertEqual(b'', err)
         self.assertTrue(conn._connected)
 
     def test_netconf_exec_command(self):
@@ -86,22 +89,16 @@ class TestNetconfConnectionClass(unittest.TestCase):
         conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
-        mock_manager = MagicMock(name='self._manager')
-
         mock_reply = MagicMock(name='reply')
         type(mock_reply).data_xml = PropertyMock(return_value='<test/>')
 
+        mock_manager = MagicMock(name='self._manager')
         mock_manager.rpc.return_value = mock_reply
-
         conn._manager = mock_manager
 
-        rc, out, err = conn.exec_command('<test/>')
+        out = conn.exec_command('<test/>')
 
-        netconf.to_ele.assert_called_with('<test/>')
-
-        self.assertEqual(0, rc)
         self.assertEqual('<test/>', out)
-        self.assertEqual('', err)
 
     def test_netconf_exec_command_invalid_request(self):
         pc = PlayContext()
@@ -110,12 +107,11 @@ class TestNetconfConnectionClass(unittest.TestCase):
         conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
+        mock_manager = MagicMock(name='self._manager')
+        conn._manager = mock_manager
+
         netconf.to_ele.return_value = None
 
-        rc, out, err = conn.exec_command('test string')
+        out = conn.exec_command('test string')
 
-        self.assertEqual(1, rc)
-        self.assertEqual('', out)
-        self.assertEqual('unable to parse request', err)
-
-
+        self.assertEqual('unable to parse request', out)

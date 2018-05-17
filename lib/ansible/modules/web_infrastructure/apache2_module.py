@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013-2014, Christian Berendt <berendt@b1-systems.de>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -29,30 +21,37 @@ author:
     - Christian Berendt (@berendt)
     - Ralf Hertel (@n0trax)
     - Robin Roth (@robinro)
-short_description: enables/disables a module of the Apache2 webserver
+short_description: Enables/disables a module of the Apache2 webserver.
 description:
    - Enables or disables a specified module of the Apache2 webserver.
 options:
    name:
      description:
-        - name of the module to enable/disable
+        - Name of the module to enable/disable as given to C(a2enmod/a2dismod).
      required: true
+   identifier:
+     description:
+         - Identifier of the module as listed by C(apache2ctl -M).
+           This is optional and usually determined automatically by the common convention of
+           appending C(_module) to I(name) as well as custom exception for popular modules.
+     required: False
+     version_added: "2.5"
    force:
      description:
-        - force disabling of default modules and override Debian warnings
+        - Force disabling of default modules and override Debian warnings.
      required: false
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.1"
    state:
      description:
-        - indicate the desired state of the resource
+        - Desired state of the module.
      choices: ['present', 'absent']
      default: present
    ignore_configcheck:
      description:
         - Ignore configuration checks about inconsistent module configuration. Especially for mpm_* modules.
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.3"
 requirements: ["a2enmod","a2dismod"]
@@ -77,6 +76,11 @@ EXAMPLES = '''
     state: absent
     name: mpm_worker
     ignore_configcheck: True
+# enable dump_io module, which is identified as dumpio_module inside apache2
+- apache2_module:
+    state: present
+    name: dump_io
+    identifier: dumpio_module
 '''
 
 RETURN = '''
@@ -104,12 +108,14 @@ stderr:
 
 import re
 
+
 def _run_threaded(module):
     control_binary = _get_ctl_binary(module)
 
     result, stdout, stderr = module.run_command("%s -V" % control_binary)
 
     return bool(re.search(r'threaded:[ ]*yes', stdout))
+
 
 def _get_ctl_binary(module):
     for command in ['apache2ctl', 'apachectl']:
@@ -122,20 +128,18 @@ def _get_ctl_binary(module):
             " At least one apache control binary is necessary."
     )
 
+
 def _module_is_enabled(module):
     control_binary = _get_ctl_binary(module)
-    name = module.params['name']
-    ignore_configcheck = module.params['ignore_configcheck']
-
     result, stdout, stderr = module.run_command("%s -M" % control_binary)
 
     if result != 0:
         error_msg = "Error executing %s: %s" % (control_binary, stderr)
-        if ignore_configcheck:
-            if 'AH00534' in stderr and 'mpm_' in name:
+        if module.params['ignore_configcheck']:
+            if 'AH00534' in stderr and 'mpm_' in module.params['name']:
                 module.warnings.append(
                     "No MPM module loaded! apache2 reload AND other module actions"
-                    " will fail if no MPM module is loaded immediatly."
+                    " will fail if no MPM module is loaded immediately."
                 )
             else:
                 module.warnings.append(error_msg)
@@ -143,8 +147,9 @@ def _module_is_enabled(module):
         else:
             module.fail_json(msg=error_msg)
 
-    searchstring = ' ' + create_apache_identifier(name)
+    searchstring = ' ' + module.params['identifier']
     return searchstring in stdout
+
 
 def create_apache_identifier(name):
     """
@@ -170,8 +175,11 @@ def create_apache_identifier(name):
 
     for search, reexpr in re_workarounds:
         if search in name:
-            rematch = re.search(reexpr, name)
-            return rematch.group(1) + '_module'
+            try:
+                rematch = re.search(reexpr, name)
+                return rematch.group(1) + '_module'
+            except AttributeError:
+                pass
 
     return name + '_module'
 
@@ -206,7 +214,18 @@ def _set_state(module, state):
                              result=success_msg,
                              warnings=module.warnings)
         else:
-            module.fail_json(msg="Failed to set module %s to %s: %s" % (name, state_string, stdout),
+            msg = (
+                'Failed to set module {name} to {state}:\n'
+                '{stdout}\n'
+                'Maybe the module identifier ({identifier}) was guessed incorrectly.'
+                'Consider setting the "identifier" option.'
+            ).format(
+                name=name,
+                state=state_string,
+                stdout=stdout,
+                identifier=module.params['identifier']
+            )
+            module.fail_json(msg=msg,
                              rc=result,
                              stdout=stdout,
                              stderr=stderr)
@@ -215,15 +234,17 @@ def _set_state(module, state):
                          result=success_msg,
                          warnings=module.warnings)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name  = dict(required=True),
-            force = dict(required=False, type='bool', default=False),
-            state = dict(default='present', choices=['absent', 'present']),
+        argument_spec=dict(
+            name=dict(required=True),
+            identifier=dict(required=False, type='str'),
+            force=dict(required=False, type='bool', default=False),
+            state=dict(default='present', choices=['absent', 'present']),
             ignore_configcheck=dict(required=False, type='bool', default=False),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     module.warnings = []
@@ -231,6 +252,9 @@ def main():
     name = module.params['name']
     if name == 'cgi' and _run_threaded(module):
         module.fail_json(msg="Your MPM seems to be threaded. No automatic actions on module %s possible." % name)
+
+    if not module.params['identifier']:
+        module.params['identifier'] = create_apache_identifier(module.params['name'])
 
     if module.params['state'] in ['present', 'absent']:
         _set_state(module, module.params['state'])

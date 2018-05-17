@@ -57,10 +57,9 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
-
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
-        #import epdb; epdb.st()
+        # import epdb; epdb.st()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
@@ -156,16 +155,6 @@ class TestPlayIterator(unittest.TestCase):
             all_vars=dict(),
         )
 
-        # lookup up an original task
-        target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_parent=True)
-        found_task = itr.get_original_task(hosts[0], task_copy)
-        self.assertEqual(target_task, found_task)
-
-        bad_task = Task()
-        found_task = itr.get_original_task(hosts[0], bad_task)
-        self.assertIsNone(found_task)
-
         # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
@@ -191,11 +180,11 @@ class TestPlayIterator(unittest.TestCase):
         self.assertEqual(task.name, "role always task")
         self.assertIsNotNone(task._role)
         # role include task
-        #(host_state, task) = itr.get_next_task_for_host(hosts[0])
-        #self.assertIsNotNone(task)
-        #self.assertEqual(task.action, 'debug')
-        #self.assertEqual(task.name, "role included task")
-        #self.assertIsNotNone(task._role)
+        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        # self.assertIsNotNone(task)
+        # self.assertEqual(task.action, 'debug')
+        # self.assertEqual(task.name, "role included task")
+        # self.assertIsNotNone(task._role)
         # role task after include
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
@@ -427,7 +416,7 @@ class TestPlayIterator(unittest.TestCase):
         )
 
         # test the high-level add_tasks() method
-        s = HostState(blocks=[0,1,2])
+        s = HostState(blocks=[0, 1, 2])
         itr._insert_tasks_into_state = MagicMock(return_value=s)
         itr.add_tasks(hosts[0], [MagicMock(), MagicMock(), MagicMock()])
         self.assertEqual(itr._host_states[hosts[0].name], s)

@@ -1,0 +1,393 @@
+---
+- block:
+
+    # ============================================================
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+
+    - name: Create VPC for use in testing
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        tags:
+          Name: Ansible ec2_instance Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: testing_vpc
+
+    # ============================================================
+    - name: Create a public zone
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.comment == 'original comment'
+          - output.name == '{{ resource_prefix }}.public.'
+          - not output.private_zone
+
+    # ============================================================
+    - name: Create a public zone (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.check.public"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - output.comment == 'original comment'
+          - output.name == '{{ resource_prefix }}.check.public.'
+          - not output.private_zone
+
+    # ============================================================
+    - name: Do an idemptotent update of a public zone
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.comment == 'original comment'
+          - output.name == '{{ resource_prefix }}.public.'
+          - not output.private_zone
+
+    - name: Do an idemptotent update of a public zone (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not output.changed
+          - output.comment == 'original comment'
+          - output.name == '{{ resource_prefix }}.public.'
+          - not output.private_zone
+
+    # ============================================================
+    - name: Update comment of a public zone
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        comment: updated comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.result.comment == "updated comment"
+
+    - name: Update comment of a public zone (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        comment: updated comment for check
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - output.result.comment == "updated comment for check"
+
+    # ============================================================
+    - name: Delete public zone (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+    - name: Delete public zone
+      route53_zone:
+        zone: "{{ resource_prefix }}.public"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+    # ============================================================
+    - name: Create a private zone (CHECK MODE)
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+
+    - name: Create a private zone
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+    # ============================================================
+    - name: Idemptotent update a private zone
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - "'There is already a private hosted zone in the same region with the same VPC' in output.msg"
+
+    - name: Idemptotent update a private zone (CHECK MODE)
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: original comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not output.changed
+          - "'There is already a private hosted zone in the same region with the same VPC' in output.msg"
+
+    # ============================================================
+    - name: Update private zone comment
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: updated_comment
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.result.comment == "updated_comment"
+
+    - name: Update private zone comment (CHECK MODE)
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        comment: updated_comment check
+        state: present
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - output.result.comment == "updated_comment check"
+
+    # ============================================================
+    - name: Try to delete private zone without setting vpc_id and vpc_region
+      route53_zone:
+        zone: "{{ resource_prefix }}.private"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - "output.result == 'No zone to delete.'"
+
+    - name: Try to delete private zone without setting vpc_id and vpc_region (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.private"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not output.changed
+          - "output.result == 'No zone to delete.'"
+
+    # ============================================================
+    - name: Try to delete a public zone that does not exists
+      route53_zone:
+        zone: "{{ resource_prefix }}.publicfake"
+        comment: original comment
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - "output.result == 'No zone to delete.'"
+
+    - name: Try to delete a public zone that does not exists (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.publicfake"
+        comment: original comment
+        state: absent
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not output.changed
+          - "output.result == 'No zone to delete.'"
+
+    # ============================================================
+    - name: Delete private zone (CHECK MODE)
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+    - name: Delete private zone
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+    # ============================================================
+    - name: Create a public zone
+      route53_zone:
+        zone: "{{ resource_prefix }}.public2"
+        comment: this is an example
+        state: present
+        <<: *aws_connection_info
+      register: new_zone
+
+    # Delete zone using its id
+    - name: Delete zone using attribute hosted_zone_id (CHECK MODE)
+      route53_zone:
+        zone: "{{ resource_prefix }}.public2"
+        hosted_zone_id: "{{new_zone.zone_id}}"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+      check_mode: yes
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+    - name: Delete zone using attribute hosted_zone_id
+      route53_zone:
+        zone: "{{ resource_prefix }}.public2"
+        hosted_zone_id: "{{new_zone.zone_id}}"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - "'Successfully deleted' in output.result"
+
+  # ============================================================
+  always:
+    - name: Ensure public zone is deleted
+      route53_zone:
+        zone: "{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+      with_items:
+        - "{{ resource_prefix }}.public"
+        - "{{ resource_prefix }}.public2"
+
+    - name: Ensure private zone is deleted
+      route53_zone:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        vpc_region: "{{ aws_region }}"
+        zone: "{{ resource_prefix }}.private"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

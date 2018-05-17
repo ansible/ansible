@@ -20,11 +20,28 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ovs import openvswitch_db
-from .ovs_module import TestOpenVSwitchModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ovs_module import TestOpenVSwitchModule, load_fixture
+
+test_name_side_effect_matrix = {
+    'test_openvswitch_db_absent_idempotent': [
+        (0, 'openvswitch_db_disable_in_band_missing.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_absent_removes_key': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_idempotent': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_adds_key': [
+        (0, 'openvswitch_db_disable_in_band_missing.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_updates_key': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+}
 
 
 class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
@@ -32,6 +49,8 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
     module = openvswitch_db
 
     def setUp(self):
+        super(TestOpenVSwitchDBModule, self).setUp()
+
         self.mock_run_command = (
             patch('ansible.module_utils.basic.AnsibleModule.run_command'))
         self.run_command = self.mock_run_command.start()
@@ -40,13 +59,21 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
         self.get_bin_path = self.mock_get_bin_path.start()
 
     def tearDown(self):
+        super(TestOpenVSwitchDBModule, self).tearDown()
+
         self.mock_run_command.stop()
         self.mock_get_bin_path.stop()
 
-    def load_fixtures(self, fixture_name):
-        self.run_command.side_effect = [
-            (0, load_fixture(fixture_name + '.cfg'), None),
-            (0, None, None)]
+    def load_fixtures(self, test_name):
+        test_side_effects = []
+        for s in test_name_side_effect_matrix[test_name]:
+            rc = s[0]
+            out = load_fixture(s[1]) if s[1] else None
+            err = s[2]
+            side_effect_with_fixture_loaded = (rc, out, err)
+            test_side_effects.append(side_effect_with_fixture_loaded)
+        self.run_command.side_effect = test_side_effects
+
         self.get_bin_path.return_value = '/usr/bin/ovs-vsctl'
 
     def test_openvswitch_db_absent_idempotent(self):
@@ -54,7 +81,7 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              table='Bridge', record='test-br',
                              col='other_config', key='disable-in-band',
                              value='True'))
-        self.execute_module(fixture_name='openvswitch_db_disable_in_band_missing')
+        self.execute_module(test_name='test_openvswitch_db_absent_idempotent')
 
     def test_openvswitch_db_absent_removes_key(self):
         set_module_args(dict(state='absent',
@@ -63,16 +90,16 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              value='True'))
         self.execute_module(
             changed=True,
-            command='/usr/bin/ovs-vsctl -t 5 remove Bridge test-br other_config'
-                    ' disable-in-band=True',
-            fixture_name='openvswitch_db_disable_in_band_true')
+            commands=['/usr/bin/ovs-vsctl -t 5 remove Bridge test-br other_config'
+                      ' disable-in-band=True'],
+            test_name='test_openvswitch_db_absent_removes_key')
 
     def test_openvswitch_db_present_idempotent(self):
         set_module_args(dict(state='present',
                              table='Bridge', record='test-br',
                              col='other_config', key='disable-in-band',
                              value='True'))
-        self.execute_module(fixture_name='openvswitch_db_disable_in_band_true')
+        self.execute_module(test_name='test_openvswitch_db_present_idempotent')
 
     def test_openvswitch_db_present_adds_key(self):
         set_module_args(dict(state='present',
@@ -81,9 +108,9 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              value='True'))
         self.execute_module(
             changed=True,
-            command='/usr/bin/ovs-vsctl -t 5 add Bridge test-br other_config'
-                    ' disable-in-band=True',
-            fixture_name='openvswitch_db_disable_in_band_missing')
+            commands=['/usr/bin/ovs-vsctl -t 5 add Bridge test-br other_config'
+                      ' disable-in-band=True'],
+            test_name='test_openvswitch_db_present_adds_key')
 
     def test_openvswitch_db_present_updates_key(self):
         set_module_args(dict(state='present',
@@ -92,6 +119,6 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              value='False'))
         self.execute_module(
             changed=True,
-            command='/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
-                    ':disable-in-band=False',
-            fixture_name='openvswitch_db_disable_in_band_true')
+            commands=['/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
+                      ':disable-in-band=False'],
+            test_name='test_openvswitch_db_present_updates_key')

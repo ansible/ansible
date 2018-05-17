@@ -1,0 +1,32 @@
+# verify that apt is handling multi-arch systems properly
+- name: add architecture {{ apt_foreign_arch }}
+  command: dpkg --add-architecture {{ apt_foreign_arch }}
+
+- name: install hello:{{ apt_foreign_arch }} with apt
+  apt: pkg=hello:{{ apt_foreign_arch }} state=present update_cache=yes
+
+- name: uninstall hello:{{ apt_foreign_arch }} with apt
+  apt: pkg=hello:{{ apt_foreign_arch }} state=absent purge=yes
+
+- name: install deb file
+  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  register: apt_multi_initial
+
+- name: install deb file again
+  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  register: apt_multi_secondary
+
+- name: verify installation of hello:{{ apt_foreign_arch }}
+  assert:
+    that:
+        - "apt_multi_initial.changed"
+        - "not apt_multi_secondary.changed"
+
+- name: remove all {{ apt_foreign_arch }} packages
+  apt:
+    name: "*:{{ apt_foreign_arch }}"
+    state: absent
+    purge: yes
+
+- name: remove {{ apt_foreign_arch }} architecture
+  command: dpkg --remove-architecture {{ apt_foreign_arch }}

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -42,13 +42,10 @@ options:
   description:
     description:
       - The description of the load balancer rule.
-    required: false
-    default: null
   algorithm:
     description:
       - Load balancer algorithm
       - Required when using C(state=present).
-    required: false
     choices: [ 'source', 'roundrobin', 'leastconn' ]
     default: 'source'
   private_port:
@@ -56,15 +53,12 @@ options:
       - The private port of the private ip address/virtual machine where the network traffic will be load balanced to.
       - Required when using C(state=present).
       - Can not be changed once the rule exists due API limitation.
-    required: false
-    default: null
   public_port:
     description:
       - The public port from where the network traffic will be load balanced from.
       - Required when using C(state=present).
       - Can not be changed once the rule exists due API limitation.
     required: true
-    default: null
   ip_address:
     description:
       - Public IP address from where the network traffic will be load balanced from.
@@ -74,45 +68,32 @@ options:
     description:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   cidr:
     description:
       - CIDR (full notation) to be used for firewall rule if required.
-    required: false
-    default: null
   protocol:
     description:
       - The protocol to be used on the load balancer
-    required: false
-    default: null
   project:
     description:
       - Name of the project the load balancer IP address is related to.
-    required: false
-    default: null
   state:
     description:
       - State of the rule.
-    required: true
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the rule is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the rule should be created.
       - If not set, default zone is used.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
@@ -225,7 +206,6 @@ state:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -248,7 +228,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         }
 
     def get_rule(self, **kwargs):
-        rules = self.cs.listLoadBalancerRules(**kwargs)
+        rules = self.query_api('listLoadBalancerRules', **kwargs)
         if rules:
             return rules['loadbalancerrule'][0]
 
@@ -263,16 +243,12 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         }
 
     def present_lb_rule(self):
-        missing_params = []
-        for required_params in [
+        required_params = [
             'algorithm',
             'private_port',
             'public_port',
-        ]:
-            if not self.module.params.get(required_params):
-                missing_params.append(required_params)
-        if missing_params:
-            self.module.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
+        ]
+        self.module.fail_on_missing_params(required_params=required_params)
 
         args = self._get_common_args()
         rule = self.get_rule(**args)
@@ -297,9 +273,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
                 'description': self.module.params.get('description'),
                 'protocol': self.module.params.get('protocol'),
             })
-            res = self.cs.createLoadBalancerRule(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createLoadBalancerRule', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -315,9 +289,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         if self.has_changed(args, rule):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateLoadBalancerRule(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateLoadBalancerRule', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -330,12 +302,11 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
         if rule:
             self.result['changed'] = True
         if rule and not self.module.check_mode:
-            res = self.cs.deleteLoadBalancerRule(id=rule['id'])
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('deleteLoadBalancerRule', id=rule['id'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                res = self.poll_job(res, 'loadbalancer')
+                self.poll_job(res, 'loadbalancer')
         return rule
 
 
@@ -366,20 +337,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_lb_rule = AnsibleCloudStackLBRule(module)
+    acs_lb_rule = AnsibleCloudStackLBRule(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            rule = acs_lb_rule.absent_lb_rule()
-        else:
-            rule = acs_lb_rule.present_lb_rule()
+    state = module.params.get('state')
+    if state in ['absent']:
+        rule = acs_lb_rule.absent_lb_rule()
+    else:
+        rule = acs_lb_rule.present_lb_rule()
 
-        result = acs_lb_rule.get_result(rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_lb_rule.get_result(rule)
     module.exit_json(**result)
 
 

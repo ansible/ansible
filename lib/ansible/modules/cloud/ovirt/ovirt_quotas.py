@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the quota to manage."
+            - "Name of the quota to manage."
         required: true
     state:
         description:
@@ -48,7 +48,7 @@ options:
         required: true
     description:
         description:
-            - "Description of the the quota to manage."
+            - "Description of the quota to manage."
     cluster_threshold:
         description:
             - "Cluster threshold(soft limit) defined in percentage (0-100)."
@@ -82,7 +82,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add cluster quota to cluster cluster1 with memory limit 20GiB and CPU limit to 10:
-ovirt_quotas:
+- ovirt_quotas:
     name: quota1
     data_center: dcX
     clusters:
@@ -91,7 +91,7 @@ ovirt_quotas:
           cpu: 10
 
 # Add cluster quota to all clusters with memory limit 30GiB and CPU limit to 15:
-ovirt_quotas:
+- ovirt_quotas:
     name: quota2
     data_center: dcX
     clusters:
@@ -99,7 +99,7 @@ ovirt_quotas:
           cpu: 15
 
 # Add storage quota to storage data1 with size limit to 100GiB
-ovirt_quotas:
+- ovirt_quotas:
     name: quota3
     data_center: dcX
     storage_grace: 40
@@ -109,7 +109,7 @@ ovirt_quotas:
           size: 100
 
 # Remove quota quota1 (Note the quota must not be assigned to any VM/disk):
-ovirt_quotas:
+- ovirt_quotas:
     state: absent
     data_center: dcX
     name: quota1
@@ -123,8 +123,9 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 quota:
     description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success if quota is found.
+    type: dict
 '''
 
 try:

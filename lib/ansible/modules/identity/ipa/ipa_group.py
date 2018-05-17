@@ -1,24 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -37,11 +27,9 @@ options:
   external:
     description:
     - Allow adding external non-IPA members from trusted domains.
-    required: false
   gidnumber:
     description:
     - GID (use this option to set it manually).
-    required: false
   group:
     description:
     - List of group names assigned to this group.
@@ -51,7 +39,6 @@ options:
   nonposix:
     description:
     - Create as a non-POSIX group.
-    required: false
   user:
     description:
     - List of user names assigned to this group.
@@ -61,36 +48,9 @@ options:
   state:
     description:
     - State to ensure
-    required: false
     default: "present"
     choices: ["present", "absent"]
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: "ipa.example.com"
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: "admin"
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: "https"
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
@@ -140,9 +100,11 @@ group:
   type: dict
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
+from ansible.module_utils._text import to_native
 
 
 class GroupIPAClient(IPAClient):
@@ -202,12 +164,16 @@ def get_group_diff(client, ipa_group, module_group):
             module_group['posix'] = True
         del module_group['nonposix']
 
+    if 'external' in module_group:
+        if module_group['external'] and 'ipaexternalgroup' in ipa_group.get('objectclass'):
+            del module_group['external']
+
     return client.get_diff(ipa_data=ipa_group, module_data=module_group)
 
 
 def ensure(module, client):
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['cn']
     group = module.params['group']
     user = module.params['user']
 
@@ -251,25 +217,19 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            cn=dict(type='str', required=True, aliases=['name']),
-            description=dict(type='str', required=False),
-            external=dict(type='bool', required=False),
-            gidnumber=dict(type='str', required=False, aliases=['gid']),
-            group=dict(type='list', required=False),
-            nonposix=dict(type='bool', required=False),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
-            user=dict(type='list', required=False),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
+                         description=dict(type='str'),
+                         external=dict(type='bool'),
+                         gidnumber=dict(type='str', aliases=['gid']),
+                         group=dict(type='list'),
+                         nonposix=dict(type='bool'),
+                         state=dict(type='str', default='present', choices=['present', 'absent']),
+                         user=dict(type='list'))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
+                           )
 
     client = GroupIPAClient(module=module,
                             host=module.params['ipa_host'],
@@ -280,9 +240,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, group = ensure(module, client)
         module.exit_json(changed=changed, group=group)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

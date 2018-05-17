@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -32,20 +32,20 @@ description:
     running Arista EOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   banner:
     description:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
-    choices: ['login', 'banner']
+    choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -88,24 +88,35 @@ session_name:
   sample: ansible_1479315771
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and 'text' in have.keys() and have['text']:
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent' and have.get('text'):
+        if isinstance(have['text'], str):
+            commands.append('no banner %s' % module.params['banner'])
+        elif have['text'].get('loginBanner') or have['text'].get('motd'):
+            commands.append({'cmd': 'no banner %s' % module.params['banner']})
 
     elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
-            if module.params['transport'] == 'cli':
+        if isinstance(have['text'], string_types):
+            if want['text'] != have['text']:
                 commands.append('banner %s' % module.params['banner'])
                 commands.extend(want['text'].strip().split('\n'))
                 commands.append('EOF')
-            else:
+        else:
+            have_text = have['text'].get('loginBanner') or have['text'].get('motd')
+            if have_text:
+                have_text = have_text.strip()
+
+            if to_text(want['text']) != have_text or not have_text:
                 # For EAPI we need to construct a dict with cmd/input
                 # key/values for the banner
                 commands.append({'cmd': 'banner %s' % module.params['banner'],
@@ -113,13 +124,12 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        if module.params['transport'] == 'cli':
-            obj['text'] = output[0]
-        else:
+        if module.params['transport'] == 'eapi':
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
             if module.params['banner'] == 'login':
@@ -127,9 +137,12 @@ def map_config_to_obj(module):
             else:
                 banner_response_key = 'motd'
             if isinstance(output[0], dict) and banner_response_key in output[0].keys():
-                obj['text'] = output[0][banner_response_key].strip('\n')
+                obj['text'] = output[0]
+        else:
+            obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
+
 
 def map_params_to_obj(module):
     text = module.params['text']
@@ -141,6 +154,7 @@ def map_params_to_obj(module):
         'text': text,
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution

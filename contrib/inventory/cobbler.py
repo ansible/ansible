@@ -13,7 +13,7 @@ This, more or less, allows you to keep one central database containing
 info about all of your managed instances.
 
 This script is an example of sourcing that data from Cobbler
-(http://cobbler.github.com).  With cobbler each --mgmt-class in cobbler
+(https://cobbler.github.io).  With cobbler each --mgmt-class in cobbler
 will correspond to a group in Ansible, and --ks-meta variables will be
 passed down for use in templates or even in argument lines.
 
@@ -24,8 +24,6 @@ ansible talking to it twice.  The first one found will be used. If no
 --dns-name is set the system will NOT be visible to ansible.  We do
 not add cobbler system names because there is no requirement in cobbler
 that those correspond to addresses.
-
-See http://ansible.github.com/api.html for more info
 
 Tested with Cobbler 2.0.11.
 
@@ -56,7 +54,7 @@ Changelog:
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 ######################################################################
 
@@ -110,9 +108,9 @@ class CobblerInventory(object):
         if self.args.host:
             data_to_print += self.get_host_info()
         else:
-            self.inventory['_meta'] = { 'hostvars': {} }
+            self.inventory['_meta'] = {'hostvars': {}}
             for hostname in self.cache:
-                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname]}
             data_to_print += self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
@@ -179,7 +177,7 @@ class CobblerInventory(object):
 
         for host in data:
             # Get the FQDN for the host and add it to the right groups
-            dns_name = host['hostname'] #None
+            dns_name = host['hostname']  # None
             ksmeta = None
             interfaces = host['interfaces']
             # hostname is often empty for non-static IP hosts
@@ -190,7 +188,7 @@ class CobblerInventory(object):
                         if this_dns_name is not None and this_dns_name is not "":
                             dns_name = this_dns_name
 
-            if dns_name == '':
+            if dns_name == '' or dns_name is None:
                 continue
 
             status = host['status']
@@ -229,11 +227,11 @@ class CobblerInventory(object):
             # Need to load index from cache
             self.load_cache_from_cache()
 
-        if not self.args.host in self.cache:
+        if self.args.host not in self.cache:
             # try updating the cache
             self.update_cache()
 
-            if not self.args.host in self.cache:
+            if self.args.host not in self.cache:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
@@ -271,7 +269,7 @@ class CobblerInventory(object):
     def to_safe(self, word):
         """ Converts 'bad' characters in a string to underscores so they can be used as Ansible groups """
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """ Converts a dict to a JSON object and dumps it as a formatted string """

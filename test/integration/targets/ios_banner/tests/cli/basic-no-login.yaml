@@ -6,14 +6,12 @@
       Junk login banner
       over multiple lines
     state: present
-    authorize: yes
     provider: "{{ cli }}"
 
 - name: remove login
   ios_banner:
     banner: login
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -29,7 +27,6 @@
   ios_banner:
     banner: login
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
