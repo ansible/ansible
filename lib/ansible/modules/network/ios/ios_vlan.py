@@ -108,7 +108,6 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def search_obj_in_list(vlan_id, lst):
-    obj = list()
     for o in lst:
         if o['vlan_id'] == vlan_id:
             return o
@@ -240,6 +239,8 @@ def parse_logical_row(r):
     vals = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
     vals['interfaces'] = ports_str_to_list(vals['interfaces'])
     vals['interfaces'].extend(prts_r for prts in rest_rows for prts_r in ports_str_to_list(prts))
+    for interface in vals['interfaces']:
+        interface = interface.replace('Gi', 'GigabitEthernet')
     return vals
 
 
