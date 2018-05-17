@@ -72,7 +72,7 @@ def get_config(module, source, filter, lock=False):
     try:
         locked = False
         if lock:
-            conn.lock(target=source)
+            conn.lock(target='running')
             locked = True
         response = conn.get_config(source=source, filter=filter)
 
@@ -81,17 +81,17 @@ def get_config(module, source, filter, lock=False):
 
     finally:
         if locked:
-            conn.unlock(target=source)
+            conn.unlock(target='running')
 
     return response
 
 
-def get(module, source, filter, lock=False):
+def get(module, filter, lock=False):
     conn = get_connection(module)
     try:
         locked = False
         if lock:
-            conn.lock(target=source)
+            conn.lock(target='running')
             locked = True
 
         response = conn.get(filter=filter)
@@ -101,6 +101,6 @@ def get(module, source, filter, lock=False):
 
     finally:
         if locked:
-            conn.unlock(target=source)
+            conn.unlock(target='running')
 
     return response

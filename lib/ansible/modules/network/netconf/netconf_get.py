@@ -30,10 +30,8 @@ options:
   source:
     description:
       - This argument specifies the datastore from which configuration data should be fetched.
-        Valid values are I(running), I(candidate) and I(auto). If the value is I(auto) it fetches
-        configuration data from I(candidate) datastore and if candidate datastore is not supported
-        it fallback to I(running) datastore. If the C(source) value is not mentioned in that case
-        both configuration and state information is returned in the response from running datastore.
+        Valid values are I(running), I(candidate) and I(startup). If the C(source) value is not
+        set both configuration and state information are returned in response from running datastore.
     choices: ['running', 'candidate', 'startup']
   filter:
     description:
@@ -53,13 +51,16 @@ options:
     choices: ['json', 'pretty', 'xml']
   lock:
     description:
-      - Instructs the module to explicitly lock the datastore specified as C(source). If no
-        I(source) is defined, the I(running) datastore will be locked. By setting the option
-        value I(True) is will always lock the datastore mentioned in C(source) option provided
-        the platform supports it else module will report error By setting the option value I(False)
-        it will never lock the C(source) datastore.
-    default: False
-    type: bool
+      - Instructs the module to explicitly lock the datastore specified as C(source) before fetching
+        configuration and/or state information from remote host. If the value is I(never) in that case
+        the C(source) datastore is never locked, if the value is I(if-supported) the C(source) datastore
+        is locked only if the Netconf server running on remote host supports locking of that datastore,
+        if the lock on C(source) datastore is not supported module will report appropriate error before
+        executing lock. If the value is I(always) the lock operation on C(source) datastore will always
+        be executed irrespective if the remote host supports it or not, if it doesn't the module with
+        fail will the execption message received from remote host and might vary based on the platform.
+    default: 'never'
+    choices: ['never', 'always', 'if-supported']
 requirements:
   - ncclient (>=v0.5.2)
   - jxmlease
@@ -101,6 +102,16 @@ EXAMPLES = """
 - name: get interface confiugration with filter (iosxr)
   netconf_get:
     filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+
+- name: Get system configuration data from running datastore state (sros)
+  netconf_get:
+    source: running
+    filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:conf"/>
+    lock: True
+
+- name: Get state data (sros)
+  netconf_get:
+    filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:state"/>
 """
 
 RETURN = """
@@ -168,7 +179,7 @@ def main():
         source=dict(choices=['running', 'candidate', 'startup']),
         filter=dict(),
         display=dict(choices=['json', 'pretty', 'xml']),
-        lock=dict(default=False, type=bool)
+        lock=dict(default='never', choices=['never', 'always', 'if-supported'])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -192,11 +203,28 @@ def main():
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
         module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
 
-    if lock and not operations.get('supports_lock', False):
+    execute_lock = True if lock in ('always', 'if-supported') else False
+
+    if execute_lock and not operations.get('supports_lock', False):
         module.fail_json(msg='lock operation is not supported on this device')
 
-    if lock and source not in operations.get('lock_datastore', []):
-        module.fail_json(msg="lock operation on '%s' source is not supported on this device" % source)
+    if execute_lock:
+        if source is None:
+            # if source is None, in that case operation is 'get' and `get` supports
+            # fetching data only from running datastore
+            if 'running' not in operations.get('lock_datastore', []):
+                # lock is not supported, set execute lock to false is disable lock
+                if lock == 'if-supported':
+                    execute_lock = False
+                else:
+                    module.warn("lock operation on 'running' source is not supported on this device")
+        else:
+            if source not in operations.get('lock_datastore', []):
+                # lock is not supported, set execute lock to false is disable lock
+                if lock == 'if-supported':
+                    execute_lock = False
+                else:
+                    module.warn("lock operation on '%s' source is not supported on this device" % source)
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
@@ -206,9 +234,9 @@ def main():
     filter_spec = (filter_type, filter) if filter_type else None
 
     if source is not None:
-        response = get_config(module, source, filter_spec, lock)
+        response = get_config(module, source, filter_spec, execute_lock)
     else:
-        response = get(module, source, filter_spec, lock)
+        response = get(module, filter_spec, execute_lock)
 
     xml_resp = tostring(response)
     output = None

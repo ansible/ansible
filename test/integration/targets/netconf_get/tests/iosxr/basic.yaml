@@ -23,6 +23,44 @@
       - "'<description>this is test interface Loopback999</description>' in result.stdout"
       - "'<usernames>' not in result.stdout"
 
+- name: test lock=never, get-config, running interface confiugration with filter without lock
+  netconf_get:
+    source: running
+    lock: never
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
+
+- name: test lock=if-supported, get-config, running interface confiugration with filter without lock
+  netconf_get:
+    source: running
+    lock: if-supported
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
+
+- name: Failure scenario, get-config information with lock
+  netconf_get:
+    source: running
+    lock: always
+  register: result
+  ignore_errors: True
+  connection: netconf
+
+- assert:
+    that:
+      - "'<bad-element>running</bad-element>' in result.msg"
+
 - name: Failure scenario, fetch config from startup
   netconf_get:
     source: startup
@@ -34,17 +72,38 @@
     that:
       - "'startup source is not supported' in result.msg"
 
-- name: Failure scenario, fetch config from running with lock
+- name: test get, information from running datastore without lock
   netconf_get:
-    lock: True
-    source: running
+    lock: never
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+
+- name: test get, information from running datastore with lock if supported
+  netconf_get:
+    lock: if-supported
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+
+- name: Failure scenario, get information from running with lock
+  netconf_get:
+    lock: always
   register: result
   ignore_errors: True
   connection: netconf
 
 - assert:
     that:
-      - "'lock operation on \\'running\\' source is not supported' in result.msg"
+      - "'<bad-element>running</bad-element>' in result.msg"
 
 - name: get configuration and state data in json format
   netconf_get:

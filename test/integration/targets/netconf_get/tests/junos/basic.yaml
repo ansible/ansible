@@ -33,14 +33,29 @@
 
 - name: Failure scenario, fetch config from running with lock
   netconf_get:
-    lock: True
+    lock: always
     source: running
   register: result
   ignore_errors: True
 
 - assert:
     that:
-      - "'lock operation on \\'running\\' source is not supported' in result.msg"
+      - "'syntax error' in result.msg"
+
+- name: Get system configuration data from running datastore state and lock if-supported
+  netconf_get:
+    source: running
+    filter: <configuration><system><syslog></syslog></system></configuration>
+    lock: if-supported
+  register: result
+
+- assert:
+    that:
+      - "'<name>test1</name>' in result.stdout"
+      - "'<name>any</name>' in result.stdout"
+      - "'<any/>' in result.stdout"
+      - "'<login>' not in result.stdout"
+      - "'<interface>' not in result.stdout"
 
 - name: get configuration and state data in json format
   netconf_get:
@@ -73,8 +88,19 @@
       - "{{ result['output'] is defined}}"
       - "{{ 'xmlns' not in result.output }}"
 
-- name: get configuration and state data
+- name: get configuration and state data without datastore lock
   netconf_get:
+    lock: never
+  register: result
+
+- assert:
+    that:
+      - "'<database-status-information>' in result.stdout"
+      - "'</configuration>' in result.stdout"
+
+- name: get configuration and state data and lock data-store if supported
+  netconf_get:
+    lock: if-supported
   register: result
 
 - assert:
