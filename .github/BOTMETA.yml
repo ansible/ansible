@@ -903,6 +903,8 @@ files:
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
+  $module_utils/onepassword.py:
+    maintainers: samdoran
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -1042,6 +1044,12 @@ files:
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/lookup/onepassword.py:
+    maintainers: samdoran
+    ignored: azenk
+  lib/ansible/plugins/lookup/onepassword_raw.py:
+    maintainers: samdoran
+    ignored: azenk
   lib/ansible/plugins/shell/powershell.py:
     maintainers: $team_windows_core
     labels:
