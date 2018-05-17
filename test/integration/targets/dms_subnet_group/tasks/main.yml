@@ -1,0 +1,179 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_vpc_subnet
+
+- block:
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          #security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    ################################################
+    # TESTING PREREQUIREMENTS
+    ################################################
+
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.10.0.0/16"
+        <<: *aws_connection_info
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    - name: create subnet a
+      ec2_vpc_subnet:
+        cidr: "10.10.11.0/24"
+        az: "{{ aws_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        <<: *aws_connection_info
+        state: present
+      register: vpc_subnet_a
+
+    - name: create subnet b
+      ec2_vpc_subnet:
+        cidr: "10.10.22.0/24"
+        az: "{{ aws_region }}b"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        <<: *aws_connection_info
+        state: present
+      register: vpc_subnet_b
+
+    - name: create subnet c
+      ec2_vpc_subnet:
+        cidr: "10.10.33.0/24"
+        az: "{{ aws_region }}b"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        <<: *aws_connection_info
+        state: present
+      register: vpc_subnet_c
+
+    ################################################
+    # PARAMETER TESTING
+    ################################################
+
+
+    ################################################
+    # MODULE TESTING
+    ################################################
+
+    - name: Create replication subnet group for DMS instances
+      dms_subnet_group:
+        <<: *aws_connection_info
+        name: 'my_dms_subnet_group'
+        state: present
+        description: 'my testing replication group'
+        subnet_ids:
+          - "{{ vpc_subnet_a.subnet.id }}"
+          - "{{ vpc_subnet_b.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+
+    - name: no changes made to replication subnet group
+      dms_subnet_group:
+        <<: *aws_connection_info
+        name: 'my_dms_subnet_group'
+        state: present
+        description: 'my testing replication group'
+        subnet_ids:
+          - "{{ vpc_subnet_a.subnet.id }}"
+          - "{{ vpc_subnet_b.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - not result.changed
+
+    - name: Make a change to replication subnet group
+      dms_subnet_group:
+        <<: *aws_connection_info
+        name: 'my_dms_subnet_group'
+        state: present
+        description: 'generating a change to this subnet group'
+        subnet_ids:
+          - "{{ vpc_subnet_a.subnet.id }}"
+          - "{{ vpc_subnet_b.subnet.id }}"
+          - "{{ vpc_subnet_c.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+
+  always:
+
+    ################################################
+    # TEARDOWN TESTING RESOURCES
+    ################################################
+
+    - name: Delete replication subnet group
+      dms_subnet_group:
+        <<: *aws_connection_info
+        name: 'my_dms_subnet_group'
+        state: absent
+        description: 'generating a change to this subnet group'
+        subnet_ids:
+          - "{{ vpc_subnet_a.subnet.id }}"
+          - "{{ vpc_subnet_b.subnet.id }}"
+          - "{{ vpc_subnet_c.subnet.id }}"
+      ignore_errors: yes
+
+    - name: tear down subnet a
+      ec2_vpc_subnet:
+        cidr: "10.10.11.0/24"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tear down subnet b
+      ec2_vpc_subnet:
+        cidr: "10.10.22.0/24"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tear down subnet c
+      ec2_vpc_subnet:
+        cidr: "10.10.33.0/24"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.10.0.0/16"
+        <<: *aws_connection_info
+      ignore_errors: yes
