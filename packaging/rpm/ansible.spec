@@ -26,7 +26,6 @@ BuildRequires: python26-setuptools
 Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
-Requires: python26-keyczar
 Requires: python26-httplib2
 Requires: python26-setuptools
 Requires: python26-six
@@ -60,7 +59,6 @@ BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
 Requires: python-six
@@ -72,7 +70,6 @@ BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
 Requires: python-setuptools
