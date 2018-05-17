@@ -17,13 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division
 __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -83,7 +83,6 @@ def has_lldp(module):
 
     for line in body.split('\n'):
         l = line.strip()
-        print(l)
         match = re.search(r'disable', l, re.M)
         if match:
             return False
@@ -113,14 +112,10 @@ def main():
 
     commands = []
 
-    print(HAS_LLDP)
-    print(module.params['state'])
     if module.params['state'] == 'absent' and HAS_LLDP:
-        print('Nope')
         commands.append('protocol lldp')
         commands.append('disable')
     elif module.params['state'] == 'present' and not HAS_LLDP:
-        print('Adding the commands, captin')
         commands.append('protocol lldp')
         commands.append('no disable')
 
