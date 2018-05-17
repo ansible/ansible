@@ -3,6 +3,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -27,10 +28,15 @@ RETURN = """
   _list:
     description: basically the same as you fed in
 """
+import collections
+
 from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        if not isinstance(terms, collections.Sequence):
+            raise AnsibleError("with_list expects a list")
         return terms
