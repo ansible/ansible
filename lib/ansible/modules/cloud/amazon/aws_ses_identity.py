@@ -355,11 +355,6 @@ def update_notification_topic_headers(connection, module, identity, identity_not
 
 
 def update_feedback_forwarding(connection, module, identity, identity_notifications):
-    if module.params.get('feedback_forwarding') is False:
-        if not (desired_topic(module, 'Bounce') and desired_topic(module, 'Complaint')):
-            module.fail_json(msg="Invalid Parameter Value 'False' for 'feedback_forwarding'. AWS requires "
-                             "feedback forwarding to be enabled unless bounces and complaints are handled by SNS topics")
-
     if identity_notifications is None:
         # AWS requires feedback forwarding to be enabled unless bounces and complaints
         # are being handled by SNS topics. So in the absence of identity_notifications
@@ -419,6 +414,13 @@ def update_identity_notifications(connection, module):
         else:
             identity_notifications = get_identity_notifications(connection, module, identity, retries=4)
     return changed, identity_notifications
+
+
+def validate_params_for_identity_present(module):
+    if module.params.get('feedback_forwarding') is False:
+        if not (desired_topic(module, 'Bounce') and desired_topic(module, 'Complaint')):
+            module.fail_json(msg="Invalid Parameter Value 'False' for 'feedback_forwarding'. AWS requires "
+                             "feedback forwarding to be enabled unless bounces and complaints are handled by SNS topics")
 
 
 def create_or_update_identity(connection, module, region, account_id):
@@ -524,6 +526,7 @@ def main():
     if state == 'present':
         region = module.params.get('region')
         account_id = get_account_id(module)
+        validate_params_for_identity_present(module)
         create_or_update_identity(connection, module, region, account_id)
     else:
         destroy_identity(connection, module)
