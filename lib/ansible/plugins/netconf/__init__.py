@@ -32,6 +32,10 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
+try:
+    from lxml.etree import Element, SubElement, tostring, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
 
 def ensure_connected(func):
     @wraps(func)
@@ -172,6 +176,15 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
                  copy operation or `config` element containing the configuration subtree to copy
         :target: is the name of the configuration datastore to use as the destination of the copy operation"""
         resp = self.m.copy_config(*args, **kwargs)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+    @ensure_connected
+    def dispatch(self, request):
+        """Execute operation on the remote device
+        :request: is the rpc request including attributes as XML string
+        """
+        req = fromstring(request)
+        resp = self.m.dispatch(req)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected

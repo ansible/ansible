@@ -104,3 +104,12 @@ def get(module, filter, lock=False):
             conn.unlock(target='running')
 
     return response
+
+def dispatch(module, request):
+    conn = get_connection(module)
+    try:
+        response = conn.dispatch(request)
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
