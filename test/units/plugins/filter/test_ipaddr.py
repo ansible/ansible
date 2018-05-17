@@ -462,7 +462,10 @@ class TestIpFilter(unittest.TestCase):
         address = '1.1.1.1/24'
         self.assertEqual(ipsubnet(address, '30'), '64')
         address = '1.1.1.1/25'
-        self.assertEqual(ipsubnet(address, '24'), False)
+        self.assertEqual(ipsubnet(address, '24'), '0')
         address = '1.12.1.34/32'
         subnet = '1.12.1.34/24'
         self.assertEqual(ipsubnet(address, subnet), '34')
+        address = '1.12.1.34/24'
+        subnet = '1.12.1.34/32'
+        self.assertEqual(ipsubnet(address, subnet), False)
