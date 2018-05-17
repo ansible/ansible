@@ -436,15 +436,13 @@ class User(object):
 
         cmd.append(self.name)
         first_tuple = self.execute_command(cmd)
-        
         if self.force_pw:
             second_tuple = self._expire_password()
             return self._compare_outputs(first_tuple, second_tuple)
-
         return self._compare_outputs(first_tuple)
 
     def _compare_outputs(self, first_tuple, second_tuple = (None, ' ', ' ')):
-        if first_tuple[0] == 0 or second_tuple[0] == 0:
+        if first_tuple[0]==0 or second_tuple[0]==0:
             overall_rc = 0
         else:
             overall_rc = None
@@ -587,7 +585,7 @@ class User(object):
         if self.force_pw:
             second_tuple = (None, " ", " ")
             current_lastday = self.user_password()[2]   
-            if current_lastday != 0:
+            if current_lastday!=0:
                 second_tuple = self._expire_password()
             return self._compare_outputs(first_tuple, second_tuple)
         return self._compare_outputs(first_tuple)
@@ -817,8 +815,6 @@ class FreeBsdUser(User):
     SHADOWFILE_EXPIRE_INDEX = 6
     SHADOWFILE_LASTDAY_INDEX = 5
     DATE_FORMAT = '%d-%b-%Y'
-
-
     def remove_user(self):
         cmd = [
             self.module.get_bin_path('pw', True),
@@ -998,11 +994,10 @@ class FreeBsdUser(User):
             if current_lastday != 0:
                 cmd.append('-p')
                 cmd.append('1')   
-
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
-            if rc is not None and rc != 0:
+            if rc is not None and rc!=0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
         else:
             (rc, out, err) = (None, '', '')
