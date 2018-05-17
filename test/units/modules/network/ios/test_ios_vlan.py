@@ -23,6 +23,7 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_vlan
+from ansible.modules.network.ios.ios_vlan import parse_vlan_brief
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
@@ -53,3 +54,18 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(vlan_id=2, name='test', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['vlan 2', 'name test'])
+
+    def test_parse_vlan_brief(self):
+        set_module_args(dict(vlan_id=2, name='test', state='present'))
+        result = parse_vlan_brief(load_fixture('ios_vlan_config.cfg'))
+        obj = [{'name': 'default',
+                'ports': ['GigabitEthernet1/0/4',
+                        'GigabitEthernet1/0/5',
+                        'GigabitEthernet1/0/52'],
+                'status': 'active',
+                'vlan': '1'},
+                {'name': 'fddi-default',
+                 'ports': [],
+                 'status': 'act/unsup',
+                 'vlan': '1002'}]
+        self.assertEqual(result, obj)
