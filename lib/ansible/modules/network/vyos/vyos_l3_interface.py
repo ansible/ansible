@@ -66,6 +66,11 @@ EXAMPLES = """
     name: eth0
     state: absent
 
+- name: Set interface Vlan1 (SVI) IPv4 address
+  vyos_l3_interface:
+    name: Vlan1
+    ipv4: 192.168.0.5/24
+
 - name: Set IP addresses on aggregate
   vyos_l3_interface:
     aggregate:
