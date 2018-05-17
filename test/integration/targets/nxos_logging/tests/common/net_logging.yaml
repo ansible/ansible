@@ -11,7 +11,6 @@
     dest: console
     dest_level: 0
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - name: Set up console logging using platform agnostic module
@@ -19,7 +18,6 @@
     dest: console
     dest_level: 0
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -32,7 +30,6 @@
     dest: console
     dest_level: 0
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 

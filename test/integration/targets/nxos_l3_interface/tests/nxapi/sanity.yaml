@@ -16,7 +16,6 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
-    provider: "{{ nxapi }}"
     state: absent
   ignore_errors: yes
 
@@ -26,13 +25,11 @@
       - name: "{{ testint2 }}"
       - name: "{{ testint3 }}"
     mode: layer3
-    provider: "{{ nxapi }}"
 
 - name: Configure ipv4 address to interface
   nxos_l3_interface: &conf
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -51,7 +48,6 @@
   nxos_l3_interface: &rm
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ nxapi }}"
     state: absent
   register: result
 
@@ -72,7 +68,6 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -92,7 +87,6 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
-    provider: "{{ nxapi }}"
     state: absent
   register: result
 
