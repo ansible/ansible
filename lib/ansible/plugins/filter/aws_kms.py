@@ -4,7 +4,7 @@ import base64
 import botocore
 import aws_encryption_sdk
 
-def aws_kms_decrypt(key_arn, ciphertext):
+def aws_kms_decrypt(ciphertext, key_arn):
     """ Decrypt with KMS """
     try:
         session = botocore.session.get_session()
