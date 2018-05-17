@@ -476,7 +476,8 @@ files:
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
   $modules/network/meraki/: $team_meraki
-  $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
+  $modules/network/netconf/netconf_config.py: lpenz userlerueda $team_networking
+  $modules/network/netconf/netconf_get.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
@@ -863,6 +864,9 @@ files:
     maintainers: $team_manageiq
   $module_utils/network/meraki:
     maintainers: $team_meraki
+    labels: networking
+  $module_utils/network/netconf:
+    maintainers: $team_networking
     labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
