@@ -242,7 +242,8 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             args = {
                 'account': self.get_account('name'),
                 'domainid': self.get_domain('id'),
-                'projectid': self.get_project('id')
+                'projectid': self.get_project('id'),
+                'fetch_list': True,
             }
             if fw_type == 'egress':
                 args['networkid'] = self.get_network(key='id')
@@ -255,8 +256,8 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
                     self.module.fail_json(msg="missing required argument for type ingress: ip_address")
                 firewall_rules = self.query_api('listFirewallRules', **args)
 
-            if firewall_rules and 'firewallrule' in firewall_rules:
-                for rule in firewall_rules['firewallrule']:
+            if firewall_rules:
+                for rule in firewall_rules:
                     type_match = self._type_cidrs_match(rule, cidrs)
 
                     protocol_match = (

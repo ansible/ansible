@@ -386,12 +386,13 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             self.module.fail_json(msg="missing required arguments: network_offering")
 
         args = {
-            'zoneid': self.get_zone(key='id')
+            'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
 
         network_offerings = self.query_api('listNetworkOfferings', **args)
         if network_offerings:
-            for no in network_offerings['networkoffering']:
+            for no in network_offerings:
                 if network_offering in [no['name'], no['displaytext'], no['id']]:
                     return self._get_by_key(key, no)
         self.module.fail_json(msg="Network offering '%s' not found" % network_offering)
@@ -414,10 +415,11 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
                 'vpcid': self.get_vpc(key='id'),
+                'fetch_list': True,
             }
             networks = self.query_api('listNetworks', **args)
             if networks:
-                for n in networks['network']:
+                for n in networks:
                     if network in [n['name'], n['displaytext'], n['id']]:
                         self.network = n
                         self.network['acl'] = self.get_network_acl(key='name', acl_id=n.get('aclid'))
