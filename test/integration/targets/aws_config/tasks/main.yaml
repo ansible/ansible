@@ -16,7 +16,7 @@
     - name: ensure IAM role exists
       iam_role:
         <<: *aws_connection_info
-        name: AwsConfigRecorderTestRole
+        name: '{{ config_role_name }}'
         assume_role_policy_document: "{{ lookup('file','config-trust-policy.json') }}"
         state: present
         create_instance_profile: no
@@ -43,7 +43,7 @@
       iam_policy:
         <<: *aws_connection_info
         iam_type: role
-        iam_name: AwsConfigRecorderTestRole
+        iam_name: '{{ config_role_name }}'
         policy_name: AwsConfigRecorderTestRoleS3Policy
         state: present
         policy_json: "{{ lookup( 'template', 'config-s3-policy.json.j2') }}"
@@ -376,7 +376,7 @@
       iam_policy:
         <<: *aws_connection_info
         iam_type: role
-        iam_name: AwsConfigRecorderTestRole
+        iam_name: '{{ config_role_name }}'
         policy_name: AwsConfigRecorderTestRoleS3Policy
         state: absent
         policy_json: "{{ lookup( 'template', 'config-s3-policy.json.j2') }}"
@@ -385,7 +385,7 @@
     - name: remove IAM role
       iam_role:
         <<: *aws_connection_info
-        name: AwsConfigRecorderTestRole
+        name: '{{ config_role_name }}'
         state: absent
       ignore_errors: yes
 
