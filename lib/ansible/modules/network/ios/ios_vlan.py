@@ -211,7 +211,7 @@ def map_params_to_obj(module):
     return obj
 
 
-def logical_rows(out):
+def parse_to_logical_rows(out):
     started_yielding = False
     cur_row = []
     for l in out.splitlines()[2:]:
@@ -230,24 +230,23 @@ def logical_rows(out):
     yield cur_row
 
 
-def ports_str_to_list(ports_str):
+def map_ports_str_to_list(ports_str):
     return list(filter(bool, (p.strip().replace('Gi', 'GigabitEthernet') for p in ports_str.split(', '))))
 
 
-def parse_logical_row(r):
-    first_row = r[0]
-    rest_rows = r[1:]
-    vals = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
-    vals['interfaces'] = ports_str_to_list(vals['interfaces'])
-    vals['interfaces'].extend(prts_r for prts in rest_rows for prts_r in ports_str_to_list(prts))
-    return vals
+def parse_to_obj(logical_rows):
+    first_row = logical_rows[0]
+    rest_rows = logical_rows[1:]
+    obj = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
+    obj['interfaces'] = map_ports_str_to_list(obj['interfaces'])
+    obj['interfaces'].extend(prts_r for prts in rest_rows for prts_r in map_ports_str_to_list(prts))
+    return obj
 
 
 def parse_vlan_brief(vlan_out):
     objs = []
-    for r in logical_rows(vlan_out):
-        row_object = parse_logical_row(r)
-        objs.append(row_object)
+    for logical_rows in parse_to_logical_rows(vlan_out):
+        objs.append(parse_to_obj(logical_rows))
     return objs
 
 
