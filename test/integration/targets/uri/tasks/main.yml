@@ -334,6 +334,62 @@
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
 
+- name: Validate body_format form-urlencoded using dicts works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      user: foo
+      password: bar!#@ |&82$M
+      submit: Sign in
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded dict input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded using lists works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      - [ user, foo ]
+      - [ password, bar!#@ |&82$M ]
+      - [ submit, Sign in ]
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded list input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded of invalid input fails
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+    - foo
+    - bar: baz
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid input fails
+  assert:
+    that:
+    - result is failure
+    - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
+
 - name: Test client cert auth, no certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
