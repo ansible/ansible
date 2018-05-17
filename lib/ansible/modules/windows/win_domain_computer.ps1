@@ -22,7 +22,7 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true -resultobj $result
 $sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -default "$name$"
 If (-not $sam_account_name.EndsWith("$")) {
-  Fail-Json -obj $result "sam_account_name must end in $"
+  Fail-Json -obj $result -message "sam_account_name must end in $"
 }
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
 $description = Get-AnsibleParam -obj $params -name "description" -default ""
@@ -90,7 +90,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
       -Description $desired_state.description `
       -WhatIf:$check_mode
   } Catch {
-    Fail-Json -obj $result -msg "Failed to set the AD object $($desired_state.name): $($_.Exception.Message)"
+    Fail-Json -obj $result -message "Failed to set the AD object $($desired_state.name): $($_.Exception.Message)"
   }
 
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name) {
@@ -102,7 +102,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
             -Confirm:$False `
             -WhatIf:$check_mode
     } Catch {
-      Fail-Json -obj $result -msg "Failed to move the AD object $($desired_state.name) to $($desired_state.ou) OU: $($_.Exception.Message)"
+      Fail-Json -obj $result -message "Failed to move the AD object $($desired_state.name) to $($desired_state.ou) OU: $($_.Exception.Message)"
     }
   }
   $result.changed = $true
@@ -120,7 +120,7 @@ Function Add-ConstructedState($desired_state) {
       -Description $desired_state.description `
       -WhatIf:$check_mode
     } Catch {
-      Fail-Json -obj $result -msg "Failed to create the AD object $($desired_state.name): $($_.Exception.Message)"
+      Fail-Json -obj $result -message "Failed to create the AD object $($desired_state.name): $($_.Exception.Message)"
     }
 
   $result.changed = $true
@@ -134,7 +134,7 @@ Function Remove-ConstructedState($initial_state) {
       -Confirm:$False `
       -WhatIf:$check_mode
   } Catch {
-    Fail-Json -obj $result -msg "Failed to remove the AD object $($desired_state.name): $($_.Exception.Message)"
+    Fail-Json -obj $result -message "Failed to remove the AD object $($desired_state.name): $($_.Exception.Message)"
   }
 
   $result.changed = $true
