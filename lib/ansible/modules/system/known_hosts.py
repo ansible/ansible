@@ -174,6 +174,11 @@ def sanity_check(module, host, key, sshkeygen):
 
     # The approach is to write the key to a temporary file,
     # and then attempt to look up the specified host in that file.
+
+    if re.search(r'\S+(\s+)?,(\s+)?', host):
+        module.fail_json(msg="Comma separated list of names is not supported. "
+                             "Please pass a single name to lookup in the known_hosts file.")
+
     try:
         outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
@@ -183,7 +188,7 @@ def sanity_check(module, host, key, sshkeygen):
                              (outf.name, to_native(e)))
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=True)
+    rc, stdout, stderr = module.run_command(sshkeygen_command)
     try:
         outf.close()
     except:
