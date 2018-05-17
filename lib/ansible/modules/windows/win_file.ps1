@@ -16,7 +16,7 @@ $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $tr
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "absent","directory","file","touch"
 
 # used in template/copy when dest is the path to a dir and source is a file
-$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
+$original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
 if ((Test-Path -Path $path -PathType Container) -and ($null -ne $original_basename)) {
     $path = Join-Path -Path $path -ChildPath $original_basename
 }
