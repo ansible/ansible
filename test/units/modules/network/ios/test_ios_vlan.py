@@ -34,19 +34,19 @@ class TestIosUserModule(TestIosModule):
     def setUp(self):
         super(TestIosUserModule, self).setUp()
 
-        self.mock_get_config = patch('ansible.modules.network.ios.ios_vlan.get_config')
-        self.get_config = self.mock_get_config.start()
+        self.mock_run_commands = patch('ansible.modules.network.ios.ios_vlan.run_commands')
+        self.run_commands = self.mock_run_commands.start()
 
         self.mock_load_config = patch('ansible.modules.network.ios.ios_vlan.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
         super(TestIosUserModule, self).tearDown()
-        self.mock_get_config.stop()
+        self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
-        self.get_config.return_value = load_fixture('ios_vlan_config.cfg')
+        self.run_commands.return_value = load_fixture('ios_vlan_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_vlan_create(self):
