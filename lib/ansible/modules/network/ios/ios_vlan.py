@@ -230,7 +230,7 @@ def logical_rows(out):
 
 
 def ports_str_to_list(ports_str):
-    return list(filter(bool, (p.strip() for p in ports_str.split(', '))))
+    return list(filter(bool, (p.strip().replace('Gi', 'GigabitEthernet') for p in ports_str.split(', '))))
 
 
 def parse_logical_row(r):
@@ -239,8 +239,6 @@ def parse_logical_row(r):
     vals = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
     vals['interfaces'] = ports_str_to_list(vals['interfaces'])
     vals['interfaces'].extend(prts_r for prts in rest_rows for prts_r in ports_str_to_list(prts))
-    for interface in vals['interfaces']:
-        interface = interface.replace('Gi', 'GigabitEthernet')
     return vals
 
 
