@@ -700,7 +700,6 @@ class AzureInventory(object):
                     vm.private_ip_address = nic_config["private_ip_address"]
                     vm.hardware_profile = type('obj', (object,), {'vm_size' : vmss.sku.name})
                     vm.vmss_vm = True
-                    #print(vm.__dict__)
                     vms.append(vm)
         return vms
 
