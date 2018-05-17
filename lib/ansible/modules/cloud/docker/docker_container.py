@@ -1271,7 +1271,7 @@ class Container(DockerBaseClass):
 
         def deep_empty(v):
             """Given a value that may or may not be a dict or iterable, check if its contents are truthy"""
-            if not v and v is not False:
+            if not v and not isinstance(v, bool):
                 return True
             if isinstance(v, list):
                 for i in v:
