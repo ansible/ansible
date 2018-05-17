@@ -236,6 +236,7 @@ EXAMPLES = '''
 
 '''
 
+import errno
 import grp
 import os
 import platform
@@ -646,6 +647,13 @@ class User(object):
                 return passwd, expires
             except KeyError:
                 return passwd, expires
+            except OSError as e:
+                # Python 3.6 raises PermissionError instead of KeyError
+                # Due to absence of PermissionError in python2.7 need to check
+                # errno
+                if e.errno in (errno.EACCES, errno.EPERM):
+                    return passwd, expires
+                raise
 
         if not self.user_exists():
             return passwd, expires
