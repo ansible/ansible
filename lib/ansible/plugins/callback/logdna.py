@@ -193,30 +193,30 @@ class CallbackModule(CallbackBase):
             logdata['result'].pop('invocation', None)
             warnings = logdata['result'].pop('warnings', None)
             if warnings is not None:
-                self.flush({'warnings': warnings}, options)
+                self.flush({'warn': warnings}, options)
             self.flush((logdata), options)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
         self.playbook_name = playbook._file_name
-        self.sendLog(self.conf_hostname, 'START', {'result': self.playbook_name})
+        self.sendLog(self.conf_hostname, 'START', {'info': self.playbook_name})
 
     def v2_playbook_on_stats(self, stats):
         result = dict()
         for host in stats.processed.keys():
             result[host] = stats.summarize(host)
-        self.sendLog(self.conf_hostname, 'STATS', {'result': result})
+        self.sendLog(self.conf_hostname, 'STATS', {'info': result})
 
     def runner_on_failed(self, host, res, ignore_errors=False):
         if self.plugin_ignore_errors:
             ignore_errors = self.plugin_ignore_errors
-        self.sendLog(host, 'FAILED', {'result': res, 'ignore_errors': ignore_errors})
+        self.sendLog(host, 'FAILED', {'info': res, 'ignore_errors': ignore_errors})
 
     def runner_on_ok(self, host, res):
-        self.sendLog(host, 'OK', {'result': res})
+        self.sendLog(host, 'OK', {'info': res})
 
     def runner_on_async_failed(self, host, res, jid):
-        self.sendLog(host, 'ASYNC_FAILED', {'result': res, 'job_id': jid})
+        self.sendLog(host, 'ASYNC_FAILED', {'info': res, 'job_id': jid})
 
     def runner_on_async_ok(self, host, res, jid):
-        self.sendLog(host, 'ASYNC_OK', {'result': res, 'job_id': jid})
+        self.sendLog(host, 'ASYNC_OK', {'info': res, 'job_id': jid})
