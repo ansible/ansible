@@ -169,6 +169,7 @@ class Connection(ConnectionBase):
     transport = 'netconf'
     has_pipelining = False
     force_persistence = True
+    remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

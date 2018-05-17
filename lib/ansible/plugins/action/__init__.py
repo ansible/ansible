@@ -568,7 +568,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         expand_path = split_path[0]
 
         if expand_path == '~':
-            if self._play_context.connection in ('httpapi', 'netconf', 'network_cli'):
+            if self._connection.remote_is_local:
                 pass
             elif sudoable and self._play_context.become and self._play_context.become_user:
                 expand_path = '~%s' % self._play_context.become_user
