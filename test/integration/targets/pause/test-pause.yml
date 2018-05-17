@@ -5,12 +5,8 @@
 
   tasks:
     - pause:
-        seconds: 5
+        seconds: 1
       register: results
-
-    - debug:
-        var: results
-      tags: debug
 
     - assert:
         that:
