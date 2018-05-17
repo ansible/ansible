@@ -57,7 +57,7 @@ Modules
 
 * New ``net_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
 * New ``net_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
-* New ``netconf_get`` - Netconf generic module to fetch configuration and state data from network device
+* New ``netconf_get`` - Netconf module to fetch configuration and state data `proposal#104 <https://github.com/ansible/proposals/issues/104>`_
 
 Other Features
 ================
