@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
-description: 
+description:
   - "Create or destroy or modify(path) cifs-share on ONTAP"
 extends_documentation_fragment:
   - netapp.na_ontap
@@ -36,7 +36,7 @@ options:
     required: true
   share_name:
     description:
-      - "The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being " 
+      - "The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being "
       - "illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)"
     required: true
   state:
