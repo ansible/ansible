@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Support tag values as hostnames in aws_ec2 inventory plugin
