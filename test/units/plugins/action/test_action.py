@@ -529,6 +529,7 @@ class TestActionBase(unittest.TestCase):
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user
 
+
 class TestActionBaseCleanReturnedData(unittest.TestCase):
     def test(self):
 
