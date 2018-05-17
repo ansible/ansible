@@ -88,7 +88,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: configure a networkv4
+- name: configure a network ipv4
   nios_network:
     network: 192.168.10.0/24
     comment: this is a test comment
@@ -99,7 +99,7 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: configure a networkv6
+- name: configure a network ipv6
   nios_network:
     network: fe80::/64
     comment: this is a test comment
@@ -110,7 +110,7 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: set dhcp options for a networkv4
+- name: set dhcp options for a network ipv4
   nios_network:
     network: 192.168.10.0/24
     comment: this is a test comment
@@ -124,7 +124,7 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: remove a networkv4
+- name: remove a network ipv4
   nios_network:
     network: 192.168.10.0/24
     state: absent
