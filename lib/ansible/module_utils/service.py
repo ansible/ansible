@@ -39,14 +39,18 @@ from ansible.module_utils.six import PY2, b
 from ansible.module_utils._text import to_bytes, to_text
 
 
-def sysv_is_enabled(name):
+def sysv_is_enabled(name, runlevel=None):
     '''
     This function will check if the service name supplied
     is enabled in any of the sysv runlevels
 
     :arg name: name of the service to test for
+    :kw runlevel: runlevel to check (default: None)
     '''
-    return bool(glob.glob('/etc/rc?.d/S??%s' % name))
+    if runlevel:
+        return bool(glob.glob('/etc/rc%s.d/S??%s' % (runlevel, name)))
+    else:
+        return bool(glob.glob('/etc/rc?.d/S??%s' % name))
 
 
 def get_sysv_script(name):
@@ -72,6 +76,27 @@ def sysv_exists(name):
     :arg name: name of the service to test for
     '''
     return os.path.exists(get_sysv_script(name))
+
+
+def get_ps(module, pattern):
+    '''
+    Last resort to find a service by trying to match pattern to programs in memory
+    '''
+    found = False
+    if platform.system() == 'SunOS':
+        flags = '-ef'
+    else:
+        flags = 'auxww'
+    psbin = module.get_bin_path('ps', True)
+
+    (rc, psout, pserr) = module.run_command([psbin, flags])
+    if rc == 0:
+        for line in psout.splitlines():
+            if pattern in line:
+                # FIXME: should add logic to prevent matching 'self', though that should be extreemly rare
+                found = True
+                break
+    return found
 
 
 def fail_if_missing(module, found, service, msg=''):
