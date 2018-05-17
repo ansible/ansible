@@ -211,7 +211,7 @@ def create_lifecycle_rule(client, module):
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
     storage_class = module.params.get("storage_class")
-    transition_date = msolarisodule.params.get("transition_date")
+    transition_date = module.params.get("transition_date")
     transition_days = module.params.get("transition_days")
     transitions = module.params.get("transitions")
     purge_transitions = module.params.get("purge_transitions")
@@ -463,7 +463,7 @@ def main():
     transition_date = module.params.get("transition_date")
     state = module.params.get("state")
 
-    if state == 'present' and module.params.get("status", "enabled") == "enabled":  # allow deleting/disabling a rule by id/prefix
+    if state == 'present' and module.params["status"] == "enabled":  # allow deleting/disabling a rule by id/prefix
 
         required_when_present = ('expiration_date', 'expiration_days', 'transition_date',
                                  'transition_days', 'transitions', 'noncurrent_version_expiration_days',
