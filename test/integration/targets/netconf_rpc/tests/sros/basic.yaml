@@ -1,0 +1,41 @@
+---
+- debug: msg="START netconf_rpc sros/basic.yaml on connection={{ ansible_connection }}"
+
+- name: lock candidate
+  netconf_rpc:
+    request:
+      lock:
+        target:
+          candidate:
+
+- name: unlock candidate
+  netconf_rpc:
+    request: "{'unlock': {'target': {'candidate': None}}}"
+    xmlns: "urn:ietf:params:xml:ns:netconf:base:1.0"
+  
+- name: discard changes
+  netconf_rpc:
+    request: discard-changes
+
+- name: copy running to startup
+  netconf_rpc:
+    request:
+      copy-config:
+        source:
+          running:
+        target:
+          startup:
+
+- name: get schema list with JSON output
+  netconf_rpc:
+    request: |
+      <get>
+        <filter>
+          <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+            <schemas/>
+          </netconf-state>
+        </filter>
+      </get>
+    display: json
+
+- debug: msg="END netconf_rpc sros/basic.yaml on connection={{ ansible_connection }}"
