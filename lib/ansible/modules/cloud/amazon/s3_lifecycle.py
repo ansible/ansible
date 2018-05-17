@@ -211,7 +211,7 @@ def create_lifecycle_rule(client, module):
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
     storage_class = module.params.get("storage_class")
-    transition_date = module.params.get("transition_date")
+    transition_date = msolarisodule.params.get("transition_date")
     transition_days = module.params.get("transition_days")
     transitions = module.params.get("transitions")
     purge_transitions = module.params.get("purge_transitions")
@@ -453,8 +453,6 @@ def main():
                                   ['transition_date', 'transitions'],
                                   ['noncurrent_version_transition_days', 'noncurrent_version_transitions'],
                               ],)
-
-
 
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
