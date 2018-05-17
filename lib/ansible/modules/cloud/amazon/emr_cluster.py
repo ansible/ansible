@@ -20,8 +20,8 @@ version_added: "2.6"
 description:
   - creating or terminating EMR Clusters
   - steps (jobs spark for example) can be setup when Cluster is creating
-  - because the name is not a unique field in AWS this module can't ensure the state
-    from a cluster, so if you runs this module 10 times, 10 cluster will be created
+  - this module will check EMR name when state is present to check if cluster already exist
+    but EMR API don't have a unique field to ensure that behavior
   - basically this module only receive args and send to boto3, so any argument supported
     by method run_job_flow() can be used when state is create.
     check http://boto3.readthedocs.io/en/latest/reference/services/emr.html#EMR.Client.run_job_flow
@@ -55,7 +55,7 @@ options:
       - list of Applications that will be enabled on EMR
   configurations:
     description:
-      - list of specific configuratins that will be pass for applications and Amazon EMR
+      - dict of specific configuratins that will be pass for applications and Amazon EMR
   service_role:
     description:
       - IAM role that will be assumed by the Amazon EMR
@@ -67,18 +67,29 @@ options:
   ebs_root_volume_size:
     description:
       - settings for EBS on root
+  ebs_optimized:
+    description:
+      - define if ebs is optimized
+  ebs_volumes:
+    description:
+      - list to create extra volumes see section EbsBlockDeviceConfigs in
+        http://boto3.readthedocs.io/en/latest/reference/services/emr.html#EMR.Client.run_job_flow
   state:
     description:
       - ensure cluster is create or terminate
-      - default create
+      - default present
   wait:
     description:
-      - wait until EMR is RUNNING
+      - wait until EMR is RUNNING if state is create or present and TERMINATED if state is absent
       - default false
-  wait_timeout:
+  wait_delay:
     description:
-      - how log before wait gives up, in seconds
-      - default 600
+      - the amount of time in seconds to wait between attempts
+      - default 30
+  wait_max_attempts:
+    description:
+      - the number of attempts for cluster become to correct state
+      - default 60
   cluster_id:
     description:
       - id from EMR that will be terminate
@@ -114,7 +125,7 @@ options:
   supported_products:
     description:
       - a list set by third-party when job is launched.
-  tags:
+  ec2_tags:
     description:
       - a dict with tags that will be associate with a cluster
   visible_to_all_users:
@@ -133,9 +144,19 @@ EXAMPLES = '''
     region: us-east-1
     log_uri: s3://bucket-name/logs/emr
     wait: yes
+    ebs_optimized: yes
+    ebs_volumes:
+      - type: gp2
+        size: 300
+    configurations:
+      spark:
+        maximizeResourceAllocation: true
+      hbase-site:
+        hbase.rootdir: s3://bucket-name/hbase-site
     applications:
       - name: Hadoop
       - name: Spark
+      - name: HBase
     steps:
       - name: s3-dist-cp
         hadoop_jar_step:
@@ -151,10 +172,6 @@ EXAMPLES = '''
     instances:
       ec2_key_name: ec2_key
       ec2_subnet_id: subnet-923a31db
-      configurations:
-        - classification: spark
-          properties:
-            maximizeResourceAllication: true
       additional_slave_security_groups:
         - sg-8eb2b1f1
       additional_master_security_groups:
@@ -206,7 +223,7 @@ cluster:
     applications:
       description: list of the applications installed on this cluster
       type: list
-    tags:
+    ec2_tags:
       description: list of tags
       type: dict
     service_role:
@@ -220,45 +237,86 @@ cluster:
       type: dict
 '''
 
-try:
-    from botocore.exception import ClientError
-except ImportError:
-    pass  # will be picked up from imported HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (
+    camel_dict_to_snake_dict,
+    snake_dict_to_camel_dict,
+    ansible_dict_to_boto3_tag_list
+)
 
 import re
-import traceback
-import time
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, snake_dict_to_camel_dict, ansible_dict_to_boto3_tag_list
+try:
+    from botocore.exceptions import BotoCoreError, ClientError, WaiterError
+except ImportError:
+    pass  # handled by AnsibleAWSModule
+
+
+class ElasticMapReduceError(Exception):
+    def __init__(self, msg, exception=None):
+        self.msg = msg
+        self.exception = exception
+
+
+def check_emr_cluster(client, module):
+    name = module.params.get('name')
+
+    if not name:
+        module.fail_json(msg='name is required')
+
+    try:
+        emr_clusters = client.list_clusters(ClusterStates=['STARTING',
+                                                           'BOOTSTRAPPING',
+                                                           'RUNNING',
+                                                           'WAITING'])
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e)
+
+    response = [emr for emr in emr_clusters['Clusters'] if re.compile(name).match(emr['Name'])]
+
+    if response:
+        changed = False
+
+        if len(response) > 1:
+            module.warn(warning='More than one Cluster match with name {} just only the first will be describe'.format(emr['Name']))
+
+        try:
+            resource = client.describe_cluster(ClusterId=response[0]['Id'])
+        except (ClientError, BotoCoreError) as e:
+            module.fail_json_aws(e)
+
+        return changed, camel_dict_to_snake_dict(resource)
+
+    else:
+        return create_emr_cluster(client, module)
 
 
 def terminate_emr_cluster(client, module):
     cluster_id = module.params.get('cluster_id')
     wait = module.params.get('wait')
-    wait_timeout = module.params.get('wait_timeout')
 
     if not cluster_id:
         module.fail_json(msg='cluster_id required for state absent')
 
-    client.terminate_job_flows(JobFlowIds=[cluster_id])
-
-    resource = client.describe_cluster(ClusterId=cluster_id)['Cluster']
+    try:
+        client.terminate_job_flows(JobFlowIds=[cluster_id])
+        resource = client.describe_cluster(ClusterId=cluster_id)['Cluster']
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e)
 
     if wait:
-        wait_timeout = time.time() + wait_timeout
-        time.sleep(5)
+        waiter = client.get_waiter('cluster_terminated')
+        wait_delay = module.params.get('wait_delay')
+        wait_max_attempts = module.params.get('wait_max_attempts')
 
-        while wait_timeout > time.time() and resource['Status']['State'] != 'TERMINATED':
-            time.sleep(5)
+        try:
+            waiter.wait(ClusterId=job_flow_id, WaiterConfig={'Delay': wait_delay, 'MaxAttempts': wait_max_attempts})
+            resource = client.describe_cluster(ClusterId=job_flow_id)['Cluster']
+        except (ClientError, BotoCoreError, WaiterError) as e:
+            module.fail_json_aws(e)
 
-            if wait_timeout <= time.time():
-                module.exit_json(msg="Timeout waiting for resource %s" % resource['Id'])
-
-            resource = client.describe_cluster(ClusterId=cluster_id)['Cluster']
-
-    return camel_dict_to_snake_dict(resource)
+    changed = True
+    return changed, camel_dict_to_snake_dict(resource)
 
 
 def create_emr_cluster(client, module):
@@ -268,43 +326,82 @@ def create_emr_cluster(client, module):
 
     for p in ['name', 'instances', 'log_uri', 'additional_info', 'ami_version', 'release_label',
               'steps', 'bootstrap_actions', 'supported_products', 'new_supported_products',
-              'applications', 'configurations', 'visible_to_all_users', 'service_role', 'job_flow_role',
+              'applications', 'visible_to_all_users', 'service_role', 'job_flow_role',
               'security_configuration', 'auto_scaling_role', 'scale_down_behavior', 'custom_ami_id',
               'repo_upgrade_on_boot', 'ebs_root_volume_size', 'cluster_id', 'kerberos_attributes']:
 
         if p in module.params and module.params.get(p):
             params[p] = module.params.get(p)
 
-    if 'tags' in module.params and module.params.get('tags'):
-        params['tags'] = ansible_dict_to_boto3_tag_list(module.params.get('tags'))
+    if 'ec2_tags' in module.params and module.params.get('ec2_tags'):
+        params['tags'] = ansible_dict_to_boto3_tag_list(module.params.get('ec2_tags'))
 
     if not params['name']:
         module.fail_json(msg="name required for the state create")
 
     params = snake_dict_to_camel_dict(params, capitalize_first=True)
 
-    job_flow_id = client.run_job_flow(**params)['JobFlowId']
+    if 'configurations' in module.params and module.params.get('configurations'):
+        c = module.params.get('configurations')
+        params['Configurations'] = []
 
-    resource = client.describe_cluster(ClusterId=job_flow_id)['Cluster']
+        for k in c.keys():
+            params['Configurations'].append({'Classification': k, 'Properties': c[k]})
+
+    if 'ebs_volumes' in module.params and module.params.get('ebs_volumes'):
+        volumes = module.params.get('ebs_volumes')
+
+        device_configs = {'EbsBlockDeviceConfigs': []}
+
+        for v in volumes:
+            spec = {'VolumeSpecification': {}, 'VolumesPerInstance': 1}
+
+            if 'iops' in v:
+                spec['VolumeSpecification']['Iops'] = v['iops']
+
+            spec['VolumeSpecification']['SizeInGB'] = v['size']
+            spec['VolumeSpecification']['VolumeType'] = v['type']
+
+            device_configs['EbsBlockDeviceConfigs'].append(spec)
+
+        if 'InstanceGroups' in params['Instances']:
+            for i in params['Instances']['InstanceGroups']:
+                i['EbsConfiguration'] = device_configs
+
+            if 'ebs_optimized' in module.params and module.params.get('ebs_volumes'):
+                i['EbsConfiguration']['EbsOptimized'] = module.params.get('ebs_optimized')
+
+        elif 'InstanceFleets' in params['Instances']:
+            for i in params['Instances']['InstanceFleets']:
+                for t in i['InstanceTypeConfigs']:
+                    t['EbsConfiguration'] = device_configs
+
+                    if 'ebs_optimized' in module.params and module.params.get('ebs_optimized'):
+                        t['EbsConfiguration']['EbsOptimized'] = module.params.get('ebs_optimized')
+
+    try:
+        job_flow_id = client.run_job_flow(**params)['JobFlowId']
+        resource = client.describe_cluster(ClusterId=job_flow_id)['Cluster']
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e)
 
     if wait:
-        wait_timeout = time.time() + wait_timeout
-        time.sleep(5)
+        waiter = client.get_waiter('cluster_running')
+        wait_delay = module.params.get('wait_delay')
+        wait_max_attempts = module.params.get('wait_max_attempts')
 
-        while wait_timeout > time.time() and resource['Status']['State'] != 'RUNNING':
-            time.sleep(5)
-
-            if wait_timeout <= time.time():
-                module.exit_json(msg="Timeout waiting for resource %s" % resource['Id'])
-
+        try:
+            waiter.wait(ClusterId=job_flow_id, WaiterConfig={'Delay': wait_delay, 'MaxAttempts': wait_max_attempts})
             resource = client.describe_cluster(ClusterId=job_flow_id)['Cluster']
+        except (ClientError, BotoCoreError, WaiterError) as e:
+            module.fail_json_aws(e)
 
-    return camel_dict_to_snake_dict(resource)
+    changed = True
+    return changed, camel_dict_to_snake_dict(resource)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = dict(
         dict(
             name=dict(required=False),
             instances=dict(required=False, type='dict'),
@@ -317,7 +414,7 @@ def main():
             supported_products=dict(required=False, type='list'),
             new_supported_products=dict(required=False, type='list'),
             applications=dict(required=False, type='list'),
-            configurations=dict(required=False, type='list'),
+            configurations=dict(required=False, type='dict'),
             visible_to_all_users=dict(required=False, type='bool', default=True),
             service_role=dict(required=False, default='EMR_DefaultRole'),
             job_flow_role=dict(required=False, default='EMR_EC2_DefaultRole'),
@@ -327,37 +424,35 @@ def main():
             custom_ami_id=dict(required=False),
             repo_upgrade_on_boot=dict(required=False),
             ebs_root_volume_size=dict(required=False, type='int'),
-            state=dict(required=False, choices=['create', 'absent'], default='create'),
-            wait=dict(required=False, type='bool', default=False),
+            state=dict(required=False, choices=['present', 'create', 'absent'], default='present'),
             cluster_id=dict(required=False),
-            tags=dict(required=False, type='dict'),
+            ec2_tags=dict(required=False, type='dict'),
             kerberos_attributes=dict(required=False, type='dict'),
-            wait_timeout=dict(required=False, type='int', default=600)
+            ebs_volumes=dict(required=False, type='list'),
+            ebs_optimized=dict(required=False, type='bool'),
+            wait=dict(required=False, type='bool', default=False),
+            wait_delay=dict(required=False, type='int', default=30),
+            wait_max_attempts=dict(required=False, type='int', default=60)
         )
     )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
-    )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
+
+    case = {
+        'present': check_emr_cluster,
+        'absent': terminate_emr_cluster,
+        'create': create_emr_cluster
+    }
 
     state = module.params.get('state')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='emr', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        client = module.client('emr')
+        changed, response = case.get(state)(client, module)
+    except ElasticMapReduceError as e:
+        module.fail_json(e.exception, msg=e.msg)
 
-    if state == 'create':
-        cluster = create_emr_cluster(client, module)
-    elif state == 'absent':
-        cluster = terminate_emr_cluster(client, module)
-
-    module.exit_json(changed=True, cluster=cluster)
+    module.exit_json(changed=changed, **response)
 
 if __name__ == '__main__':
     main()
