@@ -40,6 +40,40 @@ options:
   prefix:
     description:
       - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
+  purge_transitions:
+    description:
+      - >
+        "Whether to replace all the current transition(s) with the new transition(s). When false, the provided transition(s)
+        will be added, replacing transitions with the same storage_class. When true, existing transitions will be removed and
+        replaced with the new transition(s)
+    default: true
+    type: bool
+    version_added: 2.6
+  noncurrent_version_expiration_days:
+    description:
+      - 'Delete noncurrent versions this many days after they become noncurrent'
+    required: false
+    version_added: 2.6
+  noncurrent_version_storage_class:
+    description:
+      - 'Transition noncurrent versions to this storage class'
+    default: glacier
+    choices: ['glacier', 'onezone_ia', 'standard_ia']
+    required: false
+    version_added: 2.6
+  noncurrent_version_transition_days:
+    description:
+      - 'Transition noncurrent versions this many days after they become noncurrent'
+    required: false
+    version_added: 2.6
+  noncurrent_version_transitions:
+    description:
+      - >
+        A list of transition behaviors to be applied to noncurrent versions for the rule. Each storage class may be used only once. Each transition
+        behavior contains these elements
+          I(transition_days)
+          I(storage_class)
+    version_added: 2.6
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -55,10 +89,10 @@ options:
     choices: [ 'enabled', 'disabled' ]
   storage_class:
     description:
-      - "The storage class to transition to. Currently there are two supported values - 'glacier' or 'standard_ia'."
+      - "The storage class to transition to. Currently there are two supported values - 'glacier',  'onezone_ia', or 'standard_ia'."
       - "The 'standard_ia' class is only being available from Ansible version 2.2."
     default: glacier
-    choices: [ 'glacier', 'standard_ia']
+    choices: [ 'glacier', 'onezone_ia', 'standard_ia']
   transition_date:
     description:
       - >
@@ -68,6 +102,14 @@ options:
   transition_days:
     description:
       - "Indicates when, in days, an object transitions to a different storage class. If transition_date is not specified, this parameter is required."
+  transitions:
+    description:
+      - A list of transition behaviors to be applied to the rule. Each storage class may be used only once. Each transition
+        behavior may contain these elements
+          I(transition_days)
+          I(transition_date)
+          I(storage_class)
+    version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -126,10 +168,20 @@ EXAMPLES = '''
     state: present
     status: enabled
 
+# Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
+- s3_lifecycle:
+    name: mybucket
+    prefix: /logs/
+    state: present
+    status: enabled
+    transitions:
+      - transition_days: 30
+        storage_class: standard_ia
+      - transition_days: 90
+        storage_class: glacier
 '''
 
-import xml.etree.ElementTree as ET
-import copy
+from copy import deepcopy
 import datetime
 
 try:
@@ -139,157 +191,186 @@ except ImportError:
     HAS_DATEUTIL = False
 
 try:
-    import boto
-    import boto.ec2
-    from boto.s3.connection import OrdinaryCallingFormat, Location
-    from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
-    from boto.exception import BotoServerError, S3ResponseError
-    HAS_BOTO = True
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    HAS_BOTO = False
+    pass  # handled by AnsibleAwsModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
-def create_lifecycle_rule(connection, module):
+def create_lifecycle_rule(client, module):
 
     name = module.params.get("name")
     expiration_date = module.params.get("expiration_date")
     expiration_days = module.params.get("expiration_days")
+    noncurrent_version_expiration_days = module.params.get("noncurrent_version_expiration_days")
+    noncurrent_version_transition_days = module.params.get("noncurrent_version_transition_days")
+    noncurrent_version_transitions = module.params.get("noncurrent_version_transitions")
+    noncurrent_version_storage_class = module.params.get("noncurrent_version_storage_class")
     prefix = module.params.get("prefix")
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
     storage_class = module.params.get("storage_class")
     transition_date = module.params.get("transition_date")
     transition_days = module.params.get("transition_days")
+    transitions = module.params.get("transitions")
+    purge_transitions = module.params.get("purge_transitions")
     changed = False
-
-    try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        module.fail_json(msg=e.message)
 
     # Get the bucket's current lifecycle rules
     try:
-        current_lifecycle_obj = bucket.get_lifecycle_config()
-    except S3ResponseError as e:
-        if e.error_code == "NoSuchLifecycleConfiguration":
-            current_lifecycle_obj = Lifecycle()
+        current_lifecycle = client.get_bucket_lifecycle_configuration(Bucket=name)
+        current_lifecycle_rules = current_lifecycle['Rules']
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchLifecycleConfiguration':
+            current_lifecycle_rules = []
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e)
+    except BotoCoreError as e:
+        module.fail_json_aws(e)
 
+    rule = dict(Filter=dict(Prefix=prefix), Status=status.title())
+    if rule_id is not None:
+        rule['ID'] = rule_id
     # Create expiration
     if expiration_days is not None:
-        expiration_obj = Expiration(days=expiration_days)
+        rule['Expiration'] = dict(Days=expiration_days)
     elif expiration_date is not None:
-        expiration_obj = Expiration(date=expiration_date)
-    else:
-        expiration_obj = None
+        rule['Expiration'] = dict(Date=expiration_date)
 
-    # Create transition
+    if noncurrent_version_expiration_days is not None:
+        rule['NoncurrentVersionExpiration'] = dict(NoncurrentDays=noncurrent_version_expiration_days)
+
     if transition_days is not None:
-        transition_obj = Transition(days=transition_days, storage_class=storage_class.upper())
+        rule['Transitions'] = [dict(Days=transition_days, StorageClass=storage_class.upper()), ]
+
     elif transition_date is not None:
-        transition_obj = Transition(date=transition_date, storage_class=storage_class.upper())
-    else:
-        transition_obj = None
+        rule['Transitions'] = [dict(Date=transition_date, StorageClass=storage_class.upper()), ]
 
-    # Create rule
-    rule = Rule(rule_id, prefix, status.title(), expiration_obj, transition_obj)
+    if transitions is not None:
+        if not rule.get('Transitions'):
+            rule['Transitions'] = []
+        for transition in transitions:
+            t_out = dict()
+            if transition.get('transition_date'):
+                t_out['Date'] = transition['transition_date']
+            elif transition.get('transition_days'):
+                t_out['Days'] = transition['transition_days']
+            if transition.get('storage_class'):
+                t_out['StorageClass'] = transition['storage_class'].upper()
+                rule['Transitions'].append(t_out)
 
-    # Create lifecycle
-    lifecycle_obj = Lifecycle()
+    if noncurrent_version_transition_days is not None:
+        rule['NoncurrentVersionTransitions'] = [dict(NoncurrentDays=noncurrent_version_transition_days,
+                                                     StorageClass=noncurrent_version_storage_class.upper()), ]
 
+    if noncurrent_version_transitions is not None:
+        if not rule.get('NoncurrentVersionTransitions'):
+            rule['NoncurrentVersionTransitions'] = []
+        for noncurrent_version_transition in noncurrent_version_transitions:
+            t_out = dict()
+            t_out['NoncurrentDays'] = noncurrent_version_transition['transition_days']
+            if noncurrent_version_transition.get('storage_class'):
+                t_out['StorageClass'] = noncurrent_version_transition['storage_class'].upper()
+                rule['NoncurrentVersionTransitions'].append(t_out)
+
+    lifecycle_configuration = dict(Rules=[])
     appended = False
     # If current_lifecycle_obj is not None then we have rules to compare, otherwise just add the rule
-    if current_lifecycle_obj:
+    if current_lifecycle_rules:
         # If rule ID exists, use that for comparison otherwise compare based on prefix
-        for existing_rule in current_lifecycle_obj:
-            if rule.id == existing_rule.id:
-                if compare_rule(rule, existing_rule):
-                    lifecycle_obj.append(rule)
-                    appended = True
-                else:
-                    lifecycle_obj.append(rule)
-                    changed = True
-                    appended = True
-            elif rule.prefix == existing_rule.prefix:
-                existing_rule.id = None
-                if compare_rule(rule, existing_rule):
-                    lifecycle_obj.append(rule)
-                    appended = True
-                else:
-                    lifecycle_obj.append(rule)
-                    changed = True
-                    appended = True
+        for existing_rule in current_lifecycle_rules:
+            if rule['Filter']['Prefix'] == existing_rule['Filter']['Prefix']:
+                existing_rule.pop('ID')
+            if rule.get('ID') == existing_rule.get('ID'):
+                changed_, appended_ = update_or_append_rule(rule, existing_rule, purge_transitions, lifecycle_configuration)
+                changed = changed_ or changed
+                appended = appended_ or appended
             else:
-                lifecycle_obj.append(existing_rule)
+                lifecycle_configuration['Rules'].append(existing_rule)
+
         # If nothing appended then append now as the rule must not exist
         if not appended:
-            lifecycle_obj.append(rule)
+            lifecycle_configuration['Rules'].append(rule)
             changed = True
     else:
-        lifecycle_obj.append(rule)
+        lifecycle_configuration['Rules'].append(rule)
         changed = True
 
     # Write lifecycle to bucket
     try:
-        bucket.configure_lifecycle(lifecycle_obj)
-    except S3ResponseError as e:
-        module.fail_json(msg=e.message)
+        client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_configuration)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e)
 
     module.exit_json(changed=changed)
 
 
-def compare_rule(rule_a, rule_b):
+def update_or_append_rule(new_rule, existing_rule, purge_transitions, lifecycle_obj):
+    changed = False
+    if existing_rule['Status'] != new_rule['Status']:
+        if not new_rule.get('Transitions') and existing_rule.get('Transitions'):
+            new_rule['Transitions'] = existing_rule['Transitions']
+        if not new_rule.get('Expiration') and existing_rule.get('Expiration'):
+            new_rule['Expiration'] = existing_rule['Expiration']
+        if not new_rule.get('NoncurrentVersionExpiration') and existing_rule.get('NoncurrentVersionExpiration'):
+            new_rule['NoncurrentVersionExpiration'] = existing_rule['NoncurrentVersionExpiration']
+        lifecycle_obj['Rules'].append(new_rule)
+        changed = True
+        appended = True
+    else:
+        if not purge_transitions:
+            merge_transitions(new_rule, existing_rule)
+        if compare_rule(new_rule, existing_rule, purge_transitions):
+            lifecycle_obj['Rules'].append(new_rule)
+            appended = True
+        else:
+            lifecycle_obj['Rules'].append(new_rule)
+            changed = True
+            appended = True
+    return changed, appended
+
+
+def compare_rule(rule_a, rule_b, purge_transitions):
 
     # Copy objects
-    rule1 = copy.deepcopy(rule_a)
-    rule2 = copy.deepcopy(rule_b)
+    rule1 = deepcopy(rule_a)
+    rule2 = deepcopy(rule_b)
 
-    # Delete Rule from Rule
-    try:
-        del rule1.Rule
-    except AttributeError:
-        pass
-
-    try:
-        del rule2.Rule
-    except AttributeError:
-        pass
-
-    # Extract Expiration and Transition objects
-    rule1_expiration = rule1.expiration
-    rule1_transition = rule1.transition
-    rule2_expiration = rule2.expiration
-    rule2_transition = rule2.transition
-
-    # Delete the Expiration and Transition objects from the Rule objects
-    del rule1.expiration
-    del rule1.transition
-    del rule2.expiration
-    del rule2.transition
-
-    # Compare
-    if rule1_transition is None:
-        rule1_transition = Transition()
-    if rule2_transition is None:
-        rule2_transition = Transition()
-    if rule1_expiration is None:
-        rule1_expiration = Expiration()
-    if rule2_expiration is None:
-        rule2_expiration = Expiration()
-
-    if (rule1.__dict__ == rule2.__dict__ and
-            rule1_expiration.__dict__ == rule2_expiration.__dict__ and
-            rule1_transition.__dict__ == rule2_transition.__dict__):
-        return True
+    if purge_transitions:
+        return rule1 == rule2
     else:
-        return False
+        transitions1 = rule1.pop('Transitions', [])
+        transitions2 = rule2.pop('Transitions', [])
+        noncurrent_transtions1 = rule1.pop('NoncurrentVersionTransitions', [])
+        noncurrent_transtions2 = rule2.pop('NoncurrentVersionTransitions', [])
+        if rule1 != rule2:
+            return False
+        for transition in transitions1:
+            if transition not in transitions2:
+                return False
+        for transition in noncurrent_transtions1:
+            if transition not in noncurrent_transtions2:
+                return False
+        return True
 
 
-def destroy_lifecycle_rule(connection, module):
+def merge_transitions(updated_rule, updating_rule):
+    # because of the legal s3 transitions, we know only one can exist for each storage class.
+    # So, our strategy is build some dicts, keyed on storage class and add the storage class transitions that are only
+    # in updating_rule to updated_rule
+    updated_transitions = {}
+    updating_transitions = {}
+    for transition in updated_rule['Transitions']:
+        updated_transitions[transition['StorageClass']] = transition
+    for transition in updating_rule['Transitions']:
+        updating_transitions[transition['StorageClass']] = transition
+    for storage_class, transition in updating_transitions.items():
+        if updated_transitions.get(storage_class) is None:
+            updated_rule['Transitions'].append(transition)
+
+
+def destroy_lifecycle_rule(client, module):
 
     name = module.params.get("name")
     prefix = module.params.get("prefix")
@@ -299,108 +380,101 @@ def destroy_lifecycle_rule(connection, module):
     if prefix is None:
         prefix = ""
 
-    try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        module.fail_json(msg=e.message)
-
     # Get the bucket's current lifecycle rules
     try:
-        current_lifecycle_obj = bucket.get_lifecycle_config()
-    except S3ResponseError as e:
-        if e.error_code == "NoSuchLifecycleConfiguration":
-            module.exit_json(changed=changed)
+        current_lifecycle_rules = client.get_bucket_lifecycle_configuration(Bucket=name)['Rules']
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchLifecycleConfiguration':
+            current_lifecycle_rules = []
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e)
+    except BotoCoreError as e:
+        module.fail_json_aws(e)
 
     # Create lifecycle
-    lifecycle_obj = Lifecycle()
+    lifecycle_obj = dict(Rules=[])
 
     # Check if rule exists
     # If an ID exists, use that otherwise compare based on prefix
     if rule_id is not None:
-        for existing_rule in current_lifecycle_obj:
-            if rule_id == existing_rule.id:
+        for existing_rule in current_lifecycle_rules:
+            if rule_id == existing_rule['ID']:
                 # We're not keeping the rule (i.e. deleting) so mark as changed
                 changed = True
             else:
-                lifecycle_obj.append(existing_rule)
+                lifecycle_obj['Rules'].append(existing_rule)
     else:
-        for existing_rule in current_lifecycle_obj:
-            if prefix == existing_rule.prefix:
+        for existing_rule in current_lifecycle_rules:
+            if prefix == existing_rule['Filter']['Prefix']:
                 # We're not keeping the rule (i.e. deleting) so mark as changed
                 changed = True
             else:
-                lifecycle_obj.append(existing_rule)
+                lifecycle_obj['Rules'].append(existing_rule)
 
     # Write lifecycle to bucket or, if there no rules left, delete lifecycle configuration
     try:
-        if lifecycle_obj:
-            bucket.configure_lifecycle(lifecycle_obj)
+        if lifecycle_obj['Rules']:
+            client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_obj)
         else:
-            bucket.delete_lifecycle_configuration()
-    except BotoServerError as e:
-        module.fail_json(msg=e.message)
-
+            client.delete_lifecycle_configuration(Bucket=name)
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e)
     module.exit_json(changed=changed)
 
 
 def main():
-
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            expiration_days=dict(default=None, required=False, type='int'),
-            expiration_date=dict(default=None, required=False, type='str'),
-            prefix=dict(default=None, required=False),
-            requester_pays=dict(default='no', type='bool'),
-            rule_id=dict(required=False, type='str'),
-            state=dict(default='present', choices=['present', 'absent']),
-            status=dict(default='enabled', choices=['enabled', 'disabled']),
-            storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
-            transition_days=dict(default=None, required=False, type='int'),
-            transition_date=dict(default=None, required=False, type='str')
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        expiration_days=dict(type='int'),
+        expiration_date=dict(),
+        noncurrent_version_expiration_days=dict(type='int'),
+        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
+        noncurrent_version_transition_days=dict(type='int'),
+        noncurrent_version_transitions=dict(type='list'),
+        prefix=dict(),
+        requester_pays=dict(default='no', type='bool'),
+        rule_id=dict(),
+        state=dict(default='present', choices=['present', 'absent']),
+        status=dict(default='enabled', choices=['enabled', 'disabled']),
+        storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
+        transition_days=dict(type='int'),
+        transition_date=dict(),
+        transitions=dict(type='list'),
+        purge_transitions=dict(default='yes', type='bool')
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=[
-                               ['expiration_days', 'expiration_date'],
-                               ['expiration_days', 'transition_date'],
-                               ['transition_days', 'transition_date'],
-                               ['transition_days', 'expiration_date']
-                           ]
-                           )
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              mutually_exclusive=[
+                                  ['expiration_days', 'expiration_date'],
+                                  ['expiration_days', 'transition_date'],
+                                  ['transition_days', 'transition_date'],
+                                  ['transition_days', 'expiration_date'],
+                                  ['transition_days', 'transitions'],
+                                  ['transition_date', 'transitions'],
+                                  ['noncurrent_version_transition_days', 'noncurrent_version_transitions'],
+                              ],)
 
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
-    if region in ('us-east-1', '', None):
-        # S3ism for the US Standard region
-        location = Location.DEFAULT
-    else:
-        # Boto uses symbolic names for locations but region strings will
-        # actually work fine for everything except us-east-1 (US Standard)
-        location = region
-    try:
-        connection = boto.s3.connect_to_region(location, is_secure=True, calling_format=OrdinaryCallingFormat(), **aws_connect_params)
-        # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
-        if connection is None:
-            connection = boto.connect_s3(**aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-        module.fail_json(msg=str(e))
+    client = module.client('s3')
 
     expiration_date = module.params.get("expiration_date")
     transition_date = module.params.get("transition_date")
     state = module.params.get("state")
-    storage_class = module.params.get("storage_class")
 
+    if state == 'present' and module.params["status"] == "enabled":  # allow deleting/disabling a rule by id/prefix
+
+        required_when_present = ('expiration_date', 'expiration_days', 'transition_date',
+                                 'transition_days', 'transitions', 'noncurrent_version_expiration_days',
+                                 'noncurrent_version_transition_days',
+                                 'noncurrent_version_transitions')
+        for param in required_when_present:
+            if module.params.get(param):
+                break
+        else:
+            msg = "one of the following is required when 'state' is 'present': %s" % ', '.join(required_when_present)
+            module.fail_json(msg=msg)
     # If expiration_date set, check string is valid
     if expiration_date is not None:
         try:
@@ -414,14 +488,10 @@ def main():
         except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
-    boto_required_version = (2, 40, 0)
-    if storage_class == 'standard_ia' and tuple(map(int, (boto.__version__.split(".")))) < boto_required_version:
-        module.fail_json(msg="'standard_ia' class requires boto >= 2.40.0")
-
     if state == 'present':
-        create_lifecycle_rule(connection, module)
+        create_lifecycle_rule(client, module)
     elif state == 'absent':
-        destroy_lifecycle_rule(connection, module)
+        destroy_lifecycle_rule(client, module)
 
 
 if __name__ == '__main__':
