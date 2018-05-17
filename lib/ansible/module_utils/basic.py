@@ -2532,17 +2532,16 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
                                exception=traceback.format_exc())
             else:
-                b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
-                native_dest_dir = b_dest_dir
-                native_suffix = os.path.basename(b_dest)
-                native_prefix = b('.ansible_tmp')
+                b_dest_dir = os.path.dirname(b_dest)
+                b_suffix = os.path.basename(b_dest)
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
+                                                                  dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:
