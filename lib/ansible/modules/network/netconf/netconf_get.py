@@ -205,7 +205,7 @@ def main():
 
     execute_lock = True if lock in ('always', 'if-supported') else False
 
-    if execute_lock and not operations.get('supports_lock', False):
+    if lock == 'always' and not operations.get('supports_lock', False):
         module.fail_json(msg='lock operation is not supported on this device')
 
     if execute_lock:
@@ -213,15 +213,15 @@ def main():
             # if source is None, in that case operation is 'get' and `get` supports
             # fetching data only from running datastore
             if 'running' not in operations.get('lock_datastore', []):
-                # lock is not supported, set execute lock to false is disable lock
+                # lock is not supported, don't execute lock operation
                 if lock == 'if-supported':
                     execute_lock = False
                 else:
                     module.warn("lock operation on 'running' source is not supported on this device")
         else:
             if source not in operations.get('lock_datastore', []):
-                # lock is not supported, set execute lock to false is disable lock
                 if lock == 'if-supported':
+                    # lock is not supported, don't execute lock operation
                     execute_lock = False
                 else:
                     module.warn("lock operation on '%s' source is not supported on this device" % source)
