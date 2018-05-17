@@ -1,0 +1,2 @@
+bugfixes:
+  - known_hosts - add better checking and error reporting to the host field (https://github.com/ansible/ansible/pull/38307)
