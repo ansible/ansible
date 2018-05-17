@@ -60,10 +60,6 @@ class ConnectionBase(AnsiblePlugin):
     supports_persistence = False
     force_persistence = False
 
-    # Some connections execute on the controller instead of the remote host.
-    # This option indicates that paths should not be updated to use the remote user.
-    remote_is_local = False
-
     default_user = None
 
     def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
