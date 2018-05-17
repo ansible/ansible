@@ -275,12 +275,17 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
+                        vars_factory = self.get_vars_factory(iterator._play, host=host, task=task)
+                        templar = Templar(loader=self._loader)
                         display.debug("done getting variables")
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = getattr(action, 'BYPASS_HOST_LOOP', False)
+                        if task.run_once and not run_once:
+                            if templar.is_template_uncached(task.run_once):
+                                templar.set_available_variables(vars_factory())
+                                run_once = templar.template(task.run_once)
+                            else:
+                                run_once = task.run_once
 
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
@@ -288,14 +293,16 @@ class StrategyModule(StrategyBase):
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
                             saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
+                            if templar.is_template_uncached(task.name):
+                                display.debug("done copying, going to template now")
+                                templar.set_available_variables(vars_factory())
+                                try:
+                                    task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                                    display.debug("done templating")
+                                except:
+                                    # just ignore any errors during task name templating,
+                                    # we don't care if it just shows the raw name
+                                    display.debug("templating failed for some reason")
                             display.debug("here goes the callback...")
                             self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name
@@ -303,8 +310,8 @@ class StrategyModule(StrategyBase):
                             display.debug("sending task start callback")
 
                         self._blocked_hosts[host.get_name()] = True
-                        self._queue_task(host, task, task_vars, play_context)
-                        del task_vars
+                        self._queue_task(host, task, vars_factory, play_context)
+                        del vars_factory
 
                     # if we're bypassing the host loop, break out now
                     if run_once:

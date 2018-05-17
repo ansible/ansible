@@ -115,25 +115,31 @@ class StrategyModule(StrategyBase):
                             action = None
 
                         display.debug("getting variables", host=host_name)
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
+                        vars_factory = self.get_vars_factory(iterator._play, host=host, task=task)
+                        templar = Templar(loader=self._loader)
                         display.debug("done getting variables", host=host_name)
 
-                        try:
-                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                            display.debug("done templating", host=host_name)
-                        except:
-                            # just ignore any errors during task name templating,
-                            # we don't care if it just shows the raw name
-                            display.debug("templating failed for some reason", host=host_name)
+                        if templar.is_template_uncached(task.name):
+                            try:
+                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                                display.debug("done templating", host=host_name)
+                            except:
+                                # just ignore any errors during task name templating,
+                                # we don't care if it just shows the raw name
+                                display.debug("templating failed for some reason", host=host_name)
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
-                        if run_once:
-                            if action and getattr(action, 'BYPASS_HOST_LOOP', False):
-                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
-                                                   "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
+                        if getattr(action, 'BYPASS_HOST_LOOP', False):
+                            raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
+                                               "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
+
+                        if task.run_once:
+                            if templar.is_template_uncached(task.run_once):
+                                templar.set_available_variables(vars_factory())
+                                run_once = templar.template(task.run_once)
                             else:
+                                run_once = task.run_once
+
+                            if run_once:
                                 display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
                                                 "executed for every host in the inventory list.")
 
@@ -157,8 +163,8 @@ class StrategyModule(StrategyBase):
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                                self._queue_task(host, task, task_vars, play_context)
-                                del task_vars
+                                self._queue_task(host, task, vars_factory, play_context)
+                                del vars_factory
                     else:
                         display.debug("%s is blocked, skipping for now" % host_name)
 

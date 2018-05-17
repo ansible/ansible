@@ -213,13 +213,13 @@ class TestStrategyBase(unittest.TestCase):
 
         try:
             strategy_base = StrategyBase(tqm=tqm)
-            strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
+            strategy_base._queue_task(host=mock_host, task=mock_task, vars_factory=(lambda: {}), play_context=MagicMock())
             self.assertEqual(strategy_base._cur_worker, 1)
             self.assertEqual(strategy_base._pending_results, 1)
-            strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
+            strategy_base._queue_task(host=mock_host, task=mock_task, vars_factory=(lambda: {}), play_context=MagicMock())
             self.assertEqual(strategy_base._cur_worker, 2)
             self.assertEqual(strategy_base._pending_results, 2)
-            strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
+            strategy_base._queue_task(host=mock_host, task=mock_task, vars_factory=(lambda: {}), play_context=MagicMock())
             self.assertEqual(strategy_base._cur_worker, 0)
             self.assertEqual(strategy_base._pending_results, 3)
         finally:
@@ -344,7 +344,7 @@ class TestStrategyBase(unittest.TestCase):
             (mock_host.name, mock_task._uuid): {
                 'task': mock_task,
                 'host': mock_host,
-                'task_vars': {},
+                'vars_factory': (lambda: {}),
                 'play_context': {},
             }
         }
@@ -564,7 +564,7 @@ class TestStrategyBase(unittest.TestCase):
             strategy_base._queued_task_cache[(mock_host.name, mock_handler_task._uuid)] = {
                 'task': mock_handler_task,
                 'host': mock_host,
-                'task_vars': {},
+                'vars_factory': (lambda: {}),
                 'play_context': mock_play_context
             }
             tqm._final_q.put(task_result)

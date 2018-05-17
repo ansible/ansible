@@ -121,7 +121,7 @@ def debug_closure(func):
             task = result._task
             host = result._host
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
-            task_vars = _queued_task_args['task_vars']
+            vars_factory = _queued_task_args['vars_factory']
             play_context = _queued_task_args['play_context']
             # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
             try:
@@ -131,7 +131,7 @@ def debug_closure(func):
 
             while result.needs_debugger(globally_enabled=self.debugger_active):
                 next_action = NextAction()
-                dbg = Debugger(task, host, task_vars, play_context, result, next_action)
+                dbg = Debugger(task, host, vars_factory(), play_context, result, next_action)
                 dbg.cmdloop()
 
                 if next_action.result == NextAction.REDO:
@@ -144,7 +144,7 @@ def debug_closure(func):
                     self._tqm._stats.decrement('ok', host.name)
 
                     # redo
-                    self._queue_task(host, task, task_vars, play_context)
+                    self._queue_task(host, task, vars_factory, play_context)
 
                     _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
                     break
@@ -264,15 +264,40 @@ class StrategyBase:
     def get_failed_hosts(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
 
-    def add_tqm_variables(self, vars, play):
+    def get_vars_factory(self, play, **kwargs):
         '''
-        Base class method to add extra variables/information to the list of task
-        vars sent through the executor engine regarding the task queue manager state.
-        '''
-        vars['ansible_current_hosts'] = [h.name for h in self.get_hosts_remaining(play)]
-        vars['ansible_failed_hosts'] = [h.name for h in self.get_failed_hosts(play)]
+        Return a factory that generates task variables on first invocation, and
+        caches the result for subsequent invocations. This allows delaying
+        an exensive get_vars() call hopefully until its first use occurs within
+        a Worker, rather than in the top-level process.
 
-    def _queue_task(self, host, task, task_vars, play_context):
+        :param ansible.playbook.play.Play play:
+            Associated play.
+        :returns:
+            Factory callable as `factory()`, returning a task variables dict.
+        '''
+        box = [None]
+
+        def closure():
+            if not box[0]:
+                task_vars = self._variable_manager.get_vars(play=play, **kwargs)
+                task_vars.update(self.get_tqm_variables(play))
+                box[0] = task_vars
+            return box[0]
+
+        return closure
+
+    def get_tqm_variables(self, play):
+        '''
+        Return extra variables/information to the list of task vars sent
+        through the executor engine regarding the task queue manager state.
+        '''
+        return {
+            'ansible_current_hosts': [h.name for h in self.get_hosts_remaining(play)],
+            'ansible_failed_hosts': [h.name for h in self.get_failed_hosts(play)]
+        }
+
+    def _queue_task(self, host, task, vars_factory, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
@@ -307,11 +332,11 @@ class StrategyBase:
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
                         'task': task,
-                        'task_vars': task_vars,
+                        'vars_factory': vars_factory,
                         'play_context': play_context
                     }
 
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
+                    worker_prc = WorkerProcess(self._final_q, vars_factory, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
@@ -864,9 +889,8 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
-                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
-                self.add_tqm_variables(task_vars, play=iterator._play)
-                self._queue_task(host, handler, task_vars, play_context)
+                vars_factory = self.get_vars_factory(iterator._play, host=host, task=handler)
+                self._queue_task(host, handler, vars_factory, play_context)
                 if run_once:
                     break
 
