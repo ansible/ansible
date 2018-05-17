@@ -34,8 +34,9 @@ class OpenNebulaCloudProvider(CloudProvider):
 
         config = self._read_config_template()
         values = dict(
-            ENDPOINT="http://localhost/RPC2",
-            SESSION='oneadmin:onepass',
+            URL="http://localhost/RPC2",
+            USERNAME='oneadmin',
+            PASSWORD='onepass',
             FIXTURES='true',
             REPLAY='true',
         )
