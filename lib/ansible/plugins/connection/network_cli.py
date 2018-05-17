@@ -188,6 +188,7 @@ class Connection(ConnectionBase):
     transport = 'network_cli'
     has_pipelining = True
     force_persistence = True
+    # Do not use _remote_is_local in other connections
     _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
