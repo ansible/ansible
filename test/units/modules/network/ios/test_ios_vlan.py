@@ -59,13 +59,13 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(vlan_id=2, name='test', state='present'))
         result = parse_vlan_brief(load_fixture('ios_vlan_config.cfg'))
         obj = [{'name': 'default',
-                'ports': ['GigabitEthernet1/0/4',
+                'interfaces': ['GigabitEthernet1/0/4',
                         'GigabitEthernet1/0/5',
                         'GigabitEthernet1/0/52'],
-                'status': 'active',
-                'vlan': '1'},
+                'state': 'active',
+                'vlan_id': '1'},
                 {'name': 'fddi-default',
-                 'ports': [],
-                 'status': 'act/unsup',
-                 'vlan': '1002'}]
+                 'interfaces': [],
+                 'state': 'act/unsup',
+                 'vlan_id': '1002'}]
         self.assertEqual(result, obj)
