@@ -67,6 +67,11 @@ EXAMPLES = """
     name: ethernet1
     ipv6: "fd5d:12c9:2201:1::1/64"
 
+- name: Set interface Vlan1 (SVI) IPv4 address
+  eos_l3_interface:
+    name: Vlan1
+    ipv4: 192.168.0.5/24
+
 - name: Set IP addresses on aggregate
   eos_l3_interface:
     aggregate:
