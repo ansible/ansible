@@ -880,7 +880,6 @@ lib/ansible/modules/network/cnos/cnos_backup.py E322
 lib/ansible/modules/network/cnos/cnos_backup.py E323
 lib/ansible/modules/network/cnos/cnos_backup.py E326
 lib/ansible/modules/network/cnos/cnos_bgp.py E326
-lib/ansible/modules/network/cnos/cnos_command.py E326
 lib/ansible/modules/network/cnos/cnos_conditional_command.py E326
 lib/ansible/modules/network/cnos/cnos_conditional_template.py E326
 lib/ansible/modules/network/cnos/cnos_factory.py E326
