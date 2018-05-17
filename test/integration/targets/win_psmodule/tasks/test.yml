@@ -152,7 +152,7 @@
 - name: Validate sample module in custom repo
   assert:
     that:
-      - "saved_package.output == '{{powershell_module}}'"
+      - "saved_package.stdout == '{{powershell_module}}'"
 
 - name: Install module from custom Powershell repository
   win_psmodule:
@@ -175,4 +175,4 @@
 - name: Validate sample module is installed from custom repo
   assert:
     that:
-      - "is_package_customrepo.output == '{{custom_repo_name}}'"
+      - "is_package_customrepo.stdout == '{{custom_repo_name}}'"
