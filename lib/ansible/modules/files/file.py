@@ -191,11 +191,11 @@ def additional_parameter_handling(params):
     if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
         basename = None
 
-        # original_basename is used by other modules that depend on file
-        if params['original_basename']:
-            basename = params['original_basename']
-        elif params['src'] is not None:
-            basename = os.path.basename(params['src'])
+        # _original_basename is used by other modules that depend on file
+        if params['_original_basename']:
+            basename = params['_original_basename']
+        #elif params['src'] is not None:
+        #    basename = os.path.basename(params['src'])
 
         if basename:
             params['path'] = params['path'] = os.path.join(params['path'], basename)
@@ -513,18 +513,18 @@ def ensure_symlink(path, src, follow, force):
     elif prev_state == 'hard':
         changed = True
         if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
                                               'dest': path, 'src': src})
     elif prev_state == 'file':
         changed = True
         if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link, %s exists at destination' % prev_state,
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
                                               'dest': path, 'src': src})
     elif prev_state == 'directory':
         changed = True
         if os.path.exists(b_path):
             if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
+                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
                                                   'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
@@ -575,27 +575,35 @@ def ensure_hardlink(path, src, follow, force):
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
 
-    # source is both the source of a symlink or an informational passing of the src for a template module
-    # or copy module, even if this module never uses it, it is needed to key off some things
-    if src is None:
-        # Note: Bug: if hard link exists, we shouldn't need to check this
-        raise AnsibleModuleError(results={'msg': 'src and dest are required for creating hardlinks'})
+    # src is the source of a hardlink.  We require it if we are creating a new hardlink
+    if src is None and not os.path.exists(b_path):
+        raise AnsibleModuleError(results={'msg': 'src and dest are required for creating new hardlinks'})
 
+    # Toshio: Begin suspect block
+    # I believe that this block of code is wrong for hardlinks.
+    # src may be relative.
+    # If it is relative, it should be relative to the cwd (so just use abspath).
+    # This is different from symlinks where src is relative to the symlink's path.
+
+    # Why must src be an absolute path?
     if not os.path.isabs(b_src):
-        raise AnsibleModuleError(results={'msg': "absolute paths are required"})
+        raise AnsibleModuleError(results={'msg': "src must be an absolute path"})
 
+    # If this is a link, then it can't be a dir so why is it in the conditional?
     if not os.path.islink(b_path) and os.path.isdir(b_path):
         relpath = path
     else:
         b_relpath = os.path.dirname(b_path)
         relpath = to_native(b_relpath, errors='strict')
 
+    # Why? This does nothing because src was checked to be absolute above?
     absrc = os.path.join(relpath, src)
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
     if not force and not os.path.exists(b_absrc):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
+    # Toshio: end suspect block
 
     diff = initial_diff(path, 'hard', prev_state)
     changed = False
@@ -676,7 +684,7 @@ def main():
         argument_spec=dict(
             state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
-            original_basename=dict(required=False),  # Internal use only, for recursive ops
+            _original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),  # Note: Should not be in file_common_args in future
             follow=dict(required=False, default=True, type='bool'),  # Note: Different default than file_common_args
