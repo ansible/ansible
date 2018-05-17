@@ -8,6 +8,7 @@
     lines: no ip access-list test
     provider: "{{ connection }}"
     match: none
+  ignore_errors: yes
 
 - name: configure sub level command using block replace
   nxos_config:
