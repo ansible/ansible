@@ -51,6 +51,7 @@ options:
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
+    type: int
     default: 10
   aggregate:
     description: List of VLANs definitions.
