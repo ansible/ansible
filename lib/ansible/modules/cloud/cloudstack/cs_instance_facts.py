@@ -225,11 +225,12 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id'),
                 'projectid': self.get_project(key='id'),
                 'virtualmachineid': instance['id'],
+                'fetch_list': True,
             }
 
             volumes = self.query_api('listVolumes', **args)
             if volumes:
-                for vol in volumes['volume']:
+                for vol in volumes:
                     volume_details.append({'size': vol['size'], 'type': vol['type'], 'name': vol['name']})
         return volume_details
 

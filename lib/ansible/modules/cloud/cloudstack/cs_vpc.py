@@ -222,11 +222,12 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
         vpcs = self.query_api('listVPCs', **args)
         if vpcs:
             vpc_name = self.module.params.get('name')
-            for v in vpcs['vpc']:
+            for v in vpcs:
                 if vpc_name in [v['name'], v['displaytext'], v['id']]:
                     # Fail if the identifyer matches more than one VPC
                     if self.vpc:
