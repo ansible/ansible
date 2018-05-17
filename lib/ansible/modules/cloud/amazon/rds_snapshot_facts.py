@@ -25,11 +25,13 @@ options:
       - snapshot_name
   db_instance_identifier:
     description:
-      - RDS instance name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_cluster_identifier), I(db_cluster_snapshot_identifier)
+      - RDS instance name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_cluster_identifier),
+        I(db_cluster_snapshot_identifier)
     required: false
   db_cluster_identifier:
     description:
-      - RDS cluster name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_instance_identifier), I(db_cluster_snapshot_identifier)
+      - RDS cluster name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_instance_identifier),
+        I(db_cluster_snapshot_identifier)
     required: false
   db_cluster_snapshot_identifier:
     description:
