@@ -309,7 +309,7 @@ def main():
         argument_spec=dict(
             login_user=dict(type='str'),
             login_password=dict(type='str', no_log=True),
-            login_host=dict(type='str', default='localhost'),
+            login_host=dict(type='str', default=None),
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
             name=dict(type='list', required=True, aliases=['db']),

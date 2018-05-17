@@ -65,8 +65,10 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
 
     cp = _parse_from_mysql_config_file(config_file)
     if cp and cp.has_section('client'):
-        module.params['login_unix_socket'] = cp.get('client', 'socket', fallback=module.params['login_unix_socket'])
-        module.params['login_host'] = cp.get('client', 'host', fallback=module.params['login_host'])
+        if module.params['login_unix_socket'] is None:
+            module.params['login_unix_socket'] = cp.get('client', 'socket', fallback=module.params['login_unix_socket'])
+        if module.params['login_host'] is None:
+            module.params['login_host'] = cp.get('client', 'host', fallback='localhost')
         module.params['login_port'] = cp.getint('client', 'port', fallback=module.params['login_port'])
 
     if module.params['login_unix_socket']:
