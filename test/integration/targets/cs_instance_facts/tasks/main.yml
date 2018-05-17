@@ -48,6 +48,13 @@
     that:
     - instance_facts is successful
     - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
     - cloudstack_instance.id == instance.id
     - cloudstack_instance.domain == instance.domain
     - cloudstack_instance.account == instance.account
@@ -64,6 +71,13 @@
     that:
     - instance_facts is successful
     - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
     - cloudstack_instance.id == instance.id
     - cloudstack_instance.domain == instance.domain
     - cloudstack_instance.account == instance.account
