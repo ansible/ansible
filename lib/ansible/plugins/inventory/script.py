@@ -30,13 +30,13 @@ DOCUMENTATION = '''
         env:
            - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR
     description:
-        - The source provided must an executable that returns Ansible inventory JSON
+        - The source provided must be an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
         - It takes the place of the previously hardcoded script inventory.
-        - To function it requires being whitelisted in configuration, which is true by default.
+        - In order to function, it requires being whitelisted in configuration, which is true by default.
 '''
 
 import os
