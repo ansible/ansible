@@ -55,8 +55,8 @@ Connection work
 Modules
 =======
 
-* New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
-* New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
+* New ``net_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
+* New ``net_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
 
 Other Features
 ================
