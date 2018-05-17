@@ -1331,10 +1331,8 @@ class Container(DockerBaseClass):
                 )
                 differences.append(item)
 
-
         has_differences = True if len(differences) > 0 else False
         return has_differences, differences
-
 
     def _compare_dictionary_lists(self, list_a, list_b):
         '''
