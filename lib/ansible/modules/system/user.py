@@ -1459,11 +1459,23 @@ class SunOS(User):
                         fields[1] = self.password
                         fields[2] = str(int(time.time() // 86400))
                         if minweeks:
-                            fields[3] = str(int(minweeks) * 7)
+                            try:
+                                fields[3] = str(int(minweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         if maxweeks:
-                            fields[4] = str(int(maxweeks) * 7)
+                            try:
+                                fields[4] = str(int(maxweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         if warnweeks:
-                            fields[5] = str(int(warnweeks) * 7)
+                            try:
+                                fields[5] = str(int(warnweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
