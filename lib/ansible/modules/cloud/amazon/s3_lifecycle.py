@@ -105,7 +105,7 @@ options:
   transitions:
     description:
       - A list of transition behaviors to be applied to the rule. Each storage class may be used only once. Each transition
-        behavior contains these elements
+        behavior may contain these elements
           I(transition_days)
           I(transition_date)
           I(storage_class)
@@ -452,7 +452,10 @@ def main():
                                   ['transition_days', 'transitions'],
                                   ['transition_date', 'transitions'],
                                   ['noncurrent_version_transition_days', 'noncurrent_version_transitions'],
-                              ]
+                              ],
+                              required_one_of=['expiration_date', 'expiration_days', 'transition_date',
+                                               'transition_days', 'transitions', 'noncurrent_version_transition_days',
+                                               'noncurrent_version_transitions']
                               )
 
     if not HAS_DATEUTIL:

@@ -412,7 +412,7 @@
         <<: *aws_connection_info
         status: enabled
 
-    # Configure a lifecycle rule to tranision files to infrequent access after 30 days and glacier after 90
+    # Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
     - s3_lifecycle:
         name: "{{ resource_prefix }}-testbucket-ansible"
         prefix: /other_logs/
