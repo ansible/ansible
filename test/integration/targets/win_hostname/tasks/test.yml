@@ -1,0 +1,56 @@
+---
+- name: fail to set hostname to an invalid name
+  win_hostname:
+    name: invalid/name
+  register: fail_hostname
+  failed_when: '"Failed to rename computer to ''invalid/name''" not in fail_hostname.msg'
+
+- name: change the hostname (check)
+  win_hostname:
+    name: '{{test_win_hostname_name}}'
+  register: change_hostname_check
+  check_mode: yes
+
+- name: get actual hostname
+  win_shell: $env:COMPUTERNAME
+  register: change_hostname_actual_check
+
+- name: assert change the hostname (check)
+  assert:
+    that:
+    - change_hostname_check is changed
+    - change_hostname_check.old_name|upper != test_win_hostname_name|upper
+    - change_hostname_check.reboot_required
+    - change_hostname_actual_check.stdout_lines[0]|upper != test_win_hostname_name|upper
+
+- name: change the hostname
+  win_hostname:
+    name: '{{test_win_hostname_name}}'
+  register: change_hostname
+
+- name: reboot after changing the hostname
+  win_reboot:
+
+- name: get actual hostname
+  win_shell: $env:COMPUTERNAME
+  register: change_hostname_actual
+
+- name: assert change the hostname
+  assert:
+    that:
+    - change_hostname is changed
+    - change_hostname.old_name|upper == change_hostname_check.old_name|upper
+    - change_hostname.reboot_required
+    - change_hostname_actual.stdout_lines[0]|upper == test_win_hostname_name|upper
+
+- name: change the hostname (idempotent)
+  win_hostname:
+    name: '{{test_win_hostname_name}}'
+  register: change_hostname_again
+
+- name: assert change the hostname (idempotent)
+  assert:
+    that:
+    - not change_hostname_again is changed
+    - change_hostname_again.old_name|upper == test_win_hostname_name|upper
+    - not change_hostname_again.reboot_required
