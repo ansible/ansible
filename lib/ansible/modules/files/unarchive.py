@@ -26,6 +26,7 @@ description:
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
      - For Windows targets, use the M(win_unzip) module instead.
+     - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
 options:
   src:
     description:
