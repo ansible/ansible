@@ -157,6 +157,16 @@ options:
       - Use trends or not for zabbix datasource type
     type: bool
     version_added: 2.6
+  client_cert:
+    required: false
+    description:
+      - TLS certificate path used by ansible to query grafana api
+    version_added: 2.6
+  client_key:
+    required: false
+    description:
+      - TLS private key path used by ansible to query grafana api
+    version_added: 2.6
   validate_certs:
     description:
       - Whether to validate the Grafana certificate.
@@ -503,6 +513,8 @@ def main():
             tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
             sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
             trends=dict(default=False, type='bool'),
+            client_cert=dict(type='path'),
+            client_key=dict(type='path'),
             validate_certs=dict(type='bool', default=True)
         ),
         supports_check_mode=False,
