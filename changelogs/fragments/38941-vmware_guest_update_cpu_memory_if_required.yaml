@@ -1,2 +1,2 @@
 bugfixes:
-- Do not update cpu/memory allocation in configspec if there is no change.
+- vmware_guest - Do not update cpu/memory allocation in configspec if there is no change (https://github.com/ansible/ansible/pull/39865)

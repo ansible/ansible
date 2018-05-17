@@ -1,2 +1,2 @@
 bugfixes:
-- Fix vdirect_file module to correctly deal with invalid upload source https://github.com/ansible/ansible/pull/37461
+- vdirect_file - deal with invalid upload source (https://github.com/ansible/ansible/pull/37461)

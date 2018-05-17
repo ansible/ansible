@@ -2,8 +2,156 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.3:
+
+v2.5.3
+======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.3_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-05-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.3_Bugfixes:
+
+Bugfixes
+--------
+
+- openstack.os_stack - extend failure message with the server response (https://github.com/ansible/ansible/pull/39660).
+
+- vmware_guest - typecast VLAN ID to match various conditions. (https://github.com/ansible/ansible/pull/39793)
+
+- vmware_guest - Do not update cpu/memory allocation in configspec if there is no change (https://github.com/ansible/ansible/pull/39865)
+
+- Fix unset 'ansible_virtualization_role' fact while setting virtualization facts for real hardware.
+
+- loop_control - update template vars for loop_control fields on each loop iteration (https://github.com/ansible/ansible/pull/39818).
+
+- template - Fix for encoding issues when a template path contains non-ascii characters and using the template path in ansible_managed (https://github.com/ansible/ansible/issues/27262)
+
+- apt - Auto install of python-apt without recommends (https://github.com/ansible/ansible/pull/37121)
+
+- apt - Mark installed packages manual (https://github.com/ansible/ansible/pull/37751)
+
+- async - Ensure that the implicit async_status gets the env from a task with async (https://github.com/ansible/ansible/pull/39764)
+
+- Fallback to instance role STS credentials if none are explicitly provided for the aws_ec2 inventory plugin
+
+- Support tag values as hostnames in aws_ec2 inventory plugin
+
+- Fix regression in aws_s3 to allow uploading files on the remote host to an S3 bucket
+
+- ec2_vpc_route_table - fix regression by skipping routes without DestinationCidrBlock (https://github.com/ansible/ansible/pull/37010)
+
+- Use custom waiters
+
+- Add integration tests for check mode
+
+- Fix non-monotonic AWS behavior by waiting until attributes are the correct value before returning the subnet
+
+- Don't use custom waiter configs for older versions of botocore
+
+- Fix an encoding issue when parsing the examples from a plugins' documentation
+
+- Fix misuse of self in module_utils/network/eos/eos.py (https://github.com/ansible/ansible/pull/39074)
+
+- eos_vlan - Fix eos_vlan associated interface name check (https://github.com/ansible/ansible/pull/39661)
+
+- file module - Fix error when running a task which assures a symlink to a nonexistent file exists for the second and subsequent times (https://github.com/ansible/ansible/issues/39558)
+
+- file module - Fix error when recursively assigning permissions and a symlink to a nonexistent file is present in the directory tree (https://github.com/ansible/ansible/issues/39456)
+
+- file - Eliminate an error if we're asked to remove a file but something removes it while we are processing the request (https://github.com/ansible/ansible/pull/39466)
+
+- Fix interfaces_file to support `allow-` https://github.com/ansible/ansible/pull/37847
+
+- ios cliconf plugin fix regex for version (https://github.com/ansible/ansible/pull/40066)
+
+- ios_config - If defaults is enabled append default flag to command (https://github.com/ansible/ansible/pull/39741)
+
+- ios_config - Fix ios get_config to fetch config without defaults (https://github.com/ansible/ansible/pull/39475)
+
+- ios_iosxr_terminal - fixed issue with ios and iosxr terminal prompt regex
+
+- iosxr_config - handle configuration block with mis-indented sublevel command (https://github.com/ansible/ansible/pull/39673)
+
+- iosxr_* modules do not work with iosxr version >= 6.3.2 as cisco has deprecated 'show version brief'
+
+- Fix junos_config confirm timeout issue (https://github.com/ansible/ansible/pull/40238)
+
+- Fix nested noop block padding in dynamic includes (https://github.com/ansible/ansible/pull/38814)
+
+- nio_lookup_error - fixed nios lookup errors out when there are no results
+
+- nxos_feature - Handle nxos_feature issue where json isn't supported (https://github.com/ansible/ansible/pull/39150)
+
+- nxos_ntp - Fix nxos_ntp issues (https://github.com/ansible/ansible/pull/39178)
+
+- nxos_interface - Fix AttributeError NoneType object has no attribute group (https://github.com/ansible/ansible/pull/38544)
+
+- nxos_snmp_community - Fix nxos_snmp_community issues (https://github.com/ansible/ansible/pull/39258)
+
+- nxos_l2_interface - Add aggregate example in nxos_l2_interface module doc (https://github.com/ansible/ansible/pull/39275)
+
+- nxos_snmp_host - Fix for nxos_snmp_host issues (https://github.com/ansible/ansible/pull/39642)
+
+- nxos_snmp_traps - Fix nxos_snmp_traps issues (https://github.com/ansible/ansible/pull/39444)
+
+- nxos_linkagg - nxos_linkagg abbreviated form issue (https://github.com/ansible/ansible/pull/39591)
+
+- nxos_snmp_user - Fix nxos_snmp_user (https://github.com/ansible/ansible/pull/39760)
+
+- nxos_logging - remove purge from nxos_logging doc, argspec (https://github.com/ansible/ansible/pull/39947)
+
+- nxos_ping - Fix nxos_ping issues (https://github.com/ansible/ansible/pull/40028)
+
+- nxos_vxlan_vtep_vni - Fix nxos_vxlan_vtep_vni test (https://github.com/ansible/ansible/pull/39968)
+
+- nxos_snapshot - Fix logic for save_snapshot_locally (https://github.com/ansible/ansible/pull/40227)
+
+- Fix nxos terminal plugin regex (https://github.com/ansible/ansible/pull/39659)
+
+- template action plugin - fix the encoding of filenames to avoid tracebacks on Python2 when characters that are not present in the user's locale are present. (https://github.com/ansible/ansible/pull/39424)
+
+- ufw - "route" has to be the first option in ufw command https://github.com/ansible/ansible/pull/31756
+
+- user - only change the expiration time when necessary (https://github.com/ansible/ansible/issues/13235)
+
+- firewalld - fixed fw_offline undefined error (https://github.com/ansible/ansible/pull/39394)
+
+- ansible-connection - properly unlock the socket file lock (https://github.com/ansible/ansible/pull/39223)
+
+- apt - added --no-install-recommends to PYTHON_APT dep installation (https://github.com/ansible/ansible/pull/39409)
+
+- ec2_vpc_route_table - updated matching_count parsing (https://github.com/ansible/ansible/pull/39899)
+
+- ovirt - fixed quota_id check (https://github.com/ansible/ansible/pull/40081)
+
+- vdirect_file - deal with invalid upload source (https://github.com/ansible/ansible/pull/37461)
+
+- win_file - fix issue where special chars like [ and ] were not being handled correctly https://github.com/ansible/ansible/pull/37901
+
+- win_get_url - fixed a few bugs around authentication and force no when using an FTP URL
+
+- win_template - fix when specifying the dest option as a directory with and without the trailing slash https://github.com/ansible/ansible/issues/39886
+
+- win_updates - Fix typo that hid the download error when a download failed
+
+- win_updates - Fix logic when using a whitelist for multiple updates
+
+- windows become - Show better error messages when the become process fails
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.2:
+
 v2.5.2
 ======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.2_Release Summary:
 
 Release Summary
 ---------------
@@ -12,11 +160,15 @@ Release Summary
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.2_Minor Changes:
+
 Minor Changes
 -------------
 
 - Return virtual_facts after VMware platform detection, otherwise we're falling back to 'NA' for virtualization type and virtualization role.
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.2_Bugfixes:
 
 Bugfixes
 --------
@@ -52,8 +204,12 @@ Bugfixes
 - win_get_url - Compare the UTC time of the web file to the local UTC time (https://github.com/ansible/ansible/pull/39152)
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.1:
+
 v2.5.1
 ======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.1_Release Summary:
 
 Release Summary
 ---------------
@@ -62,6 +218,8 @@ Release Summary
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.1_Minor Changes:
+
 Minor Changes
 -------------
 
@@ -69,6 +227,8 @@ Minor Changes
 
 - Updated virtual machine facts with instanceUUID which is unique for each VM irrespective of name and BIOS UUID.
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.1_Bugfixes:
 
 Bugfixes
 --------
@@ -89,7 +249,7 @@ Bugfixes
 
 - azure_rm_image - Allow Azure images to be created with tags, bug was introduced in Ansible v2.5.0
 
-- azure_rm_networkinterface - fixed examples in module documentation and added fix to allow an IP configuration with no public IP (https://github.com/ansible/ansible/pull/36824)
+- azure_rm_networkinterface - Network interface can attach an existing NSG or create a new NSG with specified name in Ansible v2.5.0.
 
 - azure_rm_virtualmachine - removed docs note that says on marketplace images can be used, custom images were added in 2.5
 
@@ -118,6 +278,8 @@ Bugfixes
 - ios_interface - neighbors option now include CDP neighbors (https://github.com/ansible/ansible/pull/37667)
 
 - ios_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37389)
+
+- ios_l2_interface - use show run instead of section pipeline ios_l2_interface (https://github.com/ansible/ansible/pull/39658)
 
 - Add supported connection in junos module documentation (https://github.com/ansible/ansible/pull/38813)
 
@@ -165,7 +327,7 @@ Bugfixes
 
 - Fix onyx_config action plugin when used on Python 3 https://github.com/ansible/ansible/pull/38343
 
-- openssl_certificate - Handle dump() in check_mode https://github.com/ansible/ansible/pull/38386
+- openssl-certificate - Add space between arguments for acme-tiny (https://github.com/ansible/ansible/pull/36739)
 
 - Fix traceback when creating or stopping ovirt vms (https://github.com/ansible/ansible/pull/37249)
 
@@ -256,14 +418,20 @@ Bugfixes
 - winrm - when managing Kerberos tickets in Ansible, get a forwardable ticket if delegation is set (https://github.com/ansible/ansible/pull/37815)
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0:
+
 v2.5.0
 ======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Release Summary:
 
 Release Summary
 ---------------
 
 | Release Date: 2018-03-22
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Major Changes:
 
 Major Changes
 -------------
@@ -286,6 +454,8 @@ Major Changes
 
 - Added a configuration file that a site administrator can use to specify modules to exclude from being used.
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Minor Changes:
 
 Minor Changes
 -------------
@@ -348,6 +518,8 @@ Minor Changes
 - aci_* modules - improved ACI return values
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Deprecated Features:
+
 Deprecated Features
 -------------------
 
@@ -394,6 +566,8 @@ Deprecated Features
 - vsphere\_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware\_guest module instead.
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Removed Features (previously deprecated):
+
 Removed Features (previously deprecated)
 ----------------------------------------
 
@@ -418,6 +592,8 @@ Removed Features (previously deprecated)
 - panos\_nat\_policy: Use panos\_nat\_rule the old module uses deprecated API calls
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_New Lookup Plugins:
+
 New Lookup Plugins
 ------------------
 
@@ -440,6 +616,8 @@ New Lookup Plugins
 - redis: look up date from Redis DB, deprecates the redis\_kv one.
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_New Callback Plugins:
+
 New Callback Plugins
 --------------------
 
@@ -449,6 +627,8 @@ New Callback Plugins
 
 - yaml
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_New Connection Plugins:
 
 New Connection Plugins
 ----------------------
@@ -464,11 +644,15 @@ New Connection Plugins
      `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`_ for more details.
 
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_New Filter Plugins:
+
 New Filter Plugins
 ------------------
 
 - parse\_xml
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_New Modules:
 
 New Modules
 -----------
@@ -849,6 +1033,8 @@ New Modules
     -  win\_scheduled\_task\_stat
     -  win\_whoami
 
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.0_Bugfixes:
 
 Bugfixes
 --------

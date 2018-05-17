@@ -1,0 +1,6 @@
+bugfixes:
+- firewalld - fixed fw_offline undefined error (https://github.com/ansible/ansible/pull/39394)
+- ansible-connection - properly unlock the socket file lock (https://github.com/ansible/ansible/pull/39223)
+- apt - added --no-install-recommends to PYTHON_APT dep installation (https://github.com/ansible/ansible/pull/39409)
+- ec2_vpc_route_table - updated matching_count parsing (https://github.com/ansible/ansible/pull/39899)
+- ovirt - fixed quota_id check (https://github.com/ansible/ansible/pull/40081)

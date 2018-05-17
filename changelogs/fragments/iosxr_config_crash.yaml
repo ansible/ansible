@@ -1,2 +1,2 @@
 bugfixes:
-- iosxr_config - handle configuration block with mis-indented sublevel command
+- iosxr_config - handle configuration block with mis-indented sublevel command (https://github.com/ansible/ansible/pull/39673)

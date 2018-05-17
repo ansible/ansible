@@ -1,2 +1,2 @@
 bugfixes:
-- Typecast VLAN ID to match various conditions. Explicitly converting to integer/string will make the module works as expected with or without the NativeType support.
+- vmware_guest - typecast VLAN ID to match various conditions. (https://github.com/ansible/ansible/pull/39793)

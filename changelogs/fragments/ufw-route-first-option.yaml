@@ -1,2 +1,2 @@
 bugfixes:
-- Fix ufw module, "route" has to be the first option in ufw command https://github.com/ansible/ansible/pull/31756
+- ufw - "route" has to be the first option in ufw command https://github.com/ansible/ansible/pull/31756
