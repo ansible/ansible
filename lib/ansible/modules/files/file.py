@@ -392,17 +392,20 @@ def ensure_file_attributes(path, follow):
 def ensure_directory(path, follow, recurse):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
+    file_args = module.load_file_common_arguments(module.params)
 
+    # For followed symlinks, we need to operate on the target of the link
     if follow and prev_state == 'link':
         b_path = os.path.realpath(b_path)
         path = to_native(b_path, errors='strict')
+        file_args['path'] = path
         prev_state = get_state(b_path)
 
     changed = False
-    file_args = module.load_file_common_arguments(module.params)
     diff = initial_diff(path, 'directory', prev_state)
 
     if prev_state == 'absent':
+        # Create directory and assign permissions to it
         if module.check_mode:
             return {'changed': True, 'diff': diff}
         curpath = ''
@@ -412,6 +415,7 @@ def ensure_directory(path, follow, recurse):
             # from the root (/) directory for absolute paths or the base path
             # of a relative path.  We can then walk the appropriate directory
             # path to apply attributes.
+            # Something like mkdir -p with mode applied to all of the newly created directories
             for dirname in path.strip('/').split('/'):
                 curpath = '/'.join([curpath, dirname])
                 # Remove leading slash if we're creating a relative path
@@ -434,16 +438,21 @@ def ensure_directory(path, follow, recurse):
             raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
                                                      ' %s' % (curpath, to_native(e)),
                                               'path': path})
+        return {'path': path, 'changed': changed, 'diff': diff}
 
-    # We already know prev_state is not 'absent', therefore it exists in some form.
     elif prev_state != 'directory':
+        # We already know prev_state is not 'absent', therefore it exists in some form.
         raise AnsibleModuleError(results={'msg': '%s already exists as a %s' % (path, prev_state),
                                           'path': path})
+
+    #
+    # previous state == directory
+    #
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
     if recurse:
-        changed |= recursive_set_attributes(to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
+        changed |= recursive_set_attributes(b_path, follow, file_args)
 
     return {'path': path, 'changed': changed, 'diff': diff}
 
