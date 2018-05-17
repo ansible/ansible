@@ -89,7 +89,7 @@ options:
     authentication_keys:
         description:
             - "List of authentication keys. Each key is represented by dict
-               like {'uuid': 'our-uuid', 'YourSecretValue=='}"
+               like {'uuid': 'our-uuid', 'value': 'YourSecretValue=='}"
             - "When you will not pass these keys and there are already some
                of them defined in the system they will be removed."
             - "Applicable for I(os_volume)."
@@ -212,7 +212,8 @@ class ExternalProviderModule(BaseModule):
             (key, value) for key, value in self._module.params.items() if key
             not in self.non_provider_params
         ]
-        return provider_params + [('data_center', self.get_data_center())]
+        provider_params.append(('data_center', self.get_data_center()))
+        return provider_params
 
     def get_data_center(self):
         dc_name = self._module.params.get("data_center", None)
