@@ -130,7 +130,7 @@
 
   - assert: *false
 
-  when: not platform is search("N35")
+  when: not platform is search("N35|N3L")
 
   always:
   - name: Remove vrf
