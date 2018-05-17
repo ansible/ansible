@@ -26,7 +26,7 @@ description:
 options:
     advertise_addr:
         description:
-            - Externally reachable address advertised to other nodes. 
+            - Externally reachable address advertised to other nodes.
             - This can either be an address/port combination
                 in the form ``192.168.1.1:4567``, or an interface followed by a
                 port number, like ``eth0:4567``. If the port number is omitted,
@@ -36,7 +36,7 @@ options:
     listen_addr:
         description:
             - Listen address used for inter-manager communication.
-            - This can either be an address/port combination in the form 
+            - This can either be an address/port combination in the form
                 ``192.168.1.1:4567``,
                 or an interface followed by a port number, like ``eth0:4567``.
                 If the port number is omitted, the default swarm listening port
