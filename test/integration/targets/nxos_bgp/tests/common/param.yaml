@@ -7,14 +7,12 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -35,7 +33,6 @@
       graceful_restart_helper: true
       log_neighbor_changes: true
       maxas_limit: 50
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -67,7 +64,6 @@
       log_neighbor_changes: false
       maxas_limit: default
       router_id: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -85,7 +81,6 @@
       asn: 65535
       vrf: "{{ item }}"
       cluster_id: 10.0.0.1
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -103,7 +98,6 @@
       asn: 65535
       vrf: "{{ item }}"
       cluster_id: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -124,7 +118,6 @@
         - 16
         - 22
         - 18
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -140,7 +133,6 @@
       asn: 65535
       confederation_id: default
       confederation_peers: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -161,7 +153,6 @@
         - 16
         - 22
         - 18
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -179,7 +170,6 @@
       local_as: default
       confederation_id: default
       confederation_peers: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -196,7 +186,6 @@
       vrf: myvrf
       local_as: 33
       confederation_id: 99
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -213,7 +202,6 @@
       vrf: myvrf
       confederation_id: default
       local_as: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -235,7 +223,6 @@
       fast_external_fallover: false
       flush_routes: true
       shutdown: true
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -254,7 +241,6 @@
       fast_external_fallover: true
       flush_routes: false
       shutdown: false
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -270,7 +256,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

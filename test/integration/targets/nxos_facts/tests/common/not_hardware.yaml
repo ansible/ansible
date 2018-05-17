@@ -6,7 +6,6 @@
 
 - name: test not hardware
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
     timeout: 30

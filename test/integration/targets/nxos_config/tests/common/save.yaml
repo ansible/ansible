@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }}/save.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START common/save.yaml on connection={{ ansible_connection }}"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -14,13 +12,11 @@
     parents:
       - "interface {{ intname }}"
     match: none
-    provider: "{{ connection }}"
 
 - name: save config
   nxos_config:
     save_when: always
     timeout: 300
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -31,11 +27,10 @@
   nxos_config:
     save_when: always
     timeout: 300
-    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == true"
 
-- debug: msg="END connection={{ ansible_connection }}/save.yaml"
+- debug: msg="END common/save.yaml on connection={{ ansible_connection }}"

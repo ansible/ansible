@@ -1,10 +1,9 @@
 ---
-- debug: msg="START cli/output.yaml"
+- debug: msg="START common/output.yaml on connection={{ ansible_connection }}"
 
 - name: get output for single command
   nxos_command:
     commands: ['show version']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -16,11 +15,10 @@
     commands:
       - show version
       - show interface
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/output.yaml"
+- debug: msg="END common/output.yaml on connection={{ ansible_connection }}"

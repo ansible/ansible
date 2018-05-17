@@ -7,14 +7,12 @@
       - snmp-server contact ansible
       - hostname veos01
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure top level command with before
   eos_config:
     lines: hostname foo
     after: snmp-server contact bar
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -28,7 +26,6 @@
   eos_config:
     lines: hostname foo
     after: snmp-server contact foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -42,7 +39,6 @@
       - no snmp-server contact
       - hostname veos01
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/toplevel_after.yaml on connection={{ ansible_connection }}"

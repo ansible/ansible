@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/greaterthan.yaml"
+- debug: msg="START common/greaterthan.yaml on connection={{ ansible_connection }}"
 
 - name: test gt operator
   nxos_command:
@@ -8,7 +8,6 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.eth_ip_mask gt 0"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -22,11 +21,10 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.eth_ip_mask > 0"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/greaterthan.yaml"
+- debug: msg="END common/greaterthan.yaml on connection={{ ansible_connection }}"

@@ -6,7 +6,6 @@
 - name: "Setup"
   nxos_config: &remove_evpn
     lines: no nv overlay evpn
-    provider: "{{ connection }}"
     match: none
   ignore_errors: yes
 
@@ -15,12 +14,10 @@
     nxos_feature:
       feature: bgp
       state: enabled
-      provider: "{{ connection }}"
 
   - name: "Enable nv overlay evpn"
     nxos_config:
       lines: nv overlay evpn
-      provider: "{{ connection }}"
       match: none
 
   - name: "Configure nxos_evpn_vni"
@@ -35,7 +32,6 @@
           - auto
           - "5000:10"
           - "1.1.1.1:43"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -56,7 +52,6 @@
       route_distinguisher: "50:20"
       route_target_import: auto
       route_target_export: auto
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -73,7 +68,6 @@
       route_distinguisher: default
       route_target_import: default
       route_target_export: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -88,7 +82,6 @@
     nxos_evpn_vni: &rvni
       vni: 6000
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -110,7 +103,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_evpn_vni sanity test"

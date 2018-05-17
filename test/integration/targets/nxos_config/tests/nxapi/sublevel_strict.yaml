@@ -10,7 +10,6 @@
       - 40 permit ip 4.4.4.4/32 any log
       - 50 permit ip 5.5.5.5/32 any log
     parents: ip access-list test
-    provider: "{{ nxapi }}"
     match: none
 
 - name: configure sub level command using strict match
@@ -24,7 +23,6 @@
     before: no ip access-list test
     match: strict
     replace: block
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -46,7 +44,6 @@
       - 40 permit ip 4.4.4.4/32 any log
     parents: ip access-list test
     match: strict
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -56,7 +53,6 @@
 - name: teardown
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ nxapi }}"
     match: none
 
 - debug: msg="END nxapi/sublevel_strict.yaml"

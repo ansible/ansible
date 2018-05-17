@@ -13,14 +13,12 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -30,7 +28,6 @@
       disable_policy_batching: true
       disable_policy_batching_ipv4_prefix_list: v4_p
       disable_policy_batching_ipv6_prefix_list: v6_p
-      provider: "{{ connection }}"
     register: result
     when: bgp_disable_policy
 
@@ -55,7 +52,6 @@
       disable_policy_batching: false
       disable_policy_batching_ipv4_prefix_list: default
       disable_policy_batching_ipv6_prefix_list: default
-      provider: "{{ connection }}"
     register: result
     when: bgp_disable_policy
 
@@ -78,7 +74,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

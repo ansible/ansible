@@ -4,19 +4,16 @@
 - name: get config
   nxos_command:
     commands: show running-config
-    provider: "{{ cli }}"
   register: config
 
 - name: enable feature bgp
   nxos_config:
     lines: feature bgp
-    provider: "{{ cli }}"
   when: "'feature bgp' not in config.stdout[0]"
 
 - name: remove bgp
   nxos_config:
     lines: no router bgp 1
-    provider: "{{ cli }}"
   when: "'router bgp 1' in config.stdout[0]"
 
 - name: configure multi level command
@@ -25,7 +22,6 @@
     parents:
       - router bgp 1
       - address-family ipv4 unicast
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -41,7 +37,6 @@
     parents:
       - router bgp 1
       - address-family ipv4 unicast
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -53,6 +48,5 @@
     lines:
       - no feature bgp
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/mulitlevel.yaml"

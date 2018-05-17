@@ -5,11 +5,9 @@
   eos_config:
     lines: lldp run
     authorize: yes
-    provider: "{{ eapi }}"
 
 - name: test not hardware
   eos_facts:
-    provider: "{{ eapi }}"
     gather_subset:
       - "!hardware"
   register: result
@@ -36,6 +34,5 @@
   eos_config:
     lines: no lldp run
     authorize: yes
-    provider: "{{ eapi }}"
 
 - debug: msg="END eapi/not_hardware_facts.yaml"

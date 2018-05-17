@@ -10,7 +10,6 @@
   nxos_feature:
     feature: lacp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove config used in test(part1)
@@ -18,13 +17,11 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    provider: "{{ connection }}"
 
 - name: setup - remove config used in test(part2)
   nxos_config:
     lines:
       - no channel-group 20
-    provider: "{{ connection }}"
     parents: "{{ item }}"
   ignore_errors: yes
   loop:
@@ -43,7 +40,6 @@
   nxos_linkagg: &create
     group: 20
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -67,7 +63,6 @@
     members:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -93,7 +88,6 @@
     force: True
     members:
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -114,7 +108,6 @@
   nxos_linkagg: &remove
     group: 20
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -135,7 +128,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -159,7 +151,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -182,13 +173,11 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    provider: "{{ connection }}"
 
 - name: teardown - remove config used in test(part2)
   nxos_config:
     lines:
       - no channel-group 20
-    provider: "{{ connection }}"
     parents: "{{ item }}"
   ignore_errors: yes
   loop:
@@ -200,6 +189,5 @@
     feature: lacp
     state: disabled
     timeout: 60
-    provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }} nxos_linkagg sanity test"

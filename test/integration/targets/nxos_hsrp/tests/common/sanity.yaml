@@ -12,7 +12,6 @@
     nxos_feature: 
       feature: hsrp
       state: enabled
-      provider: "{{ connection }}"
 
   - name: "change int1 mode"
     nxos_config:
@@ -21,7 +20,6 @@
       parents:
         - "interface {{ intname1 }}"
       match: none
-      provider: "{{ connection }}"
 
   - name: "change int2 mode"
     nxos_config:
@@ -30,7 +28,6 @@
       parents:
         - "interface {{ intname2 }}"
       match: none
-      provider: "{{ connection }}"
 
   - name: "configure nxos_hsrp"
     nxos_hsrp: &conf1000
@@ -42,7 +39,6 @@
       preempt: enabled
       auth_type: md5
       auth_string: "7 1234"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -67,7 +63,6 @@
       preempt: enabled
       auth_type: md5
       auth_string: "0 1234"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -88,7 +83,6 @@
       preempt: disabled
       auth_type: md5
       auth_string: "0 1234"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -107,7 +101,6 @@
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: "1234"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -126,7 +119,6 @@
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -157,7 +149,6 @@
     nxos_feature: 
       feature: hsrp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_hsrp sanity test"
