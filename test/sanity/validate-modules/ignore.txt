@@ -258,7 +258,6 @@ lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py E325
 lib/ansible/modules/cloud/cloudstack/cs_volume.py E322
 lib/ansible/modules/cloud/cloudstack/cs_volume.py E324
 lib/ansible/modules/cloud/cloudstack/cs_volume.py E325
-lib/ansible/modules/cloud/cloudstack/cs_vpc.py E325
 lib/ansible/modules/cloud/cloudstack/cs_vpc_offering.py E325
 lib/ansible/modules/cloud/cloudstack/cs_vpn_connection.py E322
 lib/ansible/modules/cloud/cloudstack/cs_vpn_customer_gateway.py E325
