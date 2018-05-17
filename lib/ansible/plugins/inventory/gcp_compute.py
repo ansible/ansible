@@ -21,11 +21,22 @@ DOCUMENTATION = '''
     options:
         zones:
           description: A list of regions in which to describe GCE instances.
+          default: all zones available to a given project
         projects:
           description: A list of projects in which to describe GCE instances.
         filters:
-          description: A dictionary of filter value pairs. Available filters are listed here
-              U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list)
+          description: A list of filter value pairs. Available filters are listed here
+              U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
+              Each additional filter in the list will act be added as an AND condition
+              (filter1 and filter2)
+        hostnames:
+          description: A list of options that describe the ordering for which
+              hostnames should be assigned.
+          options:
+              - public_ip
+              - private_ip
+              - name
+          default: ['public_ip', 'private_ip', 'name']
 '''
 
 EXAMPLES = '''
@@ -89,6 +100,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         if super(InventoryModule, self).verify_file(path):
             if path.endswith('.gcp.yml') or path.endswith('.gcp.yaml'):
+                return True
+            elif path.endswith('.gcp_compute.yml') or path.endswith('.gcp_compute.yaml'):
                 return True
         return False
 
@@ -229,21 +242,49 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param item: A host response from GCP
             :return the hostname of this instance
         '''
+        hostname_ordering = ['public_ip', 'private_ip', 'name']
+        if self.get_option('hostnames'):
+            hostname_ordering = self.get_option('hostnames')
+
+        for order in hostname_ordering:
+            name = None
+            if order == 'public_ip':
+                name = self._get_publicip(item)
+            elif order == 'private_ip':
+                name = self._get_privateip(item)
+            elif order == 'name':
+                name = item['name']
+            else:
+                raise AnsibleParserError("%s is not a valid hostname precedent" % order)
+
+            if name:
+                return name
+            else:
+                raise AnsibleParserError("No valid name found for host")
+
+
+    def _get_publicip(self, item):
+        '''
+            :param item: A host response from GCP
+            :return the publicIP of this instance or None
+        '''
         # Get public IP if exists
         for interface in item['networkInterfaces']:
             if 'accessConfigs' in interface:
                 for accessConfig in interface['accessConfigs']:
                     if 'natIP' in accessConfig:
                         return accessConfig['natIP']
+        return None
 
+    def _get_privateip(self, item):
+        '''
+            :param item: A host response from GCP
+            :return the privateIP of this instance or None
+        '''
         # Fallback: Get private IP
         for interface in item['networkInterfaces']:
             if 'networkIP' in interface:
                 return interface['networkIP']
-
-        # Fallback: host name.
-        # This is for completion and should not be necessary.
-        return item['name']
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
