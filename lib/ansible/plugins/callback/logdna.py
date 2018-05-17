@@ -38,33 +38,64 @@ DOCUMENTATION = '''
 
 import logging
 import json
-import pip
-try:
-    import logdna
-except ImportError:
-    pip.main(['install', 'logdna'])
-from logdna import LogDNAHandler
+import sys
+import socket
+import time
 from uuid import getnode
-from socket import gethostname
-
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils.urls import open_url
+
+try:
+    from logdna import LogDNAHandler
+    HAS_LOGDNA = True
+except ImportError:
+    HAS_LOGDNA = False
+    IS_PY2 = (sys.version_info[0] == 2)
+    LOGDNA_URL = 'https://logs.logdna.com/logs/ingest'
+    MAX_LINE_LENGTH = 32000
+    if IS_PY2:
+        from urllib import urlencode
+    else:
+        from urllib.parse import urlencode
+
 
 # Getting MAC Address of system:
-
-
 def get_mac():
     mac = "%012x" % getnode()
-    return ":".join(map(lambda index: mac[index:index + 2], xrange(int(len(mac) / 2))))
-
-# Getting hostname of system
+    return ":".join(map(lambda index: mac[index:index + 2], range(int(len(mac) / 2))))
 
 
+# Getting hostname of system:
 def get_hostname():
-    return str(gethostname()).split('.local')[0]
+    return str(socket.gethostname()).split('.local')[0]
+
+
+# Getting IP of system:
+def get_ip():
+    try:
+        return socket.gethostbyname(get_hostname())
+    except:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+
+
+# Is it JSON?
+def isJSONable(obj):
+    try:
+        json.dumps(obj)
+        return True
+    except:
+        return False
+
 
 # LogDNA Callback Module:
-
-
 class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 0.1
@@ -91,6 +122,8 @@ class CallbackModule(CallbackBase):
         self.plugin_ignore_errors = self.get_option('plugin_ignore_errors')
         self.conf_hostname = self.get_option('conf_hostname')
         self.conf_tags = self.get_option('conf_tags')
+        self.mac = get_mac()
+        self.ip = get_ip()
 
         if self.plugin_ignore_errors is None:
             self.plugin_ignore_errors = False
@@ -111,15 +144,57 @@ class CallbackModule(CallbackBase):
             self._display.warning('LogDNA Ingestion Key has not been provided!')
         else:
             self.disabled = False
-            self.log = logging.getLogger('logdna')
-            self.log.setLevel(logging.INFO)
-            self.options = {'hostname': self.conf_hostname, 'mac': get_mac(), 'index_meta': True}
-            self.log.addHandler(LogDNAHandler(self.conf_key, self.options))
+            if HAS_LOGDNA:
+                self.log = logging.getLogger('logdna')
+                self.log.setLevel(logging.INFO)
+                self.options = {'hostname': self.conf_hostname, 'mac': self.mac, 'index_meta': True}
+                self.log.addHandler(LogDNAHandler(self.conf_key, self.options))
+            else:
+                self.params = dict()
+                self.params['hostname'] = self.conf_hostname
+                self.params['ip'] = self.ip
+                self.params['mac'] = self.mac
+                self.params['tags'] = self.conf_tags
+
+    def metaIndexing(self, meta):
+        invalidKeys = []
+        ninvalidKeys = 0
+        for key, value in meta.items():
+            if not isJSONable(value):
+                invalidKeys.append(key)
+                ninvalidKeys += 1
+        if ninvalidKeys > 0:
+            for key in invalidKeys:
+                del meta[key]
+            meta['__errors'] = 'These keys have been sanitized: ' + ', '.join(invalidKeys)
+        return meta
+
+    def flush(self, log, options):
+        if HAS_LOGDNA:
+            self.log.info(json.dumps(log), options)
+        else:
+            message = dict()
+            message['hostname'] = self.conf_hostname
+            message['timestamp'] = int(time.time() * 1000)
+            message['line'] = json.dumps(log)
+            message['level'] = 'info'
+            message['app'] = options['app']
+            message['env'] = ''
+            message['meta'] = self.metaIndexing(options['meta'])
+            if len(message['line']) > MAX_LINE_LENGTH:
+                message['line'] = message['line'][:MAX_LINE_LENGTH] + ' (cut off, too long...)'
+            url = LOGDNA_URL + '?' + urlencode(self.params)
+            data = {'e': 'ls', 'ls': [message]}
+            open_url(url, data=data, method='POST', force=True, timeout=30, url_username='user', url_password=self.conf_key)
 
     def sendLog(self, host, category, logdata):
         if not self.disabled:
-            invocation = logdata['result'].pop('invocation', None)
-            self.log.info(json.dumps(logdata), {'app': 'ansible', 'meta': {'playbook': self.playbook_name, 'host': host, 'category': category}})
+            options = {'app': 'ansible', 'meta': {'playbook': self.playbook_name, 'host': host, 'category': category}}
+            logdata['result'].pop('invocation', None)
+            warnings = logdata['result'].pop('warnings', None)
+            if warnings is not None:
+                self.flush({'warnings': warnings}, options)
+            self.flush((logdata), options)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
