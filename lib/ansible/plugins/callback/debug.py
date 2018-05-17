@@ -1,8 +1,13 @@
-# (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""
+(c) 2017 Ansible Project
+GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+Callback plugin for Debug Output
+"""
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+
+__metaclass__ = type  # pylint: disable=invalid-name
 
 DOCUMENTATION = '''
     callback: debug
@@ -16,9 +21,6 @@ DOCUMENTATION = '''
     requirements:
       - set as stdout in configuration
 '''
-
-from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
-
 
 class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-methods,no-init
     '''
@@ -38,7 +40,13 @@ class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-
         result['_ansible_verbose_always'] = True
 
         save = {}
-        for key in ['stdout', 'stdout_lines', 'stderr', 'stderr_lines', 'msg', 'module_stdout', 'module_stderr']:
+        for key in ['stdout',
+                    'stdout_lines',
+                    'stderr',
+                    'stderr_lines',
+                    'msg',
+                    'module_stdout',
+                    'module_stderr']:
             if key in result:
                 save[key] = result.pop(key)
 
