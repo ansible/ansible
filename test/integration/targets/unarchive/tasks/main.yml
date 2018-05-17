@@ -184,6 +184,26 @@
     that:
       - "unarchive03b.changed == false"
 
+- name: "Create {{ output_dir }}/exclude directory"
+  file:
+    state: directory
+    path: "{{ output_dir }}/exclude"
+
+- name: Unpack zip file excluding one file.
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.zip"
+    dest: "{{ output_dir }}/exclude"
+    exclude: "foo-unarchive-*.txt"
+
+- name: verify that the file was unarchived
+  shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
+  register: unarchive_dir01
+
+- name: verify that zip extraction excluded file
+  assert:
+    that:
+      - "'foo-unarchive-777.txt' not in unarchive_dir01.stdout"
+
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
 
