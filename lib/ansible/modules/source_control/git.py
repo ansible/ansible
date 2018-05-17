@@ -595,14 +595,7 @@ def is_not_a_branch(git_path, module, dest):
     return False
 
 
-def get_head_branch(git_path, module, dest, remote, bare=False):
-    '''
-    Determine what branch HEAD is associated with.  This is partly
-    taken from lib/ansible/utils/__init__.py.  It finds the correct
-    path to .git/HEAD and reads from that file the branch that HEAD is
-    associated with.  In the case of a detached HEAD, this will look
-    up the branch in .git/refs/remotes/<remote>/HEAD.
-    '''
+def get_repo_path(module, dest, bare):
     if bare:
         repo_path = dest
     else:
@@ -611,23 +604,39 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     if os.path.isfile(repo_path):
         try:
             git_conf = open(repo_path, 'rb')
-            for line in git_conf:
-                config_val = line.split(b(':'), 1)
-                if config_val[0].strip() == b('gitdir'):
-                    gitdir = to_native(config_val[1].strip(), errors='surrogate_or_strict')
-                    break
-            else:
-                # No repo path found
-                return ''
+            with open(repo_path, 'r') as gitfile:
+                data = gitfile.read()
+            ref_prefix, gitdir = data.rstrip().split('gitdir: ', 1)
+            if ref_prefix:
+                raise ValueError('.git file has invalid git dir reference format')
 
             # There is a possibility the .git file to have an absolute path.
             if os.path.isabs(gitdir):
                 repo_path = gitdir
             else:
                 repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
-        except (IOError, AttributeError):
+            if not os.path.isdir(repo_path):
+                raise ValueError('%s is not a directory' % repo_path)
+        except (IOError, AttributeError, ValueError) as err:
             # No repo path found
-            return ''
+            """``.git`` file does not have a valid format for detached Git dir."""
+            module.fail_json(
+                msg='Current repo does not have a valid reference to a '
+                'separate Git dir or it refers to the invalid path',
+                details=str(err),
+            )
+    return repo_path
+
+
+def get_head_branch(git_path, module, dest, remote, bare=False):
+    '''
+    Determine what branch HEAD is associated with.  This is partly
+    taken from lib/ansible/utils/__init__.py.  It finds the correct
+    path to .git/HEAD and reads from that file the branch that HEAD is
+    associated with.  In the case of a detached HEAD, this will look
+    up the branch in .git/refs/remotes/<remote>/HEAD.
+    '''
+    repo_path = get_repo_path(module, dest, bare)
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
     # the remote HEAD in .git/refs/remotes/<remote>/HEAD
@@ -1017,27 +1026,8 @@ def main():
         module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(dest)
-        if bare:
-            gitconfig = os.path.join(dest, 'config')
-        elif os.path.isfile(os.path.join(dest, '.git')):
-            with open(os.path.join(dest, '.git'), 'r') as gitfile:
-                data = gitfile.read()
-            try:
-                ref_prefix, separate_git_dir = data.rstrip().split('gitdir: ', 1)
-                if ref_prefix:
-                    raise ValueError('.git file has invalid git dir reference format')
-                if not os.path.isdir(separate_git_dir):
-                    raise TypeError('%s is not a directory' % separate_git_dir)
-                gitconfig = os.path.join(separate_git_dir, 'config')
-            except (TypeError, ValueError) as err:
-                """``.git`` file does not have a valid format for detached Git dir."""
-                module.fail_json(
-                    msg='Current repo does not have a valid reference to a '
-                    'separate Git dir or it refers to the invalid path',
-                    details=str(err),
-                )
-        else:
-            gitconfig = os.path.join(dest, '.git', 'config')
+        repo_path = get_repo_path(module, dest, bare)
+        gitconfig = os.path.join(repo_path, 'config')
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
