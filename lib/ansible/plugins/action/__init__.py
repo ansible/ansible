@@ -232,7 +232,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._connection.get_option('remote_user')
 
         try:
             admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
@@ -367,7 +367,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         """
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._connection.get_option('remote_user')
 
         display.deprecated('_fixup_perms is deprecated. Use _fixup_perms2 instead.', version='2.4', removed=False)
 
@@ -402,7 +402,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._connection.get_option('remote_user')
 
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until
@@ -583,7 +583,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 expand_path = '~%s' % self._play_context.become_user
             else:
                 # use remote user instead, if none set default to current user
-                expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
+                expand_path = '~%s' % (self._connection.get_option('remote_user') or self._connection.default_user or '')
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
@@ -825,7 +825,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_files:
             # remove none/empty
             remote_files = [x for x in remote_files if x]
-            self._fixup_perms2(remote_files, self._play_context.remote_user)
+            self._fixup_perms2(remote_files, self._connection.get_option('remote_user'))
 
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
@@ -913,7 +913,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
-        same_user = self._play_context.become_user == self._play_context.remote_user
+        same_user = self._play_context.become_user == self._connection.get_option('remote_user')
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
             if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
