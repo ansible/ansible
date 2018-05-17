@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: sysvinit
 author:
     - "Ansible Core Team"
-version_added: "2.5"
+version_added: "2.6"
 short_description:  Manage SysV services.
 description:
     - Controls services on target hosts that use the SysV init system.
@@ -127,7 +127,7 @@ def main():
             enabled=dict(type='bool'),
             sleep=dict(type='int', default=1),
             pattern=dict(type='str'),
-            arguments=dict(type='str'),
+            arguments=dict(type='str', aliases=['args']),
             runlevels=dict(type='list'),
             daemonize=dict(type='bool', default=False),
         ),
