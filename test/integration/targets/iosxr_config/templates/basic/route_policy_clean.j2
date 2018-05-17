@@ -1,0 +1,24 @@
+no router ospf 1
+!
+no prefix-set EBGP-PEER-BOGONS
+!
+no prefix-set cust-ddos-DDOS
+!
+no prefix-set cust-no-export
+!          
+no prefix-set acme_DC_Internal
+!
+no as-path-set EBGP-PEER-AS16509-403-PERMIT-PATHS
+!
+no community-set cust-announce
+!
+no community-set cust-no-export
+!
+no route-policy POLICY2
+!
+no route-policy cust2bgp
+!
+no route-policy static-to-bgp
+!
+no router bgp 65001
+!
