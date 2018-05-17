@@ -1,0 +1,60 @@
+---
+- name: Download JRE
+  get_url:
+    url: http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jre-8u171-linux-x64.tar.gz
+    headers: "Cookie:oraclelicense=accept-securebackup-cookie"
+    dest: /tmp/jre-8u171-linux-x64.tar.gz
+
+- name: Extract JRE tarball
+  unarchive:
+    src: /tmp/jre-8u171-linux-x64.tar.gz
+    dest: /opt
+    creates: /opt/jre1.8.0_171/
+    remote_src: yes
+
+- name: JBoss OS user
+  user:
+    name: "{{ jboss_user }}"
+
+- name: JBoss OS group
+  group:
+    name: "{{ jboss_group }}"
+
+- name: JBoss home dir
+  file:
+    path: "{{ jboss_home }}"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    state: directory
+    mode: 0755
+
+- name: Download and Extract Tarball
+  unarchive:
+    src: "{{ jboss_install_src }}"
+    dest: "{{ jboss_home }}"
+    extra_opts:
+      - "--no-same-owner"
+      - "--no-same-permissions"
+      - "--strip-components=1"
+    creates: "{{ jboss_home }}/jboss-modules.jar"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    remote_src: yes
+
+- name: Management Realm user
+  lineinfile:
+    path: "{{ jboss_home }}/standalone/configuration/mgmt-users.properties"
+    line: "{{ jboss_mgmt_user }}={{ [jboss_mgmt_user, 'ManagementRealm', jboss_mgmt_password] | join(':') | hash('md5') }}"
+    regexp: "^{{ jboss_mgmt_user }}="
+
+- name: Start JBoss
+  shell: "nohup {{ jboss_home }}/bin/standalone.sh &"
+  become: yes
+  become_user: "{{ jboss_user }}"
+  environment:
+    JAVA_HOME: /opt/jre1.8.0_171
+
+- name: Wait for management interface to become available
+  wait_for:
+    port: 9990
+    delay: 10
