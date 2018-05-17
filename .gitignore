@@ -57,6 +57,7 @@ credentials.yml
 # test output
 *.retry
 *.out
+.pytest_cache/
 .tox
 .cache
 .pytest_cache
