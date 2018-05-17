@@ -277,6 +277,25 @@ If you need a password to enter ``enable`` mode, you can specify it in one of tw
 
    As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
 
+authorize and auth_pass
+-----------------------
+
+Ansible still supports ``enable`` mode with ``connection: local`` for legacy playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
+
+.. code-block:: yaml
+
+   - hosts: eos-switches
+     ansible_connection: local
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+           gather_subset:
+             - "!hardware"
+         provider:
+           authorize: yes
+           auth_pass: " {{ secret_auth_pass }}"
+
+We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
 .. _become-windows:
 
