@@ -218,13 +218,14 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
         if not self.user:
             args = {
                 'domainid': self.get_domain('id'),
+                'fetch_list': True,
             }
 
             users = self.query_api('listUsers', **args)
 
             if users:
                 user_name = self.module.params.get('username')
-                for u in users['user']:
+                for u in users:
                     if user_name.lower() == u['username'].lower():
                         self.user = u
                         break
