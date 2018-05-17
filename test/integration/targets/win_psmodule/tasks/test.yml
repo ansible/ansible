@@ -149,6 +149,9 @@
     Get-ChildItem "{{custom_repo_path}}" | ? Name -eq "{{powershell_module}}" | % Name;
   register: saved_package
 
+- debug:
+    msg: "Saved_package: '{{ saved_package }}' , stdout: '{{ saved_package.stdout }}'"
+
 - name: Validate sample module in custom repo
   assert:
     that:
