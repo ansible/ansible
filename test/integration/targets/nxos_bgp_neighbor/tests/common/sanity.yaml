@@ -19,7 +19,6 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
@@ -28,7 +27,6 @@
     neighbor: 3.3.3.3
     vrf: "{{ item }}"
     state: absent
-    provider: "{{ connection }}"
   with_items: "{{ vrfs }}"
   ignore_errors: yes
 
@@ -38,7 +36,6 @@
     neighbor: 3.3.3.3/32
     vrf: "{{ item }}"
     state: absent
-    provider: "{{ connection }}"
   with_items: "{{ vrfs }}"
   ignore_errors: yes
 
@@ -64,7 +61,6 @@
       update_source: "{{ intname.capitalize() }}"
       shutdown: true
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -102,7 +98,6 @@
       update_source: default
       shutdown: False
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -137,7 +132,6 @@
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asa|default(omit)}}"
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -158,7 +152,6 @@
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asr|default(omit)}}"
       state: present
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -186,7 +179,6 @@
       remote_as: 30
       pwd: '386c0565965f89de'
       pwd_type: 3des
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -214,7 +206,6 @@
       remote_as: 30
       pwd: '386c0565965f89de'
       pwd_type: cisco_type_7
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -235,7 +226,6 @@
       remote_as: 30
       pwd: default
       pwd_type: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -262,7 +252,6 @@
       vrf: "{{ item }}"
       remote_as: 30
       transport_passive_only: true
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -282,7 +271,6 @@
       vrf: "{{ item }}"
       remote_as: 30
       transport_passive_only: false
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -320,6 +308,5 @@
     nxos_feature: &disable_bgp
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

@@ -9,14 +9,12 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure device with defaults included
   eos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -31,7 +29,6 @@
   eos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 

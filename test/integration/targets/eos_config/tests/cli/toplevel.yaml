@@ -5,13 +5,11 @@
   eos_config:
     lines: hostname veos01
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure top level command
   eos_config:
     lines: hostname foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -23,7 +21,6 @@
 - name: configure top level command idempotent check
   eos_config:
     lines: hostname foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -35,7 +32,6 @@
   eos_config:
     lines: hostname veos01
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/toplevel.yaml on connection={{ ansible_connection }}"

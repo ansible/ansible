@@ -20,14 +20,36 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import time
 
 from itertools import chain
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.connection.network_cli import Connection as NetworkCli
 
 
 class Cliconf(CliconfBase):
+
+    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+        """Executes a cli command and returns the results
+        This method will execute the CLI command on the connection and return
+        the results to the caller.  The command output will be returned as a
+        string
+        """
+        kwargs = {'command': to_bytes(command), 'sendonly': sendonly,
+                  'newline': newline, 'prompt_retry_check': prompt_retry_check}
+        if prompt is not None:
+            kwargs['prompt'] = to_bytes(prompt)
+        if answer is not None:
+            kwargs['answer'] = to_bytes(answer)
+
+        if isinstance(self._connection, NetworkCli):
+            resp = self._connection.send(**kwargs)
+        else:
+            resp = self._connection.send_request(command, **kwargs)
+        return resp
 
     def get_device_info(self):
         device_info = {}
@@ -74,3 +96,72 @@ class Cliconf(CliconfBase):
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    # Imported from module_utils
+    def close_session(self, session):
+        # to close session gracefully execute abort in top level session prompt.
+        self.get('end')
+        self.get('configure session %s' % session)
+        self.get('abort')
+
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        responses = list()
+        multiline = False
+
+        for cmd in to_list(commands):
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+
+            if command == 'end':
+                continue
+            elif command.startswith('banner') or multiline:
+                multiline = True
+            elif command == 'EOF' and multiline:
+                multiline = False
+
+            out = self.get(command, prompt, answer, multiline)
+
+            if out is not None:
+                try:
+                    out = json.loads(out)
+                except ValueError:
+                    out = str(out).strip()
+
+                responses.append(out)
+
+        return responses
+
+    def load_config(self, commands, commit=False, replace=False):
+        """Loads the config commands onto the remote device
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+
+        self.get('configure session %s' % session)
+        if replace:
+            self.get('rollback clean-config')
+
+        try:
+            self.run_commands(commands)
+        except ConnectionError:
+            self.close_session(session)
+            raise
+
+        out = self.get('show session-config diffs')
+        if out:
+            result['diff'] = out.strip()
+
+        if commit:
+            self.get('commit')
+        else:
+            self.close_session(session)
+
+        return result

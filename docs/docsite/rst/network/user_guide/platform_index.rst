@@ -4,7 +4,7 @@
 Platform Options
 ****************
 
-Some Ansible Network platforms support multiple connection types, privilege escalation, or other options. The pages in this section offer standardized guides to understanding available options on each network platform. We welcome contributions from community-maintained platforms to this section.
+Some Ansible Network platforms support multiple connection types, privilege escalation (``enable`` mode), or other options. The pages in this section offer standardized guides to understanding available options on each network platform. We welcome contributions from community-maintained platforms to this section.
 
 .. toctree::
    :maxdepth: 2

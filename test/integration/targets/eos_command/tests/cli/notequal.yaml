@@ -8,7 +8,6 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.name neq Ethernet"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -23,7 +22,6 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.name != Ethernet"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
