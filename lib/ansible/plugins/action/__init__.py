@@ -246,7 +246,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
-        if self._connection.remote_is_local:
+        if getattr(self._connection, 'remote_is_local', False):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
@@ -571,7 +571,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         expand_path = split_path[0]
 
         if expand_path == '~':
-            if self._connection.remote_is_local:
+            if getattr(self._connection, 'remote_is_local', False):
                 pass
             elif sudoable and self._play_context.become and self._play_context.become_user:
                 expand_path = '~%s' % self._play_context.become_user
