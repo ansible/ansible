@@ -48,4 +48,5 @@ class Netconf(NetconfBase):
         result['server_capabilities'] = [c for c in self.m.server_capabilities]
         result['client_capabilities'] = [c for c in self.m.client_capabilities]
         result['session_id'] = self.m.session_id
+        result['device_operations'] = self.get_device_operations(result['server_capabilities'])
         return json.dumps(result)
