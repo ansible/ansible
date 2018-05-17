@@ -32,7 +32,7 @@ See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/portin
 
 <a id="2.5"></a>
 
-## 2.5 "Kashmir" - March 2018 (estimated)
+## 2.5 "Kashmir" - 2018-03-22
 
 [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html)
 
