@@ -441,15 +441,14 @@ class User(object):
             return self._compare_outputs(first_tuple, second_tuple)
         return self._compare_outputs(first_tuple)
 
-    def _compare_outputs(self, first_tuple, second_tuple = (None, ' ', ' ')):
-        if first_tuple[0]==0 or second_tuple[0]==0:
+    def _compare_outputs(self, first_tuple, second_tuple=(None, ' ', ' ')):
+        if first_tuple[0] == 0 or second_tuple[0] == 0:
             overall_rc = 0
         else:
             overall_rc = None
         overall_out = first_tuple[1] + ' | ' + second_tuple[1]
         overall_err = first_tuple[2] + ' | ' + second_tuple[2]
         return (overall_rc, overall_out, overall_err)  
-
     def _expire_password(self):
         chage_cmd = [self.module.get_bin_path('chage', True)]
         chage_cmd.append('-d')
@@ -581,11 +580,10 @@ class User(object):
         if len(cmd) > 1:
             cmd.append(self.name)
             first_tuple = self.execute_command(cmd)
-        
         if self.force_pw:
             second_tuple = (None, " ", " ")
             current_lastday = self.user_password()[2]   
-            if current_lastday!=0:
+            if current_lastday != 0:
                 second_tuple = self._expire_password()
             return self._compare_outputs(first_tuple, second_tuple)
         return self._compare_outputs(first_tuple)
@@ -815,6 +813,7 @@ class FreeBsdUser(User):
     SHADOWFILE_EXPIRE_INDEX = 6
     SHADOWFILE_LASTDAY_INDEX = 5
     DATE_FORMAT = '%d-%b-%Y'
+
     def remove_user(self):
         cmd = [
             self.module.get_bin_path('pw', True),
@@ -983,12 +982,10 @@ class FreeBsdUser(User):
 
         if self.expires:
             current_expires = time.gmtime(int(self.user_password()[1]))
-
             # Compare year, month, and day only
             if current_expires[:3] != self.expires[:3]:
                 cmd.append('-e')
                 cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
-
         if self.force_pw:
             current_lastday = self.user_password()[2]
             if current_lastday != 0:
@@ -997,11 +994,10 @@ class FreeBsdUser(User):
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
-            if rc is not None and rc!=0:
+            if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
         else:
             (rc, out, err) = (None, '', '')
-
         # we have to set the password in a second command
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = [
