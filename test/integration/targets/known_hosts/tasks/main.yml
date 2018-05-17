@@ -17,7 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: copy an existing file in place
-  copy: src=existing_known_hosts dest="{{output_dir|expanduser}}/known_hosts"
+  copy:
+    src: existing_known_hosts
+    dest: "{{ output_dir | expanduser }}/known_hosts"
 
 # test addition
 
@@ -167,3 +169,33 @@
     - 'not result.changed'
     - 'result.diff.before == result.diff.after'
     - 'known_hosts_v3.stdout == known_hosts_v4.stdout'
+
+# test errors
+
+- name: Try using a comma separated list of hosts
+  known_hosts:
+    name: example.org,acme.com
+    key: "{{ example_org_rsa_key }}"
+    path: "{{output_dir|expanduser}}/known_hosts"
+  ignore_errors: yes
+  register: result
+
+- name: Assert that error message was displayed
+  assert:
+    that:
+      - result is failed
+      - result.msg == 'Comma separated list of names is not supported. Please pass a single name to lookup in the known_hosts file.'
+
+- name: Try using a name that does not match the key
+  known_hosts:
+    name: example.com
+    key: "{{ example_org_rsa_key }}"
+    path: "{{output_dir|expanduser}}/known_hosts"
+  ignore_errors: yes
+  register: result
+
+- name: Assert that name checking failed with error message
+  assert:
+    that:
+      - result is failed
+      - result.msg == 'Host parameter does not match hashed host field in supplied key'
