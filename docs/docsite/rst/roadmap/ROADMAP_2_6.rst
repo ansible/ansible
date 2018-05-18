@@ -10,7 +10,7 @@ Release Schedule
 Expected
 ========
 
-- 2018-05-17 Core Freeze (Core Engine and Core Modules/Plugins)
+- 2018-05-17 Core Freeze (Engine and Core Modules/Plugins)
 - 2018-05-17 Alpha Release 1
 - 2018-05-24 Alpha Release 2
 - 2018-05-25 Community Freeze (Non-Core Modules/Plugins)
