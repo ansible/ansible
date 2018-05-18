@@ -1,13 +1,9 @@
 """ Modoule to handle encrypting and decrypting of items with KMS """
-
-
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type  # pylint: disable=invalid-name
 import base64
 import botocore
 import aws_encryption_sdk
-
-
-__metaclass__ = type  # pylint: disable=invalid-name
 
 
 def aws_kms_encrypt(plaintext, key_arn):
