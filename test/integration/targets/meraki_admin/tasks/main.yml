@@ -9,7 +9,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jane Doe
-    email: meraki+janedoe@kevinbreit.net
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
     orgAccess: read-only
   delegate_to: localhost
   register: create_orgaccess
@@ -26,7 +26,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: John Doe
-    email: meraki+johndoe@kevinbreit.net
+    email: '{{email_prefix}}+johndoe@{{email_domain}}'
     orgAccess: none
     tags:
       - { "tag": "production", "access": "read-only" }
@@ -46,18 +46,39 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jake Doe
-    email: meraki+jakedoe@kevinbreit.net
+    email: '{{email_prefix}}+jakedoe@{{email_domain}}'
     orgAccess: none
     tags:
       - { "tag": "production", "access": "read-only" }
-      - { "tag": "beta", "access": "invalid" }
+      - { "tag": "alpha", "access": "invalid" }
   delegate_to: localhost
   register: create_tags_invalid
   ignore_errors: yes
 
 - assert:
     that:
-      - '"Invalid permission type" in create_tags_invalid.msg'
+      - '"400" in create_tags_invalid.msg'
+      # - '"must contain only valid tags" in create_tags_invalid.msg'
+
+- name: Create administrator with invalid tag permission
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jake Doe
+    email: '{{email_prefix}}+jakedoe@{{email_domain}}'
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "beta", "access": "invalid" }
+  delegate_to: localhost
+  register: create_tags_invalid_permission
+  ignore_errors: yes
+
+- assert:
+    that:
+      - '"400" in create_tags_invalid_permission.msg'
+      # - '"Invalid permission type" in create_tags_invalid_permission.msg'
 
 - name: Create administrator with networks
   meraki_admin:
@@ -65,7 +86,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jim Doe
-    email: meraki+jimdoe@kevinbreit.net
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
     orgAccess: none
     networks:
       - { "network": "TestNet", "access": "read-only" }
@@ -85,7 +106,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jim Doe
-    email: meraki+jimdoe@kevinbreit.net
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
     orgAccess: none
     networks:
       - { "network": "TestNet", "access": "full" }
@@ -104,7 +125,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jim Doe
-    email: meraki+jimdoe@kevinbreit.net
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
     orgAccess: none
     networks:
       - { "network": "TestNet", "access": "full" }
@@ -121,7 +142,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: John Doe
-    email: meraki+John@kevinbreit.net
+    email: '{{email_prefix}}+John@{{email_domain}}'
     orgAccess: none
     networks:
       - { "network": "readnet", "access": "read-only" }
@@ -129,9 +150,10 @@
   register: create_network_invalid
   ignore_errors: yes
 
-# - assert:
-#     that:
-#       - '"No network found with the name" in create_network_invalid.msg'
+- assert:
+    that:
+      - '"No network found with the name" in create_network_invalid.msg'
+      # - '"400" in create_network_invalid.msg'
 
 - name: Query all administrators
   meraki_admin:
@@ -160,14 +182,14 @@
     auth_key: '{{auth_key}}'
     state: query
     org_name: '{{test_org_name}}'
-    email: meraki+janedoe@kevinbreit.net
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
   delegate_to: localhost
   register: query_email
 
 - assert:
     that:
       - query_name.data.name == "Jane Doe"
-      - query_email.data.email == "meraki+janedoe@kevinbreit.net"
+      - 'query_email.data.email == "{{email_prefix}}+janedoe@{{email_domain}}"'
 
 - name: Delete administrators
   meraki_admin:
@@ -178,9 +200,9 @@
   delegate_to: localhost
   register: delete_all
   loop:
-      - meraki+janedoe@kevinbreit.net
-      - meraki+johndoe@kevinbreit.net
-      - meraki+jimdoe@kevinbreit.net
+      - '{{email_prefix}}+janedoe@{{email_domain}}'
+      - '{{email_prefix}}+johndoe@{{email_domain}}'
+      - '{{email_prefix}}+jimdoe@{{email_domain}}'
 
 - name: Query all administrators
   meraki_admin:
