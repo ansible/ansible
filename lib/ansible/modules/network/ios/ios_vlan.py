@@ -129,25 +129,25 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                commands.append('no vlan {}'.format(vlan_id))
+                commands.append('no vlan {0}'.format(vlan_id))
 
         elif state == 'present':
             if not obj_in_have:
-                commands.append('vlan {}'.format(vlan_id))
+                commands.append('vlan {0}'.format(vlan_id))
                 if name:
-                    commands.append('name {}'.format(name))
+                    commands.append('name {0}'.format(name))
 
                 if interfaces:
                     for i in interfaces:
-                        commands.append('interface {}'.format(i))
+                        commands.append('interface {0}'.format(i))
                         commands.append('switchport mode access')
-                        commands.append('switchport access vlan {}'.format(vlan_id))
+                        commands.append('switchport access vlan {0}'.format(vlan_id))
 
             else:
                 if name:
                     if name != obj_in_have['name']:
-                        commands.append('vlan {}'.format(vlan_id))
-                        commands.append('name {}'.format(name))
+                        commands.append('vlan {0}'.format(vlan_id))
+                        commands.append('name {0}'.format(name))
 
                 if interfaces:
                     if not obj_in_have['interfaces']:
@@ -172,10 +172,10 @@ def map_obj_to_commands(updates, module):
                             commands.append('switchport mode access')
                             commands.append('no switchport access vlan {}'.format(vlan_id))
         else:
-            commands.append('vlan {}'.format(vlan_id))
+            commands.append('vlan {0}'.format(vlan_id))
             if name:
-                commands.append('name {}'.format(name))
-            commands.append('state {}'.format(state))
+                commands.append('name {0}'.format(name))
+            commands.append('state {0}'.format(state))
 
     if purge:
         for h in have:
