@@ -72,7 +72,7 @@ def get_config(module, source, filter, lock=False):
     try:
         locked = False
         if lock:
-            conn.lock(target='running')
+            conn.lock(target=source)
             locked = True
         response = conn.get_config(source=source, filter=filter)
 
@@ -81,7 +81,7 @@ def get_config(module, source, filter, lock=False):
 
     finally:
         if locked:
-            conn.unlock(target='running')
+            conn.unlock(target=source)
 
     return response
 
