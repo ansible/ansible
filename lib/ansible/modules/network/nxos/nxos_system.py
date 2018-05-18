@@ -111,29 +111,34 @@ commands:
 """
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.common.utils import ComplexList
 
 _CONFIGURED_VRFS = None
+
 
 def has_vrf(module, vrf):
     global _CONFIGURED_VRFS
     if _CONFIGURED_VRFS is not None:
         return vrf in _CONFIGURED_VRFS
     config = get_config(module)
-    _CONFIGURED_VRFS = re.findall('vrf context (\S+)', config)
+    _CONFIGURED_VRFS = re.findall(r'vrf context (\S+)', config)
     return vrf in _CONFIGURED_VRFS
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-    difference = lambda x,y,z: [item for item in x[z] if item not in y[z]]
+    def needs_update(x):
+        return want.get(x) and (want.get(x) != have.get(x))
+
+    def difference(x, y, z):
+        return [item for item in x[z] if item not in y[z]]
 
     def remove(cmd, commands, vrf=None):
         if vrf:
@@ -195,7 +200,7 @@ def map_obj_to_commands(want, have, module):
 
         if want['name_servers']:
             for item in difference(have, want, 'name_servers'):
-                cmd = 'no ip name-server %s' %  item['server']
+                cmd = 'no ip name-server %s' % item['server']
                 remove(cmd, commands, item['vrf'])
             for item in difference(want, have, 'name_servers'):
                 cmd = 'ip name-server %s' % item['server']
@@ -206,14 +211,16 @@ def map_obj_to_commands(want, have, module):
 
     return commands
 
+
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     if match:
         return match.group(1)
 
+
 def parse_domain_name(config, vrf_config):
     objects = list()
-    regex = re.compile('ip domain-name (\S+)')
+    regex = re.compile(r'ip domain-name (\S+)')
 
     match = regex.search(config, re.M)
     if match:
@@ -226,17 +233,19 @@ def parse_domain_name(config, vrf_config):
 
     return objects
 
+
 def parse_domain_search(config, vrf_config):
     objects = list()
 
-    for item in re.findall('^ip domain-list (\S+)', config, re.M):
+    for item in re.findall(r'^ip domain-list (\S+)', config, re.M):
         objects.append({'name': item, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip domain-list (\S+)', cfg, re.M):
+        for item in re.findall(r'ip domain-list (\S+)', cfg, re.M):
             objects.append({'name': item, 'vrf': vrf})
 
     return objects
+
 
 def parse_name_servers(config, vrf_config, vrfs):
     objects = list()
@@ -256,10 +265,12 @@ def parse_name_servers(config, vrf_config, vrfs):
 
     return objects
 
+
 def parse_system_mtu(config):
-    match = re.search('^system jumbomtu (\d+)', config, re.M)
+    match = re.search(r'^system jumbomtu (\d+)', config, re.M)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -267,7 +278,7 @@ def map_config_to_obj(module):
 
     vrf_config = {}
 
-    vrfs = re.findall('^vrf context (\S+)$', config, re.M)
+    vrfs = re.findall(r'^vrf context (\S+)$', config, re.M)
     for vrf in vrfs:
         config_data = configobj.get_block_config(path=['vrf context %s' % vrf])
         vrf_config[vrf] = config_data
@@ -281,9 +292,11 @@ def map_config_to_obj(module):
         'system_mtu': parse_system_mtu(config)
     }
 
+
 def validate_system_mtu(value, module):
     if not 1500 <= value <= 9216:
         module.fail_json(msg='system_mtu must be between 1500 and 9216')
+
 
 def map_params_to_obj(module):
     obj = {
@@ -316,6 +329,7 @@ def map_params_to_obj(module):
 
     return obj
 
+
 def main():
     """ main entry point for module execution
     """
@@ -333,7 +347,6 @@ def main():
         name_servers=dict(type='list'),
 
         system_mtu=dict(type='int'),
-        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

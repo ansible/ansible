@@ -29,24 +29,29 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
         self._supports_async = True
 
-        results = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
-        if not results.get('skipped'):
+        if not result.get('skipped'):
 
-            if results.get('invocation', {}).get('module_args'):
+            if result.get('invocation', {}).get('module_args'):
                 # avoid passing to modules in case of no_log
                 # should not be set anymore but here for backwards compatibility
-                del results['invocation']['module_args']
+                del result['invocation']['module_args']
 
             # FUTURE: better to let _execute_module calculate this internally?
-            wrap_async = self._task.async and not self._connection.has_native_async
+            wrap_async = self._task.async_val and not self._connection.has_native_async
 
             # do work!
-            results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars, wrap_async=wrap_async))
+            result = merge_hash(result, self._execute_module(task_vars=task_vars, wrap_async=wrap_async))
 
-            # hack to keep --verbose from showing all the setup module results
-            # moved from setup module as now we filter out all _ansible_ from results
+            # hack to keep --verbose from showing all the setup module result
+            # moved from setup module as now we filter out all _ansible_ from result
             if self._task.action == 'setup':
-                results['_ansible_verbose_override'] = True
+                result['_ansible_verbose_override'] = True
 
-        return results
+        if not wrap_async:
+            # remove a temporary path we created
+            self._remove_tmp_path(self._connection._shell.tmpdir)
+
+        return result

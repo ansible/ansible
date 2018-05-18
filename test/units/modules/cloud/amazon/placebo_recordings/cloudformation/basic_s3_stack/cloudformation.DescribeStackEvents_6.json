@@ -20,7 +20,6 @@
                 "StackName": "ansible-test-basic-yaml",
                 "ResourceProperties": "{}\n",
                 "PhysicalResourceId": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4",
-                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "MyBucket"
             },
             {
@@ -42,7 +41,6 @@
                 "StackName": "ansible-test-basic-yaml",
                 "ResourceProperties": "{}\n",
                 "PhysicalResourceId": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4",
-                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "MyBucket"
             },
             {
@@ -63,7 +61,6 @@
                 "StackName": "ansible-test-basic-yaml",
                 "ResourceProperties": "{}\n",
                 "PhysicalResourceId": "",
-                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "MyBucket"
             },
             {
@@ -84,7 +81,6 @@
                 "ResourceStatusReason": "User Initiated",
                 "StackName": "ansible-test-basic-yaml",
                 "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
-                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "ansible-test-basic-yaml"
             }
         ],

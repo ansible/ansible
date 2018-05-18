@@ -1,52 +1,20 @@
-import json
-
-from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.modules.system import iptables
-from ansible.module_utils._text import to_bytes
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
-
-
-def exit_json(*args, **kwargs):
-    if 'changed' not in kwargs:
-        kwargs['changed'] = False
-    raise AnsibleExitJson(kwargs)
-
-
-def fail_json(*args, **kwargs):
-    kwargs['failed'] = True
-    raise AnsibleFailJson(kwargs)
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
 def get_bin_path(*args, **kwargs):
     return "/sbin/iptables"
 
 
-class TestIptables(unittest.TestCase):
+class TestIptables(ModuleTestCase):
 
     def setUp(self):
-        self.mock_basic = patch.multiple(basic.AnsibleModule,
-                                         exit_json=exit_json,
-                                         fail_json=fail_json,
-                                         get_bin_path=get_bin_path)
-        self.mock_basic.start()
-        self.addCleanup(self.mock_basic.stop)
-
-    def tearDown(self):
-        pass
+        super(TestIptables, self).setUp()
+        self.mock_get_bin_path = patch.object(basic.AnsibleModule, 'get_bin_path', get_bin_path)
+        self.mock_get_bin_path.start()
+        self.addCleanup(self.mock_get_bin_path.stop)  # ensure that the patching is 'undone'
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""
@@ -609,3 +577,62 @@ class TestIptables(unittest.TestCase):
             '--reject-with',
             'tcp-reset',
         ])
+
+    def test_tcp_flags(self):
+        """ Test various ways of inputting tcp_flags """
+        args = [
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': 'flags=ALL flags_set="ACK,RST,SYN,FIN"'
+            },
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': {
+                    'flags': 'ALL',
+                    'flags_set': 'ACK,RST,SYN,FIN'
+                }
+            },
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': {
+                    'flags': ['ALL'],
+                    'flags_set': ['ACK', 'RST', 'SYN', 'FIN']
+                }
+            },
+
+        ]
+
+        for item in args:
+            set_module_args(item)
+
+            commands_results = [
+                (0, '', ''),
+            ]
+
+            with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+                run_command.side_effect = commands_results
+                with self.assertRaises(AnsibleExitJson) as result:
+                    iptables.main()
+                    self.assertTrue(result.exception.args[0]['changed'])
+
+            self.assertEqual(run_command.call_count, 1)
+            self.assertEqual(run_command.call_args_list[0][0][0], [
+                '/sbin/iptables',
+                '-t',
+                'filter',
+                '-C',
+                'OUTPUT',
+                '-p',
+                'tcp',
+                '--tcp-flags',
+                'ALL',
+                'ACK,RST,SYN,FIN',
+                '-j',
+                'DROP'
+            ])

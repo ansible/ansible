@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_ospf_vrf
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosOspfVrfModule(TestNxosModule):
@@ -31,6 +29,8 @@ class TestNxosOspfVrfModule(TestNxosModule):
     module = nxos_ospf_vrf
 
     def setUp(self):
+        super(TestNxosOspfVrfModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_ospf_vrf.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosOspfVrfModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosOspfVrfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

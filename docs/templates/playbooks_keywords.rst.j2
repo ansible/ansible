@@ -1,11 +1,18 @@
-Directives Glossary
-===================
+.. _playbook_keywords:
 
-Here we list the common playbook objects and their directives.
-Note that not all directives affect the object itself and might just be there to be inherited by other contained objects.
-Aliases for the directives are not reflected here, nor are mutable ones, for example `action` in task can be substituted by the name of any module plugin.
+Playbook Keywords
+=================
 
-Be aware that this reflects the 'current development branch' and that the keywords do not have 'version_added' information.
+These are the keywords available on common playbook objects.
+
+.. note:: Please note:
+
+    * Aliases for the directives are not reflected here, nor are mutable one. For example,
+      :term:`action` in task can be substituted by the name of any Ansible module.
+    * The keywords do not have ``version_added`` information at this time
+    * Some keywords set defaults for the objects inside of them rather than for the objects
+      themselves
+
 
 .. contents::
    :local:
@@ -19,8 +26,7 @@ Be aware that this reflects the 'current development branch' and that the keywor
 
 {% for attribute in oblist[name]|sort %}
     {{ attribute }}
-        {{ oblist[name][attribute] }}
+        {{ oblist[name][attribute] |indent(8) }}
 
 {% endfor %}
-
 {% endfor %}

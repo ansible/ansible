@@ -1,0 +1,5 @@
+Interface       IPv6 Address/Link-local Address          Admin-Status Link-Status VRF
+loopback0       fe80::200:ff:fe00:0                      up           up          default
+loopback3       fe80::200:ff:fe00:0                      up           up          default
+mgmt0           fe80::a68c:dbff:fe33:bc00                up           up          management
+

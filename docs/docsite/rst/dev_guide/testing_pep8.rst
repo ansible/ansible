@@ -48,7 +48,7 @@ The `PEP 8`_ check can be run locally with::
 
 
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
-.. _pycodestyle: https://pypi.python.org/pypi/pycodestyle
+.. _pycodestyle: https://pypi.org/project/pycodestyle/
 .. _current ignore list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/current-ignore.txt
 .. _legacy file list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/legacy-files.txt
 .. _legacy ignore list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/legacy-ignore.txt

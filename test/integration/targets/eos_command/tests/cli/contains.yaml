@@ -1,15 +1,14 @@
 ---
-- debug: msg="START cli/contains.yaml"
+- debug: msg="START cli/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   eos_command:
     commands:
       - show version
-      - show interface Management1 | json
+      - show interfaces Management1 | json
     wait_for:
       - "result[0] contains EOS"
       - "result[1].interfaces.Management1.name contains Manage"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -17,4 +16,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/contains.yaml"
+- debug: msg="END cli/contains.yaml on connection={{ ansible_connection }}"

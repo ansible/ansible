@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_user
 short_description: Creates/updates/deletes Gitlab Users
 description:
-   - When the user does not exists in Gitlab, it will be created.
+   - When the user does not exist in Gitlab, it will be created.
    - When the user does exists and state=absent, the user will be deleted.
    - When changes are made to user, the user will be updated.
 version_added: "2.1"
@@ -32,25 +32,19 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     name:
         description:
             - Name of the user you want to create
@@ -62,6 +56,7 @@ options:
     password:
         description:
             - The password of the user.
+            - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
         required: true
     email:
         description:
@@ -70,18 +65,12 @@ options:
     sshkey_name:
         description:
             - The name of the sshkey
-        required: false
-        default: null
     sshkey_file:
         description:
             - The ssh key itself.
-        required: false
-        default: null
     group:
         description:
             - Add user as an member to this group.
-        required: false
-        default: null
     access_level:
         description:
             - The access level to the group. One of the following can be used.
@@ -90,20 +79,17 @@ options:
             - developer
             - master
             - owner
-        required: false
-        default: null
     state:
         description:
             - create or delete group.
             - Possible values are present and absent.
-        required: false
         default: present
         choices: ["present", "absent"]
     confirm:
         description:
             - Require confirmation.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         version_added: "2.4"
 '''
 
@@ -302,6 +288,9 @@ def main():
     state = module.params['state']
     confirm = module.params['confirm']
 
+    if len(user_password) < 8:
+        module.fail_json(msg="New user's 'password' should contain more than 8 characters.")
+
     # We need both login_user and login_password or login_token, otherwise we fail.
     if login_user is not None and login_password is not None:
         use_credentials = True
@@ -348,7 +337,7 @@ def main():
 
     # Check if user exists, if not exists and state = absent, we exit nicely.
     if not user.existsUser(user_username) and state == "absent":
-        module.exit_json(changed=False, result="User already deleted or does not exists")
+        module.exit_json(changed=False, result="User already deleted or does not exist")
     else:
         # User exists,
         if state == "absent":

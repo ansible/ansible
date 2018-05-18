@@ -27,32 +27,23 @@ options:
     description:
       - Whether to create or delete the firewall policy
     default: present
-    required: False
     choices: ['present', 'absent']
   source:
     description:
       - The list  of source addresses for traffic on the originating firewall.
-        This is required when state is 'present"
-    default: None
-    required: False
+        This is required when state is 'present'
   destination:
     description:
       - The list of destination addresses for traffic on the terminating firewall.
         This is required when state is 'present'
-    default: None
-    required: False
   ports:
     description:
       - The list of ports associated with the policy.
         TCP and UDP can take in single ports or port ranges.
-    default: None
-    required: False
     choices: ['any', 'icmp', 'TCP/123', 'UDP/123', 'TCP/123-456', 'UDP/123-456']
   firewall_policy_id:
     description:
       - Id of the firewall policy. This is required to update or delete an existing firewall policy
-    default: None
-    required: False
   source_account_alias:
     description:
       - CLC alias for the source account
@@ -60,20 +51,16 @@ options:
   destination_account_alias:
     description:
       - CLC alias for the destination account
-    default: None
-    required: False
   wait:
     description:
       - Whether to wait for the provisioning tasks to finish before returning.
-    default: True
-    required: False
-    choices: [True, False]
+    type: bool
+    default: 'yes'
   enabled:
     description:
       - Whether the firewall policy is enabled or disabled
-    default: True
-    required: False
     choices: [True, False]
+    default: 'yes'
 requirements:
     - python = 2.7
     - requests >= 2.5.0

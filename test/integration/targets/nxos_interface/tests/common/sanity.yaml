@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -7,14 +9,12 @@
   nxos_feature:
     feature: interface-vlan
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Put interface {{ testint }} into a default state"
   nxos_config: &intcleanup
     lines:
       - "default interface {{ testint }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Remove possibly existing vlan interfaces"
@@ -24,7 +24,6 @@
       - "no interface vlan 710"
       - "no interface vlan 711"
       - "no interface vlan 712"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -33,9 +32,8 @@
       interface: "{{ testint }}"
       mode: layer3
       description: 'Configured by Ansible - Layer3'
-      admin_state: 'up'
+      admin_state: up
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -55,9 +53,8 @@
       interface: "{{ testint }}"
       mode: layer2
       description: 'Configured by Ansible - Layer2'
-      admin_state: 'down'
+      admin_state: down
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -72,7 +69,6 @@
     nxos_interface: &createvlans
       interface: "{{ item.os_svi_int }}"
       description: "{{ item.os_svi_desc }}"
-      provider: "{{ connection }}"
     with_items: &vlanitems
       - {os_svi_int: vlan2, os_svi_desc: SVI_VLAN2}
       - {os_svi_int: vlan710, os_svi_desc: SVI_VLAN710}
@@ -88,7 +84,6 @@
       addr: "{{ item.ipv4_addr }}"
       mask: "{{ item.ipv4_mask }}"
       version: "{{ item.ipv4_ver }}"
-      provider: "{{ connection }}"
     with_items: &vlanips
       - {os_svi_int: vlan2, ipv4_addr: 192.168.2.1, ipv4_mask: 24, ipv4_ver: v4}
       - {os_svi_int: vlan710, ipv4_addr: 192.168.3.1, ipv4_mask: 24, ipv4_ver: v4}
@@ -124,8 +119,7 @@
     nxos_feature:
       feature: interface-vlan
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   always:
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_interface sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_interface sanity test"

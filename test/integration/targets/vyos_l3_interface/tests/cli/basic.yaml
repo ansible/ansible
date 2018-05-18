@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Remove IP address
   vyos_l3_interface:
     name: eth1
@@ -147,6 +149,7 @@
     aggregate:
       - { name: eth1, ipv4: 192.168.2.10/24 }
       - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
   register: result
 
 - assert:
@@ -155,12 +158,14 @@
       - '"set interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
       - '"set interfaces ethernet eth2 address 192.168.3.10/24" in result.commands'
       - '"set interfaces ethernet eth2 address fd5d:12c9:2201:1::1/64" in result.commands'
+      - '"set interfaces ethernet eth2 address 192.168.4.10/24" in result.commands'
 
 - name: Set IP addresses on aggregate (idempotent)
   vyos_l3_interface:
     aggregate:
       - { name: eth1, ipv4: 192.168.2.10/24 }
       - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
   register: result
 
 - assert:
@@ -172,6 +177,7 @@
     aggregate:
       - { name: eth1, ipv4: 192.168.2.10/24 }
       - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
     state: absent
   register: result
 
@@ -181,12 +187,14 @@
       - '"delete interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
       - '"delete interfaces ethernet eth2 address 192.168.3.10/24" in result.commands'
       - '"delete interfaces ethernet eth2 address fd5d:12c9:2201:1::1/64" in result.commands'
+      - '"delete interfaces ethernet eth2 address 192.168.4.10/24" in result.commands'
 
 - name: Remove IP addresses on aggregate (idempotent)
   vyos_l3_interface:
     aggregate:
       - { name: eth1, ipv4: 192.168.2.10/24 }
       - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
     state: absent
   register: result
 

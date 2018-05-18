@@ -12,9 +12,9 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-optional region environment variable if region is 'auto'
+Optional region environment variable if region is 'auto'
 
-This script also assumes there is an ec2.ini file alongside it.  To specify a
+This script also assumes that there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
     export EC2_INI_PATH=/path/to/my_ec2.ini
@@ -31,6 +31,13 @@ the AWS_PROFILE variable:
     AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml
 
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
+
+You can filter for specific EC2 instances by creating an environment variable
+named EC2_INSTANCE_FILTERS, which has the same format as the instance_filters
+entry documented in ec2.ini.  For example, to find all hosts whose name begins
+with 'webserver', one might use:
+
+    export EC2_INSTANCE_FILTERS='tag:Name=webserver*'
 
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
@@ -95,7 +102,7 @@ consistency with variable spellings (camelCase and underscores) since this
 just loops through all variables the object exposes. It is preferred to use the
 ones with underscores when multiple exist.
 
-In addition, if an instance has AWS Tags associated with it, each tag is a new
+In addition, if an instance has AWS tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
@@ -340,18 +347,18 @@ class Ec2Inventory(object):
 
         # Regions
         self.regions = []
-        configRegions = config.get('ec2', 'regions')
-        if (configRegions == 'all'):
+        config_regions = config.get('ec2', 'regions')
+        if (config_regions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
-                configRegions_exclude = config.get('ec2', 'regions_exclude')
+                config_regions_exclude = config.get('ec2', 'regions_exclude')
 
-                for regionInfo in ec2.regions():
-                    if regionInfo.name not in configRegions_exclude:
-                        self.regions.append(regionInfo.name)
+                for region_info in ec2.regions():
+                    if region_info.name not in config_regions_exclude:
+                        self.regions.append(region_info.name)
         else:
-            self.regions = configRegions.split(",")
+            self.regions = config_regions.split(",")
         if 'auto' in self.regions:
             env_region = os.environ.get('AWS_REGION')
             if env_region is None:
@@ -456,6 +463,7 @@ class Ec2Inventory(object):
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
         if cache_id:
             cache_name = '%s-%s' % (cache_name, cache_id)
+        cache_name += '-' + str(abs(hash(__file__)))[1:7]
         self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
@@ -493,8 +501,8 @@ class Ec2Inventory(object):
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = []
 
-        if config.has_option('ec2', 'instance_filters'):
-            filters = config.get('ec2', 'instance_filters')
+        if config.has_option('ec2', 'instance_filters') or 'EC2_INSTANCE_FILTERS' in os.environ:
+            filters = os.getenv('EC2_INSTANCE_FILTERS', config.get('ec2', 'instance_filters') if config.has_option('ec2', 'instance_filters') else '')
 
             if self.stack_filters and '&' in filters:
                 self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
@@ -1026,7 +1034,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by AWS account ID
         if self.group_by_aws_account:
-            self.push(self.inventory, self.aws_account_id, dest)
+            self.push(self.inventory, self.aws_account_id, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
@@ -1680,9 +1688,9 @@ class Ec2Inventory(object):
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        regex = "[^A-Za-z0-9\_"
+        regex = r"[^A-Za-z0-9\_"
         if not self.replace_dash_in_groups:
-            regex += "\-"
+            regex += r"\-"
         return re.sub(regex + "]", "_", word)
 
     def json_format_dict(self, data, pretty=False):

@@ -91,7 +91,7 @@ class SoftLayerInventory(object):
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups'''
 
-        return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-\.]", "_", word)
 
     def push(self, my_dict, key, element):
         '''Push an element onto an array that may not have been defined in the dict'''

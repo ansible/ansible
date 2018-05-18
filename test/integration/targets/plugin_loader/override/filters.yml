@@ -1,0 +1,15 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: ensure local 'flag' filter works, 'flatten' is overriden and 'ternary' is still from core
+      assert:
+         that:
+             - a|flag == 'flagged'
+             - a|flatten != [1, 2, 3, 4, 5]
+             - a|flatten == "flagged"
+             - a|ternary('yes', 'no') == 'yes'
+      vars:
+        a:
+         - 1
+         - 2
+         - [3, 4, 5]

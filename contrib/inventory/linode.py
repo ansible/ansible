@@ -242,7 +242,7 @@ class LinodeInventory(object):
         self.push(self.inventory, "linode", dest)
 
         # Add host info to hostvars
-        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info(node)
+        self.inventory["_meta"]["hostvars"][dest] = self._get_host_info(node)
 
     def get_node_public_ip(self, node):
         """Returns a the public IP address of the node"""
@@ -265,9 +265,9 @@ class LinodeInventory(object):
         node_id = self.index[self.args.host]
         node = self.get_node(node_id)
 
-        return self.json_format_dict(self.get_host_info(node), True)
+        return self.json_format_dict(self._get_host_info(node), True)
 
-    def get_host_info(self, node):
+    def _get_host_info(self, node):
         node_vars = {}
         for direct_attr in [
             "api_id",
@@ -338,7 +338,7 @@ class LinodeInventory(object):
 
     def to_safe(self, word):
         """Escapes any characters that would be invalid in an ansible group name."""
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """Converts a dict to a JSON object and dumps it as a formatted string."""

@@ -34,46 +34,39 @@ version_added: "1.1"
 options:
     name:
         description:
-            - name of package to install/remove
-        required: false
-        default: None
+            - list of names of packages to install/remove
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - >
-              ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed
-              relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an
-              alternative location in the system.
-        required: false
+            - "A ':' separated list of paths to search for 'brew' executable.
+              Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
+              providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
         default: '/usr/local/bin'
     state:
         description:
             - state of the package
         choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'unlinked' ]
-        required: false
         default: present
     update_homebrew:
         description:
             - update homebrew itself first
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['update-brew']
     upgrade_all:
         description:
             - upgrade all homebrew packages
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['upgrade']
     install_options:
         description:
             - options flags to install a package
-        required: false
-        default: null
         aliases: ['options']
         version_added: "1.4"
-notes:  []
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
@@ -180,9 +173,9 @@ class Homebrew(object):
         @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -694,7 +687,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         opts = (
-            [self.brew_path, 'uninstall']
+            [self.brew_path, 'uninstall', '--force']
             + self.install_options
             + [self.current_package]
         )

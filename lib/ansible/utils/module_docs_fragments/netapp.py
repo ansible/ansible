@@ -40,10 +40,12 @@ options:
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
         For more information, please read the documentation U(https://goo.gl/BRu78Z).
+      aliases: ['user']
   password:
       required: true
       description:
       - Password for the specified user.
+      aliases: ['pass']
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
@@ -51,7 +53,7 @@ requirements:
   - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
 
 notes:
-  - The modules prefixed with C(netapp\_cdot) are built to support the ONTAP storage platform.
+  - The modules prefixed with C(netapp\\_cdot) are built to support the ONTAP storage platform.
 
 """
 
@@ -75,7 +77,7 @@ requirements:
   - solidfire-sdk-python (1.1.0.92)
 
 notes:
-  - The modules prefixed with C(sf\_) are built to support the SolidFire storage platform.
+  - The modules prefixed with C(sf\\_) are built to support the SolidFire storage platform.
 
 """
 

@@ -5,6 +5,7 @@ python_versions=(
     2.7
     3.5
     3.6
+    3.7
 )
 
 requirements=()
@@ -32,7 +33,9 @@ for python_version in "${python_versions[@]}"; do
     echo "==> Installing pip for python ${python_version} ..."
 
     set -x
+    "python${python_version}" --version
     "python${python_version}" /tmp/get-pip.py -c constraints.txt
+    "pip${python_version}" --version --disable-pip-version-check
     set +x
 
     echo "==> Installing requirements for python ${python_version} ..."
@@ -45,7 +48,7 @@ for python_version in "${python_versions[@]}"; do
 
     echo "==> Checking for requirements conflicts for ${python_version} ..."
 
-    after=$("pip${python_version}" list)
+    after=$("pip${python_version}" list --format=legacy)
 
     for requirement in "${version_requirements[@]}"; do
         before="${after}"
@@ -54,7 +57,7 @@ for python_version in "${python_versions[@]}"; do
         "pip${python_version}" install --disable-pip-version-check -c constraints.txt -r "${requirement}"
         set +x
 
-        after=$("pip${python_version}" list)
+        after=$("pip${python_version}" list --format=legacy)
 
         if [ "${before}" != "${after}" ]; then
             echo "==> Conflicts detected in requirements for python ${python_version}: ${requirement}"

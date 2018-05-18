@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_ospf_vrf sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_ospf_vrf sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Enable feature OSPF"
   nxos_feature:
@@ -37,15 +39,65 @@
       that:
         - "result.changed == false"
 
-  rescue:
-  - name: "Disable feature OSPF"
-    nxos_feature:
-      feature: ospf
-      state: disabled
+  - name: Configure ospf vrf
+    nxos_ospf_vrf: &config1
+      ospf: 2
+      auto_cost: 5000
+      timer_throttle_spf_hold: 1100
+      timer_throttle_lsa_max: 2222
+      default_metric: 1000
+      log_adjacency: log
+      vrf: default
+      passive_interface: true
+      state: present
       provider: "{{ connection }}"
-    ignore_errors: yes
+    register: result
 
-  always:
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_ospf_vrf: *config1
+    register: result
+
+  - assert: *false
+
+  - name: Configure ospf vrf
+    nxos_ospf_vrf: &config2
+      ospf: 2
+      auto_cost: default
+      default_metric: default
+      log_adjacency: default
+      timer_throttle_spf_hold: default
+      passive_interface: false
+      vrf: default
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_ospf_vrf: *config2
+    register: result
+
+  - assert: *false
+
+  - name: Unconfigure ospf vrf
+    nxos_ospf_vrf: &unconfig1
+      ospf: 2
+      vrf: default
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_ospf_vrf: *unconfig1
+    register: result
+
+  - assert: *false
+
   - name: Unconfigure ospf vrf
     nxos_ospf_vrf: &unconfig
       ospf: 1
@@ -62,4 +114,12 @@
 
   - assert: *false
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_ospf_vrf sanity test"
+  always:
+  - name: "Disable feature OSPF"
+    nxos_feature:
+      feature: ospf
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_ospf_vrf sanity test"

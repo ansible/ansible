@@ -44,7 +44,7 @@
 - name: check new head
   assert:
     that:
-      - not update_new_tag|changed
+      - update_new_tag is not changed
       - "'newtag' in listoftags.stdout_lines"
 
 

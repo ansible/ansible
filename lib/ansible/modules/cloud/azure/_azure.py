@@ -19,28 +19,25 @@ short_description: create or terminate a virtual machine in azure
 description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
-deprecated: "Use M(azure_rm_virtualmachine) instead."
+deprecated:
+  removed_in: "2.8"
+  why: Replaced with various dedicated Azure modules.
+  alternative: M(azure_rm_virtualmachine)
 options:
   name:
     description:
       - name of the virtual machine and associated cloud service.
     required: true
-    default: null
   location:
     description:
       - the azure location to use (e.g. 'East US')
     required: true
-    default: null
   subscription_id:
     description:
       - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environment variable.
-    required: false
-    default: null
   management_cert_path:
     description:
       - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environment variable.
-    required: false
-    default: null
   storage_account:
     description:
       - the azure storage account in which to store the data disks.
@@ -50,86 +47,65 @@ options:
       - system image for creating the virtual machine
         (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
     required: true
-    default: null
   role_size:
     description:
       - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of
         type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
-    required: false
     default: Small
   endpoints:
     description:
       - a comma-separated list of TCP ports to expose on the virtual machine (e.g., "22,80")
-    required: false
     default: 22
   user:
     description:
       - the unix username for the new virtual machine.
-    required: false
-    default: null
   password:
     description:
       - the unix password for the new virtual machine.
-    required: false
-    default: null
   ssh_cert_path:
     description:
       - path to an X509 certificate containing the public ssh key to install in the virtual machine.
         See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
       - if this option is specified, password-based ssh authentication will be disabled.
-    required: false
-    default: null
   virtual_network_name:
     description:
       - Name of virtual network.
-    required: false
-    default: null
   hostname:
     description:
       - hostname to write /etc/hostname. Defaults to <name>.cloudapp.net.
-    required: false
-    default: null
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    aliases: []
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 600
-    aliases: []
   wait_timeout_redirects:
     description:
       - how long before wait gives up for redirects, in seconds
     default: 300
-    aliases: []
   state:
     description:
       - create or terminate instances
-    required: false
+    choices: [ absent, present ]
     default: 'present'
-    aliases: []
   auto_updates:
     description:
       - Enable Auto Updates on Windows Machines
-    required: false
     version_added: "2.0"
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   enable_winrm:
     description:
       - Enable winrm on Windows Machines
-    required: false
     version_added: "2.0"
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   os_type:
     description:
       - The type of the os that is gettings provisioned
-    required: false
     version_added: "2.0"
     default: "linux"
     choices: [ "windows", "linux" ]

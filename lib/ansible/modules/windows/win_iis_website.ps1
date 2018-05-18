@@ -25,14 +25,14 @@ $params = Parse-Args $args;
 # Name parameter
 $name = Get-Attr $params "name" $FALSE;
 If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
+    Fail-Json @{} "missing required argument: name";
 }
 
 # State parameter
 $state = Get-Attr $params "state" $FALSE;
 $state.ToString().ToLower();
 If (($state -ne $FALSE) -and ($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted') -and ($state -ne 'absent')) {
-  Fail-Json (New-Object psobject) "state is '$state'; must be 'started', 'restarted', 'stopped' or 'absent'"
+  Fail-Json @{} "state is '$state'; must be 'started', 'restarted', 'stopped' or 'absent'"
 }
 
 # Path parameter
@@ -65,8 +65,8 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
 }
 
 # Result
-$result = New-Object psobject @{
-  site = New-Object psobject
+$result = @{
+  site = @{}
   changed = $false
 };
 
@@ -77,13 +77,13 @@ Try {
   # Add site
   If(($state -ne 'absent') -and (-not $site)) {
     If ($physical_path -eq $FALSE) {
-      Fail-Json (New-Object psobject) "missing required arguments: physical_path"
+      Fail-Json @{} "missing required arguments: physical_path"
     }
     ElseIf (-not (Test-Path $physical_path)) {
-      Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+      Fail-Json @{} "specified folder must already exist: physical_path"
     }
 
-    $site_parameters = New-Object psobject @{
+    $site_parameters = @{
       Name = $name
       PhysicalPath = $physical_path
     };
@@ -129,7 +129,7 @@ Try {
     # Change Physical Path if needed
     if($physical_path) {
       If (-not (Test-Path $physical_path)) {
-        Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+        Fail-Json @{} "specified folder must already exist: physical_path"
       }
 
       $folder = Get-Item $physical_path
@@ -150,8 +150,15 @@ Try {
     # Set properties
     if($parameters) {
       $parameters | foreach {
-        $parameter_value = Get-ItemProperty "IIS:\Sites\$($site.Name)" $_[0]
-        if((-not $parameter_value) -or ($parameter_value.Value -as [String]) -ne $_[1]) {
+        $property_value = Get-ItemProperty "IIS:\Sites\$($site.Name)" $_[0]
+
+        switch ($property_value.GetType().Name)
+        {
+            "ConfigurationAttribute" { $parameter_value = $property_value.value }
+            "String" { $parameter_value = $property_value }
+        }
+        
+        if((-not $parameter_value) -or ($parameter_value) -ne $_[1]) {
           Set-ItemProperty "IIS:\Sites\$($site.Name)" $_[0] $_[1]
           $result.changed = $true
         }
@@ -173,7 +180,7 @@ Try {
 }
 Catch
 {
-  Fail-Json (New-Object psobject) $_.Exception.Message
+  Fail-Json @{} $_.Exception.Message
 }
 
 if ($state -ne 'absent')
@@ -183,7 +190,7 @@ if ($state -ne 'absent')
 
 if ($site)
 {
-  $result.site = New-Object psobject @{
+  $result.site = @{
     Name = $site.Name
     ID = $site.ID
     State = $site.State

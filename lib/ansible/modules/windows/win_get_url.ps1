@@ -5,8 +5,7 @@
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -35,8 +34,8 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
 
-    $webRequest = [System.Net.HttpWebRequest]::Create($url)
-
+    $webRequest = [System.Net.WebRequest]::Create($url)
+    
     foreach ($header in $headers.GetEnumerator()) {
         $webRequest.Headers.Add($header.Name, $header.Value)
     }
@@ -53,14 +52,23 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     }
 
     if ($credentials) {
-        $webRequest.Credentials = $credentials
+        if ($force_basic_auth) {
+            $extWebClient.Headers.Add("Authorization","Basic $credentials")
+        } else {
+            $extWebClient.Credentials = $credentials
+        }
     }
 
-    $webRequest.Method = "HEAD"
+    if ($webRequest -is [System.Net.FtpWebRequest]) {
+        $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+    } else {
+        $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
+    }
+    
     Try {
-        [System.Net.HttpWebResponse]$webResponse = $webRequest.GetResponse()
+        $webResponse = $webRequest.GetResponse()
 
-        $webLastMod = $webResponse.GetResponseHeader("Last-Modified")
+        $webLastMod = $webResponse.LastModified
     } Catch [System.Net.WebException] {
         $result.status_code = $_.Exception.Response.StatusCode
         Fail-Json -obj $result -message "Error requesting '$url'. $($_.Exception.Message)"
@@ -71,7 +79,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $result.msg = $webResponse.StatusDescription
     $webResponse.Close()
 
-    if ($webLastMod -and ((Get-Date -Date $webLastMod) -lt $fileLastMod)) {
+    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -lt $fileLastMod)) {
         return $false
     } else {
         return $true
@@ -106,7 +114,11 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     }
 
     if ($credentials) {
-        $extWebClient.Credentials = $credentials
+        if ($force_basic_auth) {
+            $extWebClient.Headers.Add("Authorization","Basic $credentials")
+        } else {
+            $extWebClient.Credentials = $credentials
+        }
     }
 
     if (-not $whatif) {
@@ -138,6 +150,7 @@ $skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certifi
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $url_username = Get-AnsibleParam -obj $params -name "url_username" -type "str" -aliases "username"
 $url_password = Get-AnsibleParam -obj $params -name "url_password" -type "str" -aliases "password"
+$force_basic_auth = Get-AnsibleParam -obj $params -name "force_basic_auth" -type "bool" -default $false
 $use_proxy = Get-AnsibleParam -obj $params -name "use_proxy" -type "bool" -default $true
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
@@ -169,8 +182,13 @@ if ($proxy_url) {
 }
 
 $credentials = $null
-if ($url_username -and $url_password) {
-    $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
+if ($url_username) {
+    if ($force_basic_auth) {
+        $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
+    } else {
+        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password) 
+    }
+    
 }
 
 # If skip_certificate_validation was specified, use validate_certs
@@ -231,3 +249,4 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 }
 
 Exit-Json -obj $result
+

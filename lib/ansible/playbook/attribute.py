@@ -24,8 +24,22 @@ from copy import deepcopy
 
 class Attribute:
 
-    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, class_type=None, always_post_validate=False,
-                 inherit=True):
+    def __init__(
+        self,
+        isa=None,
+        private=False,
+        default=None,
+        required=False,
+        listof=None,
+        priority=0,
+        class_type=None,
+        always_post_validate=False,
+        inherit=True,
+        alias=None,
+        extend=False,
+        prepend=False,
+    ):
+
         """
         :class:`Attribute` specifies constraints for attributes of objects which
         derive from playbook data.  The attributes of the object are basically
@@ -53,6 +67,8 @@ class Attribute:
         :kwarg inherit: A boolean value, which controls whether the object
             containing this field should attempt to inherit the value from its
             parent object if the local value is None.
+        :kwarg alias: An alias to use for the attribute name, for situations where
+            the attribute name may conflict with a Python reserved word.
         """
 
         self.isa = isa
@@ -64,6 +80,9 @@ class Attribute:
         self.class_type = class_type
         self.always_post_validate = always_post_validate
         self.inherit = inherit
+        self.alias = alias
+        self.extend = extend
+        self.prepend = prepend
 
         if default is not None and self.isa in ('list', 'dict', 'set'):
             self.default = deepcopy(default)

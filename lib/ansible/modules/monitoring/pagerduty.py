@@ -32,87 +32,57 @@ options:
         description:
             - Create a maintenance window or get a list of ongoing windows.
         required: true
-        default: null
         choices: [ "running", "started", "ongoing", "absent" ]
-        aliases: []
     name:
         description:
             - PagerDuty unique subdomain.
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - PagerDuty user ID.
         required: true
-        default: null
-        choices: []
-        aliases: []
     passwd:
         description:
             - PagerDuty user password.
         required: true
-        default: null
-        choices: []
-        aliases: []
     token:
         description:
             - A pagerduty token, generated on the pagerduty site. Can be used instead of
               user/passwd combination.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: '1.8'
     requester_id:
         description:
             - ID of user making the request. Only needed when using a token and creating a maintenance_window.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: '1.8'
     service:
         description:
             - A comma separated list of PagerDuty service IDs.
-        required: false
-        default: null
-        choices: []
         aliases: [ services ]
     hours:
         description:
             - Length of maintenance window in hours.
-        required: false
         default: 1
-        choices: []
-        aliases: []
     minutes:
         description:
             - Maintenance window in minutes (this is added to the hours).
-        required: false
         default: 0
-        choices: []
-        aliases: []
         version_added: '1.8'
     desc:
         description:
             - Short description of maintenance window.
-        required: false
         default: Created by Ansible
-        choices: []
-        aliases: []
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
         version_added: 1.5.1
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # List ongoing maintenance windows using a user/passwd
 - pagerduty:
     name: companyabc
@@ -164,19 +134,22 @@ EXAMPLES='''
     service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
-import base64
 import datetime
 import json
+import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
+
 
 def auth_header(user, passwd, token):
     if token:
         return "Token token=%s" % token
 
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = base64.b64encode(to_bytes('%s:%s' % (user, passwd)).replace('\n', ''))
     return "Basic %s" % auth
+
 
 def ongoing(module, name, user, passwd, token):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
@@ -203,7 +176,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
     headers = {
         'Authorization': auth_header(user, passwd, token),
-        'Content-Type' : 'application/json',
+        'Content-Type': 'application/json',
     }
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
 
@@ -225,11 +198,12 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
 
     return False, json_out, True
 
+
 def absent(module, name, user, passwd, token, requester_id, service):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
     headers = {
         'Authorization': auth_header(user, passwd, token),
-        'Content-Type' : 'application/json',
+        'Content-Type': 'application/json',
     }
     request_data = {}
 
@@ -266,7 +240,7 @@ def main():
             hours=dict(default='1', required=False),
             minutes=dict(default='0', required=False),
             desc=dict(default='Created by Ansible', required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
@@ -280,7 +254,7 @@ def main():
     minutes = module.params['minutes']
     token = module.params['token']
     desc = module.params['desc']
-    requester_id =  module.params['requester_id']
+    requester_id = module.params['requester_id']
 
     if not token and not (user or passwd):
         module.fail_json(msg="neither user and passwd nor token specified")
@@ -290,7 +264,7 @@ def main():
             module.fail_json(msg="service not specified")
         (rc, out, changed) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
         if rc == 0:
-            changed=True
+            changed = True
 
     if state == "ongoing":
         (rc, out, changed) = ongoing(module, name, user, passwd, token)
@@ -300,7 +274,6 @@ def main():
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
-
 
     module.exit_json(msg="success", result=out, changed=changed)
 

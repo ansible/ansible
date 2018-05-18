@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_static_route sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: create static route
@@ -9,8 +11,9 @@
       route_name: testing
       pref: 100
       tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
       provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: &true
@@ -19,11 +22,33 @@
 
   - name: "Conf Idempotence"
     nxos_static_route: *configure
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: change static route
+    nxos_static_route: &configure1
+      prefix: "192.168.20.64/24"
+      next_hop: "3.3.3.3"
+      route_name: default
+      pref: 10
+      tag: default
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf1 Idempotence"
+    nxos_static_route: *configure1
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
 
   - name: remove static route
     nxos_static_route: &remove
@@ -31,19 +56,61 @@
       next_hop: "3.3.3.3"
       route_name: testing
       pref: 100
-      tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
       state: absent
       provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: *true
 
   - name: "Remove Idempotence"
     nxos_static_route: *remove
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: *false
+
+  - name: configure static route(aggregate)
+    nxos_static_route: &conf_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: configure static route aggregate(Idempotence)
+    nxos_static_route: *conf_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: remove static route aggregate
+    nxos_static_route: &remove_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: remove static route aggregate(Idempotence)
+    nxos_static_route: *remove_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
 
   always:
   - name: remove static route
@@ -53,9 +120,19 @@
       route_name: testing
       pref: 100
       tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
+      state: absent
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    ignore_errors: yes
+
+  - name: remove static route aggregate
+    nxos_static_route:
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
       state: absent
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_static_route sanity test"

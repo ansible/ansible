@@ -1,4 +1,6 @@
 ---
+- debug: msg="cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Remove linkagg
   vyos_linkagg:
     name: bond0

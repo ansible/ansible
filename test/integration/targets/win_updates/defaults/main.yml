@@ -1,0 +1,1 @@
+win_updates_dir: '{{win_output_dir}}\win_updates'

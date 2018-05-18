@@ -14,7 +14,7 @@
 - name: assert create default pool check
   assert:
     that:
-    - create_default_check|changed
+    - create_default_check is changed
     - create_default_actual_check.rc == 1
 
 - name: create default pool
@@ -31,7 +31,7 @@
 - name: assert create default pool
   assert:
     that:
-    - create_default|changed
+    - create_default is changed
     - create_default.info.attributes.name == test_iis_webapppool_name
     - create_default.info.attributes.startMode == 'OnDemand'
     - create_default.info.attributes.state == 'Started'
@@ -52,7 +52,7 @@
 - name: assert change attributes of pool check
   assert:
     that:
-    - change_pool_attributes_check|changed
+    - change_pool_attributes_check is changed
     - change_pool_attributes_check.info == create_default.info
 
 - name: change attributes of pool
@@ -70,7 +70,7 @@
 - name: assert change attributes of pool
   assert:
     that:
-    - change_pool_attributes|changed
+    - change_pool_attributes is changed
     - change_pool_attributes.info.attributes.managedPipelineMode == 'Classic'
     - change_pool_attributes.info.cpu.limit == 95
     - change_pool_attributes.info.processModel.identityType == 'LocalSystem'
@@ -90,51 +90,8 @@
 - name: assert change attributes of pool again
   assert:
     that:
-    - not change_pool_attributes_again|changed
+    - change_pool_attributes_again is not changed
     - change_pool_attributes_again.info == change_pool_attributes.info
-
-- name: change attributes of pool (old style) check
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:0|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated_check
-  check_mode: yes
-
-- name: assert change attributes of pool (old style) check
-  assert:
-    that:
-    - change_pool_attributes_deprecated_check|changed
-    - change_pool_attributes_deprecated_check.info == change_pool_attributes_again.info
-
-- name: change attributes of pool (old style)
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:10|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated
-
-- name: assert change attributes of pool (old style)
-  assert:
-    that:
-    - change_pool_attributes_deprecated|changed
-    - change_pool_attributes_deprecated.info.attributes.managedPipelineMode == 'Integrated'
-    - change_pool_attributes_deprecated.info.attributes.startMode == 'OnDemand'
-    - change_pool_attributes_deprecated.info.cpu.limit == 10
-    - change_pool_attributes_deprecated.info.processModel.identityType == 'NetworkService'
-
-- name: change attributes of pool (old style) again
-  win_iis_webapppool:
-    name: '{{test_iis_webapppool_name}}'
-    state: present
-    attributes: "managedPipelineMode:0|startMode:OnDemand|cpu.limit:10|processModel.identityType:NetworkService"
-  register: change_pool_attributes_deprecated_again
-
-- name: assert change attributes of pool (old style) again
-  assert:
-    that:
-    - not change_pool_attributes_deprecated_again|changed
-    - change_pool_attributes_deprecated_again.info == change_pool_attributes_deprecated.info
 
 - name: change more complex variables check
   win_iis_webapppool:
@@ -151,8 +108,8 @@
 - name: assert change more complex variables check
   assert:
     that:
-    - change_complex_attributes_check|changed
-    - change_complex_attributes_check.info == change_pool_attributes_deprecated_again.info
+    - change_complex_attributes_check is changed
+    - change_complex_attributes_check.info == change_pool_attributes_again.info
 
 - name: change more complex variables
   win_iis_webapppool:
@@ -168,7 +125,7 @@
 - name: assert change more complex variables
   assert:
     that:
-    - change_complex_attributes|changed
+    - change_complex_attributes is changed
     - change_complex_attributes.info.attributes.queueLength == 500
     - change_complex_attributes.info.recycling.periodicRestart.requests == 10
     - change_complex_attributes.info.recycling.periodicRestart.time.TotalSeconds == 300
@@ -188,7 +145,7 @@
 - name: assert change more complex variables again
   assert:
     that:
-    - not change_complex_attributes_again|changed
+    - change_complex_attributes_again is not changed
     - change_complex_attributes_again.info == change_complex_attributes.info
 
 - name: stop web pool check
@@ -205,7 +162,7 @@
 - name: assert stop web pool check
   assert:
     that:
-    - stop_pool_check|changed
+    - stop_pool_check is changed
     - stop_pool_actual_check.stdout == 'Started\r\n'
 
 - name: stop web pool
@@ -221,7 +178,7 @@
 - name: assert stop web pool
   assert:
     that:
-    - stop_pool|changed
+    - stop_pool is changed
     - stop_pool_actual.stdout == 'Stopped\r\n'
 
 - name: stop web pool again
@@ -237,7 +194,7 @@
 - name: assert stop web pool again
   assert:
     that:
-    - not stop_pool_again|changed
+    - stop_pool_again is not changed
     - stop_pool_actual_again.stdout == 'Stopped\r\n'
 
 - name: start web pool check
@@ -254,7 +211,7 @@
 - name: assert start web pool check
   assert:
     that:
-    - start_pool_check|changed
+    - start_pool_check is changed
     - start_pool_actual_check.stdout == 'Stopped\r\n'
 
 - name: start web pool
@@ -270,7 +227,7 @@
 - name: assert start web pool
   assert:
     that:
-    - start_pool|changed
+    - start_pool is changed
     - start_pool_actual.stdout == 'Started\r\n'
 
 - name: start web pool again
@@ -286,7 +243,7 @@
 - name: assert start web pool again
   assert:
     that:
-    - not start_pool_again|changed
+    - start_pool_again is not changed
     - start_pool_actual_again.stdout == 'Started\r\n'
 
 - name: restart web pool
@@ -302,7 +259,7 @@
 - name: assert restart web pool
   assert:
     that:
-    - restart_pool|changed
+    - restart_pool is changed
     - restart_pool_actual.stdout == 'Started\r\n'
 
 - name: stop pool before restart on stop test
@@ -324,7 +281,7 @@
 - name: assert restart from stopped web pool check
   assert:
     that:
-    - restart_from_stop_pool_check|changed
+    - restart_from_stop_pool_check is changed
     - restart_from_stop_pool_actual_check.stdout == 'Stopped\r\n'
 
 - name: restart from stopped web pool
@@ -340,7 +297,7 @@
 - name: assert restart from stopped web pool
   assert:
     that:
-    - restart_from_stop_pool|changed
+    - restart_from_stop_pool is changed
     - restart_from_stop_pool_actual.stdout == 'Started\r\n'
 
 - name: set web pool attribute that is a collection (check mode)
@@ -361,7 +318,7 @@
 - name: assert results of set web pool attribute that is a collection (check mode)
   assert:
     that:
-    - collection_change_check|changed
+    - collection_change_check is changed
     - collection_change_result_check.stdout == ""
 
 - name: set web pool attribute that is a collection
@@ -381,7 +338,7 @@
 - name: assert results of set web pool attribute that is a collection
   assert:
     that:
-    - collection_change|changed
+    - collection_change is changed
     - collection_change_result.stdout_lines == [ "00:10:00", "10:10:00" ]
 
 - name: set web pool attribute that is a collection (idempotent)
@@ -395,7 +352,7 @@
 - name: assert results of set web pool attribute that is a collection (idempotent)
   assert:
     that:
-    - not collection_change_again|changed
+    - collection_change_again is not changed
 
 # The following tests are only for IIS versions 8.0 or newer
 - block:
@@ -416,7 +373,7 @@
       state: present
       attributes:
         startMode: AlwaysRunning
-        processModel.identityType: 3
+        processModel.identityType: SpecificUser
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new_check
@@ -425,7 +382,7 @@
   - name: assert change attributes for newer IIS version check
     assert:
       that:
-      - iis_attributes_new_check|changed
+      - iis_attributes_new_check is changed
       - iis_attributes_new_check.info == iis_attributes_blank.info
 
   - name: change attributes for newer IIS version
@@ -434,7 +391,7 @@
       state: present
       attributes:
         startMode: AlwaysRunning
-        processModel.identityType: 3
+        processModel.identityType: SpecificUser
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new
@@ -442,11 +399,10 @@
   - name: assert change attributes for newer IIS version
     assert:
       that:
-      - iis_attributes_new|changed
+      - iis_attributes_new is changed
       - iis_attributes_new.info.attributes.startMode == 'AlwaysRunning'
       - iis_attributes_new.info.processModel.identityType == 'SpecificUser'
       - iis_attributes_new.info.processModel.userName == ansible_user
-      - iis_attributes_new.info.processModel.password == ansible_password
 
   - name: change attributes for newer IIS version again
     win_iis_webapppool:
@@ -462,7 +418,7 @@
   - name: assert change attributes for newer IIS version again
     assert:
       that:
-      - not iis_attributes_new_again|changed
+      - iis_attributes_new_again is not changed
       - iis_attributes_new_again.info == iis_attributes_new.info
 
   when: iis_version.win_file_version.file_major_part|int > 7

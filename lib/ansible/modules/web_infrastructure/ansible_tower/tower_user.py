@@ -30,13 +30,9 @@ options:
     first_name:
       description:
         - First name of the user.
-      required: False
-      default: null
     last_name:
       description:
         - Last name of the user.
-      required: False
-      default: null
     email:
       description:
         - Email address of the user.
@@ -44,22 +40,19 @@ options:
     password:
       description:
         - Password of the user.
-      required: False
-      default: null
     superuser:
       description:
         - User is a system wide administator.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     auditor:
       description:
         - User is a system wide auditor.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

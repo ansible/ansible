@@ -198,6 +198,15 @@ Function Compare-Properties($property_name, $parent_property, $map, $enum_map=$n
     return ,$changes
 }
 
+Function Set-PropertyForComObject($com_object, $name, $arg, $value) {
+    $com_name = Convert-SnakeToPascalCase -snake $arg
+    try {
+        $com_object.$com_name = $value
+    } catch {
+        Fail-Json -obj $result -message "failed to set $name property '$com_name' to '$value': $($_.Exception.Message)"
+    }
+}
+
 Function Compare-PropertyList {
     Param(
         $collection, # the collection COM object to manipulate, this must contains the Create method
@@ -266,11 +275,21 @@ Function Compare-PropertyList {
             # we have more properties than before,just add to the new
             # properties list
             $diff_list = [System.Collections.ArrayList]@()
+
             foreach ($property_arg in $total_args) {
                 if ($new_property.ContainsKey($property_arg)) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
                     $property_value = $new_property.$property_arg
-                    [void]$diff_list.Add("+$com_name=$property_value")
+
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($sub_property_arg in $property_value.Keys) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_property_value = $property_value.$sub_property_arg
+                            [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                        }
+                    } else {
+                        [void]$diff_list.Add("+$com_name=$property_value")
+                    }
                 }
             }
 
@@ -285,7 +304,16 @@ Function Compare-PropertyList {
                     if ($new_property.ContainsKey($property_arg)) {
                         $com_name = Convert-SnakeToPascalCase -snake $property_arg
                         $property_value = $new_property.$property_arg
-                        [void]$diff_list.Add("+$com_name=$property_value")
+
+                        if ($property_value -is [Hashtable]) {
+                            foreach ($sub_property_arg in $property_value.Keys) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                                $sub_property_value = $property_value.$sub_property_arg
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+                        } else {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
                     }
                 }
             } else {
@@ -295,14 +323,31 @@ Function Compare-PropertyList {
                 [void]$diff_list.Add("+Type=$type")
                 foreach ($property_arg in $total_args) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $property_value = $new_property.$property_arg
                     $existing_value = $existing_property.$com_name
-                    $new_value = $new_property.$property_arg
 
-                    if ($existing_value -ne $null) {
-                        [void]$diff_list.Add("-$com_name=$existing_value")
-                    }
-                    if ($new_value -ne $null) {
-                        [void]$diff_list.Add("+$com_name=$new_value")
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($sub_property_arg in $property_value.Keys) {
+                            $sub_property_value = $property_value.$sub_property_arg
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
+
+                            if ($sub_property_value -ne $null) {
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+
+                            if ($sub_existing_value -ne $null) {
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
+                            }
+                        }
+                    } else {
+                        if ($property_value -ne $null) {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
+
+                        if ($existing_value -ne $null) {
+                            [void]$diff_list.Add("-$com_name=$existing_value")
+                        }
                     }
                 }
             }
@@ -313,15 +358,27 @@ Function Compare-PropertyList {
             $diff_list = [System.Collections.ArrayList]@()
 
             foreach ($property_arg in $total_args) {
-                $new_value = $new_property.$property_arg
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                $property_value = $new_property.$property_arg
                 $existing_value = $existing_property.$com_name
+                
+                if ($property_value -is [Hashtable]) {
+                    foreach ($sub_property_arg in $property_value.Keys) {
+                        $sub_property_value = $property_value.$sub_property_arg
+                        
+                        if ($sub_property_value -ne $null) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
-                if ($new_value -ne $null) {
-                    if ($new_value -cne $existing_value) {
-                        [void]$diff_list.Add("-$com_name=$existing_value")
-                        [void]$diff_list.Add("+$com_name=$new_value")
+                            if ($sub_property_value -cne $sub_existing_value) {
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+                        }
                     }
+                } elseif ($property_value -ne $null -and $property_value -cne $existing_value) {
+                    [void]$diff_list.Add("-$com_name=$existing_value")
+                    [void]$diff_list.Add("+$com_name=$property_value")
                 }
             }
 
@@ -334,13 +391,18 @@ Function Compare-PropertyList {
         $new_object = $collection.Create($type)
         foreach ($property_arg in $total_args) {
             $new_value = $new_property.$property_arg
-            if ($new_value -ne $null) {
+            if ($new_value -is [Hashtable]) {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
-                try {
-                    $new_object.$com_name = $new_value
-                } catch {
-                    Fail-Json -obj $result -message "failed to set $property_name property '$com_name' to '$new_value': $($_.Exception.Message)"
+                $new_object_property = $new_object.$com_name
+    
+                foreach ($key in $new_value.Keys) {
+                    $value = $new_value.$key
+                    if ($value -ne $null) {
+                        Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $key -value $value
+                    }
                 }
+            } elseif ($new_value -ne $null) {
+                Set-PropertyForComObject -com_object $new_object -name $property_name -arg $property_arg -value $new_value
             }
         }
     }
@@ -543,52 +605,51 @@ Function Compare-Triggers($task_definition) {
         $task_triggers.Clear()
     }
 
-    # TODO: solve repetition, takes in a COM object
     $map = @{
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_BOOT = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY = @{
             mandatory = @('start_boundary')
-            optional = @('days_interval', 'enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+            optional = @('days_interval', 'enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_EVENT = @{
             mandatory = @('subscription')
             # TODO: ValueQueries is a COM object
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_IDLE = @{
             mandatory = @()
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_LOGON = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'user_id')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'user_id', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLYDOW = @{
             mandatory = @('start_boundary')
-            optional = @('days_of_week', 'enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_week_of_month', 'weeks_of_month')
+            optional = @('days_of_week', 'enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_week_of_month', 'weeks_of_month', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLY = @{
             mandatory = @('days_of_month', 'start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_day_of_month', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_day_of_month', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_REGISTRATION = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME = @{
             mandatory = @('start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY = @{
             mandatory = @('days_of_week', 'start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'weeks_interval')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'weeks_interval', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_SESSION_STATE_CHANGE = @{
             mandatory = @('days_of_week', 'start_boundary')
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id', 'repetition')
         }
     }
     $changes = Compare-PropertyList -collection $task_triggers -property_name "trigger" -new $triggers -existing $existing_triggers -map $map -enum TASK_TRIGGER_TYPE2
@@ -612,6 +673,17 @@ Function Test-TaskExists($task_folder, $name) {
     }
 
     return $task
+}
+
+Function Test-XmlDurationFormat($key, $value) {
+    # validate value is in the Duration Data Type format
+    # PnYnMnDTnHnMnS
+    try {
+        $time_span = [System.Xml.XmlConvert]::ToTimeSpan($value)
+        return $time_span
+    } catch [System.FormatException] {
+        Fail-Json -obj $result -message "trigger option '$key' must be in the XML duration format but was '$value'"
+    }
 }
 
 ######################################
@@ -774,15 +846,27 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
 
     $time_properties = @('execution_time_limit', 'delay', 'random_delay')
     foreach ($property_name in $time_properties) {
-        # validate the duration is in the Duration Data Type format
-        # PnYnMnDTnHnMnS
         if ($trigger.ContainsKey($property_name)) {
             $time_span = $trigger.$property_name
-            try {
-                [void][System.Xml.XmlConvert]::ToTimeSpan($time_span)
-            } catch [System.FormatException] {
-                Fail-Json -obj $result -message "trigger option '$property_name' must be in the XML duration format but was '$time_span'"
-            }
+            Test-XmlDurationFormat -key $property_name -value $time_span
+        }
+    }
+
+    if ($trigger.ContainsKey("repetition")) {
+        $trigger.repetition = ConvertTo-HashtableFromPsCustomObject -object $trigger.repetition
+
+        $interval_timespan = $null
+        if ($trigger.repetition.ContainsKey("interval") -and $trigger.repetition.interval -ne $null) {
+            $interval_timespan = Test-XmlDurationFormat -key "interval" -value $trigger.repetition.interval
+        }
+
+        $duration_timespan = $null
+        if ($trigger.repetition.ContainsKey("duration") -and $trigger.repetition.duration -ne $null) {
+            $duration_timespan = Test-XmlDurationFormat -key "duration" -value $trigger.repetition.duration
+        }
+
+        if ($interval_timespan -ne $null -and $duration_timespan -ne $null -and $interval_timespan -gt $duration_timespan) {
+            Fail-Json -obj $result -message "trigger repetition option 'interval' value '$($trigger.repetition.interval)' must be less than or equal to 'duration' value '$($trigger.repetition.duration)'"
         }
     }
 

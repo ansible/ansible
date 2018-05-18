@@ -45,7 +45,7 @@
     private: no
   tasks:
   - pause:
-      prompt: "Has the CHANGELOG and any other files been updated and are ready to go?"
+      prompt: "Has the CHANGELOG.md, versions.yml, release_and_maintenance.rst, and any other files been updated and are ready to go?"
     when: is_final|bool
 
   - name: create a combined version string from the specified values
@@ -81,7 +81,7 @@
   - name: "assert the specified version ({{new_version}}) is greater than the latest version ({{latest_version.stdout}})"
     assert:
       that:
-      - new_version|version_compare(latest_version.stdout, "gt")
+      - new_version is version(latest_version.stdout, "gt")
     ignore_errors: yes
 
   - name: Update the VERSION file for the main repo

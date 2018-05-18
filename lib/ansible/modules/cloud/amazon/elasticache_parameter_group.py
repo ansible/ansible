@@ -28,6 +28,9 @@ description:
   - Returns information about the specified cache cluster.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ boto3, botocore ]
 options:
   group_family:
@@ -35,7 +38,6 @@ options:
       - The name of the cache parameter group family that the cache parameter group can be used with.
         Required when creating a cache parameter group.
     choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
-    required: no
   name:
     description:
      - A user-specified name for the cache parameter group.
@@ -51,8 +53,6 @@ options:
   values:
     description:
       - A user-specified dictionary of parameters to reset or modify for the cache parameter group.
-    required: no
-    default: None
 """
 
 EXAMPLES = """

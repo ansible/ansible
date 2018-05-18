@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport}} nxos_acl_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_acl_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -11,15 +13,22 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
-    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup: Put interface into no switch port mode"
+  nxos_config:
+    commands:
+      - "no switchport"
+    parents:
+      - "interface {{ intname }}"
+    match: none
   ignore_errors: yes
 
 - name: "Setup: Cleanup possibly existing acl"
   nxos_acl: &remove
     name: ANSIBLE_ACL
     seq: 10
-    state: absent
-    provider: "{{ connection }}"
+    state: delete_acl
   ignore_errors: yes
 
 - name: Configure Supporting ACL
@@ -30,7 +39,6 @@
     proto: tcp
     src: 1.1.1.1/24
     dest: any
-    provider: "{{ connection }}"
 
 - block:
   - name: Configure acl interface egress
@@ -39,7 +47,6 @@
       interface: "{{ intname }}"
       direction: egress
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -60,7 +67,6 @@
       interface: "{{ intname }}"
       direction: ingress
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -77,7 +83,6 @@
       interface: "{{ intname }}"
       direction: egress
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -94,7 +99,6 @@
       interface: "{{ intname }}"
       direction: ingress
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -110,9 +114,9 @@
     nxos_config: *default
     ignore_errors: yes
 
+  always:
   - name: Remove possible configured ACL
     nxos_acl: *remove
     ignore_errors: yes
 
-  always:
-  - debug: msg="END TRANSPORT:{{ connection.transport}} nxos_acl_interface sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_acl_interface sanity test"

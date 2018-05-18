@@ -1,0 +1,36 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/sanity.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - name: configure hostname and domain-name
+    nxos_system: &hostname
+      hostname: switch
+      domain_name: test.example.com
+      provider: "{{ connection }}"
+
+  - name: remove configuration
+    nxos_system:
+      state: absent
+      provider: "{{ connection }}"
+
+  - name: configure name servers
+    nxos_system:
+      name_servers:
+        - 8.8.8.8
+        - 8.8.4.4
+      provider: "{{ connection }}"
+
+  - name: configure name servers with VRF support
+    nxos_system:
+      name_servers:
+        - { server: 8.8.8.8, vrf: management }
+        - { server: 8.8.4.4, vrf: management }
+      provider: "{{ connection }}"
+
+  always:
+  - name: Re-configure hostname
+    nxos_system: *hostname
+
+  - debug: msg="END connection={{ ansible_connection }}/sanity.yaml" 

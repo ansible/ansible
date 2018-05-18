@@ -7,10 +7,10 @@ DOCUMENTATION = """
     lookup: config
     author: Ansible Core
     version_added: "2.5"
-    short_description: Lookup current Ansilbe configuration values
+    short_description: Lookup current Ansible configuration values
     description:
       - Retrieves the value of an Ansible configuration setting.
-      - You can use ``ansible-config list`` to see all available settings.
+      - You can use C(ansible-config list) to see all available settings.
     options:
       _terms:
         description: The key(s) to look up

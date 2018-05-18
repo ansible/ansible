@@ -37,36 +37,29 @@ options:
         description:
             - IP address (or hostname) of PAN-OS device being configured.
         required: true
-        default: null
     key_filename:
         description:
             - Location of the filename that is used for the auth. Either I(key_filename) or I(password) is required.
         required: true
-        default: null
     password:
         description:
             - Password credentials to use for auth. Either I(key_filename) or I(password) is required.
         required: true
-        default: null
     cert_friendly_name:
         description:
             - Human friendly certificate name (not CN but just a friendly name).
         required: true
-        default: null
     cert_cn:
         description:
             - Certificate CN (common name) embedded in the certificate signature.
         required: true
-        default: null
     signed_by:
         description:
             - Undersigning authority (CA) that MUST already be presents on the device.
         required: true
-        default: null
     rsa_nbits:
         description:
             - Number of bits used by the RSA algorithm for the certificate generation.
-        required: false
         default: "2048"
 '''
 
@@ -81,7 +74,7 @@ EXAMPLES = '''
     signed_by: "root-ca"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
@@ -91,14 +84,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 import time
 
 try:
     import paramiko
-    HAS_LIB=True
+    HAS_LIB = True
 except ImportError:
-    HAS_LIB=False
+    HAS_LIB = False
 
 _PROMPTBUFF = 4096
 
@@ -113,14 +106,14 @@ def wait_with_timeout(module, shell, prompt, timeout=60):
             if len(endresult) != 0 and endresult[-1] == prompt:
                 break
 
-        if time.time()-now > timeout:
+        if time.time() - now > timeout:
             module.fail_json(msg="Timeout waiting for prompt")
 
     return result
 
 
 def generate_cert(module, ip_address, key_filename, password,
-                  cert_cn, cert_friendly_name, signed_by, rsa_nbits ):
+                  cert_cn, cert_friendly_name, signed_by, rsa_nbits):
     stdout = ""
 
     client = paramiko.SSHClient()
@@ -154,7 +147,7 @@ def generate_cert(module, ip_address, key_filename, password,
     shell.send('exit\n')
 
     if 'Success' not in buff:
-        module.fail_json(msg="Error generating self signed certificate: "+stdout)
+        module.fail_json(msg="Error generating self signed certificate: " + stdout)
 
     client.close()
     return stdout
@@ -193,11 +186,11 @@ def main():
                                cert_friendly_name,
                                signed_by,
                                rsa_nbits)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=True, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

@@ -33,69 +33,48 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent']
     authen_scheme_name:
         description:
             - Name of an authentication scheme.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     first_authen_mode:
         description:
             - Preferred authentication mode.
-        required: false
-        default: null
         choices: ['invalid', 'local', 'hwtacacs', 'radius', 'none']
     author_scheme_name:
         description:
             - Name of an authorization scheme.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     first_author_mode:
         description:
             - Preferred authorization mode.
-        required: false
-        default: null
         choices: ['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']
     acct_scheme_name:
         description:
             - Accounting scheme name.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     accounting_mode:
         description:
             - Accounting Mode.
-        required: false
-        default: null
         choices: ['invalid', 'hwtacacs', 'radius', 'none']
     domain_name:
         description:
             - Name of a domain.
               The value is a string of 1 to 64 characters.
-        required: false
-        default: null
     radius_server_group:
         description:
             - RADIUS server group's name.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     hwtacas_template:
         description:
             - Name of a HWTACACS template.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     local_user_group:
         description:
             - Name of the user group where the user belongs. The user inherits all the rights of the user group.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -183,7 +162,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 SUCCESS = """success"""

@@ -22,14 +22,23 @@ DOCUMENTATION = '''
                - name: ansible_host
                - name: ansible_ssh_host
       host_key_checking:
-          #constant: HOST_KEY_CHECKING
           description: Determines if ssh should check host keys
           type: boolean
           ini:
               - section: defaults
                 key: 'host_key_checking'
+              - section: ssh_connection
+                key: 'host_key_checking'
+                version_added: '2.5'
           env:
               - name: ANSIBLE_HOST_KEY_CHECKING
+              - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+                version_added: '2.5'
+          vars:
+              - name: ansible_host_key_checking
+                version_added: '2.5'
+              - name: ansible_ssh_host_key_checking
+                version_added: '2.5'
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
           vars:
@@ -56,9 +65,24 @@ DOCUMENTATION = '''
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
           ini:
           - {key: ssh_executable, section: ssh_connection}
-          yaml: {key: ssh_connection.ssh_executable}
           #const: ANSIBLE_SSH_EXECUTABLE
           version_added: "2.2"
+      sftp_executable:
+          default: sftp
+          description:
+            - This defines the location of the sftp binary. It defaults to `sftp` which will use the first binary available in $PATH.
+          env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
+          ini:
+          - {key: sftp_executable, section: ssh_connection}
+          version_added: "2.6"
+      scp_executable:
+          default: scp
+          description:
+            - This defines the location of the scp binary. It defaults to `scp` which will use the first binary available in $PATH.
+          env: [{name: ANSIBLE_SCP_EXECUTABLE}]
+          ini:
+          - {key: scp_executable, section: ssh_connection}
+          version_added: "2.6"
       scp_extra_args:
           description: Extra exclusive to the 'scp' CLI
           vars:
@@ -141,7 +165,6 @@ DOCUMENTATION = '''
             - name: ansible_ssh_private_key_file
 
       control_path:
-        default: null
         description:
           - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
           - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
@@ -161,12 +184,12 @@ DOCUMENTATION = '''
           - section: ssh_connection
             key: control_path_dir
       sftp_batch_mode:
-        default: True
+        default: 'yes'
         description: 'TODO: write it'
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
-        type: boolean
+        type: bool
       scp_if_ssh:
         default: smart
         description:
@@ -176,6 +199,15 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+      use_tty:
+        version_added: '2.5'
+        default: 'yes'
+        description: add -tt to ssh commands to force tty allocation
+        env: [{name: ANSIBLE_SSH_USETTY}]
+        ini:
+        - {key: usetty, section: ssh_connection}
+        type: bool
+        yaml: {key: connection.usetty}
 '''
 
 import errno
@@ -297,11 +329,13 @@ class Connection(ConnectionBase):
         return self
 
     @staticmethod
-    def _create_control_path(host, port, user, connection=None):
+    def _create_control_path(host, port, user, connection=None, pid=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
         if connection:
             pstring += '-%s' % connection
+        if pid:
+            pstring += '-%s' % to_text(pid)
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()
@@ -643,7 +677,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if b'ssh' in cmd:
+        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -760,6 +794,9 @@ class Connection(ConnectionBase):
                     if self._flags['become_prompt']:
                         display.debug('Sending become_pass in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
+                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
+                        # that the write will happen without a flush
+                        stdin.flush()
                         self._flags['become_prompt'] = False
                         state += 1
                     elif self._flags['become_success']:
@@ -852,7 +889,7 @@ class Connection(ConnectionBase):
     def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         """Wrapper around _bare_run that retries the connection
         """
-        return self._bare_run(cmd, in_data, sudoable, checkrc)
+        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
 
     @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
@@ -891,15 +928,16 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command('sftp', to_bytes(host))
+                cmd = self._build_command(self.get_option('sftp_executable'), to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
+                scp = self.get_option('scp_executable')
                 if sftp_action == 'get':
-                    cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
+                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
+                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
@@ -913,7 +951,7 @@ class Connection(ConnectionBase):
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
@@ -948,7 +986,11 @@ class Connection(ConnectionBase):
 
         ssh_executable = self._play_context.ssh_executable
 
-        if not in_data and sudoable:
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        use_tty = self.get_option('use_tty')
+
+        if not in_data and sudoable and use_tty:
             args = (ssh_executable, '-tt', self.host, cmd)
         else:
             args = (ssh_executable, self.host, cmd)

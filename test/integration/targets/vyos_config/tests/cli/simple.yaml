@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/simple.yaml"
+- debug: msg="START cli/simple.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   vyos_config:
@@ -30,4 +30,4 @@
     lines: set system host-name {{ inventory_hostname_short }}
     match: none
 
-- debug: msg="END cli/simple.yaml"
+- debug: msg="END cli/simple.yaml on connection={{ ansible_connection }}"

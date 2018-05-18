@@ -24,34 +24,27 @@ options:
   server:
     description:
       - IRC server name/address
-    required: false
     default: localhost
   port:
     description:
       - IRC server port number
-    required: false
     default: 6667
   nick:
     description:
       - Nickname to send the message from. May be shortened, depending on server's NICKLEN setting.
-    required: false
     default: ansible
   msg:
     description:
       - The message body.
     required: true
-    default: null
   topic:
     description:
       - Set the channel topic
-    required: false
-    default: null
     version_added: "2.0"
   color:
     description:
       - Text color for the message. ("none" is a valid option in 1.6 or later, in 1.6 and prior, the default color is black, not "none").
         Added 11 more colors in version 2.0.
-    required: false
     default: "none"
     choices: [ "none", "white", "black", "blue", "green", "red", "brown", "purple", "orange", "yellow", "light_green", "teal", "light_cyan",
                "light_blue", "pink", "gray", "light_gray"]
@@ -62,18 +55,14 @@ options:
   nick_to:
     description:
       - A list of nicknames to send the message to. One of nick_to or channel needs to be set.  When both are defined, the message will be sent to both of them.
-    required: false
-    default: null
     version_added: "2.0"
   key:
     description:
       - Channel key
-    required: false
     version_added: "1.7"
   passwd:
     description:
       - Server password
-    required: false
   timeout:
     description:
       - Timeout to use while waiting for successful registration and join
@@ -83,19 +72,19 @@ options:
   use_ssl:
     description:
       - Designates whether TLS/SSL should be used when connecting to the IRC server
-    default: False
+    type: bool
+    default: 'no'
     version_added: "1.8"
   part:
     description:
       - Designates whether user should part from channel after sending message or not.
         Useful for when using a faux bot and not wanting join/parts between messages.
-    default: True
+    type: bool
+    default: 'yes'
     version_added: "2.0"
   style:
     description:
       - Text style for the message. Note italic does not work on some clients
-    default: None
-    required: False
     choices: [ "bold", "underline", "reverse", "italic" ]
     version_added: "2.0"
 
@@ -206,7 +195,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         motd += irc.recv(1024)
         # The server might send back a shorter nick than we specified (due to NICKLEN),
         #  so grab that and use it from now on (assuming we find the 00[1-4] response).
-        match = re.search('^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
+        match = re.search(r'^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
         if match:
             nick = match.group('nick')
             break
@@ -223,7 +212,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     start = time.time()
     while 1:
         join += irc.recv(1024)
-        if re.search('^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
+        if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC JOIN response')
@@ -259,11 +248,11 @@ def main():
             nick_to=dict(required=False, type='list'),
             msg=dict(required=True),
             color=dict(default="none", aliases=['colour'], choices=["white", "black", "blue",
-                                                "green", "red", "brown",
-                                                "purple", "orange", "yellow",
-                                                "light_green", "teal", "light_cyan",
-                                                "light_blue", "pink", "gray",
-                                                "light_gray", "none"]),
+                                                                    "green", "red", "brown",
+                                                                    "purple", "orange", "yellow",
+                                                                    "light_green", "teal", "light_cyan",
+                                                                    "light_blue", "pink", "gray",
+                                                                    "light_gray", "none"]),
             style=dict(default="none", choices=["underline", "reverse", "bold", "italic", "none"]),
             channel=dict(required=False),
             key=dict(no_log=True),

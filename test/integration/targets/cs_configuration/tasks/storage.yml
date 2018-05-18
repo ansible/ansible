@@ -8,7 +8,7 @@
 - name: verify test configuration storage
   assert:
     that:
-    - config|success
+    - config is successful
 
 - name: test update configuration storage in check mode
   cs_configuration:
@@ -20,8 +20,8 @@
 - name: verify update configuration storage in check mode
   assert:
     that:
-    - config|success
-    - config|changed
+    - config is successful
+    - config is changed
     - config.value == "2.0"
     - config.name == "storage.overprovisioning.factor"
     - config.scope == "storagepool"
@@ -36,8 +36,8 @@
 - name: verify update configuration storage
   assert:
     that:
-    - config|success
-    - config|changed
+    - config is successful
+    - config is changed
     - config.value == "3.0"
     - config.name == "storage.overprovisioning.factor"
     - config.scope == "storagepool"
@@ -52,8 +52,8 @@
 - name: verify update configuration storage idempotence
   assert:
     that:
-    - config|success
-    - not config|changed
+    - config is successful
+    - config is not changed
     - config.value == "3.0"
     - config.name == "storage.overprovisioning.factor"
     - config.scope == "storagepool"
@@ -68,8 +68,8 @@
 - name: verify reset configuration storage
   assert:
     that:
-    - config|success
-    - config|changed
+    - config is successful
+    - config is changed
     - config.value == "2.0"
     - config.name == "storage.overprovisioning.factor"
     - config.scope == "storagepool"

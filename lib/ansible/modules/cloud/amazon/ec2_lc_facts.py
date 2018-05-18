@@ -25,33 +25,25 @@ options:
   name:
     description:
       - A name or a list of name to match.
-    required: false
     default: []
   sort:
     description:
       - Optional attribute which with to sort the results.
     choices: ['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']
-    default: null
-    required: false
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
 extends_documentation_fragment:
     - aws
     - ec2
@@ -191,7 +183,7 @@ def list_launch_configs(connection, module):
             launch_config['CreatedTime'] = str(launch_config['CreatedTime'])
 
     if sort:
-        snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
+        snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order == 'descending'))
 
     try:
         if sort and sort_start and sort_end:
@@ -210,13 +202,13 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=False, default=[], type='list'),
-            sort = dict(required=False, default=None,
-                choices=['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']),
-            sort_order = dict(required=False, default='ascending',
-                choices=['ascending', 'descending']),
-            sort_start = dict(required=False),
-            sort_end = dict(required=False),
+            name=dict(required=False, default=[], type='list'),
+            sort=dict(required=False, default=None,
+                      choices=['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']),
+            sort_order=dict(required=False, default='ascending',
+                            choices=['ascending', 'descending']),
+            sort_start=dict(required=False),
+            sort_end=dict(required=False),
         )
     )
 

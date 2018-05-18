@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: get current user profile location
+  raw: $env:USERPROFILE
+  check_mode: no
+  register: profile_result
+
+- set_fact:
+    profile_dir: '{{ profile_result.stdout_lines[0] }}'
+
 - name: Add Ansible website link on the desktop
   win_shortcut:
     src: https://ansible.com/
@@ -27,7 +35,7 @@
   assert:
     that:
     - ansible_website_link_add.changed == true
-    - ansible_website_link_add.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add.src == 'https://ansible.com/'
 
 - name: Add Ansible website link on the desktop again
@@ -41,7 +49,7 @@
   assert:
     that:
     - ansible_website_link_add_again.changed == false
-    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add_again.src == 'https://ansible.com/'
   when: not in_check_mode
 
@@ -49,7 +57,7 @@
   assert:
     that:
     - ansible_website_link_add_again.changed == true
-    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add_again.src == 'https://ansible.com/'
   when: in_check_mode
 
@@ -63,14 +71,14 @@
   assert:
     that:
     - ansible_website_link_remove.changed == true
-    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove.dest == profile_dir + '\Desktop\Ansible website.url'
   when: not in_check_mode
 
 - name: Check there was no change (check-mode)
   assert:
     that:
     - ansible_website_link_remove.changed == false
-    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove.dest == profile_dir + '\Desktop\Ansible website.url'
   when: in_check_mode
 
 - name: Remove link again
@@ -83,7 +91,7 @@
   assert:
     that:
     - ansible_website_link_remove_again.changed == false
-    - ansible_website_link_remove_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove_again.dest == profile_dir + '\Desktop\Ansible website.url'
 
 - name: Add a regedit shortcut on the desktop
   win_shortcut:

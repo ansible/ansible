@@ -40,15 +40,12 @@ options:
     new_name:
         description:
         - New name for the user account.
-        required: false
-        default: None
 
     initiator_secret:
         description:
         - CHAP secret to use for the initiator. Should be 12-16 characters long and impenetrable.
         - The CHAP initiator secrets must be unique and cannot be the same as the target CHAP secret.
         - If not specified, a random secret is created.
-        required: false
 
     target_secret:
         description:
@@ -56,22 +53,17 @@ options:
         - Should be 12-16 characters long and impenetrable.
         - The CHAP target secrets must be unique and cannot be the same as the initiator CHAP secret.
         - If not specified, a random secret is created.
-        required: false
 
     attributes:
         description: List of Name/Value pairs in JSON object format.
-        required: false
 
     account_id:
         description:
         - The ID of the account to manage or update.
-        required: false
-        default: None
 
     status:
         description:
         - Status of the account.
-        required: false
 
 '''
 

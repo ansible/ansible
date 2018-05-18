@@ -1,16 +1,16 @@
 ---
-- debug: msg="START cli/set_lookup_source.yaml"
+- debug: msg="START cli/set_lookup_source.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
-    lines:
-      - no domain lookup source-interface Loopback10
-#      - vrf ansible
+    lines: no domain lookup source-interface Loopback10
     match: none
+    provider: "{{ cli }}"
 
 - name: configure lookup_source
   iosxr_system:
     lookup_source: Loopback10
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -21,42 +21,18 @@
 - name: verify lookup_source
   iosxr_system:
     lookup_source: Loopback10
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - result.changed == false
 
-#- name: change to vrf
-#  iosxr_system:
-#    lookup_source:
-#      - interface: Loopback10
-#        vrf: ansible
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == true
-#      - "'no ip domain lookup source-interface Management1' in result.commands"
-#      - "'ip domain lookup vrf ansible source-interface Management1' in result.commands"
-#      - result.commands|length == 2
-#
-#- name: verify change to vrf
-#  iosxr_system:
-#    lookup_source:
-#      - interface: Management1
-#        vrf: ansible
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == false
-
 - name: teardown
   iosxr_config:
     lines:
       - no domain lookup source-interface Loopback10
-      - no vrf ansible
     match: none
+    provider: "{{ cli }}"
 
-- debug: msg="END cli/set_lookup_source.yaml"
+- debug: msg="END cli/set_lookup_source.yaml on connection={{ ansible_connection }}"

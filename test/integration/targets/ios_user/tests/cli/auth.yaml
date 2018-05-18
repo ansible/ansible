@@ -6,7 +6,7 @@
       privilege: 15
       role: network-operator
       state: present
-      authorize: yes
+      provider: "{{ cli }}"
       configured_password: pass123
 
   - name: test login
@@ -33,5 +33,8 @@
     ios_user:
       name: auth_user
       state: absent
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
+
+  - name: reset connection
+    meta: reset_connection

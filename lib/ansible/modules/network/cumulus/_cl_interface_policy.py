@@ -19,7 +19,10 @@ module: cl_interface_policy
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configure interface enforcement policy on Cumulus Linux
-deprecated: Deprecated in 2.3. Use M(nclu) instead.
+deprecated:
+  removed_in: "2.5"
+  why: The M(nclu) module is designed to be easier to use for individuals who are new to Cumulus Linux by exposing the NCLU interface in an automatable way.
+  alternative: Use M(nclu) instead.
 description:
     - This module affects the configuration files located in the interfaces
       folder defined by ifupdown2. Interfaces port and port ranges listed in the
@@ -64,82 +67,8 @@ msg:
     type: string
     sample: "interface bond0 config updated"
 '''
-import os
-import re
 
-from ansible.module_utils.basic import AnsibleModule
-
-
-# get list of interface files that are currently "configured".
-# doesn't mean actually applied to the system, but most likely are
-def read_current_int_dir(module):
-    module.custom_currentportlist = os.listdir(module.params.get('location'))
-
-
-# take the allowed list and convert it to into a list
-# of ports.
-def convert_allowed_list_to_port_range(module):
-    allowedlist = module.params.get('allowed')
-    for portrange in allowedlist:
-        module.custom_allowedportlist += breakout_portrange(portrange)
-
-
-def breakout_portrange(prange):
-    _m0 = re.match(r'(\w+[a-z.])(\d+)?-?(\d+)?(\w+)?', prange.strip())
-    # no range defined
-    if _m0.group(3) is None:
-        return [_m0.group(0)]
-    else:
-        portarray = []
-        intrange = range(int(_m0.group(2)), int(_m0.group(3)) + 1)
-        for _int in intrange:
-            portarray.append(''.join([_m0.group(1),
-                                      str(_int),
-                                      str(_m0.group(4) or '')
-                                      ]
-                                     )
-                             )
-        return portarray
-
-
-# deletes the interface files
-def unconfigure_interfaces(module):
-    currentportset = set(module.custom_currentportlist)
-    allowedportset = set(module.custom_allowedportlist)
-    remove_list = currentportset.difference(allowedportset)
-    fileprefix = module.params.get('location')
-    module.msg = "remove config for interfaces %s" % (', '.join(remove_list))
-    for _file in remove_list:
-        os.unlink(fileprefix + _file)
-
-
-# check to see if policy should be enforced
-# returns true if policy needs to be enforced
-# that is delete interface files
-def int_policy_enforce(module):
-    currentportset = set(module.custom_currentportlist)
-    allowedportset = set(module.custom_allowedportlist)
-    return not currentportset.issubset(allowedportset)
-
-
-def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            allowed=dict(type='list', required=True),
-            location=dict(type='str', default='/etc/network/interfaces.d/')
-        ),
-    )
-    module.custom_currentportlist = []
-    module.custom_allowedportlist = []
-    module.changed = False
-    module.msg = 'configured port list is part of allowed port list'
-    read_current_int_dir(module)
-    convert_allowed_list_to_port_range(module)
-    if int_policy_enforce(module):
-        module.changed = True
-        unconfigure_interfaces(module)
-    module.exit_json(changed=module.changed, msg=module.msg)
-
+from ansible.module_utils.common.removed import removed_module
 
 if __name__ == '__main__':
-    main()
+    removed_module()

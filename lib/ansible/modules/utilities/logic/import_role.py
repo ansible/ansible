@@ -7,21 +7,24 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
 
 
 DOCUMENTATION = '''
 ---
-author:
-    - "Ansible Core Team (@ansible)"
+author: Ansible Core Team (@ansible)
 module: import_role
 short_description: Import a role into a play
 description:
-     - Mostly like the `roles:` keyword this action loads a role, but it allows you to control when the tasks run in between other playbook tasks.
-     - Most keywords, loops and conditionals will not be applied to this action, but to the imported tasks instead.
-       If you want the opposite behaviour, use M(include_role) instead.
+  - Much like the `roles:` keyword, this task loads a role, but it allows you to control it when the role tasks run in
+    between other tasks of the play.
+  - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
+    you want the opposite behavior, use M(include_role) instead. To better understand the difference you can read
+    the L(Including and Importing Guide,../user_guide/playbooks_reuse_includes.html).
 version_added: "2.4"
 options:
   name:
@@ -30,39 +33,38 @@ options:
     required: True
   tasks_from:
     description:
-      - "File to load from a Role's tasks/ directory."
-    required: False
-    default: 'main'
+      - File to load from a role's C(tasks/) directory.
+    default: main
   vars_from:
     description:
-      - "File to load from a Role's vars/ directory."
-    required: False
-    default: 'main'
+      - File to load from a role's C(vars/) directory.
+    default: main
   defaults_from:
     description:
-      - "File to load from a Role's defaults/ directory."
-    required: False
-    default: 'main'
+      - File to load from a role's C(defaults/) directory.
+    default: main
   allow_duplicates:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
-    required: False
-    default: True
+    type: bool
+    default: 'yes'
   private:
     description:
-      - If True the variables from defaults/ and vars/ in a role will not be made available to the rest of the play.
-    default: None
+      - This option is a no op, and the functionality described in previous versions was not implemented. This
+        option will be removed in Ansible v2.8.
+    type: bool
+    default: 'no'
 notes:
-    - Handlers are made available to the whole play.
+  - Handlers are made available to the whole play.
 '''
 
 EXAMPLES = """
 - hosts: all
   tasks:
     - import_role:
-       name: myrole
+        name: myrole
 
-    - name: Run tasks/other.yml instead of 'main'
+    - name: Run tasks/other.yaml instead of 'main'
       import_role:
         name: myrole
         tasks_from: other
@@ -71,16 +73,7 @@ EXAMPLES = """
       import_role:
         name: myrole
       vars:
-        rolevar1: 'value from task'
-
-    - name: Apply loop to each task in role
-      import_role:
-        name: myrole
-      with_items:
-        - '{{ roleinput1 }}'
-        - '{{ roleinput2 }}'
-      loop_control:
-        loop_var: roleinputvar
+        rolevar1: value from task
 
     - name: Apply condition to each task in role
       import_role:
@@ -89,5 +82,5 @@ EXAMPLES = """
 """
 
 RETURN = """
-# this module does not return anything except tasks to execute
+# This module does not return anything except tasks to execute.
 """

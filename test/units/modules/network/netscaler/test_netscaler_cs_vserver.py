@@ -18,7 +18,8 @@
 #
 
 from ansible.compat.tests.mock import patch, Mock, MagicMock, call
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 import sys
 
@@ -44,6 +45,8 @@ class TestNetscalerCSVserverModule(TestModule):
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver.csvserver': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding.csvserver_cspolicy_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding.csvserver_lbvserver_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding.sslvserver_sslcertkey_binding': m,
@@ -58,12 +61,16 @@ class TestNetscalerCSVserverModule(TestModule):
         cls.nitro_specific_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerCSVserverModule, self).setUp()
+
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerCSVserverModule, self).tearDown()
+
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 

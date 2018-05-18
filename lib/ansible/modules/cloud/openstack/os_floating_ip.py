@@ -30,39 +30,34 @@ options:
    network:
      description:
         - The name or ID of a neutron external network or a nova pool name.
-     required: false
    floating_ip_address:
      description:
         - A floating IP address to attach or to detach. Required only if I(state)
           is absent. When I(state) is present can be used to specify a IP address
           to attach.
-     required: false
    reuse:
      description:
         - When I(state) is present, and I(floating_ip_address) is not present,
           this parameter can be used to specify whether we should try to reuse
           a floating IP address already allocated to the project.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    fixed_address:
      description:
         - To which fixed IP of server the floating IP address should be
           attached to.
-     required: false
    nat_destination:
      description:
         - The name or id of a neutron private network that the fixed IP to
           attach floating IP is on
-     required: false
-     default: None
      aliases: ["fixed_network", "internal_network"]
      version_added: "2.3"
    wait:
      description:
         - When attaching a floating IP address, specify whether we should
           wait for it to appear as attached.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    timeout:
      description:
         - Time to wait for an IP address to appear as attached. See wait.
@@ -72,19 +67,17 @@ options:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
-     required: false
      default: present
    purge:
      description:
         - When I(state) is absent, indicates whether or not to delete the floating
           IP completely, or only detach it from the server. Default is to detach only.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements: ["shade"]
 '''
 
@@ -128,16 +121,8 @@ EXAMPLES = '''
      server: cattle001
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule, remove_values
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _get_floating_ip(cloud, floating_ip_address):
@@ -167,13 +152,10 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['nat_destination'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-        module.fail_json(msg="To utilize nat_destination, the installed version of"
-                             "the shade library MUST be >= 1.8.0")
+    if module.params['nat_destination']:
+        min_version = '1.8.0'
+    else:
+        min_version = None
 
     server_name_or_id = module.params['server']
     state = module.params['state']
@@ -186,7 +168,7 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    cloud = shade.openstack_cloud(**module.params)
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
 
     try:
         server = cloud.get_server(server_name_or_id)
@@ -204,8 +186,21 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
-                        (nat_destination and f_ip.internal_network == fixed_address),
+                # check if we have floting ip on given nat_destination network
+                if nat_destination:
+                    nat_floating_addrs = [addr for addr in server.addresses.get(
+                        cloud.get_network(nat_destination)['name'], [])
+                        if addr.addr == public_ip and
+                        addr['OS-EXT-IPS:type'] == 'floating']
+
+                    if len(nat_floating_addrs) == 0:
+                        module.fail_json(msg="server {server} already has a "
+                                             "floating-ip on a different "
+                                             "nat-destination than '{nat_destination}'"
+                                         .format(server=server_name_or_id,
+                                                 nat_destination=nat_destination))
+
+                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "

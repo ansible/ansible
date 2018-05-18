@@ -1,9 +1,12 @@
 ---
+- debug: msg="START cli/basic-login.yaml on connection={{ ansible_connection }}"
+
 - name: Remove previous login banner
   eos_config:
     lines: no banner login
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create login banner
   eos_banner:
@@ -14,6 +17,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -32,6 +36,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -40,13 +45,14 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-  
-- name: remove login
+
+- name: Remove login
   eos_banner:
     banner: login
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -56,12 +62,13 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: remove login (idempotent)
+- name: Remove login again (idempotent)
   eos_banner:
     banner: login
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -70,7 +77,6 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:

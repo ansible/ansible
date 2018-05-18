@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
@@ -45,21 +45,19 @@ options:
       - Facility name for logging.
   dest_level:
     description:
-      - Set logging severity levels. C(alias level).
+      - Set logging severity levels.
+    aliases: ['level']
   facility_level:
     description:
       - Set logging serverity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """
@@ -104,8 +102,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -146,7 +144,7 @@ def map_obj_to_commands(updates, module):
                         pass
 
             if w['facility'] is not None:
-                    commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+                commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
 
     return commands
 
@@ -293,8 +291,7 @@ def main():
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
+        aggregate=dict(type='list')
     )
 
     argument_spec.update(nxos_argument_spec)

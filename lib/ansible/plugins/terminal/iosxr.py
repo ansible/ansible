@@ -30,13 +30,13 @@ class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
         re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$"),
         re.compile(br']]>]]>[\r\n]?')
     ]
 
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
         re.compile(br"% ?Bad secret"),
+        re.compile(br"% ?This command is not authorized"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),

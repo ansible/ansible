@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,8 @@ short_description: Manage VMware ESXi DNS Configuration
 description:
     - Manage VMware ESXi DNS Configuration
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author:
+- Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -94,8 +93,8 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(change_hostname_to=dict(required=True, type='str'),
-                         domainname=dict(required=True, type='str'),
-                         dns_servers=dict(required=True, type='list')))
+                              domainname=dict(required=True, type='str'),
+                              dns_servers=dict(required=True, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

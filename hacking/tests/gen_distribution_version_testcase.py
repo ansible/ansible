@@ -32,6 +32,7 @@ filelist = [
     '/etc/altlinux-release',
     '/etc/os-release',
     '/etc/coreos/update.conf',
+    '/usr/lib/os-release',
 ]
 
 fcont = {}

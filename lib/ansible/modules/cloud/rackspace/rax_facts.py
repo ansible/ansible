@@ -29,7 +29,6 @@ options:
   name:
     description:
       - Server name to retrieve facts for
-    default: null
 author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace.openstack
 '''
@@ -61,7 +60,7 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def rax_facts(module, address, name, server_id):

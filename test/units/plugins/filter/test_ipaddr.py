@@ -17,14 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pytest
+
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
                                            previous_nth_usable, network_in_usable, network_in_network)
-try:
-    import netaddr
-except ImportError:
-    from nose.plugins.skip import SkipTest
-    raise SkipTest("This test  requires the `netaddr` python library")
+netaddr = pytest.importorskip('netaddr')
 
 
 class TestIpFilter(unittest.TestCase):

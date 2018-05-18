@@ -1,0 +1,24 @@
+---
+- debug: msg="START common/output.yaml on connection={{ ansible_connection }}"
+
+- name: get output for single command
+  nxos_command:
+    commands: ['show version']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: get output for multiple commands
+  nxos_command:
+    commands:
+      - show version
+      - show interface
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END common/output.yaml on connection={{ ansible_connection }}"

@@ -173,7 +173,7 @@ def main():
                 config = yaml.safe_load(stream)
                 break
         if not config:
-            sys.stderr.write("No config file found at {}\n".format(config_files))
+            sys.stderr.write("No config file found at {0}\n".format(config_files))
             sys.exit(1)
         client, auth_creds = stack_auth(config['stacki']['auth'])
         header = stack_build_header(auth_creds)

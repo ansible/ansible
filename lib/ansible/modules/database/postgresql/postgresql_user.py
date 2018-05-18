@@ -36,7 +36,6 @@ options:
     description:
       - name of the user (role) to add or remove
     required: true
-    default: null
   password:
     description:
       - set the user's password, before 1.4 this was required.
@@ -45,16 +44,14 @@ options:
         C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
         C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
         MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
-    default: null
   db:
     description:
       - name of database where permissions will be granted
-    default: null
   fail_on_user:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
+    type: bool
     default: 'yes'
-    choices: [ "yes", "no" ]
   port:
     description:
       - Database port to connect to.
@@ -66,7 +63,6 @@ options:
   login_password:
     description:
       - Password used to authenticate with PostgreSQL
-    default: null
   login_host:
     description:
       - Host running PostgreSQL.
@@ -74,41 +70,37 @@ options:
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
-    default: null
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    default: null
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
+      - Note that '[NO]CREATEUSER' is deprecated.
     default: ""
-    choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
-                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
+    choices: [ "[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
   state:
     description:
       - The user (role) state
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ present, absent ]
   encrypted:
     description:
       - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
         stored password is hashed when encrypted is set.
-    default: false
     version_added: '1.4'
   expires:
     description:
       - The date at which the user's password is to expire.
       - If set to C('infinity'), user's password never expire.
       - Note that this value should be a valid SQL date and time type.
-    default: null
     version_added: '1.4'
   no_password_changes:
     description:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
+    type: bool
     default: 'no'
-    choices: [ "yes", "no" ]
     version_added: '2.0'
   ssl_mode:
     description:
@@ -122,12 +114,10 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    default: null
     version_added: '2.3'
   conn_limit:
     description:
       - Specifies the user connection limit.
-    default: null
     version_added: '2.4'
 notes:
    - The default authentication assumes that you are either logging in as or
@@ -216,7 +206,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
 
-FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
@@ -226,8 +216,7 @@ VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
-                             CREATEUSER='rolcreateuser', CREATEDB='rolcreatedb',
-                             INHERIT='rolinherit', LOGIN='rolcanlogin',
+                             CREATEDB='rolcreatedb', INHERIT='rolinherit', LOGIN='rolcanlogin',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
 
@@ -331,6 +320,18 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
             db_connection.rollback()
 
         pwchanging = user_should_we_change_password(current_role_attrs, user, password, encrypted)
+
+        if current_role_attrs is None:
+            try:
+                # AWS RDS instances does not allow user to access pg_authid
+                # so try to get current_role_attrs from pg_roles tables
+                select = "SELECT * FROM pg_roles where rolname=%(user)s"
+                cursor.execute(select, {"user": user})
+                # Grab current role attributes from pg_roles
+                current_role_attrs = cursor.fetchone()
+            except psycopg2.ProgrammingError as e:
+                db_connection.rollback()
+                module.fail_json(msg="Failed to get role details for current user %s: %s" % (user, e))
 
         role_attr_flags_changing = False
         if role_attr_flags:
@@ -503,7 +504,7 @@ def get_database_privileges(cursor, user, db):
     datacl = cursor.fetchone()[0]
     if datacl is None:
         return set()
-    r = re.search('%s\\\\?\"?=(C?T?c?)/[^,]+\,?' % user, datacl)
+    r = re.search(r'%s\\?"?=(C?T?c?)/[^,]+,?' % user, datacl)
     if r is None:
         return set()
     o = set()
@@ -607,11 +608,12 @@ def parse_role_attrs(cursor, role_attr_flags):
     Where:
 
         attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
-        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
+        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEDB",
                             "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION",
                             "[NO]BYPASSRLS" ]
 
     Note: "[NO]BYPASSRLS" role attribute introduced in 9.5
+    Note: "[NO]CREATEUSER" role attribute is deprecated.
 
     """
     flags = frozenset(role.upper() for role in role_attr_flags.split(',') if role)

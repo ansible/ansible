@@ -1,0 +1,36 @@
+---
+- name: Setup
+  iosxr_banner:
+    banner: login
+    text: |
+      Junk login banner
+      over multiple lines
+    provider: "{{ netconf }}"
+    state: present
+
+- name: remove login
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'xc:operation=\"delete\"' in result.xml"
+
+- name: remove login (idempotent)
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.xml | length == 0"

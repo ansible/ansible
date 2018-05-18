@@ -45,7 +45,7 @@ options:
   wait:
     description:
       - Whether to wait for the tasks to finish before returning.
-    choices: [ True, False ]
+    type: bool
     default: True
     required: False
 requirements:
@@ -380,7 +380,8 @@ class ClcGroup(object):
             changed:  Boolean- whether a change was made,
             group:  A clc group object for the group
         """
-        assert self.root_group, "Implementation Error: Root Group not set"
+        if not self.root_group:
+            raise AssertionError("Implementation Error: Root Group not set")
         parent = parent_name if parent_name is not None else self.root_group.name
         description = group_description
         changed = False

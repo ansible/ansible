@@ -29,13 +29,9 @@ options:
    description:
      description:
         - Group description
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the group in if the cloud supports domains.
-     required: false
-     default: None
      version_added: "2.3"
    state:
      description:
@@ -45,7 +41,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -99,14 +94,8 @@ group:
             sample: "default"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, description, group):
@@ -132,16 +121,14 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    name = module.params.get('name')
+    description = module.params.get('description')
+    state = module.params.get('state')
 
-    name = module.params.pop('name')
-    description = module.params.pop('description')
     domain_id = module.params.pop('domain_id')
-    state = module.params.pop('state')
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         if domain_id:
             group = cloud.get_group(name, filters={'domain_id': domain_id})
         else:

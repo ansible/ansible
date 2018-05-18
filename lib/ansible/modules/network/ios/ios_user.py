@@ -43,7 +43,8 @@ options:
       - The set of username objects to be configured on the remote
         Cisco IOS device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the Cisco IOS device.
@@ -76,6 +77,7 @@ options:
         device running configuration. The argument accepts a string value
         defining the view name. This argument does not check if the view
         has been configured on the device.
+    aliases: ['role']
   nopassword:
     description:
       - Defines the username without assigning
@@ -99,6 +101,7 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -166,10 +169,10 @@ import json
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):
@@ -178,11 +181,12 @@ def validate_privilege(value, module):
 
 
 def user_del_cmd(username):
-    return json.dumps({
+    return {
         'command': 'no username %s' % username,
         'prompt': 'This operation will remove all username related configurations with same name',
-        'answer': 'y'
-    })
+        'answer': 'y',
+        'newline': False,
+    }
 
 
 def map_obj_to_commands(updates, module):

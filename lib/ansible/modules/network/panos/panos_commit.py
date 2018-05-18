@@ -31,34 +31,19 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     interval:
         description:
             - interval for checking commit job
-        required: false
         default: 0.5
     timeout:
         description:
             - timeout for commit job
-        required: false
-        default: None
     sync:
         description:
             - if commit should be synchronous
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

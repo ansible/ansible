@@ -39,6 +39,7 @@ options:
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+    aliases: ['droplet_id']
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
@@ -46,9 +47,9 @@ options:
     description:
      - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host
        per name.  Useful for idempotence.
+    type: bool
+    default: 'no'
     version_added: "1.4"
-    default: "no"
-    choices: [ "yes", "no" ]
   size_id:
     description:
      - This is the slug of the size you would like the droplet created with.
@@ -64,39 +65,36 @@ options:
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
+    type: bool
+    default: 'yes'
     version_added: "1.4"
-    default: "yes"
-    choices: [ "yes", "no" ]
   private_networking:
     description:
      - "Bool, add an additional, private network interface to droplet for inter-droplet communication."
+    type: bool
+    default: 'no'
     version_added: "1.4"
-    default: "no"
-    choices: [ "yes", "no" ]
   backups_enabled:
     description:
      - Optional, Boolean, enables backups for your droplet.
+    type: bool
+    default: 'no'
     version_added: "1.6"
-    default: "no"
-    choices: [ "yes", "no" ]
   user_data:
     description:
       - opaque blob of data which is made available to the droplet
     version_added: "2.0"
-    required: false
-    default: None
   ipv6:
     description:
       - Optional, Boolean, enable IPv6 for your droplet.
+    type: bool
+    default: 'no'
     version_added: "2.2"
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
      - How long before wait gives up, in seconds.
@@ -201,7 +199,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 
 class TimeoutError(Exception):
@@ -231,13 +229,20 @@ class Droplet(JsonfyMixIn):
         if attrs:
             for k, v in attrs.items():
                 setattr(self, k, v)
+            networks = attrs.get('networks', {})
+            for network in networks.get('v6', []):
+                if network['type'] == 'public':
+                    setattr(self, 'public_ipv6_address', network['ip_address'])
+                else:
+                    setattr(self, 'private_ipv6_address', network['ip_address'])
         else:
             json = self.manager.show_droplet(self.id)
             if json['ip_address']:
                 self.update_attr(json)
 
     def power_on(self):
-        assert self.status == 'off', 'Can only power on a closed one.'
+        if self.status != 'off':
+            raise AssertionError('Can only power on a closed one.')
         json = self.manager.power_on_droplet(self.id)
         self.update_attr(json)
 
@@ -299,7 +304,7 @@ class Droplet(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_active_droplets()
-        return map(cls, json)
+        return list(map(cls, json))
 
 
 class SSH(JsonfyMixIn):
@@ -330,7 +335,7 @@ class SSH(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_ssh_keys()
-        return map(cls, json)
+        return list(map(cls, json))
 
     @classmethod
     def add(cls, name, key_pub):
@@ -345,11 +350,7 @@ def core(module):
             module.fail_json(msg='Unable to load %s' % k)
         return v
 
-    try:
-        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
+    api_token = module.params['api_token']
     changed = True
     command = module.params['command']
     state = module.params['state']
@@ -431,7 +432,11 @@ def main():
         argument_spec=dict(
             command=dict(choices=['droplet', 'ssh'], default='droplet'),
             state=dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            api_token=dict(
+                aliases=['API_TOKEN'],
+                no_log=True,
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY'])
+            ),
             name=dict(type='str'),
             size_id=dict(),
             image_id=dict(),

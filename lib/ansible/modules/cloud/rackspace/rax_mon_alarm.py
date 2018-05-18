@@ -60,7 +60,7 @@ options:
     description:
     - If yes, create this alarm, but leave it in an inactive state. Defaults to
       no.
-    choices: [ "yes", "no" ]
+    type: bool
   metadata:
     description:
     - Arbitrary key/value pairs to accompany the alarm. Must be a hash of String
@@ -179,6 +179,7 @@ def alarm(module, state, label, entity_id, check_id, notification_plan_id, crite
         module.exit_json(changed=changed, alarm=alarm_dict)
     else:
         module.exit_json(changed=changed)
+
 
 def main():
     argument_spec = rax_argument_spec()

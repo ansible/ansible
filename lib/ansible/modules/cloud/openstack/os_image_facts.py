@@ -40,7 +40,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created image named image1
   os_image_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -127,14 +127,8 @@ openstack_image:
             type: int
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -145,11 +139,8 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         image = cloud.get_image(module.params['image'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_image=image))

@@ -6,8 +6,7 @@
       - name: ansibletest2
       - name: ansibletest3
     state: absent
-    authorize: yes
-  register: result
+    provider: "{{ cli }}"
 
 - name: Create user (SetUp)
   ios_user:
@@ -15,7 +14,7 @@
     privilege: 15
     role: network-operator
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,7 +27,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    authorize: yes
+    provider: "{{ cli }}"
     state: present
     view: network-admin
   register: result
@@ -44,7 +43,7 @@
     privilege: 15
     role: network-operator
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -57,7 +56,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    authorize: yes
+    provider: "{{ cli }}"
     state: present
     view: network-admin
   register: result
@@ -74,12 +73,12 @@
       - name: ansibletest2
       - name: ansibletest3
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"no username ansibletest1" in result.commands[0]'
-      - '"no username ansibletest2" in result.commands[1]'
-      - '"no username ansibletest3" in result.commands[2]'
+      - '"no username ansibletest1" in result.commands[0]["command"]'
+      - '"no username ansibletest2" in result.commands[1]["command"]'
+      - '"no username ansibletest3" in result.commands[2]["command"]'

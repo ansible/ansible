@@ -20,7 +20,7 @@ description:
     - This module will let you trigger, acknowledge or resolve a PagerDuty incident by sending events
 version_added: "1.9"
 author:
-    - "Amanpreet Singh (@aps-sids)"
+    - "Amanpreet Singh (@ApsOps)"
 requirements:
     - PagerDuty API access
 options:

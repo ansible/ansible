@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -22,7 +20,7 @@ description:
 version_added: "2.1"
 author:
   - Ritesh Khadgaray (@ritzk)
-  - Abhijeet Kasurde (@akasurde)
+  - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 5.5
     - Only the first match against vm_id is used, even if there are multiple matches
@@ -85,6 +83,7 @@ options:
     vm_shell_args:
         description:
             - The argument to the program.
+        default: " "
     vm_shell_env:
         description:
             - Comma separated list of environment variable, specified in the guest OS notation.

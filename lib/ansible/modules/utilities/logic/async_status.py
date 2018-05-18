@@ -28,12 +28,11 @@ options:
     required: true
   mode:
     description:
-      - if C(status), obtain the status; if C(cleanup), clean up the async job cache
-        located in C(~/.ansible_async/) for the specified job I(jid).
+      - if C(status), obtain the status; if C(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job I(jid).
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
-    - See also U(http://docs.ansible.com/playbooks_async.html)
+    - See also U(https://docs.ansible.com/playbooks_async.html)
     - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
@@ -57,8 +56,10 @@ def main():
     mode = module.params['mode']
     jid = module.params['jid']
 
+    async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
+
     # setup logging directory
-    logdir = os.path.expanduser("~/.ansible_async")
+    logdir = os.path.expanduser(async_dir)
     log_path = os.path.join(logdir, jid)
 
     if not os.path.exists(log_path):

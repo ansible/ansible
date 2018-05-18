@@ -1,10 +1,11 @@
 ---
-- debug: msg="START {{ connection.transport }}/invalid_subset.yaml"
+- debug: msg="START connection={{ ansible_connection }}/invalid_subset.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 
 - name: test invalid subset (foobar)
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "foobar"
   register: result
@@ -26,7 +27,6 @@
 
 - name: test subset specified multiple times
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
       - "hardware"
@@ -45,4 +45,4 @@
 
 
 
-- debug: msg="END {{ connection.transport }}/invalid_subset.yaml"
+- debug: msg="END connection={{ ansible_connection }}/invalid_subset.yaml"

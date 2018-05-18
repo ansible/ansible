@@ -32,6 +32,13 @@ from ansible.cli.vault import VaultCLI
 
 
 class TestVaultCli(unittest.TestCase):
+    def setUp(self):
+        self.tty_patcher = patch('ansible.cli.sys.stdin.isatty', return_value=False)
+        self.mock_isatty = self.tty_patcher.start()
+
+    def tearDown(self):
+        self.tty_patcher.stop()
+
     def test_parse_empty(self):
         cli = VaultCLI([])
         self.assertRaisesRegexp(errors.AnsibleOptionsError,
@@ -46,14 +53,18 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
 
-    def test_view_missing_file_no_secret(self):
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    def test_view_missing_file_no_secret(self, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
         self.assertRaisesRegexp(errors.AnsibleOptionsError,
                                 "A vault password is required to use Ansible's Vault",
                                 cli.run)
 
-    def test_encrypt_missing_file_no_secret(self):
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
         self.assertRaisesRegexp(errors.AnsibleOptionsError,

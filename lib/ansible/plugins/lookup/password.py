@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - Maykel Moya <mmoya@speedyrails.com>
     short_description: retrieve or generate a random password, stored in a file
     description:
-      -  generates a random plaintext password and stores it in a file at a given filepath.
+      - Generates a random plaintext password and stores it in a file at a given filepath.
       - If the file exists previously, it will retrieve its contents, behaving just like with_file.
       - 'Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host,
         which simplifies password management in C("host_vars") variables.'
@@ -36,7 +36,7 @@ DOCUMENTATION = """
       chars:
         version_added: "1.4"
         description:
-          - Define comma separeted list of names that compose a custom character set in the generated passwords.
+          - Define comma separated list of names that compose a custom character set in the generated passwords.
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
@@ -48,7 +48,7 @@ DOCUMENTATION = """
     notes:
       - A great alternative to the password lookup plugin,
         if you don't need to generate random passwords on a per-host basis,
-        would be to use Using Vault in playbooks.
+        would be to use Vault in playbooks.
         Read the documentation there and consider using it first,
         it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.
@@ -79,7 +79,7 @@ EXAMPLES = """
 - name: create a mysql user with a random password using many different char sets
   mysql_user:
     name: "{{ client }}"
-    password" "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 """
 
@@ -92,7 +92,7 @@ _raw:
 import os
 import string
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
@@ -250,7 +250,8 @@ def _format_content(password, salt, encrypt=True):
         return password
 
     # At this point, the calling code should have assured us that there is a salt value.
-    assert salt, '_format_content was called with encryption requested but no salt value'
+    if not salt:
+        raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
 
     return u'%s salt=%s' % (password, salt)
 

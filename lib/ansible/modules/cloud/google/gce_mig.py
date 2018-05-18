@@ -40,31 +40,22 @@ options:
        - Instance Template to be used in creating the VMs.  See
          U(https://cloud.google.com/compute/docs/instance-templates) to learn more
          about Instance Templates.  Required for creating MIGs.
-    required: false
   size:
     description:
        - Size of Managed Instance Group.  If MIG already exists, it will be
          resized to the number provided here.  Required for creating MIGs.
-    required: false
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     description:
       - GCE project ID
-    required: false
-    default: null
   state:
     description:
       - desired state of the resource
-    required: false
     default: "present"
     choices: ["absent", "present"]
   zone:
@@ -77,15 +68,11 @@ options:
         and policy.max_instances (int) are required fields if autoscaling is used. See
         U(https://cloud.google.com/compute/docs/reference/beta/autoscalers) for more information
         on Autoscaling.
-    required: false
-    default: null
   named_ports:
     version_added: "2.3"
     description:
       - Define named ports that backend services can forward data to.  Format is a a list of
         name:port dictionaries.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

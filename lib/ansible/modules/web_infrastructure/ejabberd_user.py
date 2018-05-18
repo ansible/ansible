@@ -41,7 +41,7 @@ options:
             - enables or disables the local syslog facility for this module
         required: false
         default: false
-        choices: [ 'true', 'false', 'yes', 'no' ]
+        type: bool
     state:
         description:
             - describe the desired state of the user to be managed
@@ -56,7 +56,7 @@ notes:
 EXAMPLES = '''
 # Example playbook entries using the ejabberd_user module to manage users state.
 
-- name: create a user if it does not exists
+- name: create a user if it does not exist
   ejabberd_user:
     username: test
     host: server

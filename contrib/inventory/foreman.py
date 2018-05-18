@@ -84,7 +84,7 @@ class ForemanInventory(object):
         try:
             self.foreman_url = config.get('foreman', 'url')
             self.foreman_user = config.get('foreman', 'user')
-            self.foreman_pw = config.get('foreman', 'password')
+            self.foreman_pw = config.get('foreman', 'password', raw=True)
             self.foreman_ssl_verify = config.getboolean('foreman', 'ssl_verify')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
             print("Error parsing configuration: %s" % e, file=sys.stderr)
@@ -139,6 +139,10 @@ class ForemanInventory(object):
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.cache_max_age = 60
+        try:
+            self.scan_new_hosts = config.getboolean('cache', 'scan_new_hosts')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.scan_new_hosts = False
 
         return True
 
@@ -264,16 +268,18 @@ class ForemanInventory(object):
         >>> ForemanInventory.to_safe("foo-bar baz")
         'foo_barbaz'
         '''
-        regex = "[^A-Za-z0-9\_]"
+        regex = r"[^A-Za-z0-9\_]"
         return re.sub(regex, "_", word.replace(" ", ""))
 
-    def update_cache(self):
+    def update_cache(self, scan_only_new_hosts=False):
         """Make calls to foreman and save the output in a cache"""
 
         self.groups = dict()
         self.hosts = dict()
 
         for host in self._get_hosts():
+            if host['name'] in self.cache.keys() and scan_only_new_hosts:
+                continue
             dns_name = host['name']
 
             host_data = self._get_host_data_by_id(host['id'])
@@ -387,6 +393,8 @@ class ForemanInventory(object):
             self.load_facts_from_cache()
             self.load_hostcollections_from_cache()
             self.load_cache_from_cache()
+            if self.scan_new_hosts:
+                self.update_cache(True)
 
     def get_host_info(self):
         """Get variables about a specific host"""

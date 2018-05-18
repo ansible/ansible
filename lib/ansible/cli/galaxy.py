@@ -81,8 +81,8 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog init [options] role_name")
             self.parser.add_option('--init-path', dest='init_path', default="./",
                                    help='The path in which the skeleton role will be created. The default is the current working directory.')
-            self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
-                                   help='Initialize the skeleton role with default contents for a Container Enabled role.')
+            self.parser.add_option('--type', dest='role_type', action='store', default='default',
+                                   help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
             self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
@@ -91,6 +91,8 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
+                                   default=False, help='Use tar instead of the scm archive option when packaging the role')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -212,7 +214,7 @@ class GalaxyCLI(CLI):
             license='license (GPLv2, CC-BY, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='1.2',
-            container_enabled=self.options.container_enabled
+            role_type=self.options.role_type
         )
 
         # create role directory
@@ -233,7 +235,7 @@ class GalaxyCLI(CLI):
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
-            dirs[:] = [d for d in dirs if not any(r.match(os.path.join(rel_root, d)) for r in skeleton_ignore_re)]
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)
@@ -476,13 +478,17 @@ class GalaxyCLI(CLI):
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.options.roles_path
+            path_found = False
             for path in roles_path:
                 role_path = os.path.expanduser(path)
                 if not os.path.exists(role_path):
-                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % role_path)
+                    display.warning("- the configured path %s does not exist." % role_path)
+                    continue
                 elif not os.path.isdir(role_path):
-                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % role_path)
+                    display.warning("- the configured path %s, exists, but it is not a directory." % role_path)
+                    continue
                 path_files = os.listdir(role_path)
+                path_found = True
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, path_file)
                     if gr.metadata:
@@ -493,6 +499,8 @@ class GalaxyCLI(CLI):
                         if not version:
                             version = "(unknown version)"
                         display.display("- %s, %s" % (path_file, version))
+            if not path_found:
+                raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return 0
 
     def execute_search(self):
@@ -545,14 +553,17 @@ class GalaxyCLI(CLI):
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
-            login = GalaxyLogin(self.galaxy)
-            github_token = login.create_github_token()
+            if C.GALAXY_TOKEN:
+                github_token = C.GALAXY_TOKEN
+            else:
+                login = GalaxyLogin(self.galaxy)
+                github_token = login.create_github_token()
         else:
             github_token = self.options.token
 
         galaxy_response = self.api.authenticate(github_token)
 
-        if self.options.token is None:
+        if self.options.token is None and C.GALAXY_TOKEN is None:
             # Remove the token we created
             login.remove_github_token()
 

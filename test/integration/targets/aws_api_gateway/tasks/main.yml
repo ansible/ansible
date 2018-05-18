@@ -10,7 +10,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("Region must be specified")'
+           - 'result.msg.startswith("The aws_api_gateway module requires a region")'
 
     # ============================================================
     - name: test with minimal parameters but no region
@@ -23,7 +23,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("Region must be specified")'
+           - 'result.msg.startswith("The aws_api_gateway module requires a region")'
 
     # ============================================================
     - name: test disallow multiple swagger sources
@@ -106,7 +106,7 @@
     - name: assert 
       assert:
         that:
-          - bad_uri_result|failed
+          - bad_uri_result is failed
 
     # ============================================================
 

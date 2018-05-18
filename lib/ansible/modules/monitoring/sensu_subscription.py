@@ -40,7 +40,7 @@ options:
     description:
       - Create a backup file (if yes), including the timestamp information so you
       - can get the original file back if you somehow clobbered it incorrectly.
-    choices: [ 'yes', 'no' ]
+    type: bool
     required: false
     default: no
 requirements: [ ]
@@ -135,9 +135,9 @@ def sensu_subscription(module, path, name, state='present', backup=False):
 
 
 def main():
-    arg_spec = {'name':   {'type': 'str', 'required': True},
-                'path':   {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
-                'state':  {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
+    arg_spec = {'name': {'type': 'str', 'required': True},
+                'path': {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
+                'state': {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
                 'backup': {'type': 'bool', 'default': 'no'},
                 }
 

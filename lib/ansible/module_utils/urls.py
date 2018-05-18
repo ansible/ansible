@@ -6,80 +6,16 @@
 #
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com>, 2015
-# All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 #
 # The match_hostname function and supporting code is under the terms and
 # conditions of the Python Software Foundation License.  They were taken from
 # the Python3 standard library and adapted for use in Python2.  See comments in the
-# source for which code precisely is under this License.  PSF License text
-# follows:
+# source for which code precisely is under this License.
 #
-# PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
-# --------------------------------------------
-#
-# 1. This LICENSE AGREEMENT is between the Python Software Foundation
-# ("PSF"), and the Individual or Organization ("Licensee") accessing and
-# otherwise using this software ("Python") in source or binary form and
-# its associated documentation.
-#
-# 2. Subject to the terms and conditions of this License Agreement, PSF hereby
-# grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
-# analyze, test, perform and/or display publicly, prepare derivative works,
-# distribute, and otherwise use Python alone or in any derivative version,
-# provided, however, that PSF's License Agreement and PSF's notice of copyright,
-# i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-# 2011, 2012, 2013, 2014 Python Software Foundation; All Rights Reserved" are
-# retained in Python alone or in any derivative version prepared by Licensee.
-#
-# 3. In the event Licensee prepares a derivative work that is based on
-# or incorporates Python or any part thereof, and wants to make
-# the derivative work available to others as provided herein, then
-# Licensee hereby agrees to include in any such work a brief summary of
-# the changes made to Python.
-#
-# 4. PSF is making Python available to Licensee on an "AS IS"
-# basis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
-# IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND
-# DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
-# FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT
-# INFRINGE ANY THIRD PARTY RIGHTS.
-#
-# 5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON
-# FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS
-# A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,
-# OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
-#
-# 6. This License Agreement will automatically terminate upon a material
-# breach of its terms and conditions.
-#
-# 7. Nothing in this License Agreement shall be deemed to create any
-# relationship of agency, partnership, or joint venture between PSF and
-# Licensee.  This License Agreement does not grant permission to use PSF
-# trademarks or trade name in a trademark sense to endorse or promote
-# products or services of Licensee, or any third party.
-#
-# 8. By copying, installing or otherwise using Python, Licensee
-# agrees to be bound by the terms and conditions of this License
-# Agreement.
+# PSF License (see licenses/PSF-license.txt or https://opensource.org/licenses/Python-2.0)
+
 
 '''
 The **urls** utils module offers a replacement for the urllib2 python library.
@@ -115,6 +51,9 @@ except ImportError:
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+
+from ansible.module_utils.six import PY3
+
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -126,6 +65,8 @@ except ImportError:
     # python2
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
+
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
@@ -428,13 +369,28 @@ class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
         return httplib.HTTPSConnection(host, **kwargs)
 
 
+class ParseResultDottedDict(dict):
+    '''
+    A dict that acts similarly to the ParseResult named tuple from urllib
+    '''
+    def __init__(self, *args, **kwargs):
+        super(ParseResultDottedDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+    def as_list(self):
+        '''
+        Generate a list from this dict, that looks like the ParseResult named tuple
+        '''
+        return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+
+
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
     but accounts for the fact that older versions of that
     library do not support named attributes (ie. .netloc)
     '''
-    generic_parts = dict()
+    generic_parts = ParseResultDottedDict()
     if hasattr(parts, 'netloc'):
         # urlparse is newer, just read the fields straight
         # from the parts object
@@ -493,11 +449,11 @@ class RequestWithMethod(urllib_request.Request):
     Originally contained in library/net_infrastructure/dnsmadeeasy
     '''
 
-    def __init__(self, url, method, data=None, headers=None):
+    def __init__(self, url, method, data=None, headers=None, origin_req_host=None, unverifiable=True):
         if headers is None:
             headers = {}
         self._method = method.upper()
-        urllib_request.Request.__init__(self, url, data, headers)
+        urllib_request.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
 
     def get_method(self):
         if self._method:
@@ -525,36 +481,68 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
             if handler:
                 urllib_request._opener.add_handler(handler)
 
+            # Preserve urllib2 compatibility
             if follow_redirects == 'urllib2':
                 return urllib_request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+
+            # Handle disabled redirects
             elif follow_redirects in ['no', 'none', False]:
                 raise urllib_error.HTTPError(newurl, code, msg, hdrs, fp)
 
-            do_redirect = False
+            method = req.get_method()
+
+            # Handle non-redirect HTTP status or invalid follow_redirects
             if follow_redirects in ['all', 'yes', True]:
-                do_redirect = (code >= 300 and code < 400)
-
+                if code < 300 or code >= 400:
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             elif follow_redirects == 'safe':
-                m = req.get_method()
-                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
-
-            if do_redirect:
-                # be conciliant with URIs containing a space
-                newurl = newurl.replace(' ', '%20')
-                newheaders = dict((k, v) for k, v in req.headers.items()
-                                  if k.lower() not in ("content-length", "content-type"))
-                try:
-                    # Python 2-3.3
-                    origin_req_host = req.get_origin_req_host()
-                except AttributeError:
-                    # Python 3.4+
-                    origin_req_host = req.origin_req_host
-                return urllib_request.Request(newurl,
-                                              headers=newheaders,
-                                              origin_req_host=origin_req_host,
-                                              unverifiable=True)
+                if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
+
+            try:
+                # Python 2-3.3
+                data = req.get_data()
+                origin_req_host = req.get_origin_req_host()
+            except AttributeError:
+                # Python 3.4+
+                data = req.data
+                origin_req_host = req.origin_req_host
+
+            # Be conciliant with URIs containing a space
+            newurl = newurl.replace(' ', '%20')
+
+            # Suport redirect with payload and original headers
+            if code in (307, 308):
+                # Preserve payload and headers
+                headers = req.headers
+            else:
+                # Do not preserve payload and filter headers
+                data = None
+                headers = dict((k, v) for k, v in req.headers.items()
+                               if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
+
+                # http://tools.ietf.org/html/rfc7231#section-6.4.4
+                if code == 303 and method != 'HEAD':
+                    method = 'GET'
+
+                # Do what the browsers do, despite standards...
+                # First, turn 302s into GETs.
+                if code == 302 and method != 'HEAD':
+                    method = 'GET'
+
+                # Second, if a POST is responded to with a 301, turn it into a GET.
+                if code == 301 and method == 'POST':
+                    method = 'GET'
+
+            return RequestWithMethod(newurl,
+                                     method=method,
+                                     headers=headers,
+                                     data=data,
+                                     origin_req_host=origin_req_host,
+                                     unverifiable=True,
+                                     )
 
     return RedirectHandler
 
@@ -667,6 +655,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             pass
 
         if not to_add:
+            try:
+                os.remove(to_add_path)
+            except OSError:
+                pass
             to_add_path = None
         return (tmp_path, to_add_path, paths_checked)
 
@@ -677,7 +669,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         valid_codes = [200] if valid_codes is None else valid_codes
 
         try:
-            (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
+            (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
         except:
@@ -726,6 +718,16 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if not use_proxy:
             # ignore proxy settings for this host request
+            if tmp_ca_cert_path:
+                try:
+                    os.remove(tmp_ca_cert_path)
+                except OSError:
+                    pass
+            if to_add_ca_cert_path:
+                try:
+                    os.remove(to_add_ca_cert_path)
+                except OSError:
+                    pass
             return req
 
         try:
@@ -793,16 +795,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 
 def maybe_add_ssl_handler(url, validate_certs):
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] == 'https' and validate_certs:
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
         # do the cert validation
-        netloc = parsed[1]
+        netloc = parsed.netloc
         if '@' in netloc:
             netloc = netloc.split('@', 1)[1]
         if ':' in netloc:
@@ -831,10 +831,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if ssl_handler:
         handlers.append(ssl_handler)
 
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] != 'ftp':
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme != 'ftp':
         username = url_username
 
         if headers is None:
@@ -842,20 +840,20 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         if username:
             password = url_password
-            netloc = parsed[1]
-        elif '@' in parsed[1]:
-            credentials, netloc = parsed[1].split('@', 1)
+            netloc = parsed.netloc
+        elif '@' in parsed.netloc:
+            credentials, netloc = parsed.netloc.split('@', 1)
             if ':' in credentials:
                 username, password = credentials.split(':', 1)
             else:
                 username = credentials
                 password = ''
 
-            parsed = list(parsed)
-            parsed[1] = netloc
+            parsed_list = parsed.as_list()
+            parsed_list[1] = netloc
 
             # reconstruct url without credentials
-            url = urlunparse(parsed)
+            url = urlunparse(parsed_list)
 
         if username and not force_basic_auth:
             passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
@@ -879,7 +877,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         else:
             try:
                 rc = netrc.netrc(os.environ.get('NETRC'))
-                login = rc.authenticators(parsed[1])
+                login = rc.authenticators(parsed.hostname)
             except IOError:
                 login = None
 
@@ -946,7 +944,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     # user defined headers now, which may override things we've set above
     if headers:
         if not isinstance(headers, dict):
-            raise ValueError("headers provided to fetch_url() must be a dict")
+            raise ValueError("headers provided to open_url() must be a dict")
         for header in headers:
             request.add_header(header, headers[header])
 
@@ -1005,7 +1003,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
 
-    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+    :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
         occurred then ``info['body']`` contains the error response data::
 
@@ -1014,8 +1012,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data)
-                               header={Content-type': 'application/json'},
+                               data=module.jsonify(data),
+                               headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
         body = resp.read()
@@ -1025,6 +1023,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
+
+    # ensure we use proper tempdir
+    old_tempdir = tempfile.tempdir
+    tempfile.tempdir = module.tmpdir
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
@@ -1050,11 +1052,33 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies)
-        info.update(r.info())
+        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        info.update(dict((k.lower(), v) for k, v in r.info().items()))
+
+        # Don't be lossy, append header values for duplicate headers
+        # In Py2 there is nothing that needs done, py2 does this for us
+        if PY3:
+            temp_headers = {}
+            for name, value in r.headers.items():
+                # The same as above, lower case keys to match py2 behavior, and create more consistent results
+                name = name.lower()
+                if name in temp_headers:
+                    temp_headers[name] = ', '.join((temp_headers[name], value))
+                else:
+                    temp_headers[name] = value
+            info.update(temp_headers)
+
         # parse the cookies into a nice dictionary
+        cookie_list = []
         cookie_dict = dict()
+        # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+        # Cookies with the same path are reversed from response order.
+        # This code makes no assumptions about that, and accepts the order given by python
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
+            cookie_list.append((cookie.name, cookie.value))
+        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
+
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
@@ -1085,8 +1109,12 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except httplib.BadStatusLine as e:
+        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
                     exception=traceback.format_exc())
+    finally:
+        tempfile.tempdir = old_tempdir
 
     return r, info

@@ -1,20 +1,14 @@
-# Copyright (C) 2017 Lenovo, Inc.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
@@ -29,19 +23,17 @@ options:
         attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    default: none
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -65,7 +57,6 @@ options:
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
@@ -86,13 +77,12 @@ options:
             attempt to execute all commands in non-privileged mode. If the value
             is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-        default: no
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
       auth_pass:
         description:
           - Specifies the password to use if required to enter privileged mode
             on the remote device.  If I(authorize) is false, then this argument
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-        default: none
 '''

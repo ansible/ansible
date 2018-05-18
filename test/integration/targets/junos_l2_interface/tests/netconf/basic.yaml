@@ -1,0 +1,311 @@
+---
+- debug: msg="START junos_l2_interface netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove interface address
+  junos_l2_interface:
+    name: ge-0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: setup - remove interface address
+  junos_l2_interface:
+    name: ge-0/0/2
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Setup create vlans
+  junos_vlan:
+    vlan_id: "{{ item.vlan_id }}"
+    name: "{{ item.name }}"
+    state: present
+    provider: "{{ netconf }}"
+  with_items:
+    - { vlan_id: 100, name: red }
+    - { vlan_id: 200, name: blue }
+    - { vlan_id: 300, name: green }
+
+- name: Configure interface in access mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-access
+    mode: access
+    access_vlan: red
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - result.diff.prepared is search("\+ *ge-0/0/1")
+      - result.diff.prepared is search("\+ *description test-interface-access")
+      - result.diff.prepared is search("\+ *unit 0")
+      - result.diff.prepared is search("\+ *family ethernet-switching")
+      - result.diff.prepared is search("\+ *interface-mode access")
+      - result.diff.prepared is search("\+ *members red")
+
+- name: Configure interface in access mode (idempotent)
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-access
+    mode: access
+    access_vlan: red
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate interface in access mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-access
+    mode: access
+    access_vlan: red
+    active: False
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("! *inactive[:] ge-0/0/1")
+      - result.diff.prepared is search("! *inactive[:] unit 0")
+      - result.diff.prepared is search("! *inactive[:] family ethernet-switching")
+      - result.diff.prepared is search("! *inactive[:] vlan")
+
+- name: Activate interface in access mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-access
+    mode: access
+    access_vlan: red
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("! *active[:] ge-0/0/1")
+      - result.diff.prepared is search("! *active[:] unit 0")
+      - result.diff.prepared is search("! *active[:] family ethernet-switching")
+      - result.diff.prepared is search("! *active[:] vlan")
+
+- name: Change interface to trunk mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *description test-interface-access")
+      - result.diff.prepared is search("\+ *description test-interface-trunk")
+      - result.diff.prepared is search("\+ *native-vlan-id 100")
+      - result.diff.prepared is search("\- *interface-mode access")
+      - result.diff.prepared is search("\+ *interface-mode trunk")
+      - result.diff.prepared is search("\- *members red")
+      - result.diff.prepared is search("\+ *members \[ blue green \]")
+
+- name: Change interface to trunk mode (idempotent)
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete l2 interface
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *description test-interface-trunk")
+      - result.diff.prepared is search("\- *native-vlan-id 100")
+      - result.diff.prepared is search("\- *unit 0")
+      - result.diff.prepared is search("\- *family ethernet-switching")
+      - result.diff.prepared is search("\- *interface-mode trunk")
+      - result.diff.prepared is search("\- *members \[ blue green \]")
+
+- name: Delete l2 interface (idempotent)
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: test-interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Configure interface in access and trunk mode using aggregate
+  junos_l2_interface:
+    aggregate:
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *ge-0/0/1")
+      - result.diff.prepared is search("\+ *description test-interface-access")
+      - result.diff.prepared is search("\+ *unit 0")
+      - result.diff.prepared is search("\+ *family ethernet-switching")
+      - result.diff.prepared is search("\+ *interface-mode access")
+      - result.diff.prepared is search("\+ *members red")
+      - result.diff.prepared is search("\+ *ge-0/0/2")
+      - result.diff.prepared is search("\+ *description test-interface-trunk")
+      - result.diff.prepared is search("\+ *native-vlan-id 100")
+      - result.diff.prepared is search("\+ *interface-mode trunk")
+      - result.diff.prepared is search("\+ *members \[ blue green \]")
+
+- name: Configure interface in access and trunk mode using aggregate (idempotent)
+  junos_l2_interface:
+    aggregate:
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete interface in access and trunk mode using aggregate
+  junos_l2_interface:
+    aggregate:
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *ge-0/0/1")
+      - result.diff.prepared is search("\- *description test-interface-access")
+      - result.diff.prepared is search("\- *unit 0")
+      - result.diff.prepared is search("\- *family ethernet-switching")
+      - result.diff.prepared is search("\- *interface-mode access")
+      - result.diff.prepared is search("\- *members red")
+      - result.diff.prepared is search("\- *ge-0/0/2")
+      - result.diff.prepared is search("\- *description test-interface-trunk")
+      - result.diff.prepared is search("\- *native-vlan-id 100")
+      - result.diff.prepared is search("\- *interface-mode trunk")
+      - result.diff.prepared is search("\- *members \[ blue green \]")
+
+- name: Delete interface in access and trunk mode using aggregate (idempotent)
+  junos_l2_interface:
+    aggregate:
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Teradown delete vlans
+  junos_vlan:
+    vlan_id: "{{ item.vlan_id }}"
+    name: "{{ item.name }}"
+    state: absent
+    provider: "{{ netconf }}"
+  with_items:
+    - { vlan_id: 100, name: red }
+    - { vlan_id: 200, name: blue }
+    - { vlan_id: 300, name: green }
+
+- debug: msg="END junos_l2_interface netconf/basic.yaml on connection={{ ansible_connection }}"

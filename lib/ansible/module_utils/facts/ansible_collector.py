@@ -67,10 +67,6 @@ class AnsibleFactCollector(collector.BaseFactCollector):
         for collector_obj in self.collectors:
             info_dict = {}
 
-            # shallow copy of the accumulated collected facts to pass to each collector
-            # for reference.
-            collected_facts.update(facts_dict.copy())
-
             try:
 
                 # Note: this collects with namespaces, so collected_facts also includes namespaces
@@ -79,6 +75,10 @@ class AnsibleFactCollector(collector.BaseFactCollector):
             except Exception as e:
                 sys.stderr.write(repr(e))
                 sys.stderr.write('\n')
+
+            # shallow copy of the new facts to pass to each collector in collected_facts so facts
+            # can reference other facts they depend on.
+            collected_facts.update(info_dict.copy())
 
             # NOTE: If we want complicated fact dict merging, this is where it would hook in
             facts_dict.update(self._filter(info_dict, self.filter_spec))

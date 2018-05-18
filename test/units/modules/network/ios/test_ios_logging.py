@@ -25,7 +25,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_logging
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosLoggingModule(TestIosModule):
@@ -33,15 +34,24 @@ class TestIosLoggingModule(TestIosModule):
     module = ios_logging
 
     def setUp(self):
+        super(TestIosLoggingModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_logging.get_config')
         self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.ios.ios_logging.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.ios.ios_logging.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'device_info': {'network_os_version': '15.6(2)T'}}
+
     def tearDown(self):
+        super(TestIosLoggingModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_logging_config.cfg')

@@ -1,83 +1,90 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Copyright: (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: zfs
 short_description: Manage zfs
 description:
-  - Manages ZFS file systems, volumes, clones and snapshots.
+  - Manages ZFS file systems, volumes, clones and snapshots
 version_added: "1.1"
 options:
   name:
     description:
-      - File system, snapshot or volume name e.g. C(rpool/myfs)
+      - File system, snapshot or volume name e.g. C(rpool/myfs).
     required: true
   state:
     description:
       - Whether to create (C(present)), or remove (C(absent)) a
         file system, snapshot or volume. All parents/children
         will be created/destroyed as needed to reach the desired state.
-    choices: ['present', 'absent']
+    choices: [ absent, present ]
     required: true
   origin:
     description:
-      - Snapshot from which to create a clone
-    default: null
-    required: false
+      - Snapshot from which to create a clone.
   key_value:
     description:
-      - The C(zfs) module takes key=value pairs for zfs properties to be set. See the zfs(8) man page for more information.
-    default: null
-    required: false
-
-author: "Johan Wiren (@johanwiren)"
+      - (**DEPRECATED**) This will be removed in Ansible-2.9.  Set these values in the
+      - C(extra_zfs_properties) option instead.
+      - The C(zfs) module takes key=value pairs for zfs properties to be set.
+      - See the zfs(8) man page for more information.
+  extra_zfs_properties:
+    description:
+      - A dictionary of zfs properties to be set.
+      - See the zfs(8) man page for more information.
+    version_added: "2.5"
+author:
+- Johan Wiren (@johanwiren)
 '''
 
 EXAMPLES = '''
-# Create a new file system called myfs in pool rpool with the setuid property turned off
-- zfs:
+- name: Create a new file system called myfs in pool rpool with the setuid property turned off
+  zfs:
     name: rpool/myfs
     state: present
-    setuid: off
+    extra_zfs_properties:
+      setuid: off
 
-# Create a new volume called myvol in pool rpool.
-- zfs:
+- name: Create a new volume called myvol in pool rpool.
+  zfs:
     name: rpool/myvol
     state: present
-    volsize: 10M
+    extra_zfs_properties:
+      volsize: 10M
 
-# Create a snapshot of rpool/myfs file system.
-- zfs:
+- name: Create a snapshot of rpool/myfs file system.
+  zfs:
     name: rpool/myfs@mysnapshot
     state: present
 
-# Create a new file system called myfs2 with snapdir enabled
-- zfs:
+- name: Create a new file system called myfs2 with snapdir enabled
+  zfs:
     name: rpool/myfs2
     state: present
-    snapdir: enabled
+    extra_zfs_properties:
+      snapdir: enabled
 
-# Create a new file system by cloning a snapshot
-- zfs:
+- name: Create a new file system by cloning a snapshot
+  zfs:
     name: rpool/cloned_fs
     state: present
-    origin: rpool/myfs@mysnapshot
+    extra_zfs_properties:
+      origin: rpool/myfs@mysnapshot
 
-# Destroy a filesystem
-- zfs:
+- name: Destroy a filesystem
+  zfs:
     name: rpool/myfs
     state: absent
 '''
@@ -218,25 +225,27 @@ class Zfs(object):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name =         dict(type='str', required=True),
-            state =        dict(type='str', required=True, choices=['present', 'absent']),
-            # No longer used. Kept here to not interfere with zfs properties
-            createparent = dict(type='bool', required=False)
-            ),
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', required=True, choices=['absent', 'present']),
+            # No longer used. Deprecated and due for removal
+            createparent=dict(type='bool', default=None),
+            extra_zfs_properties=dict(type='dict', default={}),
+        ),
         supports_check_mode=True,
-        check_invalid_arguments=False
-        )
+        # Remove this in Ansible 2.9
+        check_invalid_arguments=False,
+    )
 
     state = module.params.pop('state')
     name = module.params.pop('name')
 
+    # The following is deprecated.  Remove in Ansible 2.9
     # Get all valid zfs-properties
     properties = dict()
     for prop, value in module.params.items():
         # All freestyle params are zfs properties
         if prop not in module.argument_spec:
-            # Reverse the boolification of freestyle zfs properties
             if isinstance(value, bool):
                 if value is True:
                     properties[prop] = 'on'
@@ -245,11 +254,33 @@ def main():
             else:
                 properties[prop] = value
 
-    result = {}
-    result['name'] = name
-    result['state'] = state
+    if properties:
+        module.deprecate('Passing zfs properties as arbitrary parameters to the zfs module is'
+                         ' deprecated.  Send them as a dictionary in the extra_zfs_properties'
+                         ' parameter instead.', version='2.9')
+        # Merge, giving the module_params precedence
+        for prop, value in module.params['extra_zfs_properties'].items():
+            properties[prop] = value
 
-    zfs = Zfs(module, name, properties)
+        module.params['extras_zfs_properties'] = properties
+    # End deprecated section
+
+    # Reverse the boolification of zfs properties
+    for prop, value in module.params['extra_zfs_properties'].items():
+        if isinstance(value, bool):
+            if value is True:
+                module.params['extra_zfs_properties'][prop] = 'on'
+            else:
+                module.params['extra_zfs_properties'][prop] = 'off'
+        else:
+            module.params['extra_zfs_properties'][prop] = value
+
+    result = dict(
+        name=name,
+        state=state,
+    )
+
+    zfs = Zfs(module, name, module.params['extra_zfs_properties'])
 
     if state == 'present':
         if zfs.exists():

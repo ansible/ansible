@@ -1,4 +1,4 @@
-# (c) 2017 Red Hat Inc.
+# 2017 Red Hat Inc.
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -6,22 +6,39 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Core Team
-    connection: persistent
-    short_description: Use a persistent unix socket for connection
+author: Ansible Core Team
+connection: persistent
+short_description: Use a persistent unix socket for connection
+description:
+  - This is a helper plugin to allow making other connections persistent.
+version_added: "2.3"
+options:
+  persistent_command_timeout:
+    type: int
     description:
-        - This is a helper plugin to allow making other connections persistent.
-    version_added: "2.3"
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
-
-import re
 import os
 import pty
+import json
 import subprocess
+import sys
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six.moves import cPickle
+from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
+from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.connection import Connection as SocketConnection
+from ansible.errors import AnsibleError
 
 try:
     from __main__ import display
@@ -40,10 +57,56 @@ class Connection(ConnectionBase):
         self._connected = True
         return self
 
-    def _do_it(self, action):
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        display.vvvv('exec_command(), socket_path=%s' % self.socket_path, host=self._play_context.remote_addr)
+        connection = SocketConnection(self.socket_path)
+        out = connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        return 0, out, ''
 
+    def put_file(self, in_path, out_path):
+        pass
+
+    def fetch_file(self, in_path, out_path):
+        pass
+
+    def close(self):
+        self._connected = False
+
+    def run(self):
+        """Returns the path of the persistent connection socket.
+
+        Attempts to ensure (within playcontext.timeout seconds) that the
+        socket path exists. If the path exists (or the timeout has expired),
+        returns the socket path.
+        """
+        display.vvvv('starting connection from persistent connection plugin', host=self._play_context.remote_addr)
+        socket_path = self._start_connection()
+        display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+        setattr(self, '_socket_path', socket_path)
+        return socket_path
+
+    def _start_connection(self):
+        '''
+        Starts the persistent connection
+        '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection"], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        python = sys.executable
+
+        def find_file_in_path(filename):
+            # Check $PATH first, followed by same directory as sys.argv[0]
+            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
+            for dirname in paths:
+                fullpath = os.path.join(dirname, filename)
+                if os.path.isfile(fullpath):
+                    return fullpath
+
+            raise AnsibleError("Unable to find location of '%s'" % filename)
+
+        p = subprocess.Popen(
+            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
@@ -56,40 +119,29 @@ class Connection(ConnectionBase):
         stdin.write(src)
 
         stdin.write(b'\n#END_INIT#\n')
-        stdin.write(to_bytes(action))
-        stdin.write(b'\n\n')
+        stdin.flush()
 
         (stdout, stderr) = p.communicate()
         stdin.close()
 
-        return (p.returncode, stdout, stderr)
+        if p.returncode == 0:
+            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
+        else:
+            try:
+                result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+            except getattr(json.decoder, 'JSONDecodeError', ValueError):
+                # JSONDecodeError only available on Python 3.5+
+                result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        return self._do_it('EXEC: ' + cmd)
+        if 'messages' in result:
+            for msg in result.get('messages'):
+                display.vvvv('%s' % msg, host=self._play_context.remote_addr)
 
-    def put_file(self, in_path, out_path):
-        super(Connection, self).put_file(in_path, out_path)
-        self._do_it('PUT: %s %s' % (in_path, out_path))
+        if 'error' in result:
+            if self._play_context.verbosity > 2:
+                if result.get('exception'):
+                    msg = "The full traceback is:\n" + result['exception']
+                    display.display(msg, color=C.COLOR_ERROR)
+            raise AnsibleError(result['error'])
 
-    def fetch_file(self, in_path, out_path):
-        super(Connection, self).fetch_file(in_path, out_path)
-        self._do_it('FETCH: %s %s' % (in_path, out_path))
-
-    def close(self):
-        self._connected = False
-
-    def run(self):
-        """Returns the path of the persistent connection socket.
-
-        Attempts to ensure (within playcontext.timeout seconds) that the
-        socket path exists. If the path exists (or the timeout has expired),
-        returns the socket path.
-        """
-        socket_path = None
-        rc, out, err = self._do_it('RUN:')
-        match = re.search(br"#SOCKET_PATH#: (\S+)", out)
-        if match:
-            socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
-
-        return socket_path
+        return result['socket_path']

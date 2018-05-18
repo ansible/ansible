@@ -32,7 +32,6 @@ options:
   path:
     description:
       - Alternate path to the authorized_keys file
-    required: false
     default: "(homedir)+/.ssh/authorized_keys"
     version_added: "1.2"
   manage_dir:
@@ -43,21 +42,17 @@ options:
         set C(manage_dir=no) if you are using an alternate directory for
         authorized_keys, as set with C(path), since you could lock yourself out of
         SSH access. See the example below.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
     version_added: "1.2"
   state:
     description:
       - Whether the given key (with the given key_options) should or should not be in the file
-    required: false
     choices: [ "present", "absent" ]
     default: "present"
   key_options:
     description:
       - A string of ssh key options to be prepended to the key in the authorized_keys file
-    required: false
-    default: null
     version_added: "1.4"
   exclusive:
     description:
@@ -66,38 +61,34 @@ options:
       - This option is not loop aware, so if you use C(with_) , it will be exclusive per iteration
         of the loop, if you want multiple keys in the file you need to pass them all to C(key) in a
         single batch as mentioned above.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "1.9"
   validate_certs:
     description:
       - This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
       - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
       - Prior to 2.1 the code worked as if this was set to C(yes).
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    type: bool
+    default: 'yes'
     version_added: "2.1"
   comment:
     description:
       - Change the comment on the public key. Rewriting the comment is useful in
         cases such as fetching it from GitHub or GitLab.
       - If no comment is specified, the existing comment will be kept.
-    required: false
-    default: None
     version_added: "2.4"
 author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-- name: Set authorized key took from file
+- name: Set authorized key taken from file
   authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-- name: Set authorized key took from url
+- name: Set authorized keys taken from url
   authorized_key:
     user: charlie
     state: present
@@ -134,7 +125,7 @@ EXAMPLES = '''
     key: https://github.com/user.keys
     validate_certs: False
 
-- name: Set authorized key, removing all the authorized key already set
+- name: Set authorized key, removing all the authorized keys already set
   authorized_key:
     user: root
     key: '{{ item }}'
@@ -225,7 +216,6 @@ from operator import itemgetter
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
 
 
@@ -312,11 +302,10 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     try:
         user_entry = pwd.getpwnam(user)
-    except KeyError:
-        e = get_exception()
+    except KeyError as e:
         if module.check_mode and path is None:
             module.fail_json(msg="Either user must exist or you must provide full path to key file in check mode")
-        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, to_native(e)))
     if path is None:
         homedir = user_entry.pw_dir
         sshdir = os.path.join(homedir, ".ssh")
@@ -404,7 +393,7 @@ def parsekey(module, raw_key, rank=None):
     type_index = None   # index of keytype in key string|list
 
     # remove comment yaml escapes
-    raw_key = raw_key.replace('\#', '#')
+    raw_key = raw_key.replace(r'\#', '#')
 
     # split key safely
     lex = shlex.shlex(raw_key)
@@ -475,9 +464,8 @@ def writefile(module, filename, content):
 
     try:
         f.write(content)
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+    except IOError as e:
+        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
 

@@ -152,6 +152,7 @@ def cloud_monitoring(module, state, label, agent_id, named_ip_addresses,
     else:
         module.exit_json(changed=changed)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(

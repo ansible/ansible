@@ -9,7 +9,7 @@
     - name: assert ansible_foobar is correct value when read from cache
       assert:
         that:
-          - ansible_foobar == 'blippy'
+          - ansible_foobar == 'foobar_from_set_fact_cacheable'
 
     - name: show ansible_foobar_not_cached fact
       debug:
@@ -19,3 +19,12 @@
       assert:
         that:
           - ansible_foobar_not_cached is undefined
+
+    - name: show fact_not_cached fact
+      debug:
+        var: fact_not_cached
+
+    - name: assert fact_not_cached is not cached
+      assert:
+        that:
+          - fact_not_cached is undefined

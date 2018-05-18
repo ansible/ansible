@@ -248,7 +248,10 @@ class Service(object):
                 cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(cmd)]
             # In either of the above cases, pass a list of byte strings to Popen
 
-            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")
             fds = [p.stdout, p.stderr]
@@ -672,10 +675,10 @@ class LinuxService(Service):
 
             initpath = '/etc/init'
             if self.upstart_version >= LooseVersion('0.6.7'):
-                manreg = re.compile('^manual\s*$', re.M | re.I)
+                manreg = re.compile(r'^manual\s*$', re.M | re.I)
                 config_line = 'manual\n'
             else:
-                manreg = re.compile('^start on manual\s*$', re.M | re.I)
+                manreg = re.compile(r'^start on manual\s*$', re.M | re.I)
                 config_line = 'start on manual\n'
             conf_file_name = "%s/%s.conf" % (initpath, self.name)
             override_file_name = "%s/%s.override" % (initpath, self.name)
@@ -959,7 +962,7 @@ class LinuxService(Service):
                 stdout = stdout1 + stdout2
                 stderr = stderr1 + stderr2
 
-        return(rc_state, stdout, stderr)
+        return (rc_state, stdout, stderr)
 
 
 class FreeBsdService(Service):
@@ -1071,6 +1074,17 @@ class FreeBsdService(Service):
             time.sleep(self.sleep)
 
         return ret
+
+
+class DragonFlyBsdService(FreeBsdService):
+    """
+    This is the DragonFly BSD Service manipulation class - it uses the /etc/rc.conf
+    file for controlling services started at boot and the 'service' binary to
+    check status and perform direct service manipulation.
+    """
+
+    platform = 'DragonFly'
+    distribution = None
 
 
 class OpenBsdService(Service):
@@ -1308,7 +1322,7 @@ class SunOSService(Service):
         # Support for synchronous restart/refresh is only supported on
         # Oracle Solaris >= 11.2
         for line in open('/etc/release', 'r').readlines():
-            m = re.match('\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
+            m = re.match(r'\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
             if m and m.groups()[0] >= 11.2:
                 return True
 

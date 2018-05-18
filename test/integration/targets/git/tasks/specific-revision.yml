@@ -30,7 +30,7 @@
 
 - assert:
     that:
-      - git_result | changed
+      - git_result is changed
 
 - name: SPECIFIC-REVISION | check HEAD after update to revision
   command: git rev-parse HEAD
@@ -41,6 +41,17 @@
 - assert:
     that:
       - 'git_result.stdout == "4e739a34719654db7b04896966e2354e1256ea5d"'
+
+- name: SPECIFIC-REVISION | update to HEAD from detached HEAD state
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: HEAD
+  register: git_result
+
+- assert:
+    that:
+      - git_result is changed
 
 # Test a revision not available under refs/heads/ or refs/tags/
 
@@ -54,7 +65,7 @@
 
 - assert:
     that:
-      - git_result | failed
+      - git_result is failed
 
 # Same as the previous test, but this time we specify which ref
 # contains the SHA1
@@ -110,8 +121,8 @@
   assert:
     that:
       - checkout_shallow.rc != 0
-      - checkout_shallow | success
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+      - checkout_shallow is successful
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 - name: SPECIFIC-REVISION | clear checkout_dir
   file:

@@ -30,12 +30,9 @@ options:
     description:
       description:
         - The description to use for the organization.
-      required: False
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

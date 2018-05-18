@@ -1,9 +1,15 @@
 """Sanity test using pylint."""
 from __future__ import absolute_import, print_function
 
+import collections
 import json
 import os
 import datetime
+
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -20,6 +26,10 @@ from lib.util import (
     find_executable,
 )
 
+from lib.executor import (
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
 from lib.ansible_util import (
     ansible_environment,
 )
@@ -29,10 +39,12 @@ from lib.config import (
 )
 
 from lib.test import (
+    calculate_confidence,
     calculate_best_confidence,
 )
 
 PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
+PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
@@ -41,11 +53,17 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+    def __init__(self):
+        super(PylintTest, self).__init__()
+
+        self.plugin_dir = 'test/sanity/pylint/plugins'
+        self.plugin_names = sorted(p[0] for p in [os.path.splitext(p) for p in os.listdir(self.plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
@@ -53,6 +71,41 @@ class PylintTest(SanitySingleVersion):
 
         with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
+
+        invalid_ignores = []
+
+        supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
+        supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
+
+        with open(PYLINT_IGNORE_PATH, 'r') as ignore_fd:
+            ignore_entries = ignore_fd.read().splitlines()
+            ignore = collections.defaultdict(dict)
+            line = 0
+
+            for ignore_entry in ignore_entries:
+                line += 1
+
+                if ' ' not in ignore_entry:
+                    invalid_ignores.append((line, 'Invalid syntax'))
+                    continue
+
+                path, code = ignore_entry.split(' ', 1)
+
+                if not os.path.exists(path):
+                    invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
+                    continue
+
+                if ' ' in code:
+                    code, version = code.split(' ', 1)
+
+                    if version not in supported_versions:
+                        invalid_ignores.append((line, 'Invalid version: %s' % version))
+                        continue
+
+                    if version != args.python_version and version != args.python_version.split('.')[0]:
+                        continue  # ignore version specific entries for other versions
+
+                ignore[path][code] = line
 
         skip_paths_set = set(skip_paths)
 
@@ -112,7 +165,30 @@ class PylintTest(SanitySingleVersion):
             code=m['symbol'],
         ) for m in messages]
 
+        if args.explain:
+            return SanitySuccess(self.name)
+
         line = 0
+
+        filtered = []
+
+        for error in errors:
+            if error.code in ignore[error.path]:
+                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
+            else:
+                filtered.append(error)  # error not ignored
+
+        errors = filtered
+
+        for invalid_ignore in invalid_ignores:
+            errors.append(SanityMessage(
+                code='A201',
+                message=invalid_ignore[1],
+                path=PYLINT_IGNORE_PATH,
+                line=invalid_ignore[0],
+                column=1,
+                confidence=calculate_confidence(PYLINT_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
+            ))
 
         for path in skip_paths:
             line += 1
@@ -128,6 +204,25 @@ class PylintTest(SanitySingleVersion):
                     confidence=calculate_best_confidence(((PYLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
                 ))
 
+        for path in paths:
+            if path not in ignore:
+                continue
+
+            for code in ignore[path]:
+                line = ignore[path][code]
+
+                if not line:
+                    continue
+
+                errors.append(SanityMessage(
+                    code='A102',
+                    message='Remove since "%s" passes "%s" pylint test' % (path, code),
+                    path=PYLINT_IGNORE_PATH,
+                    line=line,
+                    column=1,
+                    confidence=calculate_best_confidence(((PYLINT_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
+                ))
+
         if errors:
             return SanityFailure(self.name, messages=errors)
 
@@ -136,26 +231,39 @@ class PylintTest(SanitySingleVersion):
     def pylint(self, args, context, paths):
         """
         :type args: SanityConfig
-        :param context: str
-        :param paths: list[str]
-        :return: list[dict[str, str]]
+        :type context: str
+        :type paths: list[str]
+        :rtype: list[dict[str, str]]
         """
         rcfile = 'test/sanity/pylint/config/%s' % context
 
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
 
+        parser = configparser.SafeConfigParser()
+        parser.read(rcfile)
+
+        if parser.has_section('ansible-test'):
+            config = dict(parser.items('ansible-test'))
+        else:
+            config = dict()
+
+        disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
+        load_plugins = set(self.plugin_names) - disable_plugins
+
         cmd = [
-            'python%s' % args.python_version,
-            find_executable('pylint'),
+            args.python_executable,
+            '-m', 'pylint',
             '--jobs', '0',
             '--reports', 'n',
             '--max-line-length', '160',
             '--rcfile', rcfile,
             '--output-format', 'json',
+            '--load-plugins', ','.join(load_plugins),
         ] + paths
 
         env = ansible_environment(args)
+        env['PYTHONPATH'] += '%s%s' % (os.pathsep, self.plugin_dir)
 
         if paths:
             try:

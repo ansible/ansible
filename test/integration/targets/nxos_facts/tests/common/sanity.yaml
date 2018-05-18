@@ -1,10 +1,11 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_facts sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_facts sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "nxos_facts gather hardware facts"
   nxos_facts:
     gather_subset: hardware
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -29,7 +30,6 @@
 - name: "nxos_facts gather config facts"
   nxos_facts:
     gather_subset: config
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -52,7 +52,6 @@
     gather_subset:
       - hardware
       - config
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -75,4 +74,4 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_facts sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_facts sanity test"

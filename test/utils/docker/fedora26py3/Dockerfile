@@ -10,6 +10,7 @@ rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 
 RUN dnf clean all && \
+    dnf -y upgrade && \
     dnf -y --setopt=install_weak_deps=false install \
     acl \
     bzip2 \

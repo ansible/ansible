@@ -113,11 +113,11 @@ def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE
     pretty_metadata = pformat(new_metadata, width=1).split('\n')
 
     new_lines = []
-    new_lines.append('{} = {}'.format(assignments, pretty_metadata[0]))
+    new_lines.append('{0} = {1}'.format(assignments, pretty_metadata[0]))
 
     if len(pretty_metadata) > 1:
         for line in pretty_metadata[1:]:
-            new_lines.append('{}{}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
+            new_lines.append('{0}{1}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
 
     old_lines = module_data.split('\n')
     lines = old_lines[:insertion_line] + new_lines + old_lines[insertion_line:]
@@ -177,7 +177,7 @@ def parse_assigned_metadata(csvfile):
         :4: deprecated
         :5: removed
 
-        http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
+        https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
     """
     with open(csvfile, 'rb') as f:
         for record in csv.reader(f):
@@ -209,7 +209,7 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
             raise
         # Probably non-python modules.  These should all have python
         # documentation files where we can place the data
-        raise ParseError('Could not add metadata to {}'.format(filename))
+        raise ParseError('Could not add metadata to {0}'.format(filename))
 
     if current_metadata is None:
         # No current metadata so we can just add it
@@ -219,7 +219,7 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
                 # These aren't new-style modules
                 return
 
-            raise Exception('Module file {} had no ANSIBLE_METADATA or DOCUMENTATION'.format(filename))
+            raise Exception('Module file {0} had no ANSIBLE_METADATA or DOCUMENTATION'.format(filename))
 
         module_data = insert_metadata(module_data, new_metadata, start_line, targets=('ANSIBLE_METADATA',))
 
@@ -363,7 +363,7 @@ def add_from_csv(csv_file, version=None, overwrite=False):
     for module_name, new_metadata in parse_assigned_metadata(csv_file):
         filename = module_loader.find_plugin(module_name, mod_type='.py')
         if filename is None:
-            diagnostic_messages.append('Unable to find the module file for {}'.format(module_name))
+            diagnostic_messages.append('Unable to find the module file for {0}'.format(module_name))
             continue
 
         try:

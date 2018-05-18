@@ -34,45 +34,30 @@ options:
     bridge_domain_id:
         description:
             - Specifies a bridge domain ID. The value is an integer ranging from 1 to 16777215.
-        required: false
-        default: null
     vni_id:
         description:
             - Specifies a VXLAN network identifier (VNI) ID. The value is an integer ranging from 1 to 16000000.
-        required: false
-        default: null
     nve_name:
         description:
             - Specifies the number of an NVE interface. The value ranges from 1 to 2.
-        required: false
-        default: null
     nve_mode:
         description:
             - Specifies the working mode of an NVE interface.
-        required: false
-        default: null
         choices: ['mode-l2','mode-l3']
     peer_list_ip:
         description:
             - Specifies the IP address of a remote VXLAN tunnel endpoints (VTEP).
               The value is in dotted decimal notation.
-        required: false
-        default: null
     protocol_type:
         description:
             - The operation type of routing protocol.
-        required: false
-        default: null
         choices: ['bgp','null']
     source_ip:
         description:
             - Specifies an IP address for a source VTEP. The value is in dotted decimal notation.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -133,7 +118,7 @@ end_state:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, get_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, get_config, ce_argument_spec
 
 CE_NC_GET_VNI_BD_INFO = """
 <filter type="subtree">

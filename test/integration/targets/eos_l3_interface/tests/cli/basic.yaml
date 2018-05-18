@@ -1,0 +1,235 @@
+---
+- debug: msg="START eos_l3_interface cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Set test interface
+  set_fact:
+    test_interface_1: ethernet1
+    test_interface_2: ethernet2
+
+- name: Delete interface ipv4 and ipv6 address(setup)
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- name: Configure interface ipv4 address
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv4: 192.108.1.1/24
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address 192.108.1.1/24" in result.commands'
+
+- name: Configure interface ipv4 address (idempotent)
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv4: 192.108.1.1/24
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Change interface ipv4 address
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv4: 197.108.0.1/24
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address 197.108.0.1/24" in result.commands'
+
+- name: Configure interface ipv6 address
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv6: fd5d:12c9:2201:1::1/64
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ipv6 address fd5d:12c9:2201:1::1/64" in result.commands'
+
+- name: Configure interface ipv6 address (idempotent)
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv6: fd5d:12c9:2201:1::1/64
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Change interface ipv6 address
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv6: fd58:12c9:2201:1::1/64
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ipv6 address fd58:12c9:2201:1::1/64" in result.commands'
+
+- name: Delete interface ipv4 and ipv6 address
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"no ip address" in result.commands'
+      - '"no ipv6 address" in result.commands'
+
+- name: Delete interface ipv4 and ipv6 address (idempotent)
+  eos_l3_interface:
+    name: "{{ test_interface_1 }}"
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- name: Delete second interface ipv4 and ipv6 address (setup)
+  eos_l3_interface:
+    name: "{{ test_interface_2 }}"
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- name: Configure ipv4 and ipv6 address using aggregate
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}", ipv4: 192.108.1.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
+    - { name: "{{ test_interface_2 }}", ipv4: 192.109.1.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address 192.108.1.1/24" in result.commands'
+      - '"ipv6 address fd5d:12c9:2201:2::2/64" in result.commands'
+      - '"interface {{ test_interface_2 }}" in result.commands'
+      - '"ip address 192.109.1.2/16" in result.commands'
+      - '"ipv6 address fd5e:12c9:2201:3::3/32" in result.commands'
+
+- name:  Configure ipv4 and ipv6 address using aggregate (idempotent)
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}", ipv4: 192.108.1.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
+    - { name: "{{ test_interface_2 }}", ipv4: 192.109.1.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name:  Change ipv4 and ipv6 address using aggregate
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}", ipv4: 193.118.1.1/8, ipv6: "fd5a:12c9:2201:4::4/32" }
+    - { name: "{{ test_interface_2 }}", ipv4: 192.119.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address 193.118.1.1/8" in result.commands'
+      - '"ipv6 address fd5a:12c9:2201:4::4/32" in result.commands'
+      - '"interface {{ test_interface_2 }}" in result.commands'
+      - '"ip address 192.119.2.2/24" in result.commands'
+      - '"ipv6 address fd5b:12c9:2201:5::5/90" in result.commands'
+
+
+- name:  Delete ipv4 and ipv6 address using aggregate
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}" }
+    - { name: "{{ test_interface_2 }}" }
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"no ip address" in result.commands'
+      - '"no ipv6 address" in result.commands'
+      - '"interface {{ test_interface_2 }}" in result.commands'
+      - '"no ip address" in result.commands'
+      - '"no ipv6 address" in result.commands'
+
+- name:  Delete ipv4 and ipv6 address using aggregate (idempotent)
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}" }
+    - { name: "{{ test_interface_2 }}" }
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END eos_l3_interface cli/basic.yaml on connection={{ ansible_connection }}"

@@ -32,7 +32,6 @@ options:
         description:
             - state of the package
         choices: [ 'present', 'absent' ]
-        required: false
         default: present
     force:
         description:
@@ -49,16 +48,13 @@ options:
             - "remove"
             - "checksum"
             - "removal-of-dependent-packages"
-        required: false
         default: absent
         version_added: "2.0"
     update_cache:
         description:
             - update the package db first
-        required: false
         default: "no"
-        choices: [ "yes", "no" ]
-notes:  []
+        type: bool
 requirements:
     - opkg
     - python
@@ -87,7 +83,9 @@ EXAMPLES = '''
     force: overwrite
 '''
 
-import pipes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
+
 
 def update_package_db(module, opkg_path):
     """ Updates packages list. """
@@ -103,7 +101,7 @@ def query_package(module, opkg_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (pipes.quote(opkg_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (shlex_quote(opkg_path), shlex_quote(name)), use_unsafe_shell=True)
         if rc == 0:
             return True
 
@@ -192,8 +190,6 @@ def main():
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, opkg_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

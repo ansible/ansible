@@ -1,0 +1,25 @@
+- name: Test include_tasks using tags
+  hosts: testhost
+
+  tasks:
+    # This should not be included
+    - name: Include tasks1.yml
+      include_tasks: tasks1.yml
+
+    # This should be included but tasks inside should not run because they do not have
+    # the canary1 tag and tasks2 is not in the list of tags for the ansible-playbook command
+    - name: Include tasks2.yml
+      include_tasks: tasks2.yml
+      tags:
+        - canary1
+
+    # This should be included and tasks inside should be run
+    - name: Include tasks5.yml using tag on include task
+      include_tasks: tasks5.yml
+      tags:
+        - canary1
+
+    - name: Include validate_tags.yml
+      include_tasks: validate_tags.yml
+      tags:
+        - validate

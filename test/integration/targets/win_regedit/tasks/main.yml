@@ -13,7 +13,7 @@
       test_win_regedit_key_expected_value_null: '{{item.value_null}}'
       test_win_regedit_key_expected_value1: '{{item.value1}}'
       test_win_regedit_key_expected_value2: '{{item.value2}}'
-    items:
+    loop:
     - type: dword
       reg_type: REG_DWORD
       data1: 1337 # decimal format

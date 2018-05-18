@@ -38,18 +38,12 @@ options:
     name:
         description:
             - Limit results to a specific managed disk
-        required: false
-        default: null
     resource_group:
         description:
             - Limit results to a specific resource group
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -100,7 +94,8 @@ def managed_disk_to_dict(managed_disk):
         tags=managed_disk.tags,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=os_type,
-        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
+        storage_account_type=managed_disk.sku.name.value,
+        managed_by=managed_disk.managed_by
     )
 
 
@@ -139,6 +134,10 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             ),
             disk_size_gb=dict(
                 type='int',
+                required=False
+            ),
+            managed_by=dict(
+                type='str',
                 required=False
             ),
             tags=dict(

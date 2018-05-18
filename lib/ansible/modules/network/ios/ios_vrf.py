@@ -64,6 +64,12 @@ options:
       - Identifies the set of interfaces that
         should be configured in the VRF.  Interfaces must be routed
         interfaces in order to be placed into a VRF.
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vrf C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vrf interfaces on device it will result in failure.
+    version_added: "2.5"
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -85,8 +91,20 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
-"""
+  route_both:
+    description:
+      - Adds an export and import list of extended route target communities to the VRF.
+    version_added: "2.5"
+  route_export:
+    description:
+      - Adds an export list of extended route target communities to the VRF.
+    version_added: "2.5"
+  route_import:
+    description:
+      - Adds an import list of extended route target communities to the VRF.
+    version_added: "2.5"
 
+"""
 EXAMPLES = """
 - name: configure a vrf named management
   ios_vrf:
@@ -107,6 +125,30 @@ EXAMPLES = """
       - blue
       - green
     purge: yes
+
+- name: Creates a list of import RTs for the VRF with the same parameters
+  ios_vrf:
+    name: test_import
+    rd: 1:100
+    route_import:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of export RTs for the VRF with the same parameters
+  ios_vrf:
+    name: test_export
+    rd: 1:100
+    route_export:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of import and export route targets for the VRF with the same parameters
+  ios_vrf:
+    name: test_both
+    rd: 1:100
+    route_both:
+      - 1:100
+      - 3:100
 """
 
 RETURN = """
@@ -140,9 +182,9 @@ from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import load_config, get_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.network.ios.ios import load_config, get_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 
@@ -175,9 +217,10 @@ def add_command_to_vrf(name, cmd, commands):
         ])
     commands.append(cmd)
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state'] # FIXME NOT USED
+    state = module.params['state']  # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -204,6 +247,21 @@ def map_obj_to_commands(updates, module):
             cmd = 'rd %s' % want['rd']
             add_command_to_vrf(want['name'], cmd, commands)
 
+        if needs_update(want, have, 'route_import'):
+            for route in want['route_import']:
+                cmd = 'route-target import %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_export'):
+            for route in want['route_export']:
+                cmd = 'route-target export %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_both'):
+            for route in want['route_both']:
+                cmd = 'route-target both %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
         if want['interfaces'] is not None:
             # handle the deletes
             for intf in set(have.get('interfaces', [])).difference(want['interfaces']):
@@ -226,12 +284,14 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def parse_description(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     cfg = '\n'.join(cfg.children)
     match = re.search(r'description (.+)$', cfg, re.M)
     if match:
         return match.group(1)
+
 
 def parse_rd(configobj, name):
     cfg = configobj['vrf definition %s' % name]
@@ -240,19 +300,42 @@ def parse_rd(configobj, name):
     if match:
         return match.group(1)
 
+
 def parse_interfaces(configobj, name):
     vrf_cfg = 'vrf forwarding %s' % name
     interfaces = list()
-
     for intf in re.findall('^interface .+', str(configobj), re.M):
         if vrf_cfg in '\n'.join(configobj[intf].children):
             interfaces.append(intf.split(' ')[1])
     return interfaces
 
+
+def parse_import(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    cfg = '\n'.join(cfg.children)
+    matches = re.findall(r'route-target\s+import\s+(.+)', cfg, re.M)
+    return matches
+
+
+def parse_export(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    cfg = '\n'.join(cfg.children)
+    matches = re.findall(r'route-target\s+export\s+(.+)', cfg, re.M)
+    return matches
+
+
+def parse_both(configobj, name):
+    matches = list()
+    export_match = parse_export(configobj, name)
+    import_match = parse_import(configobj, name)
+    matches.extend(export_match)
+    matches.extend(import_match)
+    return matches
+
+
 def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
-
     match = re.findall(r'^vrf definition (\S+)', config, re.M)
     if not match:
         return list()
@@ -265,7 +348,10 @@ def map_config_to_obj(module):
             'state': 'present',
             'description': parse_description(configobj, item),
             'rd': parse_rd(configobj, item),
-            'interfaces': parse_interfaces(configobj, item)
+            'interfaces': parse_interfaces(configobj, item),
+            'route_import': parse_import(configobj, item),
+            'route_export': parse_export(configobj, item),
+            'route_both': parse_both(configobj, item)
         }
         instances.append(obj)
     return instances
@@ -289,6 +375,7 @@ def get_param_value(key, item, module):
         validator(value, module)
 
     return value
+
 
 def map_params_to_obj(module):
     vrfs = module.params.get('vrfs')
@@ -316,9 +403,14 @@ def map_params_to_obj(module):
         item['rd'] = get_value('rd')
         item['interfaces'] = get_value('interfaces')
         item['state'] = get_value('state')
+        item['route_import'] = get_value('route_import')
+        item['route_export'] = get_value('route_export')
+        item['route_both'] = get_value('route_both')
+        item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
     return objects
+
 
 def update_objects(want, have):
     updates = list()
@@ -339,8 +431,12 @@ def update_objects(want, have):
     return updates
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
+def check_declarative_intent_params(want, module, result):
+    if module.params['associated_interfaces']:
+
+        if result['changed']:
+            time.sleep(module.params['delay'])
+
         name = module.params['name']
         rc, out, err = exec_command(module, 'show vrf | include {0}'.format(name))
 
@@ -354,7 +450,9 @@ def check_declarative_intent_params(want, module):
 
             for w in want:
                 if w['name'] == vrf:
-                    for i in w['interfaces']:
+                    if w.get('associated_interfaces') is None:
+                        continue
+                    for i in w['associated_interfaces']:
                         if get_interface_type(i) is not get_interface_type(interface):
                             module.fail_json(msg="Interface %s not configured on vrf %s" % (interface, name))
 
@@ -368,8 +466,12 @@ def main():
         name=dict(),
         description=dict(),
         rd=dict(),
+        route_export=dict(type='list'),
+        route_import=dict(type='list'),
+        route_both=dict(type='list'),
 
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
 
         delay=dict(default=10, type='int'),
         purge=dict(type='bool', default=False),
@@ -378,8 +480,7 @@ def main():
 
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'vrfs')]
-
+    mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
@@ -410,12 +511,10 @@ def main():
             load_config(module, commands)
         result['changed'] = True
 
-    if result['changed']:
-        time.sleep(module.params['delay'])
-
-    check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

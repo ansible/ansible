@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_domain_list.yaml"
+- debug: msg="START cli/set_domain_list.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -8,6 +8,7 @@
       - no ip domain-list redhat.com
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: configure domain_list
   eos_system:
@@ -15,6 +16,7 @@
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -29,6 +31,7 @@
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -40,6 +43,7 @@
     domain_list:
       - ansible.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -52,6 +56,7 @@
     domain_list:
       - ansible.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -64,6 +69,7 @@
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -77,6 +83,7 @@
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -89,6 +96,7 @@
       - ansible.com
       - eng.ansible.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -104,6 +112,7 @@
       - ansible.com
       - eng.ansible.com
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -118,5 +127,6 @@
       - no ip domain-list eng.ansible.com
     match: none
     provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/set_domain_list.yaml"
+- debug: msg="END cli/set_domain_list.yaml on connection={{ ansible_connection }}"

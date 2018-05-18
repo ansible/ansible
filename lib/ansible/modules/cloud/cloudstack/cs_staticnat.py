@@ -40,57 +40,42 @@ options:
     description:
       - Name of virtual machine which we make the static NAT for.
       - Required if C(state=present).
-    required: false
-    default: null
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the static NAT.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   network:
     description:
       - Network the IP address is related to.
-    required: false
-    default: null
     version_added: "2.2"
   vpc:
     description:
       - VPC the network related to.
-    required: false
-    default: null
     version_added: "2.3"
   state:
     description:
       - State of the static NAT.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the static NAT is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the static NAT is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the static NAT is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

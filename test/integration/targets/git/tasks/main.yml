@@ -31,7 +31,7 @@
   when:
     - not gpg_version.stderr
     - gpg_version.stdout
-    - git_version.stdout | version_compare("2.1.0", '>=')
+    - git_version.stdout is version("2.1.0", '>=')
 - include_tasks: localmods.yml
 - include_tasks: reset-origin.yml
 - include_tasks: ambiguous-ref.yml

@@ -1,0 +1,317 @@
+#cm add
+#changed true, check nothing present
+- name: CM add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+  check_mode: yes
+
+- name: CM get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: get_http_no_header
+  changed_when: false
+
+- name: CM add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+  check_mode: yes
+
+- name: CM get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: get_http_header
+  changed_when: false
+
+- name: CM assert changed, but not added
+  assert:
+    that:
+    - http_no_header is changed
+    - http_no_header.binding_info is none
+    - get_http_no_header.binding is not defined
+    - http_header is changed
+    - http_header.binding_info is none
+    - get_http_header.binding is not defined
+
+#add
+#changed true, new bindings present
+- name: add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: get_http_no_header
+  changed_when: false
+
+- name: add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: get_http_header
+  changed_when: false
+
+- name: assert changed and added
+  assert:
+    that:
+    - http_no_header is changed
+    - http_no_header.binding_info is defined
+    - http_no_header.operation_type == 'added'
+    - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
+    - http_no_header.binding_info.port == {{ http_vars.port }}
+    - http_no_header.binding_info.protocol == "{{ http_vars.protocol }}"
+    - http_header is changed
+    - http_header.binding_info is defined
+    - http_header.operation_type == 'added'
+    - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
+    - http_header.binding_info.port == {{ http_header_vars.port }}
+    - http_header.binding_info.protocol == "{{ http_header_vars.protocol }}"
+    - http_header.binding_info.hostheader == "{{ http_header_vars.header }}"
+
+#add idem
+#changed false
+- name: idem add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+
+- name: idem add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+
+- name: idem assert not changed
+  assert:
+    that:
+    - http_no_header is not changed
+    - http_header is not changed
+
+#modify
+#can't test modify for http, it will add a new binding instead since
+#there's no way to match existing bindings against the new parameters
+
+#cm remove
+#changed true, bindings still present
+- name: cm remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+  check_mode: yes
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: get_http_no_header
+  changed_when: false
+
+- name: cm remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+  check_mode: yes
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: get_http_header
+  changed_when: false
+
+- name: cm remove assert changed, but still present
+  assert:
+    that:
+    - http_no_header is changed
+    - http_no_header.binding_info is defined
+    - http_no_header.operation_type == 'removed'
+    - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
+    - http_no_header.binding_info.port == {{ http_vars.port }}
+    - http_no_header.binding_info.protocol == "{{ http_vars.protocol }}"
+    - get_http_no_header.binding is defined
+    - get_http_no_header.binding.ip == "{{ http_vars.ip }}"
+    - get_http_no_header.binding.port == {{ http_vars.port }}
+    - get_http_no_header.binding.protocol == "{{ http_vars.protocol }}"
+    - http_header is changed
+    - http_header.binding_info is defined
+    - http_header.operation_type == 'removed'
+    - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
+    - http_header.binding_info.port == {{ http_header_vars.port }}
+    - http_header.binding_info.protocol == "{{ http_header_vars.protocol }}"
+    - http_header.binding_info.hostheader == "{{ http_header_vars.header }}"
+    - get_http_header.binding is defined
+    - get_http_header.binding.ip == "{{ http_header_vars.ip }}"
+    - get_http_header.binding.port == {{ http_header_vars.port }}
+    - get_http_header.binding.protocol == "{{ http_header_vars.protocol }}"
+    - get_http_header.binding.hostheader == "{{ http_header_vars.header }}"
+
+
+#remove
+#changed true, bindings gone
+- name: remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: get_http_no_header
+  changed_when: false
+
+- name: remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: get_http_header
+  changed_when: false
+
+- name: remove assert changed and gone
+  assert:
+    that:
+    - http_no_header is changed
+    - http_no_header.operation_type == 'removed'
+    - http_no_header.binding_info is defined
+    - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
+    - http_no_header.binding_info.port == {{ http_vars.port }}
+    - http_no_header.binding_info.protocol == "{{ http_vars.protocol }}"
+    - get_http_no_header.binding is not defined
+    - http_header is changed
+    - http_header.binding_info is defined
+    - http_header.operation_type == 'removed'
+    - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
+    - http_header.binding_info.port == {{ http_header_vars.port }}
+    - http_header.binding_info.protocol == "{{ http_header_vars.protocol }}"
+    - http_header.binding_info.hostheader == "{{ http_header_vars.header }}"
+    - get_http_header.binding is not defined
+
+#remove idem
+#change false, bindings gone
+- name: idem remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: http_no_header
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ http_vars.protocol }}"
+    ip: "{{ http_vars.ip }}"
+    port: "{{ http_vars.port }}"
+  register: get_http_no_header
+  changed_when: false
+
+- name: idem remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: http_header
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: "{{ http_header_vars.header }}"
+    protocol: "{{ http_header_vars.protocol }}"
+    ip: "{{ http_header_vars.ip }}"
+    port: "{{ http_header_vars.port }}"
+  register: get_http_header
+  changed_when: false
+
+- name: idem remove assert changed and gone
+  assert:
+    that:
+    - http_no_header is not changed
+    - http_no_header.binding_info is not defined
+    - get_http_no_header.binding is not defined
+    - http_header is not changed
+    - http_header.binding_info is not defined
+    - get_http_header.binding is not defined

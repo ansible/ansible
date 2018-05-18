@@ -21,8 +21,10 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
+from ansible.parsing.mod_args import ModuleArgsParser
 
 try:
     from __main__ import display
@@ -40,36 +42,44 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
-    from ansible.playbook.task_include import TaskInclude
-    from ansible.playbook.role_include import IncludeRole
 
-    assert isinstance(ds, (list, type(None))), '%s should be a list or None but is %s' % (ds, type(ds))
+    if not isinstance(ds, (list, type(None))):
+        raise AnsibleAssertionError('%s should be a list or None but is %s' % (ds, type(ds)))
 
     block_list = []
     if ds:
-        for block_ds in ds:
-            b = Block.load(
-                block_ds,
-                play=play,
-                parent_block=parent_block,
-                role=role,
-                task_include=task_include,
-                use_handlers=use_handlers,
-                variable_manager=variable_manager,
-                loader=loader,
-            )
+        count = iter(range(len(ds)))
+        for i in count:
+            block_ds = ds[i]
             # Implicit blocks are created by bare tasks listed in a play without
             # an explicit block statement. If we have two implicit blocks in a row,
             # squash them down to a single block to save processing time later.
-            if b._implicit and len(block_list) > 0 and block_list[-1]._implicit:
-                for t in b.block:
-                    if isinstance(t._parent, (TaskInclude, IncludeRole)):
-                        t._parent._parent = block_list[-1]
-                    else:
-                        t._parent = block_list[-1]
-                block_list[-1].block.extend(b.block)
-            else:
-                block_list.append(b)
+            implicit_blocks = []
+            while block_ds is not None and not Block.is_block(block_ds):
+                implicit_blocks.append(block_ds)
+                i += 1
+                # Advance the iterator, so we don't repeat
+                next(count, None)
+                try:
+                    block_ds = ds[i]
+                except IndexError:
+                    block_ds = None
+
+            # Loop both implicit blocks and block_ds as block_ds is the next in the list
+            for b in (implicit_blocks, block_ds):
+                if b:
+                    block_list.append(
+                        Block.load(
+                            b,
+                            play=play,
+                            parent_block=parent_block,
+                            role=role,
+                            task_include=task_include,
+                            use_handlers=use_handlers,
+                            variable_manager=variable_manager,
+                            loader=loader,
+                        )
+                    )
 
     return block_list
 
@@ -89,11 +99,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
 
-    assert isinstance(ds, list), 'The ds (%s) should be a list but was a %s' % (ds, type(ds))
+    if not isinstance(ds, list):
+        raise AnsibleAssertionError('The ds (%s) should be a list but was a %s' % (ds, type(ds)))
 
     task_list = []
     for task_ds in ds:
-        assert isinstance(task_ds, dict), 'The ds (%s) should be a dict but was a %s' % (ds, type(ds))
+        if not isinstance(task_ds, dict):
+            AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
             t = Block.load(
@@ -108,10 +120,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            if 'include' in task_ds or 'import_tasks' in task_ds or 'include_tasks' in task_ds:
-                if 'include' in task_ds:
-                    display.deprecated("The use of 'include' for tasks has been deprecated. "
-                                       "Use 'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions")
+            args_parser = ModuleArgsParser(task_ds)
+            try:
+                (action, args, delegate_to) = args_parser.parse()
+            except AnsibleParserError as e:
+                # if the raises exception was created with obj=ds args, then it includes the detail
+                # so we dont need to add it so we can just re raise.
+                if e._obj:
+                    raise
+                # But if it wasn't, we can add the yaml object now to get more detail
+                raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
+
+            if action in ('include', 'import_tasks', 'include_tasks'):
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
@@ -133,9 +153,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if 'include_tasks' in task_ds:
+                if action == 'include_tasks':
                     is_static = False
-                elif 'import_tasks' in task_ds:
+                elif action == 'import_tasks':
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
@@ -148,7 +168,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if t.loop is not None:
-                        if 'import_tasks' in task_ds:
+                        if action == 'import_tasks':
                             raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
@@ -246,6 +266,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
+                    # FIXME: remove once 'include' is removed
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
@@ -254,6 +275,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
+                        if action in ('include_tasks', 'import_tasks'):
+                            raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
@@ -282,7 +305,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     t.is_static = False
                     task_list.append(t)
 
-            elif 'include_role' in task_ds or 'import_role' in task_ds:
+            elif action in ('include_role', 'import_role'):
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -295,7 +318,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
                 is_static = False
-                if 'import_role' in task_ds:
+                if action == 'import_role':
                     is_static = True
 
                 elif ir.static is not None:
@@ -305,7 +328,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if ir.loop is not None:
-                        if 'import_tasks' in task_ds:
+                        if action == 'import_role':
                             raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
@@ -321,10 +344,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
-                    t = task_list.extend(blocks)
+                    task_list.extend(blocks)
                 else:
                     # passes task object itself for latter generation of list
-                    t = task_list.append(ir)
+                    task_list.append(ir)
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
@@ -345,7 +368,8 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
-    assert isinstance(ds, list), 'ds (%s) should be a list but was a %s' % (ds, type(ds))
+    if not isinstance(ds, list):
+        raise AnsibleAssertionError('ds (%s) should be a list but was a %s' % (ds, type(ds)))
 
     roles = []
     for role_def in ds:

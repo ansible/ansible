@@ -372,6 +372,31 @@ class LinuxHardware(Hardware):
 
         return uuids
 
+    def _udevadm_uuid(self, device):
+        # fallback for versions of lsblk <= 2.23 that don't have --paths, see _run_lsblk() above
+        uuid = 'N/A'
+
+        udevadm_path = self.module.get_bin_path('udevadm')
+        if not udevadm_path:
+            return uuid
+
+        cmd = [udevadm_path, 'info', '--query', 'property', '--name', device]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return uuid
+
+        # a snippet of the output of the udevadm command below will be:
+        # ...
+        # ID_FS_TYPE=ext4
+        # ID_FS_USAGE=filesystem
+        # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+        # ...
+        m = re.search('ID_FS_UUID=(.*)\n', out)
+        if m:
+            uuid = m.group(1)
+
+        return uuid
+
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
@@ -442,11 +467,16 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     options += ",bind"
 
+            # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
+            # see _run_lsblk() above
+            # https://github.com/ansible/ansible/issues/36077
+            uuid = uuids.get(device, self._udevadm_uuid(device))
+
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
                           'options': options,
-                          'uuid': uuids.get(device, 'N/A')}
+                          'uuid': uuid}
 
             mount_info.update(mount_statvfs_info)
 
@@ -568,7 +598,7 @@ class LinuxHardware(Hardware):
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
                 if rc == 0:
-                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
 
@@ -585,7 +615,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + "\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)
@@ -601,7 +631,7 @@ class LinuxHardware(Hardware):
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * float(part['sectorsize'])))
+                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -611,7 +641,7 @@ class LinuxHardware(Hardware):
             d['scheduler_mode'] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
             if scheduler is not None:
-                m = re.match(".*?(\[(.*)\])", scheduler)
+                m = re.match(r".*?(\[(.*)\])", scheduler)
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
@@ -621,16 +651,16 @@ class LinuxHardware(Hardware):
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
+            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
 
             d['host'] = ""
 
             # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
-            m = re.match(".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
+            m = re.match(r".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
-                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                m = re.search("^" + did + r"\s(.*)$", pcidata, re.MULTILINE)
                 if m:
                     d['host'] = m.group(1)
 
@@ -710,3 +740,5 @@ class LinuxHardware(Hardware):
 class LinuxHardwareCollector(HardwareCollector):
     _platform = 'Linux'
     _fact_class = LinuxHardware
+
+    required_facts = set(['platform'])

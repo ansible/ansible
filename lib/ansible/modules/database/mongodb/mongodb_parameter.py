@@ -27,33 +27,23 @@ options:
     login_user:
         description:
             - The username used to authenticate with
-        required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
-        required: false
-        default: null
     login_host:
         description:
             - The host running the database
-        required: false
         default: localhost
     login_port:
         description:
             - The port to connect to
-        required: false
         default: 27017
     login_database:
         description:
             - The database where login credentials are stored
-        required: false
-        default: null
     replica_set:
         description:
             - Replica set to connect to (automatically connects to primary for writes)
-        required: false
-        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -61,8 +51,8 @@ options:
     ssl:
         description:
             - Whether to use an SSL connection when connecting to the database
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     param:
         description:
             - MongoDB administrative parameter to modify
@@ -74,7 +64,6 @@ options:
     param_type:
         description:
             - Define the parameter value (str, int)
-        required: false
         default: str
 
 notes:
@@ -223,5 +212,5 @@ def main():
                          after=value)
 
 
-if __name__ ==  '__main__':
+if __name__ == '__main__':
     main()

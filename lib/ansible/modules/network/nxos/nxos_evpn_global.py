@@ -29,12 +29,14 @@ short_description: Handles the EVPN control plane for VXLAN.
 description:
     - Handles the EVPN control plane for VXLAN.
 author: Gabriele Gerbino (@GGabriele)
+notes:
+  - This module is not supported on Nexus 3000 series of switches.
 options:
   nv_overlay_evpn:
     description:
       - EVPN control plane.
     required: true
-    choices: ['true', 'false']
+    type: bool
 '''
 
 EXAMPLES = '''
@@ -51,27 +53,13 @@ commands:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
-
-
-def check_args(module, warnings):
-    nxos_check_args(module, warnings)
-
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 
 
 def main():
     argument_spec = dict(
         nv_overlay_evpn=dict(required=True, type='bool'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -81,12 +69,17 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     if warnings:
         result['warnings'] = warnings
 
     config = get_config(module)
     commands = list()
+
+    info = get_capabilities(module).get('device_info', {})
+    os_platform = info.get('network_os_platform', '')
+
+    if '3K' in os_platform:
+        module.fail_json(msg='This module is not supported on Nexus 3000 series')
 
     if module.params['nv_overlay_evpn'] is True:
         if 'nv overlay evpn' not in config:

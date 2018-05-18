@@ -24,8 +24,6 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
-    required: false
-    default: null
 extends_documentation_fragment:
     - aws
     - ec2
@@ -92,11 +90,12 @@ def get_volume_info(volume):
             'device': attachment.device,
             'instance_id': attachment.instance_id,
             'status': attachment.status
-            },
+        },
         'tags': volume.tags
-        }
+    }
 
     return volume_info
+
 
 def list_ec2_volumes(connection, module):
 
@@ -118,7 +117,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 

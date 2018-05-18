@@ -33,13 +33,11 @@ options:
   location:
     description:
       - The geo-locations in which the resource group will be located.
-    required: false
     default: westus
   deployment_mode:
     description:
       - In incremental mode, resources are deployed without deleting existing resources that are not included in the template.
         In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
-    required: false
     default: incremental
     choices:
         - complete
@@ -49,7 +47,6 @@ options:
       - If state is "present", template will be created. If state is "present" and if deployment exists, it will be
         updated. If state is "absent", stack will be removed.
     default: present
-    required: false
     choices:
         - present
         - absent
@@ -57,26 +54,18 @@ options:
     description:
       - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
         Either one of them is required if "state" parameter is "present".
-    required: false
-    default: null
   template_link:
     description:
       - Uri of file containing the template body. This parameter is mutually exclusive with 'template'. Either one
         of them is required if "state" parameter is "present".
-    required: false
-    default: null
   parameters:
     description:
       - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive
         with 'parameters_link'. Either one of them is required if "state" parameter is "present".
-    required: false
-    default: null
   parameters_link:
     description:
       - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
         one of them is required if "state" parameter is "present".
-    required: false
-    default: null
   deployment_name:
     description:
       - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
@@ -85,8 +74,8 @@ options:
   wait_for_deployment_completion:
     description:
       - Whether or not to block until the deployment has completed.
-    default: yes
-    choices: ['yes', 'no']
+    type: bool
+    default: 'yes'
   wait_for_deployment_polling_period:
     description:
       - Time (in seconds) to wait between polls when waiting for deployment completion.
@@ -379,12 +368,6 @@ except ImportError as exc:
 try:
     from itertools import chain
     from azure.common.exceptions import CloudError
-    from azure.mgmt.resource.resources.models import (DeploymentProperties,
-                                                      ParametersLink,
-                                                      TemplateLink,
-                                                      Deployment,
-                                                      ResourceGroup,
-                                                      Dependency)
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.network import NetworkManagementClient
 
@@ -482,21 +465,21 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         :return:
         """
 
-        deploy_parameter = DeploymentProperties(self.deployment_mode)
+        deploy_parameter = self.rm_models.DeploymentProperties(self.deployment_mode)
         if not self.parameters_link:
             deploy_parameter.parameters = self.parameters
         else:
-            deploy_parameter.parameters_link = ParametersLink(
+            deploy_parameter.parameters_link = self.rm_models.ParametersLink(
                 uri=self.parameters_link
             )
         if not self.template_link:
             deploy_parameter.template = self.template
         else:
-            deploy_parameter.template_link = TemplateLink(
+            deploy_parameter.template_link = self.rm_models.TemplateLink(
                 uri=self.template_link
             )
 
-        params = ResourceGroup(location=self.location, tags=self.tags)
+        params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
         try:
             self.rm_client.resource_groups.create_or_update(self.resource_group_name, params)
@@ -512,7 +495,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             if self.wait_for_deployment_completion:
                 deployment_result = self.get_poller_result(result)
                 while deployment_result.properties is None or deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
-                                                                              'Succeeded']:
+                                                                                                                      'Succeeded']:
                     time.sleep(self.wait_for_deployment_polling_period)
                     deployment_result = self.rm_client.deployments.get(self.resource_group_name, self.deployment_name)
         except CloudError as exc:
@@ -535,7 +518,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         """
         try:
             result = self.rm_client.resource_groups.delete(self.resource_group_name)
-            result.wait() # Blocking wait till the delete is finished
+            result.wait()  # Blocking wait till the delete is finished
         except CloudError as e:
             if e.status_code == 404 or e.status_code == 204:
                 return
@@ -569,7 +552,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                                                                                       nested_deployment)
                     except CloudError as exc:
                         self.fail("List nested deployment operations failed with status code: %s and message: %s" %
-                                 (exc.status_code, exc.message))
+                                  (exc.status_code, exc.message))
                     new_nested_operations = self._get_failed_nested_operations(nested_operations)
                     new_operations += new_nested_operations
         return new_operations
@@ -627,7 +610,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         for dep in dependencies:
             if dep.resource_name not in tree:
                 tree[dep.resource_name] = dict(dep=dep, children=dict())
-            if isinstance(dep, Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
+            if isinstance(dep, self.rm_models.Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
                 self._build_hierarchy(dep.depends_on, tree[dep.resource_name]['children'])
 
         if 'top' in tree:
@@ -642,10 +625,10 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def _get_ip_dict(self, ip):
         ip_dict = dict(name=ip.name,
-            id=ip.id,
-            public_ip=ip.ip_address,
-            public_ip_allocation_method=str(ip.public_ip_allocation_method)
-        )
+                       id=ip.id,
+                       public_ip=ip.ip_address,
+                       public_ip_allocation_method=str(ip.public_ip_allocation_method)
+                       )
         if ip.dns_settings:
             ip_dict['dns_settings'] = {
                 'domain_name_label': ip.dns_settings.domain_name_label,
@@ -657,9 +640,9 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         return [self.network_client.public_ip_addresses.get(public_ip_id.split('/')[4], public_ip_id.split('/')[-1])
                 for nic_obj in (self.network_client.network_interfaces.get(self.resource_group_name,
                                                                            nic['dep'].resource_name) for nic in nics)
-                  for public_ip_id in [ip_conf_instance.public_ip_address.id
-                                       for ip_conf_instance in nic_obj.ip_configurations
-                                       if ip_conf_instance.public_ip_address]]
+                for public_ip_id in [ip_conf_instance.public_ip_address.id
+                                     for ip_conf_instance in nic_obj.ip_configurations
+                                     if ip_conf_instance.public_ip_address]]
 
 
 def main():

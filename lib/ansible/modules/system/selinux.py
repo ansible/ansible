@@ -26,19 +26,16 @@ options:
   policy:
     description:
       - "name of the SELinux policy to use (example: C(targeted)) will be required if state is not C(disabled)"
-    required: false
-    default: null
   state:
     description:
       - The SELinux mode
     required: true
-    default: null
     choices: [ "enforcing", "permissive", "disabled" ]
   conf:
     description:
       - path to the SELinux configuration file, if non-standard
-    required: false
     default: "/etc/selinux/config"
+    aliases: ['configfile', 'file']
 notes:
    - Not tested on any debian based system
 requirements: [ libselinux-python ]
@@ -151,6 +148,9 @@ def set_state(module, state):
 
 
 def set_config_policy(module, policy, configfile):
+    if not os.path.exists('/etc/selinux/%s/policy' % policy):
+        module.fail_json(msg='Policy %s does not exist in /etc/selinux/' % policy)
+
     # edit config file with state value
     # SELINUXTYPE=targeted
     policyline = 'SELINUXTYPE=%s' % policy

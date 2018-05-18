@@ -12,7 +12,7 @@ Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3+
 Group:     Development/Libraries
-Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
+Source:    https://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %{!?__python2: %global __python2 /usr/bin/python2.6}
 %{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
@@ -26,7 +26,6 @@ BuildRequires: python26-setuptools
 Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
-Requires: python26-keyczar
 Requires: python26-httplib2
 Requires: python26-setuptools
 Requires: python26-six
@@ -60,7 +59,6 @@ BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
 Requires: python-six
@@ -72,7 +70,6 @@ BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
 Requires: python-setuptools
@@ -131,7 +128,7 @@ rm -rf %{buildroot}
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING CHANGELOG.md
+%doc README.rst PKG-INFO COPYING CHANGELOG.md
 %doc %{_mandir}/man1/ansible*
 
 %changelog

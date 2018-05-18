@@ -80,6 +80,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
+        del tmp  # tmp no longer has any effect
+
         if task_vars is None:
             task_vars = dict()
 
@@ -139,7 +141,7 @@ class ActionModule(ActionBase):
             scope[self.return_results_as_name] = results
             results = scope
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         if failed:
             result['failed'] = failed
@@ -234,7 +236,7 @@ class ActionModule(ActionBase):
             data = to_text(b_data, errors='surrogate_or_strict')
 
             self.show_content = show_content
-            data = self._loader.load(data, show_content)
+            data = self._loader.load(data, file_name=filename, show_content=show_content)
             if not data:
                 data = dict()
             if not isinstance(data, dict):

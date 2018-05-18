@@ -7,8 +7,8 @@
 - name: verify destroy instance with display_name
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Destroyed"
 
 - name: test destroy instance with display_name idempotence
@@ -19,8 +19,8 @@
 - name: verify destroy instance with display_name idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
 
 - name: test recover to stopped state and update a deleted instance with display_name
   cs_instance:
@@ -31,8 +31,8 @@
 - name: verify test recover to stopped state and update a deleted instance with display_name
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 

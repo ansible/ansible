@@ -1,0 +1,35 @@
+========================================================================
+ Local Interface Ma 0/0 has 1 neighbor
+  Total Frames Out: 1747
+  Total Frames In: 10333
+  Total Neighbor information Age outs: 0
+  Total Multiple Neighbors Detected: 0
+  Total Frames Discarded: 0
+  Total In Error Frames: 0
+  Total Unrecognized TLVs: 0
+  Total TLVs Discarded: 0
+  Next packet will be sent after 17 seconds
+  The neighbors are given below:
+  -----------------------------------------------------------------------
+
+    Remote Chassis ID Subtype: Mac address (4)
+    Remote Chassis ID:  90:b1:1c:f4:2f:6d
+    Remote Port Subtype:  Interface name (5)
+    Remote Port ID:  TenGigabitEthernet 0/33
+    Remote Port Description:  TenGigabitEthernet 0/33
+    Local Port ID: ManagementEthernet 0/0
+    Locally assigned remote Neighbor Index: 1
+    Remote TTL:  20
+    Information valid for next 17 seconds
+    Time since last information change of this neighbor:  14:54:48
+    Remote System Name:  swlab1-maa-tor-A2
+    Remote System Desc:  Dell Real Time Operating System Software. Dell
+     Operating System Version: 2.0. Dell Application Software Version:
+     9.11(2.0) Copyright (c) 1999-2017Dell Inc. All Rights Reserved.Build
+     Time: Tue Apr 25 21:22:59 2017
+    Existing System Capabilities:  Repeater Bridge Router
+    Enabled System Capabilities:  Repeater Bridge Router
+    Remote Port Vlan ID:  148
+    Port and Protocol Vlan ID: 148, Capability: Supported, Status: Enabled
+   ---------------------------------------------------------------------------
+

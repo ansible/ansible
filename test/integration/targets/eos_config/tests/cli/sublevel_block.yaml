@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel_block.yaml"
+- debug: msg="START cli/sublevel_block.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -11,7 +11,7 @@
     before: no ip access-list test
     after: exit
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
 - name: configure sub level command using block resplace
   eos_config:
@@ -23,7 +23,7 @@
     parents: ip access-list test
     replace: block
     after: exit
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -45,7 +45,7 @@
     parents: ip access-list test
     replace: block
     after: exit
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -56,6 +56,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/sublevel_block.yaml"
+- debug: msg="END cli/sublevel_block.yaml on connection={{ ansible_connection }}"

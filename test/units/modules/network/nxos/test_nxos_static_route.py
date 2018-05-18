@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_static_route
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosStaticRouteModule(TestNxosModule):
     module = nxos_static_route
 
     def setUp(self):
+        super(TestNxosStaticRouteModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_static_route.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosStaticRouteModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosStaticRouteModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

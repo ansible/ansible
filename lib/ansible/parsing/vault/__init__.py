@@ -29,6 +29,7 @@ import tempfile
 import warnings
 from binascii import hexlify
 from binascii import unhexlify
+from binascii import Error as BinasciiError
 from hashlib import md5
 from hashlib import sha256
 from io import BytesIO
@@ -71,12 +72,13 @@ try:
 except ImportError:
     pass
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
 from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.path import makedirs_safe
 
 try:
     from __main__ import display
@@ -102,6 +104,10 @@ class AnsibleVaultError(AnsibleError):
 
 
 class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
+class AnsibleVaultFormatError(AnsibleError):
     pass
 
 
@@ -148,20 +154,7 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
         file_obj.seek(current_position)
 
 
-def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
-    """Retrieve information about the Vault and clean the data
-
-    When data is saved, it has a header prepended and is formatted into 80
-    character lines.  This method extracts the information from the header
-    and then removes the header and the inserted newlines.  The string returned
-    is suitable for processing by the Cipher classes.
-
-    :arg b_vaulttext: byte str containing the data from a save file
-    :returns: a byte str suitable for passing to a Cipher class's
-        decrypt() function.
-    """
-    # used by decrypt
-    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
 
     b_tmpdata = b_vaulttext_envelope.splitlines()
     b_tmpheader = b_tmpdata[0].strip().split(b';')
@@ -169,7 +162,6 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     b_version = b_tmpheader[1].strip()
     cipher_name = to_text(b_tmpheader[2].strip())
     vault_id = default_vault_id
-    # vault_id = None
 
     # Only attempt to find vault_id if the vault file is version 1.2 or newer
     # if self.b_version == b'1.2':
@@ -179,6 +171,37 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     b_ciphertext = b''.join(b_tmpdata[1:])
 
     return b_ciphertext, b_version, cipher_name, vault_id
+
+
+def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
+    """Parse the vaulttext envelope
+
+    When data is saved, it has a header prepended and is formatted into 80
+    character lines.  This method extracts the information from the header
+    and then removes the header and the inserted newlines.  The string returned
+    is suitable for processing by the Cipher classes.
+
+    :arg b_vaulttext: byte str containing the data from a save file
+    :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
+    :kwarg filename: The filename that the data came from.  This is only
+        used to make better error messages in case the data cannot be
+        decrypted. This is optional.
+    :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
+        a byte str of the vault format version,
+        the name of the cipher used, and the vault_id.
+    :raises: AnsibleVaultFormatError: if the vaulttext_envelope format is invalid
+    """
+    # used by decrypt
+    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+
+    try:
+        return _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id)
+    except Exception as exc:
+        msg = "Vault envelope format error"
+        if filename:
+            msg += ' in %s' % (filename)
+        msg += ': %s' % exc
+        raise AnsibleVaultFormatError(msg)
 
 
 def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=None):
@@ -220,6 +243,41 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     b_vaulttext = b'\n'.join(b_vaulttext)
 
     return b_vaulttext
+
+
+def _unhexlify(b_data):
+    try:
+        return unhexlify(b_data)
+    except (BinasciiError, TypeError) as exc:
+        raise AnsibleVaultFormatError('Vault format unhexlify error: %s' % exc)
+
+
+def _parse_vaulttext(b_vaulttext):
+    b_vaulttext = _unhexlify(b_vaulttext)
+    b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
+    b_salt = _unhexlify(b_salt)
+    b_ciphertext = _unhexlify(b_ciphertext)
+
+    return b_ciphertext, b_salt, b_crypted_hmac
+
+
+def parse_vaulttext(b_vaulttext):
+    """Parse the vaulttext
+
+    :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
+    :returns: A tuple of byte str of the ciphertext suitable for passing to a
+        Cipher class's decrypt() function, a byte str of the salt,
+        and a byte str of the crypted_hmac
+    :raises: AnsibleVaultFormatError: if the vaulttext format is invalid
+    """
+    # SPLIT SALT, DIGEST, AND DATA
+    try:
+        return _parse_vaulttext(b_vaulttext)
+    except AnsibleVaultFormatError:
+        raise
+    except Exception as exc:
+        msg = "Vault vaulttext format error: %s" % exc
+        raise AnsibleVaultFormatError(msg)
 
 
 def verify_secret_is_not_empty(secret, msg=None):
@@ -373,6 +431,10 @@ class FileVaultSecret(VaultSecret):
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
+        b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass, filename)
+
+        vault_pass = b_vault_data.strip(b'\r\n')
+
         verify_secret_is_not_empty(vault_pass,
                                    msg='Invalid vault password was provided from file (%s)' % filename)
 
@@ -495,12 +557,40 @@ def match_best_secret(secrets, target_vault_ids):
     return None
 
 
-def match_encrypt_secret(secrets):
+def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
+    # See if the --encrypt-vault-id matches a vault-id
+    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+
+    if encrypt_vault_id is None:
+        raise AnsibleError('match_encrypt_vault_id_secret requires a non None encrypt_vault_id')
+
+    encrypt_vault_id_matchers = [encrypt_vault_id]
+    encrypt_secret = match_best_secret(secrets, encrypt_vault_id_matchers)
+
+    # return the best match for --encrypt-vault-id
+    if encrypt_secret:
+        return encrypt_secret
+
+    # If we specified a encrypt_vault_id and we couldn't find it, dont
+    # fallback to using the first/best secret
+    raise AnsibleVaultError('Did not find a match for --encrypt-vault-id=%s in the known vault-ids %s' % (encrypt_vault_id,
+                                                                                                          [_v for _v, _vs in secrets]))
+
+
+def match_encrypt_secret(secrets, encrypt_vault_id=None):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
+    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+    # See if the --encrypt-vault-id matches a vault-id
+    if encrypt_vault_id:
+        return match_encrypt_vault_id_secret(secrets,
+                                             encrypt_vault_id=encrypt_vault_id)
+
+    # Find the best/first secret from secrets since we didnt specify otherwise
     # ie, consider all of the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
+
     # can be empty list sans any tuple
     return best_secret
 
@@ -510,26 +600,6 @@ class VaultLib:
         self.secrets = secrets or []
         self.cipher_name = None
         self.b_version = b'1.2'
-
-    @staticmethod
-    def is_encrypted(data):
-        """ Test if this is vault encrypted data
-
-        :arg data: a byte or text string or a python3 to test for whether it is
-            recognized as vault encrypted data
-        :returns: True if it is recognized.  Otherwise, False.
-        """
-
-        # This could in the future, check to see if the data is a vault blob and
-        # is encrypted with a key associated with this vault
-        # instead of just checking the format.
-        display.deprecated(u'vault.VaultLib.is_encrypted is deprecated.  Use vault.is_encrypted instead', version='2.4')
-        return is_encrypted(data)
-
-    @staticmethod
-    def is_encrypted_file(file_obj):
-        display.deprecated(u'vault.VaultLib.is_encrypted_file is deprecated.  Use vault.is_encrypted_file instead', version='2.4')
-        return is_encrypted_file(file_obj)
 
     def encrypt(self, plaintext, secret=None, vault_id=None):
         """Vault encrypt a piece of data.
@@ -564,7 +634,11 @@ class VaultLib:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
 
         # encrypt data
-        display.vvvvv('Encrypting with vault secret %s' % secret)
+        if vault_id:
+            display.vvvvv('Encrypting with vault_id "%s" and vault secret %s' % (vault_id, secret))
+        else:
+            display.vvvvv('Encrypting without a vault_id using vault secret %s' % secret)
+
         b_ciphertext = this_cipher.encrypt(b_plaintext, secret)
 
         # format the data for output to the file
@@ -584,7 +658,7 @@ class VaultLib:
         :returns: a byte string containing the decrypted data and the vault-id that was used
 
         '''
-        plaintext, vault_id = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
+        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
         return plaintext
 
     def decrypt_and_get_vault_id(self, vaulttext, filename=None):
@@ -595,7 +669,7 @@ class VaultLib:
         :kwarg filename: a filename that the data came from.  This is only
             used to make better error messages in case the data cannot be
             decrypted.
-        :returns: a byte string containing the decrypted data and the vault-id that was used
+        :returns: a byte string containing the decrypted data and the vault-id vault-secret that was used
 
         """
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
@@ -606,10 +680,11 @@ class VaultLib:
         if not is_encrypted(b_vaulttext):
             msg = "input is not vault encrypted data"
             if filename:
-                msg += "%s is not a vault encrypted file" % filename
+                msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
+                                                                             filename=filename)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -635,13 +710,14 @@ class VaultLib:
 
         vault_id_matchers = []
         vault_id_used = None
+        vault_secret_used = None
 
         if vault_id:
             display.vvvvv('Found a vault_id (%s) in the vaulttext' % (vault_id))
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv('We have a secret associated with vault id (%s), will try to use to decrypt %s' % (vault_id, filename))
+                display.vvvvv('We have a secret associated with vault id (%s), will try to use to decrypt %s' % (vault_id, to_text(filename)))
             else:
                 display.vvvvv('Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % (vault_id))
 
@@ -655,7 +731,7 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, filename))
+            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, to_text(filename)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
@@ -663,25 +739,36 @@ class VaultLib:
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
-                    display.vvvvv('decrypt succesful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
+                    vault_secret_used = vault_secret
+                    file_slug = ''
+                    if filename:
+                        file_slug = ' of "%s"' % filename
+                    display.vvvvv('Decrypt%s successful with secret=%s and vault_id=%s' % (file_slug, vault_secret, vault_secret_id))
                     break
+            except AnsibleVaultFormatError as exc:
+                msg = "There was a vault format error"
+                if filename:
+                    msg += ' in %s' % (to_text(filename))
+                msg += ': %s' % exc
+                display.warning(msg)
+                raise
             except AnsibleError as e:
                 display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (vault_secret_id, filename, e))
+                             (vault_secret_id, to_text(filename), e))
                 continue
         else:
             msg = "Decryption failed (no vault secrets were found that could decrypt)"
             if filename:
-                msg += " on %s" % filename
+                msg += " on %s" % to_native(filename)
             raise AnsibleVaultError(msg)
 
         if b_plaintext is None:
             msg = "Decryption failed"
             if filename:
-                msg += " on %s" % filename
+                msg += " on %s" % to_native(filename)
             raise AnsibleError(msg)
 
-        return b_plaintext, vault_id_used
+        return b_plaintext, vault_id_used, vault_secret_used
 
 
 class VaultEditor:
@@ -722,7 +809,10 @@ class VaultEditor:
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
-                    assert fh.tell() == file_len  # FIXME remove this assert once we have unittests to check its accuracy
+                    # FIXME remove this assert once we have unittests to check its accuracy
+                    if fh.tell() != file_len:
+                        raise AnsibleAssertionError()
+
                     os.fsync(fh)
 
     def _shred_file(self, tmp_path):
@@ -836,6 +926,11 @@ class VaultEditor:
     def create_file(self, filename, secret, vault_id=None):
         """ create a new encrypted file """
 
+        dirname = os.path.dirname(filename)
+        if not os.path.exists(dirname):
+            display.warning("%s does not exist, creating..." % dirname)
+            makedirs_safe(dirname)
+
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.
         if os.path.isfile(filename):
@@ -844,7 +939,8 @@ class VaultEditor:
         self._edit_file_helper(filename, secret, vault_id=vault_id)
 
     def edit_file(self, filename):
-
+        vault_id_used = None
+        vault_secret_used = None
         # follow the symlink
         filename = self._real_path(filename)
 
@@ -856,33 +952,27 @@ class VaultEditor:
         try:
             # vaulttext gets converted back to bytes, but alas
             # TODO: return the vault_id that worked?
-            plaintext, vault_id_used = self.vault.decrypt_and_get_vault_id(vaulttext)
+            plaintext, vault_id_used, vault_secret_used = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
+                                                                       filename=filename)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
         # (vault_id=default, while a different vault-id decrypted)
 
-        # if we could decrypt, the vault_id should be in secrets or we use vault_id_used
-        # though we could have multiple secrets for a given vault_id, pick the first one
-        secrets = match_secrets(self.vault.secrets, [vault_id_used, vault_id])
-
-        if not secrets:
-            raise AnsibleVaultError('Attempting to encrypt "%s" but no vault secrets were found for vault ids "%s" or "%s"' %
-                                    (filename, vault_id, vault_id_used))
-
-        secret = secrets[0][1]
-
+        # Keep the same vault-id (and version) as in the header
         if cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=True, vault_id=vault_id)
+            self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext,
+                                   force_save=True, vault_id=vault_id)
         else:
-            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=False, vault_id=vault_id)
+            self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext,
+                                   force_save=False, vault_id=vault_id)
 
     def plaintext(self, filename):
 
@@ -890,7 +980,7 @@ class VaultEditor:
         vaulttext = to_text(b_vaulttext)
 
         try:
-            plaintext = self.vault.decrypt(vaulttext)
+            plaintext = self.vault.decrypt(vaulttext, filename=filename)
             return plaintext
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
@@ -905,8 +995,10 @@ class VaultEditor:
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
+        display.vvvvv('Rekeying file "%s" to with new vault-id "%s" and vault secret %s' %
+                      (filename, new_vault_id, new_vault_secret))
         try:
-            plaintext = self.vault.decrypt(vaulttext)
+            plaintext, vault_id_used, _dummy = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
@@ -930,6 +1022,9 @@ class VaultEditor:
         # preserve permissions
         os.chmod(filename, prev.st_mode)
         os.chown(filename, prev.st_uid, prev.st_gid)
+
+        display.vvvvv('Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
+                      (filename, vault_id_used, new_vault_id, new_vault_secret))
 
     def read_data(self, filename):
 
@@ -1136,7 +1231,7 @@ class VaultAES:
                            'switch to the newer VaultAES256 format', version='2.3')
         # http://stackoverflow.com/a/14989032
 
-        b_vaultdata = unhexlify(b_vaulttext)
+        b_vaultdata = _unhexlify(b_vaulttext)
         b_salt = b_vaultdata[len(b'Salted__'):16]
         b_ciphertext = b_vaultdata[16:]
 
@@ -1289,7 +1384,7 @@ class VaultAES256:
         hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
         hmac.update(b_ciphertext)
         try:
-            hmac.verify(unhexlify(b_crypted_hmac))
+            hmac.verify(_unhexlify(b_crypted_hmac))
         except InvalidSignature as e:
             raise AnsibleVaultError('HMAC verification failed: %s' % e)
 
@@ -1351,11 +1446,8 @@ class VaultAES256:
 
     @classmethod
     def decrypt(cls, b_vaulttext, secret):
-        # SPLIT SALT, DIGEST, AND DATA
-        b_vaulttext = unhexlify(b_vaulttext)
-        b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
-        b_salt = unhexlify(b_salt)
-        b_ciphertext = unhexlify(b_ciphertext)
+
+        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)

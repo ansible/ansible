@@ -46,20 +46,15 @@ class IncludedFile:
             self._hosts.append(host)
 
     def __eq__(self, other):
-        return other._filename == self._filename and other._args == self._args
+        return other._filename == self._filename and other._args == self._args and other._task._parent._uuid == self._task._parent._uuid
 
     def __repr__(self):
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, inventory, loader, variable_manager):
+    def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
-
-        def get_original_host(host):
-            if host.name in inventory._hosts_cache:
-                return inventory._hosts_cache[host.name]
-            else:
-                return inventory.get_host(host.name)
+        task_vars_cache = {}
 
         for res in results:
 
@@ -79,15 +74,23 @@ class IncludedFile:
                     if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
                         continue
 
-                    task_vars = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
+                    cache_key = (iterator._play, original_host, original_task)
+                    try:
+                        task_vars = task_vars_cache[cache_key]
+                    except KeyError:
+                        task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
+                    index_var = None
                     if original_task.loop_control:
-                        loop_var = original_task.loop_control.loop_var or 'item'
+                        loop_var = original_task.loop_control.loop_var
+                        index_var = original_task.loop_control.index_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
+                    if index_var and index_var in include_result:
+                        task_vars[index_var] = include_variables[index_var] = include_result[index_var]
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None
@@ -115,7 +118,16 @@ class IncludedFile:
                                     include_target = templar.template(include_result['include'])
                                     if original_task._role:
                                         new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                        include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
+                                        candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
+                                                      loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                        for include_file in candidates:
+                                            try:
+                                                # may throw OSError
+                                                os.stat(include_file)
+                                                # or select the task file if it exists
+                                                break
+                                            except OSError:
+                                                pass
                                     else:
                                         include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
@@ -132,9 +144,23 @@ class IncludedFile:
                                 include_file = loader.path_dwim(include_result['include'])
 
                         include_file = templar.template(include_file)
+                        # Update the task args to reflect the expanded/templated path
+                        original_task.args['_raw_params'] = include_file
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
-                        inc_file = IncludedFile("role", include_variables, original_task, is_role=True)
+                        # template the included role's name here
+                        role_name = include_variables.pop('name', include_variables.pop('role', None))
+                        if role_name is not None:
+                            role_name = templar.template(role_name)
+
+                        new_task = original_task.copy()
+                        new_task._role_name = role_name
+                        for from_arg in new_task.FROM_ARGS:
+                            if from_arg in include_variables:
+                                from_key = from_arg.replace('_from', '')
+                                new_task._from_files[from_key] = templar.template(include_variables.pop(from_arg))
+
+                        inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
 
                     try:
                         pos = included_files.index(inc_file)

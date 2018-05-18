@@ -19,7 +19,7 @@ module: bigip_facts
 short_description: Collect facts from F5 BIG-IP devices
 description:
   - Collect facts from F5 BIG-IP devices via iControl SOAP API
-version_added: "1.6"
+version_added: 1.6
 author:
   - Matt Hite (@mhite)
   - Tim Rupp (@caphrim007)
@@ -36,15 +36,12 @@ options:
     description:
       - BIG-IP session support; may be useful to avoid concurrency
         issues in certain circumstances.
-    required: false
-    default: true
-    choices: []
-    aliases: []
+    default: no
+    type: bool
   include:
     description:
       - Fact category or list of categories to collect
-    required: true
-    default: null
+    required: True
     choices:
       - address_class
       - certificate
@@ -65,15 +62,10 @@ options:
       - virtual_address
       - virtual_server
       - vlan
-    aliases: []
   filter:
     description:
       - Shell-style glob matching string used to filter fact keys. Not
         applicable for software, provision, and system_info fact categories.
-    required: false
-    default: null
-    choices: []
-    aliases: []
 extends_documentation_fragment: f5
 '''
 
@@ -91,14 +83,21 @@ import fnmatch
 import re
 import traceback
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import map, zip
+
+try:
+    from library.module_utils.network.f5.legacy import bigip_api, bigsuds_found
+    from library.module_utils.network.f5.common import f5_argument_spec
+except ImportError:
+    from ansible.module_utils.network.f5.legacy import bigip_api, bigsuds_found
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+
 try:
     from suds import MethodNotFound, WebFault
 except ImportError:
     pass  # Handle via f5_utils.bigsuds_found
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import bigip_api, bigsuds_found, f5_argument_spec
-from ansible.module_utils.six.moves import map, zip
 
 
 class F5(object):
@@ -473,6 +472,9 @@ class VirtualServers(object):
     def get_list(self):
         return self.virtual_servers
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.virtual_servers]
+
     def get_actual_hardware_acceleration(self):
         return self.api.LocalLB.VirtualServer.get_actual_hardware_acceleration(self.virtual_servers)
 
@@ -623,6 +625,9 @@ class Pools(object):
     def get_list(self):
         return self.pool_names
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.pool_names]
+
     def get_action_on_service_down(self):
         return self.api.LocalLB.Pool.get_action_on_service_down(self.pool_names)
 
@@ -654,7 +659,32 @@ class Pools(object):
         return self.api.LocalLB.Pool.get_ignore_persisted_weight_state(self.pool_names)
 
     def get_lb_method(self):
-        return self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        result = []
+        lb_choice = dict(
+            LB_METHOD_DYNAMIC_RATIO_MEMBER='dynamic-ratio-member',
+            LB_METHOD_DYNAMIC_RATIO='dynamic-ratio-node',
+            LB_METHOD_FASTEST_APP_RESPONSE='fastest-app-response',
+            LB_METHOD_FASTEST_NODE_ADDRESS='fastest-node',
+            LB_METHOD_LEAST_CONNECTION_MEMBER='least-connections-member',
+            LB_METHOD_LEAST_CONNECTION_NODE_ADDRESS='least-connections-node',
+            LB_METHOD_LEAST_SESSIONS='least-sessions',
+            LB_METHOD_OBSERVED_MEMBER='observed-member',
+            LB_METHOD_OBSERVED_NODE_ADDRESS='observed-node',
+            LB_METHOD_PREDICTIVE_MEMBER='predictive-member',
+            LB_METHOD_PREDICTIVE_NODE_ADDRESS='predictive-node',
+            LB_METHOD_RATIO_LEAST_CONNECTION_MEMBER='ratio-least-connections-member',
+            LB_METHOD_RATIO_LEAST_CONNECTION_NODE_ADDRESS='ratio-least-connections-node',
+            LB_METHOD_RATIO_MEMBER='ratio-member',
+            LB_METHOD_RATIO_NODE_ADDRESS='ratio-node',
+            LB_METHOD_RATIO_SESSION='ratio-session',
+            LB_METHOD_ROUND_ROBIN='round-robin',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_MEMBER='weighted-least-connections-member',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_NODE_ADDRESS='weighted-least-connections-node'
+        )
+        methods = self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        for method in methods:
+            result.append(lb_choice.get(method, method))
+        return result
 
     def get_member(self):
         return self.api.LocalLB.Pool.get_member_v2(self.pool_names)
@@ -1061,6 +1091,9 @@ class AddressClasses(object):
 
     F5 BIG-IP address group/class class.
 
+    In TMUI these things are known as Address Data Groups. Examples that ship with the
+    box include /Common/aol and /Common/private_net
+
     Attributes:
         api: iControl API instance.
         address_classes: List of address classes.
@@ -1079,7 +1112,15 @@ class AddressClasses(object):
     def get_address_class(self):
         key = self.api.LocalLB.Class.get_address_class(self.address_classes)
         value = self.api.LocalLB.Class.get_address_class_member_data_value(key)
-        result = list(map(zip, [x['members'] for x in key], value))
+
+        result = []
+        for idx, v in enumerate(key):
+            for idx2, member in enumerate(v['members']):
+                dg_value = dict(
+                    value=value[idx][idx2]
+                )
+                dg_value.update(member)
+                result.append(dg_value)
         return result
 
     def get_description(self):
@@ -1466,7 +1507,8 @@ def generate_vs_dict(f5, regex):
               'source_address_translation_snat_pool',
               'source_address_translation_type', 'source_port_behavior',
               'staged_firewall_policy', 'translate_address_state',
-              'translate_port_state', 'type', 'vlan', 'wildmask']
+              'translate_port_state', 'type', 'vlan', 'wildmask',
+              'name']
     return generate_dict(virtual_servers, fields)
 
 
@@ -1483,7 +1525,7 @@ def generate_pool_dict(f5, regex):
               'profile', 'queue_depth_limit',
               'queue_on_connection_limit_state', 'queue_time_limit',
               'reselect_tries', 'server_ip_tos', 'server_link_qos',
-              'simple_timeout', 'slow_ramp_time']
+              'simple_timeout', 'slow_ramp_time', 'name']
     return generate_dict(pools, fields)
 
 
@@ -1608,12 +1650,20 @@ def generate_provision_dict(f5):
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
+    argument_spec = f5_argument_spec
     meta_args = dict(
-        session=dict(type='bool', default=False),
-        include=dict(type='list', required=True),
-        filter=dict(type='str', required=False),
+        session=dict(type='bool', default='no'),
+        include=dict(
+            type='raw',
+            required=True,
+            choices=[
+                'address_class', 'certificate', 'client_ssl_profile', 'device',
+                'device_group', 'interface', 'key', 'node', 'pool', 'provision',
+                'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
+                'trunk', 'virtual_address', 'virtual_server', 'vlan'
+            ]
+        ),
+        filter=dict(type='str'),
     )
     argument_spec.update(meta_args)
 
@@ -1643,7 +1693,11 @@ def main():
         regex = fnmatch.translate(fact_filter)
     else:
         regex = None
-    include = [x.lower() for x in module.params['include']]
+    if isinstance(module.params['include'], string_types):
+        includes = module.params['include'].split(',')
+    else:
+        includes = module.params['include']
+    include = [x.lower() for x in includes]
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
                       'device', 'device_group', 'interface', 'key', 'node',
                       'pool', 'provision', 'rule', 'self_ip', 'software',
@@ -1651,7 +1705,7 @@ def main():
                       'virtual_address', 'virtual_server', 'vlan')
     include_test = (x in valid_includes for x in include)
     if not all(include_test):
-        module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
+        module.fail_json(msg="Value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
 
     try:
         facts = {}
@@ -1711,7 +1765,10 @@ def main():
                saved_recursive_query_state != "STATE_ENABLED":
                 f5.set_recursive_query_state(saved_recursive_query_state)
 
-        result = {'ansible_facts': facts}
+        result = dict(
+            ansible_facts=facts,
+        )
+        result.update(**facts)
 
     except Exception as e:
         module.fail_json(msg="received exception: %s\ntraceback: %s" % (e, traceback.format_exc()))

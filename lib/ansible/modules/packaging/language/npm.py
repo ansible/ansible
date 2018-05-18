@@ -40,7 +40,7 @@ options:
       - Install the node.js library globally
     required: false
     default: no
-    choices: [ "yes", "no" ]
+    type: bool
   executable:
     description:
       - The executable location for npm.
@@ -48,16 +48,16 @@ options:
     required: false
   ignore_scripts:
     description:
-      - Use the --ignore-scripts flag when installing.
+      - Use the C(--ignore-scripts) flag when installing.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
     version_added: "1.8"
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
   registry:
     description:
@@ -70,6 +70,8 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+requirements:
+    - npm installed in bin path (recommended /usr/local/bin)
 '''
 
 EXAMPLES = '''
@@ -183,7 +185,7 @@ class Npm(object):
         return ''
 
     def list(self):
-        cmd = ['list', '--json']
+        cmd = ['list', '--json', '--long']
 
         installed = list()
         missing = list()
@@ -220,7 +222,7 @@ class Npm(object):
             if dep:
                 # node.js v0.10.22 changed the `npm outdated` module separator
                 # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split('\s|@', dep, 1)
+                pkg, other = re.split(r'\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated

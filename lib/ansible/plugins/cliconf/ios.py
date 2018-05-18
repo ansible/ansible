@@ -24,8 +24,8 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils._text import to_text
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -35,12 +35,12 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'ios'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
-        match = re.search(r'Version (\S+),', data)
+        match = re.search(r'Version (\S+)', data)
         if match:
-            device_info['network_os_version'] = match.group(1)
+            device_info['network_os_version'] = match.group(1).strip(',')
 
         match = re.search(r'^Cisco (.+) \(revision', data, re.M)
         if match:
@@ -53,22 +53,41 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
+
+        if not flags:
+            flags = []
+
         if source == 'running':
-            cmd = b'show running-config all'
+            cmd = 'show running-config '
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config '
+
+        cmd += ' '.join(to_list(flags))
+        cmd = cmd.strip()
+
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
-            self.send_command(cmd)
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+                newline = cmd.get('newline', True)
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+                newline = True
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+            self.send_command(command, prompt, answer, False, newline)
+
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}

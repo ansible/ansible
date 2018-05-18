@@ -43,6 +43,7 @@ class Connection(ConnectionBase):
 
     transport = "lxd"
     has_pipelining = True
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

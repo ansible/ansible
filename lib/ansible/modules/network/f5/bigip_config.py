@@ -24,50 +24,41 @@ description:
     configuration to disk. Since the F5 module only manipulate running
     configuration, it is important that you utilize this module to save
     that running config.
-version_added: "2.4"
+version_added: 2.4
 options:
   save:
     description:
       - The C(save) argument instructs the module to save the
-        running-config to startup-config. This operation is performed
-        after any changes are made to the current running config. If
-        no changes are made, the configuration is still saved to the
-        startup config. This option will always cause the module to
-        return changed.
-    choices:
-      - yes
-      - no
-    default: no
+        running-config to startup-config.
+      - This operation is performed after any changes are made to the
+        current running config. If no changes are made, the configuration
+        is still saved to the startup config.
+      - This option will always cause the module to return changed.
+    type: bool
+    default: yes
   reset:
     description:
-      - Loads the default configuration on the device. If this option
-        is specified, the default configuration will be loaded before
-        any commands or other provided configuration is run.
-    choices:
-      - yes
-      - no
+      - Loads the default configuration on the device.
+      - If this option is specified, the default configuration will be
+        loaded before any commands or other provided configuration is run.
+    type: bool
     default: no
   merge_content:
     description:
       - Loads the specified configuration that you want to merge into
         the running configuration. This is equivalent to using the
-        C(tmsh) command C(load sys config from-terminal merge). If
-        you need to read configuration from a file or template, use
+        C(tmsh) command C(load sys config from-terminal merge).
+      - If you need to read configuration from a file or template, use
         Ansible's C(file) or C(template) lookup plugins respectively.
   verify:
     description:
       - Validates the specified configuration to see whether they are
-        valid to replace the running configuration. The running
-        configuration will not be changed.
-    choices:
-      - yes
-      - no
-    default: yes
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-requirements:
-  - f5-sdk >= 2.2.3
+        valid to replace the running configuration.
+      - The running configuration will not be changed.
+      - When this parameter is set to C(yes), no change will be reported
+        by the module.
+    type: bool
+    default: no
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -109,7 +100,6 @@ stdout:
   returned: always
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
   returned: always
@@ -120,31 +110,39 @@ stdout_lines:
 import os
 import tempfile
 
+from ansible.module_utils.basic import AnsibleModule
+
+try:
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
-
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
-
 
 class Parameters(AnsibleF5Parameters):
     returnables = ['stdout', 'stdout_lines']
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params)
 
     def to_return(self):
         result = {}
@@ -153,34 +151,12 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _set_changed_options(self):
@@ -189,7 +165,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
 
     def _to_lines(self, stdout):
         lines = list()
@@ -200,15 +176,14 @@ class ModuleManager(object):
         return lines
 
     def exec_module(self):
-        result = dict()
-
+        result = {}
         try:
-            self.execute()
+            changed = self.execute()
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
         result.update(**self.changes.to_return())
-        result.update(dict(changed=True))
+        result.update(dict(changed=changed))
         return result
 
     def execute(self):
@@ -229,13 +204,28 @@ class ModuleManager(object):
             response = self.save()
             responses.append(response)
 
-        self.changes = Parameters({
+        self._detect_errors(responses)
+        changes = {
             'stdout': responses,
             'stdout_lines': self._to_lines(responses)
-        })
+        }
+        self.changes = Parameters(params=changes)
+        if self.want.verify:
+            return False
+        return True
+
+    def _detect_errors(self, stdout):
+        errors = [
+            'Unexpected Error:'
+        ]
+
+        msg = [x for x in stdout for y in errors if y in x]
+        if msg:
+            # Error only contains the lines that include the error
+            raise F5ModuleError(' '.join(msg))
 
     def reset(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         return self.reset_device()
 
@@ -254,7 +244,7 @@ class ModuleManager(object):
         remote_path = "/var/config/rest/downloads/{0}".format(temp_name)
         temp_path = '/tmp/' + temp_name
 
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         self.upload_to_device(temp_name)
@@ -302,7 +292,7 @@ class ModuleManager(object):
         upload.upload_stringio(template, temp_name)
 
     def save(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         return self.save_on_device()
 
@@ -321,7 +311,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             reset=dict(
                 type='bool',
                 default=False
@@ -329,34 +319,37 @@ class ArgumentSpec(object):
             merge_content=dict(),
             verify=dict(
                 type='bool',
-                default=True
+                default=False
             ),
             save=dict(
                 type='bool',
-                default=True
+                default='yes'
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

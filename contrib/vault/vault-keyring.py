@@ -26,7 +26,7 @@
 # This file *MUST* be saved with executable permissions. Otherwise, Ansible
 # will try to parse as a password file and display: "ERROR! Decryption failed"
 #
-# The `keyring` Python module is required: https://pypi.python.org/pypi/keyring
+# The `keyring` Python module is required: https://pypi.org/project/keyring/
 #
 # By default, this script will store the specified password in the keyring of
 # the user that invokes the script. To specify a user keyring, add a [vault]
@@ -91,8 +91,8 @@ def main():
             sys.stderr.write('Passwords do not match\n')
             sys.exit(1)
     else:
-        sys.stdout.write('{}\n'.format(keyring.get_password(keyname,
-                                                            username)))
+        sys.stdout.write('{0}\n'.format(keyring.get_password(keyname,
+                                                             username)))
 
     sys.exit(0)
 

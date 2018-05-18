@@ -120,6 +120,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def get_arn_from_kms_alias(kms, aliasname):
     ret = kms.list_aliases()
     key_id = None
@@ -138,11 +139,13 @@ def get_arn_from_kms_alias(kms, aliasname):
             return k['KeyArn']
     raise Exception('could not find key from id: {}'.format(key_id))
 
+
 def get_arn_from_role_name(iam, rolename):
     ret = iam.get_role(RoleName=rolename)
     if ret.get('Role') and ret['Role'].get('Arn'):
         return ret['Role']['Arn']
     raise Exception('could not find arn for name {}.'.format(rolename))
+
 
 def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
     ret = {}
@@ -179,10 +182,10 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
-                    if not role_arn in statement['Principal']['AWS']: # needs to be added.
+                    if role_arn not in statement['Principal']['AWS']:  # needs to be added.
                         changes_needed[granttype] = 'add'
                         statement['Principal']['AWS'].append(role_arn)
-                elif role_arn in statement['Principal']['AWS']: # not one the places the role should be
+                elif role_arn in statement['Principal']['AWS']:  # not one the places the role should be
                     changes_needed[granttype] = 'remove'
                     statement['Principal']['AWS'].remove(role_arn)
 
@@ -210,6 +213,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
 
     return ret
 
+
 def assert_policy_shape(policy):
     '''Since the policy seems a little, uh, fragile, make sure we know approximately what we're looking at.'''
     errors = []
@@ -218,7 +222,7 @@ def assert_policy_shape(policy):
 
     found_statement_type = {}
     for statement in policy['Statement']:
-        for label,sidlabel in statement_label.items():
+        for label, sidlabel in statement_label.items():
             if statement['Sid'] == sidlabel:
                 found_statement_type[label] = True
 
@@ -230,16 +234,17 @@ def assert_policy_shape(policy):
         raise Exception('Problems asserting policy shape. Cowardly refusing to modify it: {}'.format(' '.join(errors)))
     return None
 
+
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-        mode = dict(choices=['grant', 'deny'], default='grant'),
-        key_alias = dict(required=False, type='str'),
-        key_arn = dict(required=False, type='str'),
-        role_name = dict(required=False, type='str'),
-        role_arn = dict(required=False, type='str'),
-        grant_types = dict(required=False, type='list'),
-        clean_invalid_entries = dict(type='bool', default=True),
+        mode=dict(choices=['grant', 'deny'], default='grant'),
+        key_alias=dict(required=False, type='str'),
+        key_arn=dict(required=False, type='str'),
+        role_name=dict(required=False, type='str'),
+        role_arn=dict(required=False, type='str'),
+        grant_types=dict(required=False, type='list'),
+        clean_invalid_entries=dict(type='bool', default=True),
     )
     )
 
@@ -255,14 +260,12 @@ def main():
     result = {}
     mode = module.params['mode']
 
-
     try:
         region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
-
 
     try:
         if module.params['key_alias'] and not module.params['key_arn']:
@@ -278,13 +281,13 @@ def main():
         # check the grant types for 'grant' only.
         if mode == 'grant':
             for g in module.params['grant_types']:
-                if not g in statement_label:
+                if g not in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
         ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'],
-                  mode=mode,
-                  dry_run=module.check_mode,
-                  clean_invalid_entries=module.params['clean_invalid_entries'])
+                       mode=mode,
+                       dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:

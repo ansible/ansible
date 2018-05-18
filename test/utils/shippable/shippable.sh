@@ -53,6 +53,14 @@ else
     export CHANGED="--changed"
 fi
 
+if [ "${IS_PULL_REQUEST:-}" == "true" ]; then
+    # run unstable tests which are targeted by focused changes on PRs
+    export UNSTABLE="--allow-unstable-changed"
+else
+    # do not run unstable tests outside PRs
+    export UNSTABLE=""
+fi
+
 # remove empty core/extras module directories from PRs created prior to the repo-merge
 find lib/ansible/modules -type d -empty -print -delete
 
@@ -95,6 +103,7 @@ function cleanup
 
     rmdir shippable/testresults/
     cp -a test/results/junit/ shippable/testresults/
+    cp -a test/results/data/ shippable/testresults/
     cp -aT test/results/bot/ shippable/testresults/
 }
 

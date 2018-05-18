@@ -5,7 +5,7 @@
 - name: verify setup ssh key
   assert:
     that:
-    - sshkey|success
+    - sshkey is successful
 
 - name: setup affinity group
   cs_affinitygroup: name={{ cs_resource_prefix }}-ag
@@ -13,7 +13,7 @@
 - name: verify setup affinity group
   assert:
     that:
-    - ag|success
+    - ag is successful
 
 - name: setup security group
   cs_securitygroup: name={{ cs_resource_prefix }}-sg
@@ -21,7 +21,7 @@
 - name: verify setup security group
   assert:
     that:
-    - sg|success
+    - sg is successful
 
 - name: setup instance
   cs_instance:
@@ -36,7 +36,7 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: test instance facts in check mode
   cs_instance_facts:
@@ -46,8 +46,15 @@
 - name: verify test instance facts in check mode
   assert:
     that:
-    - instance_facts|success
-    - not instance_facts|changed
+    - instance_facts is successful
+    - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
     - cloudstack_instance.id == instance.id
     - cloudstack_instance.domain == instance.domain
     - cloudstack_instance.account == instance.account
@@ -62,8 +69,15 @@
 - name: verify test instance facts
   assert:
     that:
-    - instance_facts|success
-    - not instance_facts|changed
+    - instance_facts is successful
+    - instance_facts is not changed
+    - instance_facts.id == instance.id
+    - instance_facts.domain == instance.domain
+    - instance_facts.account == instance.account
+    - instance_facts.zone == instance.zone
+    - instance_facts.name == instance.name
+    - instance_facts.service_offering == instance.service_offering
+    - instance_facts.host != ""
     - cloudstack_instance.id == instance.id
     - cloudstack_instance.domain == instance.domain
     - cloudstack_instance.account == instance.account

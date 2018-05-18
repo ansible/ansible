@@ -66,7 +66,7 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -110,10 +110,9 @@ class Host(object):
         try:
             (rc, host_types) = request(self.url + 'storage-systems/%s/host-types' % self.ssid, url_password=self.pwd,
                                        url_username=self.user, validate_certs=self.certs, headers=HEADERS)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to get host types. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                msg="Failed to get host types. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         try:
             match = filter(lambda host_type: host_type['index'] == self.host_type_index, host_types)[0]
@@ -129,10 +128,9 @@ class Host(object):
                                                  url_password=self.pwd, url_username=self.user,
                                                  validate_certs=self.certs,
                                                  headers=HEADERS)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to get unassociated host ports. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                msg="Failed to get unassociated host ports. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         if len(self.available_ports) > 0 and len(self.ports) <= len(self.available_ports):
             for port in self.ports:
@@ -159,10 +157,9 @@ class Host(object):
                 (rc, all_groups) = request(self.url + 'storage-systems/%s/host-groups' % self.ssid,
                                            url_password=self.pwd,
                                            url_username=self.user, validate_certs=self.certs, headers=HEADERS)
-            except:
-                err = get_exception()
+            except Exception as err:
                 self.module.fail_json(
-                    msg="Failed to get host groups. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                    msg="Failed to get host groups. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
             try:
                 group_obj = filter(lambda group: group['name'] == self.group, all_groups)[0]
@@ -178,10 +175,9 @@ class Host(object):
         try:
             (rc, all_hosts) = request(self.url + 'storage-systems/%s/hosts' % self.ssid, url_password=self.pwd,
                                       url_username=self.user, validate_certs=self.certs, headers=HEADERS)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to determine host existence. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                msg="Failed to determine host existence. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         self.all_hosts = all_hosts
         try:  # Try to grab the host object
@@ -260,11 +256,10 @@ class Host(object):
                     self.url + 'storage-systems/%s/hosts/%s' % (self.ssid, self.host_obj['id']),
                     url_username=self.user, url_password=self.pwd, headers=HEADERS,
                     validate_certs=self.certs, method='POST', data=json.dumps(self.post_body))
-            except:
-                err = get_exception()
+            except Exception as err:
                 self.module.fail_json(
                     msg="Failed to reassign host port. Host Id [%s]. Array Id [%s]. Error [%s]." % (
-                        self.host_obj['id'], self.ssid, str(err)))
+                        self.host_obj['id'], self.ssid, to_native(err)))
 
     def update_host(self):
         if self.ports:
@@ -285,16 +280,15 @@ class Host(object):
             (rc, self.host_obj) = request(self.url + 'storage-systems/%s/hosts/%s' % (self.ssid, self.host_obj['id']),
                                           url_username=self.user, url_password=self.pwd, headers=HEADERS,
                                           validate_certs=self.certs, method='POST', data=json.dumps(self.post_body))
-        except:
-            err = get_exception()
-            self.module.fail_json(msg="Failed to update host. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+        except Exception as err:
+            self.module.fail_json(msg="Failed to update host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         self.module.exit_json(changed=True, **self.host_obj)
 
     def create_host(self):
         post_body = dict(
             name=self.name,
-            host_type=dict(index=self.host_type_index),
+            hostType=dict(index=self.host_type_index),
             groupId=self.group_id,
             ports=self.ports
         )
@@ -311,10 +305,9 @@ class Host(object):
                 (rc, create_resp) = request(self.url + "storage-systems/%s/hosts" % self.ssid, method='POST',
                                             url_username=self.user, url_password=self.pwd, validate_certs=self.certs,
                                             data=json.dumps(post_body), headers=HEADERS)
-            except:
-                err = get_exception()
+            except Exception as err:
                 self.module.fail_json(
-                    msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                    msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
         else:
             self.module.exit_json(changed=False,
                                   msg="Host already exists. Id [%s]. Host [%s]." % (self.ssid, self.name))
@@ -331,12 +324,11 @@ class Host(object):
             (rc, resp) = request(self.url + "storage-systems/%s/hosts/%s" % (self.ssid, self.host_obj['id']),
                                  method='DELETE',
                                  url_username=self.user, url_password=self.pwd, validate_certs=self.certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to remote host.  Host[%s]. Array Id [%s]. Error [%s]." % (self.host_obj['id'],
                                                                                       self.ssid,
-                                                                                      str(err)))
+                                                                                      to_native(err)))
 
     def apply(self):
         if self.state == 'present':

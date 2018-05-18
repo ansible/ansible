@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vpc_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vpc_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: enable feature vpc
@@ -8,10 +10,18 @@
       state: enabled
       provider: "{{ connection }}"
 
-  - name: create port-channel
+  - name: create port-channel10
     nxos_config:
       commands:
         - interface port-channel10
+        - switchport
+      match: none
+      provider: "{{ connection }}"
+
+  - name: create port-channel11
+    nxos_config:
+      commands:
+        - interface port-channel11
         - switchport
       match: none
       provider: "{{ connection }}"
@@ -31,7 +41,7 @@
   - name: Configure vpc port channel
     nxos_vpc_interface: &conf
       portchannel: 10
-      vpc: 100
+      vpc: 10
       provider: "{{ connection }}"
     register: result
 
@@ -47,10 +57,40 @@
       that:
         - "result.changed == false"
 
+  - name: Configure vpc port channel
+    nxos_vpc_interface: &conf1
+      portchannel: 11
+      peer_link: True
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vpc_interface: *conf1
+    register: result
+
+  - assert: *false
+
+  - name: Configure vpc port channel
+    nxos_vpc_interface: &conf2
+      portchannel: 11
+      peer_link: False
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vpc_interface: *conf2
+    register: result
+
+  - assert: *false
+
   - name: remove vpc port channel
     nxos_vpc_interface: &remove
       portchannel: 10
-      vpc: 100
+      vpc: 10
       state: absent
       provider: "{{ connection }}"
     register: result
@@ -80,7 +120,7 @@
   - name: remove vpc port channel
     nxos_vpc_interface:
       portchannel: 10
-      vpc: 100
+      vpc: 10
       state: absent
       provider: "{{ connection }}"
     ignore_errors: yes
@@ -89,6 +129,7 @@
     nxos_config:
       commands:
         - no interface port-channel10
+        - no interface port-channel11
       match: none
       provider: "{{ connection }}"
     ignore_errors: yes
@@ -99,4 +140,4 @@
       state: disabled
       provider: "{{ connection }}"
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vpc_interface sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vpc_interface sanity test"

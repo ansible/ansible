@@ -43,7 +43,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
         play_context = Mock()
         task = MagicMock(Task)
-        task.async = False
+        task.async_val = False
         connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
@@ -60,7 +60,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
         play_context = Mock()
         task = MagicMock(Task)
-        task.async = False
+        task.async_val = False
         connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
@@ -75,7 +75,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
         play_context = Mock()
         task = MagicMock(Task)
-        task.async = False
+        task.async_val = False
         connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
@@ -92,7 +92,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
         play_context = Mock()
         task = MagicMock(Task)
-        task.async = False
+        task.async_val = False
         connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}

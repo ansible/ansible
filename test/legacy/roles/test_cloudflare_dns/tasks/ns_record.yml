@@ -17,8 +17,8 @@
 - name: "Validate: NS record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == 'an.si.ble'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'NS'
@@ -39,8 +39,8 @@
 - name: "Validate: NS record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: NS record update"
   cloudflare_dns:
@@ -56,8 +56,8 @@
 - name: "Validate: NS record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.ttl == 300
 
 - name: "Test: NS record duplicate (create new record)"
@@ -74,8 +74,8 @@
 - name: "Validate: NS record duplicate (create new record)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == 'ble.si.an'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'NS'
@@ -96,8 +96,8 @@
 - name: "Validate: NS record duplicate (old record present)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
       - cloudflare_dns.result.record.content == 'an.si.ble'
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.type == 'NS'
@@ -119,8 +119,8 @@
 - name: "Validate: NS record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == 'ble.si.an'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'NS'
@@ -142,8 +142,8 @@
 - name: "Validate: NS record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: NS record deletion"
   cloudflare_dns:
@@ -160,8 +160,8 @@
 - name: "Validate: NS record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: NS record deletion succeeded"
   cloudflare_dns:
@@ -178,5 +178,5 @@
 - name: "Validate: NS record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

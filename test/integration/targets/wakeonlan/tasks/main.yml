@@ -18,7 +18,7 @@
 - name: Check error message
   assert:
     that:
-    - incorrect_mac_length|failed
+    - incorrect_mac_length is failed
     - incorrect_mac_length.msg is search('Incorrect MAC address length')
 
 - name: Provide an incorrect MAC format
@@ -31,7 +31,7 @@
 - name: Check error message
   assert:
     that:
-    - incorrect_mac_format|failed
+    - incorrect_mac_format is failed
     - incorrect_mac_format.msg is search('Incorrect MAC address format')
 
 - name: Cause a socket error
@@ -44,5 +44,5 @@
 - name: Check error message
   assert:
     that:
-    - incorrect_broadcast_address|failed
+    - incorrect_broadcast_address is failed
     - incorrect_broadcast_address.msg is search('not known')

@@ -1,6 +1,6 @@
 [local]
-testhost ansible_ssh_host=127.0.0.1 ansible_connection=local
-testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
+testhost ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role3
+testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role2
 # For testing delegate_to
 testhost3 ansible_ssh_host=127.0.0.3
 testhost4 ansible_ssh_host=127.0.0.4
@@ -47,6 +47,17 @@ arbitrary_parent
 groups_tree_var=3000
 grandparent_var=2000
 overridden_in_parent=2000
+
+[aci:vars]
+aci_hostname=your-apic-1
+aci_username=admin
+aci_password=your-password
+aci_validate_certs=no
+aci_use_ssl=yes
+aci_use_proxy=no
+
+[aci]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
 [amazon]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local

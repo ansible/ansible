@@ -572,7 +572,7 @@ class AosInventory(object):
           - Converting to lowercase
         """
 
-        rx = re.compile('\W+')
+        rx = re.compile(r'\W+')
         clean_group = rx.sub('_', group_name).lower()
 
         return clean_group

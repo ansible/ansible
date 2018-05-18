@@ -21,7 +21,7 @@
 - name: DEPTH | make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
 - name: DEPTH | fetch repo again with depth=1
@@ -32,8 +32,8 @@
   register: checkout2
 
 - assert:
-    that: "not checkout2|changed"
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+    that: "checkout2 is not changed"
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 - name: DEPTH | again try to access earlier commit
   shell: "git checkout {{git_shallow_head_1.stdout}}"
@@ -45,7 +45,7 @@
 - name: DEPTH | again make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 # make sure we are still able to fetch other versions
 - name: DEPTH | Clone same repo with older version
@@ -57,7 +57,7 @@
   register: cloneold
 
 - assert:
-    that: cloneold | success
+    that: cloneold is successful
 
 - name: DEPTH | try to access earlier commit
   shell: "git checkout {{git_shallow_head_1.stdout}}"
@@ -79,7 +79,7 @@
   register: cloneold
 
 - assert:
-    that: cloneold | success
+    that: cloneold is successful
 
 - name: DEPTH | clear checkout_dir
   file:
@@ -107,7 +107,7 @@
 
 - name: DEPTH | ensure the fetch succeeded
   assert:
-    that: git_fetch | success
+    that: git_fetch is successful
 
 
 - name: DEPTH | clear checkout_dir
@@ -132,7 +132,7 @@
 
 - name: DEPTH | ensure the fetch succeeded
   assert:
-    that: git_fetch | success
+    that: git_fetch is successful
 
 - name: DEPTH | clear checkout_dir
   file:
@@ -165,7 +165,58 @@
   assert:
     that:
       - "{{ lookup('file', checkout_dir+'/a' )}} == 3"
-      - git_fetch | changed
+      - git_fetch is changed
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+#
+# Make sure shallow fetch works when switching to (fetching) a new a branch
+#
+
+- name: DEPTH | clone from branch with depth specified
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: test_branch
+
+- name: DEPTH | check if clone is shallow
+  stat: path={{ checkout_dir }}/.git/shallow
+  register: is_shallow
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | assert that clone is shallow
+  assert:
+    that:
+      - is_shallow.stat.exists
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | switch to new branch (fetch) with the shallow clone
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: new_branch
+  register: git_fetch
+
+- name: DEPTH | assert if switching a shallow clone to a new branch worked
+  assert:
+    that:
+      - git_fetch is changed
+
+- name: DEPTH | check if clone is still shallow
+  stat: path={{ checkout_dir }}/.git/shallow
+  register: is_shallow
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | assert that clone still is shallow
+  assert:
+    that:
+      - is_shallow.stat.exists
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 - name: DEPTH | clear checkout_dir
   file:

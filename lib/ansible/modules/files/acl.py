@@ -130,7 +130,7 @@ acl:
 import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def split_entry(entry):
@@ -199,10 +199,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if mode == 'rm':
-            cmd.insert(1, '-k')
-        else:  # mode == 'set' or mode == 'get'
-            cmd.insert(1, '-d')
+        cmd.insert(1, '-d')
 
     cmd.append(path)
     return cmd
@@ -228,9 +225,8 @@ def run_acl(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e.strerror)
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
 
     lines = []
     for l in out.splitlines():
@@ -357,6 +353,7 @@ def main():
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
+
 
 if __name__ == '__main__':
     main()

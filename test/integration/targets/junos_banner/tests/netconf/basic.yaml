@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_banner netconf/basic.yaml"
+- debug: msg="START junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove login banner
   junos_banner:
@@ -77,6 +77,20 @@
     that:
       - "result.changed == true"
       - "'<message>this is my login banner</message>' in config.xml"
+
+- name: check mode
+  junos_banner:
+    banner: login
+    text: this is not the login banner you're looking for
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.failed == false"
 
 - name: delete login banner
   junos_banner:
@@ -190,3 +204,5 @@
     that:
       - "result.changed == true"
       - "'<announcement>this is my motd banner</announcement>' not in config.xml"
+
+- debug: msg="END junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"

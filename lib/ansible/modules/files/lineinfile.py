@@ -42,10 +42,10 @@ options:
   regexp:
     description:
       - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found; only the last line
+        C(state=present), the pattern to replace if found. Only the last line
         found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove.  Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        to remove. Uses Python regular expressions.
+        See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -72,8 +72,10 @@ options:
   insertafter:
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        after the last match of specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file.
+        after the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A special value is available; C(EOF) for inserting the line at the
+        end of the file.
         If specified regular expression has no matches, EOF will be used instead.
         May not be used with C(backrefs).
     choices: [ EOF, '*regex*' ]
@@ -81,8 +83,10 @@ options:
   insertbefore:
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression. A value is
-        available; C(BOF) for inserting the line at the beginning of the file.
+        before the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A value is available; C(BOF) for inserting the line at
+        the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ BOF, '*regex*' ]
@@ -100,6 +104,13 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
      type: bool
      default: 'no'
+  firstmatch:
+    description:
+      - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
+        a first line has regular expression matches.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
@@ -139,10 +150,11 @@ EXAMPLES = r"""
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if it does not exist, without passing regexp
+# Add a line to a file if the file does not exist, without passing regexp
 - lineinfile:
     path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
+    create: yes
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:
@@ -214,7 +226,7 @@ def check_file_attrs(module, changed, message, diff):
 
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
-            backup, backrefs):
+            backup, backrefs, firstmatch):
 
     diff = {'before': '',
             'after': '',
@@ -227,7 +239,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         b_destpath = os.path.dirname(b_dest)
         if not os.path.exists(b_destpath) and not module.check_mode:
-            os.makedirs(b_destpath)
+            try:
+                os.makedirs(b_destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+
         b_lines = []
     else:
         f = open(b_dest, 'rb')
@@ -264,9 +280,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
+                if firstmatch:
+                    break
             if insertbefore:
-                # + 1 for the previous line
+                # index[1] for the previous line
                 index[1] = lineno
+                if firstmatch:
+                    break
 
     msg = ''
     changed = False
@@ -282,10 +302,49 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        if b_lines[index[0]] != b_new_line:
+        # If a regexp is specified and a match is found anywhere in the file, do
+        # not insert the line before or after.
+        if regexp is None and m:
+
+            # Insert lines
+            if insertafter and insertafter != 'EOF':
+
+                # Ensure there is a line separator after the found string
+                # at the end of the file.
+                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                    b_lines[-1] = b_lines[-1] + b_linesep
+
+                # If the line to insert after is at the end of the file
+                # use the appropriate index value.
+                if len(b_lines) == index[1]:
+                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                        b_lines.append(b_line + b_linesep)
+                        msg = 'line added'
+                        changed = True
+                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
+                    msg = 'line added'
+                    changed = True
+
+            elif insertbefore:
+                # If the line to insert before is at the beginning of the file
+                # use the appropriate index value.
+                if index[1] == 0:
+                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                        b_lines.insert(index[1], b_line + b_linesep)
+                        msg = 'line replaced'
+                        changed = True
+
+                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
+                    msg = 'line replaced'
+                    changed = True
+
+        elif b_lines[index[0]] != b_new_line:
             b_lines[index[0]] = b_new_line
             msg = 'line replaced'
             changed = True
+
     elif backrefs:
         # Do absolutely nothing, since it's not safe generating the line
         # without the regexp matching to populate the backrefs.
@@ -307,7 +366,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
-    # insert* matched, but not the regexp
+    # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
         msg = 'line added'
@@ -407,6 +466,7 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
+            firstmatch=dict(default=False, type='bool'),
             validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
@@ -419,6 +479,7 @@ def main():
     backup = params['backup']
     backrefs = params['backrefs']
     path = params['path']
+    firstmatch = params['firstmatch']
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -440,12 +501,13 @@ def main():
         line = params['line']
 
         present(module, path, params['regexp'], line,
-                ins_aft, ins_bef, create, backup, backrefs)
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
         absent(module, path, params['regexp'], params.get('line', None), backup)
+
 
 if __name__ == '__main__':
     main()

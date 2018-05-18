@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -11,12 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_scheduled_task_stat
 version_added: "2.5"
-short_description: Returns information about a Windows Scheduled Task
+short_description: Get information about Windows Scheduled Tasks
 description:
 - Will return whether the folder and task exists.
 - Returns the names of tasks in the folder specified.
@@ -219,7 +218,10 @@ settings:
       returned: ''
       type: dictionary
       sample: {
-          "idle_settings": "PT1H"
+          "idle_duration": "PT10M",
+          "restart_on_idle": false,
+          "stop_on_idle_end": true,
+          "wait_timeout": "PT1H"
       }
     maintenance_settings:
       description: The maintenance settings of the task.
@@ -237,7 +239,8 @@ settings:
       returned: ''
       type: dictionary
       sample: {
-          "network_settings": null
+          "id": null,
+          "name": null
       }
     priority:
       description: The priority level of the task.
@@ -343,7 +346,9 @@ triggers:
           "execution_time_limit": null,
           "id": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "start_boundary": null,
           "type": "TASK_TRIGGER_BOOT"
@@ -357,7 +362,9 @@ triggers:
           "months_of_year": "june,december",
           "random_delay": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "run_on_last_day_of_month": true,
           "start_boundary": "2017-09-20T03:44:38",

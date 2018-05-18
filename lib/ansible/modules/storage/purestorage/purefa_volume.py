@@ -47,7 +47,7 @@ options:
     description:
     - Volume size in M, G, T or P units.
 extends_documentation_fragment:
-- purestorage
+- purestorage.fa
 '''
 
 EXAMPLES = r'''

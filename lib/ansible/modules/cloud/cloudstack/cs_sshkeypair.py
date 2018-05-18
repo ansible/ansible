@@ -41,29 +41,20 @@ options:
   domain:
     description:
       - Domain the public key is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the public key is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the public key to be registered in.
-    required: false
-    default: null
   state:
     description:
       - State of the public key.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   public_key:
     description:
       - String of the public key.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
@@ -169,7 +160,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                     # We need to make another lookup if there is a key with identical name.
                     self.ssh_key = None
                     ssh_key = self.get_ssh_key()
-                    if ssh_key['fingerprint'] != fingerprint:
+                    if ssh_key and ssh_key['fingerprint'] != fingerprint:
                         args['name'] = name
                         self.query_api('deleteSSHKeyPair', **args)
 

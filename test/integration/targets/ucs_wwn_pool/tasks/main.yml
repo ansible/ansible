@@ -1,0 +1,129 @@
+# Test code for the UCS modules
+# Copyright 2017, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+
+
+# Setup (clean environment)
+- name: WWNN/WWPN Pools absent
+  ucs_wwn_pool: &wwn_pool_absent
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    name: WWPN-Pool-A
+    state: absent
+
+
+# Test present (check_mode)
+- name: WWNN/WWPN Pools present (check_mode)
+  ucs_wwn_pool: &wwn_pool_present
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    name: WWPN-Pool-A
+    purpose: port
+    order: sequential
+    first_addr: 20:00:00:25:B5:48:0A:00
+    last_addr: 20:00:00:25:B5:48:0A:0F
+  check_mode: yes
+  register: cm_wwn_pool_present
+
+
+# Present (normal mode)
+- name: WWNN/WWPN Pools present (normal mode)
+  ucs_wwn_pool: *wwn_pool_present
+  register: nm_wwn_pool_present
+
+
+# Test present again (idempotent)
+- name: WWNN/WWPN Pools present again (check_mode)
+  ucs_wwn_pool: *wwn_pool_present
+  check_mode: yes
+  register: cm_wwn_pool_present_again
+
+
+# Present again (normal mode)
+- name: WWNN/WWPN Pools present again (normal mode)
+  ucs_wwn_pool: *wwn_pool_present
+  register: nm_wwn_pool_present_again
+
+
+# Verfiy present
+- name: Verify WWNN/WWPN Pools present results
+  assert:
+    that:
+    - cm_wwn_pool_present.changed == nm_wwn_pool_present.changed == true
+    - cm_wwn_pool_present_again.changed == nm_wwn_pool_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: WWNN/WWPN Pools description change (check_mode)
+  ucs_wwn_pool: &wwn_pool_change
+    <<: *wwn_pool_present
+    descr: Testing Ansible
+  check_mode: yes
+  register: cm_wwn_pool_descr_change
+
+
+# Change (normal mode)
+- name: WWNN/WWPN Pools description change (normal mode)
+  ucs_wwn_pool: *wwn_pool_change
+  register: nm_wwn_pool_descr_change
+
+
+# Test change again (idempotent)
+- name: WWNN/WWPN Pools description again (check_mode)
+  ucs_wwn_pool: *wwn_pool_change
+  check_mode: yes
+  register: cm_wwn_pool_descr_change_again
+
+
+# Change again (normal mode)
+- name: WWNN/WWPN Pools description change again (normal mode)
+  ucs_wwn_pool: *wwn_pool_change
+  register: nm_wwn_pool_descr_change_again
+
+
+# Verfiy change
+- name: Verify WWNN/WWPN Pools change results
+  assert:
+    that:
+    - cm_wwn_pool_descr_change.changed == nm_wwn_pool_descr_change.changed == true
+    - cm_wwn_pool_descr_change_again.changed == nm_wwn_pool_descr_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: WWNN/WWPN Pools absent (check_mode)
+  ucs_wwn_pool: *wwn_pool_absent
+  check_mode: yes
+  register: cm_wwn_pool_absent
+
+
+# Absent (normal mode)
+- name: WWNN/WWPN Pools absent (normal mode)
+  ucs_wwn_pool: *wwn_pool_absent
+  register: nm_wwn_pool_absent
+
+
+# Test absent again (idempotent)
+- name: WWNN/WWPN Pools absent again (check_mode)
+  ucs_wwn_pool: *wwn_pool_absent
+  check_mode: yes
+  register: cm_wwn_pool_absent_again
+
+
+# Absent again (normal mode)
+- name: WWNN/WWPN Pools absent again (normal mode)
+  ucs_wwn_pool: *wwn_pool_absent
+  register: nm_wwn_pool_absent_again
+
+
+# Verfiy absent
+- name: Verify WWNN/WWPN Pools absent results
+  assert:
+    that:
+    - cm_wwn_pool_absent.changed == nm_wwn_pool_absent.changed == true
+    - cm_wwn_pool_absent_again.changed == nm_wwn_pool_absent_again.changed == false

@@ -1,0 +1,226 @@
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testnic001
+      address_prefixes: "10.10.0.0/16"
+  register: vn
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testnic001
+      address_prefix: "10.10.0.0/24"
+      virtual_network: testnic001
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+
+- name: Create NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Create NIC using virtual_network_resource_group parameter
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001rg
+      virtual_network: testnic001
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+
+- name: Create NIC using virtual_network_resource_group parameter (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001rg
+      virtual_network: testnic001
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001rg
+      state: absent
+  
+- name: Create NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.ip_configuration.subnet.name == 'testnic001'
+
+- name: Update the NIC with mutilple ip configurations (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: testnic003
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Update the NIC with mutilple ip configurations
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: testnic003
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 3
+
+- name: Update the NIC with mutilple ip configurations (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: testnic003
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Remove one ip configuration
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig1
+          public_ip_name: testnic003
+        - name: default
+          public_ip_name: testnic001
+          public_ip_allocation_method: Static
+          primary: True
+  register: output
+
+- assert:
+    that:
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 2
+
+- name: IP configuration without public IP
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001noip
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig1
+          primary: True
+  register: output
+
+- assert:
+    that:
+      - output.state.ip_configurations[0].public_ip_address == None
+
+- name: Delete the NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      state: absent
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ item }}"
+      state: absent
+  with_items:
+    - testnic001
+    - testnic001noip
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,7 +24,6 @@ options:
   name:
     description:
       - Name of the databases server instance
-    default: null
   flavor:
     description:
       - flavor to use for the instance 1 to 6 (i.e. 512MB to 16GB)
@@ -53,14 +52,16 @@ options:
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
 author: "Simon JAILLET (@jails)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -148,7 +149,7 @@ def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
                 module.fail_json(changed=False, action=action,
                                  msg='The new volume size must be larger than '
                                      'the current volume size',
-                                cdb=rax_to_dict(instance))
+                                 cdb=rax_to_dict(instance))
             instance.resize_volume(volume)
             changed = True
 

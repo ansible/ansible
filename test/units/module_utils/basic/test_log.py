@@ -1,120 +1,61 @@
 # -*- coding: utf-8 -*-
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import sys
-import json
 import syslog
+from itertools import product
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from units.mock.procenv import swap_stdin_and_argv
+import pytest
 
 import ansible.module_utils.basic
+from ansible.module_utils.six import PY3
 
 
-try:
-    # Python 3.4+
-    from importlib import reload
-except ImportError:
-    # Python 2 has reload as a builtin
+class TestAnsibleModuleLogSmokeTest:
+    DATA = [u'Text string', u'Toshio くらとみ non-ascii test']
+    DATA = DATA + [d.encode('utf-8') for d in DATA]
+    DATA += [b'non-utf8 :\xff: test']
 
-    # Ignoring python3.0-3.3 (those have imp.reload if we decide we care)
-    pass
-
-
-class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
-
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-        self.am._name = 'unittest'
-
-        self.has_journal = ansible.module_utils.basic.has_journal
-        if self.has_journal:
-            # Systems with journal can still test syslog
-            ansible.module_utils.basic.has_journal = False
-
-    def tearDown(self):
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
-        ansible.module_utils.basic.has_journal = self.has_journal
-
-    def test_smoketest_syslog(self):
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])  # pylint: disable=undefined-variable
+    def test_smoketest_syslog(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
         # daemon.  These are just smoketests to test that we don't fail.
+        mocker.patch('ansible.module_utils.basic.has_journal', False)
 
-        self.am.log(u'Text string')
-        self.am.log(u'Toshio くらとみ non-ascii test')
+        am.log(u'Text string')
+        am.log(u'Toshio くらとみ non-ascii test')
 
-        self.am.log(b'Byte string')
-        self.am.log(u'Toshio くらとみ non-ascii test'.encode('utf-8'))
-        self.am.log(b'non-utf8 :\xff: test')
+        am.log(b'Byte string')
+        am.log(u'Toshio くらとみ non-ascii test'.encode('utf-8'))
+        am.log(b'non-utf8 :\xff: test')
 
-
-class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
-
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
-
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-        self.am._name = 'unittest'
-
-    def tearDown(self):
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
-
-    @unittest.skipUnless(ansible.module_utils.basic.has_journal, 'python systemd bindings not installed')
-    def test_smoketest_journal(self):
+    @pytest.mark.skipif(not ansible.module_utils.basic.has_journal, reason='python systemd bindings not installed')
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])  # pylint: disable=undefined-variable
+    def test_smoketest_journal(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
         # daemon.  These are just smoketests to test that we don't fail.
+        mocker.patch('ansible.module_utils.basic.has_journal', True)
 
-        self.am.log(u'Text string')
-        self.am.log(u'Toshio くらとみ non-ascii test')
+        am.log(u'Text string')
+        am.log(u'Toshio くらとみ non-ascii test')
 
-        self.am.log(b'Byte string')
-        self.am.log(u'Toshio くらとみ non-ascii test'.encode('utf-8'))
-        self.am.log(b'non-utf8 :\xff: test')
+        am.log(b'Byte string')
+        am.log(u'Toshio くらとみ non-ascii test'.encode('utf-8'))
+        am.log(b'non-utf8 :\xff: test')
 
 
-class TestAnsibleModuleLogSyslog(unittest.TestCase):
+class TestAnsibleModuleLogSyslog:
     """Test the AnsibleModule Log Method"""
 
-    py2_output_data = {
+    PY2_OUTPUT_DATA = {
         u'Text string': b'Text string',
         u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test'.encode('utf-8'),
         b'Byte string': b'Byte string',
@@ -122,7 +63,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
         b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8'),
     }
 
-    py3_output_data = {
+    PY3_OUTPUT_DATA = {
         u'Text string': u'Text string',
         u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
         b'Byte string': u'Byte string',
@@ -130,60 +71,37 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
         b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
     }
 
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
-
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-        self.am._name = 'unittest'
-
-        self.has_journal = ansible.module_utils.basic.has_journal
-        if self.has_journal:
-            # Systems with journal can still test syslog
-            ansible.module_utils.basic.has_journal = False
-
-    def tearDown(self):
-        # teardown/reset
-        ansible.module_utils.basic.has_journal = self.has_journal
-
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
-
-    @patch('syslog.syslog', autospec=True)
-    def test_no_log(self, mock_func):
-        no_log = self.am.no_log
-
-        self.am.no_log = True
-        self.am.log('unittest no_log')
-        self.assertFalse(mock_func.called)
-
-        self.am.no_log = False
-        self.am.log('unittest no_log')
-        mock_func.assert_called_once_with(syslog.LOG_INFO, 'unittest no_log')
-
-        self.am.no_log = no_log
-
-    def test_output_matches(self):
-        if sys.version_info >= (3,):
-            output_data = self.py3_output_data
+    @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
+    def test_no_log(self, am, mocker, no_log):
+        """Test that when no_log is set, logging does not occur"""
+        mock_syslog = mocker.patch('syslog.syslog', autospec=True)
+        mocker.patch('ansible.module_utils.basic.has_journal', False)
+        am.no_log = no_log
+        am.log('unittest no_log')
+        if no_log:
+            assert not mock_syslog.called
         else:
-            output_data = self.py2_output_data
+            mock_syslog.assert_called_once_with(syslog.LOG_INFO, 'unittest no_log')
 
-        for msg, param in output_data.items():
-            with patch('syslog.syslog', autospec=True) as mock_func:
-                self.am.log(msg)
-                mock_func.assert_called_once_with(syslog.LOG_INFO, param)
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize('msg, param, stdin',
+                             ((m, p, {}) for m, p in
+                              (PY3_OUTPUT_DATA.items() if PY3 else PY2_OUTPUT_DATA.items())),  # pylint: disable=undefined-variable
+                             indirect=['stdin'])
+    def test_output_matches(self, am, mocker, msg, param):
+        """Check that log messages are sent correctly"""
+        mocker.patch('ansible.module_utils.basic.has_journal', False)
+        mock_syslog = mocker.patch('syslog.syslog', autospec=True)
+
+        am.log(msg)
+        mock_syslog.assert_called_once_with(syslog.LOG_INFO, param)
 
 
-class TestAnsibleModuleLogJournal(unittest.TestCase):
+@pytest.mark.skipif(not ansible.module_utils.basic.has_journal, reason='python systemd bindings not installed')
+class TestAnsibleModuleLogJournal:
     """Test the AnsibleModule Log Method"""
 
-    output_data = {
+    OUTPUT_DATA = {
         u'Text string': u'Text string',
         u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
         b'Byte string': u'Byte string',
@@ -191,82 +109,43 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
         b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
     }
 
-    # overriding run lets us use context managers for setup/teardown-esque behavior
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
+    @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
+    def test_no_log(self, am, mocker, no_log):
+        journal_send = mocker.patch('systemd.journal.send')
+        am.no_log = no_log
+        am.log('unittest no_log')
+        if no_log:
+            assert not journal_send.called
+        else:
+            assert journal_send.called == 1
+            # Message
+            # call_args is a 2-tuple of (arg_list, kwarg_dict)
+            assert journal_send.call_args[0][0].endswith('unittest no_log'), 'Message was not sent to log'
+            # log adds this journal field
+            assert 'MODULE' in journal_send.call_args[1]
+            assert 'basic.py' in journal_send.call_args[1]['MODULE']
 
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-        self.am._name = 'unittest'
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize('msg, param, stdin',
+                             ((m, p, {}) for m, p in OUTPUT_DATA.items()),  # pylint: disable=undefined-variable
+                             indirect=['stdin'])
+    def test_output_matches(self, am, mocker, msg, param):
+        journal_send = mocker.patch('systemd.journal.send')
+        am.log(msg)
+        assert journal_send.call_count == 1, 'journal.send not called exactly once'
+        assert journal_send.call_args[0][0].endswith(param)
 
-        self.has_journal = ansible.module_utils.basic.has_journal
-        ansible.module_utils.basic.has_journal = True
-
-        self.module_patcher = None
-
-        # In case systemd-python is not installed
-        if not self.has_journal:
-            self.module_patcher = patch.dict('sys.modules', {'systemd': MagicMock(), 'systemd.journal': MagicMock()})
-            self.module_patcher.start()
-            try:
-                reload(ansible.module_utils.basic)
-            except NameError:
-                self._fake_out_reload(ansible.module_utils.basic)
-
-    def tearDown(self):
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
-
-        # teardown/reset
-        ansible.module_utils.basic.has_journal = self.has_journal
-
-        if self.module_patcher:
-            self.module_patcher.stop()
-            reload(ansible.module_utils.basic)
-
-    @patch('systemd.journal.send')
-    def test_no_log(self, mock_func):
-        no_log = self.am.no_log
-
-        self.am.no_log = True
-        self.am.log('unittest no_log')
-        self.assertFalse(mock_func.called)
-
-        self.am.no_log = False
-        self.am.log('unittest no_log')
-        self.assertEqual(mock_func.called, 1)
-
-        # Message
-        # call_args is a 2-tuple of (arg_list, kwarg_dict)
-        self.assertTrue(mock_func.call_args[0][0].endswith('unittest no_log'), msg='Message was not sent to log')
-        # log adds this journal field
-        self.assertIn('MODULE', mock_func.call_args[1])
-        self.assertIn('basic.py', mock_func.call_args[1]['MODULE'])
-
-        self.am.no_log = no_log
-
-    def test_output_matches(self):
-        for msg, param in self.output_data.items():
-            with patch('systemd.journal.send', autospec=True) as mock_func:
-                self.am.log(msg)
-                self.assertEqual(mock_func.call_count, 1, msg='journal.send not called exactly once')
-                self.assertTrue(mock_func.call_args[0][0].endswith(param))
-
-    @patch('systemd.journal.send')
-    def test_log_args(self, mock_func):
-        self.am.log('unittest log_args', log_args=dict(TEST='log unittest'))
-        self.assertEqual(mock_func.called, 1)
-        self.assertTrue(mock_func.call_args[0][0].endswith('unittest log_args'), msg='Message was not sent to log')
+    @pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+    def test_log_args(self, am, mocker):
+        journal_send = mocker.patch('systemd.journal.send')
+        am.log('unittest log_args', log_args=dict(TEST='log unittest'))
+        assert journal_send.called == 1
+        assert journal_send.call_args[0][0].endswith('unittest log_args'), 'Message was not sent to log'
 
         # log adds this journal field
-        self.assertIn('MODULE', mock_func.call_args[1])
-        self.assertIn('basic.py', mock_func.call_args[1]['MODULE'])
+        assert 'MODULE' in journal_send.call_args[1]
+        assert 'basic.py' in journal_send.call_args[1]['MODULE']
 
         # We added this journal field
-        self.assertIn('TEST', mock_func.call_args[1])
-        self.assertIn('log unittest', mock_func.call_args[1]['TEST'])
+        assert 'TEST' in journal_send.call_args[1]
+        assert 'log unittest' in journal_send.call_args[1]['TEST']

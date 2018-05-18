@@ -109,15 +109,7 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        no_hosts = False
-        if len(inventory.list_hosts()) == 0:
-            # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
-        inventory.subset(self.options.subset)
-        if len(inventory.list_hosts()) == 0 and no_hosts is False:
-            # Invalid limit
-            raise AnsibleError("Specified --limit does not match any hosts")
+        hosts = CLI.get_host_list(inventory, self.options.subset)
 
         # flush fact cache if requested
         if self.options.flush_cache:

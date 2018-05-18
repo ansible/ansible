@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
 # Portions copyright @ 2015 VMware, Inc.
@@ -34,31 +34,25 @@ options:
             - Name of port to manage on the bridge
     tag:
         version_added: 2.2
-        required: false
         description:
             - VLAN tag for this port. Must be a value between
               0 and 4095.
     state:
-        required: false
         default: "present"
         choices: [ present, absent ]
         description:
             - Whether the port should exist
     timeout:
-        required: false
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
     external_ids:
         version_added: 2.0
-        required: false
         default: {}
         description:
             - Dictionary of external_ids applied to a port.
     set:
         version_added: 2.0
-        required: false
-        default: None
         description:
             - Set a single property on a port.
 '''
@@ -118,6 +112,7 @@ def _external_ids_to_dict(text):
 
         return d
 
+
 def _tag_to_str(text):
     text = text.strip()
 
@@ -125,6 +120,7 @@ def _tag_to_str(text):
         return None
     else:
         return text
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
@@ -167,7 +163,7 @@ def map_obj_to_commands(want, have, module):
             command = templatized_command % module.params
 
             if want['tag']:
-                templatized_command =  " tag=%(tag)s"
+                templatized_command = " tag=%(tag)s"
                 command += templatized_command % module.params
 
             if want['set']:
@@ -181,7 +177,7 @@ def map_obj_to_commands(want, have, module):
                     templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
                                            " set port %(port)s external_ids:")
                     command = templatized_command % module.params
-                    command +=  k + "=" + v
+                    command += k + "=" + v
                     commands.append(command)
 
     return commands
@@ -226,9 +222,10 @@ def map_params_to_obj(module):
 
     return obj
 
+
 def main():
     """ Entry point. """
-    argument_spec={
+    argument_spec = {
         'bridge': {'required': True},
         'port': {'required': True},
         'state': {'default': 'present', 'choices': ['present', 'absent']},

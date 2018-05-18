@@ -1,11 +1,12 @@
 ---
-- debug: msg="START {{ connection.transport }}/set_state_present.yaml"
+- debug: msg="START connection={{ ansible_connection }}/set_state_present.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
     lines:
       - no interface Loopback1
-    provider: "{{ connection }}"
   ignore_errors: yes # Fails if the interface is already absent
 
 - name: set state=present
@@ -13,7 +14,6 @@
     interface: Loopback1
     state: present
     description: 'Configured by Ansible - Layer3'
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -25,11 +25,10 @@
     interface: Loopback1
     state: present
     description: 'Configured by Ansible - Layer3'
-    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END {{ connection.transport }}/set_state_present.yaml"
+- debug: msg="END connection={{ ansible_connection }}/set_state_present.yaml"

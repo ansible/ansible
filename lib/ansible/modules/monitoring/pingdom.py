@@ -29,37 +29,23 @@ options:
         description:
             - Define whether or not the check should be running or paused.
         required: true
-        default: null
         choices: [ "running", "paused" ]
-        aliases: []
     checkid:
         description:
             - Pingdom ID of the check.
         required: true
-        default: null
-        choices: []
-        aliases: []
     uid:
         description:
             - Pingdom user ID.
         required: true
-        default: null
-        choices: []
-        aliases: []
     passwd:
         description:
             - Pingdom user password.
         required: true
-        default: null
-        choices: []
-        aliases: []
     key:
         description:
             - Pingdom API key.
         required: true
-        default: null
-        choices: []
-        aliases: []
 notes:
     - This module does not yet have support to add/remove checks.
 '''
@@ -98,7 +84,7 @@ def pause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "paused":             # api output buggy - accept raw exception for now
+    # if result != "paused":             # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -110,7 +96,7 @@ def unpause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "up":                 # api output buggy - accept raw exception for now
+    # if result != "up":                 # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 

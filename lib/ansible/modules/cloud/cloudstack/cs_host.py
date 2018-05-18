@@ -427,10 +427,11 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
         name = self.module.params.get('name')
         args = {
             'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
         res = self.query_api('listHosts', **args)
         if res:
-            for h in res['host']:
+            for h in res:
                 if name in [h['ipaddress'], h['name']]:
                     self.host = h
         return self.host
@@ -464,7 +465,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
 
         # Set host allocationstate to be disabled/enabled
         elif host['resourcestate'].lower() in list(self.allocation_states_for_update.keys()):
-                host['allocationstate'] = self.allocation_states_for_update[host['resourcestate'].lower()]
+            host['allocationstate'] = self.allocation_states_for_update[host['resourcestate'].lower()]
 
         else:
             host['allocationstate'] = host['resourcestate']
@@ -577,7 +578,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 return None
             elif host['resourcestate'] != 'PrepareForMaintenance':
                 return host
-        self.fail_json("Polling for maintenance timed out")
+        self.fail_json(msg="Polling for maintenance timed out")
 
     def get_result(self, host):
         super(AnsibleCloudStackHost, self).get_result(host)

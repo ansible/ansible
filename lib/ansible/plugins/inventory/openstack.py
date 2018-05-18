@@ -22,8 +22,8 @@ DOCUMENTATION = '''
     options:
         show_all:
             description: toggles showing all vms vs only those with a working IP
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         inventory_hostname:
             description: |
                 What to register as the inventory hostname.
@@ -46,16 +46,16 @@ DOCUMENTATION = '''
                 neutron and can be expensive for people with many hosts.
                 (Note, the default value of this is opposite from the default
                 old openstack.py inventory script's option expand_hostvars)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         private:
             description: |
                 Use the private interface of each server, if it has one, as
                 the host's IP in the inventory. This can be useful if you are
                 running ansible inside a server in the cloud and would rather
                 communicate to your servers over the private network.
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         only_clouds:
             description: |
                 List of clouds from clouds.yaml to use, instead of using
@@ -70,8 +70,8 @@ DOCUMENTATION = '''
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
                 inventory script's option fail_on_errors)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -80,7 +80,6 @@ DOCUMENTATION = '''
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
             type: string
-            default: None
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
@@ -104,7 +103,7 @@ simple_config_file:
 import collections
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
     import os_client_config
@@ -115,7 +114,7 @@ except ImportError:
     HAS_SHADE = False
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory provider for ansible using OpenStack clouds. '''
 
     NAME = 'openstack'
@@ -124,13 +123,10 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self._get_cache_prefix(path)
 
         # file is config file
-        try:
-            self._config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        self._config_data = self._read_config_data(path)
 
         msg = ''
         if not self._config_data:

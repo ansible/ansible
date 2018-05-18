@@ -146,16 +146,19 @@ def load_extra_vars(loader, options):
 def load_options_vars(options, version):
 
     options_vars = {'ansible_version': version}
-    aliases = {'check': 'check_mode',
-               'diff': 'diff_mode',
-               'inventory': 'inventory_sources',
-               'subset': 'limit',
-               'tags': 'run_tags'}
+    attrs = {'check': 'check_mode',
+             'diff': 'diff_mode',
+             'forks': 'forks',
+             'inventory': 'inventory_sources',
+             'skip_tags': 'skip_tags',
+             'subset': 'limit',
+             'tags': 'run_tags',
+             'verbosity': 'verbosity'}
 
-    for attr in ('check', 'diff', 'forks', 'inventory', 'skip_tags', 'subset', 'tags'):
+    for attr, alias in attrs.items():
         opt = getattr(options, attr, None)
         if opt is not None:
-            options_vars['ansible_%s' % aliases.get(attr, attr)] = opt
+            options_vars['ansible_%s' % alias] = opt
 
     return options_vars
 

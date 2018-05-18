@@ -41,18 +41,13 @@ options:
     description:
       - Name of the region.
       - Required if C(state=present)
-    required: false
-    default: null
   endpoint:
     description:
       - Endpoint URL of the region.
       - Required if C(state=present)
-    required: false
-    default: null
   state:
     description:
       - State of the region.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack
@@ -60,17 +55,17 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a region
-local_action:
-  module: cs_region
-  id: 2
-  name: geneva
-  endpoint: https://cloud.gva.example.com
+- local_action:
+    module: cs_region
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
 
 # remove a region with ID 2
-local_action:
-  module: cs_region
-  id: 2
-  state: absent
+- local_action:
+    module: cs_region
+    id: 2
+    state: absent
 '''
 
 RETURN = '''
