@@ -28,6 +28,7 @@ from .test_nios_module import TestNiosModule, load_fixture
 
 class TestNiosDnsViewModule(TestNiosModule):
 
+    module = nios_dns_view
 
     def setUp(self):
         super(TestNiosDnsViewModule, self).setUp()
@@ -40,13 +41,10 @@ class TestNiosDnsViewModule(TestNiosModule):
         self.mock_wapi_run.start()
         self.load_config = self.mock_wapi_run.start()
 
-
     def tearDown(self):
         super(TestNiosDnsViewModule, self).tearDown()
-
         self.mock_wapi.stop()
         self.mock_wapi_run.stop()
-
 
     def _get_wapi(self, test_object):
         wapi = api.WapiModule(self.module)
@@ -56,11 +54,9 @@ class TestNiosDnsViewModule(TestNiosModule):
         wapi.delete_object = Mock(name='delete_object')
         return wapi
 
-
     def load_fixtures(self, commands=None):
         self.exec_command.return_value = (0, load_fixture('nios_result.txt').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
-
 
     def test_nios_dns_view_create(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible-dns',
@@ -81,6 +77,29 @@ class TestNiosDnsViewModule(TestNiosModule):
         self.assertTrue(res['changed'])
         wapi.create_object.assert_called_once_with('testobject', {'name': 'ansible-dns'})
 
+    def test_nios_dns_view_update_comment(self):
+        self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible-dns',
+                              'comment': 'updated comment', 'extattrs': None}
+
+        test_object = [
+            {
+                "comment": "test comment",
+                "_ref": "dnsview/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
+                "name": "ansible-dns",
+                "extattrs": {}
+            }
+        ]
+
+        test_spec = {
+            "name": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
 
     def test_nios_dns_view_remove(self):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible-dns',
@@ -106,28 +125,3 @@ class TestNiosDnsViewModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.delete_object.assert_called_once_with(ref)
-
-
-    def test_nios_dns_view_update_comment(self):
-        self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible-dns',
-                              'comment': 'updated comment', 'extattrs': None}
-
-        test_object = [
-            {
-                "comment": "test comment",
-                "_ref": "dnsview/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
-                "name": "ansible-dns",
-                "extattrs": {}
-            }
-        ]
-
-        test_spec = {
-            "name": {"ib_req": True},
-            "comment": {},
-            "extattrs": {}
-        }
-
-        wapi = self._get_wapi(test_object)
-        res = wapi.run('testobject', test_spec)
-
-        self.assertTrue(res['changed'])
