@@ -128,6 +128,7 @@ class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
 
     provider_spec = {'provider': dict(type='dict', options=nios_provider_spec)}
+
     def __init__(self, provider):
         self.connector = get_connector(**provider)
 
