@@ -297,7 +297,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
 
     if module.check_mode and path is not None:
-        keysfile = path
+        keysfile = os.path.realpath(path)
         return keysfile
 
     try:
@@ -313,6 +313,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     else:
         sshdir = os.path.dirname(path)
         keysfile = path
+
+    keysfile = os.path.realpath(keysfile)
 
     if not write:
         return keysfile
