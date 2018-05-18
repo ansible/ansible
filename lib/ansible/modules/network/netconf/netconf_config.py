@@ -222,7 +222,7 @@ def main():
             port=dict(type='int', default=830),
 
             username=dict(type='str', no_log=True),
-            password=dict(type='str', no_log=True),
+            password=dict(type='str', required=False, no_log=True),
 
             hostkey_verify=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
@@ -230,7 +230,7 @@ def main():
             allow_agent=dict(type='bool', default=True),
             key_filename=dict(type='path', required=False),
         ),
-        mutually_exclusive=[('xml', 'src')]
+        mutually_exclusive=[('xml', 'src'), ('password', 'key_filename')]
     )
 
     if not module._socket_path and not HAS_NCCLIENT:
