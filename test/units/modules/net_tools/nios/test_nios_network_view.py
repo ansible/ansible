@@ -59,7 +59,6 @@ class TestNiosNetworkViewModule(TestNiosModule):
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_nios_network_view_create(self):
-        #set_module_args(dict(network_view='foo'))
         self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible',
                               'comment': None, 'extattrs': None}
 
