@@ -33,7 +33,7 @@
   - curl
   - software-properties-common
 
-- name : Get Docker's official GPG key
+- name: Get Docker's official GPG key
   apt_key:
     url: "https://download.docker.com/linux/ubuntu/gpg"
     state: present
