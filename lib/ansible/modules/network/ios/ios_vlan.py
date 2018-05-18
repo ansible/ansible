@@ -152,25 +152,25 @@ def map_obj_to_commands(updates, module):
                 if interfaces:
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('switchport access vlan {}'.format(vlan_id))
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
 
                     elif set(interfaces) != set(obj_in_have['interfaces']):
                         missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
                         for i in missing_interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('switchport access vlan {}'.format(vlan_id))
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
                         for i in superfluous_interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('no switchport access vlan {}'.format(vlan_id))
+                            commands.append('no switchport access vlan {0}'.format(vlan_id))
         else:
             commands.append('vlan {0}'.format(vlan_id))
             if name:
