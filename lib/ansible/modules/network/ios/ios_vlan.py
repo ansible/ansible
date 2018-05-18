@@ -181,7 +181,7 @@ def map_obj_to_commands(updates, module):
         for h in have:
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
             if not obj_in_want and h['vlan_id'] != '1':
-                commands.append('no vlan {0}'.format(h['vlan_id']))
+                commands.append('no vlan {}'.format(h['vlan_id']))
 
     return commands
 
