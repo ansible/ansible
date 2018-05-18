@@ -25,7 +25,8 @@ options:
     type: int
     description:
       - Specifies the port on the remote device to listening for connections
-        when establishing the SSH connection.
+        when establishing the HTTP(S) connection.
+        When unspecified, will pick 80 or 443 based on the value of use_ssl
     ini:
       - section: defaults
         key: remote_port
@@ -139,6 +140,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.six.moves.urllib.error import URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, connection_loader, httpapi_loader
@@ -243,13 +245,13 @@ class Connection(ConnectionBase):
         network_os = self._play_context.network_os
 
         protocol = 'https' if self.get_option('use_ssl') else 'http'
-        host = self._play_context.remote_addr
-        port = self._play_context.port or 443 if protocol == 'https' else 80
+        host = self.get_option('host')
+        port = self.get_option('port') or (443 if protocol == 'https' else 80)
         self._url = '%s://%s:%s' % (protocol, host, port)
 
         self._cliconf = cliconf_loader.get(network_os, self)
         if self._cliconf:
-            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
+            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=host)
         else:
             display.vvvv('unable to load cliconf for network_os %s' % network_os)
 
@@ -297,10 +299,15 @@ class Connection(ConnectionBase):
         '''
         url_kwargs = dict(
             url_username=self.get_option('remote_user'), url_password=self.get_option('password'),
-            timeout=self.get_option('persistent_command_timeout'),
+            timeout=self.get_option('timeout'),
         )
         url_kwargs.update(kwargs)
-        response = open_url(self._url + path, data=data, **url_kwargs)
+
+        try:
+            response = open_url(self._url + path, data=data, **url_kwargs)
+        except URLError as exc:
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
+
         self._auth = response.info().get('Set-Cookie')
 
         return response
