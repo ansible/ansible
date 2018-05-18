@@ -244,10 +244,7 @@ def parse_to_obj(logical_rows):
 
 
 def parse_vlan_brief(vlan_out):
-    objs = []
-    for logical_rows in parse_to_logical_rows(vlan_out):
-        objs.append(parse_to_obj(logical_rows))
-    return objs
+    return [parse_to_obj(r) for r in parse_to_logical_rows(vlan_out)]
 
 
 def map_config_to_obj(module):

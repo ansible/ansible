@@ -29,7 +29,7 @@ from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosVlanModule(TestIosModule):
-
+    
     module = ios_vlan
 
     def setUp(self):
@@ -48,7 +48,7 @@ class TestIosVlanModule(TestIosModule):
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_commands.return_value = load_fixture('ios_vlan_config.cfg')
-        self.load_config.return_value = dict(diff=None, session='session')
+        self.load_config.return_value = {'diff': None, 'session': 'session'}
 
     def test_ios_vlan_create(self):
         set_module_args(dict(vlan_id=2, name='test', state='present'))
@@ -63,7 +63,7 @@ class TestIosVlanModule(TestIosModule):
                 'interfaces': [
                     'GigabitEthernet1/0/4',
                     'GigabitEthernet1/0/5',
-                    'GigabitEthernet1/0/52'
+                    'GigabitEthernet1/0/52',
                 ],
                 'state': 'active',
                 'vlan_id': '1'},
@@ -71,7 +71,7 @@ class TestIosVlanModule(TestIosModule):
                 'name': 'fddi-default',
                 'interfaces': [],
                 'state': 'act/unsup',
-                'vlan_id': '1002'
+                'vlan_id': '1002',
             }
         ]
         self.assertEqual(result, obj)
