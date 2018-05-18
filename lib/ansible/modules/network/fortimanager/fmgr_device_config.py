@@ -149,7 +149,6 @@ def update_device_interface(fmg, device_name, interface, ip, allow_access_list, 
     """
     Update a device interface IP and allow access
     """
-
     access_list = list()
     allow_access_list = allow_access_list.replace(' ', '')
     access_list = allow_access_list.split(',')
@@ -185,7 +184,7 @@ def exec_config(fmg, device_unique_name, adom):
 def main():
     argument_spec = dict(
         host=dict(required=True, type="str"),
-        adom=dict(required=False, type="str", default="root"),
+        adom=dict(required=False, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
 
@@ -201,6 +200,10 @@ def main():
 
     # handle params passed via provider and insure they are represented as the data type expected by fortimanager
     adom = module.params["adom"]
+    # if adom is empty, set to root
+    if adom is None:
+        adom = "root"
+
     device_unique_name = module.params["device_unique_name"]
     device_hostname = module.params["device_hostname"]
     interface = module.params["interface"]
