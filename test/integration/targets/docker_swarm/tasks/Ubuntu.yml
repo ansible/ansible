@@ -12,6 +12,15 @@
   - linux-image-extra-virtual 
   when: ansible_distribution_release == 'trusty'
 
+- name: Remove old docker version
+  apt:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+  - docker
+  - docker-engine
+  - docker.io
+
 - name: Install pre-reqs
   apt:
     name: "{{ item }}"
@@ -22,7 +31,6 @@
   - ca-certificates
   - curl
   - software-properties-common
-  - nfs-common
 
 - name: Upgrade pip
   become: yes
@@ -61,3 +69,13 @@
     name: docker-ce
     state: present
     update_cache: yes
+  igore_errors: true
+
+- name: Check pb
+  become: yes
+  shell: journalctl -xe
+
+- name: Install Docker CE
+  apt:
+    name: docker-ce
+    state: present
