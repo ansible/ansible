@@ -65,7 +65,7 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
         - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
         - ['a', 'c', 'd', 'c']
 
-.. versionadded:: 2.5
+.. versionadded:: 2.6
 
 You can now control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail. For example:
 
