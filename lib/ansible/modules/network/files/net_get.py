@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: network_get
+module: net_get
 version_added: "2.6"
 author: "Deepak Agrawal (@dagrawal)"
 short_description: Copy files from a network device to Ansible Controller
@@ -57,7 +57,7 @@ notes:
 
 EXAMPLES = """
 - name: copy file from the network device to ansible controller
-  network_get:
+  net_get:
     src: running_cfg_ios1.txt
 
 - name: copy file from ios to common location at /tmp
