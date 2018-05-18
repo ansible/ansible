@@ -23,7 +23,8 @@ __metaclass__ = type
 from ansible.modules.net_tools.nios import nios_network_view
 from ansible.module_utils.net_tools.nios import api
 from ansible.compat.tests.mock import patch, MagicMock, Mock
-from .nios_module import TestNiosModule, load_fixture
+from .test_nios_module import TestNiosModule, load_fixture
+
 
 class TestNiosNetworkViewModule(TestNiosModule):
 
@@ -33,19 +34,18 @@ class TestNiosNetworkViewModule(TestNiosModule):
         self.module = MagicMock(name='ansible.modules.net_tools.nios.nios_network_view.WapiModule')
         self.module.check_mode = False
         self.module.params = {'provider': None}
-
         self.mock_wapi = patch('ansible.modules.net_tools.nios.nios_network_view.WapiModule')
         self.exec_command = self.mock_wapi.start()
         self.mock_wapi_run = patch('ansible.modules.net_tools.nios.nios_network_view.WapiModule.run')
         self.mock_wapi_run.start()
-
         self.load_config = self.mock_wapi_run.start()
+
 
     def tearDown(self):
         super(TestNiosNetworkViewModule, self).tearDown()
-
         self.mock_wapi.stop()
         self.mock_wapi_run.stop()
+
 
     def _get_wapi(self, test_object):
         wapi = api.WapiModule(self.module)
@@ -55,9 +55,11 @@ class TestNiosNetworkViewModule(TestNiosModule):
         wapi.delete_object = Mock(name='delete_object')
         return wapi
 
+
     def load_fixtures(self, commands=None):
         self.exec_command.return_value = (0, load_fixture('nios_result.txt').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
+
 
     def test_nios_network_view_create(self):
         #set_module_args(dict(network_view='foo'))
@@ -134,6 +136,7 @@ class TestNiosNetworkViewModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.update_object.called_once_with(test_object)
+
 
     def test_nios_network_view_remove(self):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible',
