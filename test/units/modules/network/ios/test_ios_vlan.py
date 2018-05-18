@@ -52,7 +52,7 @@ class TestIosVlanModule(TestIosModule):
 
     def test_ios_vlan_create(self):
         set_module_args({'vlan_id': '2', 'name': 'test', 'state': 'present'})
-        result = self.execute_module()
+        result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['vlan 2', 'name test'])
 
     def test_parse_vlan_brief(self):
