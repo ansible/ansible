@@ -250,8 +250,7 @@ class ElastiCacheManager(object):
                       CacheSecurityGroupNames=self.cache_security_groups,
                       SecurityGroupIds=self.security_group_ids,
                       CacheParameterGroupName=self.cache_parameter_group,
-                      CacheSubnetGroupName=self.cache_subnet_group,
-                      PreferredAvailabilityZone=self.zone)
+                      CacheSubnetGroupName=self.cache_subnet_group)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
         if self.tags is not None:
