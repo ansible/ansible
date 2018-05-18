@@ -124,7 +124,7 @@ Function Install-PsModule {
         $psg = [PSCustomObject]@{ n = "PowerShellGet"; v = "1.6.0"}
         Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force;
         # Unload previous version
-        Remove-Module -Name $psg.n -Force;
+        Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
         Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force;
 
         $ht = @{
