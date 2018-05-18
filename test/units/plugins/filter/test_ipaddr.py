@@ -478,3 +478,8 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipsubnet(subnet, '20', '-1'), '192.168.240.0/20')
         self.assertEqual(ipsubnet(subnet, '20', '5'), '192.168.80.0/20')
         self.assertEqual(ipsubnet(subnet, '20', '-5'), '192.168.176.0/20')
+        self.assertEqual(ipsubnet(address, '20'), '192.168.128.0/20')
+        self.assertEqual(ipsubnet(address, '18', '0'), '192.168.128.0/18')
+        self.assertEqual(ipsubnet(address, '18', '-1'), '192.168.144.4/31')
+        self.assertEqual(ipsubnet(address, '18', '5'), '192.168.144.0/23')
+        self.assertEqual(ipsubnet(address, '18', '-5'), '192.168.144.0/27')
