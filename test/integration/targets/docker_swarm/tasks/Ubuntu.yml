@@ -32,26 +32,6 @@
   - curl
   - software-properties-common
 
-- name: Upgrade pip
-  become: yes
-  pip: 
-    name=pip
-    extra_args=--upgrade
-    
-- name: Remove old Python modules
-  become: yes
-  pip:
-      name={{ item }}
-      state=absent
-  with_items:
-      - docker-py
-
-- name: Install Python modules
-  become: yes
-  pip:
-      name=docker
-      state=present
-
 - name : Get Docker's official GPG key
   become: yes
   apt_key:
@@ -69,11 +49,14 @@
     name: docker-ce
     state: present
     update_cache: yes
-  igore_errors: true
+  ignore_errors: true
 
 - name: Check pb
   become: yes
   shell: journalctl -xe
+  register: journal
+
+- debug: var=shell
 
 - name: Install Docker CE
   apt:
