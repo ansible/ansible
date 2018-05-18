@@ -52,6 +52,10 @@ options:
         - Cause the module to treat OVF Import Spec warnings as errors
         default: "no"
         type: bool
+    folder:
+        description:
+        - Absolute path of folder to place the VM. If not specified, defaults to the value of
+          C(datacenter.vmFolder)
     name:
         description:
         - Name of the VM to work with.
@@ -328,6 +332,11 @@ class VMwareDeployOvf:
                 property_mapping.value = value
                 params['propertyMapping'].append(property_mapping)
 
+        if self.params['folder']:
+            folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+        else:
+            folder = datacenter.vmFolder
+
         spec_params = vim.OvfManager.CreateImportSpecParams(**params)
 
         ovf_descriptor = self.get_ovf_descriptor()
@@ -354,7 +363,7 @@ class VMwareDeployOvf:
 
         if not self.params['allow_duplicates']:
             name = self.import_spec.importSpec.configSpec.name
-            match = find_vm_by_name(self.si, name, folder=datacenter.vmFolder)
+            match = find_vm_by_name(self.si, name, folder=folder)
             if match:
                 self.module.exit_json(instance=gather_vm_facts(self.si, match), changed=False)
 
@@ -364,7 +373,7 @@ class VMwareDeployOvf:
         try:
             self.lease = resource_pool.ImportVApp(
                 self.import_spec.importSpec,
-                datacenter.vmFolder
+                folder
             )
         except vmodl.fault.SystemError as e:
             self.module.fail_json(
@@ -497,6 +506,9 @@ def main():
             'default': 'ha-datacenter',
         },
         'deployment_option': {
+            'default': None,
+        },
+        'folder': {
             'default': None,
         },
         'resource_pool': {
