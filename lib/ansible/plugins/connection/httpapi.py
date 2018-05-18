@@ -295,7 +295,10 @@ class Connection(ConnectionBase):
         '''
         Sends the command to the device over api
         '''
-        url_kwargs = dict(url_username=self._play_context.remote_user, url_password=self._play_context.password)
+        url_kwargs = dict(
+            url_username=self.get_option('remote_user'), url_password=self.get_option('password'),
+            timeout=self.get_option('persistent_command_timeout'),
+        )
         url_kwargs.update(kwargs)
         response = open_url(self._url + path, data=data, **url_kwargs)
         self._auth = response.info().get('Set-Cookie')
