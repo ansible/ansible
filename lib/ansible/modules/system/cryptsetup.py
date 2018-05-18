@@ -20,7 +20,7 @@ module: cryptsetup
 
 short_description: manage plain dm-crypt and LUKS encrypted volumes
 
-version_added: "2.4"
+version_added: "2.6"
 
 description:
     - "Ensure an encrypted volume is in desired state"
@@ -79,6 +79,9 @@ EXAMPLES = '''
     device: /dev/sdb
     type: tcrypt
     passphrase: "{{ secret_from_vault }}"
+'''
+
+RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
