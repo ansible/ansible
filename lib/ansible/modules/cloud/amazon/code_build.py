@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: code_build
+module: aws_codebuild
 short_description: Create or delete an AWS CodeBuild project
 notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html)
@@ -22,7 +22,7 @@ description:
 version_added: "2.6"
 author:
     - Stefan Horning (@stefanhorning) <horning@mediapeers.com>
-requirements: [ json, botocore, boto3 ]
+requirements: [ botocore, boto3 ]
 options:
     name:
         description:
@@ -36,18 +36,102 @@ options:
         description:
             - Configure service and location for the build input source.
         required: true
+        suboptions:
+            type:
+                description:
+                    - The type of the source. Allows one of these: CODECOMMIT, CODEPIPELINE, GITHUB, S3, BITBUCKET, GITHUB_ENTERPRISE
+                required: true
+            location:
+                description:
+                    - Information about the location of the source code to be built. For type CODEPIPELINE location should not be specified.
+                required: false
+            git_clone_depth:
+                description:
+                    - When using git you can specify the clone depth as an integer here.
+                required: false
+                type: int
+            buildspec:
+                description:
+                    - The build spec declaration to use for the builds in this build project. Leave empty if part of the code project.
+                required: false
+            insecure_ssl:
+                description:
+                    - Enable this flag to ignore SSL warnings while connecting to the project source code.
+                required: false
+                type: bool
     artifacts:
         description:
             - Information about the build output artifacts for the build project.
         required: true
+        suboptions:
+            type:
+                description:
+                    - The type of build output for artifacts. Can be one of the following: CODEPIPELINE, NO_ARTIFACTS, S3
+                required: true
+            location:
+                description:
+                    - Information about the build output artifact location. When choosing type S3, set the bucket name here.
+                required: false
+            path:
+                description:
+                    - Along with namespace_type and name, the pattern that AWS CodeBuild will use to name and store the output artifacts.
+                    - Used for path in S3 bucket when type is S3
+                required: false
+            namespace_type:
+                description:
+                    - Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts
+                    - Accepts BUILD_ID and NONE, see docs here: http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
+                required: false
+            name:
+                description:
+                    - Along with path and namespace_type, the pattern that AWS CodeBuild will use to name and store the output artifact
+                required: false
+            packaging:
+                description:
+                    - The type of build output artifact to create on S3, can be NONE for creating a folder or ZIP for a ZIP file
+                required: false
     cache:
         description:
             - Caching params to speed up following builds.
         required: false
+        suboptions:
+            type:
+                description:
+                    - Cache type. Can be NO_CACHE or S3.
+                required: true
+            location:
+                description:
+                    - Caching location on S3.
+                required: true
     environment:
         description:
             - Information about the build environment for the build project.
         required: true
+        suboptions:
+            type:
+                description:
+                    - The type of build environment to use for the project. Usually LINUX_CONTAINER
+                required: true
+            image:
+                description:
+                    - The ID of the Docker image to use for this build project.
+                required: true
+            compute_type:
+                description:
+                    - Information about the compute resources the build project will use. Available values include:
+                    - BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE
+                required: true
+            environment_variables:
+                description:
+                    - A set of environment variables to make available to builds for the build project. List of dictionaries with name and value fields.
+                    - Example: { name: 'MY_ENV_VARIABLE', value 'test' }
+                required: false
+                type: list
+            privileged_mode:
+                description:
+                    - Enables running the Docker daemon inside a Docker container. Set to true only if the build project is be used to build Docker images.
+                required: false
+                type: bool
     service_role:
         description:
             - The ARN of the AWS IAM role that enables AWS CodeBuild to interact with dependent AWS services on behalf of the AWS account.
@@ -296,18 +380,18 @@ def describe_project(client, name, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True, type='str'),
-        description=dict(required=False, type='str'),
+        name=dict(required=True),
+        description=dict(),
         source=dict(required=True, type='dict'),
         artifacts=dict(required=True, type='dict'),
-        cache=dict(required=False, type='dict'),
-        environment=dict(required=True, type='dict'),
-        service_role=dict(required=False, type='str'),
-        timeout_in_minutes=dict(required=False, type='int', default=60),
-        encryption_key=dict(required=False, type='str'),
-        tags=dict(required=False, type='list'),
-        vpc_config=dict(required=False, type='dict'),
-        state=dict(required=False, type='str', choices=['present', 'absent'], default='present')
+        cache=dict(type='dict'),
+        environment=dict(type='dict'),
+        service_role=dict(),
+        timeout_in_minutes=dict(type='int', default=60),
+        encryption_key=dict(),
+        tags=dict(type='list'),
+        vpc_config=dict(type='dict'),
+        state=dict(choices=['present', 'absent'], default='present')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
