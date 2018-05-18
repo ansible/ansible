@@ -469,3 +469,12 @@ class TestIpFilter(unittest.TestCase):
         address = '1.12.1.34/24'
         subnet = '1.12.1.34/32'
         self.assertEqual(ipsubnet(address, subnet), False)
+        address = '192.168.144.5'
+        subnet = '192.168.0.0/16'
+        self.assertEqual(ipsubnet(address), '192.168.144.5/32')
+        self.assertEqual(ipsubnet(subnet), '192.168.0.0/16')
+        self.assertEqual(ipsubnet(subnet, '20'), '16')
+        self.assertEqual(ipsubnet(subnet, '20', '0'), '192.168.0.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '-1'), '192.168.240.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '5'), '192.168.80.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '-5'), '192.168.176.0/20')
