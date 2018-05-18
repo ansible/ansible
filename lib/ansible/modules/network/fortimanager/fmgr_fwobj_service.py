@@ -85,7 +85,6 @@ options:
       - Tells module what kind of custom service to be added
     choices: ['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp', 'connect', 'socks_tcp', 'socks_udp', 'all']
     default: all
-    type: str
 
   explicit_proxy:
     description:
