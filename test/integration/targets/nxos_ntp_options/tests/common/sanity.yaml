@@ -6,7 +6,6 @@
 - name: "Apply default ntp config" 
   nxos_ntp_options: &default
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -16,7 +15,6 @@
       master: true
       logging: true
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: &true
@@ -36,7 +34,6 @@
       master: true
       stratum: 10
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: *true
@@ -53,7 +50,6 @@
       stratum: 10
       logging: false
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -69,7 +65,6 @@
       master: false
       logging: true
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

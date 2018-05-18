@@ -8,7 +8,6 @@
       - no ip name-server 2.2.2.2
       - no ip name-server 3.3.3.3
     match: none
-    provider: "{{ cli }}"
 
 - name: configure name_servers
   nxos_system:
@@ -16,7 +15,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -32,7 +30,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -45,7 +42,6 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ cli }}"
 #  register: result
 
 #- assert:
@@ -61,7 +57,6 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ cli }}"
 #  register: result
 #
 #- assert:
@@ -73,7 +68,6 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -87,7 +81,6 @@
     lines:
       - no ip lookup source-interface
     match: none
-    provider: "{{ cli }}"
   ignore_errors: yes
   # FIXME Copied from iosxr, not sure what we need here
 
