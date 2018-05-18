@@ -17,7 +17,7 @@ module: netapp_e_iscsi_interface
 short_description: NetApp E-Series manage iSCSI interface configuration
 description:
     - Configure settings of an E-Series iSCSI interface
-version_added: '2.6'
+version_added: '2.7'
 author: Michael Price (@lmprice)
 extends_documentation_fragment:
     - netapp.eseries
@@ -25,7 +25,7 @@ options:
     controller:
         description:
             - The controller that owns the port you want to configure.
-            - Controller names are represented alphabetically, with the first controller as A,
+            - Controller names are presented alphabetically, with the first controller as A,
              the second as B, and so on.
             - Current hardware models have either 1 or 2 available controllers, but that is not a guaranteed hard
              limitation and could change in the future.
@@ -37,7 +37,7 @@ options:
         description:
             - The channel of the port to modify the configuration of.
             - The list of choices is not necessarily comprehensive. It depends on the number of ports
-              that are present in the system.
+              that are available in the system.
             - The numerical value represents the number of the channel (typically from left to right on the HIC),
               beginning with a value of 1.
         required: yes
@@ -45,12 +45,12 @@ options:
             - channel
     state:
         description:
-            - When present, the provided configuration will be utilized.
-            - When absent, the IPv4 configuration will be cleared and IPv4 connectivity disabled.
+            - When enabled, the provided configuration will be utilized.
+            - When disabled, the IPv4 configuration will be cleared and IPv4 connectivity disabled.
         choices:
-            - present
-            - absent
-        default: present
+            - enabled
+            - disabled
+        default: enabled
     address:
         description:
             - The IPv4 address to assign to the interface.
@@ -115,7 +115,7 @@ EXAMPLES = """
       netapp_e_iscsi_interface:
         name: "2"
         controller: "B"
-        state: absent
+        state: disabled
         ssid: "{{ ssid }}"
         api_url: "{{ netapp_api_url }}"
         api_username: "{{ netapp_api_username }}"
@@ -125,7 +125,7 @@ EXAMPLES = """
       netapp_e_iscsi_interface:
         name: "{{ item | int }}"
         controller: "A"
-        state: present
+        state: enabled
         mtu: 9000
         config_method: dhcp
         ssid: "{{ ssid }}"
@@ -148,7 +148,7 @@ msg:
 enabled:
     description:
         - Indicates whether IPv4 connectivity has been enabled or disabled.
-        - This does not necessarily indicate connectivity. If dhcp was enabled absent a dhcp server, for instance,
+        - This does not necessarily indicate connectivity. If dhcp was enabled without a dhcp server, for instance,
           it is unlikely that the configuration will actually be valid.
     returned: on success
     sample: True
@@ -157,6 +157,7 @@ enabled:
 import json
 import logging
 from pprint import pformat
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
@@ -174,7 +175,7 @@ class IscsiInterface(object):
         argument_spec.update(dict(
             controller=dict(type='str', required=True, choices=['A', 'B']),
             name=dict(type='int', aliases=['channel']),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
+            state=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
             address=dict(type='str', required=False),
             subnet_mask=dict(type='str', required=False),
             gateway=dict(type='str', required=False),
@@ -223,6 +224,22 @@ class IscsiInterface(object):
 
         if self.mtu < 1500 or self.mtu > 9000:
             self.module.fail_json(msg="The provided mtu is invalid, it must be > 1500 and < 9000 bytes.")
+
+        if self.config_method == 'dhcp' and any([self.address, self.subnet_mask, self.gateway]):
+            self.module.fail_json(
+                'A config_method of dhcp is mutually exclusive with the address, subnet_mask, and gateway options.')
+
+        # A relatively primitive regex to validate that the input is formatted like a valid ip address
+        address_regex = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+
+        if self.address and not address_regex.match(self.address):
+            self.module.fail_json("An invalid ip address was provided for address.")
+
+        if self.subnet_mask and not address_regex.match(self.subnet_mask):
+            self.module.fail_json("An invalid ip address was provided for subnet_mask.")
+
+        if self.gateway and not address_regex.match(self.gateway):
+            self.module.fail_json("An invalid ip address was provided for gateway.")
 
     @property
     def interfaces(self):
@@ -289,7 +306,7 @@ class IscsiInterface(object):
         self._logger.info("config_method: current=%s, requested=%s",
                           target_iface['ipv4Data']['ipv4AddressConfigMethod'], self.config_method)
 
-        if self.state == 'present':
+        if self.state == 'enabled':
             settings = dict()
             if not target_iface['ipv4Enabled']:
                 update_required = True

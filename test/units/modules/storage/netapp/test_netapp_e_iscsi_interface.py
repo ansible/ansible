@@ -24,7 +24,7 @@ class IscsiInterfaceTest(ModuleTestCase):
         'api_password': 'password',
         'api_url': 'http://localhost',
         'ssid': '1',
-        'state': 'absent',
+        'state': 'disabled',
         'name': 1,
         'controller': 'A',
     }
@@ -43,7 +43,7 @@ class IscsiInterfaceTest(ModuleTestCase):
             for i in range(1, 10):
                 for mtu in [1500, 2500, 9000]:
                     self._set_args(dict(
-                        state='absent',
+                        state='disabled',
                         name=i,
                         controller=controller,
                         mtu=mtu,
@@ -55,7 +55,7 @@ class IscsiInterfaceTest(ModuleTestCase):
 
         # Currently a 'C' controller is invalid
         self._set_args(dict(
-            state='absent',
+            state='disabled',
             name=1,
             controller="C",
         ))
@@ -65,7 +65,7 @@ class IscsiInterfaceTest(ModuleTestCase):
         # Each of these mtu values are invalid
         for mtu in [500, 1499, 9001]:
             self._set_args({
-                'state': 'absent',
+                'state': 'disabled',
                 'name': 1,
                 'controller': 'A',
                 'mtu': mtu
@@ -117,7 +117,7 @@ class IscsiInterfaceTest(ModuleTestCase):
 
     def test_make_update_body_dhcp(self):
         """Ensure the update body generates correctly for a transition from static to dhcp"""
-        self._set_args(dict(state='present',
+        self._set_args(dict(state='enabled',
                             config_method='dhcp')
                        )
 
@@ -147,7 +147,7 @@ class IscsiInterfaceTest(ModuleTestCase):
                                                         ipv4GatewayAddress="0.0.0.0", ), ),
                      interfaceData=dict(ethernetData=dict(maximumFramePayloadSize=1500, ), ), )
 
-        self._set_args(dict(state='present',
+        self._set_args(dict(state='enabled',
                             config_method='static',
                             address='10.10.10.10',
                             subnet_mask='255.255.255.0',
