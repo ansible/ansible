@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -207,7 +208,7 @@ options:
     required: false
   internet_service:
     description:
-      - Enable/disable use of Internet Services for this policy. If enabled, destination address and service are not used. 
+      - Enable/disable use of Internet Services for this policy. If enabled, destination address/service not used.
     required: false
   internet_service_custom:
     description:
@@ -537,17 +538,17 @@ api_result:
   type: string
 """
 
-import pydevd
-
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
 
 # check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
+
     HAS_PYFMGR = True
 except ImportError:
     HAS_PYFMGR = False
+
 
 def parse_csv_str_to_list(input_string):
     """
@@ -576,19 +577,19 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
     # TODO:
     # Continue to add parameters from the massive list to the datagram as time goes on, to test these.
 
-    if paramgram["mode"] in ['set','add']:
+    if paramgram["mode"] in ['set', 'add']:
         url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall/policy'.format(adom=paramgram["adom"],
-                                                                                pkg=paramgram["package_name"])
-        #BEGIN CREATING THE DATAGRAM PARAMETERS
+                                                                        pkg=paramgram["package_name"])
+        # BEGIN CREATING THE DATAGRAM PARAMETERS
         datagram = {
-            ### BASIC PARAMETERS
+            # BASIC PARAMETERS
             "name": paramgram["name"],
             "action": paramgram["action"],
             "logtraffic": paramgram["logtraffic"],
             "schedule": paramgram["schedule"],
             "nat": paramgram["nat"],
 
-            ### LIST PARAMETERS
+            # LIST PARAMETERS
             "srcaddr": parse_csv_str_to_list(paramgram["srcaddr"]),
             "dstaddr": parse_csv_str_to_list(paramgram["dstaddr"]),
             "srcintf": parse_csv_str_to_list(paramgram["srcintf"]),
@@ -596,11 +597,11 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
             "service": parse_csv_str_to_list(paramgram["service"]),
             "users": parse_csv_str_to_list(paramgram["users"]),
 
-            ### ADD PROFILE GENERAL PARAMS
+            # ADD PROFILE GENERAL PARAMS
 
             "profile-type": paramgram["profile-type"],
             "profile-group": paramgram["profile-group"],
-            #ADD SECURITY PROFILES
+            # ADD SECURITY PROFILES
             "dlp-sensor": paramgram["dlp-sensor"],
             "ips-sensor": paramgram["ips-sensor"],
             "av-profile": paramgram["av-profile"],
@@ -634,13 +635,13 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
 
     # IF MODE IS DELETE THEN...
     if paramgram["mode"] == "delete":
-        #WE NEED TO GET THE POLICY ID FROM THE NAME OF THE POLICY
+        # WE NEED TO GET THE POLICY ID FROM THE NAME OF THE POLICY
         url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall' \
               '/policy/'.format(adom=paramgram["adom"],
-                               pkg=paramgram["package_name"]
-                               )
+                                pkg=paramgram["package_name"])
+
         datagram = {
-            "filter": [ "name", "==", paramgram["name"] ]
+            "filter": ["name", "==", paramgram["name"]]
         }
         response = fmg.get(url, datagram)
         try:
@@ -652,16 +653,14 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
                 url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall' \
                       '/policy/{policyid}'.format(adom=paramgram["adom"],
                                                   pkg=paramgram["package_name"],
-                                                  policyid=policy_id
-                                                  )
+                                                  policyid=policy_id)
                 response = fmg.delete(url, datagram)
                 return response
         except:
             pass
 
-        #IF POLICY ID WASN'T FOUND, THEN JUST RETURN THE GET
+        # IF POLICY ID WASN'T FOUND, THEN JUST RETURN THE GET
         return response
-
 
     if paramgram["mode"] == "set":
         response = fmg.set(url, datagram)
@@ -945,7 +944,7 @@ def main():
     else:
         # START SESSION LOGIC
         # IF THE BASIC PARAMETERS NEEDED ARE PRESENT THEN TRY TO CREATE THE POLICY
-        if (all([paramgram["action"], paramgram["srcaddr"], paramgram["dstaddr"]]))\
+        if (all([paramgram["action"], paramgram["srcaddr"], paramgram["dstaddr"]])) \
                 or (paramgram["mode"] == "delete" and paramgram["name"] is not None):
             results = fmgr_fwpol_ipv4(fmg, paramgram)
             if results[0] == -9998:
@@ -954,12 +953,12 @@ def main():
                 module.fail_json(msg="POLICY UPDATE FAILED", **results[1])
             elif results[0] == 0:
                 module.exit_json(msg="POLICY CREATED", **results[1])
-        
-    #LOG OUT OF FMGR!
+
+    # LOG OUT OF FMGR!
     fmg.logout()
 
-    #return module.exit_json(**results[1])
-    #return module.exit_json(msg="debug end", **paramgram)
+    # return module.exit_json(**results[1])
+    # return module.exit_json(msg="debug end", **paramgram)
 
 
 if __name__ == "__main__":
