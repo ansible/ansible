@@ -25,49 +25,69 @@ options:
     description:
       - The name of the individual account or organization that owns the GitHub repository.
     required: true
+    default: null
     aliases: [ 'account', 'organization' ]
   repo:
     description:
       - The name of the GitHub repository.
     required: true
+    default: null
     aliases: [ 'repository' ]
   name:
     description:
       - The name for the deploy key.
     required: true
+    default: null
     aliases: [ 'title', 'label' ]
   key:
     description:
       - The SSH public key to add to the repository as a deploy key.
     required: true
+    default: null
   read_only:
     description:
       - If C(true), the deploy key will only be able to read repository contents. Otherwise, the deploy key will be able to read and write.
+    required: false
     type: bool
-    default: 'yes'
+    default: yes
   state:
     description:
       - The state of the deploy key.
+    required: false
     default: "present"
     choices: [ "present", "absent" ]
   force:
     description:
       - If C(true), forcefully adds the deploy key by deleting any existing deploy key with the same public key or title.
+    required: false
+    default: no
     type: bool
-    default: 'no'
   username:
     description:
       - The username to authenticate with.
+    required: false
+    default: null
   password:
     description:
       - The password to authenticate with. A personal access token can be used here in place of a password.
+    required: false
+    default: null
   token:
     description:
       - The OAuth2 token or personal access token to authenticate with. Mutually exclusive with I(password).
+    required: false
+    default: null
   otp:
     description:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
+    required: false
+    default: null
     aliases: ['2fa_token']
+  api_url:
+    description:
+      - If using GitHub Enterprise, this is the API endpoint URL.
+    required: false
+    default: 'https://api.github.com'
 requirements:
    - python-requests
 notes:
@@ -84,6 +104,17 @@ EXAMPLES = '''
     read_only: yes
     username: "johndoe"
     password: "supersecretpassword"
+
+# add a new read-only deploy key to a GitHub Enterprise repository using basic authentication
+- github_deploy_key:
+    owner: "johndoe"
+    repo: "example"
+    name: "new-deploy-key"
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAwXxn7kIMNWzcDfou..."
+    read_only: yes
+    username: "johndoe"
+    password: "supersecretpassword"
+    api_url: "https://github.example.com/api/v3"
 
 # remove an existing deploy key from a GitHub repository
 - github_deploy_key:
@@ -200,9 +231,11 @@ class GithubDeployKey(object):
                 else:
                     return None
         elif status_code == 401:
-            self.module.fail_json(msg="Failed to connect to github.com due to invalid credentials", http_status_code=status_code)
+            self.module.fail_json(msg="Failed to connect to github due to invalid credentials", http_status_code=status_code)
         elif status_code == 404:
             self.module.fail_json(msg="GitHub repository does not exist", http_status_code=status_code)
+        elif status_code == 422:
+            self.module.exit_json(changed=False, msg="Deploy key already exists")
         else:
             self.module.fail_json(msg="Failed to retrieve existing deploy keys", http_status_code=status_code)
 
@@ -251,14 +284,13 @@ def main():
             username=dict(required=False, type='str'),
             password=dict(required=False, type='str', no_log=True),
             otp=dict(required=False, type='int', aliases=['2fa_token'], no_log=True),
-            token=dict(required=False, type='str', no_log=True)
+            token=dict(required=False, type='str', no_log=True),
+            api_url=dict(default='https://api.github.com', type='str')
         ),
         mutually_exclusive=[
             ['password', 'token']
         ],
         required_together=[
-            ['username', 'password'],
-            ['otp', 'username', 'password']
         ],
         required_one_of=[
             ['username', 'token']
@@ -277,8 +309,9 @@ def main():
     password = module.params.get('password', None)
     token = module.params.get('token', None)
     otp = module.params.get('otp', None)
+    api_url = module.params['api_url']
 
-    GITHUB_API_URL = "https://api.github.com/repos/{}/{}/keys".format(owner, repo)
+    GITHUB_API_URL = "{}/repos/{}/{}/keys".format(api_url, owner, repo)
 
     deploy_key = GithubDeployKey(module, GITHUB_API_URL, state, username, password, token, otp)
 
