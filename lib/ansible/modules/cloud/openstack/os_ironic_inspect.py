@@ -46,7 +46,7 @@ options:
       description:
         - Ignored. Present for backwards compatibility
 
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 RETURN = '''
@@ -114,8 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version='1.0.0')
+    sdk, cloud = openstack_cloud_from_module(
+        module, min_version='0.13.0')
     try:
 
         if module.params['name'] or module.params['uuid']:
@@ -138,7 +138,7 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

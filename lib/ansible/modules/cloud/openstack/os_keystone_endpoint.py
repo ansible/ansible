@@ -51,7 +51,7 @@ options:
      choices: [present, absent]
      default: present
 requirements:
-    - shade >= 1.11.0
+    - openstacksdk >= 0.13.0
 '''
 
 EXAMPLES = '''
@@ -147,7 +147,7 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.11.0')
+    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
 
     service_name_or_id = module.params['service']
     interface = module.params['endpoint_interface']
@@ -157,7 +157,7 @@ def main():
     state = module.params['state']
 
     try:
-        cloud = shade.operator_cloud(**module.params)
+        cloud = sdk.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name_or_id)
         if service is None:
@@ -204,7 +204,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

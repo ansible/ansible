@@ -72,7 +72,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -384,7 +384,7 @@ def main():
                            **module_kwargs)
 
     if module.params['project']:
-        min_version = '1.10.0'
+        min_version = '0.13.0'
     else:
         min_version = None
 
@@ -396,7 +396,7 @@ def main():
     if module.params['external_fixed_ips'] and not network:
         module.fail_json(msg='network is required when supplying external_fixed_ips')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -482,7 +482,7 @@ def main():
                 cloud.delete_router(router_id)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

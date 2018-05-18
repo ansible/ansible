@@ -230,7 +230,7 @@ def main():
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     if module.params['wait']:
-        min_version = '1.4.0'
+        min_version = '0.13.0'
     else:
         min_version = None
 
@@ -250,7 +250,7 @@ def main():
     if not node_id:
         module.fail_json(msg="A uuid or name value must be defined "
                              "to use this module.")
-    shade, cloud = openstack_cloud_from_module(
+    sdk, cloud = openstack_cloud_from_module(
         module, min_version=min_version)
     try:
         node = cloud.get_machine(node_id)
@@ -344,7 +344,7 @@ def main():
             module.fail_json(msg="State must be present, absent, "
                                  "maintenance, off")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

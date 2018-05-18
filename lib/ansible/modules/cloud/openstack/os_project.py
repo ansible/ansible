@@ -35,7 +35,6 @@ options:
    domain_id:
      description:
         - Domain id to create the project in if the cloud supports domains.
-          The domain_id parameter requires shade >= 1.8.0
      aliases: ['domain']
    enabled:
      description:
@@ -52,7 +51,7 @@ options:
        - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -153,11 +152,11 @@ def main():
     state = module.params['state']
 
     if domain:
-        min_version = '1.8.0'
+        min_version = '0.13.0'
     else:
         min_version = None
 
-    shade, cloud = openstack_cloud_from_module(
+    sdk, cloud = openstack_cloud_from_module(
         module, min_version=min_version)
     try:
         if domain:
@@ -208,7 +207,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 

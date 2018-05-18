@@ -78,7 +78,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -153,7 +153,7 @@ def main():
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     if module.params['nat_destination']:
-        min_version = '1.8.0'
+        min_version = '0.13.0'
     else:
         min_version = None
 
@@ -168,7 +168,7 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
 
     try:
         server = cloud.get_server(server_name_or_id)
@@ -251,7 +251,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=changed, floating_ip=f_ip)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

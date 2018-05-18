@@ -53,7 +53,7 @@ options:
        - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -128,8 +128,8 @@ def main():
     state = module.params.get('state')
 
     # role grant/revoke API introduced in 1.5.0
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version='1.5.0')
+    sdk, cloud = openstack_cloud_from_module(
+        module, min_version='0.13.0')
     try:
         filters = {}
 
@@ -184,7 +184,7 @@ def main():
 
         module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

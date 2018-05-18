@@ -203,11 +203,11 @@ def main():
 
     if filters:
         # Range search added in 1.5.0
-        min_version = '1.5.0'
+        min_version = '0.13.0'
     else:
         min_version = None
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
         if name:
             flavors = cloud.search_flavors(filters={'name': name})
@@ -223,7 +223,7 @@ def main():
         module.exit_json(changed=False,
                          ansible_facts=dict(openstack_flavors=flavors))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

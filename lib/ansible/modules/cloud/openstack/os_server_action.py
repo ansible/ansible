@@ -55,7 +55,7 @@ options:
        - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -87,10 +87,10 @@ _action_map = {'stop': 'SHUTOFF',
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
 
-def _wait(timeout, cloud, server, action, module, shade):
+def _wait(timeout, cloud, server, action, module, sdk):
     """Wait for the server to reach the desired state for the given action."""
 
-    for count in shade._utils._iterate_timeout(
+    for count in sdk.utils._iterate_timeout(
             timeout,
             "Timeout waiting for server to complete %s" % action):
         try:
@@ -135,9 +135,9 @@ def main():
     image = module.params['image']
 
     if action in _admin_actions:
-        shade, cloud = openstack_cloud_from_module(module)
+        sdk, cloud = openstack_cloud_from_module(module)
     else:
-        shade, cloud = openstack_cloud_from_module(module)
+        sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_server(module.params['server'])
         if not server:
@@ -153,7 +153,7 @@ def main():
 
             cloud.nova_client.servers.stop(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         if action == 'start':
@@ -162,7 +162,7 @@ def main():
 
             cloud.nova_client.servers.start(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         if action == 'pause':
@@ -171,7 +171,7 @@ def main():
 
             cloud.nova_client.servers.pause(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         elif action == 'unpause':
@@ -180,7 +180,7 @@ def main():
 
             cloud.nova_client.servers.unpause(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'lock':
@@ -199,7 +199,7 @@ def main():
 
             cloud.nova_client.servers.suspend(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'resume':
@@ -208,7 +208,7 @@ def main():
 
             cloud.nova_client.servers.resume(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'rebuild':
@@ -220,10 +220,10 @@ def main():
             # rebuild doesn't set a state, just do it
             cloud.nova_client.servers.rebuild(server=server.id, image=image.id)
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

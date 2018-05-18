@@ -51,7 +51,7 @@ options:
     description:
       - The availability zone of the resource.
 requirements:
-    - "shade"
+    - "openstacksdk"
 
 '''
 
@@ -93,15 +93,8 @@ flavor:
 
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -123,8 +116,7 @@ def main():
         ],
         **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    sdk, cloud = openstack_cloud_from_module(module)
 
     changed = False
     state = module.params['state']
@@ -133,7 +125,7 @@ def main():
     target_project_id = module.params['target_project_id']
 
     try:
-        cloud = shade.operator_cloud(**module.params)
+        # cloud = shade.operator_cloud(**module.params)
 
         if resource_type == 'nova_flavor':
             # returns Munch({'NAME_ATTR': 'name',
@@ -201,7 +193,7 @@ def main():
                          resource=resource,
                          id=resource_id)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.OpenStackCloudException as e:
         module.fail_json(msg=str(e), **module.params)
 
 
