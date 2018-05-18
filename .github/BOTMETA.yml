@@ -253,6 +253,7 @@ files:
   $modules/cloud/linode/linode.py: intheclouddan rwaweber zbal
   $modules/cloud/lxc/lxc_container.py: cloudnull
   $modules/cloud/lxd/: hnakamur
+  $modules/cloud/memset/: analbeard
   $modules/cloud/misc/helm.py: flaper87
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk
@@ -905,6 +906,9 @@ files:
     labels: networking
   $module_utils/onepassword.py:
     maintainers: samdoran
+  $module_utils/memset.py:
+    maintainers: analbeard
+    labels: cloud
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
