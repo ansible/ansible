@@ -37,6 +37,7 @@ try:
 except ImportError:
     from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
 
+
 def ensure_connected(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):

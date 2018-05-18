@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: netconf_get
+module: netconf_rpc
 version_added: "2.6"
 author:
     - "Ganesh Nalawade (@ganeshrn)"
@@ -74,7 +74,7 @@ EXAMPLES = """
   netconf_rpc:
     request: "{'unlock': {'target': {'candidate': None}}}"
     xmlns: "urn:ietf:params:xml:ns:netconf:base:1.0"
-  
+
 - name: discard changes
   netconf_rpc:
     request: discard-changes

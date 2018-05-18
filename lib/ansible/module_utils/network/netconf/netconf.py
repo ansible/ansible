@@ -105,6 +105,7 @@ def get(module, filter, lock=False):
 
     return response
 
+
 def dispatch(module, request):
     conn = get_connection(module)
     try:
