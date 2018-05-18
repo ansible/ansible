@@ -51,13 +51,13 @@ options:
     description:
       - The password associated with the username account.
     required: false
-    
+
   object:
     description:
       - The data object we wish to query (device, package, rule, etc). Will expand choices as improves.
     required: true
     choices: ['device', 'cluster_nodes', 'task', 'custom']
-    
+
   custom_endpoint:
     description:
         - The HTTP Endpoint on FortiManager you wish to GET from. ADVANCED USERS ONLY.
@@ -80,7 +80,7 @@ options:
     description:
       - The serial number of the device you want to query.
     required: false
-    
+
   task_id:
     description:
       - The ID of the task you wish to query status on. If left blank and object = 'task' a list of tasks are returned.
@@ -106,7 +106,7 @@ EXAMPLES = '''
     adom: "ansible"
     object: "device"
     device_serial: "FGVM000000117992"
-    
+
 - name: QUERY FORTIGATE DEVICE BY FRIENDLY NAME
   fmgr_query:
     host: "{{inventory_hostname}}"
@@ -115,7 +115,7 @@ EXAMPLES = '''
     adom: "ansible"
     object: "device"
     device_unique_name: "ansible-fgt01"
-    
+
 - name: VERIFY CLUSTER MEMBERS AND STATUS
   fmgr_query:
     host: "{{inventory_hostname}}"
@@ -134,7 +134,7 @@ EXAMPLES = '''
     adom: "ansible"
     object: "task"
     task_id: "3"
-    
+
 - name: USE CUSTOM TYPE TO QUERY AVAILABLE SCRIPTS
   fmgr_query:
     host: "{{inventory_hostname}}"
@@ -152,7 +152,6 @@ api_result:
   returned: always
   type: string
 """
-#import pydevd
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
@@ -236,8 +235,7 @@ def fmgr_get_device(fmg, paramgram):
         if len(response[1]) >= 0:
             device_found = 1
 
-
-    #CHECK IF ANYTHING WAS RETURNED, IF NOT TRY DEVICE NAME PARAMETER
+    # CHECK IF ANYTHING WAS RETURNED, IF NOT TRY DEVICE NAME PARAMETER
     if device_found == 0 and paramgram["device_unique_name"] is not None:
         datagram = {
             "filter": ["name", "==", paramgram["device_unique_name"]]
@@ -302,7 +300,7 @@ def fmgr_get_cluster_nodes(fmg, paramgram):
         missing_nodes.remove(node_append["node_name"])
         loop_count += 1
 
-    #BUILD RETURN OBJECT FROM NODE LISTS
+    # BUILD RETURN OBJECT FROM NODE LISTS
     nodes = {
         "good_nodes": good_nodes,
         "expected_nodes": expected_nodes,
@@ -314,7 +312,6 @@ def fmgr_get_cluster_nodes(fmg, paramgram):
         nodes["cluster_status"] = "OK"
     else:
         nodes["cluster_status"] = "NOT-COMPLIANT"
-
 
     return nodes
 
@@ -385,7 +382,6 @@ def main():
             elif results is None:
                 module.fail_json(msg="Query FAILED -- Check module or playbook syntax")
 
-
         # IF OBJECT IS TASK
         if paramgram["object"] == "task":
             results = fmgr_get_task_status(fmg, paramgram)
@@ -394,7 +390,6 @@ def main():
             if results[0] == 0:
                 module.exit_json(msg="Task Found", **results[1])
 
-        #pydevd.settrace('10.0.0.122', port=54654, stdoutToServer=True, stderrToServer=True)
         # IF OBJECT IS CUSTOM
         if paramgram["object"] == "custom":
             results = fmgr_get_custom(fmg, paramgram)
@@ -415,10 +410,6 @@ def main():
     # logout
     fmg.logout()
     return module.fail_json(msg="Parameters weren't right, logic tree didn't validate. Check playbook.")
-
-
-
-
 
 if __name__ == "__main__":
     main()
