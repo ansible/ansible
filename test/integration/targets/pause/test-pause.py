@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+import os
 import pexpect
 import sys
 import termios
-import os
 
 from ansible.module_utils.six import PY2
 
@@ -11,7 +11,8 @@ args = sys.argv[1:]
 
 env_vars = {
     'ANSIBLE_ROLES_PATH': './roles',
-    'ANSIBLE_NOCOLOR': 'True'
+    'ANSIBLE_NOCOLOR': 'True',
+    'ANSIBLE_RETRY_FILES_ENABLED': 'False'
 }
 
 try:
