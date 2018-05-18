@@ -28,6 +28,7 @@ from .test_nios_module import TestNiosModule, load_fixture
 
 class TestNiosZoneModule(TestNiosModule):
 
+    module = nios_zone
 
     def setUp(self):
         super(TestNiosZoneModule, self).setUp()
@@ -40,12 +41,10 @@ class TestNiosZoneModule(TestNiosModule):
         self.mock_wapi_run.start()
         self.load_config = self.mock_wapi_run.start()
 
-
     def tearDown(self):
         super(TestNiosZoneModule, self).tearDown()
         self.mock_wapi.stop()
         self.mock_wapi_run.stop()
-
 
     def _get_wapi(self, test_object):
         wapi = api.WapiModule(self.module)
@@ -55,11 +54,9 @@ class TestNiosZoneModule(TestNiosModule):
         wapi.delete_object = Mock(name='delete_object')
         return wapi
 
-
     def load_fixtures(self, commands=None):
         self.exec_command.return_value = (0, load_fixture('nios_result.txt').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
-
 
     def test_nios_zone_create(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible.com',
@@ -80,7 +77,6 @@ class TestNiosZoneModule(TestNiosModule):
         self.assertTrue(res['changed'])
         wapi.create_object.assert_called_once_with('testobject', {'name': 'ansible.com'})
 
-
     def test_nios_zone_remove(self):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible.com',
                               'comment': None, 'extattrs': None}
@@ -99,13 +95,11 @@ class TestNiosZoneModule(TestNiosModule):
             "comment": {},
             "extattrs": {}
         }
-
         wapi = self._get_wapi(test_object)
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
         wapi.delete_object.assert_called_once_with(ref)
-
 
     def test_nios_zone_update_comment(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible.com',
