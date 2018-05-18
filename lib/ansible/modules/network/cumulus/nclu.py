@@ -86,7 +86,7 @@ EXAMPLES = '''
         - add bgp neighbor swp51 interface remote-as external
         - add bgp neighbor swp52 interface remote-as external
     commit: true
-    
+
 '''
 
 RETURN = '''
