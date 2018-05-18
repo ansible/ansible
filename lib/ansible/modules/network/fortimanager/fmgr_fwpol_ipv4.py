@@ -235,7 +235,7 @@ options:
     required: false
   learning_mode:
     description:
-      - Enable to allow everything, but log all of the meaningful data for security information gathering. A learning report will be generated.
+      - Enable to allow everything, but log all of the meaningful data. A learning report will be generated.
     required: false
   logtraffic:
     description:
@@ -264,15 +264,15 @@ options:
     required: false
   natinbound:
     description:
-      - Policy-based IPsec VPN: apply destination NAT to inbound traffic.
+      - Policy-based IPsec VPN apply destination NAT to inbound traffic.
     required: false
   natip:
     description:
-      - Policy-based IPsec VPN: source NAT IP address for outgoing traffic.
+      - Policy-based IPsec VPN source NAT IP address for outgoing traffic.
     required: false
   natoutbound:
     description:
-      - Policy-based IPsec VPN: apply source NAT to outbound traffic.
+      - Policy-based IPsec VPN apply source NAT to outbound traffic.
     required: false
   ntlm:
     description:
@@ -288,7 +288,7 @@ options:
     required: false
   outbound:
     description:
-      - Policy-based IPsec VPN: only traffic from the internal network can initiate a VPN.
+      - Policy-based IPsec VPN only traffic from the internal network can initiate a VPN.
     required: false
   per_ip_shaper:
     description:
@@ -444,11 +444,11 @@ options:
     required: false
   vlan_cos_fwd:
     description:
-      - VLAN forward direction user priority: 255 passthrough, 0 lowest, 7 highest.
+      - VLAN forward direction user priority 255 passthrough, 0 lowest, 7 highest.
     required: false
   vlan_cos_rev:
     description:
-      - VLAN reverse direction user priority: 255 passthrough, 0 lowest, 7 highest..
+      - VLAN reverse direction user priority 255 passthrough, 0 lowest, 7 highest..
     required: false
   voip_profile:
     description:
@@ -464,7 +464,7 @@ options:
     required: false
   vpntunnel:
     description:
-      - Policy-based IPsec VPN: name of the IPsec VPN Phase 1.
+      - Policy-based IPsec VPN name of the IPsec VPN Phase 1.
     required: false
   waf_profile:
     description:
