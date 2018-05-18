@@ -111,15 +111,18 @@ def openstack_module_kwargs(**kwargs):
 def openstack_cloud_from_module(module, min_version=None):
     from distutils.version import StrictVersion
     try:
-        import shade
+        # Due to the name shadowing we should import other way
+        import importlib
+        sdk = importlib.import_module('openstack')
+        # sdk = __import__('openstack')
     except ImportError:
-        module.fail_json(msg='shade is required for this module')
+        module.fail_json(msg='openstacksdk is required for this module')
 
     if min_version:
-        if StrictVersion(shade.__version__) < StrictVersion(min_version):
+        if StrictVersion(sdk.__version__) < StrictVersion(min_version):
             module.fail_json(
                 msg="To utilize this module, the installed version of"
-                    "the shade library MUST be >={min_version}".format(
+                    "the openstacksdk library MUST be >={min_version}".format(
                         min_version=min_version))
 
     cloud_config = module.params.pop('cloud', None)
@@ -136,9 +139,9 @@ def openstack_cloud_from_module(module, min_version=None):
                 module.fail_json(fail_message.format(param=param))
         if module.params['auth_type'] != 'password':
             module.fail_json(fail_message.format(param='auth_type'))
-        return shade, shade.operator_cloud(**cloud_config)
+        return sdk, sdk.connect(**cloud_config)
     else:
-        return shade, shade.operator_cloud(
+        return sdk, sdk.connect(
             cloud=cloud_config,
             auth_type=module.params['auth_type'],
             auth=module.params['auth'],
