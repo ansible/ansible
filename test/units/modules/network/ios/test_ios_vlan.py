@@ -51,7 +51,7 @@ class TestIosVlanModule(TestIosModule):
         self.load_config.return_value = {'diff': None, 'session': 'session'}
 
     def test_ios_vlan_create(self):
-        set_module_args(dict(vlan_id=2, name='test', state='present'))
+        set_module_args({'vlan_id': '2', 'name': 'test', 'state': 'present'})
         result = self.execute_module()
         self.assertEqual(result['commands'], ['vlan 2', 'name test'])
 
