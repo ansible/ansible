@@ -145,17 +145,25 @@
 
 - name: Copy some module to custom repo
   win_shell: |
-    Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path "{{custom_repo_path}}";
-    Get-ChildItem "{{custom_repo_path}}" | ? Name -eq "{{powershell_module}}" | % Name;
-  register: saved_package
 
-- debug:
-    var: saved_package
+    # Need PSGet 1.6.0 for publishing and named repo usage
+    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"}
+    Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force;
+    # Unload previous version
+    Remove-Module -Name $psg.n -Force;
+    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force;
+
+    Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path $env:temp;
+
+    Publish-Module -Path "$($env:temp)\\{{powershell_module}}" -Repository "{{custom_repo_name}}" -Force -Confirm:$false;
+    
+    Get-ChildItem C:\_repo\* | ? Name -match "powershell-yaml.*.nupkg" | % Name;
+  register: saved_package
 
 - name: Validate sample module in custom repo
   assert:
     that:
-      - "saved_package.stdout_lines[0] == powershell_module"
+      - "powershell_module in saved_package.stdout_lines[0]"
 
 - name: Install module from custom Powershell repository
   win_psmodule:
@@ -171,7 +179,7 @@
       - "module_from_custom_repo is changed"
       - "module_from_custom_repo.output == 'Module {{ powershell_module }} installed'"
 
-- name: Copy some module to custom repo
+- name: Verify module was installed from custom repo
   win_shell: (Get-InstalledModule -Name "{{powershell_module}}").Repository
   register: is_package_customrepo
 
