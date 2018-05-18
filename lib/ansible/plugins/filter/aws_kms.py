@@ -1,13 +1,27 @@
-""" Modoule to handle encrypting and decrypting of items with KMS """
+"""
+(c) 2018, Archie Gunasekara <contact@achinthagunasekara.com>
+Modoule to handle encrypting and decrypting of items with KMS
+"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type  # pylint: disable=invalid-name
+
 import base64
-import botocore
-import aws_encryption_sdk
+from ansible.errors import AnsibleError, AnsibleFilterError
+
+try:
+    import botocore
+    import aws_encryption_sdk
+    HAS_DEPENDENCIES = True
+except ImportError:
+    HAS_DEPENDENCIES = False
 
 
 def aws_kms_encrypt(plaintext, key_arn):
     """ Encrypt with KMS """
+    if not HAS_DEPENDENCIES:
+        raise AnsibleError('You need to install "botocore" and "aws_encryption_sdk"'
+                           'before using aws_kms filter')
+
     try:
         session = botocore.session.get_session()
         kms_kwargs = {
@@ -21,11 +35,15 @@ def aws_kms_encrypt(plaintext, key_arn):
         )
         return base64.b64encode(ciphertext)
     except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise Exception("Unable to decrypt vaule using KMS")
+        raise AnsibleFilterError('Unable to encrypt vaule using KMS')
 
 
 def aws_kms_decrypt(ciphertext, key_arn):
     """ Decrypt with KMS """
+    if not HAS_DEPENDENCIES:
+        raise AnsibleError('You need to install "botocore" and "aws_encryption_sdk"'
+                           'before using aws_kms filter')
+
     try:
         session = botocore.session.get_session()
         kms_kwargs = {
@@ -39,7 +57,7 @@ def aws_kms_decrypt(ciphertext, key_arn):
         )
         return cycled_plaintext.rstrip()
     except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise Exception("Unable to decrypt vaule using KMS")
+        raise AnsibleFilterError('Unable to decrypt vaule using KMS')
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
