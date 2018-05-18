@@ -595,35 +595,26 @@ def is_not_a_branch(git_path, module, dest):
     return False
 
 
-def get_repo_path(module, dest, bare):
+def get_repo_path(dest, bare):
     if bare:
         repo_path = dest
     else:
         repo_path = os.path.join(dest, '.git')
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
-        try:
-            with open(repo_path, 'r') as gitfile:
-                data = gitfile.read()
-            ref_prefix, gitdir = data.rstrip().split('gitdir: ', 1)
-            if ref_prefix:
-                raise ValueError('.git file has invalid git dir reference format')
+        with open(repo_path, 'r') as gitfile:
+            data = gitfile.read()
+        ref_prefix, gitdir = data.rstrip().split('gitdir: ', 1)
+        if ref_prefix:
+            raise ValueError('.git file has invalid git dir reference format')
 
-            # There is a possibility the .git file to have an absolute path.
-            if os.path.isabs(gitdir):
-                repo_path = gitdir
-            else:
-                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
-            if not os.path.isdir(repo_path):
-                raise ValueError('%s is not a directory' % repo_path)
-        except (IOError, AttributeError, ValueError) as err:
-            # No repo path found
-            """``.git`` file does not have a valid format for detached Git dir."""
-            module.fail_json(
-                msg='Current repo does not have a valid reference to a '
-                'separate Git dir or it refers to the invalid path',
-                details=str(err),
-            )
+        # There is a possibility the .git file to have an absolute path.
+        if os.path.isabs(gitdir):
+            repo_path = gitdir
+        else:
+            repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        if not os.path.isdir(repo_path):
+            raise ValueError('%s is not a directory' % repo_path)
     return repo_path
 
 
@@ -635,7 +626,16 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     associated with.  In the case of a detached HEAD, this will look
     up the branch in .git/refs/remotes/<remote>/HEAD.
     '''
-    repo_path = get_repo_path(module, dest, bare)
+    try:
+        repo_path = get_repo_path(dest, bare)
+    except (IOError, ValueError) as err:
+        # No repo path found
+        """``.git`` file does not have a valid format for detached Git dir."""
+        module.fail_json(
+            msg='Current repo does not have a valid reference to a '
+            'separate Git dir or it refers to the invalid path',
+            details=str(err),
+        )
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
     # the remote HEAD in .git/refs/remotes/<remote>/HEAD
@@ -1025,7 +1025,16 @@ def main():
         module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(dest)
-        repo_path = get_repo_path(module, dest, bare)
+        try:
+            repo_path = get_repo_path(dest, bare)
+        except (IOError, ValueError) as err:
+            # No repo path found
+            """``.git`` file does not have a valid format for detached Git dir."""
+            module.fail_json(
+                msg='Current repo does not have a valid reference to a '
+                'separate Git dir or it refers to the invalid path',
+                details=str(err),
+            )
         gitconfig = os.path.join(repo_path, 'config')
 
     # create a wrapper script and export
