@@ -1,5 +1,5 @@
 ---
-- debug: msg="START ios cli/network_put.yaml on connection={{ ansible_connection }}"
+- debug: msg="START ios cli/net_put.yaml on connection={{ ansible_connection }}"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
@@ -13,7 +13,7 @@
     match: none
 
 - name: copy file from controller to ios + scp (Default)
-  network_put:
+  net_put:
     src: ios1.cfg
   register: result
 
@@ -22,7 +22,7 @@
       - result.changed == true
 
 - name: copy file from controller to ios + dest specified
-  network_put:
+  net_put:
     src: ios1.cfg
     dest: ios.cfg
   register: result
@@ -31,4 +31,4 @@
     that:
       - result.changed == true
 
-- debug: msg="END ios cli/network_put.yaml on connection={{ ansible_connection }}"
+- debug: msg="END ios cli/net_put.yaml on connection={{ ansible_connection }}"
