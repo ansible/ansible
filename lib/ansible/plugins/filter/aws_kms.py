@@ -1,8 +1,32 @@
 """ Modoule to handle encrypting and decrypting of items with KMS """
 
+
+from __future__ import (absolute_import, division, print_function)
 import base64
 import botocore
 import aws_encryption_sdk
+
+
+__metaclass__ = type  # pylint: disable=invalid-name
+
+
+def aws_kms_encrypt(plaintext, key_arn):
+    """ Encrypt with KMS """
+    try:
+        session = botocore.session.get_session()
+        kms_kwargs = {
+            'key_ids': [key_arn],
+            'botocore_session': session
+        }
+        master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
+        ciphertext, encryptor_header = aws_encryption_sdk.encrypt(  # pylint: disable=unused-variable
+            source=plaintext,
+            key_provider=master_key_provider
+        )
+        return base64.b64encode(ciphertext)
+    except aws_encryption_sdk.exceptions.NotSupportedError:
+        raise Exception("Unable to decrypt vaule using KMS")
+
 
 def aws_kms_decrypt(ciphertext, key_arn):
     """ Decrypt with KMS """
@@ -27,5 +51,6 @@ class FilterModule(object):  # pylint: disable=too-few-public-methods
     def filters(self):  # pylint: disable=no-self-use
         """ Filter moule to provide functions """
         return {
+            'aws_kms_encrypt': aws_kms_encrypt,
             'aws_kms_decrypt': aws_kms_decrypt
         }
