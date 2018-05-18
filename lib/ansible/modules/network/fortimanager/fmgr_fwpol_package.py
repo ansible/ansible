@@ -36,7 +36,7 @@ author:
 short_description: Manages FortiManager Firewall Policies Packages themselves
 description:
   -  Manages FortiManager Firewall Policies IPv4 -- create/delete/clone/assign -- manage groups
-  
+
 options:
   adom:
     description:
@@ -57,7 +57,7 @@ options:
     description:
       - The username to log into the FortiManager
     required: true
-    
+
   password:
     description:
       - The password associated with the username account.
@@ -79,29 +79,29 @@ options:
       - Are we managing packages or folders, or installing packages?
     required: True
     choices: ['pkg','folder','install']
-    
+
   package_folder:
     description:
       - Name of the folder you want to put the package into
     required: false
-    
+
   central_nat:
     description:
       - Central NAT setting
     required: false
     choices: ['enable', 'disable']
     default: disable
-    
+
   fwpolicy_implicit_log:
     description:
-      - Implicit Log setting for all IPv4 policies in package 
+      - Implicit Log setting for all IPv4 policies in package
     required: false
     choices: ['enable', 'disable']
     default: disable
-    
+
   fwpolicy6_implicit_log:
     description:
-      - Implicit Log setting for all IPv6 policies in package 
+      - Implicit Log setting for all IPv6 policies in package
     required: false
     choices: ['enable', 'disable']
     default: disable
@@ -112,14 +112,14 @@ options:
     required: false
     choices: ['flow', 'proxy']
     default: flow
-    
+
   ngfw_mode:
     description:
       - NGFW mode setting for the policies flow or proxy
     required: false
     choices: ['profile-based', 'policy-based']
     default: policy-based
-    
+
   ssl_ssh_profile:
     description:
       - if policy-based ngfw-mode, refer to firewall ssl-ssh-profile
@@ -129,18 +129,18 @@ options:
     description:
       - The devices or scope that you want to assign this policy package to.
     required: false
-    
+
   scope_members_vdom:
     description:
       - The members VDOM you want to assign the package to
     required: false
     default: root
-    
+
   parent_folder:
     description:
       - The parent folder name you want to add this object under
     required: false
-    
+
 '''
 
 
@@ -154,7 +154,7 @@ EXAMPLES = '''
     mode: "add"
     name: "testPackage"
     type: "pkg"
-    
+
 - name: ADD PACKAGE WITH TARGETS
   fmgr_fwpol_package:
     host: "{{ inventory_hostname }}"
@@ -198,7 +198,7 @@ EXAMPLES = '''
     adom: "ansible"
     name: "ansibleTestFolder2"
     type: "folder"
-    parent_folder: "ansibleTestFolder1"    
+    parent_folder: "ansibleTestFolder1"
 
 - name: INSTALL PACKAGE
   fmgr_fwpol_package:
@@ -210,7 +210,7 @@ EXAMPLES = '''
     name: "ansibleTestPackage1"
     type: "install"
     scope_members: "seattle-fgt03, seattle-fgt02"
-    
+
 - name: REMOVE PACKAGE
   fmgr_fwpol_package:
     host: "{{ inventory_hostname }}"
@@ -252,8 +252,6 @@ EXAMPLES = '''
     adom: "ansible"
     name: "ansibleTestFolder1"
     type: "folder"
-
-
 '''
 RETURN = """
 api_result:
@@ -262,7 +260,6 @@ api_result:
   type: string
 """
 
-import pydevd
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
 
@@ -273,6 +270,7 @@ try:
     HAS_PYFMGR = True
 except ImportError:
     HAS_PYFMGR = False
+
 
 def parse_csv_str_to_list(input_string):
     """
@@ -290,7 +288,7 @@ def parse_csv_str_to_list(input_string):
         # FOR EACH ITEM WE CAN SPLIT VIA COMMA ADD IT TO THE LIST
         for obj in inputs.split(","):
             input.append(obj)
-        #RETURN THE LIST
+        # RETURN THE LIST
         return input
     else:
         # IF THE INPUT STRING WAS EMPTY RETURN NONE/NULL
@@ -306,7 +304,7 @@ def fmgr_fwpol_package(fmg, paramgram):
         url = '/pm/pkg/adom/{adom}'.format(adom=paramgram["adom"])
         members_list = []
 
-        #CHECK FOR SCOPE MEMBERS AND CREATE THAT DICT
+        # CHECK FOR SCOPE MEMBERS AND CREATE THAT DICT
         if paramgram["scope_members"] is not None:
             members = parse_csv_str_to_list(paramgram["scope_members"])
             for member in members:
@@ -373,11 +371,11 @@ def fmgr_fwpol_package(fmg, paramgram):
 
     if paramgram["mode"] == "set":
         response = fmg.set(url, datagram)
-       # return response
+        # return response
         # IF MODE = ADD  -- USE THE 'ADD' API CALL MODE
     if paramgram["mode"] == "add":
         response = fmg.add(url, datagram)
-        #return response
+        # return response
         # IF MODE = DELETE  -- USE THE DELETE URL AND API CALL MODE
     if paramgram["mode"] == "delete":
         response = fmg.delete(url, datagram)
@@ -440,6 +438,7 @@ def fmgr_fwpol_package_folder(fmg, paramgram):
 
     return response
 
+
 def fmgr_fwpol_package_install(fmg, paramgram):
     """
     This method/function installs FMGR FW Policy Packages to the scope members defined in the playbook.
@@ -465,6 +464,7 @@ def fmgr_fwpol_package_install(fmg, paramgram):
     url = '/securityconsole/install/package'
     response = fmg.execute(url, datagram)
     return response
+
 
 def main():
     argument_spec = dict(
@@ -523,7 +523,7 @@ def main():
         # START SESSION LOGIC
         # IF THE TYPE IS PACKAGE LETS RUN THAT METHOD
         if paramgram["type"] == "pkg":
-            results = fmgr_fwpol_package(fmg,paramgram)
+            results = fmgr_fwpol_package(fmg, paramgram)
             if results[0] == 0:
                 module.exit_json(msg="Package successfully created/deleted", **results[1])
             else:
@@ -531,7 +531,7 @@ def main():
 
         # IF THE TYPE IS FOLDER LETS RUN THAT METHOD
         if paramgram["type"] == "folder":
-            results = fmgr_fwpol_package_folder(fmg,paramgram)
+            results = fmgr_fwpol_package_folder(fmg, paramgram)
             if results[0] == 0:
                 module.exit_json(msg="Folder successfully created/deleted", **results[1])
             else:
@@ -539,16 +539,11 @@ def main():
 
         # IF THE TYPE IS INSTALL AND NEEDED PARAMETERS ARE DEFINED INSTALL THE PACKAGE
         if paramgram["scope_members"] is not None and paramgram["name"] is not None and paramgram["type"] == "install":
-            results = fmgr_fwpol_package_install(fmg,paramgram)
+            results = fmgr_fwpol_package_install(fmg, paramgram)
             if results[0] == 0:
                 module.exit_json(msg="Install Task Successfully Created", **results[1])
             else:
                 module.fail_json(msg="Failed to create install task!", **results[1])
-
-
-    # RETURN THE RESULTS
-    #return module.exit_json(**results[1])
-
 
 if __name__ == "__main__":
     main()
