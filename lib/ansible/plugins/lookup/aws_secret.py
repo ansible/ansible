@@ -20,6 +20,10 @@ description:
     has the appropriate permissions to read the secret.
   - Lookup is based on the secret's `Name` value.
   - Optional parameters can be passed into this lookup: `version_id` and `version_stage`
+options:
+  _term:
+    description: Name of the secret to look up in AWS Secrets Manager. 
+    required: True
 """
 
 EXAMPLES = """
