@@ -147,6 +147,8 @@ EXAMPLES = '''
       - proto: tcp
         from_port: 443
         to_port: 443
+        # this should only be needed for EC2 Classic security group rules
+        # because in a VPC an ELB will use a user-account security group
         group_id: amazon-elb/sg-87654321/amazon-elb-sg
       - proto: tcp
         from_port: 3306
@@ -341,12 +343,15 @@ def to_permission(rule):
             perm['Ipv6Ranges'][0]['Description'] = rule.description
     elif rule.target_type == 'group':
         if isinstance(rule.target, tuple):
-            perm['UserIdGroupPairs'] = [{
-                'OwnerId': rule.target[0],
-                'GroupId': rule.target[1],
-                'GroupName': rule.target[2],
-            }]
-            raise NotImplementedError("Whoopsie, no foreign security group serialization yet. Target {0}".format(rule.target))
+            pair = {}
+            if rule.target[0]:
+                pair['UserId'] = rule.target[0]
+            # groupid/groupname are mutually exclusive
+            if rule.target[1] and not rule.target[2]:
+                pair['GroupId'] = rule.target[1]
+            if rule.target[2]:
+                pair['GroupName'] = rule.target[2]
+            perm['UserIdGroupPairs'] = [pair]
         else:
             perm['UserIdGroupPairs'] = [{
                 'GroupId': rule.target
@@ -388,13 +393,28 @@ def rule_from_group_permission(perm):
                 r.get('Description')
             )
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
-        # security group targets are special, handle separately
-        # TODO this doesn't handle cross-account groups yet
         for pair in perm['UserIdGroupPairs']:
+            target = pair['GroupId']
+            if pair.get('UserId'):
+                target = (
+                    pair.get('UserId', None),
+                    pair.get('GroupId', None),
+                    pair.get('GroupName', None),
+                )
+            if pair.get('UserId', '').startswith('amazon-'):
+                # amazon-elb and amazon-prefix rules don't need
+                # group-id specified, so remove it when querying
+                # from permission
+                target = (
+                    target[0],
+                    None,
+                    target[2],
+                )
+
             yield Rule(
                 ports_from_permission(perm),
                 perm['IpProtocol'],
-                pair['GroupId'],
+                target,
                 'group',
                 pair.get('Description')
             )
@@ -458,7 +478,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     """
     # TODO use this to set owner account on local SG IDs
     current_account_id = get_aws_account_id(module)
-    FOREIGN_SECURITY_GROUP_REGEX = r'^(\S+)/(sg-\S+)/(\S+)'
+    FOREIGN_SECURITY_GROUP_REGEX = r'^([^/]+)/?(sg-\S+)?/(\S+)'
     group_id = None
     group_name = None
     target_group_created = False
@@ -467,9 +487,11 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
-        group_instance = dict(GroupId=group_id, GroupName=group_name)
+        group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
+        if group_id and group_name:
+            group_id = None
         return 'group', (owner_id, group_id, group_name), False
     elif 'group_id' in rule:
         return 'group', rule['group_id'], False
@@ -916,7 +938,7 @@ def main():
                     module, client, rule, name, group, groups, vpc_id)
                 changed |= target_group_created
 
-                if rule['proto'] in ('all', '-1', -1):
+                if rule.get('proto', 'tcp') in ('all', '-1', -1):
                     rule['proto'] = '-1'
                     rule['from_port'] = None
                     rule['to_port'] = None
@@ -924,7 +946,7 @@ def main():
                 named_tuple_rule_list.append(
                     Rule(
                         port_range=(rule['from_port'], rule['to_port']),
-                        protocol=rule['proto'],
+                        protocol=rule.get('proto', 'tcp'),
                         target=target, target_type=target_type,
                         description=rule.get('rule_desc'),
                     )
