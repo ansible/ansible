@@ -399,9 +399,9 @@ def main():
                 results_len = len(results[1])
                 if results_len > 0:
                     results_combine = dict()
-                    if type(results[1]) is dict:
+                    if isinstance(results[1], dict):
                         results_combine["results"] = results[1]
-                    if type(results[1]) is list:
+                    if isinstance(results[1], list):
                         results_combine["results"] = results[1][0:results_len]
                     module.exit_json(msg="Custom Query Success", **results_combine)
                 else:
