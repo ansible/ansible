@@ -17,12 +17,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+
 from ansible.modules.net_tools.nios import nios_host_record
 from ansible.module_utils.net_tools.nios import api
 from units.modules.utils import set_module_args
 from ansible.compat.tests.mock import patch, MagicMock, Mock
-from .nios_module import TestNiosModule, load_fixture
+from .test_nios_module import TestNiosModule, load_fixture
+
 
 class TestNiosHostRecordModule(TestNiosModule):
 
@@ -63,7 +64,6 @@ class TestNiosHostRecordModule(TestNiosModule):
 
 
     def test_nios_host_record_create(self):
-        # set_module_args(dict(network_view='foo'))
         self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible',
                               'comment': None, 'extattrs': None}
 
@@ -87,7 +87,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible',
                               'comment': None, 'extattrs': None}
 
-        ref = "networkview/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+        ref = "record:host/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
 
         test_object = [{
             "comment": "test comment",
@@ -116,7 +116,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         test_object = [
             {
                 "comment": "test comment",
-                "_ref": "networkview/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
+                "_ref": "record:host/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
                 "name": "default",
                 "extattrs": {}
             }
@@ -142,7 +142,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         test_object = [
             {
                 "comment": "test comment",
-                "_ref": "networkview/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
+                "_ref": "record:host/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
                 "name": "default",
                 "old_name": "old_default",
                 "extattrs": {}
