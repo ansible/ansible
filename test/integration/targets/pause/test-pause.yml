@@ -10,4 +10,12 @@
 
     - assert:
         that:
-          - results.stdout == 'Paused for 1.0 seconds'
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - pause:
+        minutes: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ minutes')
