@@ -1,4 +1,4 @@
- #
+#
 #  Copyright 2018 Red Hat | Ansible
 #
 # This file is part of Ansible
