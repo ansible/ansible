@@ -29,7 +29,7 @@ from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosVlanModule(TestIosModule):
-    
+
     module = ios_vlan
 
     def setUp(self):
