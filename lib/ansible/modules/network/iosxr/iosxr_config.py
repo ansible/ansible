@@ -187,26 +187,27 @@ from ansible.module_utils._text import to_bytes, to_native
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
 CONFIG_MISPLACED_CHILDREN = [
-    re.compile(r'end-\s*(.+)$')
+    re.compile(r'^end-\s*(.+)$')
 ]
 CONFIG_BLOCKS_FORCED_IN_DIFF = [
     {
-        'start' : re.compile(r'route-policy'),
-        'end' : re.compile(r'end-policy')
+        'start': re.compile(r'route-policy'),
+        'end': re.compile(r'end-policy')
     },
     {
-        'start' : re.compile(r'prefix-set'),
-        'end' : re.compile(r'end-set')
+        'start': re.compile(r'prefix-set'),
+        'end': re.compile(r'end-set')
     },
     {
-        'start' : re.compile(r'as-path-set'),
-        'end' : re.compile(r'end-set')
+        'start': re.compile(r'as-path-set'),
+        'end': re.compile(r'end-set')
     },
     {
-        'start' : re.compile(r'community-set'),
-        'end' : re.compile(r'end-set')
+        'start': re.compile(r'community-set'),
+        'end': re.compile(r'end-set')
     }
 ]
+
 
 def copy_file_to_node(module):
     """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
@@ -231,6 +232,7 @@ def check_args(module, warnings):
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
+
 # A list of commands like {end-set, end-policy, ...} are part of configuration
 # block like { prefix-set, as-path-set , ... } but they are not indented properly
 # to be included with their parent. sanitize_config will add indentation to
@@ -248,12 +250,13 @@ def sanitize_config(config, force_diff_prefix=None):
     conf = ('\n').join(conf_lines)
     return conf
 
+
 def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
     conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
     candidate_lines = to_native(candidate, errors='surrogate_or_strict').split('\n')
 
     for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
-        block_index_start_end =  []
+        block_index_start_end = []
         for index, line in enumerate(candidate_lines):
             startre = regex['start'].search(line)
             if startre and startre.group(0):
@@ -279,7 +282,7 @@ def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
             else:
                 diff = False
                 continue
-            for i in range(start, end+1):
+            for i in range(start, end + 1):
                 if conf_lines[run_conf_start_index] == candidate_lines[i]:
                     run_conf_start_index = run_conf_start_index + 1
                 else:
@@ -287,9 +290,9 @@ def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
                     break
             if diff:
                 run_conf_start_index = conf_lines.index(candidate_lines[start])
-                for i in range(start, end+1):
-                   conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
-                   run_conf_start_index = run_conf_start_index + 1
+                for i in range(start, end + 1):
+                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
+                    run_conf_start_index = run_conf_start_index + 1
 
     conf = ('\n').join(conf_lines)
     return conf
@@ -316,6 +319,7 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -327,7 +331,6 @@ def run(module, result):
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
-
 
     commands = None
     if match != 'none' and replace != 'config':
