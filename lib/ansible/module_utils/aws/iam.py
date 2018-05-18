@@ -4,7 +4,7 @@
 import traceback
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
     pass  # caught by HAS_BOTO3
 
@@ -23,7 +23,9 @@ def get_aws_account_id(module):
     try:
         sts_client = module.client('sts')
         account_id = sts_client.get_caller_identity().get('Account')
-    except ClientError:
+    # non-STS sessions may also get NoCredentialsError from this STS call, so
+    # we must catch that too and try the IAM version
+    except (ClientError, NoCredentialsError):
         try:
             iam_client = module.client('iam')
             account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
@@ -41,4 +43,4 @@ def get_aws_account_id(module):
             )
     if not account_id:
         module.fail_json(msg="Failed while determining AWS account ID. Try allowing sts:GetCallerIdentity or iam:GetUser permissions.")
-    return account_id
+    return to_native(account_id)
