@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cloud_init_facts
+module: cloud_init_data_facts
 short_description: Retrieve facts of cloud-init.
 description:
   - Gathers facts by reading the status.json and result.json of cloud-init.
@@ -32,28 +32,28 @@ notes:
 
 EXAMPLES = '''
 - name: Gather all facts of cloud init
-  cloud_init_facts:
+  cloud_init_data_facts:
   register: result
 
 - debug:
     var: result
 
-- name: Waiting for cloud init to finish
-  cloud_init_facts:
+- name: Wait for cloud init to finish
+  cloud_init_data_facts:
     filter: status
   register: res
-  until: not res.cloud_init_facts.status.v1.stage
+  until: "res.cloud_init_data_facts.status.v1.stage is defined and not res.cloud_init_data_facts.status.v1.stage"
   retries: 50
   delay: 5
 '''
 
 RETURN = '''
 ---
-cloud_init_facts:
+cloud_init_data_facts:
   description: Facts of result and status.
   returned: success
   type: dict
-  sample: {
+  sample: '{
     "status": {
         "v1": {
             "datasource": "DataSourceCloudStack",
@@ -84,7 +84,7 @@ cloud_init_facts:
             },
             "stage": null
         }
-    }
+    }'
 '''
 
 import os
@@ -96,31 +96,28 @@ from ansible.module_utils._text import to_text
 CLOUD_INIT_PATH = "/var/lib/cloud/data/"
 
 
-class CloudInitFacts:
+def gather_cloud_init_data_facts(module):
+    res = {
+        'cloud_init_data_facts': dict()
+    }
 
-    def __init__(self):
-        self.result = {
-            'cloud_init_facts': {
-            }
-        }
+    for i in ['result', 'status']:
+        filter = module.params.get('filter')
+        if filter is None or filter == i:
+            res['cloud_init_data_facts'][i] = dict()
+            json_file = CLOUD_INIT_PATH + i + '.json'
 
-    def run(self):
-        for i in ['result', 'status']:
-            self.result['cloud_init_facts'][i] = {}
-            filter = module.params.get('filter')
-            if filter is None or filter == i:
-                json_file = CLOUD_INIT_PATH + i + '.json'
-                if os.path.exists(json_file):
-                    f = open(json_file, 'rb')
-                    contents = to_text(f.read(), errors='surrogate_or_strict')
-                    f.close()
-                    if contents:
-                        self.result['cloud_init_facts'][i] = module.from_json(contents)
-        return self.result
+            if os.path.exists(json_file):
+                f = open(json_file, 'rb')
+                contents = to_text(f.read(), errors='surrogate_or_strict')
+                f.close()
+
+                if contents:
+                    res['cloud_init_data_facts'][i] = module.from_json(contents)
+    return res
 
 
 def main():
-    global module
     module = AnsibleModule(
         argument_spec=dict(
             filter=dict(choices=['result', 'status']),
@@ -128,8 +125,7 @@ def main():
         supports_check_mode=True,
     )
 
-    cloud_init_facts = CloudInitFacts()
-    facts = cloud_init_facts.run()
+    facts = gather_cloud_init_data_facts(module)
     result = dict(changed=False, ansible_facts=facts, **facts)
     module.exit_json(**result)
 
