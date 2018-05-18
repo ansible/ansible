@@ -153,6 +153,9 @@
         - "not apt_result.changed"
         - "apt_result.failed"
 
+- name: autoclean during install
+  apt: pkg=hello state=present autoclean=yes
+
 # https://github.com/ansible/ansible/issues/23155
 - name: create a repo file
   copy:
@@ -211,11 +214,25 @@
     - libcaca-dev
     - libslang2-dev
 
-- name: autoclean during install
-  apt: pkg=hello state=present autoclean=yes
+# https://github.com/ansible/ansible/issues/38995
+- name: build-dep for a package
+  apt:
+    name: tree
+    state: build-dep
+  register: apt_result
 
-- name: autoclean
-  apt: autoclean=yes
+- name: Check the result
+  assert:
+    that:
+      - apt_result is changed
 
-- name: autoremove
-  apt: autoremove=yes
+- name: build-dep for a package (idempotency)
+  apt:
+    name: tree
+    state: build-dep
+  register: apt_result
+
+- name: Check the result
+  assert:
+    that:
+      - apt_result is not changed

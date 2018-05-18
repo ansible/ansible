@@ -1,4 +1,4 @@
-# (C) 2016, Joel, http://github.com/jjshoe
+# (C) 2016, Joel, https://github.com/jjshoe
 # (C) 2015, Tom Paine, <github@aioue.net>
 # (C) 2014, Jharrod LaFon, @JharrodLaFon
 # (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>

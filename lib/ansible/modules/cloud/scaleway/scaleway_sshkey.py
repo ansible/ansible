@@ -83,82 +83,9 @@ data:
     }
 '''
 
-import json
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.urls import fetch_url
-
-
-class Response(object):
-
-    def __init__(self, resp, info):
-        self.body = None
-        if resp:
-            self.body = resp.read()
-        self.info = info
-
-    @property
-    def json(self):
-        if not self.body:
-            if "body" in self.info:
-                return json.loads(self.info["body"])
-            return None
-        try:
-            return json.loads(self.body)
-        except ValueError:
-            return None
-
-    @property
-    def status_code(self):
-        return self.info["status"]
-
-
-class AccountAPI(object):
-
-    def __init__(self, module, headers, base_url):
-        self.module = module
-        self.headers = headers
-        self.base_url = base_url
-
-    def _url_builder(self, path):
-        if path[0] == '/':
-            path = path[1:]
-        return '%s/%s' % (self.base_url, path)
-
-    def send(self, method, path, data=None, headers=None):
-        url = self._url_builder(path)
-        data = self.module.jsonify(data)
-        timeout = self.module.params['timeout']
-
-        if headers is not None:
-            self.headers.update(headers)
-
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method, timeout=timeout)
-
-        # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
-        if info['status'] == -1:
-            self.module.fail_json(msg=info['msg'])
-
-        return Response(resp, info)
-
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
-
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
-
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
-
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
-
-    def patch(self, path, data=None, headers=None):
-        return self.send("PATCH", path, data, headers)
-
-    def update(self, path, data=None, headers=None):
-        return self.send("UPDATE", path, data, headers)
+from ansible.module_utils.scaleway import ScalewayAPI
 
 
 def extract_present_sshkeys(raw_organization_dict):
@@ -181,16 +108,15 @@ def core(module):
     api_token = module.params['oauth_token']
     ssh_pub_key = module.params['ssh_pub_key']
     state = module.params["state"]
-    account_api = AccountAPI(module,
-                             headers={'X-Auth-Token': api_token,
-                                      'Content-type': 'application/json'},
-                             base_url=module.params["base_url"])
+    account_api = ScalewayAPI(module,
+                              headers={'X-Auth-Token': api_token},
+                              base_url=module.params["base_url"])
     response = account_api.get('organizations')
 
     status_code = response.status_code
     organization_json = response.json
 
-    if status_code not in (200, 404):
+    if not response.ok:
         module.fail_json(msg='Error getting ssh key [{0}: {1}]'.format(
             status_code, response.json['message']))
 
@@ -214,7 +140,7 @@ def core(module):
 
         response = account_api.patch('/users/%s' % user_id, data=payload)
 
-        if response.status_code in (200, 201):
+        if response.ok:
             module.exit_json(changed=True, data=response.json)
 
         module.fail_json(msg='Error creating ssh key [{0}: {1}]'.format(
@@ -232,7 +158,7 @@ def core(module):
 
         response = account_api.patch('/users/%s' % user_id, data=payload)
 
-        if response.status_code in (200, 201, 204):
+        if response.ok:
             module.exit_json(changed=True, data=response.json)
 
         module.fail_json(msg='Error deleting ssh key [{0}: {1}]'.format(

@@ -39,7 +39,7 @@ options:
       - Whether to wait for the provisioning tasks to finish before returning.
     default: True
     required: False
-    choices: [True, False]
+    type: bool
 requirements:
     - python = 2.7
     - requests >= 2.5.0

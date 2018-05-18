@@ -39,7 +39,7 @@ options:
     description:
       - Describe attributes (like launchPermission) of the images found.
     default: no
-    choices: ["yes", "no"]
+    type: bool
 
 extends_documentation_fragment:
     - aws

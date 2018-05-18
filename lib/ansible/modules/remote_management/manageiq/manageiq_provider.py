@@ -694,7 +694,7 @@ class ManageIQProvider(object):
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
                       subscription, project, uid_ems, tenant_mapping_enabled, api_version):
-        """ Edit a user from manageiq.
+        """ Edit a provider from manageiq.
 
         Returns:
             a short message describing the operation executed.
@@ -737,33 +737,32 @@ class ManageIQProvider(object):
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
                         subscription, project, uid_ems, tenant_mapping_enabled, api_version):
-        """ Creates the user in manageiq.
+        """ Creates the provider in manageiq.
 
         Returns:
-            the created user id, name, created_on timestamp,
-            updated_on timestamp, userid and current_group_id.
+            a short message describing the operation executed.
         """
+        resource = dict(
+            name=name,
+            zone={'id': zone_id},
+            provider_region=provider_region,
+            host_default_vnc_port_start=host_default_vnc_port_start,
+            host_default_vnc_port_end=host_default_vnc_port_end,
+            subscription=subscription,
+            project=project,
+            uid_ems=uid_ems,
+            tenant_mapping_enabled=tenant_mapping_enabled,
+            api_version=api_version,
+            connection_configurations=endpoints,
+        )
+
         # clean nulls, we do not send nulls to the api
-        endpoints = delete_nulls(endpoints)
+        resource = delete_nulls(resource)
 
         # try to create a new provider
         try:
             url = '%s/providers' % (self.api_url)
-            result = self.client.post(
-                url,
-                name=name,
-                type=supported_providers()[provider_type]['class_name'],
-                zone={'id': zone_id},
-                provider_region=provider_region,
-                host_default_vnc_port_start=host_default_vnc_port_start,
-                host_default_vnc_port_end=host_default_vnc_port_end,
-                subscription=subscription,
-                project=project,
-                uid_ems=uid_ems,
-                tenant_mapping_enabled=tenant_mapping_enabled,
-                api_version=api_version,
-                connection_configurations=endpoints,
-            )
+            result = self.client.post(url, type=supported_providers()[provider_type]['class_name'], **resource)
         except Exception as e:
             self.module.fail_json(msg="failed to create provider %s: %s" % (name, str(e)))
 
@@ -802,7 +801,7 @@ def main():
         project=dict(),
         azure_tenant_id=dict(aliases=['keystone_v3_domain_id']),
         tenant_mapping_enabled=dict(default=False, type='bool'),
-        api_version=dict(),
+        api_version=dict(choices=['v2', 'v3']),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments

@@ -23,9 +23,9 @@ description:
 author: "Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
-    - xmltodict can be obtained from PyPi U(https://pypi.python.org/pypi/xmltodict)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtained from PyPi U(https://pypi.org/project/xmltodict/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -156,9 +156,9 @@ EXAMPLES = '''
     tag_name: ['ProjectX']
     source_zone: ['public']
     destination_zone: ['private']
-    source: ['any']
+    source_ip: ['any']
     source_user: ['any']
-    destination: ['1.1.1.1']
+    destination_ip: ['1.1.1.1']
     category: ['any']
     application: ['ssh']
     service: ['application-default']
@@ -176,9 +176,9 @@ EXAMPLES = '''
     description: 'Allow HTTP multimedia only to host at 1.1.1.1'
     source_zone: ['public']
     destination_zone: ['private']
-    source: ['any']
+    source_ip: ['any']
     source_user: ['any']
-    destination: ['1.1.1.1']
+    destination_ip: ['1.1.1.1']
     category: ['content-delivery-networks']
     application: ['http-video', 'http-audio']
     service: ['service-http', 'service-https']

@@ -21,12 +21,6 @@ DOCUMENTATION = '''
           key: remote_tmp
         vars:
         - name: ansible_remote_tmp
-      admin_users:
-        description:
-        - List of users to be expected to have admin privileges, this is unused
-          in the PowerShell plugin
-        type: list
-        default: []
       set_module_language:
         description:
         - Controls if we set the locale for moduels when executing on the
@@ -1167,10 +1161,14 @@ namespace Ansible
     Write-Output ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Write-Output $output))))
 } # end exec_wrapper
 
-Function Dump-Error ($excep) {
+Function Dump-Error ($excep, $msg=$null) {
     $eo = @{failed=$true}
 
-    $eo.msg = $excep.Exception.Message
+    $exception_message = $excep.Exception.Message
+    if ($null -ne $msg) {
+        $exception_message = "$($msg): $exception_message"
+    }
+    $eo.msg = $exception_message
     $eo.exception = $excep | Out-String
     $host.SetShouldExit(1)
 
@@ -1249,7 +1247,7 @@ Function Run($payload) {
     try {
         $logon_type, $logon_flags = Parse-BecomeFlags -flags $payload.become_flags
     } catch {
-        Dump-Error -excep $_
+        Dump-Error -excep $_ -msg "Failed to parse become_flags '$($payload.become_flags)'"
         return $null
     }
 
@@ -1291,7 +1289,7 @@ Function Run($payload) {
         [Console]::Error.WriteLine($stderr.Trim())
     } Catch {
         $excep = $_
-        Dump-Error $excep
+        Dump-Error -excep $excep -msg "Failed to become user $username"
     } Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
     }

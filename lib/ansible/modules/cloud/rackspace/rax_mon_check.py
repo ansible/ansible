@@ -88,7 +88,7 @@ options:
   disabled:
     description:
     - If "yes", ensure the check is created, but don't actually use it yet.
-    choices: [ "yes", "no" ]
+    type: bool
   metadata:
     description:
     - Hash of arbitrary key-value pairs to accompany this check if it fires.

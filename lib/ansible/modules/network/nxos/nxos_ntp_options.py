@@ -34,12 +34,8 @@ author:
     - Jason Edelman (@jedelman8)
 notes:
     - Tested against NXOSv 7.3.(0)D1(1) on VIRL
-    - At least one of C(master) or C(logging) params must be supplied.
-    - When C(state=absent), boolean parameters are flipped,
-      e.g. C(master=true) will disable the authoritative server.
-    - When C(state=absent) and C(master=true), the stratum will be removed as well.
-    - When C(state=absent) and C(master=false), the stratum will be configured
-      to its default value, 8.
+    - When C(state=absent), master and logging will be set to False and
+      stratum will be removed as well
 options:
     master:
         description:
@@ -75,7 +71,7 @@ updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["no ntp logging", "ntp master 11"]
+    sample: ["no ntp logging", "ntp master 12"]
 '''
 import re
 
@@ -85,20 +81,20 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_current(module):
-    cmd = ('show running-config', 'show ntp logging')
+    cmd = ('show running-config | inc ntp')
 
-    output = run_commands(module, ({'command': cmd[0], 'output': 'text'},
-                                   {'command': cmd[1], 'output': 'text'}))
+    master = False
+    logging = False
+    stratum = None
 
-    match = re.search(r"^ntp master(?: (\d+))", output[0], re.M)
-    if match:
-        master = True
-        stratum = match.group(1)
-    else:
-        master = False
-        stratum = None
+    output = run_commands(module, ({'command': cmd, 'output': 'text'}))[0]
 
-    logging = 'enabled' in output[1].lower()
+    if output:
+        match = re.search(r"^ntp master(?: (\d+))", output, re.M)
+        if match:
+            master = True
+            stratum = match.group(1)
+        logging = 'ntp logging' in output.lower()
 
     return {'master': master, 'stratum': stratum, 'logging': logging}
 
@@ -106,7 +102,7 @@ def get_current(module):
 def main():
     argument_spec = dict(
         master=dict(required=False, type='bool'),
-        stratum=dict(required=False, type='str', default='8'),
+        stratum=dict(required=False, type='str'),
         logging=dict(required=False, type='bool'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
@@ -124,15 +120,10 @@ def main():
     logging = module.params['logging']
     state = module.params['state']
 
-    if stratum:
-        try:
-            stratum_int = int(stratum)
-            if stratum_int < 1 or stratum_int > 15:
-                raise ValueError
-        except ValueError:
-            module.fail_json(msg='stratum must be an integer between 1 and 15')
+    if stratum and master is False:
+        if stratum != 8:
+            module.fail_json(msg='master MUST be True when stratum is changed')
 
-    desired = {'master': master, 'stratum': stratum, 'logging': logging}
     current = get_current(module)
 
     result = {'changed': False}
@@ -146,19 +137,17 @@ def main():
             commands.append('no ntp logging')
 
     elif state == 'present':
-        if desired['master'] and desired['master'] != current['master']:
-            if desired['stratum']:
-                commands.append('ntp master %s' % stratum)
-            else:
-                commands.append('ntp master')
-        elif desired['stratum'] and desired['stratum'] != current['stratum']:
+        if master and not current['master']:
+            commands.append('ntp master')
+        elif master is False and current['master']:
+            commands.append('no ntp master')
+        if stratum and stratum != current['stratum']:
             commands.append('ntp master %s' % stratum)
 
-        if desired['logging'] and desired['logging'] != current['logging']:
-            if desired['logging']:
-                commands.append('ntp logging')
-            else:
-                commands.append('no ntp logging')
+        if logging and not current['logging']:
+            commands.append('ntp logging')
+        elif logging is False and current['logging']:
+            commands.append('no ntp logging')
 
     result['commands'] = commands
     result['updates'] = commands

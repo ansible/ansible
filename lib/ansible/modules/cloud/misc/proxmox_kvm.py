@@ -24,12 +24,12 @@ author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
 options:
   acpi:
     description:
-      - Specify if ACPI should be enables/disabled.
+      - Specify if ACPI should be enabled/disabled.
     type: bool
     default: 'yes'
   agent:
     description:
-      - Specify if the QEMU GuestAgent should be enabled/disabled.
+      - Specify if the QEMU Guest Agent should be enabled/disabled.
     type: bool
   args:
     description:
@@ -50,7 +50,7 @@ options:
       - You can use C(PROXMOX_PASSWORD) environment variable.
   autostart:
     description:
-      - Specify, if the VM should be automatically restarted after crash (currently ignored in PVE API).
+      - Specify if the VM should be automatically restarted after crash (currently ignored in PVE API).
     type: bool
     default: 'no'
   balloon:

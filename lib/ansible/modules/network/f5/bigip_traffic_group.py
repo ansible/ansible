@@ -18,7 +18,7 @@ module: bigip_traffic_group
 short_description: Manages traffic groups on BIG-IP
 description:
   - Supports managing traffic groups and their attributes on a BIG-IP.
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
@@ -28,7 +28,6 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
   state:
     description:
       - When C(present), ensures that the traffic group exists.
@@ -37,7 +36,18 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+  mac_address:
+    description:
+      - Specifies the floating Media Access Control (MAC) address associated with the floating IP addresses
+        defined for a traffic group.
+      - Primarily, a MAC masquerade address minimizes ARP communications or dropped packets as a result of failover.
+      - A MAC masquerade address ensures that any traffic destined for a specific traffic group reaches an available
+        device after failover, which happens because along with the traffic group, the MAC masquerade address floats
+        to the available device.
+      - Without a MAC masquerade address, the sending host must learn the MAC address for a newly-active device,
+        either by sending an ARP request or by relying on the gratuitous ARP from the newly-active device.
+      - To unset the MAC address, specify an empty value (C("")) to this parameter.
+    version_added: 2.6
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -61,31 +71,26 @@ RETURN = r'''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -94,19 +99,19 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-
+        'mac': 'mac_address'
     }
 
     api_attributes = [
-
+        'mac'
     ]
 
     returnables = [
-
+        'mac_address'
     ]
 
     updatables = [
-
+        'mac_address'
     ]
 
     def to_return(self):
@@ -118,6 +123,20 @@ class Parameters(AnsibleF5Parameters):
         except Exception:
             pass
         return result
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    @property
+    def mac_address(self):
+        if self._values['mac_address'] is None:
+            return None
+        if self._values['mac_address'] == '':
+            return 'none'
+        return self._values['mac_address']
 
 
 class Changes(Parameters):
@@ -156,7 +175,7 @@ class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = Parameters(params=self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
         self.changes = Changes()
 
     def _set_changed_options(self):
@@ -294,7 +313,7 @@ class ModuleManager(object):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(params=result)
+        return ApiParameters(params=result)
 
 
 class ArgumentSpec(object):
@@ -306,7 +325,8 @@ class ArgumentSpec(object):
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
-            )
+            ),
+            mac_address=dict()
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)

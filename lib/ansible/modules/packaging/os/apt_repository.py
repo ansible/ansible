@@ -36,7 +36,7 @@ options:
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
-        default: 0644
+        default: '0644'
         version_added: "1.6"
     update_cache:
         description:

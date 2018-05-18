@@ -193,8 +193,9 @@ class InventoryCLI(CLI):
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
-            from ansible.module_utils.basic import jsonify
-            results = jsonify(stuff, sort_keys=True, indent=4)
+            import json
+            from ansible.parsing.ajson import AnsibleJSONEncoder
+            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
 
         return results
 
@@ -210,9 +211,9 @@ class InventoryCLI(CLI):
             except AttributeError:
                 try:
                     if isinstance(entity, Host):
-                        data.update(plugin.get_host_vars(entity.name))
+                        data = combine_vars(data, plugin.get_host_vars(entity.name))
                     else:
-                        data.update(plugin.get_group_vars(entity.name))
+                        data = combine_vars(data, plugin.get_group_vars(entity.name))
                 except AttributeError:
                     if hasattr(plugin, 'run'):
                         raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
@@ -230,8 +231,7 @@ class InventoryCLI(CLI):
         # get info from inventory source
         res = group.get_vars()
 
-        # FIXME: add switch to skip vars plugins
-        # add vars plugin info
+        # FIXME: add switch to skip vars plugins, add vars plugin info
         for inventory_dir in self.inventory._sources:
             res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
 
@@ -301,7 +301,7 @@ class InventoryCLI(CLI):
                 result.append(self._graph_name(host.name, depth))
                 result.extend(self._show_vars(host.get_vars(), depth + 1))
 
-        result.extend(self._show_vars(group.get_vars(), depth))
+        result.extend(self._show_vars(self._get_group_variables(group), depth))
 
         return result
 

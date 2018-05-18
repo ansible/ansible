@@ -20,26 +20,48 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import time
 
 from itertools import chain
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.connection.network_cli import Connection as NetworkCli
 
 
 class Cliconf(CliconfBase):
+
+    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+        """Executes a cli command and returns the results
+        This method will execute the CLI command on the connection and return
+        the results to the caller.  The command output will be returned as a
+        string
+        """
+        kwargs = {'command': to_bytes(command), 'sendonly': sendonly,
+                  'newline': newline, 'prompt_retry_check': prompt_retry_check}
+        if prompt is not None:
+            kwargs['prompt'] = to_bytes(prompt)
+        if answer is not None:
+            kwargs['answer'] = to_bytes(answer)
+
+        if isinstance(self._connection, NetworkCli):
+            resp = self._connection.send(**kwargs)
+        else:
+            resp = self._connection.send_request(command, **kwargs)
+        return resp
 
     def get_device_info(self):
         device_info = {}
 
         device_info['network_os'] = 'eos'
-        reply = self.get(b'show version | json')
+        reply = self.get('show version | json')
         data = json.loads(reply)
 
         device_info['network_os_version'] = data['version']
         device_info['network_os_model'] = data['modelName']
 
-        reply = self.get(b'show hostname | json')
+        reply = self.get('show hostname | json')
         data = json.loads(reply)
 
         device_info['network_os_hostname'] = data['hostname']
@@ -51,19 +73,18 @@ class Cliconf(CliconfBase):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
-        if format == 'text':
-            cmd = b'show %s ' % lookup[source]
-        else:
-            cmd = b'show %s | %s' % (lookup[source], format)
 
-        flags = [] if flags is None else flags
-        cmd += ' '.join(flags)
+        cmd = 'show %s ' % lookup[source]
+        if format and format is not 'text':
+            cmd += '| %s ' % format
+
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure'], to_list(command), [b'end']):
+        for cmd in chain(['configure'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
@@ -75,3 +96,72 @@ class Cliconf(CliconfBase):
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    # Imported from module_utils
+    def close_session(self, session):
+        # to close session gracefully execute abort in top level session prompt.
+        self.get('end')
+        self.get('configure session %s' % session)
+        self.get('abort')
+
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        responses = list()
+        multiline = False
+
+        for cmd in to_list(commands):
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+
+            if command == 'end':
+                continue
+            elif command.startswith('banner') or multiline:
+                multiline = True
+            elif command == 'EOF' and multiline:
+                multiline = False
+
+            out = self.get(command, prompt, answer, multiline)
+
+            if out is not None:
+                try:
+                    out = json.loads(out)
+                except ValueError:
+                    out = str(out).strip()
+
+                responses.append(out)
+
+        return responses
+
+    def load_config(self, commands, commit=False, replace=False):
+        """Loads the config commands onto the remote device
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+
+        self.get('configure session %s' % session)
+        if replace:
+            self.get('rollback clean-config')
+
+        try:
+            self.run_commands(commands)
+        except ConnectionError:
+            self.close_session(session)
+            raise
+
+        out = self.get('show session-config diffs')
+        if out:
+            result['diff'] = out.strip()
+
+        if commit:
+            self.get('commit')
+        else:
+            self.close_session(session)
+
+        return result

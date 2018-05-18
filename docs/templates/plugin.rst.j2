@@ -1,6 +1,11 @@
 :source: @{ source }@
 
-.. _@{ module }@:
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+{% if plugin_type == 'module' %}
+:orphan:
+{% endif %}
+
+.. _@{ module }@_@{ plugin_type }@:
 {% for alias in aliases %}
 .. _@{ alias }@:
 {% endfor %}
@@ -111,12 +116,10 @@ Parameters
                 <td>
                     <div class="cell-border">
                         {# Turn boolean values in 'yes' and 'no' values #}
-                        {% if value.default is defined %}
-                            {% if value.default == true %}
-                                {% set _x = value.update({'default': 'yes'}) %}
-                            {% elif value.default == false %}
-                                {% set _x = value.update({'default': 'no'}) %}
-                            {% endif %}
+                        {% if value.default is sameas true %}
+                            {% set _x = value.update({'default': 'yes'}) %}
+                        {% elif value.default is sameas false %}
+                            {% set _x = value.update({'default': 'no'}) %}
                         {% endif %}
                         {% if value.type == 'bool' %}
                             {% set _x = value.update({'choices': ['no', 'yes']}) %}
@@ -126,9 +129,9 @@ Parameters
                             <ul><b>Choices:</b>
                                 {% for choice in value.choices %}
                                     {# Turn boolean values in 'yes' and 'no' values #}
-                                    {% if choice == true %}
+                                    {% if choice is sameas true %}
                                         {% set choice = 'yes' %}
-                                    {% elif choice == false %}
+                                    {% elif choice is sameas false %}
                                         {% set choice = 'no' %}
                                     {% endif %}
                                     {% if (value.default is string and value.default == choice) or (value.default is iterable and value.default is not string and choice in value.default) %}
@@ -261,10 +264,12 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td>
                     <div class="cell-border">
                         {% if value.description is string %}
-                            <div>@{ value.description | html_ify }@</div>
+                            <div>@{ value.description | html_ify }@
+                            </div>
                         {% else %}
                             {% for desc in value.description %}
-                                <div>@{ desc | html_ify }@</div>
+                                <div>@{ desc | html_ify }@
+                                </div>
                             {% endfor %}
                         {% endif %}
                         <br/>
@@ -325,10 +330,10 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td>
                     <div class="cell-border">
                         {% if value.description is string %}
-                            <div>@{ value.description | html_ify }@</div>
+                            <div>@{ value.description | html_ify |indent(4)}@</div>
                         {% else %}
                             {% for desc in value.description %}
-                                <div>@{ desc | html_ify }@</div>
+                                <div>@{ desc | html_ify |indent(4)}@</div>
                             {% endfor %}
                         {% endif %}
                         <br/>
@@ -386,7 +391,7 @@ please refer to this `Knowledge Base article <https://access.redhat.com/articles
 
 {% else %}
 
-This module is flagged as **deprecated** and will be removed in version { deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see :ref:`DEPRECATED`.
+This module is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see `DEPRECATED`_.
 
 {% endif %}
 
@@ -402,4 +407,8 @@ Author
 {% endif %}
 
 .. hint::
+{%   if plugin_type == 'module' %}
     If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+{% else %}
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@>`_ to improve it.
+{% endif %}

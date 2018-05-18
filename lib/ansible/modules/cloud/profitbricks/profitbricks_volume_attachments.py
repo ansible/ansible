@@ -44,7 +44,7 @@ options:
       - wait for the operation to complete before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

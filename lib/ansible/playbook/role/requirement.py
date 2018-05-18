@@ -20,12 +20,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import shutil
-import subprocess
 import tempfile
 import tarfile
 
+from subprocess import Popen, PIPE
+
+from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 
@@ -184,31 +186,32 @@ class RoleRequirement(RoleDefinition):
 
     @staticmethod
     def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
+
+        def run_scm_cmd(cmd, tempdir):
+            try:
+                popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = popen.communicate()
+            except Exception as e:
+                ran = " ".join(cmd)
+                display.debug("ran %s:" % ran)
+                display.debug("\tstdout: " + stdout)
+                display.debug("\tstderr: " + stderr)
+                raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
+            if popen.returncode != 0:
+                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(cmd), tempdir, popen.returncode))
+
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
-        tempdir = tempfile.mkdtemp()
+
+        tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
         clone_cmd = [scm, 'clone', src, name]
-        with open('/dev/null', 'w') as devnull:
-            try:
-                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except:
-                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
-            rc = popen.wait()
-        if rc != 0:
-            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
+        run_scm_cmd(clone_cmd, tempdir)
 
         if scm == 'git' and version:
             checkout_cmd = [scm, 'checkout', version]
-            with open('/dev/null', 'w') as devnull:
-                try:
-                    popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, name), stdout=devnull, stderr=devnull)
-                except (IOError, OSError):
-                    raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
-                rc = popen.wait()
-            if rc != 0:
-                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(checkout_cmd), tempdir, rc))
+            run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
         archive_cmd = None
         if keep_scm_meta:
             display.vvv('tarring %s from %s to %s' % (name, tempdir, temp_file.name))
@@ -228,12 +231,6 @@ class RoleRequirement(RoleDefinition):
 
         if archive_cmd is not None:
             display.vvv('archiving %s' % archive_cmd)
-            with open('/dev/null', 'w') as devnull:
-                popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, name),
-                                         stderr=devnull, stdout=devnull)
-                rc = popen.wait()
-            if rc != 0:
-                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(archive_cmd), tempdir, rc))
+            run_scm_cmd(archive_cmd, os.path.join(tempdir, name))
 
-        shutil.rmtree(tempdir, ignore_errors=True)
         return temp_file.name

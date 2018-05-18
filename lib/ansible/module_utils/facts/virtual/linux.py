@@ -242,9 +242,10 @@ class LinuxVirtual(Virtual):
             if rc == 0:
                 # Strip out commented lines (specific dmidecode output)
                 vendor_name = ''.join([line.strip() for line in out.splitlines() if not line.startswith('#')])
-                if vendor_name.startwith('VMware'):
+                if vendor_name.startswith('VMware'):
                     virtual_facts['virtualization_type'] = 'VMware'
                     virtual_facts['virtualization_role'] = 'guest'
+                    return virtual_facts
 
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.

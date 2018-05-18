@@ -44,7 +44,7 @@ options:
     accept_hostkey:
         description:
             - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
-              present as an ssh options.
+              present as an ssh option.
         type: bool
         default: 'no'
         version_added: "1.5"
@@ -56,7 +56,7 @@ options:
         version_added: "1.5"
     key_file:
         description:
-            - Specify an optional private key file to use for the checkout.
+            - Specify an optional private key file path, on the target host, to use for the checkout.
         version_added: "1.5"
     reference:
         description:
@@ -157,6 +157,8 @@ options:
               archive file of the specified format containing the tree structure
               for the source tree.
               Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+            - This will clone and perform git archive from local directory as not
+              all git servers support git archive.
         version_added: "2.4"
 
 requirements:
@@ -590,7 +592,7 @@ def is_local_branch(git_path, module, dest, branch):
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
     for branch in branches:
-        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch):
+        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch or 'detached at' in branch):
             return True
     return False
 

@@ -51,6 +51,11 @@ options:
             - The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
               Required if there are multiple zones identified with the above options
         version_added: 2.4
+    delegation_set_id:
+        description:
+            - The reusable delegation set ID to be associated with the zone.
+              Note that you can't associate a reusable delegation set with a private hosted zone.
+        version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -74,6 +79,12 @@ EXAMPLES = '''
     vpc_id: '{{ myvpc_id }}'
     vpc_region: us-west-2
     comment: developer domain
+
+- name: create a public zone associated with a specific reusable delegation set
+  route53_zone:
+    zone: example.com
+    comment: reusable delegation set example
+    delegation_set_id: A1BCDEF2GHIJKL
 '''
 
 RETURN = '''
@@ -107,6 +118,11 @@ zone_id:
     returned: when hosted zone exists
     type: string
     sample: "Z6JQG9820BEFMW"
+delegation_set_id:
+    description: id of the associated reusable delegation set
+    returned: for public hosted zones, if they have been associated with a reusable delegation set
+    type: string
+    sample: "A1BCDEF2GHIJKL"
 '''
 
 import time
@@ -142,6 +158,7 @@ def create(module, client, matching_zones):
     vpc_id = module.params.get('vpc_id')
     vpc_region = module.params.get('vpc_region')
     comment = module.params.get('comment')
+    delegation_set_id = module.params.get('delegation_set_id')
 
     if not zone_in.endswith('.'):
         zone_in += "."
@@ -154,6 +171,7 @@ def create(module, client, matching_zones):
         'vpc_region': vpc_region,
         'comment': comment,
         'name': zone_in,
+        'delegation_set_id': delegation_set_id,
     }
 
     if private_zone:
@@ -224,10 +242,12 @@ def create_or_update_private(module, client, matching_zones, record):
 
 
 def create_or_update_public(module, client, matching_zones, record):
-    zone_details = None
+    zone_details, zone_delegation_set_details = None, {}
     for matching_zone in matching_zones:
         try:
-            zone_details = client.get_hosted_zone(Id=matching_zone['Id'])['HostedZone']
+            zone = client.get_hosted_zone(Id=matching_zone['Id'])
+            zone_details = zone['HostedZone']
+            zone_delegation_set_details = zone.get('DelegationSet', {})
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Could not get details about hosted zone %s" % matching_zone['Id'])
         if 'Comment' in zone_details['Config'] and zone_details['Config']['Comment'] != record['comment']:
@@ -247,15 +267,22 @@ def create_or_update_public(module, client, matching_zones, record):
     if zone_details is None:
         if not module.check_mode:
             try:
-                result = client.create_hosted_zone(
+                params = dict(
                     Name=record['name'],
                     HostedZoneConfig={
                         'Comment': record['comment'] if record['comment'] is not None else "",
                         'PrivateZone': False,
                     },
-                    CallerReference="%s-%s" % (record['name'], time.time())
+                    CallerReference="%s-%s" % (record['name'], time.time()),
                 )
+
+                if record.get('delegation_set_id') is not None:
+                    params['DelegationSetId'] = record['delegation_set_id']
+
+                result = client.create_hosted_zone(**params)
                 zone_details = result['HostedZone']
+                zone_delegation_set_details = result.get('DelegationSet', {})
+
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Could not create hosted zone")
         changed = True
@@ -263,6 +290,7 @@ def create_or_update_public(module, client, matching_zones, record):
     if not module.check_mode:
         record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
         record['name'] = zone_details['Name']
+        record['delegation_set_id'] = zone_delegation_set_details.get('Id', '').replace('/delegationset/', '')
 
     return changed, record
 
@@ -363,15 +391,26 @@ def delete(module, client, matching_zones):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         zone=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         vpc_id=dict(default=None),
         vpc_region=dict(default=None),
         comment=dict(default=''),
-        hosted_zone_id=dict()))
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+        hosted_zone_id=dict(),
+        delegation_set_id=dict(),
+    )
+
+    mutually_exclusive = [
+        ['delegation_set_id', 'vpc_id'],
+        ['delegation_set_id', 'vpc_region'],
+    ]
+
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
+    )
 
     zone_in = module.params.get('zone').lower()
     state = module.params.get('state').lower()

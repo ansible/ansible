@@ -22,7 +22,7 @@ See :ref:`all_modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
+in the :envvar:`library section of the Ansible configuration file <ANSIBLE_LIBRARY>`.
 
 .. _module_dev_should_you:
 
@@ -49,11 +49,11 @@ If you find an existing PR that looks like it addresses the issue you are trying
 
 Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
 
-For more information about action plugins, `read the action plugins documentation here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
+For more information about action plugins, read the :ref:`action plugins documentation <developing_plugins>`.
 
 4. Should you use a role instead?
 
-Check out the roles documentation `available here <http://docs.ansible.com/ansible/playbooks_reuse_roles.html#roles>`_.
+Check out the :ref:`roles documentation<playbooks_reuse_roles>`.
 
 5. Should you write multiple modules instead of one module?
 
@@ -87,7 +87,7 @@ The following topics will discuss how to develop and work with modules:
      Checklist for contributing your module to Ansible.
 :doc:`testing`
     Developing unit and integration tests.
-:doc:`developing_python3`
+:ref:`developing_python_3`
     Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
 :doc:`developing_modules_in_groups`
     A guide for partners wanting to submit multiple modules.
@@ -108,5 +108,3 @@ The following topics will discuss how to develop and work with modules:
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
-
-.. include:: ./developing_module_utilities.rst

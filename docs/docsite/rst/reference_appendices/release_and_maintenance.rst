@@ -16,8 +16,8 @@ This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
 Ansible has a graduated support structure that extends to three major releases.
-For more information, read about the :ref: `_development_and_stable_versiona_maintenance_workflow` or see
-the chart in :ref:`schedule` for the degrees to which current releases are supported.
+For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
+see the chart in :ref:`release_schedule` for the degrees to which current releases are supported.
 
 .. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
     are only supported for two releases.
@@ -29,10 +29,8 @@ latest features and security fixes.
 Older, unsupported versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
-You can refer to the `porting guides`_ for tips on updating your Ansible
+You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
 playbooks to run on newer versions.
-
-.. _porting guides: https://docs.ansible.com/ansible/porting_guides.html
 
 .. _release_schedule:
 
@@ -70,7 +68,7 @@ devel             `2.6` (unreleased, trunk)    In development
 .. _support_life:
 .. _methods:
 
-.. _development_and_stable_versiona_maintenance_workflow:
+.. _development_and_stable_version_maintenance_workflow:
 
 Development and stable version maintenance workflow
 ```````````````````````````````````````````````````

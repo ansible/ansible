@@ -55,13 +55,11 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     """
     A base class for implementing cli connections
 
-    .. note:: Unlike most of Ansible, nearly all strings in
-        :class:`CliconfBase` plugins are byte strings.  This is because of
-        how close to the underlying platform these plugins operate.  Remember
-        to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
-        problems.
+    .. note:: String inputs to :meth:`send_command` will be cast to byte strings
+         within this method and as such are not required to be made byte strings
+         beforehand.  Please avoid using literal byte strings (``b'string'``) in
+         :class:`CliConfBase` plugins as this can lead to unexpected errors when
+         running on Python 3
 
     List of supported rpc's:
         :get_config: Retrieves the specified configuration from the device
@@ -180,25 +178,25 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         "Discard changes in candidate datastore"
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
 
-    def copy_file(self, source=None, destination=None, proto='scp'):
+    def copy_file(self, source=None, destination=None, proto='scp', timeout=30):
         """Copies file over scp/sftp to remote device"""
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport()) as scp:
-                scp.put(source, destination)
+            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
+                out = scp.put(source, destination)
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.put(source, destination)
 
-    def get_file(self, source=None, destination=None, proto='scp'):
+    def get_file(self, source=None, destination=None, proto='scp', timeout=30):
         """Fetch file over scp/sftp from remote device"""
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport()) as scp:
+            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                 scp.get(source, destination)
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:

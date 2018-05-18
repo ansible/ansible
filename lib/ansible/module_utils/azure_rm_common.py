@@ -23,7 +23,8 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file', 'msi']
+        choices=['auto', 'cli', 'env', 'credential_file', 'msi'],
+        default='auto'
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -32,7 +33,7 @@ AZURE_COMMON_ARGS = dict(
     tenant=dict(type='str', no_log=True),
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
-    cloud_environment=dict(type='str'),
+    cloud_environment=dict(type='str', default='AzureCloud'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
     api_profile=dict(type='str', default='latest')
     # debug=dict(type='bool', default=False),
@@ -175,6 +176,11 @@ def format_resource_id(val, subscription_id, namespace, types, resource_group):
                        namespace=namespace,
                        type=types,
                        subscription=subscription_id) if not is_valid_resource_id(val) else val
+
+
+def normalize_location_name(name):
+    return name.replace(' ', '').lower()
+
 
 # FUTURE: either get this from the requirements file (if we can be sure it's always available at runtime)
 # or generate the requirements files from this so we only have one source of truth to maintain...
@@ -814,8 +820,15 @@ class AzureRMModuleBase(object):
                 priority += 1
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                                     destination_port_range=str(port), priority=priority, name=rule_name)
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     source_port_range='*',
+                                                     destination_port_range=str(port),
+                                                     priority=priority,
+                                                     name=rule_name)
                 )
 
         self.log('Creating default security group {0}'.format(security_group_name))
@@ -926,13 +939,13 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
+                                                            api_version='2017-11-01')
         return self._network_client
 
     @property
     def network_models(self):
         self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-06-01")
+        return NetworkManagementClient.models("2017-11-01")
 
     @property
     def rm_client(self):

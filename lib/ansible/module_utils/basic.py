@@ -41,13 +41,15 @@ PASS_VARS = {
     'check_mode': 'check_mode',
     'debug': '_debug',
     'diff': '_diff',
+    'keep_remote_files': '_keep_remote_files',
     'module_name': '_name',
     'no_log': 'no_log',
+    'remote_tmp': '_remote_tmp',
     'selinux_special_fs': '_selinux_special_fs',
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
-    'tmpdir': 'tmpdir',
+    'tmpdir': '_tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
 }
@@ -58,6 +60,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import atexit
 import locale
 import os
 import re
@@ -216,7 +219,9 @@ _literal_eval = literal_eval
 _ANSIBLE_ARGS = None
 
 FILE_COMMON_ARGUMENTS = dict(
-    src=dict(),
+    # These are things we want. About setting metadata (mode, ownership, permissions in general) on
+    # created files (these are used by set_fs_attributes_if_different and included in
+    # load_file_common_arguments)
     mode=dict(type='raw'),
     owner=dict(),
     group=dict(),
@@ -224,17 +229,23 @@ FILE_COMMON_ARGUMENTS = dict(
     serole=dict(),
     selevel=dict(),
     setype=dict(),
-    follow=dict(type='bool', default=False),
-    # not taken by the file module, but other modules call file so it must ignore them.
-    content=dict(no_log=True),
-    backup=dict(),
-    force=dict(),
+    attributes=dict(aliases=['attr']),
+
+    # The following are not about perms and should not be in a rewritten file_common_args
+    src=dict(),  # Maybe dest or path would be appropriate but src is not
+    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
+    force=dict(type='bool'),
+
+    # not taken by the file module, but other action plugins call the file module so this ignores
+    # them for now. In the future, the caller should take care of removing these from the module
+    # arguments before calling the file module.
+    content=dict(no_log=True),  # used by copy
+    backup=dict(),  # Used by a few modules to create a remote backup before updating the file
     remote_src=dict(),  # used by assemble
     regexp=dict(),  # used by assemble
     delimiter=dict(),  # used by assemble
     directory_mode=dict(),  # used by copy
     unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
-    attributes=dict(aliases=['attr']),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -845,6 +856,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
         self._options_context = list()
+        self._tmpdir = None
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -919,6 +931,28 @@ class AnsibleModule(object):
             self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
                            ' Update the code for this module  In the future, AnsibleModule will'
                            ' always check for invalid arguments.', version='2.9')
+
+    @property
+    def tmpdir(self):
+        # if _ansible_tmpdir was not set, the module needs to create it and
+        # clean it up once finished.
+        if self._tmpdir is None:
+            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+            if not os.path.exists(basedir):
+                self.warn("Module remote_tmp %s did not exist and was created "
+                          "with a mode of 0700, this may cause issues when "
+                          "running as another user. To avoid this, create the "
+                          "remote_tmp dir with the correct permissions "
+                          "manually" % basedir)
+                os.makedirs(basedir, mode=0o700)
+
+            basefile = "ansible-moduletmp-%s-" % time.time()
+            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            if not self._keep_remote_files:
+                atexit.register(shutil.rmtree, tmpdir)
+            self._tmpdir = tmpdir
+
+        return self._tmpdir
 
     def warn(self, warning):
 
@@ -1975,7 +2009,13 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('options', None)
-                if spec is None or k not in params or params[k] is None:
+                if v.get('apply_defaults', False):
+                    if spec is not None:
+                        if params.get(k) is None:
+                            params[k] = {}
+                    else:
+                        continue
+                elif spec is None or k not in params or params[k] is None:
                     continue
 
                 self._options_context.append(k)
@@ -2492,17 +2532,16 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
                                exception=traceback.format_exc())
             else:
-                b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
-                native_dest_dir = b_dest_dir
-                native_suffix = os.path.basename(b_dest)
-                native_prefix = b('.ansible_tmp')
+                b_dest_dir = os.path.dirname(b_dest)
+                b_suffix = os.path.basename(b_dest)
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
+                                                                  dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:

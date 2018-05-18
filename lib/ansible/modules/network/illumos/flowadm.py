@@ -75,7 +75,7 @@ options:
               flows do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Create/delete/enable/disable an IP address on the network interface.

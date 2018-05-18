@@ -48,6 +48,14 @@ options:
     description:
     - The store name to use when importing a certificate or searching for a
       certificate.
+    - "C(AddressBook): The X.509 certificate store for other users"
+    - "C(AuthRoot): The X.509 certificate store for third-party certificate authorities (CAs)"
+    - "C(CertificateAuthority): The X.509 certificate store for intermediate certificate authorities (CAs)"
+    - "C(Disallowed): The X.509 certificate store for revoked certificates"
+    - "C(My): The X.509 certificate store for personal certificates"
+    - "C(Root): The X.509 certificate store for trusted root certificate authorities (CAs)"
+    - "C(TrustedPeople): The X.509 certificate store for directly trusted people and resources"
+    - "C(TrustedPublisher): The X.509 certificate store for directly trusted publishers"
     default: My
     choices:
     - AddressBook

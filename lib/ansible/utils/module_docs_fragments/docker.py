@@ -37,7 +37,7 @@ options:
         description:
             - The version of the Docker API running on the Docker Host. Defaults to the latest version of the API
               supported by docker-py.
-        default: default provided by docker-py
+        default: 'auto'
         aliases:
             - docker_api_version
     timeout:
@@ -67,9 +67,18 @@ options:
         description:
             -  Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
                server.
+        default: false
+        type: bool
     tls_verify:
         description:
             - Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+        default: false
+        type: bool
+    debug:
+        description:
+            - Debug mode
+        default: false
+        type: bool
 
 notes:
     - Connect to the Docker daemon by providing parameters with each task or by defining environment variables.

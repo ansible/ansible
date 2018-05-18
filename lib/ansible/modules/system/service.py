@@ -248,7 +248,10 @@ class Service(object):
                 cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(cmd)]
             # In either of the above cases, pass a list of byte strings to Popen
 
-            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")
             fds = [p.stdout, p.stderr]

@@ -1,0 +1,15 @@
+{
+    "kind": "tm:sys:log-config:destination:remote-syslog:remote-syslogstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 1767,
+    "selfLink": "https://localhost/mgmt/tm/sys/log-config/destination/remote-syslog/~Common~foo?ver=13.1.0.4",
+    "defaultFacility": "local0",
+    "defaultSeverity": "info",
+    "format": "rfc5424",
+    "remoteHighSpeedLog": "/Common/pool1",
+    "remoteHighSpeedLogReference": {
+        "link": "https://localhost/mgmt/tm/sys/log-config/destination/remote-high-speed-log/~Common~pool1?ver=13.1.0.4"
+    }
+}

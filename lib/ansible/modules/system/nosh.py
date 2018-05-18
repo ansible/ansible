@@ -39,14 +39,14 @@ options:
               enabled or not.
     enabled:
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         description:
             - Enable or disable the service, independently of C(*.preset) file
               preference or running state. Mutually exclusive with I(preset). Will take
               effect prior to I(state=reset).
     preset:
         required: false
-        choices: [ "yes", "no" ]
+        type: bool
         description:
             - Enable or disable the service according to local preferences in *.preset files.
               Mutually exclusive with I(enabled). Only has an effect if set to true. Will take
@@ -54,7 +54,7 @@ options:
     user:
         required: false
         default: 'no'
-        choices: [ "yes", "no" ]
+        type: bool
         description:
             - Run system-control talking to the calling user's service manager, rather than
               the system-wide service manager.

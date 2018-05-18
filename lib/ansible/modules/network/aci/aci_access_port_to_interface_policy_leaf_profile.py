@@ -60,6 +60,12 @@ options:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
     aliases: [ policy_group_name ]
+  interface_type:
+    version_added: '2.6'
+    description:
+    - The type of interface for the static EPG deployement.
+    choices: [ fex, port_channel, switch_port, vpc ]
+    default: switch_port
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -231,9 +237,11 @@ def main():
         'description': dict(typ='str'),
         'leaf_port_blk': dict(type='str', aliases=['leaf_port_blk_name']),
         'leaf_port_blk_description': dict(type='str'),
+        # NOTE: Keyword 'from' is a reserved word in python, so we need it as a string
         'from': dict(type='str', aliases=['fromPort', 'from_port_range']),
         'to': dict(type='str', aliases=['toPort', 'to_port_range']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
+        'interface_type': dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
     })
 
@@ -254,6 +262,7 @@ def main():
     from_ = module.params['from']
     to_ = module.params['to']
     policy_group = module.params['policy_group']
+    interface_type = module.params['interface_type']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -273,6 +282,14 @@ def main():
         ),
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp']
     )
+
+    INTERFACE_TYPE_MAPPING = dict(
+        fex='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
+        port_channel='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
+        switch_port='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
+        vpc='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -296,7 +313,7 @@ def main():
                 dict(
                     infraRsAccBaseGrp=dict(
                         attributes=dict(
-                            tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
+                            tDn=INTERFACE_TYPE_MAPPING[interface_type],
                         ),
                     ),
                 ),

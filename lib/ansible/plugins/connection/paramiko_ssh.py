@@ -114,8 +114,16 @@ DOCUMENTATION = """
             version_added: '2.5'
           - name: ansible_paramiko_host_key_checking
             version_added: '2.5'
+      use_persistent_connections:
+        description: 'Toggles the use of persistence for connections'
+        type: boolean
+        default: False
+        env:
+          - name: ANSIBLE_USE_PERSISTENT_CONNECTIONS
+        ini:
+          - section: defaults
+            key: use_persistent_connections
 # TODO:
-#C.USE_PERSISTENT_CONNECTIONS:
 #timeout=self._play_context.timeout,
 """
 
@@ -188,7 +196,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            if C.USE_PERSISTENT_CONNECTIONS or self.connection.force_persistence:
+            if self.connection.get_option('use_persistent_connections') or self.connection.force_persistence:
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
                 raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
@@ -228,6 +236,7 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
+    _log_channel = None
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -239,6 +248,10 @@ class Connection(ConnectionBase):
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
+
+    def _set_log_channel(self, name):
+        '''Mimic paramiko.SSHClient.set_log_channel'''
+        self._log_channel = name
 
     def _parse_proxy_command(self, port=22):
         proxy_command = None
@@ -296,6 +309,10 @@ class Connection(ConnectionBase):
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
+
+        # override paramiko's default logger name
+        if self._log_channel is not None:
+            ssh.set_log_channel(self._log_channel)
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 

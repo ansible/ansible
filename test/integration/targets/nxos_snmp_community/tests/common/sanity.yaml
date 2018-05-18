@@ -17,7 +17,6 @@
     nxos_snmp_community: &config
       community: TESTING7
       group: network-operator
-      #access: ro
       state: present
       provider: "{{ connection }}"
     register: result
@@ -33,6 +32,22 @@
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: Change snmp_community group
+    nxos_snmp_community: &chg
+      community: TESTING7
+      group: network-admin
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *chg
+    register: result
+
+  - assert: *false
 
   - name: Remove snmp_community
     nxos_snmp_community: *remove
@@ -87,6 +102,40 @@
 
   - name: Idempotence Check
     nxos_snmp_community: *configaccessrw
+    register: result
+
+  - assert: *false
+
+  - name: Change acl
+    nxos_snmp_community: &chgacl
+      community: TESTING7
+      access: rw
+      acl: new_acl
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *chgacl
+    register: result
+
+  - assert: *false
+
+  - name: Remove acl
+    nxos_snmp_community: &removeacl
+      community: TESTING7
+      access: rw
+      acl: default
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *removeacl
     register: result
 
   - assert: *false

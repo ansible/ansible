@@ -233,7 +233,11 @@ class TaskExecutor:
         elif self._task.loop:
             items = templar.template(self._task.loop)
             if not isinstance(items, list):
-                raise AnsibleError("Invalid data passed to 'loop' it requires a list, got this instead: %s" % items)
+                raise AnsibleError(
+                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
+                    " Hint: If you passed a list/dict of just one element,"
+                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
+                )
 
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
@@ -297,6 +301,9 @@ class TaskExecutor:
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
+
+            # Update template vars to reflect current loop iteration
+            templar.set_available_variables(task_vars)
 
             # pause between loop iterations
             if loop_pause and ran_once:
@@ -467,9 +474,7 @@ class TaskExecutor:
             # loop error takes precedence
             if self._loop_eval_error is not None:
                 raise self._loop_eval_error  # pylint: disable=raising-bad-type
-            # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
-            if self._task.action not in ['include', 'include_tasks', 'include_role']:
-                raise
+            raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
@@ -711,7 +716,7 @@ class TaskExecutor:
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
-        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+        async_task = Task().load(dict(action='async_status jid=%s' % async_jid, environment=self._task.environment))
 
         # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
@@ -790,7 +795,14 @@ class TaskExecutor:
 
         conn_type = self._play_context.connection
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin, ansible_playbook_pid=to_text(os.getppid()))
+        connection = self._shared_loader_obj.connection_loader.get(
+            conn_type,
+            self._play_context,
+            self._new_stdin,
+            task_uuid=self._task._uuid,
+            ansible_playbook_pid=to_text(os.getppid())
+        )
+
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -798,7 +810,7 @@ class TaskExecutor:
         self._play_context.set_options_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
-            self._play_context.timeout = C.PERSISTENT_COMMAND_TIMEOUT
+            self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
             socket_path = self._start_connection()
@@ -809,6 +821,9 @@ class TaskExecutor:
 
     def _set_connection_options(self, variables, templar):
 
+        # Keep the pre-delegate values for these keys
+        PRESERVE_ORIG = ('inventory_hostname',)
+
         # create copy with delegation built in
         final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
 
@@ -818,7 +833,9 @@ class TaskExecutor:
         # create dict of 'templated vars'
         options = {'_extras': {}}
         for k in option_vars:
-            if k in final_vars:
+            if k in PRESERVE_ORIG:
+                options[k] = templar.template(variables[k])
+            elif k in final_vars:
                 options[k] = templar.template(final_vars[k])
 
         # add extras if plugin supports them
@@ -913,7 +930,8 @@ class TaskExecutor:
         else:
             try:
                 result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
-            except json.decoder.JSONDecodeError:
+            except getattr(json.decoder, 'JSONDecodeError', ValueError):
+                # JSONDecodeError only available on Python 3.5+
                 result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:

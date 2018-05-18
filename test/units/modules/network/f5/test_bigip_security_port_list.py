@@ -21,16 +21,15 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_security_port_list import ApiParameters
-    from library.bigip_security_port_list import ModuleParameters
-    from library.bigip_security_port_list import ModuleManager
-    from library.bigip_security_port_list import ArgumentSpec
+    from library.modules.bigip_security_port_list import ApiParameters
+    from library.modules.bigip_security_port_list import ModuleParameters
+    from library.modules.bigip_security_port_list import ModuleManager
+    from library.modules.bigip_security_port_list import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_security_port_list import Parameters
         from ansible.modules.network.f5.bigip_security_port_list import ApiParameters
         from ansible.modules.network.f5.bigip_security_port_list import ModuleParameters
         from ansible.modules.network.f5.bigip_security_port_list import ModuleManager

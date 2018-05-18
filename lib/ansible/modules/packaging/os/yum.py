@@ -31,7 +31,6 @@ options:
       - When using state=latest, this can be '*' which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
         To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
-    required: true
     aliases: [ pkg ]
   exclude:
     description:
@@ -102,8 +101,7 @@ options:
       - Has an effect only if state is I(latest)
     required: false
     default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
     version_added: "2.5"
 
   installroot:

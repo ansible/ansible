@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
+#                    Yuwei ZHou, <yuwzho@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -174,6 +175,7 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
+    - "Yuwei Zhou (@yuwzho)"
 '''
 
 EXAMPLES = '''
@@ -266,7 +268,8 @@ state:
                 "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/publicip001",
                 "name": "publicip001"
             },
-            "subnet": {}
+            "subnet": {},
+            "load_balancer_backend_address_pools": []
         }],
         "location": "eastus2",
         "mac_address": null,
@@ -339,16 +342,6 @@ def nic_to_dict(nic):
         etag=nic.etag,
     )
 
-
-def construct_ip_configuration_set(raw):
-    configurations = [str(dict(
-        private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
-        public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
-                                if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
-        primary=item.get('primary'),
-        name=to_native(item.get('name'))
-    )) for item in raw]
-    return set(configurations)
 
 ip_configuration_spec = dict(
     name=dict(type='str', required=True),
@@ -438,6 +431,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if virtual_network_resource_group is None:
             virtual_network_resource_group = self.resource_group
 
+        # if not set the security group name, use nic name for default
+        self.security_group_name = self.security_group_name or self.name
+
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
             self.deprecate('Setting ip_configuration flatten is deprecated and will be removed.'
@@ -448,7 +444,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     private_ip_allocation_method=self.private_ip_allocation_method,
                     public_ip_address_name=self.public_ip_address_name if self.public_ip else None,
                     public_ip_allocation_method=self.public_ip_allocation_method,
-                    name='default'
+                    name='default',
+                    primary=True
                 )
             ]
 
@@ -468,11 +465,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.security_group_name:
-                    nsg = self.get_security_group(self.security_group_name)
-                    if nsg and results['network_security_group'].get('id') != nsg.id:
-                        self.log("CHANGED: network interface {0} network security group".format(self.name))
-                        changed = True
+                nsg = self.get_security_group(self.security_group_name)
+                if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
+                    self.log("CHANGED: network interface {0} network security group".format(self.name))
+                    changed = True
 
                 if results['ip_configurations'][0]['subnet']['virtual_network_name'] != virtual_network_name:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
@@ -490,8 +486,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 # construct two set with the same structure and then compare
                 # the list should contains:
                 # name, private_ip_address, public_ip_address_name, private_ip_allocation_method, subnet_name
-                ip_configuration_result = construct_ip_configuration_set(results['ip_configurations'])
-                ip_configuration_request = construct_ip_configuration_set(self.ip_configurations)
+                ip_configuration_result = self.construct_ip_configuration_set(results['ip_configurations'])
+                ip_configuration_request = self.construct_ip_configuration_set(self.ip_configurations)
                 if ip_configuration_result != ip_configuration_request:
                     self.log("CHANGED: network interface {0} ip configurations".format(self.name))
                     changed = True
@@ -531,7 +527,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
-                nsg = nsg or self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type, self.open_ports)
+                nsg = self.create_default_securitygroup(self.resource_group,
+                                                        self.location,
+                                                        self.security_group_name,
+                                                        self.os_type,
+                                                        self.open_ports)
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
@@ -597,6 +597,16 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             return self.network_client.network_security_groups.get(self.resource_group, name)
         except Exception as exc:
             return None
+
+    def construct_ip_configuration_set(self, raw):
+        configurations = [str(dict(
+            private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
+            public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
+                                    if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
+            primary=item.get('primary'),
+            name=to_native(item.get('name'))
+        )) for item in raw]
+        return set(configurations)
 
 
 def main():

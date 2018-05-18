@@ -19,8 +19,16 @@
         <<: *aws_connection_info
       register: iam_role
 
-    - name: Wait for IAM role to be available, otherwise the next step will fail (Invalid IAM Instance Profile name)
-      command: sleep 10
+    - name: Create second IAM role for test
+      iam_role:
+        name: "{{ resource_prefix }}-test-policy-2"
+        assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
+        state: present
+        create_instance_profile: yes
+        managed_policy:
+        - AmazonEC2ContainerServiceRole
+        <<: *aws_connection_info
+      register: iam_role_2
 
     - name: Make instance with an instance_role
       ec2_instance:
@@ -36,6 +44,21 @@
         that:
           - 'instance_with_role.instances[0].iam_instance_profile.arn == iam_role.arn.replace(":role/", ":instance-profile/")'
 
+    - name: Update instance with new instance_role
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-default-vpc"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        instance_role: "{{ resource_prefix }}-test-policy-2"
+        <<: *aws_connection_info
+      register: instance_with_updated_role
+
+    - assert:
+        that:
+          - 'instance_with_updated_role.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
+          - 'instance_with_updated_role.instances[0].instance_id == instance_with_role.instances[0].instance_id'
+
   always:
     - name: Terminate instance
       ec2:
@@ -49,13 +72,16 @@
 
     - name: Delete IAM role for test
       iam_role:
-        name: "{{ resource_prefix }}-test-policy"
+        name: "{{ item }}"
         assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
         state: absent
         create_instance_profile: yes
         managed_policy:
         - AmazonEC2ContainerServiceRole
         <<: *aws_connection_info
+      loop:
+        - "{{ resource_prefix }}-test-policy"
+        - "{{ resource_prefix }}-test-policy-2"
       register: removed
       until: removed is not failed
       ignore_errors: yes

@@ -103,7 +103,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(task_vars=task_vars))
+                result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -134,13 +134,7 @@ class ActionModule(ActionBase):
             for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
                 if opt in new_module_args:
                     del new_module_args[opt]
-
-            new_module_args.update(
-                dict(
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
+            new_module_args['dest'] = dest
 
             if path_checksum != dest_stat['checksum']:
 

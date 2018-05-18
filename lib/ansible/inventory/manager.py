@@ -275,7 +275,7 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                     except Exception as e:
                         display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
                     display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
@@ -330,49 +330,52 @@ class InventoryManager(object):
         or applied subsets
         """
 
+        hosts = []
+
         # Check if pattern already computed
         if isinstance(pattern, list):
             pattern_hash = u":".join(pattern)
         else:
             pattern_hash = pattern
 
-        if not ignore_limits and self._subset:
-            pattern_hash += u":%s" % to_text(self._subset, errors='surrogate_or_strict')
-
-        if not ignore_restrictions and self._restriction:
-            pattern_hash += u":%s" % to_text(self._restriction, errors='surrogate_or_strict')
-
-        if pattern_hash not in self._hosts_patterns_cache:
-
-            patterns = split_host_pattern(pattern)
-            hosts = self._evaluate_patterns(patterns)
-
-            # mainly useful for hostvars[host] access
+        if pattern_hash:
             if not ignore_limits and self._subset:
-                # exclude hosts not in a subset, if defined
-                subset = self._evaluate_patterns(self._subset)
-                hosts = [h for h in hosts if h in subset]
+                pattern_hash += u":%s" % to_text(self._subset, errors='surrogate_or_strict')
 
             if not ignore_restrictions and self._restriction:
-                # exclude hosts mentioned in any restriction (ex: failed hosts)
-                hosts = [h for h in hosts if h.name in self._restriction]
+                pattern_hash += u":%s" % to_text(self._restriction, errors='surrogate_or_strict')
 
-            seen = set()
-            self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+            if pattern_hash not in self._hosts_patterns_cache:
 
-        # sort hosts list if needed (should only happen when called from strategy)
-        if order in ['sorted', 'reverse_sorted']:
-            from operator import attrgetter
-            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
-        elif order == 'reverse_inventory':
-            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
-        else:
-            hosts = self._hosts_patterns_cache[pattern_hash][:]
-            if order == 'shuffle':
-                from random import shuffle
-                shuffle(hosts)
-            elif order not in [None, 'inventory']:
-                AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                patterns = split_host_pattern(pattern)
+                hosts = self._evaluate_patterns(patterns)
+
+                # mainly useful for hostvars[host] access
+                if not ignore_limits and self._subset:
+                    # exclude hosts not in a subset, if defined
+                    subset = self._evaluate_patterns(self._subset)
+                    hosts = [h for h in hosts if h in subset]
+
+                if not ignore_restrictions and self._restriction:
+                    # exclude hosts mentioned in any restriction (ex: failed hosts)
+                    hosts = [h for h in hosts if h.name in self._restriction]
+
+                seen = set()
+                self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+
+            # sort hosts list if needed (should only happen when called from strategy)
+            if order in ['sorted', 'reverse_sorted']:
+                from operator import attrgetter
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+            elif order == 'reverse_inventory':
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
+            else:
+                hosts = self._hosts_patterns_cache[pattern_hash][:]
+                if order == 'shuffle':
+                    from random import shuffle
+                    shuffle(hosts)
+                elif order not in [None, 'inventory']:
+                    AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
 
@@ -541,8 +544,10 @@ class InventoryManager(object):
             if implicit:
                 results.append(implicit)
 
-        if not results and pattern != 'all':
+        # Display warning if specified host pattern did not match any groups or hosts
+        if not results and not matching_groups and pattern != 'all':
             display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+
         return results
 
     def list_hosts(self, pattern="all"):

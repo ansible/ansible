@@ -122,7 +122,7 @@ Please refer to :doc:`playbooks_reuse_roles` for details on including and import
        Loops in playbooks
    :ref:`all_modules`
        Learn about available modules
-   :red:`developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source

@@ -53,6 +53,7 @@ options:
     report_supp:
         description:
             - Global IGMPv1/IGMPv2 Report Suppression.
+        type: bool
     v3_report_supp:
         description:
             - Global IGMPv3 Report Suppression and Proxy Reporting.
@@ -127,17 +128,6 @@ def get_group_timeout(config):
     return value
 
 
-def get_snooping(config):
-    REGEX = re.compile(r'{0}$'.format('no ip igmp snooping'), re.M)
-    value = False
-    try:
-        if REGEX.search(config):
-            value = False
-    except TypeError:
-        value = True
-    return value
-
-
 def get_igmp_snooping(module):
     command = 'show ip igmp snooping'
     existing = {}
@@ -194,6 +184,9 @@ def config_igmp_snooping(delta, existing, default=False):
     for key, value in delta.items():
         if value:
             if default and key == 'group_timeout':
+                if existing.get(key):
+                    command = 'no ' + CMDS.get(key).format(existing.get(key))
+            elif value == 'default' and key == 'group_timeout':
                 if existing.get(key):
                     command = 'no ' + CMDS.get(key).format(existing.get(key))
             else:

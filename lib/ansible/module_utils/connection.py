@@ -111,8 +111,10 @@ class Connection(object):
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
 
+        troubleshoot = 'https://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#category-socket-path-issue'
+
         if not os.path.exists(self.socket_path):
-            raise ConnectionError('socket_path does not exist or cannot be found')
+            raise ConnectionError('socket_path does not exist or cannot be found. Please check %s' % troubleshoot)
 
         try:
             data = json.dumps(req)
@@ -120,7 +122,8 @@ class Connection(object):
             response = json.loads(out)
 
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket. Please check %s' % troubleshoot, err=to_text(e, errors='surrogate_then_replace'),
+                                  exception=traceback.format_exc())
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')

@@ -1,6 +1,6 @@
 - name: Test HTTP 301 using HEAD
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=301&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: HEAD
@@ -12,11 +12,11 @@
     - http_301_head.json is not defined
     - http_301_head.redirected == true
     - http_301_head.status == 200
-    - http_301_head.url == 'http://{{ httpbin_host }}/anything'
+    - http_301_head.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 301 using GET
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=301&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: GET
@@ -27,15 +27,15 @@
     - http_301_get is successful
     - http_301_get.json.data == ''
     - http_301_get.json.method == 'GET'
-    - http_301_get.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_301_get.json.url == 'https://{{ httpbin_host }}/anything'
     - http_301_get.redirected == true
     - http_301_get.status == 200
-    - http_301_get.url == 'http://{{ httpbin_host }}/anything'
+    - http_301_get.url == 'https://{{ httpbin_host }}/anything'
 
 # NOTE: The HTTP POST turns into an HTTP GET
 - name: Test HTTP 301 using POST
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=301&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: POST
@@ -48,14 +48,14 @@
     - http_301_post is successful
     - http_301_post.json.data == ''
     - http_301_post.json.method == 'GET'
-    - http_301_post.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_301_post.json.url == 'https://{{ httpbin_host }}/anything'
     - http_301_post.redirected == true
     - http_301_post.status == 200
-    - http_301_post.url == 'http://{{ httpbin_host }}/anything'
+    - http_301_post.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 302 using HEAD
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=302&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: HEAD
@@ -67,11 +67,11 @@
     - http_302_head.json is not defined
     - http_302_head.redirected == true
     - http_302_head.status == 200
-    - http_302_head.url == 'http://{{ httpbin_host }}/anything'
+    - http_302_head.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 302 using GET
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=302&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: GET
@@ -82,15 +82,15 @@
     - http_302_get is successful
     - http_302_get.json.data == ''
     - http_302_get.json.method == 'GET'
-    - http_302_get.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_302_get.json.url == 'https://{{ httpbin_host }}/anything'
     - http_302_get.redirected == true
     - http_302_get.status == 200
-    - http_302_get.url == 'http://{{ httpbin_host }}/anything'
+    - http_302_get.url == 'https://{{ httpbin_host }}/anything'
 
 # NOTE: The HTTP POST turns into an HTTP GET
 - name: Test HTTP 302 using POST
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=302&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: POST
@@ -103,14 +103,14 @@
     - http_302_post is successful
     - http_302_post.json.data == ''
     - http_302_post.json.method == 'GET'
-    - http_302_post.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_302_post.json.url == 'https://{{ httpbin_host }}/anything'
     - http_302_post.redirected == true
     - http_302_post.status == 200
-    - http_302_post.url == 'http://{{ httpbin_host }}/anything'
+    - http_302_post.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 303 using HEAD
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=303&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: HEAD
@@ -122,11 +122,11 @@
     - http_303_head.json is not defined
     - http_303_head.redirected == true
     - http_303_head.status == 200
-    - http_303_head.url == 'http://{{ httpbin_host }}/anything'
+    - http_303_head.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 303 using GET
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=303&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: GET
@@ -137,15 +137,15 @@
     - http_303_get is successful
     - http_303_get.json.data == ''
     - http_303_get.json.method == 'GET'
-    - http_303_get.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_303_get.json.url == 'https://{{ httpbin_host }}/anything'
     - http_303_get.redirected == true
     - http_303_get.status == 200
-    - http_303_get.url == 'http://{{ httpbin_host }}/anything'
+    - http_303_get.url == 'https://{{ httpbin_host }}/anything'
 
 # NOTE: The HTTP POST turns into an HTTP GET
 - name: Test HTTP 303 using POST
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=303&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: POST
@@ -158,14 +158,14 @@
     - http_303_post is successful
     - http_303_post.json.data == ''
     - http_303_post.json.method == 'GET'
-    - http_303_post.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_303_post.json.url == 'https://{{ httpbin_host }}/anything'
     - http_303_post.redirected == true
     - http_303_post.status == 200
-    - http_303_post.url == 'http://{{ httpbin_host }}/anything'
+    - http_303_post.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using HEAD
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=307&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: HEAD
@@ -177,11 +177,11 @@
     - http_307_head.json is not defined
     - http_307_head.redirected == true
     - http_307_head.status == 200
-    - http_307_head.url == 'http://{{ httpbin_host }}/anything'
+    - http_307_head.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using GET
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=307&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: GET
@@ -192,14 +192,14 @@
     - http_307_get is successful
     - http_307_get.json.data == ''
     - http_307_get.json.method == 'GET'
-    - http_307_get.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_307_get.json.url == 'https://{{ httpbin_host }}/anything'
     - http_307_get.redirected == true
     - http_307_get.status == 200
-    - http_307_get.url == 'http://{{ httpbin_host }}/anything'
+    - http_307_get.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using POST
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=307&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: POST
@@ -212,14 +212,14 @@
     - http_307_post is successful
     - http_307_post.json.json.foo == 'bar'
     - http_307_post.json.method == 'POST'
-    - http_307_post.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_307_post.json.url == 'https://{{ httpbin_host }}/anything'
     - http_307_post.redirected == true
     - http_307_post.status == 200
-    - http_307_post.url == 'http://{{ httpbin_host }}/anything'
+    - http_307_post.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 308 using HEAD
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=308&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: HEAD
@@ -231,11 +231,11 @@
     - http_308_head.json is undefined
     - http_308_head.redirected == true
     - http_308_head.status == 200
-    - http_308_head.url == 'http://{{ httpbin_host }}/anything'
+    - http_308_head.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 308 using GET
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=308&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: GET
@@ -246,14 +246,14 @@
     - http_308_get is successful
     - http_308_get.json.data == ''
     - http_308_get.json.method == 'GET'
-    - http_308_get.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_308_get.json.url == 'https://{{ httpbin_host }}/anything'
     - http_308_get.redirected == true
     - http_308_get.status == 200
-    - http_308_get.url == 'http://{{ httpbin_host }}/anything'
+    - http_308_get.url == 'https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 308 using POST
   uri:
-    url: http://{{ httpbin_host }}/redirect-to?status_code=308&url=http://{{ httpbin_host }}/anything
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
     return_content: yes
     method: POST
@@ -266,7 +266,7 @@
     - http_308_post is successful
     - http_308_post.json.json.foo == 'bar'
     - http_308_post.json.method == 'POST'
-    - http_308_post.json.url == 'http://{{ httpbin_host }}/anything'
+    - http_308_post.json.url == 'https://{{ httpbin_host }}/anything'
     - http_308_post.redirected == true
     - http_308_post.status == 200
-    - http_308_post.url == 'http://{{ httpbin_host }}/anything'
+    - http_308_post.url == 'https://{{ httpbin_host }}/anything'

@@ -47,8 +47,7 @@ options:
     description:
       - If C(yes), text will be parsed as markdown.
     default: 'yes'
-    choices:
-      - 'yes'
+    type: bool
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the

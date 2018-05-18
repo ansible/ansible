@@ -1,0 +1,7 @@
+---
+ec2_ami_image:
+  us-east-1: ami-8c1be5f6
+  us-east-2: ami-c5062ba0
+
+tg_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
+lb_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-lb"

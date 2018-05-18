@@ -27,6 +27,8 @@ extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
   - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
@@ -113,8 +115,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -151,6 +154,14 @@ EXAMPLES = """
     src: config.cfg
     replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """
@@ -165,12 +176,18 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
+
+CONFIG_MISPLACED_CHILDREN = [
+    re.compile(r'end-\s*(.+)$')
+]
 
 
 def copy_file_to_node(module):
@@ -214,6 +231,29 @@ def get_candidate(module):
     return candidate
 
 
+def sanitize_candidate_config(config):
+    last_parents = None
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(config):
+            if line._parents:
+                last_parents = line._parents
+            m = regex.search(line.text)
+            if m and m.group(0):
+                config[index]._parents = last_parents
+
+
+def sanitize_running_config(config):
+    last_parents = None
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(config):
+            if line._parents:
+                last_parents = line._parents
+            m = regex.search(line.text)
+            if m and m.group(0):
+                config[index].text = ' ' + m.group(0)
+                config[index]._parents = last_parents
+
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -225,6 +265,9 @@ def run(module, result):
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
+
+    sanitize_candidate_config(candidate_config.items)
+    sanitize_running_config(running_config.items)
 
     commands = None
     if match != 'none' and replace != 'config':
