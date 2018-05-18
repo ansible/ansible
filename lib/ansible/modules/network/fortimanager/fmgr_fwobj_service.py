@@ -84,7 +84,7 @@ options:
     description:
       - Tells module what kind of custom service to be added
     choices: ['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp', 'connect', 'socks_tcp', 'socks_udp', 'all']
-    default: add
+    default: all
     type: str
 
   explicit_proxy:
@@ -256,17 +256,17 @@ EXAMPLES = '''
     protocol_number: "47"
 
 - name: ADD A CUSTOM PROXY FOR ALL WITH SOURCE RANGES AND MULTIPLES
-    fmgr_fwobj_service:
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      adom: "ansible"
-      name: "ansible_custom_proxy_all"
-      object_type: "custom"
-      custom_type: "all"
-      explicit_proxy: "enable"
-      tcp_portrange: "443:2000-1000,80-82:10000-20000"
-      iprange: "www.ansible.com"
+  fmgr_fwobj_service:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    adom: "ansible"
+    name: "ansible_custom_proxy_all"
+    object_type: "custom"
+    custom_type: "all"
+    explicit_proxy: "enable"
+    tcp_portrange: "443:2000-1000,80-82:10000-20000"
+    iprange: "www.ansible.com"
 '''
 
 RETURN = """
