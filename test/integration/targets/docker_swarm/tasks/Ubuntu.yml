@@ -22,11 +22,6 @@
   - docker.io
   - docker-ce
 
-- name: Purge socket
-  file:
-    path: /var/run/docker.sock
-    state: absent
-
 - name: Install pre-reqs
   apt:
     name: "{{ item }}"
@@ -52,3 +47,5 @@
   apt:
     name: docker-ce
     state: present
+    update_cache: yes
+    
