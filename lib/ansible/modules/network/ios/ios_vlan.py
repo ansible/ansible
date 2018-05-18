@@ -238,6 +238,8 @@ def parse_to_obj(logical_rows):
     first_row = logical_rows[0]
     rest_rows = logical_rows[1:]
     obj = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s+(?P<interfaces>.*)', first_row).groupdict()
+    if obj['state'] == 'suspended':
+        obj['state'] = 'suspend'
     obj['interfaces'] = map_ports_str_to_list(obj['interfaces'])
     obj['interfaces'].extend(prts_r for prts in rest_rows for prts_r in map_ports_str_to_list(prts))
     return obj
