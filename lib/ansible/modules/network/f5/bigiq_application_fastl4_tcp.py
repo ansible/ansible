@@ -91,6 +91,11 @@ options:
     choices:
       - absent
       - present
+  wait:
+    description:
+      - If the module should wait for the application to be created, deleted or updated.
+    type: bool
+    default: yes
 extends_documentation_fragment: f5
 notes:
   - This module does not support updating of your application (whether deployed or not).
@@ -530,9 +535,10 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
         self_link = self.remove_from_device()
-        self.wait_for_apply_template_task(self_link)
-        if self.exists():
-            raise F5ModuleError("Failed to delete the resource.")
+        if self.want.wait:
+            self.wait_for_apply_template_task(self_link)
+            if self.exists():
+                raise F5ModuleError("Failed to delete the resource.")
         return True
 
     def create(self):
@@ -552,11 +558,12 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
         self_link = self.create_on_device()
-        self.wait_for_apply_template_task(self_link)
-        if not self.exists():
-            raise F5ModuleError(
-                "Failed to deploy application."
-            )
+        if self.want.wait:
+            self.wait_for_apply_template_task(self_link)
+            if not self.exists():
+                raise F5ModuleError(
+                    "Failed to deploy application."
+                )
         return True
 
     def create_on_device(self):
@@ -657,6 +664,7 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['present', 'absent']
             ),
+            wait=dict(type='bool', default='yes')
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
