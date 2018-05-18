@@ -66,12 +66,13 @@ class TestIosVlanModule(TestIosModule):
                     'GigabitEthernet1/0/52',
                 ],
                 'state': 'active',
-                'vlan_id': '1'},
+                'vlan_id': '1',
+            },
             {
                 'name': 'fddi-default',
                 'interfaces': [],
                 'state': 'act/unsup',
                 'vlan_id': '1002',
-            }
+            },
         ]
         self.assertEqual(result, obj)
