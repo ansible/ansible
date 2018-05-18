@@ -284,7 +284,7 @@ class keydict(dict):
         return [item[1] for item in self.items()]
 
 
-def keyfile(module, user, write=False, path=None, manage_dir=True):
+def keyfile(module, user, write=False, path=None, manage_dir=True, follow_symlink=True):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
@@ -293,11 +293,16 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     :param bool write: if True, write changes to authorized_keys file (creating directories if needed)
     :param str path: if not None, use provided path rather than default of '~user/.ssh/authorized_keys'
     :param bool manage_dir: if True, create and set ownership of the parent dir of the authorized_keys file
+    :param bool follow_symlink: if False symlinks will be overwritten
     :return: full path string to authorized_keys for user
     """
 
     if module.check_mode and path is not None:
-        keysfile = os.path.realpath(path)
+        keysfile = path
+
+        if follow_symlink:
+            return os.path.realpath(keysfile)
+
         return keysfile
 
     try:
@@ -314,7 +319,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         sshdir = os.path.dirname(path)
         keysfile = path
 
-    keysfile = os.path.realpath(keysfile)
+    if follow_symlink:
+        keysfile = os.path.realpath(keysfile)
 
     if not write:
         return keysfile
@@ -520,6 +526,7 @@ def enforce_state(module, params):
     key_options = params.get("key_options", None)
     exclusive = params.get("exclusive", False)
     comment = params.get("comment", None)
+    follow_symlink = params.get('follow_symlink', True)
     error_msg = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
@@ -615,7 +622,7 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
-        filename = keyfile(module, user, do_write, path, manage_dir)
+        filename = keyfile(module, user, do_write, path, manage_dir, follow_symlink)
         new_content = serialize(existing_keys)
 
         diff = None
@@ -652,6 +659,7 @@ def main():
             exclusive=dict(default=False, type='bool'),
             comment=dict(required=False, default=None, type='str'),
             validate_certs=dict(default=True, type='bool'),
+            follow_symlink=dict(default=True, type='bool')
         ),
         supports_check_mode=True
     )
