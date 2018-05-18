@@ -20,7 +20,7 @@ __metaclass__ = type
 import copy
 import os
 import time
-import re
+import uuid
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
@@ -47,8 +47,15 @@ class ActionModule(ActionBase):
         if play_context.connection != 'network_cli':
             # It is supported only with network_cli
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type for network_get module')
+            result['msg'] = ('please use network_cli connection type for net_put module')
             return result
+
+        src_file_path_name = self._task.args.get('src')
+
+        try:
+            self._handle_template()
+        except ValueError as exc:
+            return dict(failed=True, msg=to_text(exc))
 
         try:
             src = self._task.args.get('src')
@@ -58,11 +65,6 @@ class ActionModule(ActionBase):
         # Get destination file if specified
         dest = self._task.args.get('dest')
 
-        if dest is None:
-            dest = self._get_default_dest(src)
-        else:
-            dest = self._handle_dest_path(dest)
-
         # Get proto
         proto = self._task.args.get('protocol')
         if proto is None:
@@ -70,37 +72,39 @@ class ActionModule(ActionBase):
 
         sock_timeout = play_context.timeout
 
+        # Now src has resolved file write to disk in current diectory for scp
+        filename = str(uuid.uuid4())
+        cwd = self._loader.get_basedir()
+        output_file = cwd + '/' + filename
+        with open(output_file, 'w') as f:
+            f.write(src)
+
         if socket_path is None:
             socket_path = self._connection.socket_path
 
         conn = Connection(socket_path)
+        if dest is None:
+            dest = src_file_path_name
 
         try:
-            out = conn.get_file(
-                source=src, destination=dest,
+            out = conn.copy_file(
+                source=output_file, destination=dest,
                 proto=proto, timeout=sock_timeout
             )
         except Exception as exc:
-            result['failed'] = True
-            result['msg'] = ('Exception received : %s' % exc)
+            if to_text(exc) == "No response from server":
+                if play_context.network_os == 'iosxr':
+                    # IOSXR sometimes closes socket prematurely after completion
+                    # of file transfer
+                    result['msg'] = 'Warning: iosxr scp server pre close issue. Please check dest'
+            else:
+                result['failed'] = True
+                result['msg'] = ('Exception received : %s' % exc)
 
+        # Cleanup tmp file expanded wih ansible vars
+        os.remove(output_file)
         result['changed'] = True
-        result['destination'] = dest
         return result
-
-    def _handle_dest_path(self, dest):
-        working_path = self._get_working_path()
-
-        if os.path.isabs(dest) or urlsplit('dest').scheme:
-            dst = dest
-        else:
-            dst = self._loader.path_dwim_relative(working_path, '', dest)
-
-        return dst
-
-    def _get_src_filename_from_path(self, src_path):
-        filename_list = re.split('/|:', src_path)
-        return filename_list[-1]
 
     def _get_working_path(self):
         cwd = self._loader.get_basedir()
@@ -108,11 +112,44 @@ class ActionModule(ActionBase):
             cwd = self._task._role._role_path
         return cwd
 
-    def _get_default_dest(self, src_path):
-        dest_path = self._get_working_path()
-        src_fname = self._get_src_filename_from_path(src_path)
-        filename = '%s/%s' % (dest_path, src_fname)
-        return filename
+    def _handle_template(self):
+        src = self._task.args.get('src')
+        working_path = self._get_working_path()
+
+        if os.path.isabs(src) or urlsplit('src').scheme:
+            source = src
+        else:
+            source = self._loader.path_dwim_relative(working_path, 'templates', src)
+            if not source:
+                source = self._loader.path_dwim_relative(working_path, src)
+
+        if not os.path.exists(source):
+            raise ValueError('path specified in src not found')
+
+        try:
+            with open(source, 'r') as f:
+                template_data = to_text(f.read())
+        except IOError:
+            return dict(failed=True, msg='unable to load src file')
+
+        # Create a template search path in the following order:
+        # [working_path, self_role_path, dependent_role_paths, dirname(source)]
+        searchpath = [working_path]
+        if self._task._role is not None:
+            searchpath.append(self._task._role._role_path)
+            if hasattr(self._task, "_block:"):
+                dep_chain = self._task._block.get_dep_chain()
+                if dep_chain is not None:
+                    for role in dep_chain:
+                        searchpath.append(role._role_path)
+        searchpath.append(os.path.dirname(source))
+        self._templar.environment.loader.searchpath = searchpath
+        self._task.args['src'] = self._templar.template(
+            template_data,
+            convert_data=False
+        )
+
+        return dict(failed=False, msg='successfully loaded file')
 
     def _get_network_os(self, task_vars):
         if 'network_os' in self._task.args and self._task.args['network_os']:
