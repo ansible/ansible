@@ -798,7 +798,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         host_changed = all([
             instance['state'].lower() == 'running',
             self.module.params.get('host'),
-            instance.get('hostname'),
             self.module.params.get('host') != instance.get('hostname')
         ])
         if host_changed:
