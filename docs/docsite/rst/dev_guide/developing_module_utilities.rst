@@ -23,6 +23,7 @@ The following is a list of module_utils files and a general description. The mod
 - keycloak.py - Definitions and helper functions for modules working with the Keycloak API
 - known_hosts.py - utilities for working with known_hosts file
 - manageiq.py - Functions and utilities for modules that work with ManageIQ platform and its resources.
+- memset.py - Helper functions and utilities for interacting with Memset's API.
 - mysql.py - Allows modules to connect to a MySQL instance
 - netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
 - network/a10/a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
