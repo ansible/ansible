@@ -17,7 +17,6 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -544,7 +543,6 @@ from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiM
 # check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
-
     HAS_PYFMGR = True
 except ImportError:
     HAS_PYFMGR = False
@@ -643,6 +641,7 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
         datagram = {
             "filter": ["name", "==", paramgram["name"]]
         }
+
         response = fmg.get(url, datagram)
         try:
             if response[1][0]["policyid"]:
@@ -944,7 +943,7 @@ def main():
     else:
         # START SESSION LOGIC
         # IF THE BASIC PARAMETERS NEEDED ARE PRESENT THEN TRY TO CREATE THE POLICY
-        if (all([paramgram["action"], paramgram["srcaddr"], paramgram["dstaddr"]])) \
+        if (all([paramgram["action"], paramgram["srcaddr"], paramgram["dstaddr"]]))\
                 or (paramgram["mode"] == "delete" and paramgram["name"] is not None):
             results = fmgr_fwpol_ipv4(fmg, paramgram)
             if results[0] == -9998:
