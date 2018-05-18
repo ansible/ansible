@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: network_put
+module: net_put
 version_added: "2.6"
 author: "Deepak Agrawal (@dagrawal)"
 short_description: Copy files from Ansibe controller to a network device
@@ -57,11 +57,11 @@ notes:
 
 EXAMPLES = """
 - name: copy file from ansible controller to a network device
-  network_put:
+  net_put:
     src: running_cfg_ios1.txt
 
 - name: copy file at root dir of flash in slot 3 of sw1(ios)
-  network_put:
+  net_put:
     src: running_cfg_sw1.txt
     protocol: sftp
     dest : flash3:/running_cfg_sw1.txt
