@@ -13,7 +13,7 @@ author:
 version_added: "2.6"
 requirements:
   - boto3
-  - botocore>=1.9.23
+  - botocore>=1.10.0
 extends_documentation_fragment:
   - aws_credentials
 short_description: Look up secrets stored in AWS Secrets Manager.

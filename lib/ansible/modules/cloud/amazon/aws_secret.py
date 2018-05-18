@@ -19,7 +19,7 @@ description:
     - Create, update, and delete secrets stored in AWS Secrets Manager.
 author: "Aaron Smith (@slapula)"
 version_added: "2.6"
-requirements: [ 'botocore>=1.9.23', 'boto3' ]
+requirements: [ 'botocore>=1.10.0', 'boto3' ]
 options:
   name:
     description:
