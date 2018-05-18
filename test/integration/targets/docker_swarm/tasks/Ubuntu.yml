@@ -22,12 +22,39 @@
   - ca-certificates
   - curl
   - software-properties-common
+  - nfs-common
 
-- name: Add gpg key
-  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg >key && apt-key add key
+- name: Upgrade pip
+  become: yes
+  pip: 
+    name=pip
+    extra_args=--upgrade
+    
+- name: Remove old Python modules
+  become: yes
+  pip:
+      name={{ item }}
+      state=absent
+  with_items:
+      - docker-py
 
-- name: Add Docker repo
-  shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"  
+- name: Install Python modules
+  become: yes
+  pip:
+      name=docker
+      state=present
+
+- name : Get Docker's official GPG key
+  become: yes
+  apt_key:
+    url: "https://download.docker.com/linux/ubuntu/gpg"
+    state: present
+
+- name: Add stable repository
+  become: yes
+  apt_repository:
+    repo: "deb https://download.docker.com/linux/ubuntu {{ansible_lsb.codename}} stable"
+    state: present
 
 - name: Install Docker CE
   apt:
