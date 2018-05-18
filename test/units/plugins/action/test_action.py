@@ -27,7 +27,7 @@ from ansible import constants as C
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleActionFail
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote, builtins
 from ansible.module_utils._text import to_bytes
@@ -85,6 +85,23 @@ class TestActionBase(unittest.TestCase):
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, {})
+
+    def test_action_base_run_invalid_task_args(self):
+        mock_task = MagicMock()
+        mock_task.action = "foo"
+        mock_task.args = dict(a=1, b=2, c=3)
+
+        mock_connection = MagicMock()
+
+        play_context = PlayContext()
+
+        mock_task.async_val = None
+        action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
+        task_vars = {
+            None: None
+        }
+        self.assertRaises(AnsibleActionFail, action_base.run,
+                          task_vars=task_vars)
 
     def test_action_base__configure_module(self):
         fake_loader = DictDataLoader({

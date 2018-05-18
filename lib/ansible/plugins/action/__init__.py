@@ -93,6 +93,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
+        if task_vars and (None in list(task_vars.keys())):
+            raise AnsibleActionFail('An invalid "None" key was found in task_vars.')
+
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
 
