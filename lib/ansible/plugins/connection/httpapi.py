@@ -16,7 +16,7 @@ version_added: "2.6"
 options:
   host:
     description:
-      - Specifies the remote device FQDN or IP address to establish the SSH
+      - Specifies the remote device FQDN or IP address to establish the HTTP(S)
         connection to.
     default: inventory_hostname
     vars:
@@ -34,6 +34,7 @@ options:
       - name: ANSIBLE_REMOTE_PORT
     vars:
       - name: ansible_port
+      - name: ansible_httpapi_port
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
