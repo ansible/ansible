@@ -489,6 +489,14 @@ def flatten(mylist, levels=None):
 
 
 def subelements(obj, subelements, skip_missing=False):
+    '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
+    of the element and the results of the dotted accessor
+
+    >>> obj = [{"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}]
+    >>> subelements(obj, 'groups')
+    [({'name': 'alice', 'groups': ['wheel'], 'authorized': ['/tmp/alice/onekey.pub']}, 'wheel')]
+
+    '''
     if isinstance(obj, dict):
         element_list = list(obj.values())
     elif isinstance(obj, list):
@@ -502,6 +510,8 @@ def subelements(obj, subelements, skip_missing=False):
         subelement_list = subelements.split('.')
     else:
         raise AnsibleFilterError('subelements must be a list or a string')
+
+    results = []
 
     for element in element_list:
         values = element
@@ -519,7 +529,9 @@ def subelements(obj, subelements, skip_missing=False):
             raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
-            yield element, value
+            results.append((element, value))
+
+    return results
 
 
 def dict_to_list_of_dict_key_value_elements(mydict):
