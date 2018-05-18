@@ -309,6 +309,7 @@ except ImportError:
 
 Rule = namedtuple('Rule', ['port_range', 'protocol', 'target', 'target_type', 'description'])
 valid_targets = set(['ipv4', 'ipv6', 'group', 'ip_prefix'])
+current_account_id = None
 
 
 def rule_cmp(a, b):
@@ -395,7 +396,7 @@ def rule_from_group_permission(perm):
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
             target = pair['GroupId']
-            if pair.get('UserId'):
+            if pair.get('UserId') and pair['UserId'] != current_account_id:
                 target = (
                     pair.get('UserId', None),
                     pair.get('GroupId', None),
@@ -476,15 +477,13 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     function validate the rule specification and return either a non-None
     group_id or a non-None ip range.
     """
-    # TODO use this to set owner account on local SG IDs
-    current_account_id = get_aws_account_id(module)
     FOREIGN_SECURITY_GROUP_REGEX = r'^([^/]+)/?(sg-\S+)?/(\S+)'
     group_id = None
     group_name = None
     target_group_created = False
 
     validate_rule(module, rule)
-    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
+    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']) and current_account_id not in rule['group_id']:
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
@@ -890,6 +889,9 @@ def main():
     verify_rules_with_descriptions_permitted(client, module, rules, rules_egress)
     group, groups = group_exists(client, module, vpc_id, group_id, name)
     group_created_new = not bool(group)
+
+    global current_account_id
+    current_account_id = get_aws_account_id(module)
 
     # Ensure requested group is absent
     if state == 'absent':
