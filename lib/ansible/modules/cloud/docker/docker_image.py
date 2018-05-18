@@ -402,7 +402,7 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                with open(self.archive_path, 'w') as fd:
+                with open(self.archive_path, 'wb') as fd:
                     if HAS_DOCKER_PY_3:
                         for chunk in image:
                             fd.write(chunk)
@@ -553,7 +553,7 @@ class ImageManager(DockerBaseClass):
         '''
         try:
             self.log("Opening image %s" % self.load_path)
-            image_tar = open(self.load_path, 'r')
+            image_tar = open(self.load_path, 'rb')
         except Exception as exc:
             self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
 
