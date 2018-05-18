@@ -20,6 +20,12 @@
   - docker
   - docker-engine
   - docker.io
+  - docker-ce
+
+- name: Purge socket
+  file:
+    path: /var/run/docker.sock
+    state: absent
 
 - name: Install pre-reqs
   apt:
@@ -33,30 +39,14 @@
   - software-properties-common
 
 - name : Get Docker's official GPG key
-  become: yes
   apt_key:
     url: "https://download.docker.com/linux/ubuntu/gpg"
     state: present
 
 - name: Add stable repository
-  become: yes
   apt_repository:
     repo: "deb https://download.docker.com/linux/ubuntu {{ansible_lsb.codename}} stable"
     state: present
-
-- name: Install Docker CE
-  apt:
-    name: docker-ce
-    state: present
-    update_cache: yes
-  ignore_errors: true
-
-- name: Check pb
-  become: yes
-  shell: journalctl -xe
-  register: journal
-
-- debug: var=shell
 
 - name: Install Docker CE
   apt:
