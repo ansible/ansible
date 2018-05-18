@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, Rob White (@wimnat)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -20,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: glue_job
+module: aws_glue_job
 short_description: Manage an AWS Glue job
 description:
     - Manage an AWS Glue job. See U(https://aws.amazon.com/glue/) for details.
@@ -91,14 +80,14 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Create an AWS Glue job
-- glue_job:
+- aws_glue_job:
     command_script_location: s3bucket/script.py
     name: my-glue-job
     role: my-iam-role
     state: present
 
 # Delete an AWS Glue job
-- glue_job:
+- aws_glue_job:
     name: my-glue-job
     state: absent
 
@@ -192,7 +181,7 @@ timeout:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 # Non-ansible imports
 import copy
@@ -204,7 +193,7 @@ except ImportError:
 
 def _get_glue_job(connection, module, glue_job_name):
     """
-    Get an AWS Glue job based on name using AWSRetry. If not found, return None.
+    Get an AWS Glue job based on name. If not found, return None.
 
     :param connection: AWS boto3 glue connection
     :param module: Ansible module
@@ -218,7 +207,7 @@ def _get_glue_job(connection, module, glue_job_name):
         if e.response['Error']['Code'] == 'EntityNotFoundException':
             return None
         else:
-            raise e
+            module.fail_json_aws(e)
 
 
 def _compare_glue_job_params(user_params, current_params):
@@ -338,8 +327,7 @@ def delete_glue_job(connection, module, glue_job):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = (
         dict(
             allocated_capacity=dict(type='int'),
             command_name=dict(type='str', default='glueetl'),
