@@ -203,7 +203,7 @@ options:
     required: false
   inbound:
     description:
-      - Policy-based IPsec VPN: only traffic from the remote network can initiate a VPN.
+      - Policy-based IPsec VPN only traffic from the remote network can initiate a VPN.
     required: false
   internet_service:
     description:
