@@ -603,7 +603,6 @@ def get_repo_path(module, dest, bare):
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
         try:
-            git_conf = open(repo_path, 'rb')
             with open(repo_path, 'r') as gitfile:
                 data = gitfile.read()
             ref_prefix, gitdir = data.rstrip().split('gitdir: ', 1)
