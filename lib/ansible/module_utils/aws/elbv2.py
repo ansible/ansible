@@ -14,7 +14,6 @@ try:
 except ImportError:
     pass
 import traceback
-import time
 from copy import deepcopy
 
 
@@ -263,7 +262,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
     def modify_elb_attributes(self):
         """
-        Update ELB attributes if required
+        Update Application ELB attributes if required
+        
         :return:
         """
 
@@ -339,6 +339,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
         # Ansible module parameters specific to NLBs
         self.type = 'network'
+        self.cross_zone_load_balancing = module.params.get('cross_zone_load_balancing')
 
     def create_elb(self):
         """
@@ -370,16 +371,17 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
     def modify_elb_attributes(self):
         """
-        Update ELB attributes if required
+        Update Network ELB attributes if required
+
         :return:
         """
 
         update_attributes = []
 
-        if self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "true":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
-        if self.deletion_protection is not None and not self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "false":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
+        if self.cross_zone_load_balancing is not None and str(self.cross_zone_load_balancing).lower() != self.elb_attributes['load_balancing_cross_zone_enabled']:
+            update_attributes.append({'Key': 'load_balancing.cross_zone.enabled', 'Value': str(self.cross_zone_load_balancing).lower()})
+        if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
 
         if update_attributes:
             try:

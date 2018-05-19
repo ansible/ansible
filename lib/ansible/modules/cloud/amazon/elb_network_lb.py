@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
+
+# Copyright: (c) 2018, Rob White (@wimnat)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -17,6 +18,12 @@ version_added: "2.6"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
+  cross_zone_load_balancing:
+    description:
+      - Indicates whether cross-zone load balancing is enabled.
+    required: false
+    default: no
+    type: bool
   deletion_protection:
     description:
       - Indicates whether deletion protection for the ELB is enabled.
@@ -125,26 +132,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-access_logs_s3_bucket:
-    description: The name of the S3 bucket for the access logs.
-    returned: when state is present
-    type: string
-    sample: mys3bucket
-access_logs_s3_enabled:
-    description: Indicates whether access logs stored in Amazon S3 are enabled.
-    returned: when state is present
-    type: string
-    sample: true
-access_logs_s3_prefix:
-    description: The prefix for the location in the S3 bucket.
-    returned: when state is present
-    type: string
-    sample: /my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
     returned: when state is present
     type: list
-    sample: "[{'subnet_id': 'subnet-aabbccddff', 'zone_name': 'ap-southeast-2a'}]"
+    sample: "[{'subnet_id': 'subnet-aabbccddff', 'zone_name': 'ap-southeast-2a', 'load_balancer_addresses': []}]"
 canonical_hosted_zone_id:
     description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
     returned: when state is present
@@ -240,16 +232,16 @@ load_balancer_name:
     returned: when state is present
     type: string
     sample: my-elb
+load_balancing_cross_zone_enabled:
+    description: Indicates whether cross-zone load balancing is enabled.
+    returned: when state is present
+    type: string
+    sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
     type: string
     sample: internal
-security_groups:
-    description: The IDs of the security groups for the load balancer.
-    returned: when state is present
-    type: list
-    sample: ['sg-0011223344']
 state:
     description: The state of the load balancer.
     returned: when state is present
@@ -266,7 +258,7 @@ type:
     description: The type of load balancer.
     returned: when state is present
     type: string
-    sample: application
+    sample: network
 vpc_id:
     description: The ID of the VPC for the load balancer.
     returned: when state is present
@@ -368,29 +360,33 @@ def delete_elb(elb_obj):
 
 
 def main():
-    argument_spec = dict(
-        deletion_protection=dict(type='bool'),
-        listeners=dict(type='list',
-                       elements='dict',
-                       options=dict(
-                           Protocol=dict(type='str', required=True),
-                           Port=dict(type='int', required=True),
-                           SslPolicy=dict(type='str'),
-                           Certificates=dict(type='list'),
-                           DefaultActions=dict(type='list', required=True),
-                           Rules=dict(type='list')
-                       )
-                       ),
-        name=dict(required=True, type='str'),
-        purge_listeners=dict(default=True, type='bool'),
-        purge_tags=dict(default=True, type='bool'),
-        subnets=dict(type='list'),
-        subnet_mappings=dict(type='list'),
-        scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-        state=dict(choices=['present', 'absent'], type='str'),
-        tags=dict(default={}, type='dict'),
-        wait_timeout=dict(type='int'),
-        wait=dict(type='bool', default=False)
+
+    argument_spec = (
+        dict(
+            cross_zone_load_balancing=dict(type='bool'),
+            deletion_protection=dict(type='bool'),
+            listeners=dict(type='list',
+                           elements='dict',
+                           options=dict(
+                               Protocol=dict(type='str', required=True),
+                               Port=dict(type='int', required=True),
+                               SslPolicy=dict(type='str'),
+                               Certificates=dict(type='list'),
+                               DefaultActions=dict(type='list', required=True),
+                               Rules=dict(type='list')
+                           )
+                           ),
+            name=dict(required=True, type='str'),
+            purge_listeners=dict(default=True, type='bool'),
+            purge_tags=dict(default=True, type='bool'),
+            subnets=dict(type='list'),
+            subnet_mappings=dict(type='list'),
+            scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
+            state=dict(choices=['present', 'absent'], type='str'),
+            tags=dict(type='dict'),
+            wait_timeout=dict(type='int'),
+            wait=dict(type='bool')
+        )
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
