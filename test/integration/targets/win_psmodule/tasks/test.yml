@@ -155,6 +155,12 @@
 
     Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path $env:temp | Out-Null;
 
+    # Register repo first, as there's no way to only register repository using win_psmodule
+    # at this point (maybe a win_psrepository will do that one day)
+    Register-PSRepository -Name "{{custom_repo_name}}" `
+      -SourceLocation "{{custom_repo_path}}" `      
+      -InstallationPolicy Trusted | Out-Null;
+    
     Publish-Module -Path "$($env:temp)\\{{powershell_module}}" -Repository "{{custom_repo_name}}" -Force -Confirm:$false | Out-Null;
     
     Get-ChildItem C:\_repo\* | ? Name -match "powershell-yaml.*.nupkg" | % Name;
