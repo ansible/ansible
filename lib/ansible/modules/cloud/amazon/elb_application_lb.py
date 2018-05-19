@@ -509,7 +509,7 @@ def main():
             security_groups=dict(type='list'),
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
             state=dict(choices=['present', 'absent'], type='str'),
-            tags=dict(default={}, type='dict'),
+            tags=dict(type='dict'),
             wait_timeout=dict(type='int'),
             wait=dict(default=False, type='bool')
         )
