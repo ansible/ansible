@@ -205,7 +205,6 @@ class ElastiCacheManager(object):
         return arn
 
     def compare_and_update_tags(self):
-        self.tags = ansible_dict_to_boto3_tag_list(self.tags)
         tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
         add, remove = compare_aws_tags(tags, self.tags, self.purge_tags)
         if add:
