@@ -52,7 +52,7 @@
 
   - assert: *false
 
-  when: not ( platform is search('N3K'))
+  when: not ( platform is search('N3K|N35|N3L'))
 
   rescue:
   - debug: msg="connection={{ ansible_connection }} nxos_evpn_global sanity test - FALURE ENCOUNTERED"
