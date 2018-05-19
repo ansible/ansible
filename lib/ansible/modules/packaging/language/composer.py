@@ -92,6 +92,15 @@ options:
         default: true
         type: bool
         aliases: [ optimize-autoloader ]
+    classmap_authoritative:
+        version_added: "2.7"
+        description:
+            - Autoload classes from classmap only.
+            - Implicitely enable optimize_autoloader.
+            - Recommended especially for production, but can take a bit of time to run.
+        default: false
+        type: bool
+        aliases: [ classmap-authoritative ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
@@ -183,6 +192,7 @@ def main():
             no_scripts=dict(default=False, type="bool", aliases=["no-scripts"]),
             no_plugins=dict(default=False, type="bool", aliases=["no-plugins"]),
             optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
+            classmap_authoritative=dict(default=False, type="bool", aliases=["classmap-authoritative"]),
             ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
         required_if=[('global_command', False, ['working_dir'])],
@@ -222,6 +232,7 @@ def main():
         'no_scripts': 'no-scripts',
         'no_plugins': 'no_plugins',
         'optimize_autoloader': 'optimize-autoloader',
+        'classmap_authoritative': 'classmap-authoritative',
         'ignore_platform_reqs': 'ignore-platform-reqs',
     }
 
