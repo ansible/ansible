@@ -489,6 +489,16 @@ def main():
 
                 if action:
                     result['changed'] = True
+                    if action == 'reloaded':
+                        rc, out, err = module.run_command(
+                            r"%s %s '%s' | grep ^ExecReload="
+                            % (systemctl, 'cat', unit)
+                        )
+                        if rc != 0:
+                            module.warn(
+                                'The service (%s) does not support `reload` action and it is likely to fail.'
+                                % unit
+                            )
                     if not module.check_mode:
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
