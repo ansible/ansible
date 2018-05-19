@@ -28,7 +28,10 @@ options:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
-        choices: [ reloaded, restarted, started, stopped ]
+              C(tried-restarting) - restart unit if active.
+              C(reloaded-or-restarted) - reload unit if possible, otherwise start or restart.
+              C(tried-reloading-or-restarting) - if active, reload unit, if supported, otherwise restart.
+        choices: [ tried-restarting, reloaded-or-restarted, tried-reloading-or-restarting, reloaded, restarted, started, stopped ]
     enabled:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
@@ -309,7 +312,15 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
+            state=dict(
+                type='str',
+                choices=[
+                    'tried-restarting', 'reloaded-or-restarted',
+                    'tried-reloading-or-restarting',
+                    'reloaded', 'restarted',
+                    'started', 'stopped',
+                ]
+            ),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -487,6 +498,12 @@ def main():
                     ('restarted', STOPPED_NOW): 'start',
                     ('reloaded', RUNNING_NOW): 'reload',
                     ('reloaded', STOPPED_NOW): 'start',
+                    ('tried-restarting', RUNNING_NOW): 'try-restart',
+                    ('tried-restarting', STOPPED_NOW): 'start',
+                    ('reloaded-or-restarted', RUNNING_NOW): 'reload-or-restart',
+                    ('reloaded-or-restarted', STOPPED_NOW): 'start',
+                    ('tried-reloading-or-restarting', RUNNING_NOW): 'try-reload-or-restart',
+                    ('tried-reloading-or-restarting', STOPPED_NOW): 'start',
                 }
                 action = state_to_action.get(
                     (module.params['state'], is_service_running),
