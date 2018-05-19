@@ -163,7 +163,7 @@
 - name: Validate sample module in custom repo
   assert:
     that:
-      - "powershell_module in saved_package.stdout_lines[saved_package.stdout_lines | length-1]"
+      - "powershell_module in (saved_package.stdout_lines[(saved_package.stdout_lines | length)-1])"
 
 - name: Install module from custom Powershell repository
   win_psmodule:
