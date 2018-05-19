@@ -38,25 +38,15 @@ DOCUMENTATION = '''
 
 import logging
 import json
-import sys
 import socket
-import time
 from uuid import getnode
 from ansible.plugins.callback import CallbackBase
-from ansible.module_utils.urls import open_url
 
 try:
     from logdna import LogDNAHandler
     HAS_LOGDNA = True
 except ImportError:
     HAS_LOGDNA = False
-    IS_PY2 = (sys.version_info[0] == 2)
-    LOGDNA_URL = 'https://logs.logdna.com/logs/ingest'
-    MAX_LINE_LENGTH = 32000
-    if IS_PY2:
-        from urllib import urlencode
-    else:
-        from urllib.parse import urlencode
 
 
 # Getting MAC Address of system:
@@ -74,12 +64,12 @@ def get_hostname():
 def get_ip():
     try:
         return socket.gethostbyname(get_hostname())
-    except:
+    except BaseException:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except:
+        except BaseException:
             IP = '127.0.0.1'
         finally:
             s.close()
@@ -91,7 +81,7 @@ def isJSONable(obj):
     try:
         json.dumps(obj)
         return True
-    except:
+    except BaseException:
         return False
 
 
@@ -104,7 +94,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self, display=None):
-
         super(CallbackModule, self).__init__(display=display)
 
         self.disabled = True
@@ -134,14 +123,14 @@ class CallbackModule(CallbackBase):
         if self.conf_tags is None:
             self.conf_tags = ['ansible']
         else:
-            if type(self.conf_tags) is str:
+            if isinstance(self.conf_tags, str):
                 self.conf_tags = self.conf_tags.split(',')
-            elif type(self.conf_tags) is not list:
+            elif not isinstance(self.conf_tags, list):
                 self.conf_tags = [str(self.conf_tags)]
 
         if self.conf_key is None:
             self.disabled = True
-            self._display.warning('LogDNA Ingestion Key has not been provided!')
+            self._display.warning('WARNING:\nLogDNA Ingestion Key has not been provided!')
         else:
             self.disabled = False
             if HAS_LOGDNA:
@@ -149,12 +138,10 @@ class CallbackModule(CallbackBase):
                 self.log.setLevel(logging.INFO)
                 self.options = {'hostname': self.conf_hostname, 'mac': self.mac, 'index_meta': True}
                 self.log.addHandler(LogDNAHandler(self.conf_key, self.options))
+                self.disabled = False
             else:
-                self.params = dict()
-                self.params['hostname'] = self.conf_hostname
-                self.params['ip'] = self.ip
-                self.params['mac'] = self.mac
-                self.params['tags'] = self.conf_tags
+                self.disabled = True
+                self._display.warning('WARNING:\nPlease, install LogDNA Python Package: `pip install logdna`')
 
     def metaIndexing(self, meta):
         invalidKeys = []
@@ -169,32 +156,24 @@ class CallbackModule(CallbackBase):
             meta['__errors'] = 'These keys have been sanitized: ' + ', '.join(invalidKeys)
         return meta
 
+    def sanitizeJSON(self, data):
+        try:
+            return json.loads(json.dumps(data))
+        except BaseException:
+            return {'warnings': ['JSON Formatting Issue', json.dumps(data)]}
+
     def flush(self, log, options):
         if HAS_LOGDNA:
             self.log.info(json.dumps(log), options)
-        else:
-            message = dict()
-            message['hostname'] = self.conf_hostname
-            message['timestamp'] = int(time.time() * 1000)
-            message['line'] = json.dumps(log)
-            message['level'] = 'info'
-            message['app'] = options['app']
-            message['env'] = ''
-            message['meta'] = self.metaIndexing(options['meta'])
-            if len(message['line']) > MAX_LINE_LENGTH:
-                message['line'] = message['line'][:MAX_LINE_LENGTH] + ' (cut off, too long...)'
-            url = LOGDNA_URL + '?' + urlencode(self.params)
-            data = {'e': 'ls', 'ls': [message]}
-            open_url(url, data=data, method='POST', force=True, timeout=30, url_username='user', url_password=self.conf_key)
 
     def sendLog(self, host, category, logdata):
         if not self.disabled:
             options = {'app': 'ansible', 'meta': {'playbook': self.playbook_name, 'host': host, 'category': category}}
-            logdata['result'].pop('invocation', None)
-            warnings = logdata['result'].pop('warnings', None)
+            logdata['info'].pop('invocation', None)
+            warnings = logdata['info'].pop('warnings', None)
             if warnings is not None:
                 self.flush({'warn': warnings}, options)
-            self.flush((logdata), options)
+            self.flush(logdata, options)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
@@ -204,18 +183,18 @@ class CallbackModule(CallbackBase):
         result = dict()
         for host in stats.processed.keys():
             result[host] = stats.summarize(host)
-        self.sendLog(self.conf_hostname, 'STATS', {'info': result})
+        self.sendLog(self.conf_hostname, 'STATS', {'info': self.sanitizeJSON(result)})
 
     def runner_on_failed(self, host, res, ignore_errors=False):
         if self.plugin_ignore_errors:
             ignore_errors = self.plugin_ignore_errors
-        self.sendLog(host, 'FAILED', {'info': res, 'ignore_errors': ignore_errors})
+        self.sendLog(host, 'FAILED', {'info': self.sanitizeJSON(res), 'ignore_errors': ignore_errors})
 
     def runner_on_ok(self, host, res):
-        self.sendLog(host, 'OK', {'info': res})
+        self.sendLog(host, 'OK', {'info': self.sanitizeJSON(res)})
 
     def runner_on_async_failed(self, host, res, jid):
-        self.sendLog(host, 'ASYNC_FAILED', {'info': res, 'job_id': jid})
+        self.sendLog(host, 'ASYNC_FAILED', {'info': self.sanitizeJSON(res), 'job_id': jid})
 
     def runner_on_async_ok(self, host, res, jid):
-        self.sendLog(host, 'ASYNC_OK', {'info': res, 'job_id': jid})
+        self.sendLog(host, 'ASYNC_OK', {'info': self.sanitizeJSON(res), 'job_id': jid})
