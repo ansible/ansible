@@ -1,5 +1,7 @@
+#
 # Copyright: (c) 2018, Ansible Project
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,24 +15,31 @@ DOCUMENTATION = '''
         - Get inventory hosts from VMware environment.
         - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
         - 'Please make sure you mention "enable_plugins = vmware_inventory" in inventory section of ansible.cfg.'
+        - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
-      - constructed
       - inventory_cache
+    requirements:
+      - "Python >= 2.7"
+      - "PyVmomi"
+      - "requests >= 2.3"
+      - "vSphere Automation SDK - For tag feature"
+      - "vCloud Suite SDK - For tag feature"
     options:
         hostname:
-            description: Name of vCenter or ESXi server
+            description: Name of vCenter or ESXi server.
             env:
               - name: VMWARE_SERVER
         username:
-            description: Name of vSphere admin user
+            description: Name of vSphere admin user.
             env:
               - name: VMWARE_USERNAME
         password:
-            description: Password of vSphere admin user
+            description: Password of vSphere admin user.
             env:
               - name: VMWARE_PASSWORD
         port:
-            description: Port number used to connect to vCenter or ESXi Server
+            description: Port number used to connect to vCenter or ESXi Server.
+            default: 443
             env:
               - name: VMWARE_PORT
         validate_certs:
@@ -99,25 +108,24 @@ try:
 except ImportError:
     HAS_VSPHERE = False
 
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-from ansible.module_utils.six import PY3
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
-class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     NAME = 'vmware_inventory'
 
-    def _set_params(self):
+    def _set_credentials(self):
         """
-        Function to set credentials
+        Set credentials
         """
-        self.hostname = self._options.get('hostname')
-        self.username = self._options.get('username')
-        self.password = self._options.get('password')
-        self.port = self._options.get('port') or 443
-        self.with_tags = self._options.get('with_tags', False)
+        self.hostname = self.get_option('hostname')
+        self.username = self.get_option('username')
+        self.password = self.get_option('password')
+        self.port = self.get_option('port')
+        self.with_tags = self.get_option('with_tags')
 
-        self.validate_certs = self._options.get('validate_certs')
+        self.validate_certs = self.get_option('validate_certs')
 
         if not HAS_VSPHERE and self.with_tags:
             raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
@@ -135,7 +143,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def login_vapi(self):
         """
-        Function to login to vCenter API using REST call
+        Login to vCenter API using REST call
         Returns: connection object
 
         """
@@ -170,7 +178,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def login(self):
         """
-        Function to login to vCenter or ESXi server
+        Login to vCenter or ESXi server
         Returns: connection object
 
         """
@@ -210,7 +218,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def verify_file(self, path):
         """
-        Function to verify plugin configuration file and mark this plugin active
+        Verify plugin configuration file and mark this plugin active
         Args:
             path: Path of configuration YAML file
 
@@ -223,41 +231,82 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 valid = True
 
         if HAS_REQUESTS:
-            required_version = 2 if PY3 else 1
-            requests_version = requests.__version__
-            requests_major = int(requests_version.split('.')[0])
-            if requests_major < required_version:
+            # Pyvmomi 5.5 and onwards requires requests 2.3
+            # https://github.com/vmware/pyvmomi/blob/master/requirements.txt
+            required_version = (2, 3)
+            requests_version = requests.__version__.split(".")[:2]
+            try:
+                requests_major_minor = tuple(map(int, requests_version))
+            except ValueError:
+                raise AnsibleParserError("Failed to parse 'requests' library version.")
+
+            if requests_major_minor < required_version:
                 raise AnsibleParserError("'requests' library version should"
-                                         " be >= %0.1f, found: %s." % (required_version,
-                                                                       requests_version))
+                                         " be >= %s, found: %s." % (".".join([str(w) for w in required_version]),
+                                                                    requests.__version__))
             valid = True
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=False):
+    def parse(self, inventory, loader, path, cache=True):
         """
-        parses the inventory file
+        Parses the inventory file
         """
-
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
+        cache_key = self.get_cache_key(path)
+
         config_data = self._read_config_data(path)
+
+        source_data = None
+        if cache:
+            cache = self._options.get('cache')
+
+        update_cache = False
+        if cache:
+            try:
+                source_data = self.cache.get(cache_key)
+            except KeyError:
+                update_cache = True
 
         # set _options from config data
         self._consume_options(config_data)
 
-        self._set_params()
+        self._set_credentials()
         self.content = self.login()
         if self.with_tags:
             self.rest_content = self.login_vapi()
 
-        self._populate_from_source()
+        using_current_cache = cache and not update_cache
+        cacheable_results = self._populate_from_source(source_data, using_current_cache)
 
-    def _populate_from_source(self):
+        if update_cache:
+            self.cache.set(cache_key, cacheable_results)
+
+    def _populate_from_cache(self, source_data):
         """
-        Function to populate inventory data from direct source
+        Populate inventory from cache
+        """
+        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
+        for group in source_data:
+            if group == 'all':
+                continue
+            else:
+                self.inventory.add_group(group)
+                self.inventory.add_child('all', group)
+        if not source_data:
+            for host in hostvars:
+                self.inventory.add_host(host)
+
+    def _populate_from_source(self, source_data, using_current_cache):
+        """
+        Populate inventory data from direct source
 
         """
+        if using_current_cache:
+            self._populate_from_cache(source_data)
+            return source_data
+
         cacheable_results = {}
         hostvars = {}
         objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
@@ -317,7 +366,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def get_managed_objects_properties(self, vim_type, properties=None):
         """
-        Function to look up a Managed Object Reference in vCenter / ESXi Environment
+        Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
         :param properties: List of properties related to vim object e.g. Name
         :return: local content object
