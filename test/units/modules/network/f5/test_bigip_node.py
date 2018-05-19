@@ -21,6 +21,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_node import Parameters
+    from library.modules.bigip_node import ModuleParameters
+    from library.modules.bigip_node import ApiParameters
     from library.modules.bigip_node import ModuleManager
     from library.modules.bigip_node import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
@@ -29,6 +31,8 @@ try:
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_node import Parameters
+        from ansible.modules.network.f5.bigip_node import ModuleParameters
+        from ansible.modules.network.f5.bigip_node import ApiParameters
         from ansible.modules.network.f5.bigip_node import ModuleManager
         from ansible.modules.network.f5.bigip_node import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -139,3 +143,94 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is False
+
+    def test_create_node_fqdn(self, *args):
+        set_module_args(dict(
+            fqdn='foo.bar',
+            name='mytestserver',
+            monitors=[
+                '/Common/icmp'
+            ],
+            partition='Common',
+            state='present',
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.exists = Mock(side_effect=[False, True])
+        mm.create_on_device = Mock(return_value=True)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+
+    def test_update_node_fqdn_up_interval(self, *args):
+        set_module_args(dict(
+            fqdn='foo.bar',
+            fqdn_up_interval=100,
+            name='mytestserver',
+            monitors=[
+                '/Common/icmp'
+            ],
+            partition='Common',
+            state='present',
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        current = ApiParameters(params=load_fixture('load_ltm_node_2.json'))
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.exists = Mock(side_effect=[True, True])
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+
+    def test_update_node_fqdn_up_interval_idempotent(self, *args):
+        set_module_args(dict(
+            fqdn='google.com',
+            fqdn_up_interval=3600,
+            name='fqdn-foo',
+            monitors=[
+                'icmp',
+                'tcp_echo'
+            ],
+            partition='Common',
+            state='present',
+            password='passsword',
+            server='localhost',
+            user='admin'
+        ))
+
+        current = ApiParameters(params=load_fixture('load_ltm_node_2.json'))
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.exists = Mock(side_effect=[True, True])
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is not True
