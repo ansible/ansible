@@ -31,7 +31,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
           - key: fact_caching_prefix
-          - section: defaults
+            section: defaults
       _timeout:
         default: 86400
         description: Expiration timeout in seconds for the cache plugin data
