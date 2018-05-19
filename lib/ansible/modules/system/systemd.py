@@ -473,21 +473,30 @@ def main():
 
             # What is current service state?
             if 'ActiveState' in result['status']:
-                action = None
-                if module.params['state'] == 'started':
-                    if not is_running_service(result['status']):
-                        action = 'start'
-                elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
-                        action = 'stop'
-                else:
-                    if not is_running_service(result['status']):
-                        action = 'start'
-                    else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                RUNNING_NOW = True
+                STOPPED_NOW = False
+                DO_NOTHING = None
+                is_service_running = is_running_service(result['status'])
+                state_to_action = {
+                    # current state => new state action:
+                    ('started', STOPPED_NOW): 'start',
+                    ('started', RUNNING_NOW): DO_NOTHING,
+                    ('stopped', RUNNING_NOW): 'stop',
+                    ('stopped', STOPPED_NOW): DO_NOTHING,
+                    ('restarted', RUNNING_NOW): 'restart',
+                    ('restarted', STOPPED_NOW): 'start',
+                    ('reloaded', RUNNING_NOW): 'reload',
+                    ('reloaded', STOPPED_NOW): 'start',
+                }
+                action = state_to_action.get(
+                    (module.params['state'], is_service_running),
+                    # Fall back to start if not running:
+                    DO_NOTHING if is_service_running else 'start',
+                )
+                if module.params['state'] not in ('started', 'stopped'):
                     result['state'] = 'started'
 
-                if action:
+                if action is not DO_NOTHING:
                     result['changed'] = True
                     if action == 'reloaded':
                         rc, out, err = module.run_command(
