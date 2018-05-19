@@ -5,7 +5,7 @@
   # to /etc/init/ureadahead.conf.disabled by cloud-init' clashes with `local diversion of
   # /etc/init/ureadahead.conf to /etc/init/ureadahead.conf.distrib
   # https://bugs.launchpad.net/ubuntu/+source/ureadahead/+bug/997838
-  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != 14
+  when: ansible_distribution != "Ubuntu" or ansible_distribution_major_version|int != 14
   block:
   - name: setup install cloud-init
     package:
