@@ -255,7 +255,7 @@ class ElastiCacheManager(object):
             kwargs['Port'] = self.cache_port
         if self.tags is not None:
             kwargs['Tags'] = ansible_dict_to_boto3_tag_list(self.tags)
-  	if self.zone is not None:
+        if self.zone is not None:
             kwargs['PreferredAvailabilityZone'] = self.zone
 
         try:
