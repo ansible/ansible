@@ -80,13 +80,16 @@ options:
   tags:
     description:
       - Set instance tags
+    type: dict
     required: false
-    default: none
+    default: {}
     version_added: "2.6"
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
-        tags will not be modified.
+      - If yes, existing tags will be purged from the resource to match exactly
+        what is defined by I(tags) parameter. If the I(tags) parameter is not
+        set then tags will not be modified.
+    type: bool
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
