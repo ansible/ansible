@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     description:
         - This cache uses JSON formatted, per host, files saved to the filesystem.
     version_added: "1.9"
-    author: Ansible Core
+    author: Ansible Core (@ansible-core)
     options:
       _uri:
         required: True
@@ -30,7 +30,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
           - key: fact_caching_prefix
-          - section: defaults
+            section: defaults
       _timeout:
         default: 86400
         description: Expiration timeout for the cache plugin data
