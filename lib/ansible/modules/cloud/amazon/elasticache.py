@@ -140,7 +140,7 @@ EXAMPLES = """
 """
 from time import sleep
 from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, compare_aws_tags, boto3_tag_list_to_ansible_dict, HAS_BOTO3
 
@@ -196,16 +196,11 @@ class ElastiCacheManager(object):
             self.create()
 
     def get_arn(self):
-        region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
-        if region:
-            client = boto3_conn(self.module, conn_type='client', resource='sts',
-                                region=region, endpoint=ec2_url, **aws_connect_params)
-        else:
-            self.module.fail_json(msg="region must be specified")
+        client = self.module.client('sts')
         instance_counts = {}
         response = client.get_caller_identity()
         user_id = response['Account']
-        arn = "arn:aws:elasticache:" + region + ":" + user_id + ":cluster:" + self.name
+        arn = "arn:aws:elasticache:" + self.region + ":" + user_id + ":cluster:" + self.name
         return arn
 
     def compare_and_update_tags(self):
@@ -466,13 +461,7 @@ class ElastiCacheManager(object):
         return False
 
     def _get_elasticache_connection(self):
-        """Get an elasticache connection"""
-        region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
-        if region:
-            return boto3_conn(self.module, conn_type='client', resource='elasticache',
-                              region=region, endpoint=ec2_url, **aws_connect_params)
-        else:
-            self.module.fail_json(msg="region must be specified")
+        return self.module.client('elasticache')
 
     def _get_port(self):
         """Get the port. Where this information is retrieved from is engine dependent."""
@@ -544,7 +533,7 @@ def main():
         purge_tags=dict(default=True, type='bool')
     ))
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
     )
 
