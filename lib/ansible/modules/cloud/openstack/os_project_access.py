@@ -104,13 +104,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
-def _get_allowed_projects(cloud, flavor_id):
-    return [x.tenant_id
-            for x
-            in cloud.nova_client.flavor_access.list(flavor=flavor_id)
-            ]
-
-
 def main():
     argument_spec = openstack_full_argument_spec(
         state=dict(required=False, default='present',
