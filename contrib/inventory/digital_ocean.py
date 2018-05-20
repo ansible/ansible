@@ -441,16 +441,12 @@ class DigitalOceanInventory(object):
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            for net in droplet['networks']['v4']:
-                if net['type'] == 'public':
-                    dest = net['ip_address']
-                else:
-                    continue
+            ip = self.get_ip(droplet)
 
-            self.inventory['all']['hosts'].append(dest)
+            self.inventory['all']['hosts'].append(droplet['name'])
 
-            self.inventory[droplet['id']] = [dest]
-            self.inventory[droplet['name']] = [dest]
+            self.inventory[droplet['id']] = [droplet['name']]
+            self.inventory[ip] = [droplet['name']]
 
             # groups that are always present
             for group in ('digital_ocean',
@@ -461,7 +457,7 @@ class DigitalOceanInventory(object):
                           'status_' + droplet['status']):
                 if group not in self.inventory:
                     self.inventory[group] = {'hosts': [], 'vars': {}}
-                self.inventory[group]['hosts'].append(dest)
+                self.inventory[group]['hosts'].append(droplet['name'])
 
             # groups that are not always present
             for group in (droplet['image']['slug'],
@@ -470,23 +466,26 @@ class DigitalOceanInventory(object):
                     image = 'image_' + DigitalOceanInventory.to_safe(group)
                     if image not in self.inventory:
                         self.inventory[image] = {'hosts': [], 'vars': {}}
-                    self.inventory[image]['hosts'].append(dest)
+                    self.inventory[image]['hosts'].append(droplet['name'])
 
             if droplet['tags']:
                 for tag in droplet['tags']:
                     if tag not in self.inventory:
                         self.inventory[tag] = {'hosts': [], 'vars': {}}
-                    self.inventory[tag]['hosts'].append(dest)
+                    self.inventory[tag]['hosts'].append(droplet['name'])
 
             # hostvars
             info = self.do_namespace(droplet)
-            self.inventory['_meta']['hostvars'][dest] = info
+            info['ansible_host'] = ip
+            self.inventory['_meta']['hostvars'][droplet['name']] = info
 
     def load_droplet_variables_for_host(self):
         """ Generate a JSON response to a --host call """
         host = int(self.args.host)
         droplet = self.manager.show_droplet(host)
         info = self.do_namespace(droplet)
+        ip = self.get_ip(droplet)
+        info['ansible_host'] = ip
         return {'droplet': info}
 
     ###########################################################################
@@ -537,6 +536,16 @@ class DigitalOceanInventory(object):
         for k, v in data.items():
             info['do_' + k] = v
         return info
+
+    @staticmethod
+    def get_ip(droplet):
+        ip = 'NO_IP_SET'
+        for net in droplet['networks']['v4']:
+            if net['type'] == 'public':
+                ip = net['ip_address']
+            else:
+                continue
+        return ip
 
 
 ###########################################################################
