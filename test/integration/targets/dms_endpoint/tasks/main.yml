@@ -1,0 +1,221 @@
+---
+
+- name: Set Connection Information for All Tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- block:
+    ################################################
+    # PARAMETER TESTING
+    ################################################
+
+    - name: test with no parameters
+      dms_endpoint:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      dms_endpoint:
+        name: 'my-dms-source-endpoint'
+        endpoint_type: source
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      dms_endpoint:
+        name: 'test_secret_string'
+        endpoint_type: source
+        engine_name: 'mysql'
+      register: result
+      ignore_errors: true
+      check_mode: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    ################################################
+    # MODULE TESTING
+    ################################################
+
+    - name: Create source endpoint for DMS instances
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'my-dms-source-endpoint'
+        state: present
+        endpoint_type: source
+        engine_name: mysql
+        database_name: 'mytestdb'
+        username: 'dbadmin'
+        password: "{{ my_db_password }}"
+        server_name: 'mysql-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 3306
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.endpoint_arn is not none
+
+    - name: Create target endpoint for DMS instances
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'pg-dms-target-endpoint'
+        state: present
+        endpoint_type: target
+        engine_name: postgres
+        database_name: 'pgtestdb'
+        username: 'admin'
+        password: "{{ pg_db_password }}"
+        server_name: 'postgres-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 5432
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.endpoint_arn is not none
+
+    - name: No changes to source endpoint
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'my-dms-source-endpoint'
+        state: present
+        endpoint_type: source
+        engine_name: mysql
+        database_name: 'mytestdb'
+        username: 'dbadmin'
+        password: "{{ my_db_password }}"
+        server_name: 'mysql-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 3306
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - not result.changed
+          - result.endpoint_arn is not none
+
+    - name: No changes to target endpoint
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'pg-dms-target-endpoint'
+        state: present
+        endpoint_type: target
+        engine_name: postgres
+        database_name: 'pgtestdb'
+        username: 'admin'
+        password: "{{ pg_db_password }}"
+        server_name: 'postgres-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 5432
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - not result.changed
+          - result.endpoint_arn is not none
+
+    - name: Update source endpoint for DMS instances
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'my-dms-source-endpoint'
+        state: present
+        endpoint_type: source
+        engine_name: mysql
+        database_name: 'mytestdb'
+        username: 'dbadmin'
+        password: "{{ my_db_password }}"
+        server_name: 'mysql-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 50000
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.endpoint_arn is not none
+
+    - name: Update target endpoint for DMS instances
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'pg-dms-target-endpoint'
+        state: present
+        endpoint_type: target
+        engine_name: postgres
+        database_name: 'pgtestdb'
+        username: 'admin'
+        password: "{{ pg_db_password }}"
+        server_name: 'postgres-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 50001
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.endpoint_arn is not none
+
+  always:
+    - name: Tear down source endpoint
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'my-dms-source-endpoint'
+        state: absent
+        endpoint_type: source
+        engine_name: mysql
+        database_name: 'mytestdb'
+        username: 'dbadmin'
+        password: "{{ my_db_password }}"
+        server_name: 'mysql-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 50000
+      register: result
+      ignore_errors: yes
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+      ignore_errors: yes
+
+    - name: Tear down target endpoint
+      dms_endpoint:
+        <<: *aws_connection_info
+        name: 'pg-dms-target-endpoint'
+        state: absent
+        endpoint_type: target
+        engine_name: postgres
+        database_name: 'pgtestdb'
+        username: 'admin'
+        password: "{{ pg_db_password }}"
+        server_name: 'postgres-instance.123456789012.us-east-1.rds.amazonaws.com'
+        port: 50001
+      register: result
+      ignore_errors: yes
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+      ignore_errors: yes

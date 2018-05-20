@@ -1,0 +1,3 @@
+---
+my_db_password: "myTest12345"
+pg_db_password: "pgTest12345"
