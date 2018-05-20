@@ -29,7 +29,7 @@ options:
     required: true
   state:
     description:
-     - Whether the replication subnet group should be exist or not.
+    - Whether the replication subnet group should be exist or not.
     choices: ['present', 'absent']
     default: 'present'
   endpoint_type:
@@ -101,7 +101,7 @@ options:
       csv_row_delimiter:
         description:
         - The delimiter used to separate rows in the source files.
-        default: "\n"
+        default: "\\n"
       csv_delimiter:
         description:
         - The delimiter used to separate columns in the source files.
