@@ -293,7 +293,7 @@ def create_endpoint(client, module, params, result):
     try:
         response = client.create_endpoint(**params)
         endpoint_update_waiter(client, module)
-        result['endpoint_arn'] = response['EndpointArn']
+        result['endpoint_arn'] = response['Endpoint']['EndpointArn']
         result['changed'] = True
         return result
     except (BotoCoreError, ClientError) as e:
