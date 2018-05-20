@@ -358,19 +358,23 @@ EXAMPLES = '''
         state: absent
 '''
 
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
-from distutils.version import LooseVersion
+
 
 try:
+    from distutils.version import LooseVersion
     from docker import utils
     from docker import types
-    from docker.utils.types import Ulimit
-    from ansible.module_utils.docker_common import docker_version
+    from docker import __version__ as docker_version
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+        from docker.types import Ulimit, LogConfig
+        HAS_DOCKER_PY_2 = True
+    else:
+        from docker.utils.types import Ulimit, LogConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -741,7 +745,7 @@ class DockerServiceManager():
             old_service.service_id,
             old_service.service_version,
             name=name,
-            endpoint_config=endpoint_spec,
+            endpoint_spec=endpoint_spec,
             networks=networks,
             mode=mode,
             task_template=task_template,
@@ -751,7 +755,7 @@ class DockerServiceManager():
         task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(name, self.get_networks_names_ids())
         self.client.create_service(
             name=name,
-            endpoint_config=endpoint_spec,
+            endpoint_spec=endpoint_spec,
             mode=mode,
             networks=networks,
             task_template=task_template,
