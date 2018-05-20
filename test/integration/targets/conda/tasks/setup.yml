@@ -1,0 +1,22 @@
+---
+- name: delete conda installation directory
+  file:
+    name: "{{ conda_path }}"
+    state: absent
+
+- name: get miniconda3 installation script
+  get_url:
+    url: "https://repo.continuum.io/miniconda/Miniconda3-{{ conda_bootstrap.version }}-{{ conda_variant }}-x86_64.sh"
+    dest: "{{ output_dir }}/Miniconda3-{{ conda_bootstrap.version }}-{{ conda_variant }}-x86_64.sh"
+    checksum: "{{ conda_bootstrap.checksum }}"
+    mode: 0755
+
+- name: run miniconda3 installation script
+  command: "{{ output_dir }}/Miniconda3-{{ conda_bootstrap.version }}-{{ conda_variant }}-x86_64.sh -b -f -p {{ conda_path }}"
+  args:
+    creates: "{{ conda_path }}/bin/conda"
+
+- name: configure conda
+  template:
+    src: .condarc.j2
+    dest: "{{ conda_path }}/.condarc"

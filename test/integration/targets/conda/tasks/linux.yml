@@ -1,0 +1,13 @@
+---
+- include_tasks: run.yml
+  vars:
+    conda_bootstrap: "{{ item }}"
+    conda_variant: Linux
+  loop:
+    # format of 'conda list' changes between 4.2 and 4.3
+    - version: 4.2.12
+      checksum: md5:d0c7c71cc5659e54ab51f2005a8d96f3.
+
+    # Bug in 4.4.10 where the --quiet flag is ignored when --json present
+    - version: 4.4.10
+      checksum: md5:bec6203dbb2f53011e974e9bf4d46e93

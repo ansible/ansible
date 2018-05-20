@@ -1,0 +1,7 @@
+---
+conda_rc:
+  channels:
+    - conda-forge
+    - r
+    - defaults
+  auto_update_conda: false

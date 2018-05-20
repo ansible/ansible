@@ -1,0 +1,2 @@
+---
+conda_path: "{{ output_dir }}/conda"

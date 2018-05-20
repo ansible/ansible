@@ -1,0 +1,119 @@
+---
+# these packages should always be present in an initial install
+- name: ensure that python and conda-env are present
+  conda:
+    name:
+      - python
+      - conda-env
+    state: present
+    executable: "{{ conda_path }}/bin/conda"
+  register: result1
+
+- name: installing python and conda-env should return not changed
+  assert:
+    that:
+       - not result1.changed
+
+
+- name: ensure package is not installed
+  conda:
+    name: flask
+    state: absent
+    executable: "{{ conda_path }}/bin/conda"
+  register: result2
+
+- name: removing a flask should return not changed
+  assert:
+    that:
+       - not result2.changed
+
+
+- name: ensure package is installed at version spec
+  conda:
+    name: flask=0.12*
+    state: present
+    executable: "{{ conda_path }}/bin/conda"
+  register: result3
+
+- name: installing flask should return changed
+  assert:
+    that:
+       - result3.changed
+
+
+- name: ensure package is installed at version spec - repeat
+  conda:
+    name: flask=0.12*
+    state: present
+    executable: "{{ conda_path }}/bin/conda"
+  register: result4
+
+- name: installing flask at should return not changed
+  assert:
+    that:
+       - not result4.changed
+
+
+- name: ensure package is installed at any version
+  conda:
+    name: flask
+    state: present
+    executable: "{{ conda_path }}/bin/conda"
+  register: result5
+
+- name: installing flask at any version should return not changed
+  assert:
+    that:
+       - not result5.changed
+
+
+- name: ensure package is installed at latest version
+  conda:
+    name: flask
+    state: latest
+    executable: "{{ conda_path }}/bin/conda"
+  register: result6
+
+- name: installing flask at latest version should return changed
+  assert:
+    that:
+       - result6.changed
+
+
+- name: ensure package is installed at latest version - repeat
+  conda:
+    name: flask
+    state: latest
+    executable: "{{ conda_path }}/bin/conda"
+  register: result7
+
+- name: installing flask at latest version should return not changed
+  assert:
+    that:
+       - not result7.changed
+
+
+- name: ensure package is uninstalled
+  conda:
+    name: flask
+    state: absent
+    executable: "{{ conda_path }}/bin/conda"
+  register: result8
+
+- name: removing flask should return changed
+  assert:
+    that:
+       - result8.changed
+
+
+- name: ensure package is uninstalled
+  conda:
+    name: flask
+    state: absent
+    executable: "{{ conda_path }}/bin/conda"
+  register: result9
+
+- name: removing flask should return not changed
+  assert:
+    that:
+       - not result9.changed

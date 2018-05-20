@@ -528,6 +528,7 @@ files:
   $modules/notification/typetalk.py: tksmd
   $modules/packaging/language/bower.py: mwarkentin
   $modules/packaging/language/bundler.py: thoiberg
+  $modules/packaging/language/conda.py: tmoschou
   $modules/packaging/language/cpanm.py:
   $modules/packaging/language/easy_install.py: mattupstate
   $modules/packaging/language/gem.py: $team_ansible
