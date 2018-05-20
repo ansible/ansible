@@ -195,6 +195,7 @@ class ElastiCacheManager(object):
             self.create()
 
     def get_arn(self):
+        """ calculate and return the arn """
         client = self.module.client('sts')
         instance_counts = {}
         response = client.get_caller_identity()
@@ -203,6 +204,7 @@ class ElastiCacheManager(object):
         return arn
 
     def compare_and_update_tags(self):
+        """ compare existing tags to tags that are to be set and apply changes """
         tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
         add, remove = compare_aws_tags(tags, self.tags, self.purge_tags)
         if add:
