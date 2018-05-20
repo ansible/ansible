@@ -462,6 +462,7 @@ class ElastiCacheManager(object):
         return False
 
     def _get_elasticache_connection(self):
+        """ create and return an aws elasticache connection """
         return self.module.client('elasticache')
 
     def _get_port(self):
