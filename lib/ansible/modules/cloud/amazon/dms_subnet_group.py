@@ -28,8 +28,8 @@ options:
   state:
     description:
      - Whether the replication subnet group should be exist or not.
-    required: true
     choices: ['present', 'absent']
+    default: 'present'
   description:
     description:
     - The description for the subnet group.
@@ -167,7 +167,7 @@ def main():
     module = AnsibleAWSModule(
         argument_spec={
             'name': dict(type='str', required=True),
-            'state': dict(type='str', choices=['present', 'absent'], required=True),
+            'state': dict(type='str', choices=['present', 'absent'], default='present'),
             'description': dict(type='str', required=True),
             'subnet_ids': dict(type='list', required=True),
         },

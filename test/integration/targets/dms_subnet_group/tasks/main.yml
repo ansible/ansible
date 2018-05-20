@@ -1,24 +1,14 @@
 ---
-# A Note about ec2 environment variable name preference:
-#  - EC2_URL -> AWS_URL
-#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
-#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
-#  - EC2_REGION -> AWS_REGION
-#
-
-# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_vpc_subnet
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
 
 - block:
-
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          #security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
-
     ################################################
     # TESTING PREREQUIREMENTS
     ################################################
@@ -74,6 +64,42 @@
     # PARAMETER TESTING
     ################################################
 
+    - name: test with no parameters
+      dms_subnet_group:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      dms_subnet_group:
+        name: 'my-dms-subnet-group'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      dms_subnet_group:
+        name: 'my-dms-subnet-group'
+        description: 'test string'
+      register: result
+      ignore_errors: true
+      check_mode: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
 
     ################################################
     # MODULE TESTING
