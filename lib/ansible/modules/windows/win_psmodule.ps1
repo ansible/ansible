@@ -121,11 +121,18 @@ Function Install-PsModule {
         Install-NugetProvider -CheckMode $CheckMode;
 
         # Need PSGet 1.6.0 for publishing and named repo usage
-        $psg = [PSCustomObject]@{ n = "PowerShellGet"; v = "1.6.0"}
-        Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force;
-        # Unload previous version
+        $psg = [PSCustomObject]@{ n = "PowerShellGet"; v = "1.6.0"};
         Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
-        Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force;
+        Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -EV missingProvider -Force | Out-Null;
+
+        # Install call is time consuming, only perform if provider was not successfully imported 
+        if ($missingProvider) {
+            Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
+    
+            # Unload previous version
+            Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
+            Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
+        }
 
         $ht = @{
             Name      = $Name;
