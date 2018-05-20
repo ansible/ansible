@@ -80,7 +80,6 @@ options:
   tags:
     description:
       - Set instance tags
-    type: dict
     required: false
     default: {}
     version_added: "2.6"
@@ -529,7 +528,7 @@ def main():
         zone=dict(),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool'),
-        tags=dict(type='dict'),
+        tags=dict(default={}, type='dict'),
         purge_tags=dict(default=True, type='bool')
     ))
 
