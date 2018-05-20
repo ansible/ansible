@@ -524,7 +524,7 @@ def main():
         if endpoint_status:
             delete_endpoint(client, module, result)
 
-    module.exit_json(changed=result['changed'], endpoint_arn=result['endpoint_arn'])
+    module.exit_json(changed=result['changed'], output=result)
 
 
 if __name__ == '__main__':
