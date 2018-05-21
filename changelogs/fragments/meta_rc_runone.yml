@@ -1,0 +1,2 @@
+- bugfixes:
+    - reset connection is not run once https://github.com/ansible/ansible/issues/39364
