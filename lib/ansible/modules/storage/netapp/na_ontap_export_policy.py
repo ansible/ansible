@@ -2,13 +2,6 @@
 
 # (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -43,7 +36,6 @@ options:
     description:
     - Name of the vserver to use.
     required: false
-    default: None
 '''
 
 EXAMPLES = """
@@ -77,6 +69,14 @@ EXAMPLES = """
 RETURN = """
 """
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
+
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 
@@ -92,7 +92,7 @@ class NetAppONTAPExportPolicy(object):
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
             new_name=dict(required=False, type='str', default=None),
-            vserver=dict(required=False, type='str', default=None)
+            vserver=dict(required=False, type='str')
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,

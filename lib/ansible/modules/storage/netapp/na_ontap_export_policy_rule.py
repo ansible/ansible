@@ -19,7 +19,7 @@ module: na_ontap_export_rule
 short_description: Manage ONTAP Export rules
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.5'
+version_added: '2.6'
 author: Suhas Bangalore Shekar (bsuhas@netapp.com), Archana Ganeshan (garchana@netapp.com)
 
 description:
@@ -60,12 +60,13 @@ options:
   allow_suid:
     description:
     - If 'true', NFS server will honor SetUID bits in SETATTR operation. Default value is 'true'
-    choices: [true, false]
+    choices: ['True', 'False']
 
   protocol:
     description:
     - Client access protocol. Default value is 'any'
     choices: [any,nfs,nfs3,nfs4,cifs,flexcache]
+    default: any
 
   rule_index:
     description:
@@ -156,7 +157,7 @@ class NetAppontapExportRule(object):
             super_user_security=dict(required=False,
                                      type='str', default=None,
                                      choices=['any', 'none', 'never', 'krb5', 'krb5i', 'krb5p', 'ntlm', 'sys']),
-            allow_suid=dict(required=False, choices=['true', 'false']),
+            allow_suid=dict(required=False, choices=['True', 'False']),
             rule_index=dict(required=False, type='int', default=None),
             vserver=dict(required=True, type='str'),
         ))

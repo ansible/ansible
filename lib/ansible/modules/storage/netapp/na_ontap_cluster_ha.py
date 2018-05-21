@@ -23,7 +23,7 @@ options:
     required: false
     default: present
 short_description: "Manage HA status for cluster"
-version_added: "1.0"
+version_added: "2.6"
 '''
 
 EXAMPLES = """

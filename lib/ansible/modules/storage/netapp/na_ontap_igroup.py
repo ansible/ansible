@@ -12,13 +12,12 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
----
 
 module: na_ontap_igroup
 short_description: ONTAP iSCSI igroup configuration
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.4'
+version_added: '2.6'
 author: chhaya gunawat (chhayag@netapp.com), Chris Archibald (carchi@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 
 description:
@@ -62,6 +61,7 @@ options:
     - required: false
 
   force:
+    type: bool
     description:
     -  Forcibly remove the initiator even if there are existing LUNs mapped to this initiator group.
     - required: false
@@ -139,7 +139,7 @@ class NetAppOntapIgroup(object):
             ostype=dict(required=False, type='str'),
             initiator_group_type=dict(required=False, type='str'),
             initiator=dict(required=False, type='str'),
-            vserver=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
             force=dict(required=False, type='bool', default=False),
             bind_portset=dict(required=False, type='str')
         ))
