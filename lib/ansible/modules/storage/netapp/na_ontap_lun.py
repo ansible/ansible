@@ -6,11 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,7 +19,7 @@ module: na_ontap_lun
 short_description: Manage  NetApp Ontap luns
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 
 description:
@@ -35,7 +30,6 @@ options:
   state:
     description:
     - Whether the specified lun should exist or not.
-    required: false
     choices: ['present', 'absent']
     default: present
 
@@ -64,12 +58,14 @@ options:
     description:
     - Forcibly reduce the size. This is required for reducing the size of the LUN to avoid accidentally
     - reducing the LUN size.
+    type: bool
     default: false
 
   force_remove:
     description:
     - If "true", override checks that prevent a LUN from being destroyed if it is online and mapped.
     - If "false", destroying an online and mapped LUN will fail.
+    type: bool
     default: false
 
   force_remove_fenced:
@@ -77,6 +73,7 @@ options:
     - If "true", override checks that prevent a LUN from being destroyed while it is fenced.
     - If "false", attempting to destroy a fenced LUN will fail.
     - The default if not specified is "false". This field is available in Data ONTAP 8.2 and later.
+    type: bool
     default: false
 
   vserver:
@@ -94,6 +91,7 @@ options:
     required: false
     description:
     - This can be set to "false" which will create a LUN without any space being reserved.
+    type: bool
     default: True
 
 '''
@@ -131,6 +129,11 @@ RETURN = """
 
 """
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -163,7 +166,7 @@ class NetAppOntapLUN(object):
             force_resize=dict(default=False, type='bool'),
             force_remove=dict(default=False, type='bool'),
             force_remove_fenced=dict(default=False, type='bool'),
-            flexvol_name=dict(default=True, type='str'),
+            flexvol_name=dict(required=True, type='str'),
             vserver=dict(required=True, type='str'),
             ostype=dict(required=False, type='str', default='image'),
             space_reserve=dict(required=False, type='bool', default=True),

@@ -6,10 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.netapp as netapp_utils
-
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -58,7 +54,7 @@ options:
   ipspace:
     description:
     - Specifies the port's associated IPspace name.
-    - Note: the 'Cluster' ipspace is reserved for cluster ports.
+    - The 'Cluster' ipspace is reserved for cluster ports.
 """
 
 EXAMPLES = """
@@ -74,8 +70,13 @@ EXAMPLES = """
 """
 
 RETURN = """
+
 """
 
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.netapp as netapp_utils
+
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapNetPort(object):
     """
@@ -89,8 +90,8 @@ class NetAppOntapNetPort(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present'], default='present'),
-            node=dict(required=True, type="str", default=None),
-            port=dict(required=True, type="str", default=None),
+            node=dict(required=True, type="str"),
+            port=dict(required=True, type="str"),
             mtu=dict(required=False, type="str", default=None),
             autonegotiate_admin=dict(required=False, type="str", default=None),
             duplex_admin=dict(required=False, type="str", default=None),

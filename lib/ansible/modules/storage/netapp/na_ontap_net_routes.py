@@ -7,14 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
-
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -24,7 +16,7 @@ module: na_ontap_net_routes
 short_description: Manage NetApp Ontap network routes
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author:
 - Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
 description:
@@ -33,8 +25,7 @@ options:
   state:
     description:
     - Whether you want to create or delete a network route
-    required: false
-    choices: ['create', 'delete']
+    choices: ['present', 'absent']
     default: present
   vserver:
     description:
@@ -42,17 +33,25 @@ options:
     required: true
   destination:
     description:
-    - Specify the route destination. Example: 10.7.125.5/20, fd20:13::/64
+    - Specify the route destination. Example 10.7.125.5/20, fd20:13::/64
     required: true
   gateway:
     description:
-    - Specify the route gateway. Example: 10.7.125.1, fd20:13::1
+    - Specify the route gateway. Example 10.7.125.1, fd20:13::1
     required: true
   metric:
     description:
     - Specify the route metric.
     - If this field is not provided the default will be set to 30
-    required: false
+  new_destination:
+    description:
+    - Specify the new route destination.
+  new_gateway:
+    description:
+    - Specify the new route gateway.
+  new_metric:
+    description:
+    - Specify the new route metric.
 '''
 
 EXAMPLES = """
@@ -69,8 +68,16 @@ EXAMPLES = """
 """
 
 RETURN = """
+
 """
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
+
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapNetRoutes(object):
     """
@@ -85,9 +92,9 @@ class NetAppOntapNetRoutes(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=[
                        'present', 'absent'], default='present'),
-            vserver=dict(required=True, type='str', default=None),
-            destination=dict(required=True, type='str', default=None),
-            gateway=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
+            destination=dict(required=True, type='str'),
+            gateway=dict(required=True, type='str'),
             metric=dict(required=False, type='str', default=None),
             new_destination=dict(required=False, type='str', default=None),
             new_gateway=dict(required=False, type='str', default=None),

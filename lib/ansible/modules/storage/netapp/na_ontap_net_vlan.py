@@ -6,10 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.netapp as netapp_utils
-
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -19,7 +15,7 @@ module: na_ontap_net_vlan
 short_description: Manage NetApp Ontap network vlan
 extends_documentation_fragment:
     - netapp.ontap
-version_added: '1.0'
+version_added: '2.6'
 author: Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
 description:
 - Create or Delete a network vlan
@@ -28,14 +24,14 @@ options:
     description:
     - Whether you want to create to delete a network vlan
     chocies: ['present', 'absent']
-    default: 'present'
+    default: present
   parent_interface:
     description:
     - The interface that hosts the vlan interface.
     required: true
   vlanid:
     description:
-    - The vlan id. Range: 1..4094.
+    - The vlan id. Ranges from 1 to 4094.
     required: true
   node:
     description:
@@ -60,6 +56,14 @@ EXAMPLES = """
         hostname={{ netapp_hostname }}
 """
 
+RETURN = """
+
+"""
+
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.netapp as netapp_utils
+
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapVlan(object):
     """

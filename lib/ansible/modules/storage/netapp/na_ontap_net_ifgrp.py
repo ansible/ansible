@@ -6,13 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
-
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -23,7 +16,7 @@ module: na_ontap_net_ifgrp
 short_description: Create, modify, destroy the network interface group
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author:
 - Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 description:
@@ -32,29 +25,32 @@ options:
   state:
     description:
     - Whether the specified volume should exist or not.
-    required: false
     choices: ['present', 'absent']
     default: present
+
   distribution_function:
     description:
     - Specifies the traffic distribution function for the ifgrp.
-    required: false
+    choices: ['mac', 'ip', 'sequential', 'port']
+
   name:
     description:
     - Specifies the interface group name.
     required: true
+
   mode:
     description:
     - Specifies the link policy for the ifgrp.
-    required: false
+
   node:
     description:
     - Specifies the name of node.
     required: true
+
   port:
     description:
     - Adds the specified port.
-    required: false
+
 """
 
 EXAMPLES = """
@@ -79,6 +75,17 @@ EXAMPLES = """
         node={{ Vsim node name }}
 """
 
+RETURN = """
+
+"""
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
+
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapIfGrp(object):
     """
