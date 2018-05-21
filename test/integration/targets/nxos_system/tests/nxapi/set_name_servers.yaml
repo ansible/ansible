@@ -9,7 +9,6 @@
     lines:
       - no ip name-server {{ item }}
     match: none
-    provider: "{{ nxapi }}"
   ignore_errors: yes
   with_items:
       - 1.1.1.1
@@ -22,7 +21,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -38,7 +36,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -51,7 +48,6 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ nxapi }}"
 #  register: result
 
 #- assert:
@@ -67,7 +63,6 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ nxapi }}"
 #  register: result
 #
 #- assert:
@@ -79,7 +74,6 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -93,7 +87,6 @@
     lines:
       - no ip lookup source-interface
     match: none
-    provider: "{{ nxapi }}"
   ignore_errors: yes
   # FIXME Copied from iosxr, not sure what we need here
 

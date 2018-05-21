@@ -5,14 +5,12 @@
   nxos_config:
     lines: no ip domain-name eng.ansible.com
     match: none
-    provider: "{{ nxapi }}"
 # NXAPI errors if you try to remove something that doesn't exist
   ignore_errors: yes
 
 - name: configure domain_name
   nxos_system:
     domain_name: eng.ansible.com
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -22,7 +20,6 @@
 - name: verify domain_name
   nxos_system:
     domain_name: eng.ansible.com
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -33,6 +30,5 @@
   nxos_config:
     lines: no ip domain-name eng.ansible.com
     match: none
-    provider: "{{ nxapi }}"
 
 - debug: msg="END nxapi/set_domain_name.yaml"

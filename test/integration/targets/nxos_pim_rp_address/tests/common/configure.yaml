@@ -12,13 +12,11 @@
     nxos_feature: &disable_feature
       feature: pim
       state: disabled
-      provider: "{{ connection }}"
 
   - name: "Enable feature PIM"
     nxos_feature: &enable_feature
       feature: pim
       state: enabled
-      provider: "{{ connection }}"
 
   - name: Configure rp_address + group_list 
     nxos_pim_rp_address: &configgl
@@ -26,7 +24,6 @@
       group_list: "224.0.0.0/8"
       bidir: "{{ bidir }}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -47,7 +44,6 @@
       group_list: "224.0.0.0/8"
       bidir: False
       state: present
-      provider: "{{ connection }}"
     register: result
     when: platform is not match("N3L")
 
@@ -67,7 +63,6 @@
       rp_address: "10.1.1.20"
       bidir: "{{ bidir }}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -83,7 +78,6 @@
       rp_address: "10.1.1.20"
       bidir: False
       state: present
-      provider: "{{ connection }}"
     register: result
     when: platform is not match("N3L")
 
@@ -103,7 +97,6 @@
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -118,7 +111,6 @@
     nxos_pim_rp_address: &configbir
       rp_address: "10.1.1.20"
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -135,7 +127,6 @@
       prefix_list: "pim_prefix_list"
       bidir: "{{ bidir }}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -152,7 +143,6 @@
       prefix_list: "pim_prefix_list"
       bidir: False
       state: present
-      provider: "{{ connection }}"
     register: result
     when: platform is not match("N3L")
 
@@ -173,7 +163,6 @@
       prefix_list: "pim_prefix_list"
       bidir: False
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -190,7 +179,6 @@
       route_map: "pim_routemap"
       bidir: "{{ bidir }}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -207,7 +195,6 @@
       route_map: "pim_routemap"
       bidir: False
       state: present
-      provider: "{{ connection }}"
     register: result
     when: platform is not match("N3L")
 
@@ -228,7 +215,6 @@
       route_map: "pim_routemap"
       bidir: False
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

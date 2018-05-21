@@ -12,7 +12,6 @@
       pref: 100
       tag: 5500
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -37,7 +36,6 @@
       pref: 10
       tag: default
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -58,7 +56,6 @@
       pref: 100
       vrf: "{{ item }}"
       state: absent
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -76,7 +73,6 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
         - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
-      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -97,7 +93,6 @@
         - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
         - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -122,7 +117,6 @@
       tag: 5500
       vrf: "{{ item }}"
       state: absent
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     ignore_errors: yes
 
@@ -132,7 +126,6 @@
         - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
         - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_static_route sanity test"
