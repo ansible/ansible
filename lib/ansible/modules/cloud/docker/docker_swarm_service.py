@@ -16,7 +16,6 @@ author: "Dario Zanzico (@dariko)"
 short_description: docker swarm service
 description: |
   Manage docker services. Allows live altering of already defined services
-  (see examples)
 version_added: "2.6"
 options:
   name:
