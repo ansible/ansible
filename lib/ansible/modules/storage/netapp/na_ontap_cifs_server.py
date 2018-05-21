@@ -31,7 +31,6 @@ options:
   state:
     description:
     - Whether the specified cifs_server should exist or not.
-    required: false
     default: present
     choices: ['present', 'absent']
 
@@ -48,23 +47,20 @@ options:
 
   admin_user_name:
     description:
-    - Specifies the LIF's home node.
-    required: false
+    - Specifies the cifs server admin username.
 
   admin_password:
     description:
-    - Specifies the role of the LIF.
-    required: false
+    - Specifies the cifs server admin password.
 
   domain:
     description:
     - The Fully Qualified Domain Name of the Windows Active Directory this CIFS server belongs to.
-    required: false
 
   workgroup:
     description:
     -  The NetBIOS name of the domain or workgroup this CIFS server belongs to.
-    required: false
+
 
   vserver:
     description:
