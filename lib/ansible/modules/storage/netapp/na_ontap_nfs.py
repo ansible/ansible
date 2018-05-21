@@ -26,7 +26,7 @@ options:
     description:
     - Whether nfs should exist or not.
     choices: ['present', 'absent']
-    default: 'present'
+    default: present
   service_state:
     description:
     - Whether the specified nfs should be enabled or disabled. Creates nfs service if doesnt exist.
@@ -49,7 +49,7 @@ options:
   nfsv41:
     description:
     - status of nfsv41.
-    aliases: nfsv4.1
+    aliases: ['nfsv4.1']
     required: false
     choices: ['enabled', 'disabled']
   vstorage_state:
