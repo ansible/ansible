@@ -25,8 +25,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import os
 
+
+import os
 from functools import partial
 
 from ansible.module_utils.six import iteritems
@@ -38,7 +39,6 @@ try:
     HAS_INFOBLOX_CLIENT = True
 except ImportError:
     HAS_INFOBLOX_CLIENT = False
-
 
 nios_provider_spec = {
     'host': dict(),
@@ -167,7 +167,6 @@ class WapiModule(WapiBase):
     def __init__(self, module):
         self.module = module
         provider = module.params['provider']
-
         try:
             super(WapiModule, self).__init__(provider)
         except Exception as exc:
@@ -197,6 +196,7 @@ class WapiModule(WapiBase):
 
         :returns: a results dict
         '''
+
         state = self.module.params['state']
         if state not in ('present', 'absent'):
             self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
@@ -300,7 +300,6 @@ class WapiModule(WapiBase):
                     return True
 
     def compare_objects(self, current_object, proposed_object):
-
         for key, proposed_item in iteritems(proposed_object):
             current_item = current_object.get(key)
 
