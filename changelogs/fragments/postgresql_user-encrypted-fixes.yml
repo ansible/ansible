@@ -1,0 +1,7 @@
+---
+minor_changes:
+- "`postgresql_user` module changed `encrypted=yes` to be the default. This
+   shouldn't break any current playbooks, the module will just store passwords
+   hashed by default. This change was done because Postgres 10 dropped support for
+   `UNENCRYPTED` passwords and because all versions since Postgres 7.2 support
+   storing encrypted passwords."
