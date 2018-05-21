@@ -263,7 +263,7 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection')):
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection'):
                             run_once = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
