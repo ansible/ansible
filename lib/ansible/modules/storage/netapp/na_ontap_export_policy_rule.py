@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: na_ontap_export_rule
+module: na_ontap_export_policy_rule
 
 short_description: Manage ONTAP Export rules
 extends_documentation_fragment:
@@ -31,7 +31,7 @@ options:
     description:
     - Whether the specified export policy rule should exist or not.
     choices: ['present', 'absent']
-    default: 'present'
+    default: present
 
   policy_name:
     description:
@@ -80,7 +80,6 @@ options:
 '''
 
 EXAMPLES = """
-
     - name: Create ExportPolicyRule
       na_ontap_export_policy_rule:
         state: present
@@ -141,7 +140,7 @@ class NetAppontapExportRule(object):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=False, choices=[
+            state=dict(required=False, type='str', choices=[
                        'present', 'absent'], defaut='present'),
             policy_name=dict(required=True, type='str'),
             protocol=dict(required=False,

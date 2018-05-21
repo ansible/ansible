@@ -30,14 +30,13 @@ options:
   state:
     description:
     - Whether the specified Igroup should exist or not.
-    - required: false
     choices: ['present', 'absent']
     default: present
 
   name:
     description:
     - The name of the lun to manage.
-    - required: true
+    required: true
 
   initiator_group_type:
     description:
@@ -47,12 +46,10 @@ options:
   new_name:
     description:
     - New name to be given to initiator group..
-    - required: false.
 
   ostype:
     description:
     - OS type of the initiators within the group. The default value if not specified is "default".
-    - required: false
 
   initiator:
     description:
@@ -61,18 +58,16 @@ options:
   bind_portset:
     description:
     - Name of a current portset to bind to the newly created igroup.
-    - required: false
 
   force:
     type: bool
     description:
     -  Forcibly remove the initiator even if there are existing LUNs mapped to this initiator group.
-    - required: false
 
   vserver:
     description:
     - The name of the vserver to use.
-    - required: true
+    required: true
 
 '''
 
