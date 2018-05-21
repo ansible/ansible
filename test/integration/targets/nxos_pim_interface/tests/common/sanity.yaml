@@ -7,13 +7,11 @@
   nxos_feature: &disable_feature
     feature: pim
     state: disabled
-    provider: "{{ connection }}"
 
 - name: "Enable feature PIM"
   nxos_feature:
     feature: pim
     state: enabled
-    provider: "{{ connection }}"
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -21,7 +19,6 @@
   nxos_config:
     lines:
       - "default interface {{ testint }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Ensure {{testint}} is layer3"
@@ -31,14 +28,12 @@
     description: 'Configured by Ansible - Layer3'
     admin_state: 'up'
     state: present
-    provider: "{{ connection }}"
 
 - block:
   - name: Configure nxos_pim_interface state absent
     nxos_pim_interface: &pimabsent
       interface: "{{ testint }}"
       state: absent
-      provider: "{{ connection }}"
 
   - name: configure jp policy and type
     nxos_pim_interface: &configjp
@@ -49,7 +44,6 @@
       jp_type_out: routemap
       sparse: True
       border: True
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -69,7 +63,6 @@
       interface: "{{ testint }}"
       neighbor_policy: NPR
       neighbor_type: routemap
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -88,7 +81,6 @@
       interface: "{{ testint }}"
       neighbor_policy: NPPF
       neighbor_type: prefix
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -103,7 +95,6 @@
     nxos_pim_interface: &confighak1
       interface: "{{ testint }}"
       hello_auth_key: password1
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -116,7 +107,6 @@
       sparse: True
       border: True
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -133,7 +123,6 @@
       sparse: False
       border: False
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -151,7 +140,6 @@
     nxos_pim_interface: &configdefault
       interface: "{{ testint }}"
       state: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -167,7 +155,6 @@
       interface: "{{ testint }}"
       border: True
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

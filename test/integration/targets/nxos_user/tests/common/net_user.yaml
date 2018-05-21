@@ -10,7 +10,6 @@
   net_user:
     name: ansibletest1
     state: absent
-    provider: "{{ connection }}"
 
 # Start tests
 - name: Create user with platform agnostic module
@@ -18,7 +17,6 @@
     name: ansibletest1
     roles: network-operator
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -31,6 +29,5 @@
   net_user:
     name: ansibletest1
     state: absent
-    provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }} nxos common/net_user.yaml"

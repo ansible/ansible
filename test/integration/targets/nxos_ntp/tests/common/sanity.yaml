@@ -11,7 +11,6 @@
     vrf_name: management
     source_addr: 5.5.5.5
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -24,7 +23,6 @@
       vrf_name: management
       source_addr: 5.5.5.5
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -47,7 +45,6 @@
       vrf_name: default
       source_addr: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -76,7 +73,6 @@
       peer: 1.2.3.4
       prefer: enabled
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -91,7 +87,6 @@
     nxos_ntp: &config3
       source_int: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

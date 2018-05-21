@@ -7,14 +7,12 @@
   nxos_snmp_location: &remove
     location: Test 
     state: absent
-    provider: "{{ connection }}"
 
 - block:
   - name: Configure snmp location 
     nxos_snmp_location: &config
       location: Testing
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -33,7 +31,6 @@
     nxos_snmp_location: &config1
       location: Test
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

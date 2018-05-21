@@ -117,8 +117,12 @@ class Connection(ConnectionBase):
         # that means only protocol=0 will work.
         src = cPickle.dumps(self._play_context.serialize(), protocol=0)
         stdin.write(src)
-
         stdin.write(b'\n#END_INIT#\n')
+
+        src = cPickle.dumps({}, protocol=0)
+        stdin.write(src)
+        stdin.write(b'\n#END_VARS#\n')
+
         stdin.flush()
 
         (stdout, stderr) = p.communicate()
