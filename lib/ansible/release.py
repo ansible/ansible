@@ -21,3 +21,4 @@ __metaclass__ = type
 
 __version__ = '2.6.0'
 __author__ = 'Ansible, Inc.'
+__codename__ = 'Heartbreaker'
