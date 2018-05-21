@@ -48,9 +48,8 @@ options:
     required: false
     description:
     - The name of the aggregate that replaces the current name.
-    
+
   nodes:
-    type: list
     description:
     - List of node for the aggregate
 
