@@ -78,6 +78,7 @@ import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
+
 class NetAppOntapNetPort(object):
     """
         Modify a Net port

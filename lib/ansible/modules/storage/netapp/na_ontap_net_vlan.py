@@ -23,7 +23,7 @@ options:
   state:
     description:
     - Whether you want to create to delete a network vlan
-    chocies: ['present', 'absent']
+    choices: ['present', 'absent']
     default: present
   parent_interface:
     description:
@@ -64,6 +64,7 @@ from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
+
 
 class NetAppOntapVlan(object):
     """
