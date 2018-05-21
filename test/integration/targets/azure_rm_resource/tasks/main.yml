@@ -30,7 +30,7 @@
 - assert:
     that: output.changed
 
-- name: Query the instance of security rule
+- name: Query the instance of security group
   azure_rm_resource_facts:
     resource_group: "{{ resource_group }}"
     provider: network
@@ -47,7 +47,7 @@
     resource_name: sg{{ rpfx }}
     api_version: "2018-01-01"
     idempotency: yes
-    body: "{{ output_rule }}"
+    body: "{{ output_rule.body }}"
   register: output
 
 - assert:
