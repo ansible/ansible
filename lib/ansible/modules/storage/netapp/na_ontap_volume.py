@@ -49,14 +49,15 @@ options:
     - New name of the volume to be renamed.
 
   is_infinite:
+    type: bool
     description:
     - Set True if the volume is an Infinite Volume.
-    default: 'False'
 
   is_online:
+    type: bool
     description:
     - Whether the specified volume is online, or not.
-    default: 'False'
+    default: True
 
   aggregate_name:
     description:
@@ -108,7 +109,7 @@ EXAMPLES = """
       na_ontap_volume:
         state: present
         name: ansibleVolume
-        infinite: False
+        is_infinite: False
         aggregate_name: aggr1
         size: 20
         size_unit: mb
@@ -122,8 +123,8 @@ EXAMPLES = """
       na_ontap_volume:
         state: present
         name: ansibleVolume
-        infinite: False
-        online: False
+        is_infinite: False
+        is_online: False
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
