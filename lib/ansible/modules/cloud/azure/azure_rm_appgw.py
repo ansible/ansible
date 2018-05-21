@@ -492,7 +492,13 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["backend_address_pools"] = kwargs[key]
                 elif key == "backend_http_settings_collection":
                     ev = kwargs[key]
-                    self.parameters["backend_http_settings_collection"] = snake_dict_to_camel_dict(ev, True)
+                    for i in range(len(ev)):
+                        item = ev[i]
+                        if 'protocol' in item:
+                            item['protocol'] = _snake_to_camel(item['protocol'])
+                        if 'cookie_based_affinity' in item:
+                            item['cookie_based_affinity'] = _snake_to_camel(item['cookie_based_affinity'])
+                    self.parameters["backend_http_settings_collection"] = ev
                 elif key == "http_listeners":
                     ev = kwargs[key]
                     for i in range(len(ev)):
