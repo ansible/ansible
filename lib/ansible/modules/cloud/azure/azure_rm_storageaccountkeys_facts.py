@@ -29,14 +29,10 @@ options:
         description:
             - This is the name of the resource group for which you want to retrieve Keys
         required: true
-        default: null
     name:
         description:
             - Name of the Storage Account instance.
         required: true
-        default: null
-        aliases:
-            - resource_group_name
 
 extends_documentation_fragment:
     - azure
@@ -49,8 +45,8 @@ author:
 EXAMPLES = '''
 - name: Get Storage account keys
   azure_rm_storageaccountkeys_facts:
-    resource_group: resource_group
-    name: name
+    resource_group: myresourcegroup
+    name: mystorageaccount
 '''
 
 RETURN = '''
