@@ -7,12 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-import ansible.module_utils.netapp as netapp_utils
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -25,7 +19,7 @@ module: na_ontap_volume
 short_description: Manage NetApp ONTAP volumes.
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author:
 - Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 
@@ -54,15 +48,15 @@ options:
     description:
     - New name of the volume to be renamed.
 
-  infinite:
+  is_infinite:
     description:
     - Set True if the volume is an Infinite Volume.
     default: 'False'
 
-  online:
+  is_online:
     description:
     - Whether the specified volume is online, or not.
-    default: 'True'
+    default: 'False'
 
   aggregate_name:
     description:
@@ -82,7 +76,6 @@ options:
   type:
     description:
     - The volume type, either read-write (RW) or data-protection (DP).
-    default: RW
 
   policy:
     description:
@@ -140,6 +133,12 @@ EXAMPLES = """
 
 RETURN = """
 """
+
+import traceback
+
+import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 

@@ -15,7 +15,7 @@ module: na_ontap_volume_clone
 short_description: Manage NetApp Ontap volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author: Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
 description:
 - Create NetApp Ontap volume clones.
@@ -76,6 +76,9 @@ EXAMPLES = """
         parent_snapshot=backup1
 """
 
+RETURN = """
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.netapp as netapp_utils
 
@@ -94,9 +97,9 @@ class NetAppOntapVolumeClone(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present'], default='present'),
-            parent_volume=dict(required=True, type='str', default=None),
-            volume=dict(required=True, type='str', default=None),
-            vserver=dict(required=True, type='str', default=None),
+            parent_volume=dict(required=True, type='str'),
+            volume=dict(required=True, type='str'),
+            vserver=dict(required=True, type='str'),
             parent_snapshot=dict(required=False, type='str', default=None),
             parent_vserver=dict(required=False, type='str', default=None),
             qos_policy_group_name=dict(required=False, type='str', default=None),
