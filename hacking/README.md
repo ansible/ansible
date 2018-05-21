@@ -1,7 +1,7 @@
 'Hacking' directory tools
 =========================
 
-Env-setup
+env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
@@ -21,7 +21,7 @@ can install them from pip
 
 From there, follow ansible instructions on docs.ansible.com as normal.
 
-Test-module
+test-module
 -----------
 
 'test-module' is a simple program that allows module developers (or testers) to run
