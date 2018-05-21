@@ -43,7 +43,7 @@ endif
 MAJOR_VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --majorversion)
 CODENAME := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --codename)
 
-# if a specific release was not requested, set to 0 (RPMs have "fancier" logic for this further down)
+# if a specific release was not requested, set to 1 (RPMs have "fancier" logic for this further down)
 RELEASE ?= 1
 
 # Get the branch information from git
@@ -252,7 +252,7 @@ rpmcommon: sdist
 .PHONY: mock-srpm
 mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/ \
-    --define "rpmversion $(RPMVERSION)" \
+	--define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
 	$(EXTRA_RPM_DEFINES)
@@ -264,7 +264,7 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 .PHONY: mock-rpm
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
 	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --rebuild rpm-build/$(NAME)-*.src.rpm \
-    --define "rpmversion $(RPMVERSION)" \
+	--define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
 	$(EXTRA_RPM_DEFINES)
