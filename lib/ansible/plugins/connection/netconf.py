@@ -140,6 +140,7 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 from ansible.plugins.connection.local import Connection as LocalConnection
+from ansible.utils.display import display
 
 try:
     from ncclient import manager
@@ -149,11 +150,6 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 

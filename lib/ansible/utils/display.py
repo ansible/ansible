@@ -359,3 +359,8 @@ class Display:
         else:
             tty_size = 0
         self.columns = max(79, tty_size - 1)
+
+
+#: One Display instance exists. Its :attr:`verbosity` may be changed by
+#: ansible.cli modules during startup.
+display = Display()

@@ -8,12 +8,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins.action import ActionBase
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(ActionBase):

@@ -41,12 +41,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils._text import to_text
 from ansible.playbook.role.requirement import RoleRequirement
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class GalaxyCLI(CLI):

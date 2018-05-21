@@ -25,15 +25,9 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
+from ansible.utils.display import display
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import remove_internal_keys
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class ActionBase(with_metaclass(ABCMeta, object)):

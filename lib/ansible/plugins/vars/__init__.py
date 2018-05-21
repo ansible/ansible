@@ -18,13 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.utils.display import display
 from ansible.utils.path import basedir
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class BaseVarsPlugin(object):

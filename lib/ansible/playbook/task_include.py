@@ -21,12 +21,8 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
+from ansible.utils.display import display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 __all__ = ['TaskInclude']
 

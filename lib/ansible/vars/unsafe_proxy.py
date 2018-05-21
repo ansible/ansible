@@ -21,11 +21,7 @@ __metaclass__ = type
 
 # This is backwards compat.  unsafe_proxy was moved to avoid circular imports.
 from ansible.utils.unsafe_proxy import *  # pylint: disable=wildcard-import,unused-wildcard-import
+from ansible.utils.display import display
 
-try:
-    from __main__ import display
-except:
-    from ansible.utils.display import Display
-    display = Display()
 
 display.deprecated('ansible.vars.unsafe_proxy is deprecated.  Use ansible.utils.unsafe_proxy instead.', version='2.8')

@@ -20,7 +20,7 @@ from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_va
 def _deprecated(msg, version='2.8'):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
-        from __main__ import display
+        from ansible.utils.display import display
         display.deprecated(msg, version=version)
     except:
         import sys

@@ -14,12 +14,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 from ansible.plugins.loader import connection_loader
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 def strip_internal_keys(dirty, exceptions=None):

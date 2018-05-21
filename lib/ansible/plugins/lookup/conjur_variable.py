@@ -60,17 +60,11 @@ from base64 import b64encode
 from netrc import netrc
 from os import environ
 from time import time
-from ansible.module_utils.six.moves.urllib.parse import quote_plus
 import yaml
 
+from ansible.module_utils.six.moves.urllib.parse import quote_plus
 from ansible.module_utils.urls import open_url
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 # Load configuration and return as dictionary if file is present on file system
