@@ -247,8 +247,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     conf = OrderedDict([("_id", replica_set),
                         ("protocolVersion", protocolVersion),
                         ("members", members_dict_list),
-                        ("settings", settings)
-    ])
+                        ("settings", settings)])
     client["admin"].command('replSetInitiate', conf)
 
 
