@@ -31,10 +31,10 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
+from ansible.utils.display import display
 
 
 __all__ = ['RoleRequirement']
-
 
 VALID_SPEC_KEYS = [
     'name',
@@ -43,12 +43,6 @@ VALID_SPEC_KEYS = [
     'src',
     'version',
 ]
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class RoleRequirement(RoleDefinition):

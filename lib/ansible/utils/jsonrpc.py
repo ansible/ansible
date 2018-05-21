@@ -9,13 +9,7 @@ import traceback
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import binary_type
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class JsonRpcServer(object):

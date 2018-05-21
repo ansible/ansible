@@ -21,13 +21,8 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.utils.display import display
 from ansible.utils.plugin_docs import get_docstring
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 def get_all_plugin_loaders():

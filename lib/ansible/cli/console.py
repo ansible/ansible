@@ -46,12 +46,7 @@ from ansible.playbook.play import Play
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ConsoleCLI(CLI, cmd.Cmd):

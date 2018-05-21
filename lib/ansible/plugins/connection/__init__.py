@@ -18,13 +18,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import shell_loader, connection_loader
+from ansible.utils.display import display
 from ansible.utils.path import unfrackpath
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 __all__ = ['ConnectionBase', 'ensure_connect']

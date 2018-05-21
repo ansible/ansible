@@ -11,12 +11,7 @@ from time import sleep
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(ActionBase):

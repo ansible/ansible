@@ -38,12 +38,7 @@ import tempfile
 import shutil
 
 from ansible.errors import AnsibleError
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class Connection(object):

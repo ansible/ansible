@@ -176,12 +176,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class Connection(NetworkConnectionBase):

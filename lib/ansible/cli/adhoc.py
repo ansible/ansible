@@ -29,12 +29,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.plugins.loader import get_all_plugin_loaders
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 ########################################################

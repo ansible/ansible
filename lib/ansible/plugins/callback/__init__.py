@@ -34,12 +34,8 @@ from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars.clean import strip_internal_keys
+from ansible.utils.display import display as global_display
 
-try:
-    from __main__ import display as global_display
-except ImportError:
-    from ansible.utils.display import Display
-    global_display = Display()
 
 try:
     from __main__ import cli

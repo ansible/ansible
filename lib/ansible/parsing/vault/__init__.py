@@ -75,13 +75,8 @@ from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.display import display
 from ansible.utils.path import makedirs_safe
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'

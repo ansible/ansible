@@ -36,12 +36,6 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class Netconf(NetconfBase):
 

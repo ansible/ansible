@@ -47,15 +47,10 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
+from ansible.utils.display import display
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 __all__ = ['StrategyBase']
 

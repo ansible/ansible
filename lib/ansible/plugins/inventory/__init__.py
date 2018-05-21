@@ -33,12 +33,8 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
+from ansible.utils.display import display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 _SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 

@@ -39,16 +39,11 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
+from ansible.utils.display import display
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"

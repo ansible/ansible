@@ -22,16 +22,11 @@ from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
+from ansible.utils.display import display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.vars import combine_vars
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 __all__ = ['TaskExecutor']

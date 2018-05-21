@@ -68,12 +68,6 @@ from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 ANSIBLE_GRAFANA_URL = 'http://127.0.0.1:3000'
 ANSIBLE_GRAFANA_API_KEY = None

@@ -16,14 +16,8 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
+from ansible.utils.display import display
 from ansible.utils.path import unfrackpath
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class ConfigCLI(CLI):

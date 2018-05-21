@@ -49,13 +49,8 @@ from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.utils.display import display
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 __all__ = ['Templar', 'generate_ansible_template_vars']

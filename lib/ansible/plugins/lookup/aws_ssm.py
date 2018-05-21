@@ -103,12 +103,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.display import display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 try:
     from botocore.exceptions import ClientError

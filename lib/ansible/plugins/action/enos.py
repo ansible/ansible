@@ -26,13 +26,7 @@ from ansible.module_utils.network.enos.enos import enos_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(_ActionModule):

@@ -16,6 +16,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_text, to_bytes
+from ansible.utils.display import display
 
 PASSLIB_AVAILABLE = False
 try:
@@ -26,12 +27,6 @@ try:
     PASSLIB_AVAILABLE = True
 except:
     pass
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 __all__ = ['do_encrypt']
 

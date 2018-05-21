@@ -26,14 +26,9 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
-from ansible.utils.vars import combine_vars
+from ansible.utils.display import display
 from ansible.utils.path import basedir
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.vars import combine_vars
 
 
 class InventoryData(object):

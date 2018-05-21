@@ -32,8 +32,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.utils.display import display
 from ansible.utils.encrypt import random_password
-
 
 try:
     import yaml
@@ -46,13 +46,6 @@ try:
     HAS_TEXTFSM = True
 except ImportError:
     HAS_TEXTFSM = False
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 try:
     from passlib.hash import md5_crypt

@@ -131,6 +131,7 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import NetworkConnectionBase
+from ansible.utils.display import display
 
 try:
     from napalm import get_network_driver
@@ -141,12 +142,6 @@ except ImportError:
         'Napalm is required to use the napalm connection type.\n'
         'Please run pip install napalm'
     )
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class Connection(NetworkConnectionBase):

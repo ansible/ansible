@@ -11,12 +11,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.plugin_docs import read_docstring, read_docstub
 from ansible.parsing.yaml.loader import AnsibleLoader
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 # modules that are ok that they do not have documentation strings

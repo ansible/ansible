@@ -20,13 +20,8 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
+from ansible.utils.display import display
 from ansible.utils.path import unfrackpath
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'

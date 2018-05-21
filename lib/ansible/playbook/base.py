@@ -20,13 +20,8 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.display import display
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 def _generic_g(prop_name, self):

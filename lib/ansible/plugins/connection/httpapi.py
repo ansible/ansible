@@ -156,12 +156,7 @@ from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class Connection(NetworkConnectionBase):

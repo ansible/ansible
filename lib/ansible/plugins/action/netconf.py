@@ -23,12 +23,7 @@ import copy
 import sys
 
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(_ActionModule):

@@ -28,12 +28,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class PlaybookCLI(CLI):

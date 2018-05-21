@@ -28,12 +28,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.ios.ios import ios_provider_spec
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(_ActionModule):

@@ -29,12 +29,7 @@ from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(ActionBase):

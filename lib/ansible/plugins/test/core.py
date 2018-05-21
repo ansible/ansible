@@ -25,12 +25,7 @@ from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 def failed(result):

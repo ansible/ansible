@@ -34,12 +34,7 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 ########################################################
