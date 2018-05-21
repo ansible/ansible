@@ -117,6 +117,7 @@ class Peer(object):
     def call_peer_commands(self):
         result = {}
         result['msg'] = ''
+        result['changed'] = False
 
         for node in self.nodes:
             rc, out, err = self._run_command('gluster', ' peer %s %s %s'
@@ -127,10 +128,9 @@ class Peer(object):
                 # Fail early, do not wait for the loop to finish
                 self.module.fail_json(**result)
             else:
-                result['rc'] = rc
                 if 'already in peer' in out or \
                    'localhost not needed' in out:
-                    result['changed'] = False
+                    result['changed'] |= False
                 else:
                     result['changed'] = True
         self.module.exit_json(**result)
