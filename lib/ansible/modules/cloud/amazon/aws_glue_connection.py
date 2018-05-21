@@ -256,7 +256,9 @@ def create_or_update_glue_connection(connection, connection_ec2, module, glue_co
 
     # If changed, get the Glue connection again
     if changed:
-        glue_connection = _get_glue_connection(connection, module)
+        glue_connection = None
+        while glue_connection is None:
+            glue_connection = _get_glue_connection(connection, module)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(glue_connection))
 
