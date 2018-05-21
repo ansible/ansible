@@ -59,11 +59,12 @@ options:
 
   unmount_volumes:
     required: false
+    type: bool
     description:
     - If set to "TRUE", this option specifies that all of the volumes hosted by the given aggregate are to be unmounted
     - before the offline operation is executed.
     - By default, the system will reject any attempt to offline an aggregate that hosts one or more online volumes.
-    choices: ['true', 'false']
+    choices: [True, False]
 
 '''
 

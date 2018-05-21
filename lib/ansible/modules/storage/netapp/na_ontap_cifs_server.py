@@ -5,11 +5,6 @@
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
-import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -35,11 +30,13 @@ options:
     - Whether the specified cifs_server should exist or not. Values: present/absent
     required: false
     default: present
+    choices: ['present', 'absent']
 
   service_state:
     description:
     - CIFS Server Administrative Status. Values: started/stopped
     required: true
+    choices: ['stopped', 'started']
 
   cifs_server_name:
     description:
@@ -94,8 +91,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    changed: True/False
 '''
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -117,7 +121,7 @@ class NetAppOntapcifsServer(object):
             admin_user_name=dict(required=False, type='str'),
             admin_password=dict(required=False, type='str'),
 
-            vserver=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
         ))
 
         self.module = AnsibleModule(

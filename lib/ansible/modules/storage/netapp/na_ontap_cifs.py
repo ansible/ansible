@@ -3,14 +3,6 @@
 # (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # import untangle
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -81,6 +73,15 @@ EXAMPLES = """
 
 RETURN = """
 """
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
