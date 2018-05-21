@@ -174,9 +174,10 @@ state:
 '''
 
 try:
+    import gitlab
     from gitlab import Gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except ImportError:
     HAS_GITLAB_PACKAGE = False
 
 import json
@@ -231,7 +232,11 @@ class GitLabServices(object):
         return obj
 
     def expandEvents(self, events):
-        return {value + '_events': bool(value in events) for value in self.HOOK_EVENTS}
+        # python >= 2.7: return {value + '_events': bool(value in events) for value in self.HOOK_EVENTS}
+        v = {}
+        for value in self.HOOK_EVENTS:
+            setattr(v, value + '_events', bool(value in events))
+        return v
 
     def eventsEqual(self, obj, events):
         return all((k in obj and obj[k] == v) for k, v in events.items())
@@ -240,7 +245,11 @@ class GitLabServices(object):
         return ('password' in attr and attr['password']) or ('token' in attr and attr['token']) or ('api_key' in attr and attr['api_key'])
 
     def equals(self, prev_attr, active, params, events):
-        filtered_params = {k: v for k, v in params.items() if k not in self.credentialParams}
+        # python >= 2.7: filtered_params = {k: v for k, v in params.items() if k not in self.credentialParams}
+        filtered_params = {}
+        for k, v in params.items():
+            if k not in self.credentialParams:
+                setattr(filtered_params, k, v)
         # ToDo: this is not (yet?) supported by Gitlab
         # if prev_attr['active'] != active:
         # return False
@@ -314,22 +323,30 @@ def main():
 
     try:
         git = Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password, private_token=login_token, api_version=4)
+        # git.enable_debug() ?
         git.auth()
-    except Exception as e:
+        project = git.projects.get(project)
+    except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError, gitlab.GitlabGetError) as e:
         module.fail_json(msg='Failed to connect to Gitlab server: %s' % to_native(e))
 
-    ServicesHelper = GitLabServices(module, git)
-    project = git.projects.get(project)
-    remote_service = project.services.get(service)
+    try:
+        remote_service = project.services.get(service)
+    except gitlab.GitlabGetError as e:
+        module.fail_json(msg='No such a service %s' % service, exception=to_native(e))
 
+    ServicesHelper = GitLabServices(module, git)
     if state == 'absent':
         if not remote_service or not remote_service.created_at:
             module.exit_json(changed=False, msg='Service not found', details='Service %s not found' % service)
         else:
             if module.check_mode:
                 module.exit_json(changed=True)
-            remote_service.delete()
-            module.exit_json(changed=True, result='Successfully deleted service %s' % service)
+            try:
+                remote_service.delete()
+            except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
+                module.fail_json(msg='Failed to remove service %s' % service, exception=to_native(e))
+            else:
+                module.exit_json(changed=True, result='Successfully deleted service %s' % service)
 
     else:
         if remote_service.created_at:
@@ -337,12 +354,13 @@ def main():
             try:
                 diff = {'before': str(remote_service.attributes)}
                 h = ServicesHelper.update(project, remote_service, active, params, events)
-                diff['after'] = str(h.attributes)
-            except:
-                module.fail_json(changed=False, msg='Could not update service %s' % service)
+                # if diff: fetch again
+                # diff['after'] = str(remote_service.attributes)
+            except gitlab.GitlabUpdateError as e:
+                module.fail_json(changed=False, msg='Could not update service %s' % service, exception=to_native(e))
             else:
                 if h:
-                    module.exit_json(changed=True, service=h.attributes, diff=diff, state='changed', result='Successfully updated service %s' % service)
+                    module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='changed', result='Successfully updated service %s' % service)
                 else:
                     module.exit_json(changed=False)
 
@@ -357,8 +375,8 @@ def main():
             try:
                 remote_service.save()
                 diff = {'before': {}, 'after': str(remote_service.attributes)}
-            except:
-                module.fail_json(changed=False, msg='Could not create service %s' % service)
+            except (gitlab.GitlabCreateError, gitlab.GitlabUpdateError) as e:
+                module.fail_json(changed=False, msg='Could not create service %s' % service, exception=to_native(e))
             else:
                 module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='created',
                                  result='Successfully created service %s' % service)
