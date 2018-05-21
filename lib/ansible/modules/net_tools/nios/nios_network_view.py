@@ -92,6 +92,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.net_tools.nios.api import NIOS_NETWORK_VIEW
 
+
 def main():
     ''' Main entry point for module execution
     '''
