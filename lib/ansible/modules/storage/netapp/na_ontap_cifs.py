@@ -14,7 +14,7 @@ description:
   - "Create or destroy or modify(path) cifs-share on ONTAP"
 extends_documentation_fragment:
   - netapp.na_ontap
-module: na_ontap_cif
+module: na_ontap_cifs
 options:
   path:
     description:
