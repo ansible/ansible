@@ -141,7 +141,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
-
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV6_NETWORK
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
@@ -178,9 +179,9 @@ def check_ip_addr_type(ip):
     check_ip = ip.split('/')
 
     if validate_ip_address(check_ip[0]):
-        return 'network'
+        return NIOS_IPV4_NETWORK
     elif validate_ip_v6_address(check_ip[0]):
-        return 'ipv6network'
+        return NIOS_IPV6_NETWORK
 
 
 def main():
