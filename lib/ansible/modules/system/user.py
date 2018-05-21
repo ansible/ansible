@@ -448,7 +448,8 @@ class User(object):
             overall_rc = None
         overall_out = first_tuple[1] + ' | ' + second_tuple[1]
         overall_err = first_tuple[2] + ' | ' + second_tuple[2]
-        return (overall_rc, overall_out, overall_err)  
+        return (overall_rc, overall_out, overall_err)
+        
     def _expire_password(self):
         chage_cmd = [self.module.get_bin_path('chage', True)]
         chage_cmd.append('-d')
@@ -582,7 +583,7 @@ class User(object):
             first_tuple = self.execute_command(cmd)
         if self.force_pw:
             second_tuple = (None, " ", " ")
-            current_lastday = self.user_password()[2]   
+            current_lastday = self.user_password()[2]
             if current_lastday != 0:
                 second_tuple = self._expire_password()
             return self._compare_outputs(first_tuple, second_tuple)
@@ -990,7 +991,7 @@ class FreeBsdUser(User):
             current_lastday = self.user_password()[2]
             if current_lastday != 0:
                 cmd.append('-p')
-                cmd.append('1')   
+                cmd.append('1') 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
