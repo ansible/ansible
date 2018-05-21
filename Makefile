@@ -70,16 +70,16 @@ DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
 DEB_DATE := $(shell LC_TIME=C date +"%a, %d %b %Y %T %z")
-DEB_VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debversion)
+DEB_VERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debversion)
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debrelease)ppa
+    DEB_RELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debrelease)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 100.git$(DATE)$(GITINFO)
+    DEB_RELEASE ?= 100.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
