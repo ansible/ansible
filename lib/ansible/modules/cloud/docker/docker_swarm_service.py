@@ -17,7 +17,7 @@ short_description: docker swarm service
 description: |
   Manage docker services. Allows live altering of already defined services
   (see examples)
-version_added: "2.5"
+version_added: "2.6"
 options:
   name:
     required: true
@@ -30,6 +30,7 @@ options:
       Maps docker service IMAGE parameter.
   state:
     required: true
+    default: present
     description:
     - Service state.
     choices:
@@ -56,6 +57,7 @@ options:
     - Requires api_version >= 1.25
   tty:
     required: false
+    type: bool
     default: False
     description:
     - Allocate a pseudo-TTY
@@ -198,8 +200,10 @@ options:
     required: false
     default: root
     description: username or UID
+extends_documentation_fragment:
+- docker
 requirements:
-  - "docker-py >= 2.0"
+- "docker-py >= 2.0"
 '''
 
 RETURN = '''
@@ -362,7 +366,6 @@ from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
-
 
 
 try:
