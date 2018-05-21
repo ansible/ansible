@@ -19,7 +19,7 @@ module: na_ontap_license
 short_description: Manage NetApp ONTAP protocol and feature licenses
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com), Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
 
 description:
@@ -35,10 +35,12 @@ options:
   remove_unused:
     description:
     - Remove licenses that have no controller affiliation in the cluster.
+    type: bool
 
   remove_expired:
     description:
     - Remove licenses that have expired in the cluster.
+    type: bool
 
   serial_number:
     description:

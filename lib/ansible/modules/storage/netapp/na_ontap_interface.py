@@ -19,7 +19,7 @@ short_description: ONTAP LIF configuration
 
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.4'
+version_added: '2.6'
 author: chhaya gunawat (chhayag@netapp.com)
 
 description:
@@ -29,7 +29,6 @@ options:
   state:
     description:
     - Whether the specified interface should exist or not.
-    required: false
     choices: ['present', 'absent']
     default: present
 
@@ -38,7 +37,7 @@ options:
     - Specifies the logical interface (LIF) name.
     required: true
 
-  home-node:
+  home_node:
     description:
     - Specifies the LIF's home node.
     - Required when C(state=present).
@@ -46,7 +45,7 @@ options:
   home_port:
     description:
     - Specifies the LIF's home port.
-    - Required: when C(state=present)
+    - Required when C(state=present)
 
   role:
     description:
@@ -56,7 +55,7 @@ options:
   address:
     description:
     - Specifies the LIF's IP address.
-    - Required: when C(state=present)
+    - Required when C(state=present)
 
   netmask:
     description:
@@ -68,33 +67,28 @@ options:
     - The name of the vserver to use.
     required: true
 
-  firewall-policy:
+  firewall_policy:
     description:
     - Specifies the firewall policy for the LIF.
-    required: false
 
-  failover-policy:
+  failover_policy:
     description:
     - Specifies the failover policy for the LIF.
-    required: false
 
-  administrative-status:
+  admin_status:
     description:
     - Specifies the administrative status of the LIF..
-    required: false
 
-  is-auto-revert:
+  is_auto_revert:
     description:
     - If true, data LIF will revert to its home node under certain circumstances such as startup, and load balancing
     - migration capability is disabled automatically
-    required: false
 
   protocols:
     description:
     - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
     - Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
     - Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
-    required: false
 
 '''
 
@@ -129,9 +123,10 @@ EXAMPLES = '''
 
 '''
 
-RETURN = '''
-    changed: True/False
-'''
+RETURN = """
+
+"""
+
 import traceback
 import json
 from ansible.module_utils.basic import AnsibleModule
@@ -156,7 +151,7 @@ class NetAppOntapInterface(object):
             role=dict(required=False, type='str'),
             address=dict(required=False, type='str'),
             netmask=dict(required=False, type='str'),
-            vserver=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
             firewall_policy=dict(required=False, type='str', default=None),
             failover_policy=dict(required=False, type='str', default=None),
             admin_status=dict(required=False, type='str', default=None),
