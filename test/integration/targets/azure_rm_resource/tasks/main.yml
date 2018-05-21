@@ -47,7 +47,7 @@
     resource_name: sg{{ rpfx }}
     api_version: "2018-01-01"
     idempotency: yes
-    body: {{ output_rule }}
+    body: "{{ output_rule }}"
   register: output
 
 - assert:
