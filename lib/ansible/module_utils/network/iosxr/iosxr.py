@@ -34,7 +34,7 @@ from time import sleep
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 try:
@@ -454,7 +454,10 @@ def run_command(module, commands):
             sendonly = False
             newline = True
 
-        out = conn.get(command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        try:
+            out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        except ConnectionError as e:
+            out = e
 
         try:
             responses.append(to_text(out, errors='surrogate_or_strict'))
