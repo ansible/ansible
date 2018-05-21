@@ -31,10 +31,9 @@ options:
     - The name of the logical volume.
   min_size:
     description:
-    - The minimum size to extend the logical volume up to. The size must be specified
-      in megabytes (mM) or gigabytes (gG); Float values must begin with a digit.
-      In the case the actual lv size is greater than the minimum size it does
-      nothing.
+    - The minimum size to extend the logical volume up to. The size must be in
+      megabytes (mM) or gigabytes (gG); Float values must begin with a digit.
+      If the actual lv size is greater than the minimum size it does nothing.
       version_added: "2.6"
   size:
     description:
@@ -335,16 +334,16 @@ def main():
         test_opt = ''
 
     if min_size:
-         if min_size[-1].lower() in 'mg':
-             min_size_unit = min_size[-1].lower()
-             min_size = min_size[0:-1]
+        if min_size[-1].lower() in 'mg':
+            min_size_unit = min_size[-1].lower()
+            min_size = min_size[0:-1]
 
-         try:
-             float(min_size)
-             if not min_size[0].isdigit():
-                 raise ValueError()
-         except ValueError:
-             module.fail_json(msg="Bad min_size specification of '%s'" % min_size)
+        try:
+            float(min_size)
+            if not min_size[0].isdigit():
+                raise ValueError()
+        except ValueError:
+            module.fail_json(msg="Bad min_size specification of '%s'" % min_size)
 
     if size:
         # LVCREATE(8) -l --extents option with percentage
@@ -533,16 +532,16 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-	    if size is not None:
-    	       if int(size) > this_lv['size']:
-                  tool = module.get_bin_path("lvextend", required=True)
-	    elif min_size is not None:
-		if min_size_unit.lower() in 'm':
-        	    if int(min_size) > this_lv['size']:
-                     tool = module.get_bin_path("lvextend", required=True)
+            if size is not None:
+                if int(size) > this_lv['size']:
+                    tool = module.get_bin_path("lvextend", required=True)
+            elif min_size is not None:
+                if min_size_unit.lower() in 'm':
+                    if int(min_size) > this_lv['size']:
+                        tool = module.get_bin_path("lvextend", required=True)
                 elif min_size_unit.lower() in 'g':
-        	    if int(min_size) > (this_lv['size'] / 1024):
-                       tool = module.get_bin_path("lvextend", required=True)
+                    if int(min_size) > (this_lv['size'] / 1024):
+                        tool = module.get_bin_path("lvextend", required=True)
             elif not min_size and shrink and int(size) < this_lv['size']:
                 if int(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
@@ -555,10 +554,10 @@ def main():
             if tool:
                 if resizefs:
                     tool = '%s %s' % (tool, '--resizefs')
-		
-		if min_size:
-		   size = min_size
-		   size_unit = min_size_unit
+
+                if min_size:
+                    size = min_size
+                    size_unit = min_size_unit
 
                 cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
