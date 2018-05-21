@@ -237,19 +237,17 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     else:
         settings['electionTimeoutMillis'] = electionTimeoutMillis
     for member in members:
-        if ':' not in member: # No port supplied. Assume 27017
+        if ':' not in member:  # No port supplied. Assume 27017
             member += ":27017"
-        members_dict_list.append(OrderedDict([("_id", index),
-                                               ("host", str(member))]))
+        members_dict_list.append(OrderedDict([("_id", index), ("host", str(member))]))
         if index == arbiter_at_index:
             members_dict_list[index]['arbiterOnly'] = True
         index += 1
 
-    conf = OrderedDict([
-                            ("_id", replica_set),
-                            ("protocolVersion", protocolVersion),
-                            ("members", members_dict_list),
-                            ("settings", settings)
+    conf = OrderedDict([("_id", replica_set),
+                        ("protocolVersion", protocolVersion),
+                        ("members", members_dict_list),
+                        ("settings", settings)
     ])
     client["admin"].command('replSetInitiate', conf)
 

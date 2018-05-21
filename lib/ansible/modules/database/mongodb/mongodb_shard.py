@@ -230,20 +230,17 @@ def load_mongocnf():
 
 
 def main():
-    module=AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_database=dict(default="admin"),
-            login_host=dict(default="localhost", required=False),
-            login_port=dict(default=27017, type='int', required=False),
-            ssl=dict(default=False, type='bool'),
-            ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
-            shard=dict(default=None),
-            state=dict(required=False, default="present", choices=["present", "absent"])
-            ),
-            supports_check_mode=True
-        )
+    module=AnsibleModule(argument_spec=dict( login_user=dict(default=None),
+                                             login_password=dict(default=None, no_log=True),
+                                             login_database=dict(default="admin"),
+                                             login_host=dict(default="localhost", required=False),
+                                             login_port=dict(default=27017, type='int', required=False),
+                                             ssl=dict(default=False, type='bool'),
+                                             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
+                                             shard=dict(default=None),
+                                             state=dict(required=False, default="present", choices=["present", "absent"])),
+                         supports_check_mode=True
+                        )
 
     if not pymongo_found:
         module.fail_json(msg='the python pymongo module is required')
