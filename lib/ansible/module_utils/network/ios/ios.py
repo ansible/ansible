@@ -165,4 +165,4 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, commands):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    return connection.edit_config(commands)
