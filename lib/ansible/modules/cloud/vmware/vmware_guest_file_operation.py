@@ -162,6 +162,7 @@ except ImportError:
     pass
 
 import os
+from six.moves.urllib.parse import urlparse, urlunparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import urls
 from ansible.module_utils._text import to_bytes, to_native
@@ -340,6 +341,13 @@ class VmwareGuestFileManager(PyVmomi):
             url = file_manager.InitiateFileTransferToGuest(vm=self.vm, auth=creds, guestFilePath=dest,
                                                            fileAttributes=file_attributes, overwrite=overwrite,
                                                            fileSize=file_size)
+            # Since hostname can be * we substitute it with original hostname.
+            # See https://pubs.vmware.com/vsphere-6-5/index.jsp#com.vmware.wssdk.smssdk.doc/vim.vm.guest.FileManager.html#initiateFileTransferToGuest
+            split_url = urlparse(url)
+            if '*' in split_url.hostname:
+                host = self.module.params['hostname'] + ":" + str(self.module.params['port'])
+                url = split_url._replace(netloc=host).geturl()
+
             resp, info = urls.fetch_url(self.module, url, data=data, method="PUT")
 
             status_code = info["status"]
