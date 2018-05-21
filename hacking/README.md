@@ -55,13 +55,6 @@ return_skeleton_generator.py
 return_skeleton_generator.py helps in generating the RETURNS section of a module. It takes
 JSON output of a module provided either as a file argument or via stdin.
 
-Module-formatter
-----------------
-
-The module formatter is a script used to generate manpages and online
-module documentation.  This is used by the system makefiles and rarely
-needs to be run directly.
-
 fix_test_syntax.py
 ------------------
 
