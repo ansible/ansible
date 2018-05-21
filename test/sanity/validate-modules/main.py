@@ -396,19 +396,6 @@ class ModuleValidator(Validator):
                         'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
 
-    def _check_for_tabs(self):
-        for line_no, line in enumerate(self.text.splitlines()):
-            indent = INDENT_REGEX.search(line)
-            if indent and '\t' in line:
-                index = line.index('\t')
-                self.reporter.error(
-                    path=self.object_path,
-                    code=402,
-                    msg='indentation contains tabs',
-                    line=line_no + 1,
-                    column=index
-                )
-
     def _find_blacklist_imports(self):
         for child in self.ast.body:
             names = []
@@ -1358,7 +1345,6 @@ class ModuleValidator(Validator):
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
-            self._check_for_tabs()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
 

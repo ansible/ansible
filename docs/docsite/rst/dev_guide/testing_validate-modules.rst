@@ -121,7 +121,6 @@ Errors
 ---------   -------------------
   **4xx**   **Syntax**
   401       Python ``SyntaxError`` while parsing module
-  402       Indentation contains tabs
   403       Type comparison using ``type()`` found. Use ``isinstance()`` instead
   ..
 ---------   -------------------
