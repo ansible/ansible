@@ -51,7 +51,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
-from ansible.utils.display import Display
+from ansible.utils.display import display
 
 
 #####################################################################################
@@ -82,7 +82,6 @@ _RULER = re.compile(r"HORIZONTALLINE")
 DEPRECATED = b" (D)"
 
 pp = PrettyPrinter()
-display = Display()
 
 
 def rst_ify(text):

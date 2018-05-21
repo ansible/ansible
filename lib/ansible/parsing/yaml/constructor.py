@@ -25,14 +25,9 @@ from yaml.nodes import MappingNode
 from ansible.module_utils._text import to_bytes
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.utils.display import display
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class AnsibleConstructor(SafeConstructor):

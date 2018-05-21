@@ -37,14 +37,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
+from ansible.utils.display import display
 from ansible.utils.ssh_functions import check_for_controlpersist
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 __all__ = ['PlayContext']

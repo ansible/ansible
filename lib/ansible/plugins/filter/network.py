@@ -30,6 +30,7 @@ from xml.etree.ElementTree import fromstring
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError
+from ansible.utils.display import display
 
 try:
     import yaml
@@ -42,13 +43,6 @@ try:
     HAS_TEXTFSM = True
 except ImportError:
     HAS_TEXTFSM = False
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 def re_matchall(regex, value):

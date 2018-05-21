@@ -29,13 +29,8 @@ from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
 from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.utils.display import display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
 

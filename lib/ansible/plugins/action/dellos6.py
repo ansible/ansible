@@ -30,12 +30,7 @@ from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.dellos6.dellos6 import dellos6_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 class ActionModule(_ActionModule):

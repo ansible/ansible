@@ -30,13 +30,8 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
     vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
+from ansible.utils.display import display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class DocCLI(CLI):

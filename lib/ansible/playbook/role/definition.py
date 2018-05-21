@@ -31,13 +31,8 @@ from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+from ansible.utils.display import display
 from ansible.utils.path import unfrackpath
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 __all__ = ['RoleDefinition']

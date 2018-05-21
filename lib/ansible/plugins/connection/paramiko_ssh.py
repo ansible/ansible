@@ -146,12 +146,7 @@ from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes, to_native
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import display
 
 
 AUTHENTICITY_MSG = """

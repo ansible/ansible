@@ -36,20 +36,13 @@ RETURN = """
 HAS_KEYRING = True
 
 from ansible.errors import AnsibleError
+from ansible.utils.display import display
+from ansible.plugins.lookup import LookupBase
 
 try:
     import keyring
 except ImportError:
     HAS_KEYRING = False
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
-from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):

@@ -121,6 +121,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import leaf_exec
+from ansible.utils.display import display
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -152,12 +153,6 @@ try:
     HAS_IPADDRESS = True
 except ImportError:
     HAS_IPADDRESS = False
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class Connection(ConnectionBase):
