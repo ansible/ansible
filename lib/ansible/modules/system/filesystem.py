@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat, ocfs2 ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -30,6 +30,7 @@ options:
     - since 2.5, I(dev) can be an image file.
     - vfat support was added in 2.5
     - ocfs2 support was added in 2.6
+    - f2fs support was added in 2.7
     required: yes
     aliases: [type]
   dev:
@@ -45,7 +46,7 @@ options:
   resizefs:
     description:
     - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
-    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(lvm), C(xfs) and C(vfat) filesystems.
+    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs) and C(vfat) filesystems.
     - XFS Will only grow if mounted.
     - vFAT will likely fail if fatresize < 1.04.
     type: bool
@@ -233,6 +234,49 @@ class Ocfs2(Filesystem):
     MKFS_FORCE_FLAGS = '-Fx'
 
 
+class F2fs(Filesystem):
+    MKFS = 'mkfs.f2fs'
+    GROW = 'resize.f2fs'
+
+    @property
+    def MKFS_FORCE_FLAGS(self):
+        mkfs = self.module.get_bin_path(self.MKFS, required=True)
+        cmd = "%s %s" % (mkfs, os.devnull)
+        _, out, _ = self.module.run_command(cmd, check_rc=False)
+        # Looking for "	F2FS-tools: mkfs.f2fs Ver: 1.10.0 (2018-01-30)"
+        # mkfs.f2fs displays version since v1.2.0
+        match = re.search(r"F2FS-tools: mkfs.f2fs Ver: ([0-9.]+) \(", out)
+        if match is not None:
+            # Since 1.9.0, mkfs.f2fs check overwrite before make filesystem
+            # before that version -f switch wasn't used
+            if LooseVersion(match.group(1)) >= LooseVersion('1.9.0'):
+                return '-f'
+
+        return ''
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path('dump.f2fs', required=True)
+        # Get sector count and sector size
+        _, dump, _ = self.module.run_command([cmd, str(dev)], check_rc=True)
+        sector_size = None
+        sector_count = None
+        for line in dump.splitlines():
+            if 'Info: sector size = ' in line:
+                # expected: 'Info: sector size = 512'
+                sector_size = int(line.split()[4])
+            elif 'Info: total FS sectors = ' in line:
+                # expected: 'Info: total FS sectors = 102400 (50 MB)'
+                sector_count = int(line.split()[5])
+
+            if None not in (sector_size, sector_count):
+                break
+        else:
+            self.module.warn("Unable to process dump.f2fs output '%s'", '\n'.join(dump))
+            self.module.fail_json(msg="Unable to process dump.f2fs output for %s" % dev)
+
+        return sector_size * sector_count
+
+
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
         MKFS = "newfs_msdos"
@@ -271,6 +315,7 @@ FILESYSTEMS = {
     'ext3': Ext3,
     'ext4': Ext4,
     'ext4dev': Ext4,
+    'f2fs': F2fs,
     'reiserfs': Reiserfs,
     'xfs': XFS,
     'btrfs': Btrfs,
