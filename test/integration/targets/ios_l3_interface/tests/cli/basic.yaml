@@ -22,7 +22,7 @@
 - name: Configure interface ipv4 address
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
@@ -31,12 +31,12 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"ip address 192.168.0.1 255.255.255.0" in result.commands'
+      - '"ip address 192.168.20.1 255.255.255.0" in result.commands'
 
 - name: Configure interface ipv4 address (idempotent)
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
@@ -48,7 +48,7 @@
 - name: Assign same ipv4 address to other interface (fail)
   ios_l3_interface:
     name: "{{ test_interface2 }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   ignore_errors: yes
