@@ -492,7 +492,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["backend_address_pools"] = kwargs[key]
                 elif key == "backend_http_settings_collection":
                     ev = kwargs[key]
-                    self.parameters["backend_http_settings_collection"] = snake_dict_to_camel_dict(ev)
+                    self.parameters["backend_http_settings_collection"] = snake_dict_to_camel_dict(ev, True)
                 elif key == "http_listeners":
                     ev = kwargs[key]
                     for i in range(len(ev)):
