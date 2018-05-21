@@ -26,8 +26,8 @@ options:
   state:
     description:
     - Whether the specified service processor network should exist or not.
-    choices: ['present', 'absent']
-    default: 'present'
+    choices: ['present']
+    default: present
   address_type:
     description:
     - Specify address class.
