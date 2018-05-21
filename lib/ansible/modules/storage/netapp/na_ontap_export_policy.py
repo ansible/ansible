@@ -46,7 +46,7 @@ EXAMPLES = """
       na_ontap_export_policy:
         state: present
         name: ansiblePolicyName
-        vserver:vs_hack
+        vserver: vs_hack
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -54,7 +54,7 @@ EXAMPLES = """
       na_ontap_export_policy:
         action: present
         name: ansiblePolicyName
-        vserver:vs_hack
+        vserver: vs_hack
         new_name: newPolicyName
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -63,7 +63,7 @@ EXAMPLES = """
       na_ontap_export_policy:
         state: absent
         name: ansiblePolicyName
-        vserver:vs_hack
+        vserver: vs_hack
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"

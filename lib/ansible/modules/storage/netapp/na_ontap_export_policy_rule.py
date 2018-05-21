@@ -26,10 +26,10 @@ description:
 - Create or delete or modify export rules in ONTAP
 
 options:
-
   state:
     description:
     - Whether the specified export policy rule should exist or not.
+    required: false
     choices: ['present', 'absent']
     default: present
 
@@ -140,8 +140,7 @@ class NetAppontapExportRule(object):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=False, type='str', choices=[
-                       'present', 'absent'], defaut='present'),
+            state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             policy_name=dict(required=True, type='str'),
             protocol=dict(required=False,
                           type='str', default='any',
