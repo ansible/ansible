@@ -546,7 +546,7 @@ class AnsibleCloudStack:
 
     def query_tags(self, resource, resource_type):
         args = {
-            'resourceids': resource['id'],
+            'resourceid': resource['id'],
             'resourcetype': resource_type,
         }
         tags = self.query_api('listTags', **args)
