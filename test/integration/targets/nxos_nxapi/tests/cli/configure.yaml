@@ -7,7 +7,6 @@
 - name: Setup - put NXAPI in stopped state
   nxos_nxapi:
     state: absent
-    provider: "{{ cli }}"
 
 - name: Configure NXAPI
   nxos_nxapi:
@@ -15,13 +14,11 @@
     enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
     enable_https: yes
     https_port: 9443
-    provider: "{{ cli }}"
   register: result
 
 - nxos_command:
     commands:
       - show nxapi | json
-    provider: "{{ cli }}"
   register: result
 
 - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes.yaml
@@ -39,7 +36,6 @@
     enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
     enable_https: yes
     https_port: 9443
-    provider: "{{ cli }}"
   register: result
 
 - name: Assert configuration is idempotent

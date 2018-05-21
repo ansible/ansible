@@ -16,7 +16,6 @@
   - name: "Enable nv overlay evpn"
     nxos_evpn_global: &enable_evpn
       nv_overlay_evpn: true
-      provider: "{{ connection }}"
 
   - name: "Apply N7K specific setup config"
     include: targets/nxos_overlay_global/tasks/platform/n7k/setup.yaml
@@ -28,13 +27,11 @@
         - feature-set fabric
         - feature fabric forwarding
       match: none
-      provider: "{{ connection }}"
     when: platform is match('N7K')
 
   - name: "Remove possibly existing mac"
     nxos_overlay_global:
       anycast_gateway_mac: "default"
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   when: overlay_global_supported
@@ -45,7 +42,6 @@
   - name: Configure overlay global
     nxos_overlay_global: &configure
       anycast_gateway_mac: "b.b.b"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -63,7 +59,6 @@
   - name: Update anycast gateway mac
     nxos_overlay_global: &update
       anycast_gateway_mac: "a.a.a"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -78,7 +73,6 @@
   - name: Remove anycast gateway mac
     nxos_overlay_global: &remove
       anycast_gateway_mac: "default"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -99,7 +93,6 @@
   - name: "Disable nv overlay evpn"
     nxos_evpn_global: &disable_evpn
       nv_overlay_evpn: false
-      provider: "{{ connection }}"
     ignore_errors: yes
     when: overlay_global_supported
 

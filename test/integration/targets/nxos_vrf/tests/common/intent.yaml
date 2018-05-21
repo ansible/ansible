@@ -12,7 +12,6 @@
       - no vrf member test1
     parents: no switchport
     before: "interface {{ testint1 }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove vrf from interfaces used in test(part2)
@@ -21,21 +20,18 @@
       - no vrf member test1
     parents: no switchport
     before: "interface {{ testint2 }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - delete VRF test1 used in test
   nxos_config:
     lines:
       - no vrf context test1
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove VRF test2 used in test
   nxos_config:
     lines:
       - no vrf context test2
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: aggregate definitions of VRFs
@@ -43,7 +39,6 @@
     aggregate:
       - { name: test1, description: Configured by Ansible }
       - { name: test2, description: Testing, admin_state: down }
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -73,7 +68,6 @@
     associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -99,7 +93,6 @@
     associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -111,7 +104,6 @@
     name: test1
     associated_interfaces:
       - test
-    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -124,7 +116,6 @@
     name: test1
     interfaces:
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -147,7 +138,6 @@
       - { name: test1, description: Configured by Ansible }
       - { name: test2, description: Testing, admin_state: down }
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -170,7 +160,6 @@
       - no vrf member test1
     parents: no switchport
     before: "interface {{ testint1 }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove vrf from interfaces used in test(part2)
@@ -179,21 +168,18 @@
       - no vrf member test1
     parents: no switchport
     before: "interface {{ testint2 }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - delete VRF test1 used in test
   nxos_config:
     lines:
       - no vrf context test1
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove VRF test2 used in test
   nxos_config:
     lines:
       - no vrf context test2
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrf intent & aggregate test"

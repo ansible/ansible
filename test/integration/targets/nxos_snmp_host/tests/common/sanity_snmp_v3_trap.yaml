@@ -23,7 +23,6 @@
     vrf_filter: management
     src_intf: "{{ intname|default(omit) }}"
     state: absent 
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -40,7 +39,6 @@
       vrf_filter: management
       src_intf: "{{ intname|default(omit) }}"
       state: present 
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -62,7 +60,6 @@
         udp: 222
         vrf_filter: default
         state: present 
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -82,7 +79,6 @@
       vrf: management
       vrf_filter: management
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -100,7 +96,6 @@
         udp: 222
         vrf_filter: default
         state: absent
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
