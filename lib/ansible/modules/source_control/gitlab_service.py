@@ -360,7 +360,8 @@ def main():
                 module.fail_json(changed=False, msg='Could not update service %s' % service, exception=to_native(e))
             else:
                 if h:
-                    module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='changed', result='Successfully updated service %s' % service)
+                    module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='changed',
+                                     result='Successfully updated service %s' % service)
                 else:
                     module.exit_json(changed=False)
 
