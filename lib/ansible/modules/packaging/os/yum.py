@@ -247,6 +247,18 @@ EXAMPLES = '''
   yum:
     name: sos
     disablerepo: "epel,ol7_latest"
+
+- name: install CVE-2018-7858
+  yum:
+    name: CVE-2018-7858
+    state: present | latest
+    cve: yes
+
+- name: install RHBA-2018:1406
+  yum:
+    name: RHBA-2018:1406
+    state: present | latest
+    advisory: yes
 '''
 
 import os
@@ -1060,7 +1072,7 @@ def parse_check_update(check_update_output):
     return updates
 
 
-def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, installroot='/'):
+def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, cve, advisory, installroot='/'):
 
     res = {}
     res['results'] = []
@@ -1094,6 +1106,10 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
         cmd = yum_basecmd + ['update']
         will_update = set(updates.keys())
         will_update_from_other_package = dict()
+    elif cve and [item for item in items if 'CVE' or 'cve' in item]:
+        cmd = yum_basecmd + ['update'] + ['--cve'] + [item]
+    elif advisory and [item for item in items if 'RHSA' or 'rhsa' or 'RHBA' or 'rhba' or 'RHEA' or 'rhea' in item]:
+        cmd = yum_basecmd + ['update'] + ['--advisory'] + [item]
     else:
         will_update = set()
         will_update_from_other_package = dict()
@@ -1214,7 +1230,10 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
     # run commands
     if cmd:     # update all
         rc, out, err = module.run_command(cmd)
-        res['changed'] = True
+        if out.strip().lower().find("no packages needed for security") != -1:
+            res['changed'] = False
+        else:
+            res['changed'] = True
     elif pkgs['install'] or will_update:
         cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
@@ -1237,7 +1256,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
 
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
+           disable_gpg_check, exclude, repoq, skip_broken, update_only, security, cve, advisory,
            installroot='/', allow_downgrade=False, disable_plugin='', enable_plugin=''):
 
     # fedora will redirect yum to dnf, which has incompatibilities
@@ -1338,7 +1357,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot, allow_downgrade=allow_downgrade)
+        if cve or advisory:
+            res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, cve, advisory, installroot=installroot)
+        else:
+            res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot, allow_downgrade=allow_downgrade)
     elif state in ['removed', 'absent']:
         res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
     elif state == 'latest':
@@ -1346,7 +1368,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--nogpgcheck')
         if security:
             yum_basecmd.append('--security')
-        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, installroot=installroot)
+        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, cve, advisory, installroot=installroot)
     else:
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all failed",
@@ -1388,6 +1410,8 @@ def main():
             security=dict(type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
+            cve=dict(type='bool', default= False),
+            advisory=dict(type='bool',default=False)
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1450,9 +1474,11 @@ def main():
         update_only = params['update_only']
         security = params['security']
         allow_downgrade = params['allow_downgrade']
+        cve = params['cve']
+        advisory = params['advisory']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, update_only, security, params['installroot'], allow_downgrade,
+                         skip_broken, update_only, security, cve, advisory, params['installroot'], allow_downgrade,
                          disable_plugin=disable_plugin, enable_plugin=enable_plugin)
         if repoquery:
             results['msg'] = '%s %s' % (
