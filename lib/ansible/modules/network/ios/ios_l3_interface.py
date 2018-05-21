@@ -296,9 +296,6 @@ def main():
 
     result = {'changed': False}
 
-    if warnings:
-        result['warnings'] = warnings
-
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
@@ -307,9 +304,13 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            resp = load_config(module, commands)
+            warnings.extend((out for out in resp if out))
 
         result['changed'] = True
+
+    if warnings:
+        result['warnings'] = warnings
 
     module.exit_json(**result)
 
