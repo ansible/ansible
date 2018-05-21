@@ -28,6 +28,8 @@ $result = @{
 if ($state -eq "absent" -and $value) {
     Add-Warning -obj $result -message "When removing environment variable '$name' it should not have a value '$value' set"
     $value = $null
+} elseif ($state -eq "present" -and (-not $value)) {
+    Fail-Json -obj $result -message "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
 }
 
 if ($state -eq "present" -and $before_value -ne $value) {
