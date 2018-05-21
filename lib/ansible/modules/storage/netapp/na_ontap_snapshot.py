@@ -26,7 +26,7 @@ options:
   state:
     description:
     - If you want to create/modify a snapshot, or delete it.
-    chocies: ['present', 'absent']
+    choices: ['present', 'absent']
     default: present
   snapshot:
     description:
