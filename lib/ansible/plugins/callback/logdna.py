@@ -1,4 +1,5 @@
-# (C) 2018, Samir Musali <samir.musali@logdna.com>
+# (c) 2018, Samir Musali <samir.musali@logdna.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -192,6 +193,9 @@ class CallbackModule(CallbackBase):
 
     def runner_on_ok(self, host, res):
         self.sendLog(host, 'OK', {'info': self.sanitizeJSON(res)})
+
+    def runner_on_unreachable(self, host, res):
+        self.sendLog(host, 'UNREACHABLE', {'info': self.sanitizeJSON(res)})
 
     def runner_on_async_failed(self, host, res, jid):
         self.sendLog(host, 'ASYNC_FAILED', {'info': self.sanitizeJSON(res), 'job_id': jid})
