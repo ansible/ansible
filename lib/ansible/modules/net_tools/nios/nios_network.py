@@ -144,6 +144,7 @@ from ansible.module_utils.network.common.utils import validate_ip_address, valid
 from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK
 from ansible.module_utils.net_tools.nios.api import NIOS_IPV6_NETWORK
 
+
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
 
