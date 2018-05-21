@@ -45,7 +45,7 @@ from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types, binary_type, text_type, viewvalues
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
@@ -69,6 +69,7 @@ __all__ = ['Templar', 'generate_ansible_template_vars']
 NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
+B_JINJA2_OVERRIDE = b'#jinja2:'
 
 
 def generate_ansible_template_vars(path):
@@ -283,12 +284,14 @@ class Templar:
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
-        self._clean_regex = re.compile(r'(?:%s|%s|%s|%s)' % (
+        template_token_regex = r'(?:%s|%s|%s|%s)' % (
             self.environment.variable_start_string,
             self.environment.block_start_string,
             self.environment.block_end_string,
             self.environment.variable_end_string
-        ))
+        )
+        self._template_token_regex = re.compile(template_token_regex)
+        self._b_template_token_regex = re.compile(to_bytes(template_token_regex))
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
@@ -370,7 +373,7 @@ class Templar:
                 # want to replace matched pairs of print/block tags
                 print_openings = []
                 block_openings = []
-                for mo in self._clean_regex.finditer(orig_data):
+                for mo in self._template_token_regex.finditer(orig_data):
                     token = mo.group(0)
                     token_start = mo.start(0)
 
@@ -552,6 +555,32 @@ class Templar:
             for k in data:
                 if self.is_template(k) or self.is_template(data[k]):
                     return True
+        return False
+
+    def is_template_uncached(self, obj):
+        '''
+        Return :data:`True` if any string or bytes in the graph `obj` contains
+        template directives. Unlike :meth:`is_template`, this does not cause
+        caching of the compiled template as a side-effect.
+        '''
+        stack = [obj]
+        while stack:
+            data = stack.pop()
+            if isinstance(data, text_type):
+                if data.startswith(JINJA2_OVERRIDE):
+                    return self.is_template(obj)
+                if self._template_token_regex.search(data):
+                    return True
+            elif isinstance(data, binary_type):
+                if data.startswith(B_JINJA2_OVERRIDE):
+                    return self.is_template(obj)
+                if self._b_template_token_regex.search(data):
+                    return True
+            elif isinstance(data, (list, tuple)):
+                stack.extend(data)
+            elif isinstance(data, dict):
+                stack.extend(data)
+                stack.extend(viewvalues(data))
         return False
 
     def templatable(self, data):
