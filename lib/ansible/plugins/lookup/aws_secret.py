@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
 lookup: aws_secret
 author:
   - Aaron Smith <ajsmith10381@gmail.com>
@@ -19,14 +19,14 @@ description:
   - Look up secrets stored in AWS Secrets Manager provided the caller
     has the appropriate permissions to read the secret.
   - Lookup is based on the secret's `Name` value.
-  - Optional parameters can be passed into this lookup: `version_id` and `version_stage`
+  - Optional parameters can be passed into this lookup; `version_id` and `version_stage`
 options:
   _term:
-    description: Name of the secret to look up in AWS Secrets Manager. 
+    description: Name of the secret to look up in AWS Secrets Manager.
     required: True
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
  - name: Create RDS instance with aws_secret lookup for password param
    rds:
      command: create
@@ -40,7 +40,7 @@ EXAMPLES = """
        Environment: staging
 """
 
-RETURN = """
+RETURN = r"""
 _raw:
   description:
     Returns the value of the secret stored in AWS Secrets Manager.
