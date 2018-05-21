@@ -22,13 +22,7 @@ options:
   permission:
     choices: ['no_access', 'read', 'change', 'full_control']
     description:
-      -
-        ? "The access rights that the user or group has on the defined CIFS share. Possible values"
-        : ~
-        change: "Change,"
-        full_control: "Full Control,"
-        no_access: "No access,"
-        read: "Read,"
+      -"The access rights that the user or group has on the defined CIFS share."
     required: false
   share_name:
     description:
@@ -44,7 +38,6 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
   user_or_group:
     description:
       - "The user or group name for which the permissions are listed."

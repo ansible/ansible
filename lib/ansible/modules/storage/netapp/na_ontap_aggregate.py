@@ -48,6 +48,11 @@ options:
     required: false
     description:
     - The name of the aggregate that replaces the current name.
+    
+  nodes:
+    type: list
+    description:
+    - List of node for the aggregate
 
   disk_count:
     description:
@@ -64,7 +69,6 @@ options:
     - If set to "TRUE", this option specifies that all of the volumes hosted by the given aggregate are to be unmounted
     - before the offline operation is executed.
     - By default, the system will reject any attempt to offline an aggregate that hosts one or more online volumes.
-    choices: [True, False]
 
 '''
 

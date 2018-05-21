@@ -30,14 +30,14 @@ options:
 
   state:
     description:
-    - Whether the specified cifs_server should exist or not. Values: present/absent
+    - Whether the specified cifs_server should exist or not.
     required: false
     default: present
     choices: ['present', 'absent']
 
   service_state:
     description:
-    - CIFS Server Administrative Status. Values: started/stopped
+    - CIFS Server Administrative Status.
     required: true
     choices: ['stopped', 'started']
 
