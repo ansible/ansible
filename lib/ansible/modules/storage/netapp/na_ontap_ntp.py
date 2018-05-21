@@ -6,11 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,7 +17,7 @@ module: na_ontap_ntp
 short_description: Create/Delete/modify_version ONTAP NTP server
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author: Suhas Bangalore Shekar (bsuhas@netapp.com), Archana Ganesan (garchana@netapp.com)
 description:
 - Create or delete or modify ntp server in ONTAP
@@ -41,6 +36,7 @@ options:
     - give version for ntp server
     required: False
     choices: ['auto', '3', '4']
+    default: 'auto'
 """
 
 EXAMPLES = """
@@ -61,7 +57,11 @@ EXAMPLES = """
 
 RETURN = """
 """
+import traceback
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 

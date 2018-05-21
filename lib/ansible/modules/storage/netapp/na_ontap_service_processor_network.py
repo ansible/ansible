@@ -7,11 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,40 +17,47 @@ module: na_ontap_service_processor_network
 short_description: Manage NetApp Ontap service processor network
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author:
 - Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
 description:
 - Modify a Ontap service processor network
 options:
+  state:
+    description:
+    - Whether the specified service processor network should exist or not.
+    choices: ['present', 'absent']
+    default: 'present'
   address_type:
     description:
-    - Specify address class (ipV4 or ipV6).
+    - Specify address class.
     required: true
+    choices: ['ipv4', 'ipv6']
   is_enabled:
     description:
-    - Specify whether to enable or disable the service processor network
-      (true or false)
+    - Specify whether to enable or disable the service processor network.
     required: true
+    choices: ['true', 'false']
   node:
     description:
     - The node where the the service processor network should be enabled
     required: true
   dhcp:
     description:
-    - Specify dhcp type (v4 or none)
+    - Specify dhcp type.
+    choices: ['v4', 'none']
   gateway_ip_address:
     description:
-    - Specify the gateway ip
+    - Specify the gateway ip.
   ip_address:
     description:
-    - Specify the service processor ip address
+    - Specify the service processor ip address.
   netmask:
     description:
-    - Specify the service processor netmask
+    - Specify the service processor netmask.
   prefix_length:
     description:
-    - Specify the service processor prefix_length
+    - Specify the service processor prefix_length.
 '''
 
 EXAMPLES = """
@@ -74,6 +76,11 @@ EXAMPLES = """
 
 RETURN = """
 """
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 

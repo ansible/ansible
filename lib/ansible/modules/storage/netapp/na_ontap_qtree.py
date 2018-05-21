@@ -19,7 +19,7 @@ module: na_ontap_qtree
 short_description: Manage qtrees
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:

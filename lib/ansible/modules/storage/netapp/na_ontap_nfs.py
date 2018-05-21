@@ -17,7 +17,7 @@ module: na_ontap_nfs
 short_description: Manage Ontap NFS status
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author: Suhas Bangalore Shekar  (bsuhas@netapp.com)
 description:
 - Enable or disable nfs on ONTAP
@@ -26,6 +26,7 @@ options:
     description:
     - Whether nfs should exist or not.
     choices: ['present', 'absent']
+    default: 'present'
   service_state:
     description:
     - Whether the specified nfs should be enabled or disabled. Creates nfs service if doesnt exist.
@@ -35,47 +36,40 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
   nfsv3:
     description:
     - status of nfsv3.
     required: false
-    default: None
     choices: ['enabled', 'disabled']
   nfsv4:
     description:
     - status of nfsv4.
     required: false
-    default: None
     choices: ['enabled', 'disabled']
   nfsv41:
     description:
     - status of nfsv41.
+    aliases: nfsv4.1
     required: false
-    default: None
     choices: ['enabled', 'disabled']
   vstorage_state:
     description:
     - status of vstorage_state.
     required: false
-    default: None
     choices: ['enabled', 'disabled']
   nfsv4_id_domain:
     description:
     - Name of the nfsv4_id_domain to use.
     required: false
-    default: None
   tcp:
     description:
     - Name of the tcp to use.
     required: false
-    default: None
     choices: ['enabled', 'disabled']
   udp:
     description:
     - Name of the udp to use.
     required: false
-    default: None
     choices: ['enabled', 'disabled']
 """
 
@@ -117,7 +111,7 @@ class NetAppONTAPNFS(object):
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             service_state=dict(required=False, choices=['started', 'stopped']),
-            vserver=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
             nfsv3=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv4=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv41=dict(required=False, default=None, choices=['enabled', 'disabled'], aliases=['nfsv4.1']),

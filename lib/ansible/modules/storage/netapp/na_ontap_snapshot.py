@@ -7,11 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,7 +17,7 @@ module: na_ontap_snapshot
 short_description: Manage NetApp Sanpshots
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '1.0'
+version_added: '2.6'
 author:
 - Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
 description:
@@ -30,7 +25,7 @@ description:
 options:
   state:
     description:
-    - If you want to create/modify a snapshot, or delete it
+    - If you want to create/modify a snapshot, or delete it.
     chocies: ['present', 'absent']
     default: 'present'
   snapshot:
@@ -42,9 +37,10 @@ options:
     description:
     - Name of the volume on which the snapshot is to be created.
     required: true
-  async:
+  async_bool:
     description:
     - If true, the snapshot is to be created asynchronously.
+    type: bool
   comment:
     description:
     - A human readable comment attached with the snapshot.
@@ -58,6 +54,7 @@ options:
     description:
     - if this field is true, snapshot will be deleted
       even if some other processes are accessing it.
+    type: bool
   snapshot_instance_uuid:
     description:
     - The 128 bit unique snapshot identifier expressed in the form of UUID.
@@ -110,6 +107,11 @@ EXAMPLES = """
 
 RETURN = """
 """
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
