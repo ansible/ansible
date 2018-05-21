@@ -67,7 +67,6 @@ options:
     - Password for the user account.
     - It is ignored for creating snmp users, but is required for creating non-snmp users.
     - For an existing user, this value will be used as the new password.
-    default: None
 
   role_name:
     description:
@@ -135,7 +134,7 @@ class NetAppOntapUser(object):
                                        choices=['community', 'password',
                                                 'publickey', 'domain',
                                                 'nsswitch', 'usm']),
-            set_password=dict(required=False, type='str', default=None),
+            set_password=dict(required=False, type='str'),
             role_name=dict(required=False, type='str'),
             lock_user=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),

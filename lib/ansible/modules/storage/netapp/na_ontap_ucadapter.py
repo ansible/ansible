@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 
-module: na_ontap_ucadatpter
+module: na_ontap_ucadapter
 short_description: ONTAP UC adapter configuration
 extends_documentation_fragment:
     - netapp.na_ontap
