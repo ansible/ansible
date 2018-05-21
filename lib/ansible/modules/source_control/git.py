@@ -600,7 +600,8 @@ def get_repo_path(dest, bare):
         repo_path = dest
     else:
         repo_path = os.path.join(dest, '.git')
-    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+    # Check if the .git is a file. If it is a file, it means that the repository is in external directory respective to the working copy (e.g. we are in a
+    # submodule structure).
     if os.path.isfile(repo_path):
         with open(repo_path, 'r') as gitfile:
             data = gitfile.read()
