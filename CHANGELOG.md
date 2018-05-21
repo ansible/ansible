@@ -19,6 +19,11 @@ See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/portin
 * Removed restriction from protocol in cloudflare_dns module to allow other protocols than tcp and udp to be specified.
 
 * Ansible 2.6 and onwards, `target_id` parameter in `vmware_target_canonical_facts` module is an optional parameter.
+* `postgresql_user` module changed `encrypted=yes` to be the default. This
+   shouldn't break any current playbooks, the module will just store passwords
+   hashed by default. This change was done because Postgres 10 dropped support for
+   `UNENCRYPTED` passwords and because all versions since Postgres 7.2 support
+   storing encrypted passwords.
 
 #### Removed modules (previously deprecated)
 
