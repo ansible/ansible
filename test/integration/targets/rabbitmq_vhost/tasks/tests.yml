@@ -1,0 +1,121 @@
+- block:
+  - set_fact:
+      vhost_name: /test
+
+  - name: Add host
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      state: present
+    register: result
+
+  - name: Check that the host was created successfuly
+    shell: "rabbitmqctl list_vhosts name tracing | grep {{ vhost_name }}"
+    register: ctl_result
+
+  - name: Check that the host is added
+    assert:
+      that:
+        - result is changed
+        - result is success
+        - '"false" in ctl_result.stdout'  # value for tracing, false is disabled
+
+  - name: Add host (idempotency)
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      state: present
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  - name: Enable tracing
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      tracing: yes
+    register: result
+
+  - name: Get rabbitmqctl output
+    shell: "rabbitmqctl list_vhosts name tracing | grep {{ vhost_name }}"
+    register: ctl_result
+
+  - name: Check that tracing is enabled
+    assert:
+      that:
+        - result is changed
+        - result is success
+        - '"true" in ctl_result.stdout'  # value for tracing, true is enabled
+
+  - name: Enable tracing (idempotency)
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      tracing: yes
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  - name: Disable tracing
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      tracing: no
+    register: result
+
+  - name: Get rabbitmqctl output
+    shell: "rabbitmqctl list_vhosts name tracing | grep {{ vhost_name }}"
+    register: ctl_result
+
+  - name: Check that tracing is disabled
+    assert:
+      that:
+        - result is changed
+        - result is success
+        - '"false" in ctl_result.stdout'  # value for tracing, false is disabled
+
+  - name: Disable tracing (idempotency)
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      tracing: no
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  - name: Remove host
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      state: absent
+    register: result
+
+  - name: Get rabbitmqctl output
+    shell: "rabbitmqctl list_vhosts name tracing | grep {{ vhost_name }}"
+    register: ctl_result
+    failed_when: ctl_result.rc == 0
+
+  - name: Check that the host is removed
+    assert:
+      that:
+        - result is changed
+        - result is success
+
+  - name: Remove host (idempotency)
+    rabbitmq_vhost:
+      name: "{{ vhost_name }}"
+      state: absent
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  always:
+    - name: Remove host
+      rabbitmq_vhost:
+        name: "{{ vhost_name }}"
+        state: absent
