@@ -19,7 +19,7 @@ module: na_ontap_user
 short_description: useradmin configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
@@ -72,11 +72,12 @@ options:
   role_name:
     description:
     - The name of the role. Required when C(state=present)
-s
+
   lock_user:
     description:
     - To ock/unlock user.
     required: false
+    type: bool
 
   vserver:
     description:

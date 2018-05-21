@@ -7,12 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-import ansible.module_utils.netapp as netapp_utils
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,7 +20,7 @@ module: na_ontap_svm
 short_description: Manage NetApp Ontap svm
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com), Archana Ganesan (garchana@netapp.com)
 
 description:
@@ -125,6 +119,11 @@ EXAMPLES = """
 
 RETURN = """
 """
+import traceback
+
+import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 

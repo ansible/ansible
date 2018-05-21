@@ -19,7 +19,7 @@ module: na_ontap_user_role
 short_description: useradmin configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.3'
+version_added: '2.6'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
@@ -32,6 +32,7 @@ options:
     - Whether the specified user should exist or not.
     required: true
     choices: ['present', 'absent']
+    default: 'present'
 
   name:
     description:

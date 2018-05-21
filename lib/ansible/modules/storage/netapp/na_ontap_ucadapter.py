@@ -1,9 +1,11 @@
-#!/usr/bin/python -utt
-''' this is ucadapter module
+#!/usr/bin/python
 
- (c) 2018, NetApp, Inc
- # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-'''
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -14,11 +16,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 
-module: na_ontap_adapte
+module: na_ontap_ucadatpter
 short_description: ONTAP UC adapter configuration
 extends_documentation_fragment:
     - netapp.na_ontap
-version_added: '2.4'
+version_added: '2.6'
 author: chhaya gunawat (chhayag@netapp.com)
 
 description:
@@ -69,7 +71,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    changed: True/False
 '''
 
 import traceback

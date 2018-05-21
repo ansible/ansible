@@ -8,9 +8,6 @@ create SNMP module to add/delete/modify SNMP user
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-import ansible.module_utils.netapp as netapp_utils
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -39,7 +36,7 @@ options:
       - "Whether the specified SNMP community should exist or not."
     default: 'present'
 short_description: "Manage NetApp SNMP community"
-version_added: "1.0"
+version_added: "2.6"
 '''
 
 EXAMPLES = """
@@ -63,6 +60,9 @@ EXAMPLES = """
 
 RETURN = """
 """
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
