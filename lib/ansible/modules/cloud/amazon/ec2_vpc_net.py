@@ -234,10 +234,10 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         tags = dict()
 
     tags.update({'Name': name})
-    tags = {k: to_native(v) for k, v in tags.items()}
+    tags = dict((k, to_native(v)) for k, v in tags.items())
     try:
         current_tags = dict((t['Key'], t['Value']) for t in connection.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}])['Tags'])
-        tags_to_update, _ = compare_aws_tags(current_tags, tags, False)
+        tags_to_update, dummy = compare_aws_tags(current_tags, tags, False)
         if tags_to_update:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags_to_update)
