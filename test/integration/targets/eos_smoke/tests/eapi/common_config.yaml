@@ -40,60 +40,61 @@
     provider: "{{ eapi }}"
 
 # hit block and diffs
+- block:
+    - name: setup
+      eos_config:
+        lines:
+          - 10 permit ip host 1.1.1.1 any log
+          - 20 permit ip host 2.2.2.2 any log
+          - 30 permit ip host 3.3.3.3 any log
+        parents: ip access-list test
+        before: no ip access-list test
+        after: exit
+        match: strict
+        provider: "{{ eapi }}"
 
-- name: setup
-  eos_config:
-    lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-    parents: ip access-list test
-    before: no ip access-list test
-    after: exit
-    match: strict
-    provider: "{{ eapi }}"
+    - name: configure sub level command using block replace
+      eos_config:
+        lines:
+          - 10 permit ip host 1.1.1.1 any log
+          - 20 permit ip host 2.2.2.2 any log
+          - 30 permit ip host 3.3.3.3 any log
+          - 40 permit ip host 4.4.4.4 any log
+        parents: ip access-list test
+        replace: block
+        after: exit
+        provider: "{{ eapi }}"
+        match: line
+      register: result
 
-- name: configure sub level command using block resplace
-  eos_config:
-    lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-    parents: ip access-list test
-    replace: block
-    after: exit
-    provider: "{{ eapi }}"
-    match: line
-  register: result
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'ip access-list test' in result.updates"
+          - "'10 permit ip host 1.1.1.1 any log' in result.updates"
+          - "'20 permit ip host 2.2.2.2 any log' in result.updates"
+          - "'30 permit ip host 3.3.3.3 any log' in result.updates"
+          - "'40 permit ip host 4.4.4.4 any log' in result.updates"
 
-- assert:
-    that:
-      - "result.changed == true"
-      - "'ip access-list test' in result.updates"
-      - "'10 permit ip host 1.1.1.1 any log' in result.updates"
-      - "'20 permit ip host 2.2.2.2 any log' in result.updates"
-      - "'30 permit ip host 3.3.3.3 any log' in result.updates"
-      - "'40 permit ip host 4.4.4.4 any log' in result.updates"
+    - name: check sub level command using block replace
+      eos_config:
+        lines:
+          - 10 permit ip host 1.1.1.1 any log
+          - 20 permit ip host 2.2.2.2 any log
+          - 30 permit ip host 3.3.3.3 any log
+          - 40 permit ip host 4.4.4.4 any log
+        parents: ip access-list test
+        replace: block
+        after: exit
+        provider: "{{ eapi }}"
+        match: exact
+      register: result
 
-- name: check sub level command using block replace
-  eos_config:
-    lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-    parents: ip access-list test
-    replace: block
-    after: exit
-    provider: "{{ eapi }}"
-    match: exact
-  register: result
-
-- name: teardown
-  eos_config:
-    lines: no ip access-list test
-    match: none
-    provider: "{{ eapi }}"
+  always:
+    - name: teardown
+      eos_config:
+        lines: no ip access-list test
+        match: none
+        provider: "{{ eapi }}"
 
 - debug: msg="END cli/common_config.yaml on connection={{ ansible_connection }}"

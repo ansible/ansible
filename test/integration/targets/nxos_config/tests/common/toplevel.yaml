@@ -1,18 +1,14 @@
 ---
-- debug: msg='START connection={{ ansible_connection }}/toplevel.yaml'
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg='START common/toplevel.yaml on connection={{ ansible_connection }}'
 
 - name: setup
   nxos_config:
     lines: hostname switch
-    provider: "{{ connection }}"
     match: none
 
 - name: configure top level command
   nxos_config:
     lines: hostname foo
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -23,7 +19,6 @@
 - name: configure top level command idempotent check
   nxos_config:
     lines: hostname foo
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -33,7 +28,6 @@
 - name: teardown
   nxos_config:
     lines: hostname switch
-    provider: "{{ connection }}"
     match: none
 
-- debug: msg='END connection={{ ansible_connection }}/toplevel.yaml'
+- debug: msg='END common/toplevel.yaml on connection={{ ansible_connection }}'

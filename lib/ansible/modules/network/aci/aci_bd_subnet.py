@@ -38,9 +38,8 @@ options:
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
-    - The APIC defaults new Subnets to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
@@ -58,9 +57,8 @@ options:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
-    - The APIC defaults new Subnets to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
@@ -75,23 +73,19 @@ options:
       hosts in other VRFs.
     - The shared option limits communication to hosts in either the same VRF or the shared VRF.
     - The value is a list of options, C(private) and C(public) are mutually exclusive, but both can be used with C(shared).
-    - The APIC defaults new Subnets to C(private).
+    - The APIC defaults to C(private) when unset during creation.
     choices:
       - private
       - public
       - shared
-      - [ private, shared ]
-      - [ public, shared ]
-    default: private
   subnet_control:
     description:
     - Determines the Subnet's Control State.
     - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
     - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
-    - The APIC defaults new Subnets to C(nd_ra).
+    - The APIC defaults to C(nd_ra) when unset during creation.
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
-    default: nd_ra
   subnet_name:
     description:
     - The name of the Subnet.
@@ -110,14 +104,14 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: create a tenant
+- name: Create a tenant
   aci_tenant:
     host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
 
-- name: create a bridge domain
+- name: Create a bridge domain
   aci_bd:
     host: apic
     username: admin
@@ -125,7 +119,7 @@ EXAMPLES = r'''
     tenant: production
     bd: database
 
-- name: create a subnet
+- name: Create a subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -135,7 +129,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: create a subnet with options
+- name: Create a subnet with options
   aci_bd_subnet:
     host: apic
     username: admin
@@ -150,7 +144,7 @@ EXAMPLES = r'''
     route_profile_l3_out: corp
     route_profile: corp_route_profile
 
-- name: update a subnets scope to private and shared
+- name: Update a subnets scope to private and shared
   aci_bd_subnet:
     host: apic
     username: admin
@@ -161,14 +155,14 @@ EXAMPLES = r'''
     mask: 24
     scope: [private, shared]
 
-- name: get all subnets
+- name: Get all subnets
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
-- name: get all subnets of specific gateway in specified tenant
+- name: Get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
     host: apic
     username: admin
@@ -178,7 +172,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: get specific subnet
+- name: Get specific subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -189,7 +183,7 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
 
-- name: delete a subnet
+- name: Delete a subnet
   aci_bd_subnet:
     host: apic
     username: admin
@@ -310,7 +304,7 @@ SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip
 
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule, SEQUENCETYPE
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -330,8 +324,6 @@ def main():
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -363,11 +355,10 @@ def main():
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
-    if isinstance(scope, SEQUENCETYPE):
-        if 'private' in scope and 'public' in scope:
-            module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
-        else:
-            scope = ','.join(sorted(scope))
+    if 'private' in scope and 'public' in scope:
+        module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
+    else:
+        scope = ','.join(sorted(scope))
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:

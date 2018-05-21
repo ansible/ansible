@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import atexit
+import contextlib
 import errno
 import filecmp
 import fcntl
@@ -14,6 +15,7 @@ import pkgutil
 import random
 import re
 import shutil
+import socket
 import stat
 import string
 import subprocess
@@ -718,6 +720,18 @@ def parse_to_dict(pattern, value):
         raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
 
     return match.groupdict()
+
+
+def get_available_port():
+    """
+    :rtype: int
+    """
+    # this relies on the kernel not reusing previously assigned ports immediately
+    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    with contextlib.closing(socket_fd):
+        socket_fd.bind(('', 0))
+        return socket_fd.getsockname()[1]
 
 
 def get_subclasses(class_type):

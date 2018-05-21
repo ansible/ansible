@@ -123,11 +123,29 @@
   
     - assert: *true
 
-    - name: "Conf 6 Idempotence"
+    - name: check configure vxlan_vtep_vni ingress static idempotence check
       nxos_vxlan_vtep_vni: *conf6
       register: result
 
     - assert: *false
+
+    - name: Remove and reconfigure vxlan_vtep
+      nxos_vxlan_vtep: &remove_vtep
+        interface: nve1
+        state: absent
+        provider: "{{ connection }}"
+
+    - name: Configure vxlan_vtep with host reachability bgp
+      nxos_vxlan_vtep:
+        interface: nve1
+        host_reachability: True
+        provider: "{{ connection }}"
+
+    - name: configure vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: &config_vni
+        interface: nve1
+        vni: 8000
+        provider: "{{ connection }}"
 
     - name: configure vxlan_vtep_vni ingress bgp
       nxos_vxlan_vtep_vni: &conf7
@@ -160,6 +178,18 @@
       register: result
 
     - assert: *false
+
+    - name: Remove and reconfigure vxlan_vtep
+      nxos_vxlan_vtep: *remove_vtep
+
+    - name: Configure vxlan_vtep with host reachability static
+      nxos_vxlan_vtep:
+        interface: nve1
+        host_reachability: False
+        provider: "{{ connection }}"
+
+    - name: configure vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: *config_vni
 
     - name: configure vxlan_vtep_vni peer-list
       nxos_vxlan_vtep_vni: &conf9

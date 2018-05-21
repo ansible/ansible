@@ -32,7 +32,7 @@ See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/portin
 
 <a id="2.5"></a>
 
-## 2.5 "Kashmir" - March 2018 (estimated)
+## 2.5 "Kashmir" - 2018-03-22
 
 [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html)
 
@@ -1279,7 +1279,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
 * Fix for the AnsiBallZ wrapper so that it gives a better error message when
   there's not enough disk space to create its tempdir.
-* Fix so ansilbe-galaxy install --force with unversioned roles will once again
+* Fix so ansible-galaxy install --force with unversioned roles will once again
   overwrite old versions.
 * Fix for RabbitMQ 3.6.7 endpoint return code changing.
 * Fix for Foreman organization creation

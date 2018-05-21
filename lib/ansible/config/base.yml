@@ -635,7 +635,7 @@ DEFAULT_HASH_BEHAVIOUR:
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
-  description: Colon separated list of Ansible inventory sources
+  description: Comma separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_HOSTS
       deprecated:
@@ -655,6 +655,14 @@ DEFAULT_HOST_LIST:
       section: defaults
   type: pathlist
   yaml: {key: defaults.inventory}
+DEFAULT_HTTPAPI_PLUGIN_PATH:
+  name: HttpApi Plugins Path
+  default: ~/.ansible/plugins/httpapi:/usr/share/ansible/plugins/httpapi
+  description: Colon separated paths in which Ansible will search for HttpApi Plugins.
+  env: [{name: ANSIBLE_HTTPAPI_PLUGINS}]
+  ini:
+  - {key: httpapi_plugins, section: defaults}
+  type: pathspec
 DEFAULT_INTERNAL_POLL_INTERVAL:
   name: Internal poll interval
   default: 0.001

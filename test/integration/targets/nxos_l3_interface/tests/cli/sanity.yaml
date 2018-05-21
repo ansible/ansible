@@ -17,7 +17,6 @@
       - no ip address 192.168.22.1/24
     parents: no switchport
     before: "interface {{ testint2 }}"
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: Setup - remove address from interface prior to testing(Part2)
@@ -27,7 +26,6 @@
       - no ipv6 address 33:db::2/8
     parents: no switchport
     before: "interface {{ testint3 }}"
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: Setup - Ensure interfaces are layer3
@@ -36,13 +34,11 @@
       - name: "{{ testint2 }}"
       - name: "{{ testint3 }}"
     mode: layer3
-    provider: "{{ cli }}"
 
 - name: Configure ipv4 address to interface
   nxos_l3_interface: &conf
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -61,7 +57,6 @@
   nxos_l3_interface: &rm
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ cli }}"
     state: absent
   register: result
 
@@ -82,7 +77,6 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -102,7 +96,6 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
-    provider: "{{ cli }}"
     state: absent
   register: result
 

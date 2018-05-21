@@ -21,7 +21,12 @@ description:
     read from the device. This module includes an argument that will cause
     the module to wait for a specific condition before returning or timing
     out if the condition is not met.
-version_added: "2.4"
+  - This module is B(not) idempotent, nor will it ever be. It is intended as
+    a stop-gap measure to satisfy automation requirements until such a time as
+    a real module has been developed to configure in the way you need.
+  - If you are using this module, you should probably also be filing an issue
+    to have a B(real) module created for your needs.
+version_added: 2.4
 options:
   commands:
     description:
@@ -30,12 +35,9 @@ options:
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retries as expired.
-      - The I(commands) argument also accepts an alternative form
-        that allows for complex values that specify the command
-        to run and the output format to return. This can be done
-        on a command by command basis. The complex argument supports
-        the keywords C(command) and C(output) where C(command) is the
-        command to run and C(output) is 'text' or 'one-line'.
+      - Only C(tmsh) commands are supported. If you are piping or adding additional
+        logic that is outside of C(tmsh) (such as grep'ing, awk'ing or other shell
+        related things that are not C(tmsh), this behavior is not supported.
     required: True
   wait_for:
     description:
@@ -53,6 +55,9 @@ options:
         then all conditionals in the I(wait_for) must be satisfied. If
         the value is set to C(any) then only one of the values must be
         satisfied.
+    choices:
+      - any
+      - all
     default: all
   retries:
     description:
@@ -78,7 +83,21 @@ options:
         - rest
         - cli
     default: rest
-    version_added: "2.5"
+    version_added: 2.5
+  warn:
+    description:
+      - Whether the module should raise warnings related to command idempotency
+        or not.
+      - Note that the F5 Ansible developers specifically leave this on to make you
+        aware that your usage of this module may be better served by official F5
+        Ansible modules. This module should always be used as a last resort.
+    default: True
+    type: bool
+    version_added: 2.6
+  chdir:
+    description:
+      - Change into this directory before running the command.
+    version_added: 2.6
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -102,6 +121,7 @@ EXAMPLES = r'''
     password: secret
     user: admin
     validate_certs: no
+  register: result
   delegate_to: localhost
 
 - name: run multiple commands on remote nodes
@@ -127,6 +147,7 @@ EXAMPLES = r'''
     password: secret
     user: admin
     validate_certs: no
+  register: result
   delegate_to: localhost
 
 - name: tmsh prefixes will automatically be handled
@@ -139,127 +160,239 @@ EXAMPLES = r'''
     user: admin
     validate_certs: no
   delegate_to: localhost
+
+- name: Delete all LTM nodes in Partition1, assuming no dependencies exist
+  bigip_command:
+    commands:
+      - delete ltm node all
+    chdir: Partition1
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 stdout:
-  description: The set of responses from the commands
+  description: The set of responses from the commands.
   returned: always
   type: list
   sample: ['...', '...']
 stdout_lines:
-  description: The value of stdout split into a list
+  description: The value of stdout split into a list.
   returned: always
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The list of conditionals that have failed
+  description: The list of conditionals that have failed.
   returned: failed
   type: list
   sample: ['...', '...']
+warn:
+  description: Whether or not to raise warnings about modification commands.
+  returned: changed
+  type: bool
+  sample: True
 '''
 
 import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.network.common.parsing import FailedConditionsError
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.six import string_types
 from collections import deque
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import is_cli
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
-    try:
-        from library.module_utils.network.f5.common import run_commands
-        HAS_CLI_TRANSPORT = True
-    except ImportError:
-        HAS_CLI_TRANSPORT = False
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import is_cli
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    try:
-        from ansible.module_utils.network.f5.common import run_commands
-        HAS_CLI_TRANSPORT = True
-    except ImportError:
-        HAS_CLI_TRANSPORT = False
+
+try:
+    from ansible.module_utils.network.f5.common import run_commands
+    HAS_CLI_TRANSPORT = True
+except ImportError:
+    HAS_CLI_TRANSPORT = False
 
 
 class Parameters(AnsibleF5Parameters):
-    returnables = ['stdout', 'stdout_lines', 'warnings']
+    returnables = ['stdout', 'stdout_lines', 'warnings', 'executed_commands']
 
     def to_return(self):
         result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+            return result
+        except Exception:
+            return result
+
+    @property
+    def raw_commands(self):
+        if self._values['commands'] is None:
+            return []
+        if isinstance(self._values['commands'], string_types):
+            result = [self._values['commands']]
+        else:
+            result = self._values['commands']
         return result
 
-    def _listify(self, item):
-        if isinstance(item, string_types):
-            result = [item]
-        else:
-            result = item
+    def convert_commands(self, commands):
+        result = []
+        for command in commands:
+            tmp = dict(
+                command='',
+                pipeline=''
+            )
+
+            command = command.replace("'", "\\'")
+            pipeline = command.split('|', 1)
+            tmp['command'] = pipeline[0]
+            try:
+                tmp['pipeline'] = pipeline[1]
+            except IndexError:
+                pass
+            result.append(tmp)
+        return result
+
+    def convert_commands_cli(self, commands):
+        result = []
+        for command in commands:
+            tmp = dict(
+                command='',
+                pipeline=''
+            )
+
+            pipeline = command.split('|', 1)
+            tmp['command'] = pipeline[0]
+            try:
+                tmp['pipeline'] = pipeline[1]
+            except IndexError:
+                pass
+            result.append(tmp)
+        return result
+
+    def merge_command_dict(self, command):
+        if command['pipeline'] != '':
+            escape_patterns = r'([$"])'
+            command['pipeline'] = re.sub(escape_patterns, r'\\\1', command['pipeline'])
+            command['command'] = '{0} | {1}'.format(command['command'], command['pipeline']).strip()
+
+    def merge_command_dict_cli(self, command):
+        if command['pipeline'] != '':
+            command['command'] = '{0} | {1}'.format(command['command'], command['pipeline']).strip()
+
+    @property
+    def rest_commands(self):
+        # ['list ltm virtual']
+        commands = self.normalized_commands
+        commands = self.convert_commands(commands)
+        if self.chdir:
+            # ['cd /Common; list ltm virtual']
+            for command in commands:
+                self.addon_chdir(command)
+        # ['tmsh -c "cd /Common; list ltm virtual"']
+        for command in commands:
+            self.addon_tmsh(command)
+        for command in commands:
+            self.merge_command_dict(command)
+        result = [x['command'] for x in commands]
         return result
 
     @property
-    def commands(self):
-        commands = self._listify(self._values['commands'])
-        commands = deque(commands)
-        if not is_cli(self.module):
-            commands.appendleft(
-                'tmsh modify cli preference pager disabled'
-            )
-        commands = map(self._ensure_tmsh_prefix, list(commands))
-        return list(commands)
+    def cli_commands(self):
+        # ['list ltm virtual']
+        commands = self.normalized_commands
+        commands = self.convert_commands_cli(commands)
+        if self.chdir:
+            # ['cd /Common; list ltm virtual']
+            for command in commands:
+                self.addon_chdir(command)
+        if not self.is_tmsh:
+            # ['tmsh -c "cd /Common; list ltm virtual"']
+            for command in commands:
+                self.addon_tmsh_cli(command)
+        for command in commands:
+            self.merge_command_dict_cli(command)
+        result = [x['command'] for x in commands]
+        return result
+
+    @property
+    def normalized_commands(self):
+        if self._values['normalized_commands'] is None:
+            return None
+        return deque(self._values['normalized_commands'])
+
+    @property
+    def chdir(self):
+        if self._values['chdir'] is None:
+            return None
+        if self._values['chdir'].startswith('/'):
+            return self._values['chdir']
+        return '/{0}'.format(self._values['chdir'])
 
     @property
     def user_commands(self):
-        commands = self._listify(self._values['commands'])
+        commands = self.raw_commands
         return map(self._ensure_tmsh_prefix, commands)
 
-    def _ensure_tmsh_prefix(self, cmd):
-        cmd = cmd.strip()
-        if cmd[0:5] != 'tmsh ':
-            cmd = 'tmsh ' + cmd.strip()
-        return cmd
+    @property
+    def wait_for(self):
+        return self._values['wait_for'] or list()
+
+    def addon_tmsh(self, command):
+        escape_patterns = r'([$"])'
+        if command['command'].count('"') % 2 != 0:
+            raise Exception('Double quotes are unbalanced')
+        command['command'] = re.sub(escape_patterns, r'\\\\\\\1', command['command'])
+        command['command'] = 'tmsh -c \\\"{0}\\\"'.format(command['command'])
+
+    def addon_tmsh_cli(self, command):
+        if command['command'].count('"') % 2 != 0:
+            raise Exception('Double quotes are unbalanced')
+        command['command'] = 'tmsh -c "{0}"'.format(command['command'])
+
+    def addon_chdir(self, command):
+        command['command'] = "cd {0}; {1}".format(self.chdir, command['command'])
 
 
-class ModuleManager(object):
+class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.want = Parameters(params=self.module.params)
         self.want.update({'module': self.module})
         self.changes = Parameters(module=self.module)
+        self.valid_configs = [
+            'list', 'show', 'modify cli preference pager disabled'
+        ]
+        self.changed_command_prefixes = ('modify', 'create', 'delete')
+        self.warnings = list()
 
     def _to_lines(self, stdout):
         lines = list()
@@ -268,26 +401,6 @@ class ModuleManager(object):
                 item = str(item).split('\n')
             lines.append(item)
         return lines
-
-    def _is_valid_mode(self, cmd):
-        valid_configs = [
-            'list', 'show',
-            'modify cli preference pager disabled'
-        ]
-        if not is_cli(self.module):
-            valid_configs = list(map(self.want._ensure_tmsh_prefix, valid_configs))
-        if any(cmd.startswith(x) for x in valid_configs):
-            return True
-        return False
-
-    def is_tmsh(self):
-        try:
-            self._run_commands(self.module, 'tmsh help')
-        except F5ModuleError as ex:
-            if 'Syntax Error:' in str(ex):
-                return True
-            raise
-        return False
 
     def exec_module(self):
         result = dict()
@@ -299,80 +412,43 @@ class ModuleManager(object):
 
         result.update(**self.changes.to_return())
         result.update(dict(changed=changed))
+        self._announce_warnings(result)
         return result
 
-    def _run_commands(self, module, commands):
-        return run_commands(module, commands)
+    def _announce_warnings(self, result):
+        warnings = result.pop('warnings', [])
+        for warning in warnings:
+            self.module.warn(warning)
 
-    def execute(self):
-        warnings = list()
-        changed = ('tmsh modify', 'tmsh create', 'tmsh delete')
-        commands = self.parse_commands(warnings)
-        wait_for = self.want.wait_for or list()
-        retries = self.want.retries
-        conditionals = [Conditional(c) for c in wait_for]
-
-        if self.module.check_mode:
-            return
-
-        while retries > 0:
-            if is_cli(self.module) and HAS_CLI_TRANSPORT:
-                if self.is_tmsh():
-                    for command in commands:
-                        command['command'] = command['command'][4:].strip()
-                responses = self._run_commands(self.module, commands)
-            else:
-                responses = self.execute_on_device(commands)
-
-            for item in list(conditionals):
-                if item(responses):
-                    if self.want.match == 'any':
-                        conditionals = list()
-                        break
-                    conditionals.remove(item)
-
-            if not conditionals:
-                break
-
-            time.sleep(self.want.interval)
-            retries -= 1
-        else:
-            failed_conditions = [item.raw for item in conditionals]
-            errmsg = 'One or more conditional statements have not been satisfied'
-            raise FailedConditionsError(errmsg, failed_conditions)
-
-        changes = {
-            'stdout': responses,
-            'stdout_lines': self._to_lines(responses),
-            'warnings': warnings
-        }
-        self.changes = Parameters(params=changes, module=self.module)
-        if any(x for x in self.want.user_commands if x.startswith(changed)):
-            return True
-        return False
-
-    def parse_commands(self, warnings):
-        results = []
-        commands = list(deque(set(self.want.commands)))
-        spec = dict(
-            command=dict(key=True),
-            output=dict(
-                default='text',
-                choices=['text', 'one-line']
-            ),
-        )
-
-        transform = ComplexList(spec, self.module)
-        commands = transform(commands)
-
+    def notify_non_idempotent_commands(self, commands):
         for index, item in enumerate(commands):
-            if not self._is_valid_mode(item['command']) and is_cli(self.module):
-                warnings.append(
+            if any(item.startswith(x) for x in self.valid_configs):
+                return
+            else:
+                self.warnings.append(
                     'Using "write" commands is not idempotent. You should use '
                     'a module that is specifically made for that. If such a '
                     'module does not exist, then please file a bug. The command '
-                    'in question is "%s..."' % item['command'][0:40]
+                    'in question is "{0}..."'.format(item[0:40])
                 )
+
+    @staticmethod
+    def normalize_commands(raw_commands):
+        if not raw_commands:
+            return None
+        result = []
+        for command in raw_commands:
+            command = command.strip()
+            if command[0:5] == 'tmsh ':
+                command = command[4:].strip()
+            result.append(command)
+        return result
+
+    def parse_commands(self):
+        results = []
+        commands = self._transform_to_complex_commands(self.commands)
+
+        for index, item in enumerate(commands):
             # This needs to be removed so that the ComplexList used in to_commands
             # will work correctly.
             output = item.pop('output', None)
@@ -385,18 +461,167 @@ class ModuleManager(object):
             results.append(item)
         return results
 
+    def execute(self):
+        if self.want.normalized_commands:
+            result = self.want.normalized_commands
+        else:
+            result = self.normalize_commands(self.want.raw_commands)
+            self.want.update({'normalized_commands': result})
+        if not result:
+            return False
+        self.notify_non_idempotent_commands(self.want.normalized_commands)
+
+        commands = self.parse_commands()
+        retries = self.want.retries
+        conditionals = [Conditional(c) for c in self.want.wait_for]
+
+        if self.module.check_mode:
+            return
+
+        while retries > 0:
+            responses = self._execute(commands)
+            self._check_known_errors(responses)
+            for item in list(conditionals):
+                if item(responses):
+                    if self.want.match == 'any':
+                        conditionals = list()
+                        break
+                    conditionals.remove(item)
+            if not conditionals:
+                break
+
+            time.sleep(self.want.interval)
+            retries -= 1
+        else:
+            failed_conditions = [item.raw for item in conditionals]
+            errmsg = 'One or more conditional statements have not been satisfied.'
+            raise FailedConditionsError(errmsg, failed_conditions)
+        stdout_lines = self._to_lines(responses)
+        changes = {
+            'stdout': responses,
+            'stdout_lines': stdout_lines,
+            'executed_commands': self.commands
+        }
+        if self.want.warn:
+            changes['warnings'] = self.warnings
+        self.changes = Parameters(params=changes, module=self.module)
+        if any(x for x in self.want.normalized_commands if x.startswith(self.changed_command_prefixes)):
+            return True
+        return False
+
+    def _check_known_errors(self, responses):
+        # A regex to match the error IDs used in the F5 v2 logging framework.
+        pattern = r'^[0-9A-Fa-f]+:?\d+?:'
+
+        for resp in responses:
+            if 'usage: tmsh' in resp:
+                raise F5ModuleError(
+                    "tmsh command printed its 'help' message instead of running your command. "
+                    "This usually indicates unbalanced quotes."
+                )
+            if re.match(pattern, resp):
+                raise F5ModuleError(str(resp))
+
+    def _transform_to_complex_commands(self, commands):
+        spec = dict(
+            command=dict(key=True),
+            output=dict(
+                default='text',
+                choices=['text', 'one-line']
+            ),
+        )
+        transform = ComplexList(spec, self.module)
+        result = transform(commands)
+        return result
+
+
+class V1Manager(BaseManager):
+    """Supports CLI (SSH) communication with the remote device
+
+    """
+    def _execute(self, commands):
+        if self.want.is_tmsh:
+            command = dict(
+                command="modify cli preference pager disabled"
+            )
+        else:
+            command = dict(
+                command="tmsh modify cli preference pager disabled"
+            )
+        self.execute_on_device(command)
+        return self.execute_on_device(commands)
+
+    @property
+    def commands(self):
+        return self.want.cli_commands
+
+    def is_tmsh(self):
+        try:
+            self.execute_on_device('tmsh -v')
+        except Exception as ex:
+            if 'Syntax Error:' in str(ex):
+                return True
+            raise
+        return False
+
+    def execute(self):
+        self.want.update({'is_tmsh': self.is_tmsh()})
+        return super(V1Manager, self).execute()
+
+    def execute_on_device(self, commands):
+        result = run_commands(self.module, commands)
+        return result
+
+
+class V2Manager(BaseManager):
+    """Supports REST communication with the remote device
+
+    """
+    def _execute(self, commands):
+        command = dict(
+            command="tmsh modify cli preference pager disabled"
+        )
+        self.execute_on_device(command)
+        return self.execute_on_device(commands)
+
+    @property
+    def commands(self):
+        return self.want.rest_commands
+
     def execute_on_device(self, commands):
         responses = []
-        escape_patterns = r'([$' + "'])"
         for item in to_list(commands):
-            command = re.sub(escape_patterns, r'\\\1', item['command'])
-            output = self.client.api.tm.util.bash.exec_cmd(
-                'run',
-                utilCmdArgs='-c "{0}"'.format(command)
-            )
-            if hasattr(output, 'commandResult'):
-                responses.append(str(output.commandResult))
+            try:
+                command = '-c "{0}"'.format(item['command'])
+                output = self.client.api.tm.util.bash.exec_cmd(
+                    'run',
+                    utilCmdArgs=command
+                )
+                if hasattr(output, 'commandResult'):
+                    responses.append(str(output.commandResult).strip())
+            except Exception as ex:
+                pass
         return responses
+
+
+class ModuleManager(object):
+    def __init__(self, *args, **kwargs):
+        self.kwargs = kwargs
+        self.module = kwargs.get('module', None)
+
+    def exec_module(self):
+        if is_cli(self.module) and HAS_CLI_TRANSPORT:
+            manager = self.get_manager('v1')
+        else:
+            manager = self.get_manager('v2')
+        result = manager.exec_module()
+        return result
+
+    def get_manager(self, type):
+        if type == 'v1':
+            return V1Manager(**self.kwargs)
+        elif type == 'v2':
+            return V2Manager(**self.kwargs)
 
 
 class ArgumentSpec(object):
@@ -427,7 +652,12 @@ class ArgumentSpec(object):
                 type='str',
                 default='rest',
                 choices=['cli', 'rest']
-            )
+            ),
+            warn=dict(
+                type='bool',
+                default='yes'
+            ),
+            chdir=dict()
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -442,16 +672,18 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
     if is_cli(module) and not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required to use the rest api")
+        module.fail_json(msg="The python f5-sdk module is required to use the REST api")
 
     try:
         client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        cleanup_tokens(client)
+        if not is_cli(module):
+            cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as e:
-        cleanup_tokens(client)
+        if not is_cli(module):
+            cleanup_tokens(client)
         module.fail_json(msg=str(e))
 
 

@@ -127,10 +127,8 @@ Flatten a list (same thing the `flatten` lookup does)::
 
 Flatten only the first level of a list (akin to the `items` lookup)::
 
-    {{ [3, [4, [2]] ]|flatten(level=1) }}
+    {{ [3, [4, [2]] ]|flatten(levels=1) }}
 
-
-To get the minimum value from list of numbers::
 
 .. _set_theory_filters:
 
@@ -384,9 +382,7 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-.. code-block:: yaml
-
-  {{ output | parse_cli('path/to/spec') }}
+    {{ output | parse_cli('path/to/spec') }}
 
 
 The ``parse_cli`` filter will load the spec file and pass the command output
@@ -472,7 +468,7 @@ The network filters also support parsing the output of a CLI command using the
 TextFSM library.  To parse the CLI output with TextFSM use the following
 filter::
 
-  {{ output | parse_cli_textfsm('path/to/fsm') }}
+  {{ output.stdout[0] | parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 
@@ -936,6 +932,13 @@ To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
+
+As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
+
+    {{ encoded | b64decode(encoding='utf-16-le') }}
+    {{ decoded | b64encode(encoding='utf-16-le') }}
+
+.. versionadded:: 2.6
 
 To create a UUID from a string (new in version 1.9)::
 

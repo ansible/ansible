@@ -26,8 +26,6 @@ description:
       The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
-extends_documentation_fragment:
-    - url
 '''
 
 EXAMPLES = '''
@@ -424,7 +422,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url
 
 
 socket.setdefaulttimeout(5)
@@ -538,10 +536,8 @@ class Ec2Metadata(object):
 
 
 def main():
-    argument_spec = url_argument_spec()
-
     module = AnsibleModule(
-        argument_spec=argument_spec,
+        argument_spec={},
         supports_check_mode=True,
     )
 

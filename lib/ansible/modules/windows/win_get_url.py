@@ -15,9 +15,10 @@ DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
-short_description: Fetches a file from a given URL
+short_description: Downloads file from HTTP, HTTPS, or FTP to node
 description:
-- Fetches a file from a URL and saves it locally.
+- Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
+  server I(must) have direct access to the remote resource.
 - For non-Windows targets, use the M(get_url) module instead.
 author:
 - Paul Durivage (@angstwad)
@@ -101,8 +102,6 @@ options:
     - Timeout in seconds for URL request.
     default: 10
     version_added : '2.4'
-notes:
- - For non-Windows targets, use the M(get_url) module instead.
 '''
 
 EXAMPLES = r'''
@@ -124,6 +123,13 @@ EXAMPLES = r'''
     proxy_url: http://10.0.0.1:8080
     proxy_username: username
     proxy_password: password
+
+- name: Download file from FTP with authentication
+  win_get_url:
+    url: ftp://server/file.txt
+    dest: '%TEMP%\ftp-file.txt'
+    url_username: ftp-user
+    url_password: ftp-password
 '''
 
 RETURN = r'''

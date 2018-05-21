@@ -28,14 +28,18 @@
 # verify things were not installed to start with
 
 - name: ensure a package is not installed (precondition setup)
-  pip: name={{ pip_test_package }} state=absent
+  pip:
+    name: "{{ pip_test_package }}"
+    state: absent
 
 # verify that a package that is uninstalled being set to absent
 # results in an unchanged state and that the test package is not
 # installed
 
 - name: ensure a package is not installed
-  pip: name={{ pip_test_package }} state=absent
+  pip:
+    name: "{{ pip_test_package }}"
+    state: absent
   register: uninstall_result
 
 - name: removing an unremoved package should return unchanged
@@ -56,7 +60,9 @@
 # and check that installation was ok
 
 - name: ensure a package is installed
-  pip: name={{ pip_test_package }} state=present
+  pip:
+    name: "{{ pip_test_package }}"
+    state: present
   register: install_result
 
 - name: verify we recorded a change
@@ -70,7 +76,9 @@
 # now remove it to test uninstallation of a package we are sure is installed
 
 - name: now uninstall so we can see that a change occurred
-  pip: name={{ pip_test_package }} state=absent
+  pip:
+    name: "{{ pip_test_package }}"
+    state: absent
   register: absent2  
 
 - name: assert a change occurred on uninstallation
@@ -81,24 +89,34 @@
 # put the test package back
 
 - name: now put it back in case someone wanted it (like us!)
-  pip: name={{ pip_test_package }} state=present
+  pip:
+    name: "{{ pip_test_package }}"
+    state: present
 
 
 # Test virtualenv installations
 
 - name: "make sure the test env doesn't exist"
-  file: state=absent name={{ output_dir }}/pipenv
+  file:
+    state: absent
+    name: "{{ output_dir }}/pipenv"
 
 - name: install a working version of setuptools in the virtualenv
-  pip: name=setuptools virtualenv={{ output_dir }}/pipenv state=present version=33.1.1
+  pip:
+    name: setuptools
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
+    version: 33.1.1
 
 - name: create a requirement file with an vcs url
-  copy: dest={{ output_dir }}/pipreq.txt
-    content="-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+  copy:
+    dest: "{{ output_dir }}/pipreq.txt"
+    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
 
 - name: install the requirement file in a virtualenv
-  pip: requirements={{ output_dir}}/pipreq.txt
-    virtualenv={{ output_dir }}/pipenv
+  pip:
+    requirements: "{{ output_dir}}/pipreq.txt"
+    virtualenv: "{{ output_dir }}/pipenv"
   register: req_installed
 
 - name: check that a change occurred
@@ -107,8 +125,9 @@
       - "req_installed.changed"
 
 - name: "repeat installation to check status didn't change"
-  pip: requirements={{ output_dir}}/pipreq.txt
-    virtualenv={{ output_dir }}/pipenv
+  pip:
+    requirements: "{{ output_dir}}/pipreq.txt"
+    virtualenv: "{{ output_dir }}/pipenv"
   register: req_installed
 
 - name: "check that a change didn't occurr this time (bug ansible#1705)"
@@ -132,10 +151,16 @@
 
 # Special case for pip
 - name: check for pip package
-  pip: name=pip virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: pip
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
 
 - name: check for pip package in check_mode
-  pip: name=pip virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: pip
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
   check_mode: True
   register: pip_check_mode
 
@@ -146,10 +171,16 @@
 
 # Special case for setuptools
 - name: check for setuptools package
-  pip: name=setuptools virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: setuptools
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
 
 - name: check for setuptools package in check_mode
-  pip: name=setuptools virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: setuptools
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
   check_mode: True
   register: setuptools_check_mode
 
@@ -161,10 +192,16 @@
 
 # Normal case
 - name: check for q package
-  pip: name=q virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: q
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
 
 - name: check for q package in check_mode
-  pip: name=q virtualenv={{ output_dir }}/pipenv state=present
+  pip:
+    name: q
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
   check_mode: True
   register: q_check_mode
 
@@ -208,3 +245,14 @@
   assert:
     that:
       - "venv_chdir.changed"
+
+# ansible#38785
+- name: allow empty list of packages
+  pip:
+    name: []
+  register: pip_install_empty
+
+- name: ensure empty install is successful
+  assert:
+    that:
+      - not pip_install_empty.changed

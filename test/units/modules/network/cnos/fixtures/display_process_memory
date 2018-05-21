@@ -1,0 +1,38 @@
+PID   MemAlloc StkSize    RSSMem  LibMem  StackBase/Ptr       Process
+----- -------- ---------- ------- ------- ------------------ ----------
+    1     6204    8388608   12312    5380 bff01bc0/bff01590   nsm
+    4     2608    8388608    5264    5312 bfa92080/bfa91ab0   ospfd
+    7    14152    8388608    5924    5284 bfaa7250/bfaa6c20   hostpd
+   10     2092    8388608    4652    5312 bfafcbf0/bfafc620   mribd
+   11     2024    8388608    3108    5284 bfb7c650/bfb7c080   pimd
+   14     2016    8388608    4896    5312 bff0ff10/bff0f940   lacpd
+   17    48608    8388608   36200    5312 bfc10e30/bfc10830   mstpd
+   24     2520    8388608    5340    5312 bf90ad00/bf90a730   onmd
+   26   228628    8388608   77312    5376 bfb34e10/bfb34830   hsl
+   28     2020    8388608    4784    5312 bff3c410/bff3be10   oam
+   39    21396    8388608    8184    5312 bf9b1a50/bf9b1460   vrrpd
+   40     2480    8388608    4064    5336 bfe5f020/bfe5ea20   ndd
+   42     2860    8388608    5672    5364 bfe83aa0/bfe83470   ribd
+   44     3528    8388608    7140    5328 bf90b720/bf90b110   bgpd
+   45     1772    8388608    4404    5312 bf9fc250/bf9fbc80   hostmibd
+   46    39564    8388608   25632    5428 bfe30db0/bfe30780   l2mribd
+   62     1876    8388608    3920    5312 bf81c210/bf81bc40   sysmgr
+   63    94380    8388608   13804    5292 bfcb67d0/bfcb61d0   nwvd
+   64     1920    8388608    5664    5676 bfc28470/bfc27ea0   ovsdbd
+   65    96548    8388608   55168    5292 bfdbcf80/bfdbc980   vlagd
+   66     1756    8388608    3808    5284 bfa15ab0/bfa154e0   slpd
+   71     2116    8388608    5880   10076 bfe8abd0/bfe8a600   npad
+   72     2220    8388608    5452    7936 bf9e6da0/bf9e67d0   hscd
+   73     1920    8388608    2760    5284 bfbc6cd0/bfbc6700   dhcpsnpd
+   74    58620    8388608   16168    9956 bfe1af70/bfe1a970   telemetryd
+   75     1756    8388608    3456    5284 bfb21da0/bfb217d0   securityd
+   76     2152    8388608    4216    5284 bfc36900/bfc36330   l2fd
+   77     1920    8388608    3876    5284 bf91e480/bf91dec0   sflowd
+   78     1888    8388608    3772    5284 bffd10c0/bffd0af0   qosd
+   69    70520    8388608    5584    5260 bfca0980/bfca0490   platform_mgr
+   70    26828    8388608    2116    2040 bfce09c0/bfce0440   service_mgr
+
+              total        used        free      shared  buff/cache   available
+Mem:        4081464      442136     3144092      153168      495236     3452732
+Swap:             0           0           0
+

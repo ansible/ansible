@@ -44,35 +44,20 @@ from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 try:
     import passlib.hash
     HAS_PASSLIB = True
-except:
+except ImportError:
     HAS_PASSLIB = False
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
-from ansible.vars.hostvars import HostVars, HostVarsVars
-
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
-
-
-class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
-    Simple encoder class to deal with JSON encoding of internal
-    types like HostVars
-    '''
-    def default(self, o):
-        if isinstance(o, (HostVars, HostVarsVars)):
-            return dict(o)
-        elif isinstance(o, (datetime.date, datetime.datetime)):
-            return o.isoformat()
-        else:
-            return super(AnsibleJSONEncoder, self).default(o)
 
 
 def to_yaml(a, *args, **kw):
@@ -103,15 +88,15 @@ def to_nice_json(a, indent=4, *args, **kw):
         else:
             try:
                 major = int(simplejson.__version__.split('.')[0])
-            except:
+            except Exception:
                 pass
             else:
                 if major >= 2:
-                    return simplejson.dumps(a, indent=indent, sort_keys=True, *args, **kw)
+                    return simplejson.dumps(a, default=AnsibleJSONEncoder.default, indent=indent, sort_keys=True, *args, **kw)
 
     try:
         return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
-    except:
+    except Exception:
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
 
@@ -136,7 +121,7 @@ def strftime(string_format, second=None):
     if second is not None:
         try:
             second = int(second)
-        except:
+        except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
 
@@ -252,7 +237,7 @@ def randomize_list(mylist, seed=None):
             r.shuffle(mylist)
         else:
             shuffle(mylist)
-    except:
+    except Exception:
         pass
     return mylist
 
@@ -261,7 +246,7 @@ def get_hash(data, hashtype='sha1'):
 
     try:  # see if hash is supported
         h = hashlib.new(hashtype)
-    except:
+    except Exception:
         return None
 
     h.update(to_bytes(data, errors='surrogate_or_strict'))
@@ -459,12 +444,12 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
-def b64encode(string):
-    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_or_strict')))
+def b64encode(string, encoding='utf-8'):
+    return to_text(base64.b64encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
 
 
-def b64decode(string):
-    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
+def b64decode(string, encoding='utf-8'):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
 
 def flatten(mylist, levels=None):

@@ -7,13 +7,13 @@ Ansible 2.6
 Release Schedule
 ----------------
 
-Proposed
+Expected
 ========
 
-- 2018-05-17 Core Freeze (Core Engine and Non-Community Modules)
+- 2018-05-17 Core Freeze (Engine and Core Modules/Plugins)
 - 2018-05-17 Alpha Release 1
 - 2018-05-24 Alpha Release 2
-- 2018-05-25 Community Freeze (Community Modules)
+- 2018-05-25 Community Freeze (Non-Core Modules/Plugins)
 - 2018-05-31 Branch stable-2.6
 - 2018-05-31 Release Candidate 1
 - 2018-06-07 Release Candidate 2
@@ -51,20 +51,13 @@ Connection work
 * New connection plugin: eAPI `proposal#102 <https://github.com/ansible/proposals/issues/102>`_
 * New connection plugin: NX-API
 * Support for configurable options for network_cli & netconf
-* Stretch & tech preview: New connection plugin for gRPC
-* Stretch: netconf plugin for IOS
-* Stretch: netconf plugin for NXOS
 
 Modules
 =======
 
-* New ``cli_config`` - platform agnostic module for sending text based config over network_cli
-* New ``cli_command`` - platform agnostic command module
-* New ``netconf_get`` - implements the standard netconf get rpc
-* New ``netconf_config`` - implements the standard netconf edit/configure rpc 
-* New ``netconf_rpc`` - calls any playbook defined rpc on the remote device and returns the results
-* New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
-* New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
+* New ``net_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
+* New ``net_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
+* New ``netconf_get`` - Netconf module to fetch configuration and state data `proposal#104 <https://github.com/ansible/proposals/issues/104>`_
 
 Other Features
 ================

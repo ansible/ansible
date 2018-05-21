@@ -14,7 +14,6 @@
       enforce_rtr_alert: true
       restart: false
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -35,7 +34,6 @@
       enforce_rtr_alert: false
       restart: "{{restart|default(omit)}}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -53,7 +51,6 @@
   - name: Configure igmp state as values
     nxos_igmp: &sdefault
       state: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

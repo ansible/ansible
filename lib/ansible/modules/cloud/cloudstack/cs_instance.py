@@ -411,6 +411,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
             'isrecursive': True,
+            'fetch_list': True,
         }
 
         if template:
@@ -419,9 +420,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
             rootdisksize = self.module.params.get('root_disk_size')
             args['templatefilter'] = self.module.params.get('template_filter')
+            args['fetch_list'] = True
             templates = self.query_api('listTemplates', **args)
             if templates:
-                for t in templates['template']:
+                for t in templates:
                     if template in [t['displaytext'], t['name'], t['id']]:
                         if rootdisksize and t['size'] > rootdisksize * 1024 ** 3:
                             continue
@@ -440,9 +442,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 return self._get_by_key(key, self.iso)
 
             args['isofilter'] = self.module.params.get('template_filter')
+            args['fetch_list'] = True
             isos = self.query_api('listIsos', **args)
             if isos:
-                for i in isos['iso']:
+                for i in isos:
                     if iso in [i['displaytext'], i['name'], i['id']]:
                         self.iso = i
                         return self._get_by_key(key, self.iso)
@@ -457,11 +460,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
                 'projectid': self.get_project(key='id'),
+                'fetch_list': True,
             }
             # Do not pass zoneid, as the instance name must be unique across zones.
             instances = self.query_api('listVirtualMachines', **args)
             if instances:
-                for v in instances['virtualmachine']:
+                for v in instances:
                     if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break
@@ -566,6 +570,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
         networks = self.query_api('listNetworks', **args)
         if not networks:
@@ -574,7 +579,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         network_ids = []
         network_displaytexts = []
         for network_name in network_names:
-            for n in networks['network']:
+            for n in networks:
                 if network_name in [n['displaytext'], n['name'], n['id']]:
                     network_ids.append(n['id'])
                     network_displaytexts.append(n['name'])

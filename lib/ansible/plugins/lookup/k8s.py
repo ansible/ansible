@@ -29,11 +29,15 @@ DOCUMENTATION = """
 
     description:
       - Uses the OpenShift Python client to fetch a specific object by name, all matching objects within a
-        namespace, or all matching objects for all namespaces.
+        namespace, or all matching objects for all namespaces, as well as information about the cluster.
       - Provides access the full range of K8s APIs.
       - Enables authentication via config file, certificates, password or token.
 
     options:
+      cluster_info:
+        description:
+        - Use to specify the type of cluster information you are attempting to retrieve. Will take priority
+          over all the other options.
       api_version:
         description:
         - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the
@@ -115,7 +119,7 @@ DOCUMENTATION = """
 
     requirements:
       - "python >= 2.7"
-      - "openshift == 0.4.1"
+      - "openshift >= 0.6"
       - "PyYAML >= 3.11"
 
     notes:
@@ -189,7 +193,95 @@ RETURN = """
 """
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.k8s.lookup import KubernetesLookup
+
+import os
+
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.k8s.common import K8sAnsibleMixin
+
+try:
+    from openshift.dynamic import DynamicClient
+    from openshift.dynamic.exceptions import NotFoundError
+    HAS_K8S_MODULE_HELPER = True
+except ImportError as exc:
+    HAS_K8S_MODULE_HELPER = False
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
+
+class KubernetesLookup(K8sAnsibleMixin):
+
+    def __init__(self):
+
+        if not HAS_K8S_MODULE_HELPER:
+            raise Exception(
+                "Requires the OpenShift Python client. Try `pip install openshift`"
+            )
+
+        if not HAS_YAML:
+            raise Exception(
+                "Requires PyYAML. Try `pip install PyYAML`"
+            )
+
+        self.kind = None
+        self.name = None
+        self.namespace = None
+        self.api_version = None
+        self.label_selector = None
+        self.field_selector = None
+        self.include_uninitialized = None
+        self.resource_definition = None
+        self.helper = None
+        self.connection = {}
+
+    def run(self, terms, variables=None, **kwargs):
+        self.params = kwargs
+        self.client = self.get_api_client()
+
+        cluster_info = kwargs.get('cluster_info')
+        if cluster_info == 'version':
+            return [self.client.version]
+        if cluster_info == 'api_groups':
+            return [self.client.resources.api_groups]
+
+        self.kind = kwargs.get('kind')
+        self.name = kwargs.get('resource_name')
+        self.namespace = kwargs.get('namespace')
+        self.api_version = kwargs.get('api_version', 'v1')
+        self.label_selector = kwargs.get('label_selector')
+        self.field_selector = kwargs.get('field_selector')
+        self.include_uninitialized = kwargs.get('include_uninitialized', False)
+
+        resource_definition = kwargs.get('resource_definition')
+        src = kwargs.get('src')
+        if src:
+            resource_definition = self.load_resource_definitions(src)[0]
+        if resource_definition:
+            self.kind = resource_definition.get('kind', self.kind)
+            self.api_version = resource_definition.get('apiVersion', self.api_version)
+            self.name = resource_definition.get('metadata', {}).get('name', self.name)
+            self.namespace = resource_definition.get('metadata', {}).get('namespace', self.namespace)
+
+        if not self.kind:
+            raise Exception(
+                "Error: no Kind specified. Use the 'kind' parameter, or provide an object YAML configuration "
+                "using the 'resource_definition' parameter."
+            )
+
+        resource = self.client.resources.get(kind=self.kind, api_version=self.api_version)
+        try:
+            k8s_obj = resource.get(name=self.name, namespace=self.namespace, label_selector=self.label_selector, field_selector=self.field_selector)
+        except NotFoundError:
+            return []
+
+        if self.name:
+            return [k8s_obj.to_dict()]
+
+        return k8s_obj.to_dict().get('items')
 
 
 class LookupModule(LookupBase):

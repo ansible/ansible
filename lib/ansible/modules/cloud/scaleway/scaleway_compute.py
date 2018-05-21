@@ -584,8 +584,7 @@ def core(module):
     }
 
     compute_api = ScalewayAPI(module=module,
-                              headers={'X-Auth-Token': api_token,
-                                       'Content-type': 'application/json'},
+                              headers={'X-Auth-Token': api_token},
                               base_url=SCALEWAY_LOCATION[region]["api_endpoint"])
 
     changed, summary = state_strategy[wished_server["state"]](compute_api=compute_api, wished_server=wished_server)

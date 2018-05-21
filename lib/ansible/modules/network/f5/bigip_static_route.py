@@ -66,6 +66,11 @@ options:
       - The route domain id of the system. When creating a new static route, if
         this value is not specified, a default value of C(0) will be used.
       - This value cannot be changed once it is set.
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.6
   state:
     description:
       - When C(present), ensures that the static route exists.
@@ -129,6 +134,11 @@ pool:
   returned: changed
   type: string
   sample: true
+partition:
+  description: The partition that the static route was created on.
+  returned: changed
+  type: string
+  sample: Common
 description:
   description: Whether the banner is enabled or not.
   returned: changed
@@ -144,6 +154,7 @@ reject:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 try:
@@ -574,6 +585,10 @@ class ArgumentSpec(object):
             state=dict(
                 default='present',
                 choices=['absent', 'present']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             ),
             route_domain=dict(type='int')
         )

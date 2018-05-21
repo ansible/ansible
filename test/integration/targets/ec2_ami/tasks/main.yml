@@ -158,6 +158,7 @@
         that:
           - "result.changed"
           - "'image_id' not in result"
+          - "result.snapshots_deleted"
 
     # ============================================================
 

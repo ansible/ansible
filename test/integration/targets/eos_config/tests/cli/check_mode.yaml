@@ -6,6 +6,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.256
      parents: interface Loopback911
+  become: yes
   check_mode: 1
   environment:
     ANSIBLE_EOS_USE_SESSIONS: 1
@@ -23,6 +24,7 @@
     before:
       - "no ip access-list test"
     src: basic/cmds.j2
+  become: yes
   check_mode: yes
   register: config
 
@@ -30,7 +32,7 @@
   eos_command:
     commands:
       - show configuration sessions | json
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -42,6 +44,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.256
      parents: interface Loopback911
+  become: yes
   check_mode: 1
   environment:
     ANSIBLE_EOS_USE_SESSIONS: 0
@@ -57,6 +60,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.255
      parents: interface Loopback911
+  become: yes
   check_mode: yes
   register: result
   environment:
