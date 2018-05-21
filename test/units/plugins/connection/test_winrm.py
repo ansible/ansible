@@ -29,7 +29,7 @@ class TestConnectionWinRM(object):
                 '_kerb_managed': False,
                 '_kinit_cmd': 'kinit',
                 '_winrm_connection_timeout': None,
-                '_winrm_host': None,
+                '_winrm_host': 'inventory_hostname',
                 '_winrm_kwargs': {'username': None, 'password': ''},
                 '_winrm_pass': '',
                 '_winrm_path': '/wsman',

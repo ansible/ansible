@@ -187,11 +187,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
 
-        self._winrm_host = self._play_context.remote_addr
-
-        # TODO: remove this once ansible_ssh_user is not a global override in play context
-        # Source the user from the connection options, so that ansible_ssh_user
-        # does not override ansible_user or ansible_winrm_user.
+        self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
 
