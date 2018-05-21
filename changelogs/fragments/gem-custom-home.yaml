@@ -1,0 +1,2 @@
+new_features:
+  - gem - add ability to specify a custom directory for installing gems (https://github.com/ansible/ansible/pull/38195)
