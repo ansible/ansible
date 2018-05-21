@@ -14,14 +14,12 @@
       parents:
         - "interface {{ intname }}"
       match: none
-      provider: "{{ connection }}"
 
   - name: Ensure vrf ntc exists on interface
     nxos_vrf_interface: &configure
       vrf: ntc
       interface: "{{ intname }}"
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -41,7 +39,6 @@
       vrf: ntc
       interface: "{{ intname }}"
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -56,7 +53,6 @@
   - name: put interface in default mode
     nxos_config:
       lines: "default interface {{ intname }}"
-      provider: "{{ connection }}"
       match: none
     ignore_errors: yes
 

@@ -20,13 +20,11 @@
     nxos_feature: 
       feature: udld
       state: enabled
-      provider: "{{ connection }}"
 
   - name: "put the interface into default state"
     nxos_config: 
       commands:
         - "default interface {{intname}}"
-      provider: "{{ connection }}"
       match: none
 
   - name: ensure interface is configured to be in aggressive mode
@@ -34,7 +32,6 @@
       interface: "{{ intname }}"
       mode: aggressive
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -56,7 +53,6 @@
         interface: "{{ intname }}"
         mode: enabled
         state: present
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -84,7 +80,6 @@
         interface: "{{ intname }}"
         mode: disabled
         state: present
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -102,7 +97,6 @@
       interface: "{{ intname }}"
       mode: enabled
       state: absent
-      provider: "{{ connection }}"
 
   when: udld_run
 
@@ -111,7 +105,6 @@
     nxos_feature: 
       feature: udld
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_udld_interface sanity test"

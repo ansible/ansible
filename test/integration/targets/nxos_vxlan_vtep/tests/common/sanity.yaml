@@ -12,7 +12,6 @@
     nxos_config: 
       commands:
         - feature nv overlay
-      provider: "{{ connection }}"
       match: none
 
   - block:
@@ -24,7 +23,6 @@
         source_interface: Loopback0
         source_interface_hold_down_time: 30
         shutdown: false
-        provider: "{{ connection }}"
       register: result
   
     - assert: &true
@@ -47,7 +45,6 @@
         source_interface_hold_down_time: default
         source_interface: default
         shutdown: true
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -68,7 +65,6 @@
         host_reachability: true
         source_interface: Loopback0
         shutdown: false
-        provider: "{{ connection }}"
       register: result
   
     - assert:
@@ -90,7 +86,6 @@
         host_reachability: false
         source_interface: default
         shutdown: true
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -112,7 +107,6 @@
       source_interface_hold_down_time: 30
       shutdown: true
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -138,7 +132,6 @@
     nxos_feature: 
       feature: nve
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
