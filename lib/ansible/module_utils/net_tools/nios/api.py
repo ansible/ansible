@@ -25,8 +25,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import os
 
+import os
 from functools import partial
 
 from ansible.module_utils.six import iteritems
@@ -39,8 +39,15 @@ try:
 except ImportError:
     HAS_INFOBLOX_CLIENT = False
 
+# defining nios constants
+NIOS_DNS_VIEW = 'view'
+NIOS_NETWORK_VIEW = 'networkview'
+NIOS_HOST_RECORD = 'record:host'
+NIOS_IPV4_NETWORK = 'network'
+NIOS_IPV6_NETWORK = 'ipv6network'
+NIOS_ZONE = 'zone_auth'
 
-nios_provider_spec = {
+NIOS_PROVIDER_SPEC = {
     'host': dict(),
     'username': dict(),
     'password': dict(no_log=True),
@@ -68,12 +75,12 @@ def get_connector(*args, **kwargs):
                         'to be installed.  It can be installed using the '
                         'command `pip install infoblox-client`')
 
-    if not set(kwargs.keys()).issubset(nios_provider_spec.keys()):
+    if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
         raise Exception('invalid or unsupported keyword argument for connector')
 
-    for key, value in iteritems(nios_provider_spec):
+    for key, value in iteritems(NIOS_PROVIDER_SPEC):
         if key not in kwargs:
-            # apply default values from nios_provider_spec since we cannot just
+            # apply default values from NIOS_PROVIDER_SPEC since we cannot just
             # assume the provider values are coming from AnsibleModule
             if 'default' in value:
                 kwargs[key] = value['default']
@@ -127,7 +134,7 @@ def flatten_extattrs(value):
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
 
-    provider_spec = {'provider': dict(type='dict', options=nios_provider_spec)}
+    provider_spec = {'provider': dict(type='dict', options=NIOS_PROVIDER_SPEC)}
 
     def __init__(self, provider):
         self.connector = get_connector(**provider)
@@ -204,10 +211,16 @@ class WapiModule(WapiBase):
         result = {'changed': False}
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
 
-        if ib_obj:
-            current_object = ib_obj[0]
+        # to delete old_name key from ib_spec dictionary as return_fields
+        # dictionary from nios doesn't expect 'old_name' key
+        if 'old_name' in ib_spec:
+            del ib_spec['old_name']
+
+        ib_obj_ref = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
+
+        if ib_obj_ref:
+            current_object = ib_obj_ref[0]
             if 'extattrs' in current_object:
                 current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
             ref = current_object.pop('_ref')
@@ -224,24 +237,25 @@ class WapiModule(WapiBase):
                     proposed_object[key] = self.module.params[key]
 
         modified = not self.compare_objects(current_object, proposed_object)
-
         if 'extattrs' in proposed_object:
             proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
-
         if state == 'present':
             if ref is None:
                 if not self.module.check_mode:
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
-                if 'network_view' in proposed_object:
-                    self.check_if_network_view_exists(proposed_object['network_view'])
-                    proposed_object.pop('network_view')
-                elif 'view' in proposed_object:
-                    self.check_if_dns_view_exists(proposed_object['view'])
-                if not self.module.check_mode:
+                if (ib_obj_type == NIOS_HOST_RECORD):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
+                elif (ib_obj_type == NIOS_NETWORK_VIEW):
+                    proposed_object = self.on_update(proposed_object, ib_spec)
+                    res = self.update_object(ref, proposed_object)
+                elif (ib_obj_type == NIOS_DNS_VIEW):
+                    proposed_object = self.on_update(proposed_object, ib_spec)
+                    res = self.update_object(ref, proposed_object)
+                elif 'network_view' in proposed_object:
+                    proposed_object.pop('network_view')
                 result['changed'] = True
 
         elif state == 'absent':
@@ -251,36 +265,6 @@ class WapiModule(WapiBase):
                 result['changed'] = True
 
         return result
-
-    def check_if_dns_view_exists(self, name, fail_on_missing=True):
-        ''' Checks if the specified DNS view is already configured
-
-        :args name: the name of the  DNS view to check
-        :args fail_on_missing: fail the module if the DNS view does not exist
-
-        :returns: True if the network_view exists and False if the  DNS view
-            does not exist and fail_on_missing is False
-        '''
-        res = self.get_object('view', {'name': name}) is not None
-        if not res and fail_on_missing:
-            self.module.fail_json(msg='DNS view %s does not exist, please create '
-                                      'it using nios_dns_view first' % name)
-        return res
-
-    def check_if_network_view_exists(self, name, fail_on_missing=True):
-        ''' Checks if the specified network_view is already configured
-
-        :args name: the name of the network view to check
-        :args fail_on_missing: fail the module if the network_view does not exist
-
-        :returns: True if the network_view exists and False if the network_view
-            does not exist and fail_on_missing is False
-        '''
-        res = self.get_object('networkview', {'name': name}) is not None
-        if not res and fail_on_missing:
-            self.module.fail_json(msg='Network view %s does not exist, please create '
-                                      'it using nios_network_view first' % name)
-        return res
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
@@ -322,6 +306,24 @@ class WapiModule(WapiBase):
                     return False
 
         return True
+
+    def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
+        ''' this function gets and returns the current object based on obj_type passed'''
+
+        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+
+        if ib_obj is None:
+            # to check for the existing old name object to get the reference of exiting object
+            for k, v in iteritems(obj_filter):
+                if (k is not 'view'):
+                    if (ib_obj_type == NIOS_HOST_RECORD):
+                        test_obj_filter = dict([('name', obj_filter[k]), ('view', obj_filter['view'])])
+                    else:
+                        test_obj_filter = dict([('name', obj_filter[k])])
+                    ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+                    if ib_obj:
+                        break
+        return ib_obj
 
     def on_update(self, proposed_object, ib_spec):
         ''' Event called before the update is sent to the API endpoing
