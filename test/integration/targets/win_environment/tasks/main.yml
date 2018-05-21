@@ -9,6 +9,23 @@
   - process
   - user
 
+- name: fail to create environment value with null value
+  win_environment:
+    name: "{{test_environment_name}}"
+    state: present
+    level: machine
+  register: create_fail_null
+  failed_when: create_fail_null.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
+
+- name: fail to create environment value with empty value
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: ''
+    state: present
+    level: machine
+  register: create_fail_empty_string
+  failed_when: create_fail_null.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
+
 - name: create test environment value for machine check
   win_environment:
     name: "{{test_environment_name}}"
