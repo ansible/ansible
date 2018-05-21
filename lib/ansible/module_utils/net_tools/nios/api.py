@@ -28,7 +28,6 @@
 
 import os
 from functools import partial
-
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 
@@ -236,6 +235,7 @@ class WapiModule(WapiBase):
                 else:
                     proposed_object[key] = self.module.params[key]
 
+        res = None
         modified = not self.compare_objects(current_object, proposed_object)
         if 'extattrs' in proposed_object:
             proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
@@ -256,6 +256,9 @@ class WapiModule(WapiBase):
                     res = self.update_object(ref, proposed_object)
                 elif 'network_view' in proposed_object:
                     proposed_object.pop('network_view')
+                if not self.module.check_mode and res is None:
+                    proposed_object = self.on_update(proposed_object, ib_spec)
+                    res = self.update_object(ref, proposed_object)
                 result['changed'] = True
 
         elif state == 'absent':
