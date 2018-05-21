@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - ensure ctrl+c interrupt works in all cases (https://github.com/ansible/ansible/issues/35372)
