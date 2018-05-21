@@ -137,6 +137,9 @@ import ansible.module_utils.netapp as netapp_utils
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 
+def local_cmp(a, b):
+    return (a > b) - (a < b)
+
 class NetAppOntapLicense(object):
     '''ONTAP license class'''
 
@@ -295,7 +298,7 @@ class NetAppOntapLicense(object):
                     self.remove_expired_licenses()
                 if create_license or remove_license:
                     new_license_status = self.get_licensing_status()
-                    if cmp(license_status, new_license_status) == 0:
+                    if local_cmp(license_status, new_license_status) == 0:
                         changed = False
             else:  # execute delete
                 license_deleted = False
