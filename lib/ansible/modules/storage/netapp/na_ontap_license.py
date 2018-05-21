@@ -140,6 +140,7 @@ HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 def local_cmp(a, b):
     return (a > b) - (a < b)
 
+
 class NetAppOntapLicense(object):
     '''ONTAP license class'''
 
