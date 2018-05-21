@@ -100,7 +100,6 @@ import base64
 import inspect
 import os
 import re
-import shlex
 import traceback
 import json
 import tempfile
@@ -189,7 +188,11 @@ class Connection(ConnectionBase):
         super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
 
         self._winrm_host = self._play_context.remote_addr
-        self._winrm_user = self._play_context.remote_user
+
+        # TODO: remove this once ansible_ssh_user is not a global override in play context
+        # Source the user from the connection options, so that ansible_ssh_user
+        # does not override ansible_user or ansible_winrm_user.
+        self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
 
         self._become_method = self._play_context.become_method
@@ -235,7 +238,7 @@ class Connection(ConnectionBase):
         kinit_mode = self.get_option('kerberos_mode')
         if kinit_mode is None:
             # HACK: ideally, remove multi-transport stuff
-            self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
+            self._kerb_managed = "kerberos" in self._winrm_transport and (self._winrm_pass is not None and self._winrm_pass != "")
         elif kinit_mode == "managed":
             self._kerb_managed = True
         elif kinit_mode == "manual":
