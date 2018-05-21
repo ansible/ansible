@@ -28,22 +28,10 @@ description:
 author: "Vinay Venkataraghavan @vinayvenkat"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
-    - xmltodict can be obtained from PyPi U(https://pypi.python.org/pypi/xmltodict)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtained from PyPi U(https://pypi.org/project/xmltodict/)
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        default: "admin"
     api_key:
         description:
             - API key that can be used instead of I(username)/I(password) credentials.
@@ -74,6 +62,7 @@ options:
         description:
             - The operation to perform Supported values are I(add)/I(list)/I(delete).
         required: true
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

@@ -19,7 +19,7 @@ It can usually be installed either via your system package manager, or using
 
     pip install netaddr
 
-.. _netaddr: https://pypi.python.org/pypi/netaddr
+.. _netaddr: https://pypi.org/project/netaddr/
 
 .. contents:: Topics
    :local:

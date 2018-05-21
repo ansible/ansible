@@ -32,9 +32,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
 
@@ -80,12 +78,22 @@ def has_sf_sdk():
     return HAS_SF_SDK
 
 
-def ontap_sf_host_argument_spec():
+def na_ontap_host_argument_spec():
 
     return dict(
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
+        https=dict(required=False, type='bool', default=False)
+    )
+
+
+def ontap_sf_host_argument_spec():
+
+    return dict(
+        hostname=dict(required=True, type='str'),
+        username=dict(required=True, type='str', aliases=['user']),
+        password=dict(required=True, type='str', aliases=['pass'], no_log=True)
     )
 
 
@@ -102,6 +110,34 @@ def create_sf_connection(module, port=None):
             raise Exception("Unable to create SF connection")
     else:
         module.fail_json(msg="the python SolidFire SDK module is required")
+
+
+def setup_na_ontap_zapi(module, vserver=None):
+    hostname = module.params['hostname']
+    username = module.params['username']
+    password = module.params['password']
+    https = module.params['https']
+
+    if HAS_NETAPP_LIB:
+        # set up zapi
+        server = zapi.NaServer(hostname)
+        server.set_username(username)
+        server.set_password(password)
+        if vserver:
+            server.set_vserver(vserver)
+        # Todo : Replace hard-coded values with configurable parameters.
+        server.set_api_version(major=1, minor=21)
+        # default is HTTP
+        if https is True:
+            server.set_port(443)
+            server.set_transport_type('HTTPS')
+        else:
+            server.set_port(80)
+            server.set_transport_type('HTTP')
+        server.set_server_type('FILER')
+        return server
+    else:
+        module.fail_json(msg="the python NetApp-Lib module is required")
 
 
 def setup_ontap_zapi(module, vserver=None):
@@ -176,3 +212,36 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         raise Exception(resp_code, data)
     else:
         return resp_code, data
+
+
+def ems_log_event(source, server, name="Ansible", id="12345", version="1.1",
+                  category="Information", event="setup", autosupport="false"):
+    ems_log = zapi.NaElement('ems-autosupport-log')
+    # Host name invoking the API.
+    ems_log.add_new_child("computer-name", name)
+    # ID of event. A user defined event-id, range [0..2^32-2].
+    ems_log.add_new_child("event-id", id)
+    # Name of the application invoking the API.
+    ems_log.add_new_child("event-source", source)
+    # Version of application invoking the API.
+    ems_log.add_new_child("app-version", version)
+    # Application defined category of the event.
+    ems_log.add_new_child("category", category)
+    # Description of event to log. An application defined message to log.
+    ems_log.add_new_child("event-description", event)
+    ems_log.add_new_child("log-level", "6")
+    ems_log.add_new_child("auto-support", autosupport)
+    server.invoke_successfully(ems_log, True)
+
+
+def get_cserver(server):
+    vserver_info = zapi.NaElement('vserver-get-iter')
+    query_details = zapi.NaElement.create_node_with_children('vserver-info', **{'vserver-type': 'admin'})
+    query = zapi.NaElement('query')
+    query.add_child_elem(query_details)
+    vserver_info.add_child_elem(query)
+    result = server.invoke_successfully(vserver_info,
+                                        enable_tunneling=False)
+    attribute_list = result.get_child_by_name('attributes-list')
+    vserver_list = attribute_list.get_child_by_name('vserver-info')
+    return vserver_list.get_child_content('vserver-name')

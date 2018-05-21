@@ -52,11 +52,11 @@ EXAMPLES = r'''
 
 - name: Print results from the query
   debug:
-    var: connection.results
+    var: connection.query_results
 '''
 
 RETURN = '''
-results:
+query_results:
   description: Result from the query
   returned: success
   type: list
@@ -96,7 +96,7 @@ def main():
     influx = AnsibleInfluxDBRead(module)
     query = module.params.get('query')
     results = influx.read_by_query(query)
-    module.exit_json(changed=True, results=results)
+    module.exit_json(changed=True, query_results=results)
 
 
 if __name__ == '__main__':

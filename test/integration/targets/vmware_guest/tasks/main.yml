@@ -2,12 +2,6 @@
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-  when: "{{ ansible_user_id == 'root' }}"
-
 - name: store the vcenter container ip
   set_fact:
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
@@ -34,3 +28,4 @@
 #- include: template_d1_c1_f0.yml
 - include: vapp_d1_c1_f0.yml
 - include: disk_size_d1_c1_f0.yml
+- include: network_with_device.yml

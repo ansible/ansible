@@ -10,21 +10,18 @@
         output: text
       - command: delete network-integration.cfg
         output: text
-    provider: "{{ nxapi }}"
   ignore_errors: yes
 
 - name: "Setup - Turn on feature scp-server"
   nxos_feature: 
     feature: scp-server
     state: enabled
-    provider: "{{ nxapi }}"
 
 - block:
   - name: "Copy network-integration.cfg to bootflash"
     nxos_file_copy: &copy_file_same_name
       local_file: "./network-integration.cfg"
       file_system: "bootflash:"
-      provider: "{{ nxapi }}"
       username: "{{ ansible_ssh_user }}"
       password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
@@ -53,7 +50,6 @@
       local_file: "./inventory.networking.template"
       remote_file: "network-integration.cfg"
       file_system: "bootflash:"
-      provider: "{{ nxapi }}"
       username: "{{ ansible_ssh_user }}"
       password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
@@ -87,6 +83,5 @@
     nxos_feature:
       feature: scp-server
       state: disabled
-      provider: "{{ nxapi }}"
 
   - debug: msg="END TRANSPORT:NXAPI nxos_file_copy sanity test"  

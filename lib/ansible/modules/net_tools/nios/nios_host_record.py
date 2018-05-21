@@ -133,6 +133,7 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_HOST_RECORD
 
 
 def ipaddr(module, key, filtered_keys=None):
@@ -178,6 +179,7 @@ def main():
 
     ib_spec = dict(
         name=dict(required=True, ib_req=True),
+        old_name=dict(required=False, ib_req=True),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
@@ -201,7 +203,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('record:host', ib_spec)
+    result = wapi.run(NIOS_HOST_RECORD, ib_spec)
 
     module.exit_json(**result)
 

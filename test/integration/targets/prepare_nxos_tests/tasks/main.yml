@@ -3,6 +3,7 @@
   nxos_config:
     lines:
       - feature nxapi
+      - feature privilege
   connection: network_cli
   ignore_errors: yes
 
@@ -78,6 +79,10 @@
 # 7.0(3)I7 or later. NG(Next Gen)
 - set_fact: platform="N35NG"
   when: ( chassis_type is search("C35")) and image_version is search("7.0\(3\)I7")
+
+# Set platform to N3L(N3K Legacy) for C3048 platform.
+- set_fact: platform="N3L"
+  when: ( chassis_type is search("C3048"))
 
 # Create matrix of simple keys based on platform
 # and image version for use within test playbooks.

@@ -21,13 +21,7 @@
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
 - name: run test cases (connection=network_cli)
-  include: "{{ test_case_to_run }} ansible_connection=network_cli connection={}"
+  include: "{{ test_case_to_run }} ansible_connection=network_cli"
   with_items: "{{ test_items }}"
-  loop_control:
-    loop_var: test_case_to_run
-
-- name: run test case (connection=local)
-  include: "{{ test_case_to_run }} ansible_connection=local connection={{ cli }}"
-  with_first_found: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run

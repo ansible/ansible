@@ -64,6 +64,10 @@ class IncludeRole(TaskInclude):
         self._role_name = None
         self._role_path = None
 
+    def get_name(self):
+        ''' return the name of the task '''
+        return "%s : %s" % (self.action, self._role_name)
+
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
@@ -112,12 +116,18 @@ class IncludeRole(TaskInclude):
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
-            raise AnsibleParserError("'name' is a required field for %s." % ir.action)
+            raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
+
+        if ir.private is not None:
+            display.deprecated(
+                msg='Supplying "private" for "include_role" is a no op, and is deprecated',
+                version='2.8'
+            )
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
-            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))))
+            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))), obj=data)
 
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):

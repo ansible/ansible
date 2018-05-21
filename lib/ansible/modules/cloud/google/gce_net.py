@@ -28,12 +28,13 @@ description:
 options:
   allowed:
     description:
-      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
+      - the protocol:ports to allow (I(tcp:80) or I(tcp:80,443) or I(tcp:80-800;udp:1-25))
         this parameter is mandatory when creating or updating a firewall rule
   ipv4_range:
     description:
       - the IPv4 address range in CIDR notation for the network
-        this parameter is not mandatory when you specified existing network in name parameter, but when you create new network, this parameter is mandatory
+        this parameter is not mandatory when you specified existing network in name parameter,
+        but when you create new network, this parameter is mandatory
     aliases: ['cidr']
   fwname:
     description:
@@ -69,7 +70,7 @@ options:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
-        This option is deprecated. Use 'credentials_file'.
+        This option is deprecated. Use C(credentials_file).
   credentials_file:
     version_added: "2.1.0"
     description:
@@ -82,9 +83,9 @@ options:
     version_added: "2.2"
     description:
       - network mode for Google Cloud
-        "legacy" indicates a network with an IP address range
-        "auto" automatically generates subnetworks in different regions
-        "custom" uses networks to group subnets of user specified IP address ranges
+        C(legacy) indicates a network with an IP address range;
+        C(auto) automatically generates subnetworks in different regions;
+        C(custom) uses networks to group subnets of user specified IP address ranges
         https://cloud.google.com/compute/docs/networking#network_types
     default: "legacy"
     choices: ["legacy", "auto", "custom"]

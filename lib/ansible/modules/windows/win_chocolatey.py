@@ -150,7 +150,7 @@ EXAMPLES = r'''
 
 - name: Install notepadplusplus version 6.6
   win_chocolatey:
-    name: notepadplusplus.install
+    name: notepadplusplus
     version: '6.6'
 
 - name: Install git from specified repository

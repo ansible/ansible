@@ -598,7 +598,7 @@ class ArgumentSpec(object):
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
             community=dict(),
-            version=dict(),
+            version=dict(choices=['v1', 'v2c']),
             agent_type=dict(
                 choices=['UCD', 'WIN2000', 'GENERIC']
             ),

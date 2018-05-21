@@ -47,6 +47,7 @@ class ActionModule(_ActionModule):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
+                del self._task.args['provider']
         elif self._play_context.connection == 'local':
             provider = load_provider(vyos_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
@@ -57,10 +58,13 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            pc.timeout = int(provider['timeout']) if provider['timeout'] else None
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
+            if connection._play_context.timeout is None:
+                connection._play_context.timeout = connection.get_option('persistent_command_timeout')
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)

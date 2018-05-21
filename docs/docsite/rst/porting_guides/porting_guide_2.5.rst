@@ -75,6 +75,7 @@ Included file:
 
 The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
 
+
 Deprecated
 ==========
 
@@ -167,6 +168,19 @@ and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
 * ``osx_say`` module was renamed into :ref:`say <say_module>`.
+* Several modules which could deal with symlinks had the default value of their ``follow`` option
+  changed as part of a feature to `standardize the behavior of follow
+  <https://github.com/ansible/proposals/issues/69>`_:
+
+  * The :ref:`file module <file_module>` changed from ``follow=False`` to ``follow=True`` because
+    its purpose is to modify the attributes of a file and most systems do not allow attributes to be
+    applied to symlinks, only to real files.
+  * The :ref:`replace module <replace_module>` had its ``follow`` parameter removed because it
+    inherently modifies the content of an existing file so it makes no sense to operate on the link
+    itself.
+  * The :ref:`blockinfile module <blockinfile_module>` had its ``follow`` parameter removed because
+    it inherently modifies the content of an existing file so it makes no sense to operate on the
+    link itself.
 
 Plugins
 =======
@@ -180,7 +194,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 
 * The ability to use a cache plugin to avoid costly API/DB queries is disabled by default.
   If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
-  Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
+  Moving to the internal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
 
 * A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
   The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
@@ -205,6 +219,12 @@ Filter
 
 The lookup plugin API now throws an error if a non-iterable value is returned from a plugin. Previously, numbers or
 other non-iterable types returned by a plugin were accepted without error or warning. This change was made because plugins should always return a list. Please note that plugins that return strings and other non-list iterable values will not throw an error, but may cause unpredictable behavior. If you have a custom lookup plugin that does not return a list, you should modify it to wrap the return values in a list.
+
+Lookup
+-------
+
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+
 
 Porting custom scripts
 ======================
