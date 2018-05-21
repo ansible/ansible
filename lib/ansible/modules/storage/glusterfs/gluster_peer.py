@@ -84,23 +84,22 @@ class Peer(object):
     def __init__(self, module):
         self.module = module
         self.state = self.module.params['state']
+        self.nodes = self.module.params['nodes']
+        self.action = ''
+        self.force = ''
 
     def gluster_peer_ops(self):
-        nodes = self.module.params['nodes']
-        if not nodes:
+        if not self.nodes:
             self.module.fail_json(msg="nodes list cannot be empty")
-        force = 'force' if self.module.params.get('force') else ''
+        self.force = 'force' if self.module.params.get('force') else ''
         if self.state == 'present':
-            nodes = self.get_to_be_probed_hosts(nodes)
-            action = 'probe'
+            self.nodes = self.get_to_be_probed_hosts(self.nodes)
+            self.action = 'probe'
             # In case of peer probe, we do not need `force'
-            force = ''
+            self.force = ''
         else:
-            action = 'detach'
-        cmd = []
-        for node in nodes:
-            cmd.append(' peer ' + action + ' ' + node + ' ' + force)
-        return cmd
+            self.action = 'detach'
+        self.call_peer_commands()
 
     def get_to_be_probed_hosts(self, hosts):
         rc, output, err = self.module.run_command("gluster pool list")
@@ -115,22 +114,29 @@ class Peer(object):
                               peers_in_cluster]
         return hosts_to_be_probed
 
-    def call_peer_commands(self, cmds):
-        errors = []
-        for cmd in cmds:
-            rc, out, err = self._run_command('gluster', cmd)
-            if rc:
-                errors.append(err)
-        return errors
+    def call_peer_commands(self):
+        result = {}
+        result['msg'] = ''
 
-    def get_output(self, errors):
-        if not errors:
-            self.module.exit_json(rc=0, changed=True)
-        else:
-            self.module.fail_json(rc=1, msg='\n'.join(errors))
+        for node in self.nodes:
+            rc, out, err = self._run_command('gluster', ' peer %s %s %s'
+                                             % (self.action, node, self.force))
+            if rc:
+                result['rc'] = rc
+                result['msg'] = err
+                # Fail early, do not wait for the loop to finish
+                self.module.fail_json(**result)
+            else:
+                result['rc'] = rc
+                if 'already in peer' in out or \
+                   'localhost not needed' in out:
+                    result['changed'] = False
+                else:
+                    result['changed'] = True
+        self.module.exit_json(**result)
 
     def _run_command(self, op, opts):
-        cmd = self.module.get_bin_path(op, True) + opts + ' --mode=script'
+        cmd = self.module.get_bin_path(op, True) + opts
         return self.module.run_command(cmd)
 
 
@@ -150,9 +156,7 @@ def main():
     if is_invalid_gluster_version(module, required_version):
         module.fail_json(msg="GlusterFS version > %s is required" %
                          required_version)
-    cmds = pops.gluster_peer_ops()
-    errors = pops.call_peer_commands(cmds)
-    pops.get_output(errors)
+    pops.gluster_peer_ops()
 
 
 def is_invalid_gluster_version(module, required_version):
