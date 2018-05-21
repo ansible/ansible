@@ -68,7 +68,7 @@ class AzureRMStorageAccountKeysFacts(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group=dict(type='str', aliases=['resource_group_name'], required=True),
+            resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True)
         )
         self.results = dict(
