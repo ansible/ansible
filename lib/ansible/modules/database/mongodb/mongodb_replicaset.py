@@ -76,11 +76,16 @@ options:
         required: false
         default: None
     chainingAllowed:
-        description: When settings.chainingAllowed is true, the replica set allows secondary members to replicate from other secondary members. When settings.chainingAllowed is false, secondaries can replicate only from the primary.
+        description: When settings.chainingAllowed is true, the replica set allows secondary members to
+        replicate from other secondary members. When settings.chainingAllowed is false, secondaries can
+        replicate only from the primary.
         default: true
         required: false
     heartbeatTimeoutSecs:
-        description: Number of seconds that the replica set members wait for a successful heartbeat from each other. If a member does not respond in time, other members mark the delinquent member as inaccessible. The setting only applies when using protocolVersion 0. When using protocolVersion 1 the relevant setting is settings.electionTimeoutMillis.
+        description: Number of seconds that the replica set members wait for a successful heartbeat
+        from each other. If a member does not respond in time, other members mark the delinquent member
+        as inaccessible. The setting only applies when using protocolVersion 0. When using protocolVersion 1
+        the relevant setting is settings.electionTimeoutMillis.
         default: 10
         required: false
     electionTimeoutMillis:
@@ -205,12 +210,13 @@ def replicaset_find(client):
     Returns:
         dict: when user exists, False otherwise.
     """
-    for rs in client["local"].system.replset.find({ }):
+    for rs in client["local"].system.replset.find({}):
                 return rs["_id"]
     return False
 
 
-def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
+def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
+                   chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
 
     try:
         from collections import OrderedDict
@@ -218,7 +224,8 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
         try:
             from ordereddict import OrderedDict
         except ImportError as excep:
-            module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict: %s' % to_native(excep), exception=traceback.format_exc())
+            module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict: %s'
+                             % to_native(excep), exception=traceback.format_exc())
 
     members_dict_list = []
     index = 0
@@ -290,7 +297,7 @@ def main():
             validate=dict(required=False, default=True, type='bool'),
             ssl=dict(default=False, type='bool'),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
-            protocolVersion=dict(required=False, default=1, type='int', choices=[ 0, 1 ]),
+            protocolVersion=dict(required=False, default=1, type='int', choices=[0, 1]),
             chainingAllowed=dict(required=False, default=True, type='bool'),
             heartbeatTimeoutSecs=dict(required=False, default=10, type='int'),
             electionTimeoutMillis=dict(required=False, default=10000, type='int')

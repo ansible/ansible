@@ -188,7 +188,7 @@ def shard_find(client, shard):
         s = shard.split('/')[0]
     else:
         s = shard
-    for shard in client["config"].shards.find({ "_id": s }):
+    for shard in client["config"].shards.find({"_id": s}):
                 return shard
     return False
 
@@ -200,12 +200,14 @@ def shard_add(client, shard):
         raise excep
     return sh
 
+
 def shard_remove(client, shard):
     try:
         sh = client["admin"].command('removeShard', shard)
     except Exception as excep:
         raise excep
     return sh
+
 
 def load_mongocnf():
     config = configparser.RawConfigParser()
@@ -225,6 +227,7 @@ def load_mongocnf():
 # =========================================
 # Module execution.
 #
+
 
 def main():
     module = AnsibleModule(
