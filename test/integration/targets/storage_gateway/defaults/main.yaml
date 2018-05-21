@@ -1,0 +1,39 @@
+---
+# defaults file for ec2_instance
+ec2_instance_name: '{{resource_prefix}}-node'
+ec2_instance_owner: 'integration-run-{{resource_prefix}}'
+ec2_file_ami_image:
+  # amazon/aws-storage-gateway-file-2018-03-21
+  ap-northeast-1: ami-798cdc1f
+  ap-northeast-2: ami-d10ca0bf
+  ap-south-1: ami-e238638d
+  ap-southeast-1: ami-48114d34
+  ap-southeast-2: ami-47d41925
+  ca-central-1: ami-edd95f89
+  eu-central-1: ami-9aa9f971
+  eu-west-1: ami-10f1a569
+  eu-west-2: ami-4c34d22b
+  eu-west-3: ami-38388e45
+  sa-east-1: ami-0f481c63
+  us-east-1: ami-6e14c313
+  us-east-2: ami-7845741d
+  us-west-1: ami-ba9483da
+  us-west-2: ami-be21bdc6
+ec2_vol_vtl_ami_image:
+  # amazon/aws-storage-gateway-2.0.9.2
+  ap-northeast-1: ami-0a8bcd6c
+  ap-northeast-2: ami-6667ca08
+  ap-south-1: ami-c04718af
+  ap-southeast-1: ami-37175c4b
+  ap-southeast-2: ami-95d91ff7
+  ca-central-1: ami-7e880f1a
+  eu-central-1: ami-71ec811e
+  eu-west-1: ami-dc82c7a5
+  eu-west-2: ami-4d64802a
+  eu-west-3: ami-2b66d056
+  sa-east-1: ami-ec165d80
+  us-east-1: ami-571ff42a
+  us-east-2: ami-a7facdc2
+  us-west-1: ami-68e7ec08
+  us-west-2: ami-989119e0
+  us-gov-west-1: ami-9ce277fd
