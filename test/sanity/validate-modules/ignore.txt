@@ -643,7 +643,6 @@ lib/ansible/modules/database/postgresql/postgresql_schema.py E322
 lib/ansible/modules/database/postgresql/postgresql_schema.py E324
 lib/ansible/modules/database/postgresql/postgresql_user.py E322
 lib/ansible/modules/database/postgresql/postgresql_user.py E324
-lib/ansible/modules/database/postgresql/postgresql_user.py E325
 lib/ansible/modules/database/postgresql/postgresql_user.py E326
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py E322
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py E325
