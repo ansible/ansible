@@ -34,7 +34,7 @@ options:
     - The minimum size to extend the logical volume up to. The size must be in
       megabytes (mM) or gigabytes (gG); Float values must begin with a digit.
       If the actual lv size is greater than the minimum size it does nothing.
-      version_added: "2.6"
+    version_added: "2.6"
   size:
     description:
     - The size of the logical volume, according to lvcreate(8) --size, by
@@ -87,7 +87,7 @@ options:
     description:
     - Resize the underlying filesystem together with the logical volume.
     type: bool
-    default: 'yes'
+    default: 'false'
     version_added: "2.5"
 notes:
   - You must specify lv (when managing the state of logical volumes) or thinpool (when managing a thin provisioned volume).
