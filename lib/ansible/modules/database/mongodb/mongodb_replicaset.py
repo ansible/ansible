@@ -239,8 +239,8 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     for member in members:
         if ':' not in member: # No port supplied. Assume 27017
             member += ":27017"
-        members_dict_list.append(OrderedDict([ ("_id", index),
-                                               ("host", str(member)) ]))
+        members_dict_list.append(OrderedDict([("_id", index),
+                                               ("host", str(member))]))
         if index == arbiter_at_index:
             members_dict_list[index]['arbiterOnly'] = True
         index += 1
@@ -253,16 +253,18 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     ])
     client["admin"].command('replSetInitiate', conf)
 
+
 def replicaset_remove(module, client, replica_set):
     raise NotImplementedError
-    #exists = replicaset_find(client, replica_set)
-    #if exists:
+    # exists = replicaset_find(client, replica_set)
+    # if exists:
     #    if module.check_mode:
     #        module.exit_json(changed=True, replica_set=replica_set)
     #    db = client[db_name]
     #    db.remove_user(replica_set)
-    #else:
+    # else:
     #    module.exit_json(changed=False, user=user)
+
 
 def load_mongocnf():
     config = configparser.RawConfigParser()
@@ -279,13 +281,15 @@ def load_mongocnf():
 
     return creds
 
+
 # =========================================
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_database=dict(default="admin"),
@@ -360,7 +364,7 @@ def main():
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         try:
-            client['admin'].command('listDatabases', 1.0) # if this throws an error we need to authenticate
+            client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
         except Exception as excep:
             if "not authorized on" in str(excep):
                 if login_user is not None and login_password is not None:
@@ -383,7 +387,8 @@ def main():
             else:
                 module.exit_json(changed=False, replica_set=replica_set)
         if not replicaset_find(client):
-            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
+                           chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
             replicaset_created = True
         else:
             rs = replicaset_find(client)

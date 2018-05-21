@@ -230,8 +230,8 @@ def load_mongocnf():
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    module=AnsibleModule(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_database=dict(default="admin"),
@@ -241,9 +241,9 @@ def main():
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             shard=dict(default=None),
             state=dict(required=False, default="present", choices=["present", "absent"])
-        ),
-    supports_check_mode=True
-)
+            ),
+            supports_check_mode=True
+        )
 
     if not pymongo_found:
         module.fail_json(msg='the python pymongo module is required')
@@ -282,7 +282,7 @@ def main():
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         try:
-            client['admin'].command('listDatabases', 1.0) # if this throws an error we need to authenticate
+            client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
         except Exception as excep:
             if "not authorized on" in str(excep):
                 if login_user is not None and login_password is not None:
