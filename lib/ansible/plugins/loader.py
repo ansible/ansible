@@ -463,11 +463,14 @@ class PluginLoader:
         if path_only and class_only:
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
-        all_matches = []
         found_in_cache = True
-
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+        all_matches = [
+            os.path.join(dirpath, name)
+            for dirpath in self._get_paths()
+            if os.path.isdir(dirpath)
+            for name in os.listdir(dirpath)
+            if name[0] != '.' and name.endswith('.py')
+        ]
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):
