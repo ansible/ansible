@@ -337,6 +337,10 @@ id:
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from copy import deepcopy
+from ansible.module_utils.common.dict_transformations import (
+    camel_dict_to_snake_dict, snake_dict_to_camel_dict,
+    _camel_to_snake, _snake_to_camel,
+)
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -459,12 +463,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                         elif ev['policy_type'] == 'custom':
                             ev['policy_type'] = 'Custom'
                     if 'policy_name' in ev:
-                        if ev['policy_name'] == 'app_gw_ssl_policy20150501':
-                            ev['policy_name'] = 'AppGwSslPolicy20150501'
-                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401':
-                            ev['policy_name'] = 'AppGwSslPolicy20170401'
-                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401_s':
-                            ev['policy_name'] = 'AppGwSslPolicy20170401S'
+                        ev['policy_name'] = _snake_to_camel(ev['policy_name'], True)
                     if 'min_protocol_version' in ev:
                         if ev['min_protocol_version'] == 'tl_sv1_0':
                             ev['min_protocol_version'] = 'TLSv1_0'
@@ -493,19 +492,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["backend_address_pools"] = kwargs[key]
                 elif key == "backend_http_settings_collection":
                     ev = kwargs[key]
-                    for i in range(len(ev)):
-                        item = ev[i]
-                        if 'protocol' in item:
-                            if item['protocol'] == 'http':
-                                item['protocol'] = 'Http'
-                            elif item['protocol'] == 'https':
-                                item['protocol'] = 'Https'
-                        if 'cookie_based_affinity' in item:
-                            if item['cookie_based_affinity'] == 'enabled':
-                                item['cookie_based_affinity'] = 'Enabled'
-                            elif item['cookie_based_affinity'] == 'disabled':
-                                item['cookie_based_affinity'] = 'Disabled'
-                    self.parameters["backend_http_settings_collection"] = ev
+                    self.parameters["backend_http_settings_collection"] = snake_dict_to_camel_dict(ev)
                 elif key == "http_listeners":
                     ev = kwargs[key]
                     for i in range(len(ev)):
@@ -756,13 +743,6 @@ def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
         appgw_name,
         name
     )
-
-
-def snake_to_camel(snake, capitalize_first=False):
-    if capitalize_first:
-        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
-    else:
-        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
 
 def compare_arrays(old_params, new_params, param_name):
