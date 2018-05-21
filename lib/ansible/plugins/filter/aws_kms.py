@@ -1,6 +1,6 @@
 """
 (c) 2018, Archie Gunasekara <contact@achinthagunasekara.com>
-Modoule to handle encrypting and decrypting of items with KMS
+Module to handle encrypting and decrypting of items with KMS
 """
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -61,9 +61,9 @@ def aws_kms_decrypt(ciphertext, key_arn):
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
-    """ Filter moule to provide functions """
+    """ Filter module to provide functions """
     def filters(self):  # pylint: disable=no-self-use
-        """ Filter moule to provide functions """
+        """ Filter module to provide functions """
         return {
             'aws_kms_encrypt': aws_kms_encrypt,
             'aws_kms_decrypt': aws_kms_decrypt
