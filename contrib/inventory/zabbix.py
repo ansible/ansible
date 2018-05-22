@@ -38,7 +38,7 @@ import argparse
 import ConfigParser
 
 try:
-    from zabbix_api import ZabbixAPI
+    from pyzabbix import ZabbixAPI
 except:
     print("Error: Zabbix API library must be installed: pip install zabbix-api.",
           file=sys.stderr)
@@ -84,12 +84,12 @@ class ZabbixInventory(object):
         return data
 
     def get_list(self, api):
-        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend'})
+        hostsData = api.do_request('host.get', {'output': ['name'], 'selectGroups': ['name']})
 
         data = {}
         data[self.defaultgroup] = self.hoststub()
 
-        for host in hostsData:
+        for host in hostsData['result']:
             hostname = host['name']
             data[self.defaultgroup]['hosts'].append(hostname)
 
