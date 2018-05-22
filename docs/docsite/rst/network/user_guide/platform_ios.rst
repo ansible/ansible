@@ -67,4 +67,4 @@ Example CLI Task
      register: backup_ios_location
      when: ansible_network_os == 'ios'
 
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt
