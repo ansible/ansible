@@ -100,46 +100,82 @@
     that:
         - "{{ dvs_result_0002.changed == false }}"
 
-
-# FIXME: Uncomment this testcase once vcsim supports distributed vswitch delete method
-# Currently, vcsim does not support distributed vswitch delete option,
-# Once this feature is available we can uncomment following testcase
-
 # Testcase 0003: Add Distributed vSwitch
-#- name: add distributed vSwitch
-#  vmware_dvswitch:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: root
-#    password: esxi@123
-#    datacenter_name: "{{ item | basename }}"
-#    state: absent
-#    switch_name: dvswitch_0001
-#    mtu: 9000
-#    uplink_quantity: 2
-#    discovery_proto: lldp
-#    discovery_operation: both
-#  with_items:
-#    - "{{ datacenters['json'] }}"
-#  register: dvs_result_0003
+- name: add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ item | basename }}"
+    state: absent
+    switch_name: dvswitch_0001
+  with_items:
+    - "{{ datacenters['json'] }}"
+  register: dvs_result_0003
 
-#- name: ensure distributed vswitch is present
-#  assert:
-#    that:
-#        - "{{ dvs_result_0003.changed == true }}"
+- name: ensure distributed vswitch is absent
+  assert:
+    that:
+        - "{{ dvs_result_0003.changed == true }}"
 
-#- name: get a list of Datacenter from vcsim after adding datacenter
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
-#  register: del_dvs
+- name: get a list of dvs from vcsim after deleting dvs
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
+  register: del_dvs
 
-#- debug:
-#    msg: "{{ item | basename }}"
-#  with_items: "{{ del_dvs['json'] }}"
+- debug:
+    msg: "{{ item | basename }}"
+  with_items: "{{ del_dvs['json'] }}"
 
-#- set_fact: del_dvs_name="{% for i in del_dvs['json'] %} {{ True if (i | basename) == 'dvswitch_0001' else False }}{% endfor %}"
+- set_fact: del_dvs_name="{% for i in del_dvs['json'] %} {{ True if (i | basename) == 'dvswitch_0001' else False }}{% endfor %}"
 
-#- debug: var=del_dvs_name
-#- assert:
-#    that:
-#      - "{{ 'True' not in del_dvs_name }}"
+- debug: var=del_dvs_name
+- assert:
+    that:
+      - "{{ 'True' not in del_dvs_name }}"
+
+- name: add distributed vSwitch with wrong mtu
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ item | basename }}"
+    state: present
+    switch_name: dvswitch_0004
+    mtu: 8
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0004
+  ignore_errors: True
+  with_items:
+    - "{{ datacenters['json'] }}"
+
+- assert:
+    that:
+      - "{{ not dvs_result_0004.changed }}"
+
+- name: add distributed vSwitch with wrong Switch version
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ item | basename }}"
+    state: present
+    switch_name: dvswitch_0005
+    switch_version: '1.0.0'
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0005
+  ignore_errors: True
+  with_items:
+    - "{{ datacenters['json'] }}"
+
+- assert:
+    that:
+      - "{{ not dvs_result_0005.changed }}"
