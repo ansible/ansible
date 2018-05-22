@@ -323,11 +323,11 @@ class Connection(ConnectionBase):
                          % principal)
             try:
                 p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    env=krb5env)
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     env=krb5env)
 
-            except FileNotFoundError as err:
+            except OSError as err:
                 err_msg = "Kerberos auth failure when calling kinit cmd " \
                           "'%s': %s" % (self._kinit_cmd, to_native(err))
                 raise AnsibleConnectionFailure(err_msg)

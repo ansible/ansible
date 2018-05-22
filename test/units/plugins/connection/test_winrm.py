@@ -293,7 +293,7 @@ class TestWinRMKerbAuth(object):
         expected_err = "[Errno 2] No such file or directory: " \
                        "'/fake/kinit': '/fake/kinit'"
         mock_subprocess = MagicMock()
-        mock_subprocess.Popen = MagicMock(side_effect=FileNotFoundError(expected_err))
+        mock_subprocess.Popen = MagicMock(side_effect=OSError(expected_err))
 
         mock_pexpect = None
         if use_pexpect:
