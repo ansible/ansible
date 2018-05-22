@@ -81,8 +81,6 @@ import pwd
 import platform
 import errno
 import datetime
-from collections import deque
-from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import chain, repeat
 
 try:
@@ -106,14 +104,6 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
-
-# Note: When getting Sequence from collections, it matches with strings.  If
-# this matters, make sure to check for strings before checking for sequencetype
-try:
-    from collections.abc import KeysView
-    SEQUENCETYPE = (Sequence, frozenset, KeysView)
-except ImportError:
-    SEQUENCETYPE = (Sequence, frozenset)
 
 try:
     import json
@@ -162,6 +152,13 @@ except ImportError:
     except ImportError:
         pass
 
+from ansible.module_utils.common._collections_compat import (
+    deque,
+    KeysView,
+    Mapping, MutableMapping,
+    Sequence, MutableSequence,
+    Set, MutableSet,
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -177,6 +174,10 @@ from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
+
+# Note: When getting Sequence from collections, it matches with strings.  If
+# this matters, make sure to check for strings before checking for sequencetype
+SEQUENCETYPE = frozenset, KeysView, Sequence
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
