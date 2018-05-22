@@ -72,7 +72,6 @@ options:
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        default: 'Storage'
         choices:
             - Hot
             - Cool

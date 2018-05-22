@@ -51,6 +51,8 @@ options:
             - Use with state present to remove any existing address_prefixes.
         type: bool
         default: 'no'
+        aliases:
+          - purge
     purge_dns_servers:
         description:
             - Use with state present to remove existing DNS servers, reverting to default Azure servers. Mutually

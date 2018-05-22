@@ -29,6 +29,9 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired virtual machine scale set
+    tags:
+        description:
+            - List of tags to be matched
     format:
         description:
             - Format of the data returned.
@@ -43,7 +46,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Sertac Ozercan (@sozercan)"
