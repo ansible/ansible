@@ -1,0 +1,3 @@
+---
+deprecated_features:
+- profitbricks_volume_attachments module is deprecated. Use profitbricks module instead.
