@@ -28,6 +28,8 @@
 
 import os
 from functools import partial
+
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 
@@ -60,7 +62,6 @@ NIOS_PROVIDER_SPEC = {
     'max_results': dict(type='int', default=1000)
 }
 
-
 def get_connector(*args, **kwargs):
     ''' Returns an instance of infoblox_client.connector.Connector
 
@@ -76,7 +77,6 @@ def get_connector(*args, **kwargs):
 
     if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
         raise Exception('invalid or unsupported keyword argument for connector')
-
     for key, value in iteritems(NIOS_PROVIDER_SPEC):
         if key not in kwargs:
             # apply default values from NIOS_PROVIDER_SPEC since we cannot just
@@ -132,12 +132,10 @@ def flatten_extattrs(value):
 
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
-
     provider_spec = {'provider': dict(type='dict', options=NIOS_PROVIDER_SPEC)}
 
     def __init__(self, provider):
         self.connector = get_connector(**provider)
-
     def __getattr__(self, name):
         try:
             return self.__dict__[name]
@@ -169,7 +167,6 @@ class WapiInventory(WapiBase):
 
 class WapiModule(WapiBase):
     ''' Implements WapiBase for executing a NIOS module '''
-
     def __init__(self, module):
         self.module = module
         provider = module.params['provider']
@@ -182,17 +179,21 @@ class WapiModule(WapiBase):
         ''' Handles any exceptions raised
 
         This method will be called if an InfobloxException is raised for
-        any call to the instance of Connector.  This method will then
-        gracefully fail the module.
+        any call to the instance of Connector and also, in case of generic
+        exception. This method will then gracefully fail the module.
 
         :args exc: instance of InfobloxException
         '''
-        self.module.fail_json(
-            msg=exc.response['text'],
-            type=exc.response['Error'].split(':')[0],
-            code=exc.response.get('code'),
-            operation=method_name
-        )
+        if ('text' in exc.response):
+            self.module.fail_json(
+                msg=exc.response['text'],
+                type=exc.response['Error'].split(':')[0],
+                code=exc.response.get('code'),
+                operation=method_name
+            )
+        else:
+            self.module.fail_json(msg=to_native(exc))
+
 
     def run(self, ib_obj_type, ib_spec):
         ''' Runs the module and performans configuration tasks
@@ -215,7 +216,6 @@ class WapiModule(WapiBase):
         # dictionary from nios doesn't expect 'old_name' key
         if 'old_name' in ib_spec:
             del ib_spec['old_name']
-
         ib_obj_ref = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
 
         if ib_obj_ref:
@@ -311,7 +311,6 @@ class WapiModule(WapiBase):
 
     def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
         ''' this function gets and returns the current object based on obj_type passed'''
-
         ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
 
         if ib_obj is None:
