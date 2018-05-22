@@ -100,7 +100,6 @@ import base64
 import inspect
 import os
 import re
-import shlex
 import traceback
 import json
 import tempfile
@@ -188,8 +187,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
 
-        self._winrm_host = self._play_context.remote_addr
-        self._winrm_user = self._play_context.remote_user
+        self._winrm_host = self.get_option('remote_addr')
+        self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
 
         self._become_method = self._play_context.become_method
@@ -235,7 +234,7 @@ class Connection(ConnectionBase):
         kinit_mode = self.get_option('kerberos_mode')
         if kinit_mode is None:
             # HACK: ideally, remove multi-transport stuff
-            self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
+            self._kerb_managed = "kerberos" in self._winrm_transport and (self._winrm_pass is not None and self._winrm_pass != "")
         elif kinit_mode == "managed":
             self._kerb_managed = True
         elif kinit_mode == "manual":
@@ -492,47 +491,6 @@ class Connection(ConnectionBase):
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
 
-        result.std_out = to_bytes(result.std_out)
-        result.std_err = to_bytes(result.std_err)
-
-        # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
-            try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
-            except Exception:
-                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
-                pass
-
-        return (result.status_code, result.std_out, result.std_err)
-
-    def exec_command_old(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
-        script = None
-        cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
-        # Support running .ps1 files (via script/raw).
-        if cmd_ext == '.ps1':
-            script = '& %s' % cmd
-        # Support running .bat/.cmd files; change back to the default system encoding instead of UTF-8.
-        elif cmd_ext in ('.bat', '.cmd'):
-            script = '[System.Console]::OutputEncoding = [System.Text.Encoding]::Default; & %s' % cmd
-        # Encode the command if not already encoded; supports running simple PowerShell commands via raw.
-        elif '-EncodedCommand' not in cmd_parts:
-            script = cmd
-        if script:
-            cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
-        if '-EncodedCommand' in cmd_parts:
-            encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = to_text(base64.b64decode(encoded_cmd).decode('utf-16-le'))
-            display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
-        else:
-            display.vvv("EXEC %s" % cmd, host=self._winrm_host)
-        try:
-            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
-        except Exception:
-            traceback.print_exc()
-            raise AnsibleConnectionFailure("failed to exec cmd %s" % to_native(cmd))
         result.std_out = to_bytes(result.std_out)
         result.std_err = to_bytes(result.std_err)
 
