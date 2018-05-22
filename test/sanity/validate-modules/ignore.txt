@@ -143,7 +143,7 @@ lib/ansible/modules/cloud/amazon/sns_topic.py E325
 lib/ansible/modules/cloud/amazon/sts_assume_role.py E317
 lib/ansible/modules/cloud/atomic/atomic_container.py E317
 lib/ansible/modules/cloud/atomic/atomic_container.py E326
-lib/ansible/modules/cloud/azure/azure_rm_containerinstance.py E324 
+lib/ansible/modules/cloud/azure/azure_rm_containerinstance.py E324
 lib/ansible/modules/cloud/centurylink/clc_alert_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E324
