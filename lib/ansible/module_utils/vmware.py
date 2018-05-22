@@ -507,7 +507,11 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     obj = {}
     container = content.viewManager.CreateContainerView(folder, vimtype, recurse)
     for managed_object_ref in container.view:
-        obj.update({managed_object_ref: managed_object_ref.name})
+        try:
+            obj.update({managed_object_ref: managed_object_ref.name})
+        except vmodl.fault.ManagedObjectNotFound:
+            # if object was deleted in the meantime, skip it
+            pass
     return obj
 
 
