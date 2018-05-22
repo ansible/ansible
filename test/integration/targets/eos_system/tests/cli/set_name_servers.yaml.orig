@@ -1,5 +1,5 @@
 ---
-- debug: msg="START eapi/set_name_servers.yaml"
+- debug: msg="START cli/set_name_servers.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -12,9 +12,16 @@
 - name: configure name_servers
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+=======
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
+    provider: "{{ cli }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   become: yes
   register: result
 
@@ -29,9 +36,16 @@
 - name: verify name_servers
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+=======
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
+    provider: "{{ cli }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   become: yes
   register: result
 
@@ -42,10 +56,17 @@
 #- name: change to vrf
 #  eos_system:
 #    name_servers:
+<<<<<<< HEAD
+#      - 1.1.1.1
+#      - { server: 2.2.2.2, vrf: ansible }
+#      - 3.3.3.3
+#  become: yes
+=======
 #      - 192.0.2.1
 #      - { server: 192.0.2.2, vrf: ansible }
 #      - 192.0.2.3
-#  become: yes
+#    provider: "{{ cli }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
 #  register: result
 
 #- assert:
@@ -58,10 +79,17 @@
 #- name: verify change to vrf
 #  eos_system:
 #    name_servers:
+<<<<<<< HEAD
+#      - 1.1.1.1
+#      - { server: 2.2.2.2, vrf: ansible }
+#      - 3.3.3.3
+#  become: yes
+=======
 #      - 192.0.2.1
 #      - { server: 192.0.2.2, vrf: ansible }
 #      - 192.0.2.3
-#  become: yes
+#    provider: "{{ cli }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
 #  register: result
 #
 #- assert:
@@ -71,8 +99,14 @@
 - name: remove one
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+=======
       - 192.0.2.1
       - 192.0.2.2
+    provider: "{{ cli }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   become: yes
   register: result
 
@@ -90,4 +124,4 @@
     match: none
   become: yes
 
-- debug: msg="END eapi/set_name_servers.yaml"
+- debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"

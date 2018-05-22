@@ -70,10 +70,10 @@
 - name: configure sub level command using block replace - exact
   nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
     provider: "{{ connection }}"
@@ -84,19 +84,19 @@
     that:
       - "result.changed == true"
       - "'ip access-list test' in result.updates"
-      - "'10 permit ip 1.1.1.1/32 any log' in result.updates"
-      - "'20 permit ip 2.2.2.2/32 any log' in result.updates"
-      - "'30 permit ip 3.3.3.3/32 any log' in result.updates"
-      - "'40 permit ip 4.4.4.4/32 any log' in result.updates"
+      - "'10 permit ip 192.0.2.1/32 any log' in result.updates"
+      - "'20 permit ip 192.0.2.2/32 any log' in result.updates"
+      - "'30 permit ip 192.0.2.3/32 any log' in result.updates"
+      - "'40 permit ip 192.0.2.4/32 any log' in result.updates"
 
 # hit NetworkConfig._diff_strict
 - name: configure sub level command using block replace strict
   nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
     provider: "{{ connection }}"
@@ -111,7 +111,7 @@
   - name: create static route
     nxos_static_route: &configure
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       tag: 5500
@@ -126,7 +126,7 @@
   - name: remove static route
     nxos_static_route: &remove
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       tag: 5500
@@ -141,7 +141,7 @@
   - name: remove static route
     nxos_static_route:
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       tag: 5500
@@ -153,8 +153,8 @@
   - name: remove static route aggregate
     nxos_static_route:
       aggregate:
-        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
-        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
       state: absent
       provider: "{{ connection }}"
     ignore_errors: yes

@@ -12,10 +12,18 @@
 - name: configure name_servers
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+  become: yes
+=======
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
-  become: yes
+    timeout: 30
+    provider: "{{ eapi }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   register: result
 
 - assert:
@@ -29,10 +37,18 @@
 - name: verify name_servers
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+  become: yes
+=======
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
-  become: yes
+    timeout: 30
+    provider: "{{ eapi }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   register: result
 
 - assert:
@@ -42,10 +58,17 @@
 #- name: change to vrf
 #  eos_system:
 #    name_servers:
+<<<<<<< HEAD
+#      - 1.1.1.1
+#      - { server: 2.2.2.2, vrf: ansible }
+#      - 3.3.3.3
+#  become: yes
+=======
 #      - 192.0.2.1
 #      - { server: 192.0.2.2, vrf: ansible }
 #      - 192.0.2.3
-#  become: yes
+#    provider: "{{ eapi }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
 #  register: result
 
 #- assert:
@@ -58,10 +81,17 @@
 #- name: verify change to vrf
 #  eos_system:
 #    name_servers:
+<<<<<<< HEAD
+#      - 1.1.1.1
+#      - { server: 2.2.2.2, vrf: ansible }
+#      - 3.3.3.3
+#  become: yes
+=======
 #      - 192.0.2.1
 #      - { server: 192.0.2.2, vrf: ansible }
 #      - 192.0.2.3
-#  become: yes
+#    provider: "{{ eapi }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
 #  register: result
 #
 #- assert:
@@ -71,9 +101,16 @@
 - name: remove one
   eos_system:
     name_servers:
+<<<<<<< HEAD
+      - 1.1.1.1
+      - 2.2.2.2
+  become: yes
+=======
       - 192.0.2.1
       - 192.0.2.2
-  become: yes
+    timeout: 30
+    provider: "{{ eapi }}"
+>>>>>>> b16962539d... remove from *_smoke and *_system
   register: result
 
 - assert:
