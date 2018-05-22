@@ -398,6 +398,7 @@ def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
             return True
     return False
 
+
 def vlan_parser(vlan_list):
 
     '''

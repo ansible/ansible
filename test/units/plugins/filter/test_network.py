@@ -167,6 +167,7 @@ class TestCompareType5(unittest.TestCase):
         parsed = comp_type5(unencrypted_password, encrypted_password)
         self.assertEqual(parsed, False)
 
+
 class TestVlanParser(unittest.TestCase):
 
     def test_compression(self):
