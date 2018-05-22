@@ -199,9 +199,6 @@ def main():
     update_password = module.params['update_password']
     description = module.params['description']
 
-    if description and StrictVersion(sdk.__version__) < StrictVersion('0.13.0'):
-        module.fail_json(msg="To utilize description, the installed version of the sdk library MUST be >=0.13.0")
-
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         user = cloud.get_user(name)
@@ -278,7 +275,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

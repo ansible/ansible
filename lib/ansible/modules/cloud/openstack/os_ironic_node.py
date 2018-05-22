@@ -250,8 +250,7 @@ def main():
     if not node_id:
         module.fail_json(msg="A uuid or name value must be defined "
                              "to use this module.")
-    sdk, cloud = openstack_cloud_from_module(
-        module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
         node = cloud.get_machine(node_id)
 
@@ -344,7 +343,7 @@ def main():
             module.fail_json(msg="State must be present, absent, "
                                  "maintenance, off")
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

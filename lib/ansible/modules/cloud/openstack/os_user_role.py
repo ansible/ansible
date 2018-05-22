@@ -127,9 +127,7 @@ def main():
     domain = module.params.get('domain')
     state = module.params.get('state')
 
-    # role grant/revoke API introduced in 1.5.0
-    sdk, cloud = openstack_cloud_from_module(
-        module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         filters = {}
 

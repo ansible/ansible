@@ -250,7 +250,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=False)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

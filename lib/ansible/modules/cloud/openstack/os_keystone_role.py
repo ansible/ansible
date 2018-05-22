@@ -97,7 +97,6 @@ def main():
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         role = cloud.get_role(name)
 
         if module.check_mode:
@@ -118,7 +117,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

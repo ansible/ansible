@@ -207,7 +207,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 

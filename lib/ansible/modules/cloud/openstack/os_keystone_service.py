@@ -147,7 +147,7 @@ def main():
     state = module.params['state']
     service_type = module.params['service_type']
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         services = cloud.search_services(name_or_id=name,
                                          filters=dict(type=service_type))
@@ -186,7 +186,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -114,10 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
-    sdk, cloud = openstack_cloud_from_module(
-        module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))
         elif module.params['mac']:
@@ -138,7 +136,7 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

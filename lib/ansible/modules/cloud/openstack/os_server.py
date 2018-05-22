@@ -725,7 +725,7 @@ def main():
         elif state == 'absent':
             _get_server_state(module, cloud)
             _delete_server(module, cloud)
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

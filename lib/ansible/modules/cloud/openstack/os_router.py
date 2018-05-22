@@ -482,7 +482,7 @@ def main():
                 cloud.delete_router(router_id)
                 module.exit_json(changed=True)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

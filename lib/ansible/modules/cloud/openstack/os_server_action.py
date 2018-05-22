@@ -134,10 +134,7 @@ def main():
     timeout = module.params['timeout']
     image = module.params['image']
 
-    if action in _admin_actions:
-        sdk, cloud = openstack_cloud_from_module(module)
-    else:
-        sdk, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_server(module.params['server'])
         if not server:
@@ -223,7 +220,7 @@ def main():
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

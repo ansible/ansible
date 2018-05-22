@@ -147,8 +147,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
-
     service_name_or_id = module.params['service']
     interface = module.params['endpoint_interface']
     url = module.params['url']
@@ -156,8 +154,8 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = sdk.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name_or_id)
         if service is None:

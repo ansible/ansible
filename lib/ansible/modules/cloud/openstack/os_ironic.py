@@ -328,7 +328,7 @@ def main():
             else:
                 module.exit_json(changed=False, result="Server not found")
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

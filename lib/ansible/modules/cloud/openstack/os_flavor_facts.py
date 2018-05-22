@@ -30,7 +30,7 @@ notes:
       contains a list of unsorted flavors.
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -223,7 +223,7 @@ def main():
         module.exit_json(changed=False,
                          ansible_facts=dict(openstack_flavors=flavors))
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

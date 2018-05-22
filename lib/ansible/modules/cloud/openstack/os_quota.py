@@ -441,7 +441,7 @@ def main():
                          openstack_quotas=project_quota_output
                          )
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

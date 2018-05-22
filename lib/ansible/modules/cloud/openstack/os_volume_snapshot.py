@@ -170,7 +170,7 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
 
     state = module.params['state']
 
@@ -186,7 +186,7 @@ def main():
             module.fail_json(
                 msg="No volume with name or id '{0}' was found.".format(
                     module.params['volume']))
-    except (sdk.OpenStackCloudException, sdk.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
         module.fail_json(msg=e.message)
 
 

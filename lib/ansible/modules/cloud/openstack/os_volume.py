@@ -149,11 +149,6 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
 
-    if (module.params['scheduler_hints'] and
-            StrictVersion(sdk.__version__) < StrictVersion('0.13.0')):
-        module.fail_json(msg="To utilize scheduler_hints, the installed version of"
-                             "the openstacksdk library MUST be >= 0.13.0")
-
     state = module.params['state']
 
     if state == 'present' and not module.params['size']:
@@ -165,7 +160,7 @@ def main():
             _present_volume(module, cloud)
         if state == 'absent':
             _absent_volume(module, cloud, sdk)
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

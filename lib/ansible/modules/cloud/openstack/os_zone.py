@@ -157,7 +157,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         zone = cloud.get_zone(name)
 
@@ -206,7 +206,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -205,7 +205,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_ports=ports))
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

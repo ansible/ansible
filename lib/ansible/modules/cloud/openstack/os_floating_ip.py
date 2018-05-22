@@ -169,8 +169,8 @@ def main():
     purge = module.params['purge']
 
     sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
-
     try:
+
         server = cloud.get_server(server_name_or_id)
         if server is None:
             module.fail_json(
@@ -251,7 +251,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=changed, floating_ip=f_ip)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

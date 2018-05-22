@@ -22,7 +22,7 @@ description:
     - Retrieve an auth token from an OpenStack Cloud
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 options:
   availability_zone:
     description:

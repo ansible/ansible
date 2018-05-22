@@ -125,8 +125,6 @@ def main():
     target_project_id = module.params['target_project_id']
 
     try:
-        # cloud = shade.operator_cloud(**module.params)
-
         if resource_type == 'nova_flavor':
             # returns Munch({'NAME_ATTR': 'name',
             # 'tenant_id': u'37e55da59ec842649d84230f3a24eed5',
@@ -193,7 +191,7 @@ def main():
                          resource=resource,
                          id=resource_id)
 
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), **module.params)
 
 
