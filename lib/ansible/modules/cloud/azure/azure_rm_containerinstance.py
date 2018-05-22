@@ -50,7 +50,6 @@ options:
         choices:
             - public
             - none
-        default: 'none'
     ports:
         description:
             - List of ports exposed within the container group.
