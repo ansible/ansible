@@ -41,6 +41,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Thomas Stringer (@tstringer)"
