@@ -35,6 +35,8 @@ PRIVATE_KEYS_RE = re.compile('__.+__')
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        if self._play_context.connection != 'network_cli':
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module. Must use network_cli.' % self._play_context.connection}
 
         if self._task.args.get('src'):
             try:
