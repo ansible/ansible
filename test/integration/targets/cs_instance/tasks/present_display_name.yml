@@ -1,6 +1,8 @@
 ---
 - name: setup instance with display_name to be absent
-  cs_instance: display_name={{ cs_resource_prefix }}-vm-{{ instance_number }} state=absent
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
   register: instance
 - name: verify instance with display_name to be absent
   assert:
