@@ -115,8 +115,8 @@ options:
         will fail
     default: 30
     ini:
-      section: persistent_connection
-      key: persistent_connect_timeout
+      - section: persistent_connection
+        key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
@@ -128,8 +128,8 @@ options:
         close
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
