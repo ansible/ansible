@@ -21,6 +21,19 @@ community-set cust-announce
   1525:65498
 end-set
 !
+rd-set EBGP_INCOMING_RD_SET
+  172.16.0.0/16:*,
+  172.14.0.0/16:100,
+  192:*,
+  192:100
+end-set
+!
+extcommunity-set rt EBGP_INCOMIG_RT_SET
+  10:615,
+  10:6120,
+  15.15.15.15:15
+end-set
+!
 route-policy POLICY2
 end-policy
 !
@@ -45,4 +58,8 @@ route-policy static-to-bgp
     drop
   endif
 end-policy
+!
+class-map match-any data
+ match precedence ipv4 0 1 2
+ end-class-map
 !

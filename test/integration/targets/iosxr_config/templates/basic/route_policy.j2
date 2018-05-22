@@ -16,12 +16,12 @@ prefix-set EBGP-PEER-BOGONS
   240.0.0.0/4 le 32
 end-set
 !
-prefix-set cust-ddos-DDOS                                                                                                           
-end-set                                                                                                                             
-!                                                                                                                                   
-prefix-set cust-no-export                                                                                                           
-end-set                                                                                                                             
-!          
+prefix-set cust-ddos-DDOS
+end-set
+!
+prefix-set cust-no-export
+end-set
+!
 prefix-set acme_DC_Internal
   137.1.0.0/16,
   137.1.16.0/24,
@@ -65,6 +65,7 @@ community-set cust-no-export
   1525:65535
 end-set
 !
+
 route-policy POLICY2
 end-policy
 !
@@ -72,6 +73,25 @@ route-policy cust2bgp
   set origin igp
   set next-hop 137.1.16.12
 end-policy
+!
+rd-set ebpg-1
+end-set
+!
+rd-set EBGP_INCOMING_RD_SET
+  172.16.0.0/16:*,
+  172.17.0.0/16:100,
+  192:*,
+  192:100
+end-set
+!
+extcommunity-set rt EBGP_INCOMIG_RT_SET
+  10:615,
+  10:6150,
+  15.15.15.15:15
+end-set
+!
+extcommunity-set rt ebpg-1
+end-set
 !
 route-policy static-to-bgp
   if destination in cust-no-export then
@@ -95,6 +115,7 @@ route-policy static-to-bgp
   endif
 end-policy
 !
-router bgp 65001
- address-family ipv4 unicast
+class-map match-any data
+ match precedence ipv4 0 1
+ end-class-map
 !
