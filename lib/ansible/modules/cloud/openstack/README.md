@@ -48,7 +48,7 @@ Libraries
 * All modules should extends\_documentation\_fragment: openstack to go along
   with openstack\_full\_argument\_spec.
 * All complex cloud interaction or interoperability code should be housed in
-  the [openstacksdk](http://git.openstack.org/cgit/openstackopenstacksdk)
+  the [openstacksdk](http://git.openstack.org/cgit/openstack/openstacksdk)
   library.
 * All OpenStack API interactions should happen via shade and not via
   OpenStack Client libraries. The OpenStack Client libraries do no have end
