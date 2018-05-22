@@ -91,7 +91,7 @@ options:
       - ramdisk I(eri) to use for the instance
   wait:
     description:
-      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for' example for details.
+      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for_connection' example for details.
     type: bool
     default: 'no'
   wait_timeout:
@@ -384,12 +384,10 @@ EXAMPLES = '''
       with_items: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
-      wait_for:
-        host: "{{ item.public_dns_name }}"
-        port: 22
+      delegate_to: "{{ item.public_dns_name }}"
+      wait_for_connection:
         delay: 60
         timeout: 320
-        state: started
       with_items: "{{ ec2.instances }}"
 
 - name: Configure instance(s)
