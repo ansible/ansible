@@ -166,4 +166,4 @@ In this example two variables defined in ``group_vars`` get passed to the module
 - the ``eapi`` variable gets passed to the ``provider`` option of the module
 - the ``proxy_env`` variable gets passed to the ``environment`` option of the module
 
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt
