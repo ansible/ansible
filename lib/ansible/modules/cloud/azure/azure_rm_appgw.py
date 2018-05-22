@@ -463,7 +463,12 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                         elif ev['policy_type'] == 'custom':
                             ev['policy_type'] = 'Custom'
                     if 'policy_name' in ev:
-                        ev['policy_name'] = _snake_to_camel(ev['policy_name'], True)
+                        if ev['policy_name'] == 'app_gw_ssl_policy20150501':
+                            ev['policy_name'] = 'AppGwSslPolicy20150501'
+                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401':
+                            ev['policy_name'] = 'AppGwSslPolicy20170401'
+                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401_s':
+                            ev['policy_name'] = 'AppGwSslPolicy20170401S'
                     if 'min_protocol_version' in ev:
                         if ev['min_protocol_version'] == 'tl_sv1_0':
                             ev['min_protocol_version'] = 'TLSv1_0'
@@ -480,11 +485,10 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters["ssl_certificates"] = kwargs[key]
                 elif key == "frontend_ip_configurations":
                     ev = kwargs[key]
-                    if 'private_ip_allocation_method' in ev:
-                        if ev['private_ip_allocation_method'] == 'static':
-                            ev['private_ip_allocation_method'] = 'Static'
-                        elif ev['private_ip_allocation_method'] == 'dynamic':
-                            ev['private_ip_allocation_method'] = 'Dynamic'
+                    for i in range(len(ev)):
+                        item = ev[i]
+                        if 'private_ip_allocation_method' in item:
+                            item['private_ip_allocation_method'] = _snake_to_camel(item['private_ip_allocation_method'], True)
                     self.parameters["frontend_ip_configurations"] = ev
                 elif key == "frontend_ports":
                     self.parameters["frontend_ports"] = kwargs[key]
@@ -495,9 +499,9 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     for i in range(len(ev)):
                         item = ev[i]
                         if 'protocol' in item:
-                            item['protocol'] = _snake_to_camel(item['protocol'])
+                            item['protocol'] = _snake_to_camel(item['protocol'], True)
                         if 'cookie_based_affinity' in item:
-                            item['cookie_based_affinity'] = _snake_to_camel(item['cookie_based_affinity'])
+                            item['cookie_based_affinity'] = _snake_to_camel(item['cookie_based_affinity'], True)
                     self.parameters["backend_http_settings_collection"] = ev
                 elif key == "http_listeners":
                     ev = kwargs[key]
@@ -517,10 +521,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                                   item['frontend_port'])
                             item['frontend_port'] = {'id': id}
                         if 'protocol' in item:
-                            if item['protocol'] == 'http':
-                                item['protocol'] = 'Http'
-                            elif item['protocol'] == 'https':
-                                item['protocol'] = 'Https'
+                            item['protocol'] = _snake_to_camel(item['protocol'], True)
                         ev[i] = item
                     self.parameters["http_listeners"] = ev
                 elif key == "request_routing_rules":
@@ -546,15 +547,9 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                                   item['http_listener'])
                             item['http_listener'] = {'id': id}
                         if 'protocol' in item:
-                            if item['protocol'] == 'http':
-                                item['protocol'] = 'Http'
-                            elif item['protocol'] == 'https':
-                                item['protocol'] = 'Https'
+                            item['protocol'] = _snake_to_camel(item['protocol'], True)
                         if 'rule_type' in ev:
-                            if item['rule_type'] == 'basic':
-                                item['rule_type'] = 'Basic'
-                            elif item['rule_type'] == 'path_based_routing':
-                                item['rule_type'] = 'PathBasedRouting'
+                            item['rule_type'] = _snake_to_camel(item['rule_type'], True)
                         ev[i] = item
                     self.parameters["request_routing_rules"] = ev
                 elif key == "etag":
