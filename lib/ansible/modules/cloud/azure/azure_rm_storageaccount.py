@@ -76,6 +76,10 @@ options:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure

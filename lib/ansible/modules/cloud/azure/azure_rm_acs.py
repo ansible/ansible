@@ -119,6 +119,7 @@ options:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
+        type: bool
 
 extends_documentation_fragment:
     - azure

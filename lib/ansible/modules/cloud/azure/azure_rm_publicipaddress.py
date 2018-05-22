@@ -39,7 +39,7 @@ options:
             - Dynamic
             - Static
         default: Dynamic
-    domain_name_label:
+    domain_name:
         description:
             - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting. If
               no value is provided, any existing value will be removed on an existing public IP.

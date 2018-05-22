@@ -46,7 +46,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Sertac Ozercan (@sozercan)"

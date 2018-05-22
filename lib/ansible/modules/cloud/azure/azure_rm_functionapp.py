@@ -34,6 +34,7 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+        version_added: 2.6
     storage_account:
         description:
             - Name of the storage account to use.
@@ -41,9 +42,11 @@ options:
         aliases:
             - storage
             - storage_account_name
+        version_added: 2.6
     app_settings:
         description:
             - Dictionary containing application settings
+        version_added: 2.6
     state:
         description:
             - Assert the state of the Function App. Use 'present' to create or update a Function App and

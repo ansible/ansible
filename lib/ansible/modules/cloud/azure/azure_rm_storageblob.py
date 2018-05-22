@@ -201,7 +201,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             blob=dict(type='str', aliases=['blob_name']),
             blob_type=dict(type='str', default='block', choices=['block', 'page']),
             container=dict(required=True, type='str', aliases=['container_name']),
-            dest=dict(type='path'),
+            dest=dict(type='path', aliases=['destination']),
             force=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             src=dict(type='str', aliases=['source']),
