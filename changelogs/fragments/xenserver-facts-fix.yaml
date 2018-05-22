@@ -1,0 +1,2 @@
+bugfixes:
+  - xenserver_facts - ensure module works with newer versions of XenServer (https://github.com/ansible/ansible/pull/35821)
