@@ -78,7 +78,7 @@ EXAMPLES = '''
     zone: domain.com
     type: A
     record: www
-    data: 1.2.3.4
+    address: 1.2.3.4
     ttl: 300
     relative: false
   delegate_to: localhost
@@ -90,7 +90,7 @@ EXAMPLES = '''
     state: present
     zone: domain.com
     type: TXT
-    data: "v=spf1 +a +mx +ip4:a1.2.3.4 ?all"
+    address: "v=spf1 +a +mx +ip4:a1.2.3.4 ?all"
   delegate_to: localhost
 '''
 
