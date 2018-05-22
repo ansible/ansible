@@ -42,6 +42,10 @@ options:
     orchestration_platform:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
         required: true
     master_profile:
         description:
