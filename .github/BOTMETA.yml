@@ -1108,6 +1108,8 @@ files:
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
     labels: networking
+  lib/ansible/release.py:
+    notify: mattclay nitzmahone
   lib/ansible/template:
     keywords:
     - jinja
