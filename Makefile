@@ -359,20 +359,20 @@ deb-src: debian
 	@echo "#############################################"
 	@echo "Ansible DEB artifacts:"
 	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 	@echo "#############################################"
 
 .PHONY: deb-upload
 deb-upload: deb
 	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
 	done
 
 .PHONY: deb-src-upload
 deb-src-upload: deb-src
 	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
 .PHONY: epub
