@@ -192,7 +192,7 @@ CONFIG_MISPLACED_CHILDREN = [
 
 # Objects defined in Route-policy Language guide of IOS_XR.
 # Reconfiguring these objects replace existing configurations.
-# Hence these objects should be played direcly from candidate 
+# Hence these objects should be played direcly from candidate
 # configurations
 CONFIG_BLOCKS_FORCED_IN_DIFF = [
     {
@@ -220,6 +220,7 @@ CONFIG_BLOCKS_FORCED_IN_DIFF = [
         'end': re.compile(r'end-set')
     }
 ]
+
 
 def copy_file_to_node(module):
     """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
