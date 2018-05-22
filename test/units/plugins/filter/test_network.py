@@ -23,7 +23,8 @@ import sys
 import pytest
 
 from units.compat import unittest
-from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5
+from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5, vlan_parser
+
 from ansible.errors import AnsibleFilterError
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
