@@ -463,7 +463,7 @@ def main():
             method = state == "dump" and db_dump or db_restore
             try:
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
-                if rc != 0:
+                if rc != 0 or not db_exists(cursor, db):
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
                     module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
