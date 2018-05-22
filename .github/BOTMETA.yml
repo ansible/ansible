@@ -263,6 +263,8 @@ files:
   $modules/cloud/misc/virt_pool.py: drybjed
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
+    maintainers: cheese
+  $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
@@ -1224,7 +1226,14 @@ files:
     keywords:
     - validate-modules
   docs/:
-    labels: docs_pull_request
+    labels: docs
+  docs/docsite/rst/network/:
+    labels: networking
+    maintainers:
+      - acozine
+      - gundalow
+  docs/docsite/rst/scenario_guides/guide_aci.rst:
+    maintainers: $team_aci
     notify: dharmabumstead
   packaging/:
   test/:
