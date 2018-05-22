@@ -36,7 +36,6 @@ options:
   service_state:
     description:
     - Whether the specified aggregate should be enabled or disabled. Creates aggregate if doesnt exist.
-    required: false
     choices: ['online', 'offline']
 
   name:
@@ -45,7 +44,6 @@ options:
     - The name of the aggregate to manage.
 
   rename:
-    required: false
     description:
     - The name of the aggregate that replaces the current name.
 
@@ -62,7 +60,6 @@ options:
     - Required when C(state=present).
 
   unmount_volumes:
-    required: false
     type: bool
     description:
     - If set to "TRUE", this option specifies that all of the volumes hosted by the given aggregate are to be unmounted
