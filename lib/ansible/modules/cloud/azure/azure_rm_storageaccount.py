@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
