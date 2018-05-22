@@ -19,13 +19,12 @@
 
 #- name: clean out the test directory
 #  file: name={{output_dir|mandatory}} state=absent
-#  always_run: True
 #  tags:
 #    - prepare
 #  when: clean_working_dir|default("yes")|bool
 #
 #- name: create the test directory
 #  file: name={{output_dir}} state=directory
-#  always_run: True
+#  check_mode: no
 #  tags:
 #    - prepare
