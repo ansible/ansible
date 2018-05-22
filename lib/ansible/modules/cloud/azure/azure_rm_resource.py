@@ -245,7 +245,7 @@ class AzureRMResource(AzureRMModuleBase):
             else:
                 try:
                     response = json.loads(original.text)
-                    needs_update = (dict_merge(response, self.body) == response)
+                    needs_update = (dict_merge(response, self.body) != response)
                 except:
                     pass
 
