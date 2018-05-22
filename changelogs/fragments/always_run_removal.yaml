@@ -1,0 +1,2 @@
+removed_features:
+- removed the deprecated always_run task option, please use `check_mode: no` instead

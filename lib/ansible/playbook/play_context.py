@@ -436,11 +436,6 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
-        if task.always_run:
-            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
-            new_info.check_mode = False
-
-        # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
