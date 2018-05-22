@@ -4,21 +4,21 @@
 - name: setup
   asa_config:
     lines:
-      - "clear configure tunnel-group 1.1.1.1"
+      - "clear configure tunnel-group 192.0.2.1"
     provider: "{{ cli }}"
   ignore_errors: yes
 
 
 - name: Prepare tunnel-group
   asa_config:
-    before: tunnel-group 1.1.1.1 type ipsec-l2l
+    before: tunnel-group 192.0.2.1 type ipsec-l2l
     lines:
-      - "tunnel-group 1.1.1.1 ipsec-attributes"
+      - "tunnel-group 192.0.2.1 ipsec-attributes"
     provider: "{{ cli }}"
 
 - name: Setup tunnel-group
   asa_config:
-    parents: tunnel-group 1.1.1.1 ipsec-attributes
+    parents: tunnel-group 192.0.2.1 ipsec-attributes
     lines:
       - "ikev1 pre-shared-key abc123"
     passwords: yes
@@ -26,7 +26,7 @@
 
 - name: Test idempotency
   asa_config:
-    parents: tunnel-group 1.1.1.1 ipsec-attributes
+    parents: tunnel-group 192.0.2.1 ipsec-attributes
     lines:
       - "ikev1 pre-shared-key abc123"
     passwords: yes
@@ -40,7 +40,7 @@
 - name: teardown
   asa_config:
     lines:
-      - "clear configure tunnel-group 1.1.1.1"
+      - "clear configure tunnel-group 192.0.2.1"
     provider: "{{ cli }}"
 
 
