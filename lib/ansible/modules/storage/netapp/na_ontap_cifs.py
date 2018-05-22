@@ -21,9 +21,9 @@ module: na_ontap_cifs
 options:
   path:
     description:
-      - "The file system path that is shared through this CIFS share. The path is the full, user visible path relative "
-      - "to the vserver root, and it might be crossing junction mount points. The path is in UTF8 and uses forward "
-      - "slash as directory separator"
+      The file system path that is shared through this CIFS share. The path is the full, user visible path relative
+      to the vserver root, and it might be crossing junction mount points. The path is in UTF8 and uses forward
+      slash as directory separator
     required: false
   vserver:
     description:
@@ -31,8 +31,8 @@ options:
     required: true
   share_name:
     description:
-      - "The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being "
-      - "illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)"
+      The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being
+      illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)
     required: true
   state:
     choices: ['present', 'absent']

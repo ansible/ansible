@@ -37,7 +37,6 @@ options:
   service_state:
     description:
     - CIFS Server Administrative Status.
-    required: true
     choices: ['stopped', 'started']
 
   cifs_server_name:

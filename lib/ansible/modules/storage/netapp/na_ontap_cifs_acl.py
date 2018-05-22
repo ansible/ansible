@@ -23,7 +23,6 @@ options:
     choices: ['no_access', 'read', 'change', 'full_control']
     description:
       -"The access rights that the user or group has on the defined CIFS share."
-    required: false
   share_name:
     description:
       - "The name of the cifs-share-access-control to manage."
@@ -32,7 +31,6 @@ options:
     choices: ['present', 'absent']
     description:
       - "Whether the specified CIFS share acl should exist or not."
-    required: false
     default: present
   vserver:
     description:
