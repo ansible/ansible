@@ -4,7 +4,6 @@ accelerate_port: "*DEPRECATED*, set to override default port use for accelerate 
 action: "The 'action' to execute for a task, it normally translates into a C(module) or action plugin."
 args: "*DEPRECATED*, A secondary way to add arguments into a task. Takes a dictionary in which keys map to options and values."
 always: List of tasks, in a block, that execute no matter if there is an error in the block or not.
-always_run: "*DEPRECATED*, forces a task to run even in check mode. Use :term:`check_mode` directive instead."
 any_errors_fatal: Force any un-handled task errors on any host to propagate to all hosts and end the play.
 async: Run a task asynchronously if the C(action) supports this; value is maximum runtime in seconds.
 become: Boolean that controls if privilege escalation is used or not on :term:`Task` execution.
