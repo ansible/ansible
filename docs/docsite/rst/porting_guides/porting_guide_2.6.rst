@@ -17,7 +17,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+* The deprecated task option ``always_run`` has been removed, please use ``check_mode: no`` instead.
 
 Deprecated
 ==========
