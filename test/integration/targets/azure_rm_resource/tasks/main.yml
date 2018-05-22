@@ -30,16 +30,16 @@
 - assert:
     that: output.changed
 
-- name: Query the instance of security group
+- name: Query the instance of security group using facts module
   azure_rm_resource_facts:
     resource_group: "{{ resource_group }}"
     provider: network
     resource_type: networksecuritygroups
     resource_name: sg{{ rpfx }}
     api_version: "2018-01-01"
-  register: output_rule
+  register: output_group
 
-- name: Try to create the same security again based on facts output
+- name: Try to create the same security group again based on facts output
   azure_rm_resource:
     resource_group: "{{ resource_group }}"
     provider: network
@@ -47,11 +47,29 @@
     resource_name: sg{{ rpfx }}
     api_version: "2018-01-01"
     idempotency: yes
-    body: "{{ output_rule.response[0] }}"
+    body: "{{ output_group.response[0] }}"
   register: output
 
 - assert:
     that: not output.changed
+
+- name: Add some tags to security group definition
+  set_fact:
+    body: "{{ output_group.response[0] | combine({'tags': {'aaa': 'bbb' }}, recursive=True) }}"
+
+- name: Try to create the same security group again with modified facts output
+  azure_rm_resource:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: sg{{ rpfx }}
+    api_version: "2018-01-01"
+    idempotency: yes
+    body: "{{ body }}"
+  register: output
+
+- assert:
+    that: output.changed
 
 - name: Query instance of security rule
   azure_rm_resource_facts:
@@ -109,7 +127,6 @@
 
 - assert:
     that: output.changed
-
 
 - name: Delete unexisting security group
   azure_rm_resource:
