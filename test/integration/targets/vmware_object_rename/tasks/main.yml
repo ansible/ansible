@@ -1,0 +1,159 @@
+# Test code for the vmware_object_rename module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: Rename multiple object
+  vmware_object_rename:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    name: "{{ item.name }}"
+    new_name: "{{ item.new_name }}"
+    object_type: "{{ item.type }}"
+  with_items:
+    - name: "DC0_DVPG0"
+      new_name: "DC0_DVPG01"
+      type: 'DistributedVirtualPortgroup'
+    - name: "DVS0"
+      new_name: "DVS10"
+      type: 'DistributedVirtualSwitch'
+    - name: "VM Network"
+      new_name: "VM Network 01"
+      type: 'Network'
+    - name: DC0_C0
+      new_name: DC0_C01
+      type: 'ClusterComputeResource'
+    - name: LocalDS_0
+      new_name: LocalDS_01
+      type: 'Datastore'
+    - name: DC0_H0_VM0
+      new_name: DC0_H0_VM01
+      type: 'VirtualMachine'
+    - name: DC0_H0
+      new_name: DC2_H2
+      type: 'HostSystem'
+    - name: DC0
+      new_name: DC1
+      type: 'Datacenter'
+  register: rename_results
+
+- debug: var=rename_results
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "rename_results.results|map(attribute='changed')|unique|list == [true]"
+
+
+- name: Rename multiple object again
+  vmware_object_rename:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    name: "{{ item.name }}"
+    new_name: "{{ item.new_name }}"
+    object_type: "{{ item.type }}"
+  with_items:
+    - name: "DC0_DVPG0"
+      new_name: "DC0_DVPG01"
+      type: 'DistributedVirtualPortgroup'
+    - name: "DVS0"
+      new_name: "DVS10"
+      type: 'DistributedVirtualSwitch'
+    - name: "VM Network"
+      new_name: "VM Network 01"
+      type: 'Network'
+    - name: DC0_C0
+      new_name: DC0_C01
+      type: 'ClusterComputeResource'
+    - name: LocalDS_0
+      new_name: LocalDS_01
+      type: 'Datastore'
+    - name: DC0_H0_VM0
+      new_name: DC0_H0_VM01
+      type: 'VirtualMachine'
+    - name: DC0_H0
+      new_name: DC2_H2
+      type: 'HostSystem'
+    - name: DC0
+      new_name: DC1
+      type: 'Datacenter'
+  register: rename_results
+
+- debug: var=rename_results
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "rename_results.results|map(attribute='changed')|unique|list == [false]"
+
+- name: Rename multiple object in check mode
+  vmware_object_rename:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    name: "{{ item.name }}"
+    new_name: "{{ item.new_name }}"
+    object_type: "{{ item.type }}"
+  check_mode: True
+  with_items:
+    - name: "DC0_DVPG0"
+      new_name: "DC0_DVPG01"
+      type: 'DistributedVirtualPortgroup'
+    - name: "DVS0"
+      new_name: "DVS10"
+      type: 'DistributedVirtualSwitch'
+    - name: "VM Network"
+      new_name: "VM Network 01"
+      type: 'Network'
+    - name: DC0_C0
+      new_name: DC0_C01
+      type: 'ClusterComputeResource'
+    - name: LocalDS_0
+      new_name: LocalDS_01
+      type: 'Datastore'
+    - name: DC0_H0_VM0
+      new_name: DC0_H0_VM01
+      type: 'VirtualMachine'
+    - name: DC0_H0
+      new_name: DC2_H2
+      type: 'HostSystem'
+    - name: DC0
+      new_name: DC1
+      type: 'Datacenter'
+  register: rename_check_mode_results
+
+- debug: var=rename_check_mode_results
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "rename_check_mode_results.results|map(attribute='changed')|unique|list == [true]"
