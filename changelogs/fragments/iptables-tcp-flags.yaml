@@ -1,0 +1,2 @@
+bugfixes:
+  - iptables - use suboptions to properly join tcp_flags options (https://github.com/ansible/ansible/issues/36490)
