@@ -399,6 +399,7 @@ def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
     return False
 
 def vlan_parser(vlan_list):
+
     '''
         Input: Unsorted list of vlan integers
         Output: Sorted list of integers according to Cisco IOS vlan list rules
@@ -409,7 +410,7 @@ def vlan_parser(vlan_list):
         4. Subsequent list lines can be 44 characters
     '''
 
-    #Sort and remove duplicates
+    # Sort and remove duplicates
     sorted_list = sorted(set(vlan_list))
 
     if sorted_list[0] < 1 or sorted_list[-1] > 4094:
@@ -441,7 +442,7 @@ def vlan_parser(vlan_list):
     line_count = 0
     result = ['']
     for vlans in parse_list:
-        #First line (" switchport trunk allowed vlan ")
+        # First line (" switchport trunk allowed vlan ")
         if line_count == 0:
             if len(result[line_count] + vlans) > 48:
                 result.append('')
@@ -450,7 +451,7 @@ def vlan_parser(vlan_list):
             else:
                 result[line_count] += vlans + ','
 
-        #Subsequent lines (" switchport trunk allowed vlan add ")
+        # Subsequent lines (" switchport trunk allowed vlan add ")
         else:
             if len(result[line_count] + vlans) > 44:
                 result.append('')
@@ -459,11 +460,11 @@ def vlan_parser(vlan_list):
             else:
                 result[line_count] += vlans + ','
 
-    #Remove trailing orphan commas
+    # Remove trailing orphan commas
     for idx in range(0, len(result)):
         result[idx] = result[idx].rstrip(',')
 
-    #Sometimes text wraps to next line, but there are no remaining VLANs
+    # Sometimes text wraps to next line, but there are no remaining VLANs
     if '' in result:
         result.remove('')
 
