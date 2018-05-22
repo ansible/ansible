@@ -159,6 +159,18 @@
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
 
+- name: test async with custom remote_tmp
+  win_shell: echo hi
+  register: async_custom_tmp
+  async: 5
+  vars:
+    ansible_remote_tmp: '{{win_output_dir}}'
+
+- name: assert results file is in the remote tmp specified
+  assert:
+    that:
+    - async_custom_tmp.results_file == win_output_dir + '\\.ansible_async\\' + async_custom_tmp.ansible_job_id
+
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success
 #  async_test:
