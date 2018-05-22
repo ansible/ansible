@@ -89,11 +89,23 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_
 
 
 class VmObjectMgr(PyVmomi):
-    def __init__(self, module, object_type):
+    def __init__(self, module):
         super(VmObjectMgr, self).__init__(module)
+
+        object_types = {
+            'Datacenter': vim.Datacenter,
+            'VirtualMachine': vim.VirtualMachine,
+            'ClusterComputeResource': vim.ClusterComputeResource,
+            'DistributedVirtualSwitch': vim.DistributedVirtualSwitch,
+            'HostSystem': vim.HostSystem,
+            'Datastore': vim.Datastore,
+            'Network': vim.Network,
+            'DistributedVirtualPortgroup': vim.dvs.DistributedVirtualPortgroup,
+        }
 
         old_name = module.params['name']
         new_name = module.params['new_name']
+        object_type = object_types[module.params['object_type']]
 
         managed_objects = self.get_managed_objects_properties(vim_type=object_type, properties=['name'])
 
@@ -133,29 +145,27 @@ class VmObjectMgr(PyVmomi):
 
 
 def main():
-    object_types = {
-        'Datacenter': vim.Datacenter,
-        'VirtualMachine': vim.VirtualMachine,
-        'ClusterComputeResource': vim.ClusterComputeResource,
-        'DistributedVirtualSwitch': vim.DistributedVirtualSwitch,
-        'HostSystem': vim.HostSystem,
-        'Datastore': vim.Datastore,
-        'Network': vim.Network,
-        'DistributedVirtualPortgroup': vim.dvs.DistributedVirtualPortgroup,
-    }
+    object_list = [
+        'Datacenter',
+        'VirtualMachine',
+        'ClusterComputeResource',
+        'DistributedVirtualSwitch',
+        'HostSystem',
+        'Datastore',
+        'Network',
+        'DistributedVirtualPortgroup',
+    ]
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         name=dict(required=True),
         new_name=dict(required=True),
-        object_type=dict(choices=list(object_types.keys()), default='VirtualMachine')
+        object_type=dict(choices=object_list, default='VirtualMachine')
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    object_type = object_types[module.params['object_type']]
-
-    pyv = VmObjectMgr(module, object_type=object_type)
+    pyv = VmObjectMgr(module)
 
 
 if __name__ == '__main__':
