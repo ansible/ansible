@@ -112,4 +112,4 @@ Example NETCONF Task
      when: ansible_network_os == 'junos'
 
 
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt
