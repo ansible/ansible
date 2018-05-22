@@ -88,7 +88,9 @@ options:
   state:
     description:
       - create or terminate instances
-    choices: [ absent, present ]
+    choices:
+        - absent
+        - present
     default: 'present'
   auto_updates:
     description:
@@ -457,7 +459,7 @@ def main():
             password=dict(no_log=True),
             image=dict(),
             virtual_network_name=dict(default=None),
-            state=dict(default='present'),
+            state=dict(default='present', choices=['absent', 'present']),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
             wait_timeout_redirects=dict(default=300),
