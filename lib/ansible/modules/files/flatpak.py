@@ -132,7 +132,7 @@ from ansible.module_utils.basic import AnsibleModule
 def install_flat(module, binary, remote, name, method):
     """Add a new flatpak."""
     global result
-    if 'http://' in name or 'https://' in name:
+    if name.startswith('http://') or name.startswith('https://'):
         command = "{0} install --{1} -y {2}".format(binary, method, name)
     else:
         command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, name)
@@ -178,7 +178,7 @@ def _match_installed_flat_name(module, binary, name, method):
 
 
 def _parse_flatpak_name(name):
-    if 'http://' in name or 'https://' in name:
+    if name.startswith('http://') or name.startswith('https://'):
         file_name = urlparse(name).path.split('/')[-1]
         file_name_without_extension = file_name.split('.')[0:-1]
         common_name = ".".join(file_name_without_extension)
