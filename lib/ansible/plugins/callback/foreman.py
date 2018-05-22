@@ -95,8 +95,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.FOREMAN_URL = self.get_option('url')
-        self.FOREMAN_SSL_CERT = (self.get_option['ssl_cert'], self.get_option['ssl_key'])
-        self.FOREMAN_SSL_VERIFY = str(self.get_option['verify_certs'])
+        self.FOREMAN_SSL_CERT = (self.get_option('ssl_cert'), self.get_option('ssl_key'))
+        self.FOREMAN_SSL_VERIFY = str(self.get_option('verify_certs'))
 
         self.ssl_verify = self._ssl_verify()
 
