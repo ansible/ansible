@@ -51,6 +51,60 @@
     that: 
       - "template_result.changed == true"
 
+# test for import with context on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
+- name: fill in a template using import with context ala issue 20494
+  template: src=import_with_context.j2 dest={{output_dir}}/import_with_context.templated mode=0644
+  register: template_result
+
+- name: copy known good import_with_context.expected into place
+  copy: src=import_with_context.expected dest={{output_dir}}/import_with_context.expected
+
+- name: compare templated file to known good import_with_context
+  shell: diff -uw {{output_dir}}/import_with_context.templated {{output_dir}}/import_with_context.expected
+  register: diff_result
+
+- name: verify templated import_with_context matches known good
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
+
+# test for 'import as' on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
+- name: fill in a template using import as ala fails2 case in issue 20494
+  template: src=import_as.j2 dest={{output_dir}}/import_as.templated mode=0644
+  register: import_as_template_result
+
+- name: copy known good import_as.expected into place
+  copy: src=import_as.expected dest={{output_dir}}/import_as.expected
+
+- name: compare templated file to known good import_as
+  shell: diff -uw {{output_dir}}/import_as.templated {{output_dir}}/import_as.expected
+  register: import_as_diff_result
+
+- name: verify templated import_as matches known good
+  assert:
+    that:
+        - 'import_as_diff_result.stdout == ""'
+        - "import_as_diff_result.rc == 0"
+
+# test for 'import as with context' on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
+- name: fill in a template using import as with context ala fails2 case in issue 20494
+  template: src=import_as_with_context.j2 dest={{output_dir}}/import_as_with_context.templated mode=0644
+  register: import_as_with_context_template_result
+
+- name: copy known good import_as_with_context.expected into place
+  copy: src=import_as_with_context.expected dest={{output_dir}}/import_as_with_context.expected
+
+- name: compare templated file to known good import_as_with_context
+  shell: diff -uw {{output_dir}}/import_as_with_context.templated {{output_dir}}/import_as_with_context.expected
+  register: import_as_with_context_diff_result
+
+- name: verify templated import_as_with_context matches known good
+  assert:
+    that:
+        - 'import_as_with_context_diff_result.stdout == ""'
+        - "import_as_with_context_diff_result.rc == 0"
+
 # VERIFY CONTENTS
 
 - name: check what python version ansible is running on
