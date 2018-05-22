@@ -74,18 +74,18 @@ EXAMPLES = """
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
       ipv6: fd5d:12c9:2201:2::2
 
 - name: Delete ipv4 address using aggregate
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
     state: absent
 """
 
@@ -96,7 +96,7 @@ diff:
   type: string
   sample: >
         [edit interfaces ge-0/0/1 unit 0 family inet]
-        +       address 1.1.1.1/32;
+        +       address 192.0.2.1/32;
         [edit interfaces ge-0/0/1 unit 0 family inet6]
         +       address fd5d:12c9:2201:1::1/128;
 """

@@ -220,7 +220,7 @@ EXAMPLES = '''
   nxos_bgp:
       asn: 65535
       vrf: test
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       state: present
 '''
 
@@ -229,7 +229,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+    sample: ["router bgp 65535", "vrf test", "router-id 192.0.2.1"]
 '''
 
 import re
