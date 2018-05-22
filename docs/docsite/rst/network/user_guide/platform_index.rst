@@ -15,7 +15,10 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_junos
    platform_nxos
 
-Connections Settings by Platform 
+.. _connections_by_platform:
+
+Connections Settings by Platform
+================================
 
 +----------------+----------------------+----------------------+------------------+------------------+
 |..              | network_cli          | netconf              | httpapi          | local            |
