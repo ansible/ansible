@@ -1,10 +1,11 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
 
 # See also: https://technet.microsoft.com/en-us/sysinternals/pxexec.aspx
 
@@ -35,153 +36,99 @@ If (-Not (Get-Command $executable -ErrorAction SilentlyContinue)) {
     Fail-Json $result "Executable '$executable' was not found."
 }
 
-$util_def = @'
-using System;
-using System.ComponentModel;
-using System.IO;
-using System.Threading;
-
-namespace Ansible.Command {
-
-    public static class NativeUtil {
-
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr) {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            string so = null, se = null;
-
-            ThreadPool.QueueUserWorkItem((s)=> {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) => {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
-        }
-    }
-}
-'@
-
-Add-Type -TypeDefinition $util_def
-
-$arguments = ""
+$arguments = @()
 
 If ($nobanner -eq $true) {
-    $arguments += " -nobanner"
+    $arguments += "-nobanner"
 }
 
 # Support running on local system if no hostname is specified
 If ($hostnames) {
-  $arguments += " \\" + $($hostnames | sort -Unique) -join ','
+    $hostname_argument = ($hostnames | sort -Unique) -join ','
+    $arguments += "\\$hostname_argument"
 }
 
 # Username is optional
 If ($username -ne $null) {
-    $arguments += " -u `"$username`""
+    $arguments += "-u"
+    $arguments += $username
 }
 
 # Password is optional
 If ($password -ne $null) {
-    $arguments += " -p `"$password`""
+    $arguments += "-p"
+    $arguments += $password
 }
 
 If ($chdir -ne $null) {
-    $arguments += " -w `"$chdir`""
+    $arguments += "-w"
+    $arguments += $chdir
 }
 
 If ($wait -eq $false) {
-    $arguments += " -d"
+    $arguments += "-d"
 }
 
 If ($noprofile -eq $true) {
-    $arguments += " -e"
+    $arguments += "-e"
 }
 
 If ($elevated -eq $true) {
-    $arguments += " -h"
+    $arguments += "-h"
 }
 
 If ($system -eq $true) {
-    $arguments += " -s"
+    $arguments += "-s"
 }
 
 If ($interactive -eq $true) {
-    $arguments += " -i"
+    $arguments += "-i"
 }
 
 If ($limited -eq $true) {
-    $arguments += " -l"
+    $arguments += "-l"
 }
 
 If ($priority -ne $null) {
-    $arguments += " -$priority"
+    $arguments += "-$priority"
 }
 
 If ($timeout -ne $null) {
-    $arguments += " -n $timeout"
+    $arguments += "-n"
+    $arguments += $timeout
 }
 
 # Add additional advanced options
 If ($extra_opts) {
     ForEach ($opt in $extra_opts) {
-        $arguments += " $opt"
+        $arguments += $opt
     }
 }
 
-$arguments += " -accepteula"
+$arguments += "-accepteula"
+$arguments += $command
 
-$proc = New-Object System.Diagnostics.Process
-$psi = $proc.StartInfo
-$psi.FileName = $executable
-$psi.Arguments = "$arguments $command"
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
-
-$result.psexec_command = "$executable$arguments $command"
+$argument_string = Argv-ToString -arguments $arguments
 
 $start_datetime = [DateTime]::UtcNow
+$result.psexec_command = "$executable $argument_string"
 
-Try {
-    $proc.Start() | Out-Null # will always return $true for non shell-exec cases
-} Catch [System.ComponentModel.Win32Exception] {
-    # fail nicely for "normal" error conditions
-    # FUTURE: this probably won't work on Nano Server
-    $excep = $_
-    $result.rc = $excep.Exception.NativeErrorCode
-    Fail-Json $result $excep.Exception.Message
-}
-
-$stdout = $stderr = [string] $null
-
-[Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-
-$result.stdout = $stdout
-$result.stderr = $stderr
-
-$proc.WaitForExit() | Out-Null
-
-If ($wait -eq $true) {
-    $result.rc = $proc.ExitCode
-} else {
-    $result.rc = 0
-    $result.pid = $proc.ExitCode
-}
+$command_result = Run-Command -command "$executable $argument_string"
 
 $end_datetime = [DateTime]::UtcNow
+
+$result.stdout = $command_result.stdout
+$result.stderr = $command_result.stderr
+
+If ($wait -eq $true) {
+    $result.rc = $command_result.rc
+} else {
+    $result.rc = 0
+    $result.pid = $command_result.rc
+}
 
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
 
 Exit-Json $result
-

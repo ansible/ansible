@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args -supports_check_mode $true
 
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "absent","directory","file","touch"
@@ -51,7 +52,13 @@ namespace Ansible.Command {
     }
 }
 "@
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 # Used to delete directories and files with logic on handling symbolic links
 function Remove-File($file, $checkmode) {

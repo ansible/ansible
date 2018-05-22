@@ -120,7 +120,16 @@ namespace Ansible {
 }
 "@
 
+$params = Parse-Args $args;
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
+
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 add-type $AdjustTokenPrivileges
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 Function SetPrivilegeTokens() {
     # Set privilege tokens only if admin.
@@ -143,7 +152,7 @@ Function SetPrivilegeTokens() {
 }
 
 
-$params = Parse-Args $args;
+
 
 $result = @{
     changed = $false
