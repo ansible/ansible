@@ -1,0 +1,115 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+  # ============================================================
+  # Parameter Tests
+  # ============================================================
+
+  - name: test with no parameters
+    dms_instance:
+    register: result
+    ignore_errors: true
+
+  - name: assert failure when called with no parameters
+    assert:
+      that:
+         - 'result.failed'
+         - 'result.msg.startswith("missing required arguments:")'
+
+  - name: test for missing parameters
+    dms_instance:
+      name: 'test-instance'
+    register: result
+    ignore_errors: true
+
+  - name: assert failure when called with missing parameters
+    assert:
+      that:
+         - 'result.failed'
+         - 'result.msg.startswith("missing required arguments:")'
+
+  - name: test for incorrect instance_type value
+    dms_instance:
+      name: 'test-instance'
+      instance_type: 't2.medium'
+    register: result
+    ignore_errors: true
+
+  - name: assert failure when called with incorrect value
+    assert:
+      that:
+         - 'result.failed'
+         - 'result.msg.startswith("value of instance_type must be one of:")'
+
+  # ============================================================
+  # Resource Tests
+  # ============================================================
+
+  - name: Create replication instance
+    dms_instance:
+      <<: *aws_connection_info
+      name: 'my-test-dms-instance'
+      state: present
+      instance_type: 'dms.t2.micro'
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+          - result.changed
+          - result.instance_arn is not none
+
+  - name: No changes to replication instance
+    dms_instance:
+      <<: *aws_connection_info
+      name: 'my-test-dms-instance'
+      state: present
+      instance_type: 'dms.t2.micro'
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+          - not result.changed
+          - result.instance_arn is not none
+
+  - name: Update replication instance
+    dms_instance:
+      <<: *aws_connection_info
+      name: 'my-test-dms-instance'
+      state: present
+      instance_type: 'dms.t2.micro'
+      multi_az: true
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+          - result.changed
+          - result.instance_arn is not none
+
+  always:
+
+  # ============================================================
+  # Teardown testing resources
+  # ============================================================
+
+  - name: Destroy replication instance
+    dms_instance:
+      name: 'my-test-dms-instance'
+      state: absent
+      instance_type: 'dms.t2.micro'
+      <<: *aws_connection_info
+    register: removed
+    until: removed is not failed
+    ignore_errors: yes
+    retries: 10
