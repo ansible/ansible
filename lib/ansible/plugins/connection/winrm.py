@@ -292,8 +292,14 @@ class Connection(ConnectionBase):
 
             display.vvvv("calling kinit with pexpect for principal %s"
                          % principal)
-            child = pexpect.spawn(command, kinit_cmdline, timeout=60,
-                                  env=krb5env)
+            try:
+                child = pexpect.spawn(command, kinit_cmdline, timeout=60,
+                                      env=krb5env)
+            except pexpect.ExceptionPexpect as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (command, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
             try:
                 child.expect(".*:")
                 child.sendline(password)
@@ -315,10 +321,17 @@ class Connection(ConnectionBase):
 
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
-            p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 env=krb5env)
+            try:
+                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env=krb5env)
+
+            except FileNotFoundError as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (self._kinit_cmd, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
             stdout, stderr = p.communicate(password + b'\n')
             rc = p.returncode != 0
 
