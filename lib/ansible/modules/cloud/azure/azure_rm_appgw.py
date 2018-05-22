@@ -82,9 +82,9 @@ options:
                 description:
                     - Minimum version of Ssl protocol to be supported on application gateway.
                 choices:
-                    - 'tl_sv1_0'
-                    - 'tl_sv1_1'
-                    - 'tl_sv1_2'
+                    - 'tls_v1_0'
+                    - 'tls_v1_1'
+                    - 'tls_v1_2'
     gateway_ip_configurations:
         description:
             - List of subnets used by the application gateway.
@@ -458,23 +458,15 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 elif key == "ssl_policy":
                     ev = kwargs[key]
                     if 'policy_type' in ev:
-                        if ev['policy_type'] == 'predefined':
-                            ev['policy_type'] = 'Predefined'
-                        elif ev['policy_type'] == 'custom':
-                            ev['policy_type'] = 'Custom'
+                        ev['policy_type'] = _snake_to_camel(ev['policy_type'], True)
                     if 'policy_name' in ev:
-                        if ev['policy_name'] == 'app_gw_ssl_policy20150501':
-                            ev['policy_name'] = 'AppGwSslPolicy20150501'
-                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401':
-                            ev['policy_name'] = 'AppGwSslPolicy20170401'
-                        elif ev['policy_name'] == 'app_gw_ssl_policy20170401_s':
-                            ev['policy_name'] = 'AppGwSslPolicy20170401S'
+                        ev['policy_name'] = _snake_to_camel(ev['policy_name'], True)
                     if 'min_protocol_version' in ev:
-                        if ev['min_protocol_version'] == 'tl_sv1_0':
+                        if ev['min_protocol_version'] == 'tls_v1_0':
                             ev['min_protocol_version'] = 'TLSv1_0'
-                        elif ev['min_protocol_version'] == 'tl_sv1_1':
+                        elif ev['min_protocol_version'] == 'tls_v1_1':
                             ev['min_protocol_version'] = 'TLSv1_1'
-                        elif ev['min_protocol_version'] == 'tl_sv1_2':
+                        elif ev['min_protocol_version'] == 'tls_v1_2':
                             ev['min_protocol_version'] = 'TLSv1_2'
                     self.parameters["ssl_policy"] = ev
                 elif key == "gateway_ip_configurations":
