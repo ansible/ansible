@@ -554,7 +554,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.vmware import (find_obj, find_objs, gather_vm_facts, get_all_objs,
+from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
                                          find_dvs_by_name, find_dvspg_by_name)
@@ -1897,39 +1897,37 @@ class PyVmomiHelper(PyVmomi):
     def get_resource_pool(self, cluster=None, host=None, resource_pool=None):
         """ Get a resource pool, filter on cluster, esxi_hostname or resource_pool if given """
 
-        cluster_name = cluster or self.params['cluster']
-        host_name = host or self.params['esxi_hostname']
-        resource_pool_name = resource_pool or self.params['resource_pool']
+        cluster_name = cluster or self.params.get('cluster', None)
+        host_name = host or self.params.get('esxi_hostname', None)
+        resource_pool_name = resource_pool or self.params.get('resource_pool', None)
 
         # get the datacenter object
-        datacenter_list = find_objs(self.content, [vim.Datacenter], None, self.params['datacenter'])
-        if not datacenter_list:
+        datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+        if not datacenter:
             self.module.fail_json(msg='Unable to find datacenter "%s"' % self.params['datacenter'])
-        datacenter = datacenter_list[0]
 
         # if cluster is given, get the cluster object
         if cluster_name:
-            cluster_list = find_objs(self.content, [vim.ComputeResource], datacenter, cluster_name)
-            if not cluster_list:
+            cluster = find_obj(self.content, [vim.ComputeResource], cluster_name, folder=datacenter)
+            if not cluster:
                 self.module.fail_json(msg='Unable to find cluster "%s"' % cluster_name)
-            cluster = cluster_list[0]
         # if host is given, get the cluster object using the host
         elif host_name:
-            host_list = find_objs(self.content, [vim.HostSystem], datacenter, host_name)
-            if not host_list:
+            host = find_obj(self.content, [vim.HostSystem], host_name, folder=datacenter)
+            if not host:
                 self.module.fail_json(msg='Unable to find host "%s"' % host_name)
-            cluster = host_list[0].parent
+            cluster = host.parent
         else:
             cluster = None
 
         # get resource pools limiting search to cluster or datacenter
-        resource_pool_list = find_objs(self.content, [vim.ResourcePool], cluster or datacenter, resource_pool_name)
-        if not resource_pool_list:
+        resource_pool = find_obj(self.content, [vim.ResourcePool], resource_pool_name, folder=cluster or datacenter)
+        if not resource_pool:
             if resource_pool_name:
                 self.module.fail_json(msg='Unable to find resource_pool "%s"' % resource_pool_name)
             else:
                 self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
-        return resource_pool_list[0]
+        return resource_pool
 
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py

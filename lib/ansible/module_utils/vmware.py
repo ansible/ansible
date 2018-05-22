@@ -76,8 +76,8 @@ def wait_for_vm_ip(content, vm, timeout=300):
     return facts
 
 
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+def find_obj(content, vimtype, name, first=True, folder=None):
+    container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
     obj_list = container.view
     container.Destroy()
 
@@ -98,22 +98,6 @@ def find_obj(content, vimtype, name, first=True):
 
     # Return all matching objects if needed
     return [obj for obj in obj_list if obj.name == name]
-
-
-def find_objs(content, vimtypes, container=None, name=None):
-    """ Get all objects of certain type(s) and optionally match name """
-    items = []
-    cv = content.viewManager.CreateContainerView(container or content.rootFolder,
-                                                 vimtypes, recursive=True)
-    # make sure name does not contain a path
-    if name:
-        name = name.split('/')[-1]
-
-    for item in cv.view:
-        if not name or item.name == name:
-            items.append(item)
-    cv.Destroy()
-    return items
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
