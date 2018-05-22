@@ -36,14 +36,15 @@ description:
 options:
   hostname:
     description:
-      - Configure the device hostname parameter. This option takes an ASCII string value.
+      - Configure the device hostname parameter. This option takes an ASCII string value
+        or keyword 'default'
   domain_name:
     description:
       - Configures the default domain
         name suffix to be used when referencing this node by its
         FQDN.  This argument accepts either a list of domain names or
-        a list of dicts that configure the domain name and VRF name.  See
-        examples.
+        a list of dicts that configure the domain name and VRF name or
+        keyword 'default'. See examples.
   domain_lookup:
     description:
       - Enables or disables the DNS
@@ -55,17 +56,17 @@ options:
       - Configures a list of domain
         name suffixes to search when performing DNS name resolution.
         This argument accepts either a list of domain names or
-        a list of dicts that configure the domain name and VRF name.  See
-        examples.
+        a list of dicts that configure the domain name and VRF name or
+        keyword 'default'. See examples.
   name_servers:
     description:
       - List of DNS name servers by IP address to use to perform name resolution
         lookups.  This argument accepts either a list of DNS servers or
-        a list of hashes that configure the name server and VRF name.  See
-        examples.
+        a list of hashes that configure the name server and VRF name or
+        keyword 'default'. See examples.
   system_mtu:
     description:
-      - Specifies the mtu, must be an integer.
+      - Specifies the mtu, must be an integer or keyword 'default'.
   state:
     description:
       - State of the configuration
@@ -174,40 +175,67 @@ def map_obj_to_commands(want, have, module):
 
     if state == 'present':
         if needs_update('hostname'):
-            commands.append('hostname %s' % want['hostname'])
+            if want['hostname'] == 'default':
+                if have['hostname']:
+                    commands.append('no hostname')
+            else:
+                commands.append('hostname %s' % want['hostname'])
 
-        if needs_update('domain_lookup'):
-            cmd = 'ip domain-lookup'
-            if want['domain_lookup'] is False:
-                cmd = 'no %s' % cmd
-            commands.append(cmd)
+        if want.get('domain_lookup') is not None:
+            if have.get('domain_lookup') != want.get('domain_lookup'):
+                cmd = 'ip domain-lookup'
+                if want['domain_lookup'] is False:
+                    cmd = 'no %s' % cmd
+                commands.append(cmd)
 
         if want['domain_name']:
-            for item in difference(have, want, 'domain_name'):
-                cmd = 'no ip domain-name %s' % item['name']
-                remove(cmd, commands, item['vrf'])
-            for item in difference(want, have, 'domain_name'):
-                cmd = 'ip domain-name %s' % item['name']
-                add(cmd, commands, item['vrf'])
+            if want.get('domain_name')[0]['name'] == 'default':
+                if have['domain_name']:
+                    for item in have['domain_name']:
+                        cmd = 'no ip domain-name %s' % item['name']
+                        remove(cmd, commands, item['vrf'])
+            else:
+                for item in difference(have, want, 'domain_name'):
+                    cmd = 'no ip domain-name %s' % item['name']
+                    remove(cmd, commands, item['vrf'])
+                for item in difference(want, have, 'domain_name'):
+                    cmd = 'ip domain-name %s' % item['name']
+                    add(cmd, commands, item['vrf'])
 
         if want['domain_search']:
-            for item in difference(have, want, 'domain_search'):
-                cmd = 'no ip domain-list %s' % item['name']
-                remove(cmd, commands, item['vrf'])
-            for item in difference(want, have, 'domain_search'):
-                cmd = 'ip domain-list %s' % item['name']
-                add(cmd, commands, item['vrf'])
+            if want.get('domain_search')[0]['name'] == 'default':
+                if have['domain_search']:
+                    for item in have['domain_search']:
+                        cmd = 'no ip domain-list %s' % item['name']
+                        remove(cmd, commands, item['vrf'])
+            else:
+                for item in difference(have, want, 'domain_search'):
+                    cmd = 'no ip domain-list %s' % item['name']
+                    remove(cmd, commands, item['vrf'])
+                for item in difference(want, have, 'domain_search'):
+                    cmd = 'ip domain-list %s' % item['name']
+                    add(cmd, commands, item['vrf'])
 
         if want['name_servers']:
-            for item in difference(have, want, 'name_servers'):
-                cmd = 'no ip name-server %s' % item['server']
-                remove(cmd, commands, item['vrf'])
-            for item in difference(want, have, 'name_servers'):
-                cmd = 'ip name-server %s' % item['server']
-                add(cmd, commands, item['vrf'])
+            if want.get('name_servers')[0]['server'] == 'default':
+                if have['name_servers']:
+                    for item in have['name_servers']:
+                        cmd = 'no ip name-server %s' % item['server']
+                        remove(cmd, commands, item['vrf'])
+            else:
+                for item in difference(have, want, 'name_servers'):
+                    cmd = 'no ip name-server %s' % item['server']
+                    remove(cmd, commands, item['vrf'])
+                for item in difference(want, have, 'name_servers'):
+                    cmd = 'ip name-server %s' % item['server']
+                    add(cmd, commands, item['vrf'])
 
         if needs_update('system_mtu'):
-            commands.append('system jumbomtu %s' % want['system_mtu'])
+            if want['system_mtu'] == 'default':
+                if have['system_mtu']:
+                    commands.append('no system jumbomtu')
+            else:
+                commands.append('system jumbomtu %s' % want['system_mtu'])
 
     return commands
 
@@ -269,7 +297,7 @@ def parse_name_servers(config, vrf_config, vrfs):
 def parse_system_mtu(config):
     match = re.search(r'^system jumbomtu (\d+)', config, re.M)
     if match:
-        return int(match.group(1))
+        return match.group(1)
 
 
 def map_config_to_obj(module):
@@ -291,11 +319,6 @@ def map_config_to_obj(module):
         'name_servers': parse_name_servers(config, vrf_config, vrfs),
         'system_mtu': parse_system_mtu(config)
     }
-
-
-def validate_system_mtu(value, module):
-    if not 1500 <= value <= 9216:
-        module.fail_json(msg='system_mtu must be between 1500 and 9216')
 
 
 def map_params_to_obj(module):
@@ -346,7 +369,7 @@ def main():
         # { server: <str>; vrf: <str> }
         name_servers=dict(type='list'),
 
-        system_mtu=dict(type='int'),
+        system_mtu=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
