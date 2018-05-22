@@ -48,6 +48,14 @@ def main():
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
+            elif path.startswith('lib/') or path.startswith('test/runner/lib/'):
+                if executable:
+                    print('%s:%d:%d: should not be executable' % (path, 0, 0))
+
+                if shebang:
+                    print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
+
+                continue
             elif path.startswith('test/integration/targets/'):
                 dirname = os.path.dirname(path)
 
