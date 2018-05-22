@@ -1,0 +1,3 @@
+bugfixes:
+- synchronize - Ensure rsync_opts is a list when not provided
+- action - Ensure remote user is correctly calculated when expanding the remote user path
