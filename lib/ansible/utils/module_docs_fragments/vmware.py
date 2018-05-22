@@ -32,6 +32,7 @@ options:
       - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
       - If the value is not specified in the task, the value of environment variable C(VMWARE_VALIDATE_CERTS) will be used instead.
       - Environment variable supported added in version 2.6.
+      - If set to C(True), please make sure Python >= 2.7.9 is installed on the given machine.
       default: 'True'
       type: bool
     port:
