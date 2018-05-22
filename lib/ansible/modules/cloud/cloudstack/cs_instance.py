@@ -115,7 +115,7 @@ options:
     description:
       - Host on which an instance should be deployed or started on.
       - Only considered when I(state=started) or instance is running.
-      - Requires root admin preveleges.
+      - Requires root admin privileges.
     version_added: 2.6
   domain:
     description:
