@@ -15,54 +15,83 @@ DOCUMENTATION = r'''
 ---
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
-description:
-- Create new virtual machines from templates or other virtual machines.
-- Manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,.
-- Modify, rename or remove a virtual machine.
+description: >
+   This module can be used to create new virtual machines from templates or other virtual machines,
+   manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,
+   modify various virtual machine components like network, disk, customization etc.,
+   rename a virtual machine and remove a virtual machine with associated components.
 version_added: '2.2'
 author:
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
-notes:
-- Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
+notes:
+    - Please make sure the user used for vmware_guest should have correct level of privileges.
+    - For example, following is the list of minimum privileges required by users to create virtual machines.
+    - "   DataStore > Allocate Space"
+    - "   Virtual Machine > Configuration > Add New Disk"
+    - "   Virtual Machine > Configuration > Add or Remove Device"
+    - "   Virtual Machine > Inventory > Create New"
+    - "   Network > Assign Network"
+    - "   Resource > Assign Virtual Machine to Resource Pool"
+    - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
+    - Tested on vSphere 5.5, 6.0 and 6.5
+    - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
     description:
     - Specify state of the virtual machine be in.
-    - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
+    - 'If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine
+       configurations conforms to task arguments.'
+    - 'If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine
+      is removed with its associated components.'
+    - 'If C(state) is set to one of the following C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
+      and virtual machine does not exists, then virtual machine is deployed with given parameters.'
+    - 'If C(state) is set to C(poweredon) and virtual machine exists with powerstate other than powered on,
+      then the specified virtual machine is powered on.'
+    - 'If C(state) is set to C(poweredoff) and virtual machine exists with powerstate other than powered off,
+      then the specified virtual machine is powered off.'
+    - 'If C(state) is set to C(restarted) and virtual machine exists, then the virtual machine is restarted.'
+    - 'If C(state) is set to C(suspended) and virtual machine exists, then the virtual machine is set to suspended mode.'
+    - 'If C(state) is set to C(shutdownguest) and virtual machine exists, then the virtual machine is shutdown.'
+    - 'If C(state) is set to C(rebootguest) and virtual machine exists, then the virtual machine is rebooted.'
     default: present
     choices: [ present, absent, poweredon, poweredoff, restarted, suspended, shutdownguest, rebootguest ]
   name:
     description:
-    - Name of the VM to work with.
-    - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    - Name of the virtual machine to work with.
+    - Virtual machine names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    - 'If multiple virtual machines with same name exists, then C(folder) is required parameter to
+       identify uniqueness of the virtual machine.'
+    - This parameter is required, if C(state) is set to C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
+      and virtual machine does not exists.
     - This parameter is case sensitive.
     required: yes
   name_match:
     description:
-    - If multiple VMs matching the name, use the first or last found.
+    - If multiple virtual machines matching the name, use the first or last found.
     default: 'first'
     choices: [ first, last ]
   uuid:
     description:
-    - UUID of the instance to manage if known, this is VMware's unique identifier.
-    - This is required if name is not supplied.
-    - Please note that a supplied UUID will be ignored on VM creation, as VMware creates the UUID internally.
+    - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
+    - This is required if C(name) is not supplied.
+    - If virtual machine does not exists, then this parameter is ignored.
+    - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
   template:
     description:
-    - Template or existing VM used to create VM.
-    - If this value is not set, VM is created without using a template.
-    - If the VM exists already this setting will be ignored.
+    - Template or existing virtual machine used to create new virtual machine.
+    - If this value is not set, virtual machine is created without using a template.
+    - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
     aliases: [ 'template_src' ]
   is_template:
     description:
     - Flag the instance as a template.
-    - This will mark VM instance as template.
+    - This will mark the given virtual machine as template.
     default: 'no'
     type: bool
     version_added: '2.3'
@@ -71,6 +100,9 @@ options:
     - Destination folder, absolute path to find an existing guest or create the new guest.
     - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
     - This parameter is case sensitive.
+    - This parameter is required, while deploying new virtual machine. version_added 2.5.
+    - 'If multiple machines are found with same name, this parameter is used to identify
+       uniqueness of the virtual machine. version_added 2.5'
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
     - '   folder: ha-datacenter/vm'
@@ -86,18 +118,20 @@ options:
     - Manage virtual machine's hardware attributes.
     - All parameters case sensitive.
     - 'Valid attributes are:'
-    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
-    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
-    - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
+    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the virtual machine is running.'
+    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the virtual machine is running.
+          version_added: 2.5'
+    - ' - C(hotadd_memory) (boolean): Allow memory to be added while the virtual machine is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
     - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
-    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
-          will always be equal to the VM's memory size. version_added: 2.5"
-    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
+    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
+          will always be equal to the virtual machine's memory size. version_added: 2.5"
+    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines.
+          version_added: 2.5.'
     - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
           version_added: 2.5'
     - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
@@ -108,18 +142,18 @@ options:
           Unit is MHz. version_added: 2.5'
     - ' - C(version) (integer): The Virtual machine hardware versions. Default is 10 (ESXi 5.5 and onwards).
           Please check VMware documentation for correct virtual machine hardware version.
-          Incorrect hardware version may lead to failure in deployment. If hardware version is already to given version then no action is taken.
-          version_added: 2.6'
+          Incorrect hardware version may lead to failure in deployment. If hardware version is already equal to the given
+          version then no action is taken. version_added: 2.6'
 
   guest_id:
     description:
     - Set the guest ID.
     - This parameter is case sensitive.
     - 'Examples:'
-    - "  VM with RHEL7 64 bit, will be 'rhel7_64Guest'"
-    - "  VM with CensOS 64 bit, will be 'centos64Guest'"
-    - "  VM with Ubuntu 64 bit, will be 'ubuntu64Guest'"
-    - This field is required when creating a VM.
+    - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
+    - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
+    - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
+    - This field is required when creating a virtual machine.
     - >
          Valid values are referenced here:
          U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
@@ -129,7 +163,7 @@ options:
     - A list of disks to add.
     - This parameter is case sensitive.
     - Resizing disks is not supported.
-    - Removing existing disks of virtual machine is not supported.
+    - Removing existing disks of the virtual machine is not supported.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
     - ' - C(type) (string): Valid values are:'
@@ -140,39 +174,39 @@ options:
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
   cdrom:
     description:
-    - A CD-ROM configuration for the VM.
+    - A CD-ROM configuration for the virtual machine.
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
     version_added: '2.5'
   resource_pool:
     description:
-    - Affect machine to the given resource pool.
+    - Use the given resource pool for virtual machine operation.
     - This parameter is case sensitive.
     - Resource pool should be child of the selected host parent.
     version_added: '2.3'
   wait_for_ip_address:
     description:
-    - Wait until vCenter detects an IP address for the VM.
+    - Wait until vCenter detects an IP address for the virtual machine.
     - This requires vmware-tools (vmtoolsd) to properly work after creation.
-    - "vmware-tools needs to be installed on given virtual machine in order to work with this parameter."
+    - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
-    - If this argument is set to a positive integer, the module will instead wait for the VM to reach the poweredoff state.
+    - If this argument is set to a positive integer, the module will instead wait for the virtual machine to reach the poweredoff state.
     - The value sets a timeout in seconds for the module to wait for the state change.
     default: 0
     version_added: '2.6'
   snapshot_src:
     description:
-    - Name of the existing snapshot to use to create a clone of a VM.
+    - Name of the existing snapshot to use to create a clone of a virtual machine.
     - This parameter is case sensitive.
     version_added: '2.4'
   linked_clone:
     description:
-    - Whether to create a Linked Clone from the snapshot specified.
+    - Whether to create a linked clone from the snapshot specified.
     default: 'no'
     type: bool
     version_added: '2.4'
@@ -180,6 +214,9 @@ options:
     description:
     - Ignore warnings and complete the actions.
     - This parameter is useful while removing virtual machine which is powered on state.
+    - 'This module reflects the VMware vCenter API and UI workflow, as such, in some cases the `force` flag will
+       be mandatory to perform the action to ensure you are certain the action has to be taken, no matter what the consequence.
+       This is specifically the case for removing a powered on the virtual machine when C(state) is set to C(absent).'
     default: 'no'
     type: bool
   datacenter:
@@ -190,11 +227,15 @@ options:
   cluster:
     description:
     - The cluster name where the virtual machine will run.
+    - This is a required parameter, if C(esxi_hostname) is not set.
+    - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
     - This parameter is case sensitive.
     version_added: '2.3'
   esxi_hostname:
     description:
     - The ESXi hostname where the virtual machine will run.
+    - This is a required parameter, if C(cluster) is not set.
+    - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
     - This parameter is case sensitive.
   annotation:
     description:
@@ -209,9 +250,11 @@ options:
   networks:
     description:
     - A list of networks (in the order of the NICs).
+    - Removing NICs is not allowed, while reconfiguring the virtual machine.
     - All parameters and VMware object names are case sensetive.
     - 'One of the below parameters is required per entry:'
-    - ' - C(name) (string): Name of the portgroup for this interface.'
+    - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
+          When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
     - ' - C(vlan) (integer): VLAN number for this interface.'
     - 'Optional parameters per entry (used for virtual hardware):'
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
@@ -230,16 +273,19 @@ options:
   customization:
     description:
     - Parameters for OS customization when cloning from the template or the virtual machine.
+    - Not all operating systems are supported for customization with respective vCenter version,
+      please check VMware documentation for respective OS customization.
+    - For supported customization operating system matrix, (see U(http://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf))
     - All parameters and VMware object names are case sensitive.
-    - Linux based OS requires Perl to be installed for OS customization.
+    - Linux based OSes requires Perl package to be installed for OS customizations.
     - 'Common parameters (Linux/Windows):'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
-    - ' - C(dns_suffix) (list): List of domain suffixes, a.k.a. DNS search path (default: C(domain) parameter).'
+    - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
-    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter).'
-    - 'Allowed characters are alphanumeric (uppercase and lowercase) and minus, rest of the characters are dropped as per RFC 952.'
+    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
+          and minus, rest of the characters are dropped as per RFC 952.'
     - 'Parameters related to Windows customization:'
-    - ' - C(autologon) (bool): Auto logon after VM customization (default: False).'
+    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
     - ' - C(domainadmin) (string): User used to join in AD domain (mandatory with C(joindomain)).'
     - ' - C(domainadminpassword) (string): Password used to join in AD domain (mandatory with C(joindomain)).'
@@ -272,12 +318,42 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Create a VM from a template
+- name: Create a virtual machine on given ESXi hostname
   vmware_guest:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    folder: /DC1/vm/
+    name: test_vm_0001
+    state: poweredon
+    guest_id: centos64Guest
+    # This is hostname of particular ESXi server on which user wants VM to be deployed
+    esxi_hostname: "{{ esxi_hostname }}"
+    disk:
+    - size_gb: 10
+      type: thin
+      datastore: datastore1
+    hardware:
+      memory_mb: 512
+      num_cpus: 4
+      scsi: paravirtual
+    networks:
+    - name: VM Network
+      mac: aa:bb:dd:aa:00:14
+      ip: 10.10.10.100
+      netmask: 255.255.255.0
+      device_type: vmxnet3
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  register: deploy_vm
+
+- name: Create a virtual machine from a template
+  vmware_guest:
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     folder: /testvms
     name: testvm_2
     state: poweredon
@@ -301,7 +377,7 @@ EXAMPLES = r'''
       hotadd_cpu: True
       hotremove_cpu: True
       hotadd_memory: False
-      version: 12 # Hardware version of VM
+      version: 12 # Hardware version of virtual machine
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -312,12 +388,12 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
-- name: Clone a VM from Template and customize
+- name: Clone a virtual machine from Template and customize
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     datacenter: datacenter1
     cluster: cluster
     name: testvm-2
@@ -345,54 +421,33 @@ EXAMPLES = r'''
       - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
   delegate_to: localhost
 
-- name: Create a VM template
+- name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
-    hostname: 192.0.2.88
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    datacenter: datacenter1
-    cluster: vmware_cluster_esx
-    resource_pool: highperformance_pool
-    folder: /testvms
-    name: testvm_6
-    is_template: yes
-    guest_id: debian6_64Guest
-    disk:
-    - size_gb: 10
-      type: thin
-      datastore: g73_datastore
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-      scsi: lsilogic
-  delegate_to: localhost
-  register: deploy
-
-- name: Rename a VM (requires the VM's uuid)
-  vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    uuid: "{{ vm_uuid }}"
     name: new_name
     state: present
   delegate_to: localhost
 
-- name: Remove a VM by uuid
+- name: Remove a virtual machine by uuid
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    uuid: "{{ vm_uuid }}"
     state: absent
   delegate_to: localhost
 
 - name: Manipulate vApp properties
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     name: vm_name
     state: present
     vapp_properties:
@@ -403,6 +458,16 @@ EXAMPLES = r'''
         value: 10.10.10.1
       - id: old_property
         operation: remove
+
+- name: Set powerstate of a virtual machine to poweroff by using UUID
+  vmware_guest:
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    uuid: "{{ vm_uuid }}"
+    state: poweredoff
+  delegate_to: localhost
 '''
 
 RETURN = r'''
