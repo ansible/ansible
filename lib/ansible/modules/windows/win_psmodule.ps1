@@ -117,6 +117,9 @@ Function Install-PsModule {
     }
     else {      
       try{
+        # Install NuGet Provider if needed
+        Install-NugetProvider -CheckMode $CheckMode;
+
         $ht = @{
             Name      = $Name;
             WhatIf    = $CheckMode;
