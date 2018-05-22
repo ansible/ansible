@@ -93,7 +93,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.set_variable(hostname, key, item[key])
         self.inventory.add_child('all', hostname)
 
-    def _validate_file(self, path):
+    def verify_file(self, path):
         '''
             :param path: the path to the inventory config file
             :return the contents of the config file
@@ -213,12 +213,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate_host(host)
 
             hostname = self._get_hostname(host)
-            if self._options.get('compose'):
-                self._set_composite_vars(self.get_option('compose'), host, hostname)
-            if self._options.get('groups'):
-                self._add_host_to_composed_groups(self.get_option('groups'), host, hostname)
-            if self._options.get('keyed_groups'):
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname)
+            self._set_composite_vars(self.get_option('compose'), host, hostname)
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname)
 
     def _format_network_info(self, address):
         '''
@@ -262,7 +259,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 raise AnsibleParserError("No valid name found for host")
 
-
     def _get_publicip(self, item):
         '''
             :param item: A host response from GCP
@@ -290,7 +286,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}
-        if self._validate_file(path):
+        if self.verify_file(path):
             config_data = self._read_config_data(path)
 
         # get user specifications
@@ -313,7 +309,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # Cache logic
         if cache:
-            cache = self._options.get('cache')
+            cache = self.get_option('cache')
             cache_key = self.get_cache_key(path)
         else:
             cache_key = None
@@ -322,6 +318,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if cache:
             try:
                 results = self.cache.get(cache_key)
+                self._add_hosts(results, config_data)
             except KeyError:
                 cache_needs_update = True
 
