@@ -1090,27 +1090,6 @@ $exec_wrapper = {
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
 
-    # become process is run under a different console to the WinRM one so we
-    # need to set the UTF-8 codepage again
-    Add-Type -Debug:$false -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-
-namespace Ansible
-{
-    public class ConsoleCP
-    {
-        [DllImport("kernel32.dll")]
-        public static extern bool SetConsoleCP(UInt32 wCodePageID);
-
-        [DllImport("kernel32.dll")]
-        public static extern bool SetConsoleOutputCP(UInt32 wCodePageID);
-    }
-}
-'@
-    [Ansible.ConsoleCP]::SetConsoleCP(65001) > $null
-    [Ansible.ConsoleCP]::SetConsoleOutputCP(65001) > $null
-
     Function ConvertTo-HashtableFromPsCustomObject($myPsObject) {
         $output = @{}
         $myPsObject | Get-Member -MemberType *Property | % {
@@ -1122,6 +1101,57 @@ namespace Ansible
         }
         return $output
     }
+
+    Function Invoke-Win32Api {
+        # Inspired by - Call a Win32 API in PowerShell without compiling C# code on
+        # the disk
+        # http://www.leeholmes.com/blog/2007/10/02/managing-ini-files-with-powershell/
+        # https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/27/use-powershell-to-interact-with-the-windows-api-part-3/
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory=$true)] [String]$DllName,
+            [Parameter(Mandatory=$true)] [String]$MethodName,
+            [Parameter(Mandatory=$true)] [Type]$ReturnType,
+            [Parameter()] [Type[]]$ParameterTypes = [Type[]]@(),
+            [Parameter()] [Object[]]$Parameters = [Object[]]@()
+        )
+
+        $assembly = New-Object -TypeName System.Reflection.AssemblyName -ArgumentList "Win32ApiAssembly"
+        $dynamic_assembly = [AppDomain]::CurrentDomain.DefineDynamicAssembly($assembly, [Reflection.Emit.AssemblyBuilderAccess]::Run)
+        $dynamic_module = $dynamic_assembly.DefineDynamicModule("Win32Module", $false)
+        $dynamic_type = $dynamic_module.DefineType("Win32Type", "Public, Class")
+
+        $dynamic_method = $dynamic_type.DefineMethod(
+            $MethodName,
+            [Reflection.MethodAttributes]"Public, Static",
+            $ReturnType,
+            $ParameterTypes
+        )
+
+        $constructor = [Runtime.InteropServices.DllImportAttribute].GetConstructor([String])
+        $custom_attributes = New-Object -TypeName Reflection.Emit.CustomAttributeBuilder -ArgumentList @(
+            $constructor,
+            $DllName
+        )
+
+        $dynamic_method.SetCustomAttribute($custom_attributes)
+        $win32_type = $dynamic_type.CreateType()
+        $win32_type::$MethodName.Invoke($Parameters)
+    }
+
+    # become process is run under a different console to the WinRM one so we
+    # need to set the UTF-8 codepage again, this also needs to be set before
+    # reading the stdin pipe that contains the module args specifying the
+    # remote_tmp to use. Instead this will use reflection when calling the Win32
+    # API no tmp files touch the disk
+    $invoke_args = @{
+        DllName = "kernel32.dll"
+        ReturnType = [bool]
+        ParameterTypes = @([UInt32])
+        Parameters = @(65001)
+    }
+    Invoke-Win32Api -MethodName SetConsoleCP @invoke_args > $null
+    Invoke-Win32Api -MethodName SetConsoleOutputCP @invoke_args > $null
 
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
     # exec runspace, capture output, cleanup, return module output
@@ -1240,7 +1270,21 @@ Function Parse-BecomeFlags($flags) {
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
+    $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+    if ($null -eq $remote_tmp) {
+        $remote_tmp = $original_tmp
+    }
+
+    # become process is run under a different console to the WinRM one so we
+    # need to set the UTF-8 codepage again
+    $env:TMP = $remote_tmp
+    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $helper_def -Debug:$false
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_tmp
 
     $username = $payload.become_user
     $password = $payload.become_password
@@ -1252,7 +1296,7 @@ Function Run($payload) {
     }
 
     # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
-    $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
+    $temp = [System.IO.Path]::Combine($remote_tmp, [System.IO.Path]::GetRandomFileName() + ".ps1")
     $exec_wrapper.ToString() | Set-Content -Path $temp
     $rc = 0
 
@@ -1574,17 +1618,29 @@ Function Run($payload) {
         }
 "@ # END Ansible.Async native type definition
 
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
+    $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+    if ($null -eq $remote_tmp) {
+        $remote_tmp = $original_tmp
+    }
+
     # calculate the result path so we can include it in the worker payload
     $jid = $payload.async_jid
     $local_jid = $jid + "." + $pid
 
-    $results_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $local_jid)
+    $results_path = [System.IO.Path]::Combine($remote_tmp, ".ansible_async", $local_jid)
 
     $payload.async_results_path = $results_path
 
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
 
+    $env:TMP = $remote_tmp
+    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $native_process_util -Debug:$false
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
 
     # FUTURE: create under new job to ensure all children die on exit?
 

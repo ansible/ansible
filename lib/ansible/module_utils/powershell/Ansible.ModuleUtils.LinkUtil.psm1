@@ -2,7 +2,7 @@
  # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 Function Load-LinkUtils() {
-    Add-Type -TypeDefinition @'
+    $link_util = @'
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
@@ -463,6 +463,25 @@ namespace Ansible
     }
 }
 '@
+
+    # FUTURE: find a better way to get the _ansible_remote_tmp variable
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+
+    $remote_tmp = $original_tmp
+    $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
+    if ($module_params) {
+        if ($module_params.Value.ContainsKey("_ansible_remote_tmp") ) {
+            $remote_tmp = $module_params.Value["_ansible_remote_tmp"]
+            $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+        }
+    }
+
+    $env:TMP = $remote_tmp
+    $env:TEMP = $remote_tmp
+    Add-Type -TypeDefinition $link_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
 
     [Ansible.LinkUtil]::EnablePrivilege("SeBackupPrivilege")
 }
