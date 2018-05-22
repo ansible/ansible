@@ -25,6 +25,9 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_EDGEOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
+  - "This is a network module and requires C(connection: network_cli)
+    in order to work properly."
+  - For more information please see the L(Network Guide,../network/getting_started/index.html).
 options:
   commands:
     description:
@@ -95,9 +98,10 @@ stdout_lines:
 
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.edgeos.edgeos import run_commands
 from ansible.module_utils.six import string_types
 
@@ -105,7 +109,7 @@ from ansible.module_utils.six import string_types
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_text(item).split('\n')
         yield item
 
 
@@ -149,7 +153,7 @@ def main():
     try:
         conditionals = [Conditional(c) for c in wait_for]
     except AttributeError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_text(e))
 
     retries = module.params['retries']
     interval = module.params['interval']
