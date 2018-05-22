@@ -11,9 +11,9 @@ including cloud sources, using the supplied :ref:`inventory plugins <inventory_p
 If the source you want is not currently covered by existing plugins, you can create your own as with any other plugin type.
 
 In previous versions you had to create a script or program that can output JSON in the correct format when invoked with the proper arguments.
-You can still use and write inventory scripts, as we ensured backwards compatiblity via the :ref:`script inventory plugin <script_inventory>`
+You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>`
 and there is no restriction on the programming language used.
-If you choose to write a script, however, you will need to implement some features youself.
+If you choose to write a script, however, you will need to implement some features yourself.
 i.e caching, configuration management, dynamic variable and group composition, etc.
 While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ansible codebase to add these common features.
 

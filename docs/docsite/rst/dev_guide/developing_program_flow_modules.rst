@@ -1,4 +1,5 @@
 .. _flow_modules:
+.. _developing_program_flow_modules:
 
 ===========================
 Ansible Module Architecture
@@ -528,7 +529,7 @@ Passing arguments via stdin was chosen for the following reasons:
   truncation of the parameters if we hit that limit.
 
 
-.. _ansiblemodule:
+.. _flow_ansiblemodule:
 
 AnsibleModule
 -------------
