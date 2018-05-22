@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos modules - add note and warning that the modules require network_cli connection (https://github.com/ansible/ansible/issues/39499)
