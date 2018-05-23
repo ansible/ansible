@@ -74,7 +74,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
             api_version = definition.get('apiVersion')
-            resource = self.find_resource(self, search_kind, api_version, fail=True)
+            resource = self.find_resource(search_kind, api_version, fail=True)
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
             results.append(result)
