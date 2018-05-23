@@ -47,7 +47,6 @@ lib/ansible/modules/network/eos/eos_linkagg.py ansible-format-automatic-specific
 lib/ansible/modules/network/eos/eos_logging.py ansible-format-automatic-specification
 lib/ansible/modules/network/eos/eos_static_route.py ansible-format-automatic-specification
 lib/ansible/modules/network/ios/ios_l3_interface.py ansible-format-automatic-specification
-lib/ansible/modules/network/ios/ios_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_banner.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_interface.py ansible-format-automatic-specification
 lib/ansible/modules/network/nxos/nxos_logging.py ansible-format-automatic-specification
