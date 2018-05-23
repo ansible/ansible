@@ -462,6 +462,29 @@ Because of the size of IPv6 subnets, iteration over all of them to find the
 correct one may take some time on slower computers, depending on the size
 difference between subnets.
 
+Subnet Merging
+^^^^^^^^^^^^^^
+
+.. versionadded:: 2.6
+
+The `cidr_merge` filter can be used to merge subnets or individual addresses
+into their minimal representation, collapsing overlapping subnets and merging
+adjacent ones wherever possible::
+
+    {{ ['192.168.0.0/17', '192.168.128.0/17', '192.168.128.1' ] | cidr_merge }}
+    # => ['192.168.0.0/16']
+
+    {{ ['192.168.0.0/24', '192.168.1.0/24', '192.168.3.0/24'] | cidr_merge }}
+    # => ['192.168.0.0/23', '192.168.3.0/24']
+
+Changing the action from 'merge' to 'span' will instead return the smallest
+subnet which contains all of the inputs::
+
+    {{ ['192.168.0.0/24', '192.168.3.0/24'] | cidr_merge('span') }}
+    # => '192.168.0.0/22'
+
+    {{ ['192.168.1.42', '192.168.42.1'] | cidr_merge('span') }}
+    # => '192.168.0.0/18'
 
 MAC address filter
 ^^^^^^^^^^^^^^^^^^
