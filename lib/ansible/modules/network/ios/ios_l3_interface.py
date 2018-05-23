@@ -107,11 +107,10 @@ from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.common.config import NetworkConfig
-from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.common.utils import is_netmask, is_masklen, to_netmask, to_masklen
 
 
@@ -197,6 +196,8 @@ def map_obj_to_commands(updates, module):
                     commands.append('no ipv6 address {}'.format(ipv6))
                 else:
                     commands.append('no ipv6 address')
+                    if 'dhcp' in obj_in_have['ipv6']:
+                        commands.append('no ipv6 address dhcp')
 
         elif state == 'present':
             if ipv4:

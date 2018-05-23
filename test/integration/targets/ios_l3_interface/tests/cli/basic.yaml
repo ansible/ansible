@@ -168,6 +168,8 @@
     provider: "{{ cli }}"
   register: result
 
+- assert: *unchanged
+
 - name: Delete second interface ipv4 and ipv6 address (setup)
   ios_l3_interface:
     name: "{{ test_interface2 }}"
