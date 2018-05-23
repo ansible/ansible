@@ -84,7 +84,16 @@ To pass Active Directory username/password via the environment, define the follo
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
-* AZURE_SUBSCRIPTION_ID
+
+To pass Active Directory username/password in ADFS via the environment, define the following variables:
+
+* AZURE_AD_USER
+* AZURE_PASSWORD
+* AZURE_CLIENT_ID
+* AZURE_TENANT
+* AZURE_ADFS_AUTHORITY_URL
+
+"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
 
 Storing in a File
 `````````````````
@@ -118,7 +127,16 @@ Or, pass the following parameters for Active Directory username/password:
 
 * ad_user
 * password
-* subscription_id
+
+Or, pass the following parameters for ADFS username/pasword:
+
+* ad_user
+* password
+* client_id
+* tenant
+* adfs_authority_url
+
+"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
 
 
 Other Cloud Environments
