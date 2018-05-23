@@ -384,10 +384,12 @@ class MavenDownloader:
             response = self._request(url, "Failed to download artifact " + str(artifact))
             with io.open(filename, 'wb') as f:
                 self._write_chunks(response, f, report_hook=self.chunk_report)
-        if verify_download and not self.verify_md5(filename, url):
-            # if verify_change was set, the previous file would be deleted
-            os.remove(filename)
-            return "Checksum verification failed"
+        if verify_download:
+            invalid_md5 = self.is_invalid_md5(filename, url)
+            if invalid_md5:
+                # if verify_change was set, the previous file would be deleted
+                os.remove(filename)
+                return invalid_md5
         return None
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
@@ -416,7 +418,7 @@ class MavenDownloader:
 
         return bytes_so_far
 
-    def verify_md5(self, file, remote_url):
+    def is_invalid_md5(self, file, remote_url):
         if os.path.exists(file):
             local_md5 = self._local_md5(file)
             if self.local:
@@ -424,8 +426,14 @@ class MavenDownloader:
                 remote_md5 = self._local_md5(parsed_url.path)
             else:
                 remote_md5 = self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False)
-            return local_md5 == remote_md5
-        return False
+                if(not remote_md5):
+                    return "Cannot find md5 from " + remote_url
+            if local_md5 == remote_md5:
+                return None
+            else:
+                return "Checksum does not match: we computed " + local_md5 + "but the repository states " + remote_md5
+
+        return "Path does not exist: " + file
 
     def _local_md5(self, file):
         md5 = hashlib.md5()
@@ -519,7 +527,7 @@ def main():
             dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
-    if os.path.lexists(b_dest) and ((not verify_change) or downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact))):
+    if os.path.lexists(b_dest) and ((not verify_change) or not downloader.is_invalid_md5(dest, downloader.find_uri_for_artifact(artifact))):
         prev_state = "present"
 
     if prev_state == "absent":
