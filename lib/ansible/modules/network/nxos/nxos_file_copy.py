@@ -28,7 +28,8 @@ version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:
   - Copy a file to the flash (or bootflash) remote network device
-    on NXOS devices.
+    on NXOS devices. This module only supports the use of connection
+    C(network_cli) or C(Cli) transport with connection C(local).
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
