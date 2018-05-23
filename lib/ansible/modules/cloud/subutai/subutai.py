@@ -489,7 +489,7 @@ class Container():
             # try install container
             out = self._subutai_cmd("import")
             if out:
-                self._return_fail("Import Error: "  + str(out))
+                self._return_fail("Import Error: " + str(out))
 
             if self._is_installed():
                 self.result['changed'] = True
@@ -804,7 +804,6 @@ class Container():
             else:
                 self.result['changed'] = False
                 self._return_fail("OS Error " + str(e))
-
 
 
 def main():
