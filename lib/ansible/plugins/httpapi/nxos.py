@@ -38,13 +38,15 @@ class HttpApi:
             cmd_output = message_kwargs.get('output', 'text')
             if isinstance(item, dict):
                 command = item['command']
-                if command.endswith('| json'):
-                    command = command.rsplit('|', 1)[0]
-                    cmd_output = 'json'
-                elif 'output' in item:
+                if 'output' in item:
                     cmd_output = item['output']
             else:
                 command = item
+
+            # Emulate '| json' from CLI
+            if command.endswith('| json'):
+                command = command.rsplit('|', 1)[0]
+                cmd_output = 'json'
 
             if output and output != cmd_output:
                 responses.extend(self._run_queue(queue, output))
