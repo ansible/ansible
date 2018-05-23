@@ -228,7 +228,6 @@ roles:
               {"cardinality": 2,"name": "bar","state": "RUNNING", "ids": [ 452, 567, 746 ]}]'
 '''
 
-import json
 import os
 import sys
 from ansible.module_utils.basic import AnsibleModule
@@ -244,7 +243,7 @@ def get_all_templates(module, auth):
     except Exception as e:
         module.fail_json(msg=str(e))
 
-    return json.load(all_templates)
+    return module.from_json(all_templates.read())
 
 
 def get_template(module, auth, pred):
@@ -275,7 +274,7 @@ def get_all_services(module, auth):
     except Exception as e:
         module.fail_json(msg=str(e))
 
-    return json.load(response)
+    return module.from_json(response.read())
 
 
 def get_service(module, auth, pred):
@@ -355,11 +354,11 @@ def create_service(module, auth, template_id, service_name, custom_attrs, unique
 
     try:
         response = open_url(auth.url + "/service_template/" + str(template_id) + "/action", method="POST",
-                            data=json.dumps(data), force_basic_auth=True, url_username=auth.user, url_password=auth.password)
+                            data=module.jsonify(data), force_basic_auth=True, url_username=auth.user, url_password=auth.password)
     except Exception as e:
         module.fail_json(msg=str(e))
 
-    service_result = json.load(response)["DOCUMENT"]
+    service_result = module.from_json(response.read())["DOCUMENT"]
 
     return service_result
 
@@ -375,7 +374,7 @@ def wait_for_service_to_become_ready(module, auth, service_id, wait_timeout):
         except Exception as e:
             module.fail_json(msg="Request for service status has failed. Error message: " + str(e))
 
-        status_result = json.load(status_result)
+        status_result = module.from_json(status_result.read())
         service_state = status_result["DOCUMENT"]["TEMPLATE"]["BODY"]["state"]
 
         if service_state in [STATES.index("RUNNING"), STATES.index("COOLDOWN")]:
@@ -405,7 +404,7 @@ def change_service_permissions(module, auth, service_id, permissions):
 
     try:
         status_result = open_url(auth.url + "/service/" + str(service_id) + "/action", method="POST", force_basic_auth=True,
-                                 url_username=auth.user, url_password=auth.password, data=json.dumps(data))
+                                 url_username=auth.user, url_password=auth.password, data=module.jsonify(data))
     except Exception as e:
         module.fail_json(msg=str(e))
 
@@ -420,7 +419,7 @@ def change_service_owner(module, auth, service_id, owner_id):
 
     try:
         status_result = open_url(auth.url + "/service/" + str(service_id) + "/action", method="POST", force_basic_auth=True,
-                                 url_username=auth.user, url_password=auth.password, data=json.dumps(data))
+                                 url_username=auth.user, url_password=auth.password, data=module.jsonify(data))
     except Exception as e:
         module.fail_json(msg=str(e))
 
@@ -436,7 +435,7 @@ def change_service_group(module, auth, service_id, group_id):
 
     try:
         status_result = open_url(auth.url + "/service/" + str(service_id) + "/action", method="POST", force_basic_auth=True,
-                                 url_username=auth.user, url_password=auth.password, data=json.dumps(data))
+                                 url_username=auth.user, url_password=auth.password, data=module.jsonify(data))
     except Exception as e:
         module.fail_json(msg=str(e))
 
@@ -450,7 +449,7 @@ def change_role_cardinality(module, auth, service_id, role, cardinality, force):
 
     try:
         status_result = open_url(auth.url + "/service/" + str(service_id) + "/role/" + role, method="PUT",
-                                 force_basic_auth=True, url_username=auth.user, url_password=auth.password, data=json.dumps(data))
+                                 force_basic_auth=True, url_username=auth.user, url_password=auth.password, data=module.jsonify(data))
     except Exception as e:
         module.fail_json(msg=str(e))
 
@@ -618,8 +617,8 @@ def get_template_by_id(module, auth, template_id):
     return get_template(module, auth, lambda template: (int(template["ID"]) == int(template_id))) if template_id else None
 
 
-def get_template_id_by_name(module, auth, template_name):
-    template = get_template_by_name(module, auth, template_name)
+def get_template_id(module, auth, requested_id, requested_name):
+    template = get_template_by_id(module, auth, requested_id) if requested_id else get_template_by_name(module, auth, requested_name)
 
     if template:
         return template["ID"]
@@ -686,15 +685,24 @@ def main():
         "force": {"default": False, "type": "bool"}
     }
 
-    module = AnsibleModule(argument_spec=fields, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=fields,
+                           mutually_exclusive=[
+                               ['template_id', 'template_name', 'service_id'],
+                               ['service_id', 'service_name'],
+                               ['template_id', 'template_name', 'role'],
+                               ['template_id', 'template_name', 'cardinality'],
+                               ['service_id', 'custom_attrs']
+                           ],
+                           required_together=['role', 'cardinality'],
+                           supports_check_mode=True)
 
     auth = get_connection_info(module)
     params = module.params
     service_name = params.get('service_name')
     service_id = params.get('service_id')
-    template_name = params.get('template_name')
 
-    template_id = params.get('template_id')
+    requested_template_id = params.get('template_id')
+    requested_template_name = params.get('template_name')
     state = params.get('state')
     permissions = params.get('mode')
     owner_id = params.get('owner_id')
@@ -707,21 +715,15 @@ def main():
     cardinality = params.get('cardinality')
     force = params.get('force')
 
-    if template_id:
-        if not get_template_by_id(module, auth, template_id):
-            module.fail_json(msg="There is no template with template_id: " + str(template_id))
+    template_id = None
 
-    if template_id and template_name:
-        module.fail_json(msg="Only one property is required, template_name or template_id!")
-
-    if template_name:
-        template_id = get_template_id_by_name(module, auth, template_name)
+    if requested_template_id or requested_template_name:
+        template_id = get_template_id(module, auth, requested_template_id, requested_template_name)
         if not template_id:
-            module.fail_json(msg="There is no template with name: " + template_name)
-    if template_id and service_id:
-        module.fail_json(msg="Invalid arguments. Service creation doesn't need service_id!")
-    if template_id and (role or cardinality):
-        module.fail_json(msg="Role's cardinality can't be changed during creation.")
+            if requested_template_id:
+                module.fail_json(msg="There is no template with template_id: " + str(requested_template_id))
+            elif requested_template_name:
+                module.fail_json(msg="There is no template with name: " + requested_template_name)
 
     if unique and not service_name:
         module.fail_json(msg="You cannot use unique without passing service_name!")
@@ -729,20 +731,14 @@ def main():
     if template_id and state == 'absent':
         module.fail_json(msg="State absent is not valid for template")
 
-    if template_id and state == 'present':  # Intantiate service
+    if template_id and state == 'present':  # Intantiate a service
         result = create_service_and_operation(module, auth, template_id, service_name, owner_id,
                                               group_id, permissions, custom_attrs, unique, wait, wait_timeout)
     else:
         if not (service_id or service_name):
-            module.fail_json(msg="The service id or service name should be specified!")
-
+            module.fail_json(msg="To manage the service at least the service id or service name should be specified!")
         if custom_attrs:
             module.fail_json(msg="You can only set custom_attrs when instantiate service!")
-
-        if role and not cardinality:
-            module.fail_json(msg="There is no specified cardinality for role: " + role)
-        if cardinality and not role:
-            module.fail_json(msg="Role, whose cardinality you want to change, has to be specified!")
 
         if not service_id:
             service_id = get_service_id_by_name(module, auth, service_name)
