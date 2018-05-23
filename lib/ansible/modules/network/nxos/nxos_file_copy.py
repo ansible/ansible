@@ -38,7 +38,6 @@ notes:
   - If the file is already present (md5 sums match), no transfer will
     take place.
   - Check mode will tell you if the file would be copied.
-  - For connection local please define host, username, password in provider spec.
 requirements:
   - paramiko
 options:
@@ -66,8 +65,6 @@ EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
     remote_file: "test_file.txt"
-    provider: "{{ cli }}"
-    connect_ssh_port: "{{ ansible_ssh_port }}"
 '''
 
 RETURN = '''
@@ -154,11 +151,9 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    provider = module.params.get('provider')
-
-    hostname = provider.get('host') if provider else module.params['host']
-    username = provider.get('username') if provider else module.params['username']
-    password = provider.get('password') if provider else module.params['password']
+    hostname = module.params['host']
+    username = module.params['username']
+    password = module.params['password']
     port = module.params['connect_ssh_port']
 
     ssh = paramiko.SSHClient()

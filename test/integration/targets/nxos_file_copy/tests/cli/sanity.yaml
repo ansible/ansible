@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
-- debug: msg="Using provider=cli"
-  when: ansible_connection == "local"
 
 - name: "Setup - Remove existing file"
   nxos_command: &remove_file
@@ -21,7 +19,6 @@
       local_file: "./network-integration.cfg"
       file_system: "bootflash:"
       connect_ssh_port: "{{ ansible_ssh_port }}"
-      provider: "{{ cli }}"
     register: result
 
   - assert: &true
@@ -46,7 +43,6 @@
       remote_file: "network-integration.cfg"
       file_system: "bootflash:"
       connect_ssh_port: "{{ ansible_ssh_port }}"
-      provider: "{{ cli }}"
     register: result
 
   - assert: *true
@@ -76,4 +72,4 @@
       feature: scp-server
       state: disabled
 
-  - debug: msg="END TRANSPORT:CLI nxos_file_copy sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_file_copy sanity test"
