@@ -25,6 +25,7 @@ import time
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
