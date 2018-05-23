@@ -363,7 +363,8 @@ def main():
         }
 
         # IF OBJECT IS DEVICE
-        if paramgram["object"] == "device":
+        if paramgram["object"] == "device" and any(v is not None for v in [paramgram["device_unique_name"],
+                                                   paramgram["device_serial"], paramgram["device_ip"]]):
             results = fmgr_get_device(fmg, paramgram)
             if results[0] not in [0]:
                 module.fail_json(msg="Device query failed!")
