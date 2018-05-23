@@ -40,16 +40,17 @@ options:
 
   initiator_group_type:
     description:
-    - Type of the initiator group. Possible values "fcp", "iscsi", "mixed".
+    - Type of the initiator group.
     - Required when C(state=present).
+    choices: ['fcp', 'iscsi', 'mixed']
 
   new_name:
     description:
-    - New name to be given to initiator group..
+    - New name to be given to initiator group.
 
   ostype:
     description:
-    - OS type of the initiators within the group. The default value if not specified is "default".
+    - OS type of the initiators within the group.
 
   initiator:
     description:
@@ -59,10 +60,11 @@ options:
     description:
     - Name of a current portset to bind to the newly created igroup.
 
-  force:
-    type: bool
+  force_remove_initiator:
     description:
     -  Forcibly remove the initiator even if there are existing LUNs mapped to this initiator group.
+    type: bool
+    default: False
 
   vserver:
     description:
@@ -133,10 +135,11 @@ class NetAppOntapIgroup(object):
             name=dict(required=True, type='str'),
             new_name=dict(required=False, type='str', default=None),
             ostype=dict(required=False, type='str'),
-            initiator_group_type=dict(required=False, type='str'),
+            initiator_group_type=dict(required=False, type='str',
+                                      choices=['fcp', 'iscsi', 'mixed']),
             initiator=dict(required=False, type='str'),
             vserver=dict(required=True, type='str'),
-            force=dict(required=False, type='bool', default=False),
+            force_remove_initiator=dict(required=False, type='bool', default=False),
             bind_portset=dict(required=False, type='str')
         ))
 
@@ -155,7 +158,7 @@ class NetAppOntapIgroup(object):
         self.initiator = params['initiator']
         self.vserver = params['vserver']
         self.new_name = params['new_name']
-        self.force = params['force']
+        self.force_remove_initiator = params['force_remove_initiator']
         self.bind_portset = params['bind_portset']
 
         if HAS_NETAPP_LIB is False:
@@ -270,7 +273,7 @@ class NetAppOntapIgroup(object):
         Delete the igroup.
         """
         igroup_delete = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-destroy', **{'initiator-group-name': self.name, 'force': 'true' if self.force else 'false'})
+            'igroup-destroy', **{'initiator-group-name': self.name, 'force': 'true' if self.force_remove_initiator else 'false'})
 
         try:
             self.server.invoke_successfully(igroup_delete,

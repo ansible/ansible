@@ -145,7 +145,7 @@ class NetAppONTAPCluster(object):
 
     def cluster_join(self):
         """
-        Join two clusters
+        Add a node to an existing cluster
         """
         cluster_add_node = netapp_utils.zapi.NaElement.create_node_with_children(
             'cluster-join', **{'cluster-ip-address': self.cluster_ip_address})
