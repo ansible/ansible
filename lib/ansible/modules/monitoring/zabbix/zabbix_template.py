@@ -314,8 +314,8 @@ class Template(object):
         self._zapi.template.delete(templateids)
 
     def ordered_json(self, obj):
-        # Deep sort json dicts for comparison   
-        if isinstance(obj, dict):                                                                                                                                                                                                                                                                                                               
+        # Deep sort json dicts for comparison
+        if isinstance(obj, dict):
             return sorted((k, self.ordered_json(v)) for k, v in obj.items())
         if isinstance(obj, list):
             return sorted(self.ordered_json(x) for x in obj)
