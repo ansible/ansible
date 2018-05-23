@@ -5,8 +5,10 @@ Module to handle encrypting and decrypting of items with KMS
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
 import base64
 from ansible.errors import AnsibleError, AnsibleFilterError
+
 
 try:
     import botocore
@@ -16,12 +18,28 @@ except ImportError:
     HAS_DEPENDENCIES = False
 
 
-def aws_kms_encrypt(plaintext, key_arn):
-    """ Encrypt with KMS """
+def dependency_check():
+    """
+    Throw an AnsibleError if dependencies are missing.
+    Args:
+    Returns:
+        None
+    """
     if not HAS_DEPENDENCIES:
         raise AnsibleError('You need to install "botocore" and "aws_encryption_sdk"'
                            'before using aws_kms filter')
 
+
+def aws_kms_encrypt(plaintext, key_arn):
+    """
+    Encrypt with AWS KMS.
+    Args:
+        plaintext (str): Plain text string to encrypt.
+        key_arn (str): ARN to the AWS KMS key to use for encryption.
+    Returns:
+        str: Encrypted string for the plain text input.
+    """
+    dependency_check()
     try:
         session = botocore.session.get_session()
         kms_kwargs = {
@@ -39,11 +57,15 @@ def aws_kms_encrypt(plaintext, key_arn):
 
 
 def aws_kms_decrypt(ciphertext, key_arn):
-    """ Decrypt with KMS """
-    if not HAS_DEPENDENCIES:
-        raise AnsibleError('You need to install "botocore" and "aws_encryption_sdk"'
-                           'before using aws_kms filter')
-
+    """
+    Decrypt with AWS KMS.
+    Args:
+        ciphertext (str): Encrypted string to decrypt.
+        key_arn (str): ARN to the AWS KMS key to use for decryption.
+    Returns:
+        str: Plain text decrypted string.
+    """
+    dependency_check()
     try:
         session = botocore.session.get_session()
         kms_kwargs = {
