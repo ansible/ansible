@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ironware_command
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Run arbitrary commands on Brocade IronWare devices
+short_description: Run arbitrary commands on Extreme IronWare devices
 description:
-  - Sends arbitrary commands to a Brocade Ironware node and returns the
+  - Sends arbitrary commands to a Extreme Ironware node and returns the
     results read from the device. This module includes a I(wait_for)
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
