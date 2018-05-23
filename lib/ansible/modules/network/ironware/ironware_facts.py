@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: ironware_facts
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Collect facts from devices running Brocade Ironware
+short_description: Collect facts from devices running Extreme Ironware
 description:
   - Collects a base set of device facts from a remote device that
     is running Ironware.  This module prepends all of the
