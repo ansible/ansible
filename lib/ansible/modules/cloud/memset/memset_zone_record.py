@@ -24,6 +24,8 @@ notes:
     same DNS records (i.e. they point to the same IP). An API key generated via the
     Memset customer control panel is needed with the following minimum scope -
     I(dns.zone_create), I(dns.zone_delete), I(dns.zone_list).
+  - Currently this module can only create one DNS record at a time. Multiple records
+    should be created using C(with_items).
 description:
     - Manage DNS records in a Memset account.
 options:
@@ -92,6 +94,19 @@ EXAMPLES = '''
     type: TXT
     address: "v=spf1 +a +mx +ip4:a1.2.3.4 ?all"
   delegate_to: localhost
+
+# create multiple DNS records
+- name: create DNS reocrds
+  memset_zone_record:
+    api_key: dcf089a2896940da9ffefb307ef49ccd
+    zone: "{{ item.zone }}"
+    type: "{{ item.type }}"
+    record: "{{ item.record }}"
+    address: "{{ item.address }}"
+  delegate_to: localhost
+  with_items:
+    - { 'zone': 'domain1.com', 'type': 'A', 'record': 'www', 'address': '1.2.3.4' }
+    - { 'zone': 'domain2.com', 'type': 'A', 'record': 'mail', 'address': '4.3.2.1' }
 '''
 
 RETURN = '''
