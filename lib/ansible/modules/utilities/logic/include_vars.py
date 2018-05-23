@@ -111,7 +111,7 @@ EXAMPLES = """
 - name: Include all .yaml files except bastion.yaml (2.3)
   include_vars:
     dir: vars
-    ignore_files: bastion.yaml
+    ignore_files: [bastion.yaml]
     extensions: [yaml]
 """
 
