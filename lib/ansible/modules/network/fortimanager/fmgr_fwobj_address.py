@@ -413,7 +413,7 @@ def fmgr_fwobj_ipv4(fmg, paramgram):
             # CHECK THAT THE SECOND ENTRY IN THE SUBNET LIST (WHAT WAS TO THE RIGHT OF THE / CHARACTER)
             # IS IN SUBNET MASK FORMAT AND NOT CIDR FORMAT.
             # IF IT IS IN CIDR FORMAT, WE NEED TO CONVERT IT TO SUBNET BIT MASK FORMAT FOR THE JSON API
-            if not re.match('\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
+            if not re.match(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
                 # IF THE SUBNET PARAMETER INPUT DIDN'T LOOK LIKE xxx.xxx.xxx.xxx TO REGEX...
                 # ... RUN IT THROUGH THE CIDR_TO_NETMASK() FUNCTION
                 mask = cidr_to_netmask(subnet[1])
@@ -446,7 +446,7 @@ def fmgr_fwobj_ipv4(fmg, paramgram):
             for subnets in paramgram["wildcard"].split("/"):
                 subnet.append(subnets)
 
-            if not re.match('\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
+            if not re.match(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
                 mask = cidr_to_netmask(subnet[1])
                 subnet[1] = mask
 
@@ -685,7 +685,7 @@ def fmgr_fwobj_multicast(fmg, paramgram):
             # CHECK THAT THE SECOND ENTRY IN THE SUBNET LIST (WHAT WAS TO THE RIGHT OF THE / CHARACTER)
             # IS IN SUBNET MASK FORMAT AND NOT CIDR FORMAT.
             # IF IT IS IN CIDR FORMAT, WE NEED TO CONVERT IT TO SUBNET BIT MASK FORMAT FOR THE JSON API
-            if not re.match('\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
+            if not re.match(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', subnet[1]):
                 # IF THE SUBNET PARAMETER INPUT DIDN'T LOOK LIKE 255.255.255.255 TO REGEX...
                 # ... RUN IT THROUGH THE CIDR_TO_NETMASK() FUNCTION
                 mask = cidr_to_netmask(subnet[1])
