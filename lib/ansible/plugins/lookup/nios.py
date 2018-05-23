@@ -69,7 +69,7 @@ EXAMPLES = """
 
 - name: get a host record
   set_fact:
-    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}
+    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}"
 
 - name: get the authoritative zone from a non default dns view
   set_fact:
