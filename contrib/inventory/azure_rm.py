@@ -209,12 +209,14 @@ HAS_AZURE_CLI_CORE = True
 CLIError = None
 
 try:
+    import adal
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_active_directory import MSIAuthentication
     from msrestazure import azure_cloud
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
+    from azure.common.credentials import ServicePrincipalCredentials
+    from msrestazure.azure_active_directory import AdalAuthentication
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.resource.subscriptions import SubscriptionClient
@@ -327,10 +329,18 @@ class AzureRM(object):
             tenant = self.credentials.get('tenant')
             if not tenant:
                 tenant = 'common'
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'],
-                                                         self.credentials['password'],
-                                                         tenant=tenant,
-                                                         cloud_environment=self._cloud_environment)
+
+            # # Default to Xplat Client ID
+            LEGACY_CLIENT_ID = '04b07795-8ddb-461a-bbee-02f9e1bf7b46'
+
+            LOGIN_ENDPOINT = self._cloud_environment.endpoints.active_directory
+            RESOURCE = self._cloud_environment.endpoints.active_directory_resource_id
+            context = adal.AuthenticationContext(LOGIN_ENDPOINT + '/' + tenant)
+            self.azure_credentials = AdalAuthentication(context.acquire_token_with_username_password,
+                                                        RESOURCE,
+                                                        self.credentials['ad_user'],
+                                                        self.credentials['password'],
+                                                        self.credentials.get('client_id', LEGACY_CLIENT_ID))
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
