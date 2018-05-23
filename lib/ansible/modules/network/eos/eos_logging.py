@@ -113,7 +113,6 @@ commands:
 """
 
 import re
-import q
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
@@ -221,6 +220,7 @@ def parse_facility(line):
     match = re.search(r'logging facility (\S+)', line, re.M)
     if match:
         facility = match.group(1)
+
     return facility
 
 
@@ -240,6 +240,7 @@ def parse_size(line, dest):
                     size = str(match.group(1))
                 else:
                     size = str(10)
+
     return size
 
 
@@ -363,7 +364,7 @@ def map_params_to_obj(module, required_if=None):
             module.params['size'] = None
 
         parse_obj(obj, module)
-        
+
     return obj
 
 
