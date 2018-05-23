@@ -85,7 +85,7 @@ options:
   password:
     description:
      - password of the user to authenticate with
-    required: true
+    required: false
   xml:
     description:
      - the XML content to send to the device
@@ -222,7 +222,7 @@ def main():
             port=dict(type='int', default=830),
 
             username=dict(type='str', no_log=True),
-            password=dict(type='str', required=False, no_log=True),
+            password=dict(type='str', no_log=True),
 
             hostkey_verify=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
