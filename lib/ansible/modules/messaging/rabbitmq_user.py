@@ -31,7 +31,7 @@ options:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
-        C(force=yes).
+        C(update_password=always).
   tags:
     description:
       - User tags specified as comma delimited
@@ -84,6 +84,13 @@ options:
       - Specify if user is to be added or removed
     default: present
     choices: [present, absent]
+  update_password:
+    description:
+      - C(on_create) will only set the password for newly created users.  C(always) will update passwords if they differ.
+    required: false
+    default: on_create
+    choices: [ on_create, always ]
+    version_added: "2.6"
 '''
 
 EXAMPLES = '''
@@ -180,6 +187,9 @@ class RabbitMqUser(object):
                                        write_priv=write_priv, read_priv=read_priv))
         return perms_list
 
+    def check_password(self):
+        return self._exec(['authenticate_user', self.username, self.password], True)
+
     def add(self):
         if self.password is not None:
             self._exec(['add_user', self.username, self.password])
@@ -189,6 +199,12 @@ class RabbitMqUser(object):
 
     def delete(self):
         self._exec(['delete_user', self.username])
+
+    def change_password(self):
+        if self.password is not None:
+            self._exec(['change_password', self.username, self.password])
+        else:
+            self._exec(['clear_password', self.username])
 
     def set_tags(self):
         self._exec(['set_user_tags', self.username] + self.tags)
@@ -229,7 +245,8 @@ def main():
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default=None)
+        node=dict(default=None),
+        update_password=dict(default='on_create', choices=['on_create', 'always'])
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -247,6 +264,7 @@ def main():
     force = module.params['force']
     state = module.params['state']
     node = module.params['node']
+    update_password = module.params['update_password']
 
     bulk_permissions = True
     if not permissions:
@@ -274,6 +292,10 @@ def main():
                 rabbitmq_user.add()
                 rabbitmq_user.get()
                 result['changed'] = True
+            elif update_password == 'always':
+                if not rabbitmq_user.check_password():
+                    rabbitmq_user.change_password()
+                    result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
