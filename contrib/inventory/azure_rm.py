@@ -50,6 +50,7 @@ Command line arguments:
  - ad_user
  - password
  - cloud_environment
+ - adfs_authority_url
 
 Environment variables:
  - AZURE_PROFILE
@@ -60,6 +61,7 @@ Environment variables:
  - AZURE_AD_USER
  - AZURE_PASSWORD
  - AZURE_CLOUD_ENVIRONMENT
+ - AZURE_ADFS_AUTHORITY_URL
 
 Run for Specific Host
 -----------------------
@@ -209,6 +211,7 @@ HAS_AZURE_CLI_CORE = True
 CLIError = None
 
 try:
+    from msrestazure.azure_active_directory import AADTokenCredentials
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_active_directory import MSIAuthentication
     from msrestazure import azure_cloud
@@ -219,6 +222,7 @@ try:
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.resource.subscriptions import SubscriptionClient
     from azure.mgmt.compute import ComputeManagementClient
+    from adal.authentication_context import AuthenticationContext
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -245,6 +249,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     ad_user='AZURE_AD_USER',
     password='AZURE_PASSWORD',
     cloud_environment='AZURE_CLOUD_ENVIRONMENT',
+    adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
 )
 
 AZURE_CONFIG_SETTINGS = dict(
@@ -281,6 +286,8 @@ class AzureRM(object):
         self._compute_client = None
         self._resource_client = None
         self._network_client = None
+        self._adfs_authority_url = None
+        self._resource = None
 
         self.debug = False
         if args.debug:
@@ -316,6 +323,17 @@ class AzureRM(object):
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
 
+        # get authentication authority
+        # for adfs, user could pass in authority or not.
+        # for others, use default authority from cloud environment
+        if self.credentials.get('adfs_authority_url') is None:
+            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
+        else:
+            self._adfs_authority_url = self.credentials.get('adfs_authority_url')
+
+        # get resource from cloud environment
+        self._resource = self._cloud_environment.endpoints.active_directory_resource_id
+
         if self.credentials.get('credentials'):
             self.azure_credentials = self.credentials.get('credentials')
         elif self.credentials.get('client_id') and self.credentials.get('secret') and self.credentials.get('tenant'):
@@ -323,6 +341,20 @@ class AzureRM(object):
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'],
                                                                  cloud_environment=self._cloud_environment)
+
+        elif self.credentials.get('ad_user') is not None and \
+                self.credentials.get('password') is not None and \
+                self.credentials.get('client_id') is not None and \
+                self.credentials.get('tenant') is not None:
+
+                self.azure_credentials = self.acquire_token_with_username_password(
+                    self._adfs_authority_url,
+                    self._resource,
+                    self.credentials['ad_user'],
+                    self.credentials['password'],
+                    self.credentials['client_id'],
+                    self.credentials['tenant'])
+
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if not tenant:
@@ -331,9 +363,12 @@ class AzureRM(object):
                                                          self.credentials['password'],
                                                          tenant=tenant,
                                                          cloud_environment=self._cloud_environment)
+
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
-                      "Credentials must include client_id, secret and tenant or ad_user and password.")
+                      "Credentials must include client_id, secret and tenant or ad_user and password, or "
+                      "ad_user, password, client_id, tenant and adfs_authority_url(optional) for ADFS authentication, or "
+                      "be logged in using AzureCLI.")
 
     def log(self, msg):
         if self.debug:
@@ -452,6 +487,16 @@ class AzureRM(object):
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
         return None
+
+    def acquire_token_with_username_password(self, authority, resource, username, password, client_id, tenant):
+        authority_uri = authority
+
+        if tenant is not None:
+            authority_uri = authority + '/' + tenant
+
+        context = AuthenticationContext(authority_uri)
+        token_response = context.acquire_token_with_username_password(resource, username, password, client_id)
+        return AADTokenCredentials(token_response)
 
     def _register(self, key):
         try:
