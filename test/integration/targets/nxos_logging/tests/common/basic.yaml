@@ -8,7 +8,6 @@
     dest: console
     dest_level: 0
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -30,7 +29,6 @@
     name: test
     dest_level: 1
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -48,7 +46,6 @@
   nxos_logging: &molog
     dest: module
     dest_level: 2
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -66,7 +63,6 @@
   nxos_logging: &mlog
     dest: monitor
     dest_level: 3
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -84,7 +80,6 @@
   nxos_logging: &flog
     facility: daemon
     facility_level: 4
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -107,7 +102,6 @@
       - { dest: logfile, dest_level: 1, name: test }
       - { facility: daemon, facility_level: 4 }
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:

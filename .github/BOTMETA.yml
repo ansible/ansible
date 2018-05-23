@@ -253,6 +253,7 @@ files:
   $modules/cloud/linode/linode.py: intheclouddan rwaweber zbal
   $modules/cloud/lxc/lxc_container.py: cloudnull
   $modules/cloud/lxd/: hnakamur
+  $modules/cloud/memset/: analbeard
   $modules/cloud/misc/helm.py: flaper87
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk
@@ -267,6 +268,7 @@ files:
   $modules/cloud/misc/virt_pool.py: drybjed
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
+    maintainers: cheese
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
@@ -476,7 +478,8 @@ files:
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
   $modules/network/meraki/: $team_meraki
-  $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
+  $modules/network/netconf/netconf_config.py: lpenz userlerueda $team_networking
+  $modules/network/netconf/netconf_get.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
@@ -864,6 +867,9 @@ files:
   $module_utils/network/meraki:
     maintainers: $team_meraki
     labels: networking
+  $module_utils/network/netconf:
+    maintainers: $team_networking
+    labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
@@ -899,6 +905,11 @@ files:
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
+  $module_utils/onepassword.py:
+    maintainers: samdoran
+  $module_utils/memset.py:
+    maintainers: analbeard
+    labels: cloud
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -1038,6 +1049,12 @@ files:
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/lookup/onepassword.py:
+    maintainers: samdoran
+    ignored: azenk
+  lib/ansible/plugins/lookup/onepassword_raw.py:
+    maintainers: samdoran
+    ignored: azenk
   lib/ansible/plugins/shell/powershell.py:
     maintainers: $team_windows_core
     labels:
@@ -1092,6 +1109,8 @@ files:
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
     labels: networking
+  lib/ansible/release.py:
+    notify: mattclay nitzmahone
   lib/ansible/template:
     keywords:
     - jinja

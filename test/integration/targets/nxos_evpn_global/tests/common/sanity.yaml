@@ -7,14 +7,12 @@
   nxos_config: &remove_evpn_config
     lines: no nv overlay evpn
     match: none
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Disable feature nv overlay"
   nxos_feature: &disable_feature_nv_overlay
     feature: nv overlay
     state: disabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -22,13 +20,11 @@
     nxos_feature: &enable_feature_nv_overlay
       feature: nv overlay
       state: enabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Enable nv overlay evpn"
     nxos_evpn_global: &enable_evpn
       nv_overlay_evpn: true
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -46,7 +42,6 @@
   - name: "Disable nv overlay evpn"
     nxos_evpn_global: &disable_evpn
       nv_overlay_evpn: false
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -57,7 +52,7 @@
 
   - assert: *false
 
-  when: not ( platform is search('N3K'))
+  when: not ( platform is search('N3K|N35|N3L'))
 
   rescue:
   - debug: msg="connection={{ ansible_connection }} nxos_evpn_global sanity test - FALURE ENCOUNTERED"

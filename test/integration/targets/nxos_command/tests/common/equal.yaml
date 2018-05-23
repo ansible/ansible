@@ -1,0 +1,30 @@
+---
+- debug: msg="START common/equal.yaml on connection={{ ansible_connection }}"
+
+- name: test eq operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.state eq up"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: test == operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.state == up"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END common/equal.yaml on connection={{ ansible_connection }}"
