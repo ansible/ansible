@@ -483,7 +483,7 @@ options:
     description:
       - Enable/disable sending RST packets when TCP sessions expire.
     required: false
-    default: 0
+    default: "0"
   traffic_shaper:
     description:
       - Traffic shaper.
