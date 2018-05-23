@@ -53,7 +53,7 @@ def aws_kms_encrypt(plaintext, key_arn):
         )
         return base64.b64encode(ciphertext)
     except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise AnsibleFilterError('Unable to encrypt vaule using KMS')
+        raise AnsibleFilterError('Unable to encrypt value using KMS')
 
 
 def aws_kms_decrypt(ciphertext, key_arn):
@@ -79,7 +79,7 @@ def aws_kms_decrypt(ciphertext, key_arn):
         )
         return cycled_plaintext.rstrip()
     except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise AnsibleFilterError('Unable to decrypt vaule using KMS')
+        raise AnsibleFilterError('Unable to decrypt value using KMS')
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
