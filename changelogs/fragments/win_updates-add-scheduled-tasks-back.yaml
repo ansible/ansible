@@ -1,0 +1,2 @@
+bugfixes:
+- win_updates - Added the ability to run on a scheduled task for older hosts so async starts working again - https://github.com/ansible/ansible/issues/38364
