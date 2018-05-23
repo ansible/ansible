@@ -56,7 +56,7 @@ options:
     description:
       - The mode for the operation
     required: false
-    default: set
+    default: add
     choices: ["set", "add", "delete"]
 
   action:
@@ -690,7 +690,7 @@ def main():
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
         package_name=dict(required=True, type="str"),
-        mode=dict(required=False, type="str", default="set", choices=["set", "add", "delete"]),
+        mode=dict(required=False, type="str", default="add", choices=["set", "add", "delete"]),
 
         action=dict(required=False, type="str"),
         app_category=dict(required=False, type="str"),
