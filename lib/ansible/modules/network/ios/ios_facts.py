@@ -227,7 +227,7 @@ class Hardware(FactsBase):
             self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.responses[1]
-        if data:
+        if data and not 'Invalid input detected' in data:
             processor_line = [l for l in data.splitlines()
                               if 'Processor' in l].pop()
             match = re.findall(r'\s(\d+)\s', processor_line)
