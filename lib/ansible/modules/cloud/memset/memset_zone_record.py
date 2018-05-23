@@ -28,7 +28,7 @@ description:
     - Manage DNS records in a Memset account.
 options:
     state:
-        required: true
+        default: present
         description:
             - Indicates desired state of resource.
         choices: [ absent, present ]
@@ -329,7 +329,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
             zone=dict(required=True, type='str'),
             type=dict(required=True, choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT'], type='str'),
