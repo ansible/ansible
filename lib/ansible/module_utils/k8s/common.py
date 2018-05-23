@@ -185,7 +185,7 @@ class K8sAnsibleMixin(object):
             return self.client.resources.get(api_version=api_version, short_names=[kind])
         except (ResourceNotFoundError, ResourceNotUniqueError):
             if fail:
-                self.fail_json(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
+                self.fail(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
 
     def remove_aliases(self):
         """
@@ -202,12 +202,12 @@ class K8sAnsibleMixin(object):
         result = None
         path = os.path.normpath(src)
         if not os.path.exists(path):
-            self.fail_json(msg="Error accessing {0}. Does the file exist?".format(path))
+            self.fail(msg="Error accessing {0}. Does the file exist?".format(path))
         try:
             with open(path, 'r') as f:
                 result = list(yaml.safe_load_all(f))
         except (IOError, yaml.YAMLError) as exc:
-            self.fail_json(msg="Error loading resource_definition: {0}".format(exc))
+            self.fail(msg="Error loading resource_definition: {0}".format(exc))
         return result
 
     @staticmethod
@@ -247,3 +247,6 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
 
     def execute_module(self):
         raise NotImplementedError()
+
+    def fail(self, msg=None):
+        self.fail_json(msg=msg)
