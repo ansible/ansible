@@ -310,6 +310,9 @@ def main():
     _original_basename = module.params.get('_original_basename', None)
     validate = module.params.get('validate', None)
     follow = module.params['follow']
+    mode = module.params['mode']
+    owner = module.params['owner']
+    group = module.params['group']
     remote_src = module.params['remote_src']
     checksum = module.params['checksum']
 
@@ -410,9 +413,12 @@ def main():
                 if validate:
                     # if we have a mode, make sure we set it on the temporary
                     # file source as some validations may require it
-                    # FIXME: should we do the same for owner/group here too?
                     if mode is not None:
                         module.set_mode_if_different(src, mode, False)
+                    if owner is not None:
+                        module.set_owner_if_different(src, owner, False)
+                    if group is not None:
+                        module.set_group_if_different(src, group, False)
                     if "%s" not in validate:
                         module.fail_json(msg="validate must contain %%s: %s" % (validate))
                     (rc, out, err) = module.run_command(validate % src)
