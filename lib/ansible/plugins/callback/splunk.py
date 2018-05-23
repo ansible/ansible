@@ -73,7 +73,6 @@ from os.path import basename
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils.urls import open_url
 
-
 class SplunkHTTPCollectorSource(object):
     def __init__(self):
         self.ansible_check_mode = False
@@ -116,8 +115,8 @@ class SplunkHTTPCollectorSource(object):
         data['ansible_result'] = result._result
 
         # This wraps the json payload in and outer json event needed by Splunk
-        jsondata=json.dumps(data, sort_keys=True)
-        jsondata='{"event":' + jsondata + "}"
+        jsondata = json.dumps(data, sort_keys=True)
+        jsondata = '{"event":' + jsondata + "}"
 
         open_url(
             url,
@@ -128,7 +127,6 @@ class SplunkHTTPCollectorSource(object):
             },
             method='POST'
         )
-
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
@@ -171,8 +169,6 @@ class CallbackModule(CallbackBase):
                                   'authentication token can be provided using the '
                                   '`SPLUNK_AUTHTOKEN` environment variable or '
                                   'in the ansible.cfg file.')
-
-
 
     def v2_playbook_on_start(self, playbook):
         self.splunk.ansible_playbook = basename(playbook._file_name)
