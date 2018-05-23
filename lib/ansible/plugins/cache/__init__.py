@@ -102,6 +102,10 @@ class BaseCacheModule(MutableMapping, AnsiblePlugin):
         self.set(key, host_cache)
 
 
+# for backwards compatiblity
+FactCache = BaseCacheModule
+
+
 class BaseFileCacheModule(BaseCacheModule):
     """
     A caching module backed by file based storage.
