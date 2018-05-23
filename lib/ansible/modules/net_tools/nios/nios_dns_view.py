@@ -31,6 +31,13 @@ options:
     required: true
     aliases:
       - view
+  old_name:
+    description:
+      - Specifies the old name of DNS view to update/or modify from the
+        system configuration based on the setting of the C(setting) argument.
+    required: false
+    aliases:
+      - view
   network_view:
     description:
       - Specifies the name of the network view to assign the configured
@@ -73,7 +80,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: update the comment for dns view
   nios_dns_view:
     name: ansible-dns
@@ -84,10 +90,19 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove the dns view instance
   nios_dns_view:
     name: ansible-dns
+    state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: update the dns view instance
+  nios_dns_view:
+    name: ansible-dns-new
+    old_name: ansible-dns
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -100,6 +115,7 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_DNS_VIEW
 
 
 def main():
@@ -107,6 +123,7 @@ def main():
     '''
     ib_spec = dict(
         name=dict(required=True, aliases=['view'], ib_req=True),
+        old_name=dict(required=False, aliases=['view'], ib_req=True),
         network_view=dict(default='default', ib_req=True),
 
         extattrs=dict(type='dict'),
@@ -125,7 +142,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('view', ib_spec)
+    result = wapi.run(NIOS_DNS_VIEW, ib_spec)
 
     module.exit_json(**result)
 
