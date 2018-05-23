@@ -39,6 +39,7 @@ options:
     description:
       - The ADOM the configuration should belong to.
     required: true
+    default: root
   host:
     description:
       - The FortiManager's Address.
@@ -51,23 +52,19 @@ options:
     description:
       - The password associated with the username account.
     required: false
-
   object:
     description:
       - The data object we wish to query (device, package, rule, etc). Will expand choices as improves.
     required: true
     choices: ['device', 'cluster_nodes', 'task', 'custom']
-
   custom_endpoint:
     description:
         - The HTTP Endpoint on FortiManager you wish to GET from. ADVANCED USERS ONLY.
     required: false
-
   custom_dict:
     description:
         - DICTIONARY JSON FORMAT ONLY -- Custom dictionary/datagram to send to the endpoint. ADVANCED USERS ONLY.
     required: false
-
   device_ip:
     description:
       - The IP of the device you want to query.
@@ -80,10 +77,13 @@ options:
     description:
       - The serial number of the device you want to query.
     required: false
-
   task_id:
     description:
       - The ID of the task you wish to query status on. If left blank and object = 'task' a list of tasks are returned.
+    required: false    
+  nodes:
+    description:
+      - A LIST of firewalls in the cluster you want to verify i.e. ["firewall_A","firewall_B"]
     required: false
 '''
 
@@ -322,7 +322,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        object=dict(required=True, type="str"),
+        object=dict(required=True, type="str", choices="['device', 'cluster_nodes', 'task', 'custom']"),
 
         custom_endpoint=dict(required=False, type="str"),
         custom_dict=dict(required=False, type="dict"),
