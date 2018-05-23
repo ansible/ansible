@@ -3,7 +3,7 @@
     name: openshift
 
 - name: Create a namespace
-  k8s_raw:
+  k8s:
     name: testing
     kind: namespace 
   register: output
@@ -13,7 +13,7 @@
     var: output
 
 - name: Create a service
-  k8s_raw:
+  k8s:
     state: present
     resource_definition: &svc
       apiVersion: v1
@@ -40,7 +40,7 @@
     var: output
 
 - name: Create the service again
-  k8s_raw:
+  k8s:
     state: present
     resource_definition: *svc 
   register: output
@@ -50,7 +50,7 @@
     that: not output.changed
 
 - name: Create PVC
-  k8s_raw:
+  k8s:
     state: present
     inline: &pvc
       apiVersion: v1
@@ -70,7 +70,7 @@
     var: output
 
 - name: Create the PVC again
-  k8s_raw:
+  k8s:
     state: present
     inline: *pvc
 
@@ -79,7 +79,7 @@
     that: not output.changed
 
 - name: Create deployment
-  k8s_raw:
+  k8s:
     state: present
     inline: &dc
       apiVersion: Apps/V1Beta1
@@ -118,7 +118,7 @@
     var: output
 
 - name: Create deployment again
-  k8s_raw:
+  k8s:
     state: present
     inline: *dc 
   register: output
