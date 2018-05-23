@@ -194,10 +194,10 @@ RETURN = """
 
 from ansible.plugins.lookup import LookupBase
 
-import os
-
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.k8s.common import K8sAnsibleMixin
+
+from ansible.errors import AnsibleError
+
 
 try:
     from openshift.dynamic import DynamicClient
@@ -238,6 +238,9 @@ class KubernetesLookup(K8sAnsibleMixin):
         self.helper = None
         self.connection = {}
 
+    def fail(self, msg=None):
+        raise AnsibleError(msg)
+
     def run(self, terms, variables=None, **kwargs):
         self.params = kwargs
         self.client = self.get_api_client()
@@ -267,7 +270,7 @@ class KubernetesLookup(K8sAnsibleMixin):
             self.namespace = resource_definition.get('metadata', {}).get('namespace', self.namespace)
 
         if not self.kind:
-            raise Exception(
+            raise AnsibleError(
                 "Error: no Kind specified. Use the 'kind' parameter, or provide an object YAML configuration "
                 "using the 'resource_definition' parameter."
             )
