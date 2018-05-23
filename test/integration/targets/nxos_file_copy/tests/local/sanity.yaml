@@ -19,9 +19,7 @@
     nxos_file_copy: &copy_file_same_name
       local_file: "./network-integration.cfg"
       file_system: "bootflash:"
-      username: "{{ ansible_ssh_user }}"
-      password: "{{ ansible_ssh_pass }}"
-      host: "{{ ansible_host }}"
+      provider: "{{ cli }}"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
@@ -46,9 +44,7 @@
       local_file: "./inventory.networking.template"
       remote_file: "network-integration.cfg"
       file_system: "bootflash:"
-      username: "{{ ansible_ssh_user }}"
-      password: "{{ ansible_ssh_pass }}"
-      host: "{{ ansible_host }}"
+      provider: "{{ cli }}"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
