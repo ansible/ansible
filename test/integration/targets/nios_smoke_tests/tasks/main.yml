@@ -1,0 +1,7 @@
+- debug: msg="running"
+- include: prepare.yml
+- include: nios_dns_view.yml
+- include: nios_host_records.yml
+- include: nios_networks.yml
+- include: nios_network_views.yml
+- include: nios_zones.yml

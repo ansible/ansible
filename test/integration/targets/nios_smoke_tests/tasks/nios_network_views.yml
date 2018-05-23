@@ -1,0 +1,18 @@
+- name: configure a new network view
+  nios_network_view:
+    name: ansible
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: update the comment for network view
+  nios_network_view:
+    name: ansible
+    comment: this is an example comment
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: remove the network view
+  nios_network_view:
+    name: ansible
+    state: absent
+    provider: "{{ nios_provider }}"
