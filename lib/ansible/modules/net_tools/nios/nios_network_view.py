@@ -90,6 +90,7 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_NETWORK_VIEW
 
 
 def main():
@@ -97,7 +98,7 @@ def main():
     '''
     ib_spec = dict(
         name=dict(required=True, aliases=['network_view'], ib_req=True),
-
+        old_name=dict(required=False, aliases=['network_view'], ib_req=True),
         extattrs=dict(type='dict'),
         comment=dict(),
     )
@@ -114,7 +115,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('networkview', ib_spec)
+    result = wapi.run(NIOS_NETWORK_VIEW, ib_spec)
 
     module.exit_json(**result)
 
