@@ -29,31 +29,31 @@ options:
         - Specifies whether SNMP information should be queried or modified.
         choices: ['query', 'present']
         default: present
-    v2cEnabled:
+    v2c_enabled:
         description:
         - Specifies whether SNMPv2c is enabled.
         type: bool
-    v3Enabled:
+    v3_enabled:
         description:
         - Specifies whether SNMPv3 is enabled.
         type: bool
-    v3AuthMode:
+    v3_auth_mode:
         description:
         - Sets authentication mode for SNMPv3.
         choices: ['MD5', 'SHA']
-    v3AuthPass:
+    v3_auth_pass:
         description:
         - Authentication password for SNMPv3.
         - Must be at least 8 characters long.
-    v3PrivMode:
+    v3_priv_mode:
         description:
         - Specifies privacy mode for SNMPv3.
         choices: ['DES', 'AES128']
-    v3PrivPass:
+    v3_priv_pass:
         description:
         - Privacy password for SNMPv3.
         - Must be at least 8 characters long.
-    peerIps:
+    peer_ips:
         description:
         - Semi-colon delimited IP addresses which can perform SNMP queries.
 author:
@@ -78,12 +78,12 @@ data:
     sample:
       "data": {
           "hostname": "n110.meraki.com",
-          "peerIps": null,
+          "peer_ips": null,
           "port": 16100,
-          "v2cEnabled": false,
-          "v3AuthMode": null,
-          "v3Enabled": false,
-          "v3PrivMode": null
+          "v2c_enabled": false,
+          "v3_auth_mode": null,
+          "v3_enabled": false,
+          "v3_priv_mode": null
       }
 '''
 
@@ -104,37 +104,37 @@ def get_snmp(meraki, org_id):
 
 def set_snmp(meraki, org_id):
     payload = dict()
-    if meraki.params['peerIps']:
-        if len(meraki.params['peerIps']) > 7:
-            if ';' not in meraki.params['peerIps']:
+    if meraki.params['peer_ips']:
+        if len(meraki.params['peer_ips']) > 7:
+            if ';' not in meraki.params['peer_ips']:
                 meraki.fail_json(msg='Peer IP addresses are semi-colon delimited.')
-    if meraki.params['v2cEnabled'] is not None:
-        payload = {'v2cEnabled': meraki.params['v2cEnabled'],
+    if meraki.params['v2c_enabled'] is not None:
+        payload = {'v2cEnabled': meraki.params['v2c_enabled'],
                    }
-    if meraki.params['v3Enabled'] is not None:
-        if len(meraki.params['v3AuthPass']) < 8 or len(meraki.params['v3PrivPass']) < 8:
-            meraki.fail_json(msg='v3AuthPass and v3PrivPass must both be at least 8 characters long.')
-        if (meraki.params['v3AuthMode'] is None or
-                meraki.params['v3AuthPass'] is None or
-                meraki.params['v3PrivMode'] is None or
-                meraki.params['v3PrivPass'] is None):
-                    meraki.fail_json(msg='v3AuthMode, v3AuthPass, v3PrivMode, and v3AuthPass are required')
-        payload = {'v3Enabled': meraki.params['v3Enabled'],
-                   'v3AuthMode': meraki.params['v3AuthMode'].upper(),
-                   'v3AuthPass': meraki.params['v3AuthPass'],
-                   'v3PrivMode': meraki.params['v3PrivMode'].upper(),
-                   'v3PrivPass': meraki.params['v3PrivPass'],
-                   'peerIps': meraki.params['peerIps'],
+    if meraki.params['v3_enabled'] is not None:
+        if len(meraki.params['v3_auth_pass']) < 8 or len(meraki.params['v3_priv_pass']) < 8:
+            meraki.fail_json(msg='v3_auth_pass and v3_priv_pass must both be at least 8 characters long.')
+        if (meraki.params['v3_auth_mode'] is None or
+                meraki.params['v3_auth_pass'] is None or
+                meraki.params['v3_priv_mode'] is None or
+                meraki.params['v3_priv_pass'] is None):
+                    meraki.fail_json(msg='v3_auth_mode, v3_auth_pass, v3_priv_mode, and v3_auth_pass are required')
+        payload = {'v3Enabled': meraki.params['v3_enabled'],
+                   'v3AuthMode': meraki.params['v3_auth_mode'].upper(),
+                   'v3AuthPass': meraki.params['v3_auth_pass'],
+                   'v3PrivMode': meraki.params['v3_priv_mode'].upper(),
+                   'v3PrivPass': meraki.params['v3_priv_pass'],
+                   'peerIps': meraki.params['peer_ips'],
                    }
-    full_compare = {'v2cEnabled': meraki.params['v2cEnabled'],
-                    'v3Enabled': meraki.params['v3Enabled'],
-                    'v3AuthMode': meraki.params['v3AuthMode'],
-                    'v3PrivMode': meraki.params['v3PrivMode'],
-                    'peerIps': meraki.params['peerIps'],
+    full_compare = {'v2cEnabled': meraki.params['v2c_enabled'],
+                    'v3Enabled': meraki.params['v3_enabled'],
+                    'v3AuthMode': meraki.params['v3_auth_mode'],
+                    'v3PrivMode': meraki.params['v3_priv_mode'],
+                    'peerIps': meraki.params['peer_ips'],
                     }
-    if meraki.params['v3Enabled'] is None:
+    if meraki.params['v3_enabled'] is None:
         full_compare['v3Enabled'] = False
-    if meraki.params['v2cEnabled'] is None:
+    if meraki.params['v2c_enabled'] is None:
         full_compare['v2cEnabled'] = False
     path = meraki.construct_path('create', org_id=org_id)
     snmp = get_snmp(meraki, org_id)
@@ -156,13 +156,13 @@ def main():
     argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['organization']),
                          org_id=dict(type='int'),
-                         v2cEnabled=dict(type='bool'),
-                         v3Enabled=dict(type='bool'),
-                         v3AuthMode=dict(type='str', choices=['SHA', 'MD5']),
-                         v3AuthPass=dict(type='str', no_log=True),
-                         v3PrivMode=dict(type='str', choices=['DES', 'AES128']),
-                         v3PrivPass=dict(type='str', no_log=True),
-                         peerIps=dict(type='str'),
+                         v2c_enabled=dict(type='bool'),
+                         v3_enabled=dict(type='bool'),
+                         v3_auth_mode=dict(type='str', choices=['SHA', 'MD5']),
+                         v3_auth_pass=dict(type='str', no_log=True),
+                         v3_priv_mode=dict(type='str', choices=['DES', 'AES128']),
+                         v3_priv_pass=dict(type='str', no_log=True),
+                         peer_ips=dict(type='str'),
                          )
 
     # seed the result dict in the object
