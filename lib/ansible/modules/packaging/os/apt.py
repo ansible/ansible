@@ -492,7 +492,12 @@ def mark_installed_manually(m, packages):
     if not packages:
         return
 
-    apt_mark_cmd_path = m.get_bin_path("apt-mark", required=True)
+    apt_mark_cmd_path = m.get_bin_path("apt-mark")
+
+    # https://github.com/ansible/ansible/issues/40531
+    if apt_mark_cmd_path is None:
+        return
+
     cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
     rc, out, err = m.run_command(cmd)
 
