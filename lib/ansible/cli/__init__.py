@@ -417,6 +417,14 @@ class CLI(with_metaclass(ABCMeta, object)):
             setattr(parser.values, option.dest, value)
 
     @staticmethod
+    def listhosts(option, opt, value, parser):
+        parser.values.listhosts = True;
+        if opt == '--list-hosts-plain':
+            parser.values.listhostsplain = True;
+        else:
+            parser.values.listhostsplain = False;
+
+    @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
                     async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
                     runas_prompt_opts=False, desc=None, basedir_opts=False, vault_rekey_opts=False):
@@ -430,8 +438,10 @@ class CLI(with_metaclass(ABCMeta, object)):
         if inventory_opts:
             parser.add_option('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
                               help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
-            parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+            parser.add_option('--list-hosts', dest='listhosts', action='callback', callback=CLI.listhosts,
                               help='outputs a list of matching hosts; does not execute anything else')
+            parser.add_option('--list-hosts-plain', dest='listhosts', action='callback', callback=CLI.listhosts,
+                              help='outputs a plain list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
                               help='further limit selected hosts to an additional pattern')
 
