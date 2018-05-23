@@ -89,8 +89,8 @@ options:
         description:
         - Will not auto elevate the remote process with I(become) and use a
           scheduled task instead.
-        - Set this to C(yes) when; using this module with async on Server 2008,
-          2008 R2, and Windows 7 or on Server 2008 that is not authenticated
+        - Set this to C(yes) when using this module with async on Server 2008,
+          2008 R2, or Windows 7, or on Server 2008 that is not authenticated
           with basic or credssp.
         - Can also be set to C(yes) on newer hosts where become does not work
           due to further privilege restrictions from the OS defaults.
