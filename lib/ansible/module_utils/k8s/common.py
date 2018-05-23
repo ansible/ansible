@@ -28,6 +28,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     import kubernetes
     from openshift.dynamic import DynamicClient
+    from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
 except ImportError:
     HAS_K8S_MODULE_HELPER = False
@@ -173,6 +174,18 @@ class K8sAnsibleMixin(object):
             if not config_file:
                 return kubernetes.client.ApiClient()
             raise
+
+    def find_resource(self, kind, api_version, fail=False):
+        for attribute in ['kind', 'name', 'singular_name']:
+            try:
+                return self.client.resources.get(**{'api_version': api_version, attribute: kind})
+            except (ResourceNotFoundError, ResourceNotUniqueError):
+                pass
+        try:
+            return self.client.resources.get(api_version=api_version, short_names=[kind])
+        except (ResourceNotFoundError, ResourceNotUniqueError):
+            if fail:
+                self.fail_json(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
 
     def remove_aliases(self):
         """
