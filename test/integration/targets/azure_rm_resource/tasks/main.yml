@@ -3,140 +3,75 @@
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
-- name: Create security group
+- name: Call REST API - StorageAccounts_Create
   azure_rm_resource:
+    api_version: '2017-10-01'
     resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
-    idempotency: yes
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "{{ accountname }}"
     body:
-      location: eastus
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: "{{ location }}"
       properties:
-        securityRules:
-        - name: firstsecurityrule
-          properties:
-            protocol: "*"
-            sourceAddressPrefix: "10.0.0.0/8"
-            destinationAddressPrefix: "11.0.0.0/8"
-            access: "Deny"
-            destinationPortRange: "8080"
-            sourcePortRange: "*"
-            priority: 100
-            direction: "Outbound"
+        accessTier: Hot
+    idempotency: yes
   register: output
 
-- assert:
+- name: Assert that something has changed
+  assert:
     that: output.changed
 
-- name: Query the instance of security group using facts module
-  azure_rm_resource_facts:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
-  register: output_group
-
-- name: Try to create the same security group again based on facts output
+- name: Call REST API - StorageAccounts_Create - with same parameters
   azure_rm_resource:
+    api_version: '2017-10-01'
     resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "{{ accountname }}"
+    body:
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: "{{ location }}"
+      properties:
+        accessTier: Hot
     idempotency: yes
-    body: "{{ output_group.response[0] }}"
   register: output
 
-- assert:
+- name: Assert that nothing has changed
+  assert:
     that: not output.changed
 
-- name: Add some tags to security group definition
-  set_fact:
-    body: "{{ output_group.response[0] | combine({'tags': {'aaa': 'bbb' }}, recursive=True) }}"
-
-- name: Try to create the same security group again with modified facts output
+- name: Call REST API - StorageAccounts_Create - with different parameters
   azure_rm_resource:
+    api_version: '2017-10-01'
     resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
-    idempotency: yes
-    body: "{{ body }}"
-  register: output
-
-- assert:
-    that: output.changed
-
-- name: Query instance of security rule
-  azure_rm_resource_facts:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    subresource:
-      - type: securityrules
-        name: firstsecurityrule
-    api_version: "2018-01-01"
-  register: output
-
-- name: Create security rule
-  azure_rm_resource:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    subresource:
-      - type: securityrules
-        name: mysecurityrule
-    api_version: "2018-01-01"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "{{ accountname }}"
     body:
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: "{{ location }}"
       properties:
-        protocol: "*"
-        sourceAddressPrefix: "10.0.0.0/8"
-        destinationAddressPrefix: "11.0.0.0/8"
-        access: "Deny"
-        destinationPortRange: "8080"
-        sourcePortRange: "*"
-        priority: 200
-        direction: "Inbound"
-
-- name: Query instance of security rule
-  azure_rm_resource_facts:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    subresource:
-      - type: securityrules
-        name: mysecurityrule
-    api_version: "2018-01-01"
-
-- name: Delete security group
-  azure_rm_resource:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
-    state: absent
+        accessTier: Cool
+    idempotency: yes
   register: output
 
-- assert:
+- name: Assert that something has changed
+  assert:
     that: output.changed
 
-- name: Delete unexisting security group
-  azure_rm_resource:
-    resource_group: "{{ resource_group }}"
-    provider: network
-    resource_type: networksecuritygroups
-    resource_name: sg{{ rpfx }}
-    api_version: "2018-01-01"
-    state: absent
-  register: output
 
-#- assert:
-#    that: not output.changed
+- name: Try to get information about account
+  azure_rm_resource_facts:
+    api_version: '2017-10-01'
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "{{ accountname }}"
+  register: output
