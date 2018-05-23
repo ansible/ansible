@@ -151,6 +151,9 @@ class SynchronizeTester(object):
             fdata = f.read()
         fdata = fdata.decode("utf-8")
         in_task_vars = json.loads(fdata)
+        # Note json key values must be strings, but YAML variables may
+        # put non-string keys.  Add to ensure this is ignored.
+        in_task_vars[None] = None
 
         # load expected final task vars
         outvarspath = os.path.join(fixturepath, test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
