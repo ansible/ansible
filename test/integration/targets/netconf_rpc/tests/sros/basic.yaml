@@ -122,4 +122,62 @@
     that:
       - "'unsupported content data-type' in result.msg"
 
+- name: Failure scenario, RPC is close-session
+  netconf_rpc:
+    rpc: close-session
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'unsupported operation' in result.msg"
+
+- name: Failure scenario, attribute rpc missing
+  netconf_rpc:
+    display: json
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'missing required arguments' in result.msg"
+
+- name: Failure scenario, attribute rpc is None
+  netconf_rpc:
+    rpc:
+    display: json
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'must not be None' in result.msg"
+
+- name: Failure scenario, attribute rpc is zero-length string
+  netconf_rpc:
+    rpc: ""
+    display: json
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'must not be empty' in result.msg"
+
+- name: Failure scenario, attribute rpc only contains white-spaces
+  netconf_rpc:
+    rpc: "   "
+    display: json
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'must not be empty' in result.msg"
+
 - debug: msg="END netconf_rpc sros/basic.yaml on connection={{ ansible_connection }}"

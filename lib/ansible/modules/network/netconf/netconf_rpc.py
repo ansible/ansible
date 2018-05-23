@@ -143,17 +143,10 @@ output:
     formatted_output:
       - Contains formatted response received from remote host as per the value in display format.
 """
-import sys
-import re
-
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring, XMLSyntaxError
+    from lxml.etree import tostring
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
-    if sys.version_info < (2, 7):
-        from xml.parsers.expat import ExpatError as XMLSyntaxError
-    else:
-        from xml.etree.ElementTree import ParseError as XMLSyntaxError
+    from xml.etree.ElementTree import tostring
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netconf.netconf import dispatch
@@ -167,12 +160,6 @@ except ImportError:
 
 
 def get_xml_request(module, request, xmlns, content):
-    if request is None:
-        module.fail_json(msg='request is mandatory')
-
-    if len(request) == 0:
-        module.fail_json(msg='request cannot be empty string')
-
     if content is None:
         if xmlns is None:
             return '<%s/>' % request
@@ -227,6 +214,18 @@ def main():
     xmlns = module.params['xmlns']
     content = module.params['content']
     display = module.params['display']
+
+    if rpc is None:
+        module.fail_json(msg='argument `rpc` must not be None')
+
+    rpc = rpc.strip()
+    if len(rpc) == 0:
+        module.fail_json(msg='argument `rpc` must not be empty')
+
+    if rpc in ['close-session']:
+        # explicit close-session is not allowed, as this would make the next
+        # NETCONF operation to the same host fail
+        module.fail_json(msg='unsupported operation `%s`' % rpc)
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
