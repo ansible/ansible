@@ -76,6 +76,10 @@ options:
     description:
       - There are two types of channels - local, which is created from destination address to host and global from destination to Subutai Helper node.
     type: bool
+  template:
+    description:
+      - A flag to specify if changes will affect template or a container
+    type: bool
   protocol:
     description:
       - Specifies required protocol for mapping and might be http, https, tcp or udp.
