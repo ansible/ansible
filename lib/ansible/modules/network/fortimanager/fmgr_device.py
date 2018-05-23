@@ -184,7 +184,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        state=dict(choices=["absent", "present"], type="str"),
+        state=dict(choices=["absent", "present"], type="str", default="present"),
 
         device_ip=dict(required=False, type="str"),
         device_username=dict(required=False, type="str"),
