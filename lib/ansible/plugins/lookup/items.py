@@ -40,7 +40,8 @@ EXAMPLES = """
      - testuser2
 
 - name: "loop through list from a variable"
-  debug: msg="An item: {{item}}"
+  debug:
+    msg: "An item: {{item}}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users
