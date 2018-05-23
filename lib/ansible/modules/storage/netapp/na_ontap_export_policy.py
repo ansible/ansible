@@ -24,7 +24,6 @@ options:
   state:
     description:
     - Whether the specified export policy should exist or not.
-    required: false
     choices: ['present', 'absent']
     default: present
   name:
@@ -34,11 +33,9 @@ options:
   new_name:
     description:
     - The name of the export-policy to be renamed.
-    required: false
   vserver:
     description:
     - Name of the vserver to use.
-    required: false
 '''
 
 EXAMPLES = """

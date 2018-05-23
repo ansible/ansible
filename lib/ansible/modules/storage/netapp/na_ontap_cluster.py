@@ -24,29 +24,23 @@ options:
   state:
     description:
     - Whether the specified cluster should exist or not.
-    required: false
     choices: ['present']
     default: present
   cluster_name:
     description:
     - The name of the cluster to manage.
-    required: False
   cluster_ip_address:
     description:
     - IP address of cluster to be joined
-    required: False
   license_code:
     description:
     - License code to be applied to the cluster
-    required: False
   license_package:
     description:
     - License package name of the license to be removed
-    required: False
   node_serial_number:
     description:
     - Serial number of the cluster node
-    required: False
 
 '''
 
