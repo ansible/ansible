@@ -24,11 +24,13 @@ notes:
     same DNS records (i.e. they point to the same IP). An API key generated via the
     Memset customer control panel is needed with the following minimum scope -
     I(dns.zone_domain_create), I(dns.zone_domain_delete), I(dns.zone_domain_list).
+  - Currently this module can only create one domain at a time. Multiple domains should
+    be created using C(with_items).
 description:
     - Manage DNS zone domains in a Memset account.
 options:
     state:
-        required: true
+        default: present
         description:
             - Indicates desired state of resource.
         choices: [ absent, present ]
@@ -226,7 +228,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
             domain=dict(required=True, aliases=['name'], type='str'),
             zone=dict(required=True, type='str')
