@@ -63,7 +63,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                             else:
                                 # not yaml, should be a simple string
                                 data[varkey] = to_text(child.value.s)
-                        display.debug('assigned :%s' % varkey)
+                        display.debug('doc parsing assigned :%s' % varkey)
 
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
         data['metadata'] = extract_metadata(module_ast=M)[0]
