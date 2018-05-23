@@ -51,6 +51,7 @@ options:
     description:
       - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of
         type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
+    default: Small
   endpoints:
     description:
       - a comma-separated list of TCP ports to expose on the virtual machine (e.g., "22,80")
@@ -88,9 +89,7 @@ options:
   state:
     description:
       - create or terminate instances
-    choices:
-        - absent
-        - present
+    choices: [ absent, present ]
     default: 'present'
   auto_updates:
     description:
@@ -168,6 +167,67 @@ import time
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.timeout import TimeoutError
+
+AZURE_LOCATIONS = ['South Central US',
+                   'Central US',
+                   'East US 2',
+                   'East US',
+                   'West US',
+                   'North Central US',
+                   'North Europe',
+                   'West Europe',
+                   'East Asia',
+                   'Southeast Asia',
+                   'Japan West',
+                   'Japan East',
+                   'Brazil South']
+
+AZURE_ROLE_SIZES = ['ExtraSmall',
+                    'Small',
+                    'Medium',
+                    'Large',
+                    'ExtraLarge',
+                    'A5',
+                    'A6',
+                    'A7',
+                    'A8',
+                    'A9',
+                    'Basic_A0',
+                    'Basic_A1',
+                    'Basic_A2',
+                    'Basic_A3',
+                    'Basic_A4',
+                    'Standard_D1',
+                    'Standard_D2',
+                    'Standard_D3',
+                    'Standard_D4',
+                    'Standard_D11',
+                    'Standard_D12',
+                    'Standard_D13',
+                    'Standard_D14',
+                    'Standard_D1_v2',
+                    'Standard_D2_v2',
+                    'Standard_D3_v2',
+                    'Standard_D4_v2',
+                    'Standard_D5_v2',
+                    'Standard_D11_v2',
+                    'Standard_D12_v2',
+                    'Standard_D13_v2',
+                    'Standard_D14_v2',
+                    'Standard_DS1',
+                    'Standard_DS2',
+                    'Standard_DS3', 
+                    'Standard_DS4',
+                    'Standard_DS11',
+                    'Standard_DS12',
+                    'Standard_DS13',
+                    'Standard_DS14',
+                    'Standard_G1',
+                    'Standard_G2',
+                    'Standard_G3',
+                    'Standard_G4',
+                    'Standard_G5']
+
 from distutils.version import LooseVersion
 
 try:
@@ -449,8 +509,8 @@ def main():
             name=dict(),
             hostname=dict(),
             os_type=dict(default='linux', choices=['linux', 'windows']),
-            location=dict(),
-            role_size=dict(),
+            location=dict(choices=AZURE_LOCATIONS),
+            role_size=dict(choices=AZURE_ROLE_SIZES),
             subscription_id=dict(no_log=True),
             storage_account=dict(),
             management_cert_path=dict(),
@@ -459,7 +519,7 @@ def main():
             password=dict(no_log=True),
             image=dict(),
             virtual_network_name=dict(default=None),
-            state=dict(default='present', choices=['absent', 'present']),
+            state=dict(default='present'),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
             wait_timeout_redirects=dict(default=300),
