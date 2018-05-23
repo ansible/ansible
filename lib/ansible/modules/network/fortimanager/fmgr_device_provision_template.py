@@ -391,7 +391,6 @@ EXAMPLES = '''
     snmp_v2c_name: "ansibleV2c"
     snmp_v2c_id: "1"
     snmp_v2c_trap_src_ipv4: "10.7.220.41"
-    snmp_v2c_trap_src_ipv4: "2001:db8:85a3:0:0:8a2e:370:5555"
     snmp_v2c_trap_hosts_ipv4: "10.7.220.59 255.255.255.255, 10.7.220.60 255.255.255.255"
     snmp_v2c_query_hosts_ipv4: "10.7.220.59 255.255.255.255, 10.7.220.0 255.255.255.0"
     snmp_v2c_trap_hosts_ipv6: "2001:db8:85a3:0:0:8a2e:370:7334"
