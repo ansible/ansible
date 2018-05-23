@@ -77,7 +77,9 @@ EXAMPLES = '''
   register: mymotd
 
 - name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+  command: /usr/bin/make_database.sh arg1 arg2
+  args:
+    creates: /path/to/database
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
