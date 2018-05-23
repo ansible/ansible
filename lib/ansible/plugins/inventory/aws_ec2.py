@@ -97,6 +97,11 @@ keyed_groups:
   # create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
+
+# set individual variables with compose
+compose:
+  # use the private IP address to connect to the host
+  ansible_host: private_ip_address
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
