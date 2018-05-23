@@ -37,6 +37,19 @@ options:
     default: default
     aliases:
       - dns_view
+  old_name:
+    description:
+      - Specifies the fully qualified hostname to update or modify from
+        the system
+    required: false
+  view:
+    description:
+      - Sets the DNS view to associate this host record with. The DNS
+        view must already be configured on the system
+    required: false
+    default: default
+    aliases:
+      - dns_view
   ipv4addrs:
     description:
       - Configures the IPv4 addresses for this host record.  This argument
@@ -103,7 +116,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
@@ -116,11 +128,22 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove a host record from the system
   nios_host_record:
     name: host.ansible.com
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: update an ipv4 host record
+  nios_host_record:
+    name: host-new.ansible.com
+    old_name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.1
+    state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
@@ -133,19 +156,17 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_HOST_RECORD
 
 
 def ipaddr(module, key, filtered_keys=None):
     ''' Transforms the input value into a struct supported by WAPI
-
     This function will transform the input from the playbook into a struct
     that is valid for WAPI in the form of:
-
         {
             ipv4addr: <value>,
             mac: <value>
         }
-
     This function does not validate the values are properly formatted or in
     the acceptable range, that is left to WAPI.
     '''
@@ -178,6 +199,7 @@ def main():
 
     ib_spec = dict(
         name=dict(required=True, ib_req=True),
+        old_name=dict(required=False, ib_req=True),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
@@ -201,7 +223,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('record:host', ib_spec)
+    result = wapi.run(NIOS_HOST_RECORD, ib_spec)
 
     module.exit_json(**result)
 
