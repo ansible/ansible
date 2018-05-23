@@ -658,10 +658,18 @@ def main():
 
             # Assign name to the partition
             if name is not None and partition.get('name', None) != name:
-                script += "name %s %s " % (number, name)
+                # Wrap double quotes in single quotes so the shell doesn't strip
+                # the double quotes as those need to be included in the arg
+                # passed to parted
+                script += 'name %s \'"%s"\' ' % (number, name)
 
             # Manage flags
             if flags:
+                # Parted infers boot with esp, if you assign esp, boot is set
+                # and if boot is unset, esp is also unset.
+                if 'esp' in flags and 'boot' not in flags:
+                    flags.append('boot')
+
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
                 flags_on = list(set(flags) - set(partition['flags']))
