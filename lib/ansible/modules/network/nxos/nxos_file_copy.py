@@ -38,6 +38,7 @@ notes:
   - If the file is already present (md5 sums match), no transfer will
     take place.
   - Check mode will tell you if the file would be copied.
+  - For connection local please define host, username, password in provider spec.
 requirements:
   - paramiko
 options:
