@@ -48,8 +48,6 @@ options:
         outdated tunnels to keep the system network connections clean. This mechanism may re-create a tunnel if
         it was dropped unintentionally (system reboot, network interruption, etc.), but newly created tunnels
         will have different "entrance" address.
-
-    default: 'present'
     choices: [ 'tunnel', 'map', 'vxlan', 'proxy' ]
   state:
     description:
