@@ -471,7 +471,7 @@ def main():
         mode=dict(choices=["add", "set", "delete"], type="str", default="add"),
 
         name=dict(required=False, type="str"),
-        type=dict(required=False, type="str", choices=['pkg','folder','install']),
+        type=dict(required=False, type="str", choices=['pkg', 'folder', 'install']),
         package_folder=dict(required=False, type="str"),
         central_nat=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
