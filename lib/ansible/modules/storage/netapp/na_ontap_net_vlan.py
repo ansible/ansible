@@ -22,7 +22,7 @@ description:
 options:
   state:
     description:
-    - Whether you want to create to delete a network vlan
+    - Whether the specified network vlan should exist or not
     choices: ['present', 'absent']
     default: present
   parent_interface:
@@ -41,7 +41,7 @@ options:
     - Name of vlan interface. The name must be of the format <parent-inteface>-<vlanid>
   gvrp_enabled:
     description:
-    - Default is false. GVRP is deprecated and this attribute is ignored in cluster mode.
+    - GVRP is deprecated and this attribute is ignored in cluster mode.
 '''
 
 EXAMPLES = """
@@ -81,7 +81,7 @@ class NetAppOntapVlan(object):
             vlanid=dict(required=True, type='str'),
             node=dict(required=True, type='str'),
             interface_name=dict(required=False, type='str'),
-            gvrp_enabled=dict(required=False, type='str'),
+            gvrp_enabled=dict(required=False, type='bool', default=False),
         ))
 
         self.module = AnsibleModule(
@@ -124,7 +124,7 @@ class NetAppOntapVlan(object):
         vlan_obj.add_child_elem(vlan_info)
         self.server.invoke_successfully(vlan_obj, True)
 
-    def does_vlan_exits(self):
+    def does_vlan_exist(self):
         """
         Checks to see if a vlan already exists or not
         :return: Returns True if the vlan exists, false if it dosn't
@@ -168,7 +168,7 @@ class NetAppOntapVlan(object):
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_net_vlan", cserver)
-        existing_vlan = self.does_vlan_exits()
+        existing_vlan = self.does_vlan_exist()
         if existing_vlan:
             if self.state == 'absent':  # delete
                 changed = True

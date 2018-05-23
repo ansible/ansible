@@ -24,7 +24,7 @@ description:
 options:
   state:
     description:
-    - Whether the specified volume should exist or not.
+    - Whether the specified network interface group should exist or not.
     choices: ['present', 'absent']
     default: present
 

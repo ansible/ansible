@@ -56,8 +56,8 @@ options:
 
   force_resize:
     description:
-    - Forcibly reduce the size. This is required for reducing the size of the LUN to avoid accidentally
-    - reducing the LUN size.
+      Forcibly reduce the size. This is required for reducing the size of the LUN to avoid accidentally
+      reducing the LUN size.
     type: bool
     default: false
 
@@ -82,13 +82,11 @@ options:
     - The name of the vserver to use.
 
   ostype:
-    required: false
     description:
     - The os type for the LUN.
     default: 'image'
 
   space_reserve:
-    required: false
     description:
     - This can be set to "false" which will create a LUN without any space being reserved.
     type: bool
@@ -343,7 +341,6 @@ class NetAppOntapLUN(object):
 
     def apply(self):
         property_changed = False
-        multiple_properties_changed = False
         size_changed = False
         lun_exists = False
         netapp_utils.ems_log_event("na_ontap_lun", self.server)
@@ -378,8 +375,7 @@ class NetAppOntapLUN(object):
                             # Ensure that size was actually changed. Please
                             # read notes in 'resize_lun' function for details.
                             size_changed = self.resize_lun()
-                            if not size_changed and not \
-                                    multiple_properties_changed:
+                            if not size_changed:
                                 property_changed = False
 
                 elif self.state == 'absent':
