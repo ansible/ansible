@@ -1,6 +1,6 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
+- debug: msg="Using provider=cli"
   when: ansible_connection == "local"
 
 - name: "Setup - Remove existing file"
