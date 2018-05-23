@@ -501,7 +501,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'net': _net_query,
         'next_usable': _next_usable_query,
         'netmask': _netmask_query,
-        'network': _network_query,
+        'network': _network_query,  # deprecate
         'network_id': _network_id_query,
         'network/prefix': _subnet_query,
         'network_netmask': _network_netmask_query,
