@@ -552,8 +552,8 @@ def main():
         color=dict(required=False, type="int"),
         comment=dict(required=False, type="str"),
         custom_type=dict(required=False, type="str", choices=['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp',
-                                                              'connect', 'socks_tcp', 'socks_udp', 'all']
-                         , default="all"),
+                                                              'connect', 'socks_tcp', 'socks_udp', 'all'],
+                         default="all"),
         explicit_proxy=dict(required=False, type="str", choices=['enable', 'disable'], default="disable"),
         fqdn=dict(required=False, type="str"),
         group_name=dict(required=False, type="str"),
