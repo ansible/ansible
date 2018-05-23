@@ -51,12 +51,13 @@ options:
   state:
     description:
       - "State of the VPC."
-      - "The state C(started) is only considered while creating the VPC, added in version 2.6."
+      - "The state C(present) creates a started VPC."
+      - "The state C(stopped) is only considered while creating the VPC, added in version 2.6."
     default: present
     choices:
       - present
       - absent
-      - started
+      - stopped
       - restarted
   domain:
     description:
@@ -92,6 +93,7 @@ EXAMPLES = '''
     name: my_vpc
     display_text: My example VPC
     cidr: 10.10.0.0/16
+    state: stopped
 
 - name: Ensure a VPC is present and started after creating
   local_action:
@@ -99,7 +101,6 @@ EXAMPLES = '''
     name: my_vpc
     display_text: My example VPC
     cidr: 10.10.0.0/16
-    state: started
 
 - name: Ensure a VPC is absent
   local_action:
@@ -289,7 +290,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
-            'start': self.module.params.get('state') == 'started'
+            'start': self.module.params.get('state') != 'stopped'
         }
         self.result['diff']['after'] = args
         if not self.module.check_mode:
@@ -338,7 +339,7 @@ def main():
         vpc_offering=dict(),
         network_domain=dict(),
         clean_up=dict(type='bool'),
-        state=dict(choices=['present', 'absent', 'started', 'restarted'], default='present'),
+        state=dict(choices=['present', 'absent', 'stopped', 'restarted'], default='present'),
         domain=dict(),
         account=dict(),
         project=dict(),
