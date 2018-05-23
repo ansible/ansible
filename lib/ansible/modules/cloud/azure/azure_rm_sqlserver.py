@@ -46,6 +46,15 @@ options:
         description:
             - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for the resour
                ce. Possible values include: 'SystemAssigned'"
+    state:
+        description:
+            - Assert the state of the SQL server. Use 'present' to create or update a server and
+              'absent' to delete a server.
+        default: present
+        choices:
+            - absent
+            - present
+        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure

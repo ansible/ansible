@@ -39,10 +39,13 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     orchestration_platform:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
         required: true
     master_profile:
         description:
@@ -116,6 +119,7 @@ options:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
+        type: bool
 
 extends_documentation_fragment:
     - azure
