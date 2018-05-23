@@ -1,0 +1,77 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Call REST API - StorageAccounts_Create
+  azure_rm_resource:
+    api_version: '2017-10-01'
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: stacc{{ rpfx }}
+    body:
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: eastus
+      properties:
+        accessTier: Hot
+    idempotency: yes
+  register: output
+
+- name: Assert that something has changed
+  assert:
+    that: output.changed
+
+- name: Call REST API - StorageAccounts_Create - with same parameters
+  azure_rm_resource:
+    api_version: '2017-10-01'
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: stacc{{ rpfx }}
+    body:
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: eastus
+      properties:
+        accessTier: Hot
+    idempotency: yes
+  register: output
+
+- name: Assert that nothing has changed
+  assert:
+    that: not output.changed
+
+- name: Call REST API - StorageAccounts_Create - with different parameters
+  azure_rm_resource:
+    api_version: '2017-10-01'
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: stacc{{ rpfx }}
+    body:
+      sku:
+        name: Standard_LRS
+      kind: BlobStorage
+      location: eastus
+      properties:
+        accessTier: Cool
+    idempotency: yes
+  register: output
+
+- name: Assert that something has changed
+  assert:
+    that: output.changed
+
+
+- name: Try to get information about account
+  azure_rm_resource_facts:
+    api_version: '2017-10-01'
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: stacc{{ rpfx }}
+  register: output
