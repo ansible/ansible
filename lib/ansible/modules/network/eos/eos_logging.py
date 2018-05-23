@@ -113,8 +113,8 @@ commands:
 """
 
 import re
-from copy import deepcopy
 
+from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.eos.eos import get_config, load_config
@@ -147,7 +147,6 @@ def map_obj_to_commands(updates, module):
         level = w['level']
         state = w['state']
         del w['state']
-
 
         if state == 'absent' and w in have:
             if dest == 'host':
@@ -190,8 +189,9 @@ def map_obj_to_commands(updates, module):
                 # Case 1:       logging buffered <size> <level>
                 #               logging buffered <same-size>
                 #
-                # Case 2:       Same buffered logging configuration already exists(i.e., both size & level
-                #               are same)
+                # Case 2:       Same buffered logging configuration
+                #               already exists (i.e., both size &
+                #               level are same)
 
                 for entry in have:
                     if entry['dest'] == 'buffered' and entry['size'] == size:
@@ -290,7 +290,6 @@ def map_config_to_obj(module):
 
             else:
                 dest = None
-                pass
 
             obj.append({'dest': dest,
                         'name': parse_name(line, dest),
@@ -408,7 +407,6 @@ def main():
     have = map_config_to_obj(module)
     want = map_params_to_obj(module, required_if=required_if)
 
-
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
 
@@ -421,6 +419,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
