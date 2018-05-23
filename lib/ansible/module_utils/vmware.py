@@ -189,10 +189,14 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
             for c_obj in f_obj.childEntity:
                 if not isinstance(c_obj, vim.VirtualMachine):
                     continue
-                if c_obj.name == vm_id:
-                    vm = c_obj
-                    if match_first:
-                        break
+                try:
+                    if c_obj.name == vm_id:
+                        vm = c_obj
+                        if match_first:
+                            break
+                except vmodl.fault.ManagedObjectNotFound:
+                    # if object was deleted in the meantime, skip it
+                    pass
     return vm
 
 
