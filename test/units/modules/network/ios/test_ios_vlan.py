@@ -51,11 +51,50 @@ class TestIosVlanModule(TestIosModule):
         self.load_config.return_value = {'diff': None, 'session': 'session'}
 
     def test_ios_vlan_create(self):
+        set_module_args({'vlan_id': '3', 'name': 'test', 'state': 'present'})
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['vlan 3', 'name test'])
+
+    def test_ios_vlan_rename(self):
         set_module_args({'vlan_id': '2', 'name': 'test', 'state': 'present'})
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['vlan 2', 'name test'])
 
-    def test_parse_vlan_brief(self):
+    def test_ios_vlan_with_interfaces(self):
+        set_module_args({'vlan_id': '2', 'name': 'vlan2', 'state': 'present', 'interfaces': ['GigabitEthernet1/0/8', 'GigabitEthernet1/0/7']})
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'],
+            [
+                'vlan 2',
+                'interface GigabitEthernet1/0/8',
+                'switchport mode access',
+                'switchport access vlan 2',
+                'vlan 2',
+                'interface GigabitEthernet1/0/6',
+                'switchport mode access',
+                'no switchport access vlan 2',
+            ]
+        )
+
+def test_ios_vlan_with_interfaces_and_newvlan(self):
+        set_module_args({'vlan_id': '3', 'name': 'vlan3', 'state': 'present', 'interfaces': ['GigabitEthernet1/0/8', 'GigabitEthernet1/0/7']})
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'],
+            [
+                'vlan 3',
+                'name vlan3',
+                'vlan 3',
+                'interface GigabitEthernet1/0/8',
+                'switchport mode access',
+                'switchport access vlan 3',
+                'vlan 3',
+                'interface GigabitEthernet1/0/7',
+                'switchport mode access',
+                'switchport access vlan 3',
+            ]
+        )
+
+def test_parse_vlan_brief(self):
         result = parse_vlan_brief(load_fixture('ios_vlan_config.cfg'))
         obj = [
             {
@@ -64,9 +103,19 @@ class TestIosVlanModule(TestIosModule):
                     'GigabitEthernet1/0/4',
                     'GigabitEthernet1/0/5',
                     'GigabitEthernet1/0/52',
+                    'GigabitEthernet1/0/54',
                 ],
                 'state': 'active',
                 'vlan_id': '1',
+            },
+            {
+                'name': 'vlan2',
+                'interfaces': [
+                    'GigabitEthernet1/0/6',
+                    'GigabitEthernet1/0/7',
+                ],
+                'state': 'active',
+                'vlan_id': '2',
             },
             {
                 'name': 'fddi-default',
