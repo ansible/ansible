@@ -74,12 +74,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
             api_version = definition.get('apiVersion')
-            try:
-                resource = self.client.resources.get(kind=search_kind, api_version=api_version)
-            except Exception as e:
-                self.fail_json(msg='Failed to find resource {0}.{1}: {2}'.format(
-                    api_version, search_kind, e
-                ))
+            resource = self.find_resource(self, search_kind, api_version, fail=True)
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
             results.append(result)

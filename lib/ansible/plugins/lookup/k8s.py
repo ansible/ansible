@@ -272,7 +272,7 @@ class KubernetesLookup(K8sAnsibleMixin):
                 "using the 'resource_definition' parameter."
             )
 
-        resource = self.client.resources.get(kind=self.kind, api_version=self.api_version)
+        resource = self.find_resource(self.kind, self.api_version, fail=True)
         try:
             k8s_obj = resource.get(name=self.name, namespace=self.namespace, label_selector=self.label_selector, field_selector=self.field_selector)
         except NotFoundError:
