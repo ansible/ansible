@@ -52,6 +52,14 @@ options:
             of the properties do not match.
       type: bool
       default: 'no'
+    state:
+        description:
+            - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
+        version_added: 2.6
 
 extends_documentation_fragment:
     - azure

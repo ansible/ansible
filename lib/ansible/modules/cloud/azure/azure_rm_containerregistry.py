@@ -38,7 +38,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     admin_user_enabled:
         description:
             - If enabled, you can use the registry name as username and admin user access key as password to docker login to your container registry.
@@ -235,7 +234,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             sku=dict(
                 type='str',
                 required=False,
-                default='Basic',
+                default='Standard',
                 choices=['Basic', 'Standard', 'Premium']
             )
         )
