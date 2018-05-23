@@ -1,41 +1,125 @@
 ---
 - debug: msg="START netconf_rpc sros/basic.yaml on connection={{ ansible_connection }}"
 
-- name: lock candidate
+- name: lock candidate (content is dict)
   netconf_rpc:
-    request:
-      lock:
-        target:
-          candidate:
+    rpc: lock
+    content:
+      target:
+        candidate:
+  register: result
+  connection: netconf
 
-- name: unlock candidate
+- name: discard changes (w/o content)
   netconf_rpc:
-    request: "{'unlock': {'target': {'candidate': None}}}"
+    rpc: discard-changes
+    display: xml
+  register: result
+  connection: netconf
+
+- name: unlock candidate (content is dict as json)
+  netconf_rpc:
+    rpc: unlock
     xmlns: "urn:ietf:params:xml:ns:netconf:base:1.0"
-  
-- name: discard changes
-  netconf_rpc:
-    request: discard-changes
-
-- name: copy running to startup
-  netconf_rpc:
-    request:
-      copy-config:
-        source:
-          running:
-        target:
-          startup:
-
-- name: get schema list with JSON output
-  netconf_rpc:
-    request: |
-      <get>
-        <filter>
-          <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
-            <schemas/>
-          </netconf-state>
-        </filter>
-      </get>
+    content: "{'target': {'candidate': None}}"
     display: json
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output']['rpc-reply'] is defined}}"
+      - "{{ result['output']['rpc-reply']['ok'] is defined}}"
+
+- name: validate candidate (content is single line of XML)
+  netconf_rpc:
+    rpc: validate
+    content: "<source><candidate/></source>"
+    display: json
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output']['rpc-reply'] is defined}}"
+      - "{{ result['output']['rpc-reply']['ok'] is defined}}"
+
+#- name: copy running to startup
+#  netconf_rpc:
+#    rpc: copy-config
+#    content:
+#      source:
+#        running:
+#      target:
+#        startup:
+#  register: result
+#  connection: netconf
+
+- name: get schema list (content is multiple lines of XML)
+  netconf_rpc:
+    rpc: get
+    content: |
+      <filter>
+        <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+          <schemas/>
+        </netconf-state>
+      </filter>
+    display: json
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output']['data'] is defined}}"
+      - "{{ result['output']['data']['netconf-state'] is defined}}"
+      - "{{ result['output']['data']['netconf-state']['schemas'] is defined}}"
+      - "{{ result['output']['data']['netconf-state']['schemas']['schema'] is defined}}"
+
+#- name: get-schema
+#  netconf_rpc:
+#    rpc: get-schema
+#    xmlns: urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring
+#    content:
+#      identifier: ietf-netconf
+#      version: "2011-06-01"
+#  register: result
+#  connection: netconf
+
+#- name: get schema using XML request
+#  netconf_rpc:
+#    rpc: "get-schema"
+#    xmlns: "urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"
+#    content: |
+#      <identifier>ietf-netconf-monitoring</identifier>
+#      <version>2010-10-04</version>
+#    display: pretty
+#  register: result
+#  connection: netconf
+
+- name: Failure scenario, unsupported content (xpath value)
+  netconf_rpc:
+    rpc: get
+    content: schemas/schema[identifier=ietf-netconf-monitoring]
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'unsupported content value' in result.msg"
+
+- name: Failure scenario, unsupported content type (list)
+  netconf_rpc:
+    rpc: get
+    content:
+      - value1
+      - value2
+  register: result
+  connection: netconf
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'unsupported content data-type' in result.msg"
 
 - debug: msg="END netconf_rpc sros/basic.yaml on connection={{ ansible_connection }}"

@@ -3,6 +3,6 @@
 
 - name: discard changes
   netconf_rpc:
-    request: discard-changes
+    rpc: discard-changes
 
 - debug: msg="END netconf_rpc junos/basic.yaml on connection={{ ansible_connection }}"

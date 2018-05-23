@@ -27,20 +27,21 @@ description:
     - This module allows the user to execute NETCONF RPC requests as defined
       by IETF RFC standards as well as proprietary requests.
 options:
-  request:
+  rpc:
     description:
-      - This argument specifies the request content to be executed on the remote NETCONF
-        enabled device. It needs to include the name of the operation including all
-        attributes. If the value is a regular string, it is used as name of the operation
-        without operation attributes. If the value is a dict, it is used as name of the
-        operation with operation attributes. If the value is a string in XML format, it
-        is directly used as RPC payload.
+      - This argument specifies the request (name of the operation) to be executed on
+        the remote NETCONF enabled device.
   xmlns:
     description:
       - NETCONF operations not defined in rfc6241 typically require the appropriate
         XML namespace to be set. In the case the I(request) option is not already
         provided in XML format, the namespace can be defined by the I(xmlns)
         option.
+  content:
+    description:
+      - This argument specifies the optional request content (all RPC attributes).
+        The I(content) value can either be provided as XML formatted string or as
+        dictionary.
   display:
     description:
       - Encoding scheme to use when serializing output from the device. The option I(json) will
@@ -52,7 +53,6 @@ options:
 requirements:
   - ncclient (>=v0.5.2)
   - jxmlease
-  - dicttoxml
 
 notes:
   - This module requires the NETCONF system service be enabled on the remote device
@@ -65,56 +65,56 @@ notes:
 EXAMPLES = """
 - name: lock candidate
   netconf_rpc:
-    request:
-      lock:
-        target:
-          candidate:
+    rpc: lock
+    content:
+      target:
+        candidate:
 
 - name: unlock candidate
   netconf_rpc:
-    request: "{'unlock': {'target': {'candidate': None}}}"
+    rpc: unlock
     xmlns: "urn:ietf:params:xml:ns:netconf:base:1.0"
+    content: "{'target': {'candidate': None}}"
 
 - name: discard changes
   netconf_rpc:
-    request: discard-changes
+    rpc: discard-changes
 
 - name: get-schema
   netconf_rpc:
+    rpc: get-schema
     xmlns: urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring
-    request:
-      get-schema:
-        identifier: ietf-netconf
-        version: "2011-06-01"
+    content:
+      identifier: ietf-netconf
+      version: "2011-06-01"
 
 - name: copy running to startup
   netconf_rpc:
-    request:
-      copy-config:
-        source:
-          running:
-        target:
-          startup:
+    rpc: copy-config
+    content:
+      source:
+        running:
+      target:
+        startup:
 
 - name: get schema list with JSON output
   netconf_rpc:
-    request: |
-      <get>
-        <filter>
-          <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
-            <schemas/>
-          </netconf-state>
-        </filter>
-      </get>
+    rpc: get
+    content: |
+      <filter>
+        <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+          <schemas/>
+        </netconf-state>
+      </filter>
     display: json
 
 - name: get schema using XML request
   netconf_rpc:
-    request: |
-      <get-schema xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
-        <identifier>ietf-netconf-monitoring</identifier>
-        <version>2010-10-04</version>
-      </get-schema>
+    rpc: "get-schema"
+    xmlns: "urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"
+    content: |
+      <identifier>ietf-netconf-monitoring</identifier>
+      <version>2010-10-04</version>
     display: json
 """
 
@@ -165,84 +165,75 @@ try:
 except ImportError:
     HAS_JXMLEASE = False
 
-try:
-    from dicttoxml import dicttoxml
-    HAS_DICTTOXML = True
-except ImportError:
-    HAS_DICTTOXML = False
 
-
-def get_xml_request(module, request, xmlns):
+def get_xml_request(module, request, xmlns, content):
     if request is None:
         module.fail_json(msg='request is mandatory')
 
-    if isinstance(request, str):
-        if len(request) == 0:
-            module.fail_json(msg='request cannot be empty string')
+    if len(request) == 0:
+        module.fail_json(msg='request cannot be empty string')
 
-        try:
-            # trying if request is already XML string
-            fromstring(request)
-            return request
-        except XMLSyntaxError:
-            pass
-
-        try:
-            # trying if request contains dict
-            tmp = eval(request)
-            if isinstance(tmp, dict):
-                request = tmp
-        except NameError:
-            pass
-
-    if isinstance(request, str):
+    if content is None:
         if xmlns is None:
             return '<%s/>' % request
         else:
             return '<%s xmlns="%s"/>' % (request, xmlns)
 
-    if isinstance(request, dict):
-        if not HAS_DICTTOXML:
-            module.fail_json(msg='dicttoxml is required to render RPC operation payload'
+    if isinstance(content, str):
+        content = content.strip()
+
+        if content.startswith('<') and content.endswith('>'):
+            # assumption content contains already XML payload
+            if xmlns is None:
+                return '<%s>%s</%s>' % (request, content, request)
+            else:
+                return '<%s xmlns="%s">%s</%s>' % (request, xmlns, content, request)
+
+        try:
+            # trying if content contains dict
+            content = eval(content)
+        except:
+            module.fail_json(msg='unsupported content value `%s`' % content)
+
+    if isinstance(content, dict):
+        if not HAS_JXMLEASE:
+            module.fail_json(msg='jxmlease is required to convert RPC content to XML '
                                  'but does not appear to be installed. '
-                                 'It can be installed using `pip install dicttoxml`')
-        xml = dicttoxml(request, root=False, attr_type=False)
+                                 'It can be installed using `pip install jxmlease`')
 
-        # Once the following PR is integrated, dicttoxml call needs to be updated:
-        #   https://github.com/quandyfactory/dicttoxml/pull/64
-        # Updated version of the dict>XML conversion:
-        #   xml = dicttoxml(request, root=False, attr_type=False, fold_list=False)
-
+        payload = jxmlease.XMLDictNode(content).emit_xml(pretty=False, full_document=False)
         if xmlns is None:
-            return xml
+            return '<%s>%s</%s>' % (request, payload, request)
         else:
-            return re.sub(r'(<[\w-]+)([^>]*>)', r'\1 xmlns="%s"\2' % xmlns, xml, count=1)
+            return '<%s xmlns="%s">%s</%s>' % (request, xmlns, payload, request)
 
-    module.fail_json(msg='unsupported request type `%s`' % type(request.__name__))
+    module.fail_json(msg='unsupported content data-type `%s`' % type(content).__name__)
 
 
 def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        request=dict(required=True),
+        rpc=dict(type="str", required=True),
         xmlns=dict(type="str"),
+        content=dict(),
         display=dict(choices=['json', 'pretty', 'xml'])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    request = module.params['request']
-    display = module.params['display']
+    rpc = module.params['rpc']
     xmlns = module.params['xmlns']
+    content = module.params['content']
+    display = module.params['display']
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
                              'but does not appear to be installed. '
                              'It can be installed using `pip install jxmlease`')
 
-    xml_req = get_xml_request(module, request, xmlns)
+    xml_req = get_xml_request(module, rpc, xmlns, content)
     response = dispatch(module, xml_req)
 
     xml_resp = tostring(response)
