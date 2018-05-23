@@ -51,93 +51,114 @@ options:
   password:
     description:
       - The password associated with the username account.
+    required: true
 
   app_category:
     description:
       - Application category ID.
+    required: false
 
   app_service_type:
     description:
       - Application service type.
+    required: false
 
   application:
     description:
       - Application ID.
+    required: false
 
   category:
     description:
       - Service category.
+    required: false
 
   check_reset_range:
     description:
       - Enable disable RST check.
+    required: false
 
   color:
     description:
       - GUI icon color.
+    required: false
 
   comment:
     description:
       - Comment.
+    required: false
 
   custom_type:
     description:
       - Tells module what kind of custom service to be added
     choices: ['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp', 'connect', 'socks_tcp', 'socks_udp', 'all']
     default: all
+    required: false
 
   explicit_proxy:
     description:
       - Enable/disable explicit web proxy service.
     choices: ['enable', 'disable']
     default: 'disable'
+    required: false
 
   fqdn:
     description:
       - Fully qualified domain name.
+    required: false
 
   group_name:
     description:
       - Name of the Service Group.
+    required: false
 
   group_member:
     description:
       - Comma Seperated list of members' names.
+    required: false
 
   icmp_code:
     description:
       - ICMP code.
+    required: false
 
   icmp_type:
     description:
       - ICMP type.
+    required: false
 
   iprange:
     description:
       - Start IP-End IP.
+    required: false
 
   name:
     description:
       - Custom service name.
+    required: false
 
   mode:
     description:
       - Sets one of three modes for managing the object
     choices: ['add', 'set', 'delete']
     default: add
+    required: false
 
   object_type:
     description:
       - Tells module if we are adding a custom service, category, or group
     choices: ['custom', 'group', 'category']
+    required: false
 
   protocol:
     description:
       - Protocol type.
+    required: false
 
   protocol_number:
     description:
       - IP protocol number.
+    required: false
 
   sctp_portrange:
     description:
@@ -147,18 +168,22 @@ options:
       - Ranges can be defined with a hyphen -
       - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
       - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+    required: false
 
   session_ttl:
     description:
       - Session TTL (300 - 604800, 0 = default).
+    required: false
 
   tcp_halfclose_timer:
     description:
       - TCP half close timeout (1 - 86400 sec, 0 = default).
+    required: false
 
   tcp_halfopen_timer:
     description:
       - TCP half close timeout (1 - 86400 sec, 0 = default).
+    required: false
 
   tcp_portrange:
     description:
@@ -168,14 +193,17 @@ options:
       - Ranges can be defined with a hyphen -
       - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
       - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+    required: false
 
   tcp_timewait_timer:
     description:
       - TCP half close timeout (1 - 300 sec, 0 = default).
+    required: false
 
   udp_idle_timer:
     description:
       - TCP half close timeout (0 - 86400 sec, 0 = default).
+    required: false
 
   udp_portrange:
     description:
@@ -185,10 +213,12 @@ options:
       - Ranges can be defined with a hyphen -
       - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
       - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+    required: false
 
   visibility:
     description:
       - Enable/disable service visibility.
+    required: false
 
 '''
 
@@ -511,6 +541,7 @@ def main():
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
+        mode=dict(required=False, type="str", choices=['add', 'set', 'delete'], default="add"),
 
         app_category=dict(required=False, type="str"),
         app_service_type=dict(required=False, type="str"),
@@ -519,8 +550,9 @@ def main():
         check_reset_range=dict(required=False, type="str"),
         color=dict(required=False, type="int"),
         comment=dict(required=False, type="str"),
-        custom_type=dict(required=False, type="str"),
-        explicit_proxy=dict(required=False, type="str"),
+        custom_type=dict(required=False, type="str", choices=['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp',
+                                                              'connect', 'socks_tcp', 'socks_udp', 'all']),
+        explicit_proxy=dict(required=False, type="str", choices=['enable', 'disable']),
         fqdn=dict(required=False, type="str"),
         group_name=dict(required=False, type="str"),
         group_member=dict(required=False, type="str"),
@@ -528,12 +560,11 @@ def main():
         icmp_type=dict(required=False, type="int"),
         iprange=dict(required=False, type="str"),
         name=dict(required=False, type="str"),
-        mode=dict(required=False, type="str"),
         protocol=dict(required=False, type="str"),
         protocol_number=dict(required=False, type="int"),
         sctp_portrange=dict(required=False, type="str"),
         session_ttl=dict(required=False, type="int"),
-        object_type=dict(required=False, type="str"),
+        object_type=dict(required=False, type="str", choices=['custom', 'group', 'category']),
         tcp_halfclose_timer=dict(required=False, type="int"),
         tcp_halfopen_timer=dict(required=False, type="int"),
         tcp_portrange=dict(required=False, type="str"),
