@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fmgr_fwpol_ipv4
-version_added: "2.5"
+version_added: "2.6"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -44,10 +44,14 @@ options:
     description:
       - The FortiManager's Address.
     required: true
+  username:
+    description:
+      - The username to log into the FortiManager
+    required: true
   password:
     description:
       - The password associated with the username account.
-    required: true
+    required: false
   package_name:
     description:
       - The policy package you want to modify
@@ -83,7 +87,7 @@ options:
     description:
       - Enable/disable authentication-based routing.
     required: false
-    default: 0
+    default: "0"
   auth_redirect_addr:
     description:
       - HTTP-to-HTTPS redirect address for firewall authentication.
@@ -101,17 +105,17 @@ options:
     description:
       - Enable/disable block notification.
     required: false
-    default: 0
+    default: "0"
   captive_portal_exempt:
     description:
       - Enable to exempt some users from the captive portal.
     required: false
-    default: 0
+    default: "0"
   capture_packet:
     description:
       - Enable/disable capture packets.
     required: false
-    default: 0
+    default: "0"
   casi_profile:
     description:
       - CASI Profile.
@@ -128,7 +132,7 @@ options:
     description:
       - Enable TCP NPU session delay to guarantee packet order of 3-way handshake.
     required: false
-    default: 0
+    default: "0"
   devices:
     description:
       - Names of devices or device groups that can be matched by the policy.
@@ -137,27 +141,27 @@ options:
     description:
       - Enable to change packet's DiffServ values to the specified diffservcode-forward value.
     required: false
-    default: 0
+    default: "0"
   diffserv_reverse:
     description:
       - Enable to change packet's reverse (reply) DiffServ values to the specified diffservcode-rev value.
     required: false
-    default: 0
+    default: "0"
   diffservcode_forward:
     description:
       - Change packet's DiffServ to this value.
     required: false
-    default: 000000
+    default: "000000"
   diffservcode_rev:
     description:
       - Change packet's reverse (reply) DiffServ to this value.
     required: false
-    default: 000000
+    default: "000000"
   disclaimer:
     description:
       - Enable/disable user authentication disclaimer.
     required: false
-    default: 0
+    default: "0"
   dlp_sensor:
     description:
       - DLP sensor.
@@ -170,7 +174,7 @@ options:
     description:
       - Enable DSRI to ignore HTTP server responses.
     required: false
-    default: 0
+    default: "0"
   dstaddr:
     description:
       - Destination address and address group names.
@@ -179,7 +183,7 @@ options:
     description:
       - When enabled dstaddr specifies what the destination address must NOT be.
     required: false
-    default: 0
+    default: "0"
   dstintf:
     description:
       - Outgoing (egress) interface.
@@ -188,17 +192,17 @@ options:
     description:
       - How to handle sessions if the configuration of this firewall policy changes.
     required: false
-    default: 0
+    default: "0"
   fixedport:
     description:
       - Enable to prevent source NAT from changing a session's source port.
     required: false
-    default: 0
+    default: "0"
   fsso:
     description:
       - Enable/disable Fortinet Single Sign-On.
     required: false
-    default: 0
+    default: "0"
   fsso_agent_for_ntlm:
     description:
       - FSSO agent to use for NTLM authentication.
@@ -227,12 +231,12 @@ options:
     description:
       - Policy-based IPsec VPN only traffic from the remote network can initiate a VPN.
     required: false
-    default: 0
+    default: "0"
   internet_service:
     description:
       - Enable/disable use of Internet Services for this policy. If enabled, destination address/service not used.
     required: false
-    default: 0
+    default: "0"
   internet_service_custom:
     description:
       - Custom Internet Service Name.
@@ -245,12 +249,12 @@ options:
     description:
       - When enabled internet-service specifies what the service must NOT be.
     required: false
-    default: 0
+    default: "0"
   ippool:
     description:
       - Enable to use IP Pools for source NAT.
     required: false
-    default: 0
+    default: "0"
   ips_sensor:
     description:
       - IPS sensor.
@@ -263,7 +267,7 @@ options:
     description:
       - Enable to allow everything, but log all of the meaningful data. A learning report will be generated.
     required: false
-    default: 0
+    default: "0"
   logtraffic:
     description:
       - Enable or disable logging. Log all sessions or security profile sessions.
@@ -272,12 +276,12 @@ options:
     description:
       - Record logs when a session starts and ends.
     required: false
-    default: 0
+    default: "0"
   match_vip:
     description:
       - Enable to match packets that have had their destination addresses changed by a VIP.
     required: false
-    default: 0
+    default: "0"
   mms_profile:
     description:
       - mms profile
@@ -296,7 +300,7 @@ options:
     description:
       - Policy-based IPsec VPN apply destination NAT to inbound traffic.
     required: false
-    default: 0
+    default: "0"
   natip:
     description:
       - Policy-based IPsec VPN source NAT IP address for outgoing traffic.
@@ -306,12 +310,12 @@ options:
     description:
       - Policy-based IPsec VPN apply source NAT to outbound traffic.
     required: false
-    default: 0
+    default: "0"
   ntlm:
     description:
       - Enable/disable NTLM authentication.
     required: false
-    default: 0
+    default: "0"
   ntlm_enabled_browsers:
     description:
       - HTTP-User-Agent value of supported browsers.
@@ -320,12 +324,12 @@ options:
     description:
       - Enable/disable NTLM guest user access.
     required: false
-    default: 0
+    default: "0"
   outbound:
     description:
       - Policy-based IPsec VPN only traffic from the internal network can initiate a VPN.
     required: false
-    default: 0
+    default: "0"
   per_ip_shaper:
     description:
       - Per-IP traffic shaper.
@@ -334,12 +338,12 @@ options:
     description:
       - Accept UDP packets from any host.
     required: false
-    default: 0
+    default: "0"
   permit_stun_host:
     description:
       - Accept UDP packets from any Session Traversal Utilities for NAT (STUN) host.
     required: false
-    default: 0
+    default: "0"
   policyid:
     description:
       - Policy ID.
@@ -361,12 +365,12 @@ options:
     description:
       - Determine whether the firewall policy allows security profile groups.
     required: false
-    default: 0
+    default: "0"
   radius_mac_auth_bypass:
     description:
       - Enable MAC authentication bypass. The bypassed MAC address must be received from RADIUS server.
     required: false
-    default: 0
+    default: "0"
   redirect_url:
     description:
       - URL users are directed to after seeing and accepting the disclaimer or authenticating.
@@ -375,12 +379,12 @@ options:
     description:
       - Override the default replacement message group for this policy.
     required: false
-    default: 0
+    default: "0"
   rsso:
     description:
       - Enable/disable RADIUS single sign-on (RSSO).
     required: false
-    default: 0
+    default: "0"
   rtp_addr:
     description:
       - Address names if this is an RTP NAT policy.
@@ -389,12 +393,12 @@ options:
     description:
       - Enable Real Time Protocol (RTP) NAT.
     required: false
-    default: 0
+    default: "0"
   scan_botnet_connections:
     description:
       - Block or monitor connections to Botnet servers or disable Botnet scanning.
     required: false
-    default: 0
+    default: "0"
   schedule:
     description:
       - Schedule name.
@@ -404,12 +408,12 @@ options:
     description:
       - Enable to force current sessions to end when the schedule object times out. Disable allows them to end from inactivity.
     required: false
-    default: 0
+    default: "0"
   send_deny_packet:
     description:
       - Enable to send a reply when a session is denied or blocked by a firewall policy.
     required: false
-    default: 0
+    default: "0"
   service:
     description:
       - Service and service group names.
@@ -418,17 +422,17 @@ options:
     description:
       - When enabled service specifies what the service must NOT be.
     required: false
-    default: 0
+    default: "0"
   session_ttl:
     description:
       - Session TTL in seconds for sessions accepted by this policy. 0 means use the system default session TTL.
     required: false
-    default: 0
+    default: "0"
   spamfilter_profile:
     description:
       - Spam filter profile.
     required: false
-    default: 0
+    default: "0"
   srcaddr:
     description:
       - Source address and address group names.
@@ -437,7 +441,7 @@ options:
     description:
       - When enabled srcaddr specifies what the source address must NOT be.
     required: false
-    default: 0
+    default: "0"
   srcintf:
     description:
       - Incoming (ingress) interface.
@@ -446,7 +450,7 @@ options:
     description:
       - Enable to copy decrypted SSL traffic to a FortiGate interface (called SSL mirroring).
     required: false
-    default: 0
+    default: "0"
   ssl_mirror_intf:
     description:
       - SSL mirror interface name.
@@ -468,12 +472,12 @@ options:
     description:
       - Receiver TCP maximum segment size (MSS).
     required: false
-    default: 0
+    default: "0"
   tcp_mss_sender:
     description:
       - Sender TCP maximum segment size (MSS).
     required: false
-    default: 0
+    default: "0"
   timeout_send_rst:
     description:
       - Enable/disable sending RST packets when TCP sessions expire.
@@ -498,7 +502,7 @@ options:
     description:
       - Enable to add one or more security profiles (AV, IPS, etc.) to the firewall policy.
     required: false
-    default: 0
+    default: "0"
   vlan_cos_fwd:
     description:
       - VLAN forward direction user priority 255 passthrough, 0 lowest, 7 highest.
@@ -533,7 +537,7 @@ options:
     description:
       - Enable/disable WAN optimization.
     required: false
-    default: 0
+    default: "0"
   wanopt_detection:
     description:
       - WAN optimization auto-detection mode.
@@ -543,7 +547,7 @@ options:
     description:
       - WAN optimization passive mode options. This option decides what IP address will be used to connect server.
     required: false
-    default: 0
+    default: "0"
   wanopt_peer:
     description:
       - WAN optimization peer.
@@ -556,17 +560,17 @@ options:
     description:
       - Enable/disable forwarding traffic matching this policy to a configured WCCP server.
     required: false
-    default: 0
+    default: "0"
   webcache:
     description:
       - Enable/disable web cache.
     required: false
-    default: 0
+    default: "0"
   webcache_https:
     description:
       - Enable/disable web cache for HTTPS.
     required: false
-    default: 0
+    default: "0"
   webfilter_profile:
     description:
       - Web filter profile.
@@ -745,7 +749,6 @@ def fmgr_fwpol_ipv4(fmg, paramgram):
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str"),
-        vdom=dict(required=False, type="str"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
