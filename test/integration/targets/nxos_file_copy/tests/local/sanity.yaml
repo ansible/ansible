@@ -1,5 +1,6 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
 
 - name: "Setup - Remove existing file"
   nxos_command: &remove_file
@@ -18,6 +19,9 @@
     nxos_file_copy: &copy_file_same_name
       local_file: "./network-integration.cfg"
       file_system: "bootflash:"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
+      host: "{{ ansible_host }}"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
@@ -42,6 +46,9 @@
       local_file: "./inventory.networking.template"
       remote_file: "network-integration.cfg"
       file_system: "bootflash:"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
+      host: "{{ ansible_host }}"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
@@ -72,4 +79,4 @@
       feature: scp-server
       state: disabled
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_file_copy sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_file_copy sanity test"

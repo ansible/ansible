@@ -154,7 +154,7 @@ def transfer_file(module, dest):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
     provider = module.params.get('provider')
-    
+
     hostname = provider.get('host') if provider else module.params['host']
     username = provider.get('username') if provider else module.params['username']
     password = provider.get('password') if provider else module.params['password']

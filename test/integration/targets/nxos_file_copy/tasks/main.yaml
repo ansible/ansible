@@ -1,3 +1,4 @@
 ---
 - { include: cli.yaml, tags: ['cli'] }
+- { include: local.yaml, tags: ['local'] }
 - { include: nxapi.yaml, tags: ['nxapi'] }

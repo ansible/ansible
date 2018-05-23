@@ -1,7 +1,5 @@
 ---
-- debug: msg="START TRANSPORT:NXAPI nxos_file_copy sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
 
 - name: "Setup - Remove existing file"
   nxos_command: &remove_file
@@ -78,4 +76,4 @@
       feature: scp-server
       state: disabled
 
-  - debug: msg="END TRANSPORT:NXAPI nxos_file_copy sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_file_copy sanity test"
