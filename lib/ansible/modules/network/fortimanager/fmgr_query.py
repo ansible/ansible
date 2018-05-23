@@ -322,7 +322,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        object=dict(required=True, type="str", choices="['device', 'cluster_nodes', 'task', 'custom']"),
+        object=dict(required=True, type="str", choices=["device", "cluster_nodes", "task", "custom"]),
 
         custom_endpoint=dict(required=False, type="str"),
         custom_dict=dict(required=False, type="dict"),
