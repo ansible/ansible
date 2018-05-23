@@ -9,7 +9,7 @@
     resource_group: "{{ resource_group }}"
     provider: storage
     resource_type: storageaccounts
-    resource_name: "{{ accountname }}"
+    resource_name: stacc{{ rpfx }}
     body:
       sku:
         name: Standard_LRS
@@ -30,7 +30,7 @@
     resource_group: "{{ resource_group }}"
     provider: storage
     resource_type: storageaccounts
-    resource_name: "{{ accountname }}"
+    resource_name: stacc{{ rpfx }}
     body:
       sku:
         name: Standard_LRS
@@ -51,7 +51,7 @@
     resource_group: "{{ resource_group }}"
     provider: storage
     resource_type: storageaccounts
-    resource_name: "{{ accountname }}"
+    resource_name: stacc{{ rpfx }}
     body:
       sku:
         name: Standard_LRS
@@ -73,5 +73,5 @@
     resource_group: "{{ resource_group }}"
     provider: storage
     resource_type: storageaccounts
-    resource_name: "{{ accountname }}"
+    resource_name: stacc{{ rpfx }}
   register: output
