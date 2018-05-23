@@ -159,7 +159,6 @@ class NiosProvider(CloudProvider):
             nios_host = 'localhost'
 
         self._set_cloud_config('NIOS_HOST', nios_host)
-        self._set_cloud_config('NIOS_PORT', str(nios_port))
 
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
@@ -184,4 +183,3 @@ class NiosEnvironment(CloudEnvironment):
 
         # Send the container IP down to the integration test(s)
         env['NIOS_HOST'] = self._get_cloud_config('NIOS_HOST')
-        env['NIOS_PORT'] = self._get_cloud_config('NIOS_PORT')
