@@ -287,7 +287,9 @@ def update_openstack_volume_provider_auth_keys(
             defined_key['uuid'] for defined_key in keys
         ]
     ]:
-        auth_keys_service.key_service(key).remove()
+        self.changed = True
+        if not self._module.check_mode:
+            auth_keys_service.key_service(key).remove()
     if not (provider_keys or keys):
         # Nothing need to do when both are empty.
         return
@@ -307,12 +309,19 @@ def update_openstack_volume_provider_auth_keys(
         )
 
         if not key_id_for_update:
-            auth_keys_service.add(auth_key)
+            self.changed = True
+            if not self._module.check_mode:
+                auth_keys_service.add(auth_key)
         else:
-            auth_key_service = (
-                auth_keys_service.key_service(key_id_for_update)
-            )
-            auth_key_service.update(auth_key)
+            # We cannot really distinguish here if it was really updated cause
+            # we cannot take key value to check if it was changed or not. So
+            # for sure we update here always.
+            self.changed = True
+            if not self._module.check_mode:
+                auth_key_service = (
+                    auth_keys_service.key_service(key_id_for_update)
+                )
+                auth_key_service.update(auth_key)
 
 
 def main():
