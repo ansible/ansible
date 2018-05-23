@@ -342,7 +342,7 @@ def wait(
 
 def __get_auth_dict():
     OVIRT_URL = os.environ.get('OVIRT_URL')
-    OVIRT_HOSTNAME  = os.environ.get('OVIRT_HOSTNAME')
+    OVIRT_HOSTNAME = os.environ.get('OVIRT_HOSTNAME')
     OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
     OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
     OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
