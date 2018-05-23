@@ -1,0 +1,2 @@
+- bugfixes:
+    - allow ansible-doc to handle 'keywords' configuration entries https://github.com/ansible/ansible/pull/40620

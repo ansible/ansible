@@ -22,6 +22,8 @@ import textwrap
 import traceback
 import yaml
 
+from collections import Sequence
+
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -160,7 +162,7 @@ class DocCLI(CLI):
 
                 try:
                     doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(self.options.verbosity > 0))
-                except:
+                except Exception:
                     display.vvv(traceback.format_exc())
                     display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin), wrap_text=False)
                     continue
@@ -256,7 +258,7 @@ class DocCLI(CLI):
                 doc = None
                 try:
                     doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader)
-                except:
+                except Exception:
                     display.warning("%s has a documentation formatting error" % plugin)
 
                 if not doc or not isinstance(doc, dict):
@@ -395,7 +397,7 @@ class DocCLI(CLI):
                 self.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
 
             conf = {}
-            for config in ('env', 'ini', 'yaml', 'vars'):
+            for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
                     for ignore in self.IGNORE:
@@ -411,7 +413,7 @@ class DocCLI(CLI):
                     continue
                 if isinstance(opt[k], string_types):
                     text.append('%s%s: %s' % (opt_indent, k, textwrap.fill(CLI.tty_ify(opt[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
-                elif isinstance(opt[k], (list, tuple)):
+                elif isinstance(opt[k], (Sequence)) and all(isinstance(x, string_types) for x in opt[k]):
                     text.append(CLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
                     text.append(self._dump_yaml({k: opt[k]}, opt_indent))
@@ -476,7 +478,7 @@ class DocCLI(CLI):
             support_block = self.get_support_block(doc)
             if support_block:
                 text.extend(support_block)
-        except:
+        except Exception:
             pass  # FIXME: not suported by plugins
 
         if doc.pop('action', False):
@@ -532,7 +534,7 @@ class DocCLI(CLI):
             if metadata_block:
                 text.extend(metadata_block)
                 text.append('')
-        except:
+        except Exception:
             pass  # metadata is optional
 
         return "\n".join(text)
