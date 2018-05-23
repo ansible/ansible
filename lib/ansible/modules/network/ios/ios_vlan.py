@@ -250,7 +250,7 @@ def parse_vlan_brief(vlan_out):
 
 
 def map_config_to_obj(module):
-    return parse_vlan_brief(run_commands(module, ['show vlan brief']))
+    return parse_vlan_brief(run_commands(module, ['show vlan brief'])[0])
 
 
 def check_declarative_intent_params(want, module, result):
