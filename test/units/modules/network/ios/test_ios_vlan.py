@@ -53,48 +53,54 @@ class TestIosVlanModule(TestIosModule):
     def test_ios_vlan_create(self):
         set_module_args({'vlan_id': '3', 'name': 'test', 'state': 'present'})
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 3', 'name test'])
+        expected_commands = [
+            'vlan 3',
+            'name test',
+        ]
+        self.assertEqual(result['commands'], expected_commands)
 
     def test_ios_vlan_rename(self):
         set_module_args({'vlan_id': '2', 'name': 'test', 'state': 'present'})
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 2', 'name test'])
+        expected_commands = [
+            'vlan 2',
+            'name test',
+        ]
+        self.assertEqual(result['commands'], expected_commands)
 
     def test_ios_vlan_with_interfaces(self):
         set_module_args({'vlan_id': '2', 'name': 'vlan2', 'state': 'present', 'interfaces': ['GigabitEthernet1/0/8', 'GigabitEthernet1/0/7']})
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'],
-            [
-                'vlan 2',
-                'interface GigabitEthernet1/0/8',
-                'switchport mode access',
-                'switchport access vlan 2',
-                'vlan 2',
-                'interface GigabitEthernet1/0/6',
-                'switchport mode access',
-                'no switchport access vlan 2',
-            ]
-        )
+        expected_commands = [
+            'vlan 2',
+            'interface GigabitEthernet1/0/8',
+            'switchport mode access',
+            'switchport access vlan 2',
+            'vlan 2',
+            'interface GigabitEthernet1/0/6',
+            'switchport mode access',
+            'no switchport access vlan 2',
+        ]
+        self.assertEqual(result['commands'], expected_commands)
 
-def test_ios_vlan_with_interfaces_and_newvlan(self):
+    def test_ios_vlan_with_interfaces_and_newvlan(self):
         set_module_args({'vlan_id': '3', 'name': 'vlan3', 'state': 'present', 'interfaces': ['GigabitEthernet1/0/8', 'GigabitEthernet1/0/7']})
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'],
-            [
-                'vlan 3',
-                'name vlan3',
-                'vlan 3',
-                'interface GigabitEthernet1/0/8',
-                'switchport mode access',
-                'switchport access vlan 3',
-                'vlan 3',
-                'interface GigabitEthernet1/0/7',
-                'switchport mode access',
-                'switchport access vlan 3',
-            ]
-        )
+        expected_commands = [
+            'vlan 3',
+            'name vlan3',
+            'vlan 3',
+            'interface GigabitEthernet1/0/8',
+            'switchport mode access',
+            'switchport access vlan 3',
+            'vlan 3',
+            'interface GigabitEthernet1/0/7',
+            'switchport mode access',
+            'switchport access vlan 3',
+        ]
+        self.assertEqual(result['commands'], expected_commands)
 
-def test_parse_vlan_brief(self):
+    def test_parse_vlan_brief(self):
         result = parse_vlan_brief(load_fixture('ios_vlan_config.cfg'))
         obj = [
             {
