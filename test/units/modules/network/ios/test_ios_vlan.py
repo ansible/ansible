@@ -127,5 +127,11 @@ class TestIosVlanModule(TestIosModule):
                 'state': 'act/unsup',
                 'vlan_id': '1002',
             },
+            {
+                'name': 'fddo-default',
+                'interfaces': [],
+                'state': 'act/unsup',
+                'vlan_id': '1003',
+            },
         ]
         self.assertEqual(result, obj)
