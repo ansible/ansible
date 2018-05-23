@@ -37,6 +37,13 @@ options:
     variables:
       description:
         - Inventory variables. Use C(@) to get from file.
+    kind:
+      description:
+        - The kind field. Cannot be modified after created.
+      default: ""
+      choices: ["", "smart"]
+    host_filter:
+        -  The host_filter field. Only useful when kind=smart.
     state:
       description:
         - Desired state of the resource.
