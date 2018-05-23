@@ -14,7 +14,7 @@
       sku:
         name: Standard_LRS
       kind: BlobStorage
-      location: "{{ location }}"
+      location: eastus
       properties:
         accessTier: Hot
     idempotency: yes
@@ -35,7 +35,7 @@
       sku:
         name: Standard_LRS
       kind: BlobStorage
-      location: "{{ location }}"
+      location: eastus
       properties:
         accessTier: Hot
     idempotency: yes
@@ -56,7 +56,7 @@
       sku:
         name: Standard_LRS
       kind: BlobStorage
-      location: "{{ location }}"
+      location: eastus
       properties:
         accessTier: Cool
     idempotency: yes
