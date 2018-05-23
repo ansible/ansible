@@ -47,6 +47,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Bruno Medina (@brusMX)"
@@ -112,34 +113,6 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
-            state=dict(
-                type='str',
-                required=False,
-                default='present',
-                choices=['present', 'absent']
-            ),
-            location=dict(
-                type='str',
-                required=False
-            ),
-            storage_account_type=dict(
-                type='str',
-                required=False,
-                choices=['Standard_LRS', 'Premium_LRS']
-            ),
-            os_type=dict(
-                type='str',
-                required=False,
-                choices=['linux', 'windows']
-            ),
-            disk_size_gb=dict(
-                type='int',
-                required=False
-            ),
-            managed_by=dict(
-                type='str',
-                required=False
-            ),
             tags=dict(
                 type='str',
                 required=False
@@ -152,13 +125,9 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        self.location = None
-        self.storage_account_type = None
         self.create_option = None
         self.source_uri = None
         self.source_resource_uri = None
-        self.os_type = None
-        self.disk_size_gb = None
         self.tags = None
         super(AzureRMManagedDiskFacts, self).__init__(
             derived_arg_spec=self.module_arg_spec,

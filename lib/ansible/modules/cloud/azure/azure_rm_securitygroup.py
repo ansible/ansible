@@ -34,7 +34,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     name:
         description:
             - Name of the security group to operate on.

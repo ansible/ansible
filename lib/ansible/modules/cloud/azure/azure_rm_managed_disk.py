@@ -43,7 +43,6 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
-        default: resource_group location
     storage_account_type:
         description:
             - "Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)."
