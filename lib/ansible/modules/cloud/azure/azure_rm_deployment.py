@@ -30,6 +30,8 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
+    aliases:
+      - resource_group
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -83,6 +85,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - David Justice (@devigned)

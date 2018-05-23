@@ -25,10 +25,28 @@ options:
         description:
             - Name of resource group
         required: true
+        aliases:
+            - resource_group_name
     name:
         description:
             - Name of the Azure Function App
         required: true
+    location:
+        description:
+            - Valid Azure location. Defaults to location of the resource group.
+        version_added: 2.6
+    storage_account:
+        description:
+            - Name of the storage account to use.
+        required: true
+        aliases:
+            - storage
+            - storage_account_name
+        version_added: 2.6
+    app_settings:
+        description:
+            - Dictionary containing application settings
+        version_added: 2.6
     state:
         description:
             - Assert the state of the Function App. Use 'present' to create or update a Function App and
@@ -41,6 +59,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Thomas Stringer (@tstringer)"
