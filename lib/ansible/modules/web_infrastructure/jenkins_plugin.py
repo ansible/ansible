@@ -491,7 +491,7 @@ class JenkinsPlugin(object):
                 sha1sum_old = base64.b64encode(sha1_old.digest())
 
                 # If the latest version changed, download it
-                if sha1sum_old != plugin_data['sha1']:
+                if sha1sum_old != plugin_data['sha1'].rstrip():
                     if not self.module.check_mode:
                         r = self._download_plugin(plugin_url)
                         self._write_file(plugin_file, r)
