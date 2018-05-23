@@ -200,7 +200,7 @@ options:
     description:
      -snmpv3 traps is enabled or disabled
     required: False
-    choices: ["enable", "disabled"]
+    choices: ["enable", "disable"]
   syslog_port:
     description:
      -syslog port that will be set
@@ -1419,7 +1419,8 @@ def main():
         syslog_server=dict(required=False, type="str"),
         syslog_tcp=dict(required=False, type="str", choices=["enable", "disable"]),
         syslog_status=dict(required=False, type="str", choices=["enable", "disable"]),
-        syslog_filter=dict(required=False, type="str"),
+        syslog_filter=dict(required=False, type="str", choices=["emergency", "alert", "critical", "error",
+                                                                "warning", "notification", "information", "debug"]),
 
         ntp_status=dict(required=False, type="str", choices=["enable", "disable"]),
         ntp_sync_interval=dict(required=False, type="int"),
