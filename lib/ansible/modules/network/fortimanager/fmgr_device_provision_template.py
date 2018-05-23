@@ -530,7 +530,7 @@ api_result:
   returned: always
   type: string
 """
-import pydevd
+
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
 
