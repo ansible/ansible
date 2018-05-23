@@ -40,7 +40,7 @@ EXAMPLES = """
     variablename: hello
     myvar: notename
 
-- name: find several related variables:
+- name: find several related variables
   debug: msg="{{ lookup('vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
 
 - name: alternate way to find some 'prefixed vars' in loop

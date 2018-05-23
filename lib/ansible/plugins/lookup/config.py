@@ -31,7 +31,8 @@ EXAMPLES = """
       debug: msg="{{ lookup('config', 'DEFAULT_BECOME_USER')}}"
 
     - name: print out role paths
-      debug: msg="These are the configured role paths: {{lookup('config', 'DEFAULT_ROLES_PATH')}}"
+      debug:
+        msg: "These are the configured role paths: {{lookup('config', 'DEFAULT_ROLES_PATH')}}"
 
     - name: find retry files, skip if missing that key
       find:
