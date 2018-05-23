@@ -186,14 +186,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
-    def _add_hosts(self, items, config_data):
+    def _format_items(self, items):
         '''
             :param items: A list of hosts
-            :param config_data: configuration data
         '''
-        if not items:
-            return
-
         for host in items:
             if 'zone' in host:
                 host['zone_selflink'] = host['zone']
@@ -210,6 +206,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
 
             host['project'] = host['selfLink'].split('/')[6]
+        return items
+
+    def _add_hosts(self, items, config_data, format_items=True):
+        '''
+            :param items: A list of hosts
+            :param config_data: configuration data
+            :param format_items: format items or not
+        '''
+        if not items:
+            return
+        if format_items:
+            items = self._format_items(items)
+
+        for host in items:
             self._populate_host(host)
 
             hostname = self._get_hostname(host)
@@ -250,14 +260,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             elif order == 'private_ip':
                 name = self._get_privateip(item)
             elif order == 'name':
-                name = item['name']
+                name = item[u'name']
             else:
                 raise AnsibleParserError("%s is not a valid hostname precedent" % order)
 
             if name:
                 return name
-            else:
-                raise AnsibleParserError("No valid name found for host")
+
+        raise AnsibleParserError("No valid name found for host")
 
     def _get_publicip(self, item):
         '''
@@ -269,7 +279,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if 'accessConfigs' in interface:
                 for accessConfig in interface['accessConfigs']:
                     if 'natIP' in accessConfig:
-                        return accessConfig['natIP']
+                        return accessConfig[u'natIP']
         return None
 
     def _get_privateip(self, item):
@@ -278,9 +288,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the privateIP of this instance or None
         '''
         # Fallback: Get private IP
-        for interface in item['networkInterfaces']:
+        for interface in item[u'networkInterfaces']:
             if 'networkIP' in interface:
-                return interface['networkIP']
+                return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
@@ -318,12 +328,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if cache:
             try:
                 results = self.cache.get(cache_key)
-                self._add_hosts(results, config_data)
+                for project in results:
+                    for zone in results[project]:
+                        self._add_hosts(results[project][zone], config_data, False)
             except KeyError:
                 cache_needs_update = True
 
         if not cache or cache_needs_update:
+            cached_data = {}
             for project in projects:
+                cached_data[project] = {}
                 config_data['project'] = project
                 if not zones:
                     zones = self._get_zones(config_data)
@@ -332,5 +346,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     link = self.self_link(config_data)
                     resp = self.fetch_list(config_data, link, query)
                     self._add_hosts(resp.get('items'), config_data)
-                    if cache_needs_update:
-                        self.cache.set(cache_key, resp.get('items'))
+                    cached_data[project][zone] = resp.get('items')
+
+        if cache_needs_update:
+            self.cache.set(cache_key, cached_data)
