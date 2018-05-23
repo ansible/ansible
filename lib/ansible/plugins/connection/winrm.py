@@ -285,33 +285,60 @@ class Connection(ConnectionBase):
         # doing so. Unfortunately it is not available on the built in Python
         # so we can only use it if someone has installed it
         if HAS_PEXPECT:
-            kinit_cmdline = " ".join(kinit_cmdline)
+            proc_mechanism = "pexpect"
+            command = kinit_cmdline.pop(0)
             password = to_text(password, encoding='utf-8',
                                errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with pexpect for principal %s"
                          % principal)
-            events = {
-                ".*:": password + "\n"
-            }
-            # technically this is the stdout but to match subprocess we will
-            # call it stderr
-            stderr, rc = pexpect.run(kinit_cmdline, withexitstatus=True, events=events, env=krb5env, timeout=60)
+            try:
+                child = pexpect.spawn(command, kinit_cmdline, timeout=60,
+                                      env=krb5env)
+            except pexpect.ExceptionPexpect as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (command, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
+            try:
+                child.expect(".*:")
+                child.sendline(password)
+            except OSError as err:
+                # child exited before the pass was sent, Ansible will raise
+                # error based on the rc below, just display the error here
+                display.vvvv("kinit with pexpect raised OSError: %s"
+                             % to_native(err))
+
+            # technically this is the stdout + stderr but to match the
+            # subprocess error checking behaviour, we will call it stderr
+            stderr = child.read()
+            child.wait()
+            rc = child.exitstatus
         else:
+            proc_mechanism = "subprocess"
             password = to_bytes(password, encoding='utf-8',
                                 errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
-            p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 env=krb5env)
+            try:
+                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     env=krb5env)
+
+            except OSError as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (self._kinit_cmd, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
             stdout, stderr = p.communicate(password + b'\n')
             rc = p.returncode != 0
 
         if rc != 0:
-            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % to_native(stderr.strip()))
+            err_msg = "Kerberos auth failure for principal %s with %s: %s" \
+                      % (principal, proc_mechanism, to_native(stderr.strip()))
+            raise AnsibleConnectionFailure(err_msg)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
