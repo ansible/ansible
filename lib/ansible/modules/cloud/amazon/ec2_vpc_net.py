@@ -314,7 +314,6 @@ def wait_for_vpc_attribute(connection, module, vpc_id, attribute, expected_value
         module.fail_json(msg="Failed to wait for {0} to be updated".format(attribute))
 
 
-
 def get_cidr_network_bits(module, cidr_block):
     fixed_cidrs = []
     for cidr in cidr_block:
