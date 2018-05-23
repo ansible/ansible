@@ -30,18 +30,12 @@ options:
   network:
     description:
       - Define network operations, like  Configuring network tunnel for containers in subutai, vxlan tunnels,
-        p2p configurations and network maps.
+        and network maps.
 
         Subutai VXLAN is network layer built on top of P2P swarms and intended to be environment communication
         bridges between physically separate hosts. Each Subutai environment has its own separate VXLAN tunnel
         so all internal network traffic goes through isolated channels, doesn't matter if environment located
         on single peer or distributed between multiple peers.
-
-        Subutai's p2p command controls and configures the peer-to-peer network structure. The swarm which
-        includes all hosts with same the same swarm hash and secret key. P2P is a base layer for Subutai
-        environment networking. All containers in same environment are connected to each other via VXLAN tunnels
-        and are accesses as if they were in one LAN. It doesn't matter where the containers are physically
-        located.
 
         The tunnel feature is based on SSH tunnels and works in combination with Subutai Helpers and serves as
         an easy solution for bypassing NATs. In Subutai, tunnels are used to access the SS management server's
@@ -56,12 +50,12 @@ options:
         will have different "entrance" address.
 
     default: 'present'
-    choices: [ 'tunnel', 'map', 'vxlan', 'p2p', 'proxy' ]
+    choices: [ 'tunnel', 'map', 'vxlan', 'proxy' ]
   state:
     description:
       - Indicates the desired container state are installed.
     default: 'present'
-    choices: [ 'absent', 'demote', 'promote', 'present', 'latest', 'started', 'stopped' ]
+    choices: [ 'absent', 'present', 'latest', 'started', 'stopped' ]
   check:
     description:
       - Check for updates without installation.
@@ -152,31 +146,22 @@ EXAMPLES = '''
   subutai:
     name: nginx
     state: present
-    become: true
 
 - name: run subutai destroy nginx
   subutai:
     name: nginx
     state: absent
-    become: true
+
+- name: run subutai destroy template nginx
+  subutai:
+    name: nginx
+    state: absent
+    template: true
 
 - name: upgrade nginx
   subutai:
     name: nginx
     state: latest
-    become: true
-
-- name: promote nginx template
-  subutai:
-    state: promote
-    name: nginx
-
-- name: demote nginx template
-  subutai:
-    name: nginx
-    state: demote
-    ipaddr: 192.168.1.1/24
-    vlan: foo
 
 - name: subutai tunnel add 10.10.0.20
   subutai:
@@ -260,32 +245,6 @@ EXAMPLES = '''
     state: absent
     vxlan: vxlan1
 
-- name: create p2p instance
-  subutai:
-    network: p2p
-    state: present
-    interface: p2p-net1
-    hash: swarm-12345678-abcd-1234-efgh-123456789012
-    key: 0123456789qwertyu0123456789zxcvbn
-    ttl: 1476870551
-    localPeepIPAddr: 10.220.22.1
-    portrange: 0-65535
-
-- name: update p2p instance
-  subutai:
-    network: p2p
-    state: present
-    interface: p2p-net1
-    hash: swarm-12345678-abcd-1234-efgh-123456789012
-    key: 0123456789qwertyu0123456789zxcvbn
-    ttl: 1476870551
-
-- name: delete p2p instance
-  subutai:
-    network: p2p
-    state: absent
-    hash: swarm-12345678-abcd-1234-efgh-123456789012
-
 - name: add domain example.com to 100 vlan
   subutai:
     network: proxy
@@ -325,7 +284,7 @@ stderr:
     description: Error output from subutai container
     type: string
     returned: success, when need
-    sample: "FATA[2018-03-09 00:10:29] Extracting tgz, read /var/snap/subutai/common/lxc/tmpdir/: is a directory"
+    sample: "FATA[2018-03-09 00:10:29] Extracting tgz, read /var/lib/lxc: is a directory"
 '''
 
 import subprocess
@@ -337,8 +296,9 @@ class Container():
         # parameters
         self.module_args = dict(
             name=dict(type='str', required=False),
+            template=dict(type='bool', required=False),
             network=dict(type='str', choices=[
-                         'tunnel', 'map', 'vxlan', 'p2p', 'proxy']),
+                         'tunnel', 'map', 'vxlan', 'proxy']),
             source=dict(type='str', required=False),
             check=dict(type='bool', required=False),
             ipaddr=dict(type='str', required=False),
@@ -346,7 +306,7 @@ class Container():
             ttl=dict(type='str', required=False),
             globalFlag=dict(type='bool', required=False),
             state=dict(type='str', default='present', choices=[
-                       'absent', 'demote', 'present', 'promote', 'latest', 'started', 'stopped']),
+                       'absent', 'present', 'latest', 'started', 'stopped']),
             protocol=dict(type='str', required=False, choices=[
                           'http', 'https', 'tcp', 'udp']),
             internal=dict(type='str', required=False),
@@ -379,7 +339,6 @@ class Container():
                 ["network", "tunnel", ["ipaddr"]],
                 ["network", "map", ["protocol"]],
                 ["network", "vxlan", ["vxlan"]],
-                ["network", "p2p", ["hash"]],
             ]
         )
 
@@ -402,13 +361,9 @@ class Container():
             if self.module.params['state'] == 'present':
                 self._import()
 
-            if self.module.params['state'] == 'promote':
-                self._promote()
-
-            if self.module.params['state'] == 'demote':
-                self._demote()
-
             if self.module.params['state'] == 'absent':
+                if self.module.params['template']:
+                    self.args.append("-t")
                 self._destroy()
 
             if self.module.params['state'] == 'latest':
@@ -429,9 +384,6 @@ class Container():
         if self.module.params['network'] == 'vxlan':
             self._vxlan()
 
-        if self.module.params['network'] == 'p2p':
-            self._p2p()
-
         if self.module.params['network'] == 'proxy':
             self._proxy()
 
@@ -447,9 +399,6 @@ class Container():
 
             self._subutai_cmd("import")
 
-            # try demote container
-            self._subutai_cmd("demote")
-
             # try start container
             if self._subutai_cmd("start"):
                 self._return_fail("Start Error")
@@ -458,8 +407,6 @@ class Container():
                 self.result['changed'] = True
 
         else:
-            # try demote container
-            self._subutai_cmd("demote")
 
             # try start container
             if self._subutai_cmd("start"):
@@ -478,9 +425,6 @@ class Container():
 
             self._subutai_cmd("import")
 
-            # try demote container
-            self._subutai_cmd("demote")
-
             # try stop container
             if self._subutai_cmd("stop"):
                 self._return_fail("Stop Error")
@@ -492,8 +436,6 @@ class Container():
             if not self._is_running():
                 self.result['changed'] = False
                 self._exit()
-            # try demote container
-            self._subutai_cmd("demote")
 
             # try start container
             if self._subutai_cmd("stop"):
@@ -513,7 +455,6 @@ class Container():
             self._exit()
 
         else:
-            self._subutai_cmd("demote")
             if self._subutai_cmd("start"):
                 self._return_fail("Start Error")
 
@@ -529,8 +470,9 @@ class Container():
             self._exit()
         else:
             # try destroy container
-            if self._subutai_cmd("destroy"):
-                self._return_fail("Destroy Error")
+            out = self._subutai_cmd("destroy")
+            if out:
+                self._return_fail("Destroy Error: " + str(out))
             self.result['changed'] = True
             self._exit()
 
@@ -541,65 +483,12 @@ class Container():
             self.result['message'] = 'already installed'
         else:
             # try install container
-            if self._subutai_cmd("import"):
-                self._return_fail("Import Error")
+            out = self._subutai_cmd("import")
+            if out:
+                self._return_fail("Import Error: "  + str(out))
 
             if self._is_installed():
                 self.result['changed'] = True
-
-        self._exit()
-
-    def _promote(self):
-        if self.module.params['source']:
-            self.args.append("-s")
-            self.args.append(self.module.params['source'])
-
-        if not self._is_promoted():
-            try:
-                err = subprocess.Popen(
-                    ["/snap/bin/subutai", "promote", self.module.params['name']] + self.args, stderr=subprocess.PIPE).stderr.read()
-                if err:
-                    self.result['changed'] = False
-                    self.result['stderr'] = err
-                    self._return_fail(err)
-            except OSError as e:
-                if "[Errno 2] No such file or directory" in str(e):
-                    self.result['changed'] = False
-                    self._return_fail("Subutai is not installed")
-
-            self.result['changed'] = True
-
-        else:
-            self.result['changed'] = False
-            self.result['stderr'] = "Already promoted"
-
-        self._exit()
-
-    def _demote(self):
-        if self.module.params['ipaddr']:
-            self.args.append("-i")
-            self.args.append(self.module.params['ipaddr'])
-
-        if self.module.params['vlan']:
-            self.args.append("-v")
-            self.args.append(self.module.params['vlan'])
-
-        if not self._is_demoted():
-            try:
-                err = subprocess.Popen(
-                    ["/snap/bin/subutai", "demote", self.module.params['name']] + self.args, stderr=subprocess.PIPE).stderr.read()
-                if err:
-                    self.result['changed'] = False
-                    self.result['stderr'] = err
-                    self._return_fail(err)
-                self.result['changed'] = True
-            except OSError as e:
-                if "[Errno 2] No such file or directory" in str(e):
-                    self.result['changed'] = False
-                    self._return_fail("Subutai is not installed")
-        else:
-            self.result['changed'] = False
-            self.result['stderr'] = "Already demoted"
 
         self._exit()
 
@@ -614,7 +503,7 @@ class Container():
             if not self._exists_tunnel():
                 try:
                     err = subprocess.Popen(
-                        ["/snap/bin/subutai", "tunnel", "add", self.module.params['ipaddr']] + self.args, stderr=subprocess.PIPE).stderr.read()
+                        ["/usr/bin/subutai", "tunnel", "add", self.module.params['ipaddr']] + self.args, stderr=subprocess.PIPE).stderr.read()
                     if err:
                         self.result['stderr'] = err
                         self._return_fail(err)
@@ -625,6 +514,9 @@ class Container():
                     if "[Errno 2] No such file or directory" in str(e):
                         self.result['changed'] = False
                         self._return_fail("Subutai is not installed")
+                    else:
+                        self.result['changed'] = False
+                        self._return_fail("OS Error " + str(e))
             else:
                 self.result['changed'] = False
                 self.result['stderr'] = "Tunnel already exist"
@@ -634,7 +526,7 @@ class Container():
             if self._exists_tunnel():
                 try:
                     err = subprocess.Popen(
-                        ["/snap/bin/subutai", "tunnel", "del", self.module.params['ipaddr']], stderr=subprocess.PIPE).stderr.read()
+                        ["/usr/bin/subutai", "tunnel", "del", self.module.params['ipaddr']], stderr=subprocess.PIPE).stderr.read()
                     if err:
                         self.result['stderr'] = err
                         self._return_fail(err)
@@ -645,6 +537,9 @@ class Container():
                     if "[Errno 2] No such file or directory" in str(e):
                         self.result['changed'] = False
                         self._return_fail("Subutai is not installed")
+                    else:
+                        self.result['changed'] = False
+                        self._return_fail("OS Error " + str(e))
             else:
                 self.result['changed'] = False
                 self.result['stderr'] = "Tunnel do not exist"
@@ -682,7 +577,7 @@ class Container():
         if self.module.params['state'] == 'absent':
             self.args.append("--remove")
         try:
-            err = subprocess.Popen(["/snap/bin/subutai", "map", self.module.params['protocol']
+            err = subprocess.Popen(["/usr/bin/subutai", "map", self.module.params['protocol']
                                     ] + self.args, stderr=subprocess.PIPE).stderr.read()
             if err:
                 if "already exists" in err:
@@ -698,6 +593,9 @@ class Container():
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
+            else:
+                self.result['changed'] = False
+                self._return_fail("OS Error " + str(e))
 
     def _vxlan(self):
 
@@ -716,7 +614,7 @@ class Container():
         if self.module.params['state'] == "present":
             try:
                 err = subprocess.Popen(
-                    ["/snap/bin/subutai", "vxlan", "--create", self.module.params['vxlan']] + self.args, stderr=subprocess.PIPE).stderr.read()
+                    ["/usr/bin/subutai", "vxlan", "--create", self.module.params['vxlan']] + self.args, stderr=subprocess.PIPE).stderr.read()
                 if err:
                     self.result['stderr'] = err
                     self._return_fail(err)
@@ -730,11 +628,14 @@ class Container():
                 if "[Errno 2] No such file or directory" in str(e):
                     self.result['changed'] = False
                     self._return_fail("Subutai is not installed")
+                else:
+                    self.result['changed'] = False
+                    self._return_fail("OS Error " + str(e))
 
         elif self.module.params['state'] == "absent":
             try:
                 err = subprocess.Popen(
-                    ["/snap/bin/subutai", "vxlan", "--delete", self.module.params['vxlan']], stderr=subprocess.PIPE).stderr.read()
+                    ["/usr/bin/subutai", "vxlan", "--delete", self.module.params['vxlan']], stderr=subprocess.PIPE).stderr.read()
                 if err:
                     self.result['stderr'] = err
                     self._return_fail(err)
@@ -748,51 +649,11 @@ class Container():
                 if "[Errno 2] No such file or directory" in str(e):
                     self.result['changed'] = False
                     self._return_fail("Subutai is not installed")
+                else:
+                    self.result['changed'] = False
+                    self._return_fail("OS Error " + str(e))
         else:
             self._return_fail(err)
-
-    def _p2p(self):
-
-        if self.module.params['state'] == "present":
-            self.args.append("-c")
-        elif self.module.params['state'] == "latest":
-            self.args.append("-u")
-        elif self.module.params['state'] == "absent":
-            self.args.append("-d")
-        else:
-            self._return_fail(
-                "State valid options are: present, absent and latest")
-
-        if self.module.params['interface']:
-            self.args.append(self.module.params['interface'])
-
-        if self.module.params['hash']:
-            self.args.append(self.module.params['hash'])
-
-        if self.module.params['key']:
-            self.args.append(self.module.params['key'])
-
-        if self.module.params['ttl']:
-            self.args.append(self.module.params['ttl'])
-
-        if self.module.params['localPeepIPAddr']:
-            self.args.append(self.module.params['localPeepIPAddr'])
-
-        if self.module.params['portrange']:
-            self.args.append(self.module.params['portrange'])
-        try:
-            err = subprocess.Popen(
-                ["/snap/bin/subutai", "p2p"] + self.args, stderr=subprocess.PIPE).stderr.read()
-            if err:
-                self.result["stderr"] = err
-                self._return_fail(err)
-            else:
-                self.result['changed'] = True
-                self._exit()
-        except OSError as e:
-            if "[Errno 2] No such file or directory" in str(e):
-                self.result['changed'] = False
-                self._return_fail("Subutai is not installed")
 
     def _proxy(self):
         check_args = []
@@ -818,13 +679,13 @@ class Container():
         if self.module.params['state'] == "present":
             try:
                 out = subprocess.Popen(
-                    ["/snap/bin/subutai", "proxy", "check", self.module.params['vlan']] + check_args, stdout=subprocess.PIPE).stdout.read()
+                    ["/usr/bin/subutai", "proxy", "check", self.module.params['vlan']] + check_args, stdout=subprocess.PIPE).stdout.read()
                 if out:
                     self.result['changed'] = False
                     self._exit()
                 else:
                     err = subprocess.Popen(
-                        ["/snap/bin/subutai", "proxy", "add", self.module.params['vlan']] + self.args, stderr=subprocess.PIPE).stderr.read()
+                        ["/usr/bin/subutai", "proxy", "add", self.module.params['vlan']] + self.args, stderr=subprocess.PIPE).stderr.read()
                     if err:
                         self.result['stderr'] = err
                         self._return_fail(err)
@@ -835,11 +696,14 @@ class Container():
                 if "[Errno 2] No such file or directory" in str(e):
                     self.result['changed'] = False
                     self._return_fail("Subutai is not installed")
+                else:
+                    self.result['changed'] = False
+                    self._return_fail("OS Error " + str(e))
 
         elif self.module.params['state'] == "absent":
             try:
                 err = subprocess.Popen(
-                    ["/snap/bin/subutai", "proxy", "del", self.module.params['vlan']] + check_args, stderr=subprocess.PIPE).stderr.read()
+                    ["/usr/bin/subutai", "proxy", "del", self.module.params['vlan']] + check_args, stderr=subprocess.PIPE).stderr.read()
                 if err:
                     self.result['stderr'] = err
                     self._return_fail(err)
@@ -851,16 +715,22 @@ class Container():
                 if "[Errno 2] No such file or directory" in str(e):
                     self.result['changed'] = False
                     self._return_fail("Subutai is not installed")
+                else:
+                    self.result['changed'] = False
+                    self._return_fail("OS Error " + str(e))
         else:
             self._return_fail(err)
 
     def _exists_vxlan(self):
         try:
-            return subprocess.Popen(["/snap/bin/subutai", "vxlan", "-l"], stdout=subprocess.PIPE).stdout.read()
+            return subprocess.Popen(["/usr/bin/subutai", "vxlan", "-l"], stdout=subprocess.PIPE).stdout.read()
         except OSError as e:
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
+            else:
+                self.result['changed'] = False
+                self._return_fail("OS Error " + str(e))
 
     def _exit(self):
         self.module.exit_json(**self.result)
@@ -873,7 +743,7 @@ class Container():
     def _is_installed(self):
         try:
             out = subprocess.Popen(
-                ["/snap/bin/subutai", "list"], stdout=subprocess.PIPE).stdout.read()
+                ["/usr/bin/subutai", "list"], stdout=subprocess.PIPE).stdout.read()
             if self.module.params['name'] + '\n' in out:
                 return True
             else:
@@ -882,11 +752,14 @@ class Container():
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
+            else:
+                self.result['changed'] = False
+                self._return_fail("OS Error " + str(e))
 
     def _exists_tunnel(self):
         try:
             out = subprocess.Popen(
-                ["/snap/bin/subutai", "tunnel", "list"], stdout=subprocess.PIPE).stdout.read()
+                ["/usr/bin/subutai", "tunnel", "list"], stdout=subprocess.PIPE).stdout.read()
             if self.module.params['ipaddr'] in out:
                 return True
             else:
@@ -895,11 +768,14 @@ class Container():
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
+            else:
+                self.result['changed'] = False
+                self._return_fail("OS Error " + str(e))
 
     def _is_running(self):
         try:
             out = subprocess.Popen(
-                ["/snap/bin/subutai", "list", "-i", self.module.params['name']], stdout=subprocess.PIPE).stdout.read()
+                ["/usr/bin/subutai", "list", "-i", self.module.params['name']], stdout=subprocess.PIPE).stdout.read()
             if bytes("RUNNING") in out:
                 return True
             else:
@@ -908,42 +784,23 @@ class Container():
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
-
-    def _is_promoted(self):
-        try:
-            output = subprocess.Popen(
-                ["/snap/bin/subutai", "list", "-t", self.module.params['name']], stdout=subprocess.PIPE).stdout.read()
-            if self.module.params['name'] in output:
-                return True
             else:
-                return False
-        except OSError as e:
-            if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
-                self._return_fail("Subutai is not installed")
-
-    def _is_demoted(self):
-        try:
-            output = subprocess.Popen(
-                ["/snap/bin/subutai", "list", "-c", self.module.params['name']], stdout=subprocess.PIPE).stdout.read()
-            if self.module.params['name'] in output:
-                return True
-            else:
-                return False
-        except OSError as e:
-            if "[Errno 2] No such file or directory" in str(e):
-                self.result['changed'] = False
-                self._return_fail("Subutai is not installed")
+                self._return_fail("OS Error " + str(e))
 
     def _subutai_cmd(self, cmd):
         try:
             msg = subprocess.Popen(
-                ["/snap/bin/subutai", cmd, self.module.params['name']] + self.args, stderr=subprocess.PIPE).stderr.read()
+                ["/usr/bin/subutai", cmd, self.module.params['name']] + self.args, stderr=subprocess.PIPE).stderr.read()
             return msg
         except OSError as e:
             if "[Errno 2] No such file or directory" in str(e):
                 self.result['changed'] = False
                 self._return_fail("Subutai is not installed")
+            else:
+                self.result['changed'] = False
+                self._return_fail("OS Error " + str(e))
+
 
 
 def main():
