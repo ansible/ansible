@@ -80,7 +80,7 @@ options:
   task_id:
     description:
       - The ID of the task you wish to query status on. If left blank and object = 'task' a list of tasks are returned.
-    required: false    
+    required: false
   nodes:
     description:
       - A LIST of firewalls in the cluster you want to verify i.e. ["firewall_A","firewall_B"]
