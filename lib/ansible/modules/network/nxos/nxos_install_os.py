@@ -35,13 +35,9 @@ notes:
       - N9k 7.0(3)I4(6), 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1), 7.0(3)F2(2), 7.0(3)F3(2)
       - N3k 6.0(2)A8(6), 6.0(2)A8(8), 7.0(3)I6(1), 7.0(3)I7(1)
       - N7k 7.3(0)D1(1), 8.0(1), 8.2(1)
-    - This module executes longer then the default ansible timeout value and
-      will generate errors unless the module timeout parameter is set to a
-      value of 500 seconds or higher.
-      The example time is sufficent for most upgrades but this can be
-      tuned higher based on specific upgrade time requirements.
-      The module will exit with a failure message if the timer is
-      not set to 500 seconds or higher.
+    - This module requires both the ANSIBLE_PERSISTENT_CONNECT and
+      ANSIBLE_PERSISTENT_COMMAND timers to be set to 600 seconds or higher.
+      The module will exit if the timers are not set properly.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - This module attempts to install the software immediately,
@@ -81,7 +77,6 @@ EXAMPLES = '''
   nxos_install_os:
     system_image_file: nxos.7.0.3.I6.1.bin
     issu: desired
-    provider: "{{ connection | combine({'timeout': 500}) }}"
 
 - name: Wait for device to come back up with new image
   wait_for:
@@ -124,27 +119,9 @@ install_state:
 
 import re
 from time import sleep
-from ansible import constants as C
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
-def check_ansible_timer(module):
-    '''Check Ansible Timer Values'''
-    command_timer = C.PERSISTENT_COMMAND_TIMEOUT
-    connect_timer = C.PERSISTENT_CONNECT_TIMEOUT
-    msg = "The 'ANSIBLE_PERSISTENT_COMMAND_TIMEOUT' and 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT'\n"
-    msg = msg + "timers need to be set to 500 seconds or higher when using this module\n"
-    msg = msg + "in order to allow enough time for the upgrade to complete\n"
-    msg = msg + "\nPlease set the timers and re-run the playbook."
-    timer_low = False
-    if command_timer is None or connect_timer is None:
-        timer_low = True
-    elif command_timer < 500 or connect_timer < 500:
-        timer_low = True
-    if timer_low:
-        module.fail_json(msg=msg.split('\n'))
 
 
 # Output options are 'text' or 'json'
@@ -537,10 +514,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
-    # This module will error out if the Ansible task timeout value is not
-    # tuned high enough.
-    check_ansible_timer(module)
 
     # Get system_image_file(sif), kickstart_image_file(kif) and
     # issu settings from module params.
