@@ -17,7 +17,6 @@ This guide shows you how to extend Ansible in many ways, from creating a plugin 
    developing_modules_general
    developing_modules_best_practices
    developing_modules_checklist
-   developing_program_flow_modules
    developing_modules_in_groups
    developing_modules_general_windows
    developing_api
