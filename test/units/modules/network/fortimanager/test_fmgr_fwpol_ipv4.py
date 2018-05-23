@@ -47,7 +47,7 @@ class TestFmgrQueryModule(TestFortimanagerModule):
         self.assertEqual(result['msg'], 'Connection to FortiManager Failed')
 
     def test_fmgr_fwpol_ipv4_login_fail_host(self):
-        set_module_args(dict(username='ansible', password='fortinet',action="accept", dstaddr="all",
+        set_module_args(dict(username='ansible', password='fortinet', action="accept", dstaddr="all",
                              package_name="ansible", adom="ansible", name="testRule",
                              srcaddr="all", dstintf="any", srcintf="any", logtraffic="utm",
                              service="ALL", schedule="always"))

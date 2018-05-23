@@ -483,6 +483,7 @@ options:
     description:
       - Enable/disable sending RST packets when TCP sessions expire.
     required: false
+    default: 0
   traffic_shaper:
     description:
       - Traffic shaper.
@@ -822,7 +823,7 @@ def main():
         poolname=dict(required=False, type="str"),
         profile_group=dict(required=False, type="str"),
         profile_protocol_options=dict(required=False, type="str"),
-        profile_type=dict(required=False, type="int", default=0),
+        profile_type=dict(required=False, type="int", default="0"),
         radius_mac_auth_bypass=dict(required=False, type="str", default="0"),
         redirect_url=dict(required=False, type="str"),
         replacemsg_override_group=dict(required=False, type="str", default="0"),
@@ -835,7 +836,7 @@ def main():
         send_deny_packet=dict(required=False, type="str", default="0"),
         service=dict(required=False, type="str"),
         service_negate=dict(required=False, type="str", default="0"),
-        session_ttl=dict(required=False, type="int", default=0),
+        session_ttl=dict(required=False, type="int", default="0"),
         spamfilter_profile=dict(required=False, type="str", default="0"),
         srcaddr=dict(required=False, type="str"),
         srcaddr_negate=dict(required=False, type="str", default="0"),
@@ -845,7 +846,7 @@ def main():
         ssl_ssh_profile=dict(required=False, type="str"),
         status=dict(required=False, type="str", default="1"),
         tags=dict(required=False, type="str"),
-        tcp_mss_receiver=dict(required=False, type="int", default=0),
+        tcp_mss_receiver=dict(required=False, type="int", default="0"),
         tcp_mss_sender=dict(required=False, type="int", default="0"),
         timeout_send_rst=dict(required=False, type="str", default="0"),
         traffic_shaper=dict(required=False, type="str"),
