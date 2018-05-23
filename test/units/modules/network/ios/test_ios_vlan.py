@@ -47,7 +47,7 @@ class TestIosVlanModule(TestIosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
-        self.run_commands.return_value = load_fixture('ios_vlan_config.cfg')
+        self.run_commands.return_value = [load_fixture('ios_vlan_config.cfg')]
         self.load_config.return_value = {'diff': None, 'session': 'session'}
 
     def test_ios_vlan_create(self):
