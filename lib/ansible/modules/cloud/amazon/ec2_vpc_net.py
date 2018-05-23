@@ -166,9 +166,10 @@ except ImportError:
 
 from time import sleep, time
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict, compare_aws_tags,
                                       ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def vpc_exists(module, vpc, name, cidr_block, multi):
@@ -229,16 +230,17 @@ def get_vpc(module, connection, vpc_id):
 
 
 def update_vpc_tags(connection, module, vpc_id, tags, name):
-
     if tags is None:
         tags = dict()
 
     tags.update({'Name': name})
+    tags = dict((k, to_native(v)) for k, v in tags.items())
     try:
         current_tags = dict((t['Key'], t['Value']) for t in connection.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}])['Tags'])
-        if tags != current_tags:
+        tags_to_update, dummy = compare_aws_tags(current_tags, tags, False)
+        if tags_to_update:
             if not module.check_mode:
-                tags = ansible_dict_to_boto3_tag_list(tags)
+                tags = ansible_dict_to_boto3_tag_list(tags_to_update)
                 vpc_obj = AWSRetry.backoff(
                     delay=1, tries=5,
                     catch_extra_error_codes=['InvalidVpcID.NotFound'],
