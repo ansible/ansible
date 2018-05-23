@@ -43,8 +43,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-  - debug
-    msg: {{ lookup('conjur_variable', '/path/to/secret') }}
+  - debug:
+      msg: "{{ lookup('conjur_variable', '/path/to/secret') }}"
 """
 
 RETURN = """
