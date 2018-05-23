@@ -22,7 +22,6 @@ description:
 - Modify Ontap broadcast domain ports
 options:
   state:
-    required: false
     description:
     - Whether the specified broadcast domain should exist or not.
     choices: ['present', 'absent']
@@ -38,11 +37,9 @@ options:
   ipspace:
     description:
     - Specify the ipspace for the broadcast domain
-    required: false
   ports:
     description:
-    - Specify the ports associated with this broadcast domain. Should be comma separated
-    required: false
+    - Specify the list of ports associated with this broadcast domain.
 
 '''
 
