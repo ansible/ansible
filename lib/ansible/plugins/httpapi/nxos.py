@@ -35,7 +35,7 @@ class HttpApi:
         responses = list()
 
         for item in to_list(data):
-            cmd_output = message_kwargs.get('output', 'json')
+            cmd_output = message_kwargs.get('output', 'text')
             if isinstance(item, dict):
                 command = item['command']
                 if command.endswith('| json'):
@@ -50,7 +50,7 @@ class HttpApi:
                 responses.extend(self._run_queue(queue, output))
                 queue = list()
 
-            output = cmd_output or 'json'
+            output = cmd_output
             queue.append(command)
 
         if queue:
