@@ -55,4 +55,3 @@ class TestFmgrQueryModule(TestFortimanagerModule):
                              device_ip="10.7.220.41"))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'Host and username are required')
-
