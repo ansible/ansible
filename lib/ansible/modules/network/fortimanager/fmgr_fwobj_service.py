@@ -40,18 +40,20 @@ description:
 options:
   adom:
     description:
-      - The ADOM the configuration should belong to.
+     -The ADOM the configuration should belong to.
     required: true
-
   host:
     description:
-      - The FortiManager's Address.
+     -The FortiManager's Address.
     required: true
-
+  username:
+    description:
+     -The username used to authenticate with the FortiManager.
+    required: false
   password:
     description:
-      - The password associated with the username account.
-    required: true
+     -The password associated with the username account.
+    required: false
 
   app_category:
     description:
@@ -537,7 +539,6 @@ def fmgr_fwobj_service_category(fmg, paramgram):
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str"),
-        vdom=dict(required=False, type="str"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
@@ -551,8 +552,9 @@ def main():
         color=dict(required=False, type="int"),
         comment=dict(required=False, type="str"),
         custom_type=dict(required=False, type="str", choices=['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp',
-                                                              'connect', 'socks_tcp', 'socks_udp', 'all']),
-        explicit_proxy=dict(required=False, type="str", choices=['enable', 'disable']),
+                                                              'connect', 'socks_tcp', 'socks_udp', 'all']
+                         , default="all"),
+        explicit_proxy=dict(required=False, type="str", choices=['enable', 'disable'], default="disable"),
         fqdn=dict(required=False, type="str"),
         group_name=dict(required=False, type="str"),
         group_member=dict(required=False, type="str"),
