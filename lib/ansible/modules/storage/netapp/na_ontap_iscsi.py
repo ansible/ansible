@@ -31,13 +31,13 @@ options:
 
   state:
     description:
-    - Whether the specified service  should running .
+    - Whether the service should be present or deleted.
     choices: ['present', 'absent']
     default: present
 
   service_state:
     description:
-    - Whether the specified service  should running .
+    - Whether the specified service should running .
     choices: ['started', 'stopped']
 
   vserver:
