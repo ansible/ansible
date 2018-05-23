@@ -31,6 +31,13 @@ options:
     required: true
     aliases:
       - network_view
+  old_name:
+    description:
+      - Specifies the name of the network view to either update or modify
+        from the configuration.
+    required: false
+    aliases:
+      - network_view
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -63,7 +70,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: update the comment for network view
   nios_network_view:
     name: ansible
@@ -74,11 +80,20 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove the network view
   nios_network_view:
     name: ansible
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: update a existing network view
+  nios_network_view:
+    name: ansible-new
+    old_name: ansible
+    state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
@@ -90,6 +105,7 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_NETWORK_VIEW
 
 
 def main():
@@ -97,7 +113,7 @@ def main():
     '''
     ib_spec = dict(
         name=dict(required=True, aliases=['network_view'], ib_req=True),
-
+        old_name=dict(required=False, aliases=['network_view'], ib_req=True),
         extattrs=dict(type='dict'),
         comment=dict(),
     )
@@ -114,7 +130,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('networkview', ib_spec)
+    result = wapi.run(NIOS_NETWORK_VIEW, ib_spec)
 
     module.exit_json(**result)
 
