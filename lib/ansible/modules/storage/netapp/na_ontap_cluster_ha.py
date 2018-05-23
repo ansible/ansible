@@ -23,7 +23,6 @@ options:
     choices: ['present', 'absent']
     description:
       - "Whether HA on cluster should be enabled or disabled."
-    required: false
     default: present
 short_description: "Manage HA status for cluster"
 version_added: "2.6"
