@@ -84,14 +84,14 @@ options:
 
   is_auto_revert:
     description:
-    - If true, data LIF will revert to its home node under certain circumstances such as startup, and load balancing
-    - migration capability is disabled automatically
+       If true, data LIF will revert to its home node under certain circumstances such as startup, and load balancing
+       migration capability is disabled automatically
 
   protocols:
     description:
-    - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
-    - Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
-    - Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
+       Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
+       Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
+       Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
 
 '''
 
