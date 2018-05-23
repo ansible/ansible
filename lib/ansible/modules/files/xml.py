@@ -495,8 +495,10 @@ def check_or_make_target(module, tree, xpath, namespaces):
                         for subexpr in eoa_value:
                             # module.fail_json(msg="element=%s subexpr=%s node=%s now tree=%s" %
                             #                      (element, subexpr, etree.tostring(node, pretty_print=True), etree.tostring(tree, pretty_print=True))
-                            check_or_make_target(module, nk, "./" + subexpr, namespaces)
-                    changed = True
+                            if subexpr[-1] != ')':
+                                # skip XPath function calls
+                                check_or_make_target(module, nk, "./" + subexpr, namespaces)
+                                changed = True
 
                 # module.fail_json(msg="now tree=%s" % etree.tostring(tree, pretty_print=True))
             elif eoa == "":
