@@ -89,11 +89,9 @@ class TestIosVlanModule(TestIosModule):
         expected_commands = [
             'vlan 3',
             'name vlan3',
-            'vlan 3',
             'interface GigabitEthernet1/0/8',
             'switchport mode access',
             'switchport access vlan 3',
-            'vlan 3',
             'interface GigabitEthernet1/0/7',
             'switchport mode access',
             'switchport access vlan 3',
