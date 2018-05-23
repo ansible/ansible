@@ -47,6 +47,10 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    short_hostname:
+        description:
+            - Short host name
+        version_added: 2.6
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
@@ -56,6 +60,7 @@ options:
         description:
             - Capacity of VMSS.
         required: true
+        default: 1
     tier:
         description:
             - SKU Tier.
@@ -79,6 +84,7 @@ options:
         description:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
+        type: bool
         default: true
     ssh_public_keys:
         description:
@@ -117,8 +123,7 @@ options:
         choices:
             - Windows
             - Linux
-        default:
-            - Linux
+        default: Linux
     managed_disk_type:
         description:
             - Managed disk type.

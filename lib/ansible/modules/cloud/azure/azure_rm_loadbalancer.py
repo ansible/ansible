@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     sku:
         description:
             The load balancer SKU.

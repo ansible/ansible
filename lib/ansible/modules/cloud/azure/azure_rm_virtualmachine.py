@@ -58,13 +58,16 @@ options:
         description:
             - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
         default: true
+        type: bool
     allocated:
         description:
             - Toggle that controls if the machine is allocated/deallocated, only useful with state='present'.
         default: True
+        type: bool
     restarted:
         description:
             - Use with state 'present' to restart a running VM.
+        type: bool
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
@@ -88,6 +91,7 @@ options:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
         default: true
+        type: bool
     ssh_public_keys:
         description:
             - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
@@ -118,11 +122,15 @@ options:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+        aliases:
+            - storage_account
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
               default container will created.
         default: vhds
+        aliases:
+            - storage_container
     storage_blob_name:
         description:
             - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
@@ -151,8 +159,7 @@ options:
         choices:
             - Windows
             - Linux
-        default:
-            - Linux
+        default: Linux
     data_disks:
         description:
             - Describes list of data disks.
@@ -208,8 +215,7 @@ options:
             - Dynamic
             - Static
             - Disabled
-        default:
-            - Static
+        default: Static
         aliases:
             - public_ip_allocation
     open_ports:
@@ -223,6 +229,8 @@ options:
             - List of existing network interface names to add to the VM. If a network interface name is not provided
               when the VM is created, a default network interface will be created. In order for the module to create
               a network interface, at least one Virtual Network with one Subnet must exist.
+        aliases:
+            - network_interfaces
     virtual_network_resource_group:
         description:
             - When creating a virtual machine, if a specific virtual network from another resource group should be

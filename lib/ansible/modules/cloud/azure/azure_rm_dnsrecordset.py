@@ -90,6 +90,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Obezimnaka Boms (@ozboms)"
