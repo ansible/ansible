@@ -28,8 +28,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-    - debug
-        msg: {{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}
+    - debug:
+        msg: "{{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}"
 """
 
 RETURN = """
