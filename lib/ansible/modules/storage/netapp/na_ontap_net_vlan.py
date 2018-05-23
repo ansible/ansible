@@ -40,6 +40,7 @@ options:
     description:
     - Name of vlan interface. The name must be of the format <parent-inteface>-<vlanid>
   gvrp_enabled:
+    type: bool
     description:
     - GVRP is deprecated and this attribute is ignored in cluster mode.
 '''
@@ -155,7 +156,9 @@ class NetAppOntapVlan(object):
         if self.interface_name:
             vlan_info.add_new_child("interface-name", self.interface_name)
         if self.gvrp_enabled:
-            vlan_info.add_new_child("gvrp-enabled", self.gvrp_enabled)
+            vlan_info.add_new_child("gvrp-enabled", 'true')
+        else:
+            vlan_info.add_new_child("gvrp-enabled", 'false')
         return vlan_info
 
     def apply(self):
