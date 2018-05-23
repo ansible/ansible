@@ -183,7 +183,6 @@ class NetAppOntapLUNMap(object):
 
     def apply(self):
         property_changed = False
-        size_changed = False
         lun_map_exists = False
         netapp_utils.ems_log_event("na_ontap_lun_map", self.server)
         lun_map_detail = self.get_lun_map()
@@ -206,13 +205,14 @@ class NetAppOntapLUNMap(object):
                 pass
             else:
                 if self.state == 'present':
+                    # TODO delete this line in next release
                     if not lun_map_exists:
                         self.create_lun_map()
 
                 elif self.state == 'absent':
                     self.delete_lun_map()
 
-        changed = property_changed or size_changed
+        changed = property_changed
         # TODO: include other details about the lun (size, etc.)
         self.module.exit_json(changed=changed)
 

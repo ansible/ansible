@@ -44,13 +44,12 @@ options:
 
   serial_number:
     description:
-    - Serial number of the node associated with the license.
-    - This parameter is used primarily when removing license for a specific service.
+      Serial number of the node associated with the license.
+      This parameter is used primarily when removing license for a specific service.
 
   license_names:
     description:
     - List of license-names to delete.
-    - Please note that trying to remove a non-existent license will throw an error.
     suboptions:
       base:
         description:

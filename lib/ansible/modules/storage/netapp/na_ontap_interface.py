@@ -79,8 +79,9 @@ options:
     - Specifies the failover policy for the LIF.
 
   admin_status:
+    choices: ['up', 'down']
     description:
-    - Specifies the administrative status of the LIF..
+    - Specifies the administrative status of the LIF.
 
   is_auto_revert:
     description:
@@ -131,7 +132,6 @@ RETURN = """
 """
 
 import traceback
-import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
@@ -157,7 +157,7 @@ class NetAppOntapInterface(object):
             vserver=dict(required=True, type='str'),
             firewall_policy=dict(required=False, type='str', default=None),
             failover_policy=dict(required=False, type='str', default=None),
-            admin_status=dict(required=False, type='str', default=None),
+            admin_status=dict(required=False, choices=['up', 'down']),
             is_auto_revert=dict(required=False, type='str', default=None),
             protocols=dict(required=False, type='list')
 
@@ -322,9 +322,6 @@ class NetAppOntapInterface(object):
             module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_interface", cserver)
         interface_detail = self.get_interface()
-        obj = open('workFile', 'w')
-        obj.write(json.dumps(interface_detail))
-        obj.close()
         if interface_detail:
             interface_exists = True
             if self.state == 'absent':
