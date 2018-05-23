@@ -55,7 +55,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
-    state: started
+    state: stopped
   register: vpc
   check_mode: true
 - name: verify test create vpc with custom offering in check mode
@@ -72,7 +72,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
-    state: started
+    state: stopped
   register: vpc
 - name: verify test create vpc with custom offering
   assert:
@@ -92,7 +92,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
-    state: started
+    state: stopped
   register: vpc
 - name: verify test create vpc with custom offering idempotence
   assert:
