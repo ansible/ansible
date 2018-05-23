@@ -100,6 +100,7 @@ RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_DNS_VIEW
 
 
 def main():
@@ -107,6 +108,7 @@ def main():
     '''
     ib_spec = dict(
         name=dict(required=True, aliases=['view'], ib_req=True),
+        old_name=dict(required=False, aliases=['view'], ib_req=True),
         network_view=dict(default='default', ib_req=True),
 
         extattrs=dict(type='dict'),
@@ -125,7 +127,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('view', ib_spec)
+    result = wapi.run(NIOS_DNS_VIEW, ib_spec)
 
     module.exit_json(**result)
 
