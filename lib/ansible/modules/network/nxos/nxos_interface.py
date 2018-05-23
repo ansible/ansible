@@ -215,7 +215,7 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -291,46 +291,6 @@ def get_interfaces_dict(module):
             interfaces[intf_type].append(intf)
 
     return interfaces
-
-
-def normalize_interface(name):
-    """Return the normalized interface name
-    """
-    if not name:
-        return None
-
-    def _get_number(name):
-        digits = ''
-        for char in name:
-            if char.isdigit() or char in '/.':
-                digits += char
-        return digits
-
-    if name.lower().startswith('et'):
-        if_type = 'Ethernet'
-    elif name.lower().startswith('vl'):
-        if_type = 'Vlan'
-    elif name.lower().startswith('lo'):
-        if_type = 'loopback'
-    elif name.lower().startswith('po'):
-        if_type = 'port-channel'
-    elif name.lower().startswith('nv'):
-        if_type = 'nve'
-    else:
-        if_type = None
-
-    number_list = name.split(' ')
-    if len(number_list) == 2:
-        number = number_list[-1].strip()
-    else:
-        number = _get_number(name)
-
-    if if_type:
-        proper_interface = if_type + number
-    else:
-        proper_interface = name
-
-    return proper_interface
 
 
 def get_vlan_interface_attributes(name, intf_type, module):
