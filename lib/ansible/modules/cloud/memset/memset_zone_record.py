@@ -96,7 +96,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 # create multiple DNS records
-- name: create DNS reocrds
+- name: create multiple DNS records
   memset_zone_record:
     api_key: dcf089a2896940da9ffefb307ef49ccd
     zone: "{{ item.zone }}"
