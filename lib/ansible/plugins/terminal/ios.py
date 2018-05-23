@@ -47,7 +47,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
         re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
         re.compile(br"[%\S] ?Informational: ?[\s]+", re.I),
-        re.compile(br"Command authorization failed"),
+        re.compile(br"Command authorization failed")
     ]
 
     def on_open_shell(self):
