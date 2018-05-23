@@ -153,12 +153,12 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    provider = module.params['provider']
-
-    hostname = module.params.get('host') or provider.get('host')
-    username = module.params.get('username') or provider.get('username')
-    password = module.params.get('password') or provider.get('password')
-    port = module.params.get('connect_ssh_port')
+    provider = module.params.get('provider')
+    
+    hostname = provider.get('host') if provider else module.params['host']
+    username = provider.get('username') if provider else module.params['username']
+    password = provider.get('password') if provider else module.params['password']
+    port = module.params['connect_ssh_port']
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
