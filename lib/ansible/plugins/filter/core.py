@@ -473,6 +473,52 @@ def flatten(mylist, levels=None):
     return ret
 
 
+def subelements(obj, subelements, skip_missing=False):
+    '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
+    of the element and the results of the dotted accessor
+
+    >>> obj = [{"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}]
+    >>> subelements(obj, 'groups')
+    [({'name': 'alice', 'groups': ['wheel'], 'authorized': ['/tmp/alice/onekey.pub']}, 'wheel')]
+
+    '''
+    if isinstance(obj, dict):
+        element_list = list(obj.values())
+    elif isinstance(obj, list):
+        element_list = obj[:]
+    else:
+        raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
+
+    if isinstance(subelements, list):
+        subelement_list = subelements[:]
+    elif isinstance(subelements, string_types):
+        subelement_list = subelements.split('.')
+    else:
+        raise AnsibleFilterError('subelements must be a list or a string')
+
+    results = []
+
+    for element in element_list:
+        values = element
+        for subelement in subelement_list:
+            try:
+                values = values[subelement]
+            except KeyError:
+                if skip_missing:
+                    values = []
+                    break
+                raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
+            except TypeError:
+                raise AnsibleFilterError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+        if not isinstance(values, list):
+            raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
+
+        for value in values:
+            results.append((element, value))
+
+    return results
+
+
 def dict_to_list_of_dict_key_value_elements(mydict):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
@@ -574,4 +620,5 @@ class FilterModule(object):
             'extract': extract,
             'flatten': flatten,
             'dict2items': dict_to_list_of_dict_key_value_elements,
+            'subelements': subelements,
         }
