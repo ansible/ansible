@@ -8,7 +8,6 @@
     lines:
       - no vlan 102
       - no vlan 103
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 
@@ -19,7 +18,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: up
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -45,7 +43,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: down
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -67,7 +64,6 @@
   nxos_vlan: &purge
     vlan_id: 1
     purge: yes
-    provider: "{{ connection }}"
   register: result
 
 - assert:

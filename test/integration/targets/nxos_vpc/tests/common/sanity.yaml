@@ -8,12 +8,10 @@
     nxos_feature:
       feature: vpc
       state: enabled
-      provider: "{{ connection }}"
 
   - name: Ensure ntc VRF exists on switch
     nxos_vrf:
       vrf: ntc
-      provider: "{{ connection }}"
 
   - name: Configure vpc
     nxos_vpc: &conf_vpc
@@ -22,7 +20,6 @@
       pkl_dest: 192.168.100.4
       pkl_src: 10.1.100.20
       pkl_vrf: ntc
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -45,7 +42,6 @@
       system_priority: 2000
       peer_gw: True
       delay_restore: 5
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -62,7 +58,6 @@
         state: present
         domain: 100
         auto_recovery: False
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -78,7 +73,6 @@
         state: present
         domain: 100
         auto_recovery: True
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -97,7 +91,6 @@
         state: present
         domain: 100
         auto_recovery: True
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -113,7 +106,6 @@
         state: present
         domain: 100
         auto_recovery: False
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -134,7 +126,6 @@
       system_priority: default
       peer_gw: True
       delay_restore: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -150,7 +141,6 @@
       state: present
       domain: 100
       peer_gw: False
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -165,7 +155,6 @@
     nxos_vpc: &rem_vpc
       state: absent
       domain: 100
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -181,14 +170,12 @@
     nxos_vrf:
       vrf: ntc
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vpc sanity test"

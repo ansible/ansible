@@ -10,7 +10,6 @@
       - { name: ansibletest2 }
       - { name: ansibletest3 }
     state: absent
-    provider: "{{ connection }}"
 
 # Start tests
 - name: Create user
@@ -18,7 +17,6 @@
     name: ansibletest1
     roles: network-operator
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -34,7 +32,6 @@
       - { name: ansibletest3 }
     state: present
     roles: network-admin
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -48,7 +45,6 @@
       - { name: ansibletest2 }
       - { name: ansibletest3 }
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:

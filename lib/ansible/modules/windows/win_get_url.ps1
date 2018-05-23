@@ -9,6 +9,9 @@
 
 $ErrorActionPreference = 'Stop'
 
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $webclient_util = @"
     using System.Net;
@@ -26,7 +29,13 @@ $webclient_util = @"
         }
     }
 "@
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $webclient_util
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -137,10 +146,6 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     $result.msg = 'OK'
     $result.dest = $dest
 }
-
-
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true

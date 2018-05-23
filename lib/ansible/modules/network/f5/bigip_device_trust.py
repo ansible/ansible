@@ -30,8 +30,9 @@ options:
   peer_hostname:
     description:
       - The hostname that you want to associate with the device. This value will
-        be used to easily distinguish this device in BIG-IP configuration. If not
-        specified, the value of C(peer_server) will be used as a default.
+        be used to easily distinguish this device in BIG-IP configuration.
+      - When trusting a new device, if this parameter is not specified, the value
+        of C(peer_server) will be used as a default.
   peer_user:
     description:
       - The API username of the remote peer device that you are trusting. Note
@@ -227,6 +228,22 @@ class ModuleManager(object):
         result.update(dict(changed=changed))
         return result
 
+    def provided_password(self):
+        if self.want.password:
+            return self.password
+        if self.want.provider.get('password', None):
+            return self.provider.get('password')
+        if self.module.params.get('password', None):
+            return self.module.params.get('password')
+
+    def provided_username(self):
+        if self.want.username:
+            return self.username
+        if self.want.provider.get('user', None):
+            return self.provider.get('user')
+        if self.module.params.get('user', None):
+            return self.module.params.get('user')
+
     def present(self):
         if self.exists():
             return False
@@ -236,11 +253,11 @@ class ModuleManager(object):
     def create(self):
         self._set_changed_options()
         if self.want.peer_user is None:
-            self.want.update({'peer_user': self.want.user})
+            self.want.update({'peer_user': self.provided_username()})
         if self.want.peer_password is None:
-            self.want.update({'peer_password': self.want.password})
+            self.want.update({'peer_password': self.provided_password()})
         if self.want.peer_hostname is None:
-            self.want.update({'peer_hostname': self.want.server})
+            self.want.update({'peer_hostname': self.want.peer_server})
         if self.module.check_mode:
             return True
 
@@ -255,6 +272,8 @@ class ModuleManager(object):
     def remove(self):
         if self.module.check_mode:
             return True
+        if self.want.peer_hostname is None:
+            self.want.update({'peer_hostname': self.want.peer_server})
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to remove the trusted peer.")
@@ -279,7 +298,7 @@ class ModuleManager(object):
         )
 
     def remove_from_device(self):
-        result = self.client.api.tm.cm.remove_from_trust.exec_cmd(
+        self.client.api.tm.cm.remove_from_trust.exec_cmd(
             'run', deviceName=self.want.peer_hostname, name=self.want.peer_hostname
         )
 

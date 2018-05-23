@@ -4,14 +4,12 @@
 - name: setup
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ cli }}"
     match: none
 
 - name: configure sub level command
   nxos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -24,7 +22,6 @@
   nxos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -34,7 +31,6 @@
 - name: teardown
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ cli }}"
     match: none
 
 - debug: msg='END cli/sublevel.yaml'

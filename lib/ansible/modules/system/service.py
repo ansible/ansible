@@ -206,7 +206,10 @@ class Service(object):
 
         # Most things don't need to be daemonized
         if not daemonize:
-            return self.module.run_command(cmd)
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
         # What we do is daemonize a part of this module, the daemon runs the

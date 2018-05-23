@@ -32,12 +32,12 @@ options:
             - Name of the user to create, remove or modify.
         required: true
         aliases: [ user ]
-    comment:
-        description:
-            - Optionally sets the description (aka I(GECOS)) of user account.
     uid:
         description:
             - Optionally sets the I(UID) of the user.
+    comment:
+        description:
+            - Optionally sets the description (aka I(GECOS)) of user account.
     hidden:
         required: false
         type: bool
@@ -47,8 +47,7 @@ options:
         version_added: "2.6"
     non_unique:
         description:
-            - Optionally when used with the -u option, this option allows to
-              change the user ID to a non-unique value.
+            - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
         type: bool
         default: "no"
         version_added: "1.1"
@@ -67,16 +66,14 @@ options:
               now it should be able to accept YAML lists also.
     append:
         description:
-            - If C(yes), will only add groups, not set them to just the list
-              in I(groups).
+            - If C(yes), will only add groups, not set them to just the list in I(groups).
         type: bool
         default: "no"
     shell:
         description:
             - Optionally set the user's shell.
-            - On Mac OS X, before version 2.5, the default shell for non-system users was
-              /usr/bin/false. Since 2.5, the default shell for non-system users on
-              Mac OS X is /bin/bash.
+            - On Mac OS X, before version 2.5, the default shell for non-system users was /usr/bin/false.
+              Since 2.5, the default shell for non-system users on Mac OS X is /bin/bash.
     home:
         description:
             - Optionally set the user's home directory.
@@ -98,39 +95,38 @@ options:
     create_home:
         description:
             - Unless set to C(no), a home directory will be made for the user
-              when the account is created or if the home directory does not
-              exist.
+              when the account is created or if the home directory does not exist.
             - Changed from C(createhome) to C(create_home) in version 2.5.
         type: bool
         default: 'yes'
         aliases: ['createhome']
     move_home:
         description:
-            - If set to C(yes) when used with C(home=), attempt to move the
-              user's home directory to the specified directory if it isn't there
-              already.
+            - If set to C(yes) when used with C(home=), attempt to move the user's old home
+              directory to the specified directory if it isn't there already and the old home exists.
         type: bool
         default: "no"
     system:
         description:
-            - When creating an account, setting this to C(yes) makes the user a
-              system account.  This setting cannot be changed on existing users.
+            - When creating an account C(state=present), setting this to C(yes) makes the user a system account.
+              This setting cannot be changed on existing users.
         type: bool
         default: "no"
     force:
         description:
-            - When used with C(state=absent), behavior is as with C(userdel --force).
+            - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
+              The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
+        type: bool
+        default: "no"
+    remove:
+        description:
+            - This only affects C(state=absent), it attempts to remove directories associated with the user.
+              The behavior is the same as C(userdel --remove), check the man page for details and support.
         type: bool
         default: "no"
     login_class:
         description:
-            - Optionally sets the user's login class for FreeBSD, DragonFlyBSD, OpenBSD and
-              NetBSD systems.
-    remove:
-        description:
-            - When used with C(state=absent), behavior is as with C(userdel --remove).
-        type: bool
-        default: "no"
+            - Optionally sets the user's login class, a feature of most BSD OSs.
     generate_ssh_key:
         description:
             - Whether to generate a SSH key for the user in question.
@@ -176,7 +172,8 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
+              Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
+            - Since version 2.6 you can remove the expiry time specify a negative value. Currently supported on GNU/Linux and FreeBSD.
         version_added: "1.9"
     password_lock:
         description:
@@ -231,8 +228,15 @@ EXAMPLES = '''
     shell: /bin/zsh
     groups: developers
     expires: 1422403387
+
+- name: starting at version 2.6, modify user, remove expiry time
+  user:
+    name: james18
+    expires: -1
+
 '''
 
+import errno
 import grp
 import os
 import platform
@@ -311,11 +315,11 @@ class User(object):
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
 
-        if module.params['expires']:
+        if module.params['expires'] is not None:
             try:
                 self.expires = time.gmtime(module.params['expires'])
             except Exception as e:
-                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, to_native(e)))
+                module.fail_json(msg="Invalid value for 'expires' %s: %s" % (self.expires, to_native(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -409,7 +413,7 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires:
+        if self.expires is not None:
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -532,17 +536,22 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires:
-            current_expires = self.user_password()[1]
+        if self.expires is not None:
 
-            # Convert days since Epoch to seconds since Epoch as struct_time
-            total_seconds = int(current_expires) * 86400
-            current_expires = time.gmtime(total_seconds)
+            current_expires = int(self.user_password()[1])
 
-            # Compare year, month, and day only
-            if current_expires[:3] != self.expires[:3]:
-                cmd.append('-e')
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                if current_expires > 0:
+                    cmd.append('-e')
+                    cmd.append('')
+            else:
+                # Convert days since Epoch to seconds since Epoch as struct_time
+                current_expire_date = time.gmtime(current_expires * 86400)
+
+                # Current expires is negative or we compare year, month, and day only
+                if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
+                    cmd.append('-e')
+                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password_lock:
             cmd.append('-L')
@@ -638,6 +647,13 @@ class User(object):
                 return passwd, expires
             except KeyError:
                 return passwd, expires
+            except OSError as e:
+                # Python 3.6 raises PermissionError instead of KeyError
+                # Due to absence of PermissionError in python2.7 need to check
+                # errno
+                if e.errno in (errno.EACCES, errno.EPERM):
+                    return passwd, expires
+                raise
 
         if not self.user_exists():
             return passwd, expires
@@ -647,7 +663,7 @@ class User(object):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
-                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -845,7 +861,7 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.expires:
+        if self.expires is not None:
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -946,13 +962,22 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
-        if self.expires:
-            current_expires = time.gmtime(int(self.user_password()[1]))
+        if self.expires is not None:
 
-            # Compare year, month, and day only
-            if current_expires[:3] != self.expires[:3]:
-                cmd.append('-e')
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            current_expires = int(self.user_password()[1])
+
+            if self.expires < time.gmtime(0):
+                if current_expires > 0:
+                    cmd.append('-e')
+                    cmd.append('0')
+            else:
+                # Convert days since Epoch to seconds since Epoch as struct_time
+                current_expire_date = time.gmtime(current_expires)
+
+                # Current expires is negative or we compare year, month, and day only
+                if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
+                    cmd.append('-e')
+                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -1442,11 +1467,23 @@ class SunOS(User):
                         fields[1] = self.password
                         fields[2] = str(int(time.time() // 86400))
                         if minweeks:
-                            fields[3] = str(int(minweeks) * 7)
+                            try:
+                                fields[3] = str(int(minweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         if maxweeks:
-                            fields[4] = str(int(maxweeks) * 7)
+                            try:
+                                fields[4] = str(int(maxweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         if warnweeks:
-                            fields[5] = str(int(warnweeks) * 7)
+                            try:
+                                fields[5] = str(int(warnweeks) * 7)
+                            except ValueError:
+                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                pass
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
