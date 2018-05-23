@@ -42,8 +42,12 @@ options:
             - C(username)[I(required)] - The name of the user, something like I(admin@internal).
               Default value is set by I(OVIRT_USERNAME) environment variable.
             - "C(password)[I(required)] - The password of the user. Default value is set by I(OVIRT_PASSWORD) environment variable."
-            - "C(url)[I(required)] - A string containing the base URL of the server, usually
-            something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable."
+            - "C(url)- A string containing the API URL of the server, usually
+            something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable.
+            Either C(url) or C(hostname) is required."
+            - "C(hostname) - A string containing the hostname of the server, usually
+            something like `I(server.example.com)`. Default value is set by I(OVIRT_HOSTNAME) environment variable.
+            Either C(url) or C(hostname) is required."
             - "C(token) - Token to be used instead of login with username/password. Default value is set by I(OVIRT_TOKEN) environment variable."
             - "C(insecure) - A boolean flag that indicates if the server TLS
             certificate and host name should be checked."
