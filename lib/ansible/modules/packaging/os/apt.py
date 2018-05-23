@@ -496,6 +496,7 @@ def mark_installed_manually(m, packages):
 
     # https://github.com/ansible/ansible/issues/40531
     if apt_mark_cmd_path is None:
+        m.warn("Could not find apt-mark binary, not marking package(s) as manually installed.")
         return
 
     cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
