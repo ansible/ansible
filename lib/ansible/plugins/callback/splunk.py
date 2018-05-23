@@ -73,6 +73,7 @@ from os.path import basename
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils.urls import open_url
 
+
 class SplunkHTTPCollectorSource(object):
     def __init__(self):
         self.ansible_check_mode = False
@@ -127,6 +128,7 @@ class SplunkHTTPCollectorSource(object):
             },
             method='POST'
         )
+
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
