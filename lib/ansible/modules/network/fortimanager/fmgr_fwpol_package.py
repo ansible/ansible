@@ -42,11 +42,7 @@ options:
     description:
       - The ADOM the configuration should belong to.
     required: true
-
-  vdom:
-    description:
-      - The VDOM of on the Fortigate you want to add, must match the device in FMGR. Usually root.
-    required: true
+    default: root
 
   host:
     description:
@@ -118,7 +114,7 @@ options:
       - NGFW mode setting for the policies flow or proxy
     required: false
     choices: ['profile-based', 'policy-based']
-    default: policy-based
+    default: profile-based
 
   ssl_ssh_profile:
     description:
