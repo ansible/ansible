@@ -4,17 +4,17 @@
 - name: delete config file on disk to prevent failure of copy task for duplicate
   iosxr_command:
     commands:
-        - command : 'delete harddisk:ansible_tmp.txt'
-          prompt : 'Delete harddisk\:ansible_tmp\.txt\[confirm\]'
+        - command: 'delete harddisk:ansible_tmp.txt'
+          prompt: 'Delete harddisk\:ansible_tmp\.txt\[confirm\]'
           answer: "\r\n"
   ignore_errors: yes
 
 - name: copy
   iosxr_command:
     commands:
-        - command : 'copy running-config harddisk:ansible_tmp.txt'
-          prompt : 'Destination file name \(control-c to abort\)\: \[\/ansible_tmp.txt\]\?'
-          answer : 'ansible_tmp.txt'
+        - command: 'copy running-config harddisk:ansible_tmp.txt'
+          prompt: 'Destination file name \(control-c to abort\)\: \[\/ansible_tmp.txt\]\?'
+          answer: 'ansible_tmp.txt'
   register: result
 
 - assert:
