@@ -94,6 +94,9 @@ keyed_groups:
   # create a group for each value of the Application tag
   - key: tag.Application
     separator: ''
+  # create a group per region e.g. aws_region_us_east_2
+  - key: placement.region
+    prefix: aws_region
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -307,6 +310,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for connection, region in self._boto3_conn(regions):
             try:
+                # By default find non-terminated/terminating instances
+                if not any([f['Name'] == 'instance-state-name' for f in filters]):
+                    filters.append({'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopping', 'stopped']})
                 paginator = connection.get_paginator('describe_instances')
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
@@ -419,6 +425,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
             host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
 
+            # Allow easier grouping by region
+            host['placement']['region'] = host['placement']['availability_zone'][:-1]
+
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
@@ -427,29 +436,26 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Use constructed if applicable
 
-            strict = self._options.get('strict', False)
+            strict = self.get_option('strict')
 
             # Composed variables
-            if self._options.get('compose'):
-                self._set_composite_vars(self._options.get('compose'), host, hostname, strict=strict)
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
 
             # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
-            if self._options.get('groups'):
-                self._add_host_to_composed_groups(self._options.get('groups'), host, hostname, strict=strict)
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
-            if self._options.get('keyed_groups'):
-                self._add_host_to_keyed_groups(self._options.get('keyed_groups'), host, hostname, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
 
     def _set_credentials(self):
         '''
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self._options.get('boto_profile')
-        self.aws_access_key_id = self._options.get('aws_access_key_id')
-        self.aws_secret_access_key = self._options.get('aws_secret_access_key')
-        self.aws_security_token = self._options.get('aws_security_token')
+        self.boto_profile = self.get_option('boto_profile')
+        self.aws_access_key_id = self.get_option('aws_access_key_id')
+        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.aws_security_token = self.get_option('aws_security_token')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             session = botocore.session.get_session()
@@ -525,13 +531,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # get user specifications
         regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
 
+        cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
         if cache:
             # get the user-specified directive
-            cache = self._options.get('cache')
-            cache_key = self.get_cache_key(path)
-        else:
-            cache_key = None
+            cache = self.get_option('cache')
 
         # Generate inventory
         formatted_inventory = {}
@@ -550,5 +554,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
-        if cache_needs_update:
+        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
+        # when the user is using caching, update the cached inventory
+        if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, formatted_inventory)
