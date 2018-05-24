@@ -28,7 +28,8 @@ version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:
   - Copy a file to the flash (or bootflash) remote network device
-    on NXOS devices.
+    on NXOS devices. This module only supports the use of connection
+    C(network_cli) or C(Cli) transport with connection C(local).
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
@@ -65,8 +66,6 @@ EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
     remote_file: "test_file.txt"
-    provider: "{{ cli }}"
-    connect_ssh_port: "{{ ansible_ssh_port }}"
 '''
 
 RETURN = '''
@@ -153,12 +152,10 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    provider = module.params['provider']
-
-    hostname = module.params.get('host') or provider.get('host')
-    username = module.params.get('username') or provider.get('username')
-    password = module.params.get('password') or provider.get('password')
-    port = module.params.get('connect_ssh_port')
+    hostname = module.params['host']
+    username = module.params['username']
+    password = module.params['password']
+    port = module.params['connect_ssh_port']
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
