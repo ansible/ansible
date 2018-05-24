@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ..six import binary_type, text_type
-from ._collections_compat import Sequence
+from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.common._collections_compat import Sequence
 
 
 def is_string(seq):
