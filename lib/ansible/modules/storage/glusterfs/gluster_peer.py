@@ -85,6 +85,8 @@ class Peer(object):
         self.module = module
         self.state = self.module.params['state']
         self.nodes = self.module.params['nodes']
+        self.glustercmd = self.module.get_bin_path('gluster', True)
+        self.lang = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         self.action = ''
         self.force = ''
 
@@ -102,7 +104,9 @@ class Peer(object):
         self.call_peer_commands()
 
     def get_to_be_probed_hosts(self, hosts):
-        rc, output, err = self.module.run_command("gluster pool list")
+        peercmd = [self.glustercmd, 'pool', 'list']
+        rc, output, err = self.module.run_command(peercmd,
+                                                  environ_update=self.lang)
         peers_in_cluster = [line.split('\t')[1].strip() for
                             line in filter(None, output.split('\n')[1:])]
         try:
@@ -120,8 +124,11 @@ class Peer(object):
         result['changed'] = False
 
         for node in self.nodes:
-            rc, out, err = self._run_command('gluster', ' peer %s %s %s'
-                                             % (self.action, node, self.force))
+            peercmd = [self.glustercmd, 'peer', self.action, node]
+            if self.force:
+                peercmd.append(self.force)
+            rc, out, err = self.module.run_command(peercmd,
+                                                   environ_update=self.lang)
             if rc:
                 result['rc'] = rc
                 result['msg'] = err
@@ -134,10 +141,6 @@ class Peer(object):
                 else:
                     result['changed'] = True
         self.module.exit_json(**result)
-
-    def _run_command(self, op, opts):
-        cmd = self.module.get_bin_path(op, True) + opts
-        return self.module.run_command(cmd)
 
 
 def main():
