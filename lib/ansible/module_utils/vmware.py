@@ -59,14 +59,27 @@ def find_obj(content, vimtype, name, first=True):
     # Select the first match
     if first is True:
         for obj in obj_list:
-            if obj.name == name:
-                return obj
+            try:
+                if obj.name == name:
+                    return obj
+            except vmodl.fault.ManagedObjectNotFound:
+                # if object was deleted in the meantime, skip it
+                pass
 
         # If no object found, return None
         return None
 
     # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
+    objs = []
+    for obj in obj_list:
+        try:
+            if obj.name == name:
+                objs.append(obj)
+        except vmodl.fault.ManagedObjectNotFound:
+            # if object was deleted in the meantime, skip it
+            pass
+
+    return objs
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
@@ -86,8 +99,13 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
 
     host_folder = datacenter.hostFolder
     for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
+        try:
+            if folder.name == cluster_name:
+                return folder
+        except vmodl.fault.ManagedObjectNotFound:
+            # if object was deleted in the meantime, skip it
+            pass
+
     return None
 
 
@@ -197,6 +215,7 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
                 except vmodl.fault.ManagedObjectNotFound:
                     # if object was deleted in the meantime, skip it
                     pass
+
     return vm
 
 
