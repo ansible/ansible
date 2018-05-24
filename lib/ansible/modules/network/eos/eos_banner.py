@@ -100,7 +100,7 @@ def map_obj_to_commands(updates, module):
     state = module.params['state']
 
     if state == 'absent' and have.get('text'):
-        if isinstance(have['text'], str):
+        if isinstance(have['text'], string_types):
             commands.append('no banner %s' % module.params['banner'])
         elif have['text'].get('loginBanner') or have['text'].get('motd'):
             commands.append({'cmd': 'no banner %s' % module.params['banner']})
@@ -147,7 +147,7 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = to_text(text).strip()
 
     return {
         'banner': module.params['banner'],
