@@ -359,8 +359,11 @@ class VMwareHost(PyVmomi):
                                       details="This could either mean that the value of folder is"
                                               " invalid or the provided folder does not exists.")
             for child in self.folder.childEntity:
-                if child and isinstance(child, vim.HostSystem) and child.name == self.esxi_hostname:
-                    self.host = child
+                try:
+                    if child and isinstance(child, vim.HostSystem) and child.name == self.esxi_hostname:
+                        self.host = child
+                except vmodl.fault.ManagedObjectNotFound:
+                    pass
 
         if self.host is None:
             return 'absent'
