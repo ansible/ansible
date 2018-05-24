@@ -75,7 +75,6 @@ options:
   lock_user:
     description:
     - To ock/unlock user.
-    required: false
     type: bool
 
   vserver:

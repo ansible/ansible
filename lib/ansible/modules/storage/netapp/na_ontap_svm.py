@@ -42,7 +42,6 @@ options:
   new_name:
     description:
     - New name of the SVM to be renamed
-    required: false
 
   root_volume:
     description:

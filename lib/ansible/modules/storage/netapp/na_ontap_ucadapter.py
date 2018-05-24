@@ -47,12 +47,10 @@ options:
   mode:
     description:
     - Specifies the mode of the adapter.
-    required: false
 
   type:
     description:
     - Specifies the fc4 type of the adapter.
-    required: false
 
 '''
 
