@@ -62,9 +62,9 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
 
     if ($credentials) {
         if ($force_basic_auth) {
-            $extWebClient.Headers.Add("Authorization","Basic $credentials")
+            $webRequest.Headers.Add("Authorization", "Basic $credentials")
         } else {
-            $extWebClient.Credentials = $credentials
+            $webRequest.Credentials = $credentials
         }
     }
 
