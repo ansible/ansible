@@ -51,7 +51,8 @@ options:
   is_infinite:
     type: bool
     description:
-    - Set True if the volume is an Infinite Volume.
+      Set True if the volume is an Infinite Volume.
+      Deleting an infinite volume is asynchronous.
 
   is_online:
     type: bool
@@ -72,7 +73,7 @@ options:
     description:
     - The unit used to interpret the size parameter.
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
-    default: 'gb'
+    default: gb
 
   type:
     description:
@@ -429,8 +430,6 @@ class NetAppOntapVolume(object):
         """
         Change volume's state (offline/online).
 
-        Note: 'is_infinite' needs to be set to True in order to change the
-        state of an Infinite Volume.
         """
         state_requested = None
         if self.is_online:
