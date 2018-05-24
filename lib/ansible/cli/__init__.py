@@ -418,11 +418,11 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def listhosts(option, opt, value, parser):
-        parser.values.listhosts = True;
+        parser.values.listhosts = True
         if opt == '--list-hosts-plain':
-            parser.values.listhostsplain = True;
+            parser.values.listhostsplain = True
         else:
-            parser.values.listhostsplain = False;
+            parser.values.listhostsplain = False
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,

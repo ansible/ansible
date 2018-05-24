@@ -123,12 +123,12 @@ class AdHocCLI(CLI):
                 display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
-            prefix = '';
+            prefix = ''
             if not self.options.listhostsplain:
                 display.display('  hosts (%d):' % len(hosts))
-                prefix = '    ';
+                prefix = '    '
             for host in hosts:
-                display.display('%s%s' % (prefix,host))
+                display.display('%s%s' % (prefix, host))
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
