@@ -191,6 +191,12 @@ options:
     scheduling_policy:
         description:
             - "Name of the scheduling policy to be used for cluster."
+    scheduling_policy_properties:
+        description:
+            - "Custom scheduling policy properties of the cluster."
+            - "These optional properties override the properties of the
+               scheduling policy specified by the C(scheduling_policy) parameter."
+        version_added: "2.6"
     cpu_arch:
         description:
             - "CPU architecture of cluster."
@@ -503,6 +509,12 @@ class ClustersModule(BaseModule):
                 id=get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'))
             ) if self.param('mac_pool') else None,
             external_network_providers=self._get_external_network_providers_entity(),
+            custom_scheduling_policy_properties=[
+                otypes.Property(
+                    name=sp.get('name'),
+                    value=str(sp.get('value')),
+                ) for sp in self.param('scheduling_policy_properties') if sp
+            ] if self.param('scheduling_policy_properties') is not None else None,
         )
 
     def _matches_entity(self, item, entity):
@@ -532,7 +544,20 @@ class ClustersModule(BaseModule):
         sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
         cluster_cpu = getattr(entity, 'cpu', dict())
+
+        def check_custom_scheduling_policy_properties():
+            if self.param('scheduling_policy_properties'):
+                current = []
+                if entity.custom_scheduling_policy_properties:
+                    current = [(sp.name, str(sp.value)) for sp in entity.custom_scheduling_policy_properties]
+                passed = [(sp.get('name'), str(sp.get('value'))) for sp in self.param('scheduling_policy_properties') if sp]
+                for p in passed:
+                    if p not in current:
+                        return False
+            return True
+
         return (
+            check_custom_scheduling_policy_properties() and
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
             equal(self.param('switch_type'), str(entity.switch_type)) and
@@ -628,6 +653,7 @@ def main():
         compatibility_version=dict(default=None),
         mac_pool=dict(default=None),
         external_network_providers=dict(default=None, type='list'),
+        scheduling_policy_properties=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
