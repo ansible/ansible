@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -404,10 +391,12 @@ def map_obj_to_commands(updates, module):
 
         elif state == 'present':
             if obj_in_have:
-                if mode == 'layer2' and mode != obj_in_have.get('mode'):
-                    add_command_to_interface(interface, 'switchport', commands)
-                elif mode == 'layer3' and mode != obj_in_have.get('mode'):
-                    add_command_to_interface(interface, 'no switchport', commands)
+                # Don't run switchport command for loopback and svi interfaces
+                if get_interface_type(name) in ('ethernet', 'portchannel'):
+                    if mode == 'layer2' and mode != obj_in_have.get('mode'):
+                        add_command_to_interface(interface, 'switchport', commands)
+                    elif mode == 'layer3' and mode != obj_in_have.get('mode'):
+                        add_command_to_interface(interface, 'no switchport', commands)
 
                 if admin_state == 'up' and admin_state != obj_in_have.get('admin_state'):
                     add_command_to_interface(interface, 'no shutdown', commands)
@@ -444,10 +433,12 @@ def map_obj_to_commands(updates, module):
 
             else:
                 commands.append(interface)
-                if mode == 'layer2':
-                    commands.append('switchport')
-                elif mode == 'layer3':
-                    commands.append('no switchport')
+                # Don't run switchport command for loopback and svi interfaces
+                if get_interface_type(name) in ('ethernet', 'portchannel'):
+                    if mode == 'layer2':
+                        commands.append('switchport')
+                    elif mode == 'layer3':
+                        commands.append('no switchport')
 
                 if admin_state == 'up':
                     commands.append('no shutdown')
