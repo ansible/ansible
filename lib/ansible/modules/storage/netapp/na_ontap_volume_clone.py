@@ -23,7 +23,6 @@ options:
   state:
     description:
     - Whether volume clone should be created.
-    required: false
     choices: ['present']
     default: 'present'
   parent_volume:
@@ -41,24 +40,19 @@ options:
   parent_snapshot:
     description:
     - Parent snapshot in which volume clone is created off.
-    required: false
   parent_vserver:
     description:
     - Vserver of parent volume in which clone is created off.
-    required: false
   qos_policy_group_name:
     description:
     - The qos-policy-group-name which should be set for volume clone.
-    required: false
   space_reserve:
     description:
     - The space_reserve setting which should be used for the volume clone.
-    required: false
     choices: ['volume', 'none']
   volume_type:
     description:
     - The volume-type setting which should be used for the volume clone.
-    required: false
     choices: ['rw', 'dp']
 '''
 
