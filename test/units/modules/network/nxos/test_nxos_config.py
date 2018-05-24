@@ -41,6 +41,9 @@ class TestNxosConfigModule(TestNxosModule):
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N9K-NXOSV'}}
 
+        self.mock_save_config = patch('ansible.modules.network.nxos.nxos_config.save_config')
+        self.save_config = self.mock_save_config.start()
+
     def tearDown(self):
         super(TestNxosConfigModule, self).tearDown()
         self.mock_get_config.stop()
@@ -148,3 +151,27 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
+
+    def test_nxos_config_save_always(self):
+        args = dict(save_when='always')
+        set_module_args(args)
+        self.execute_module()
+        self.assertEqual(self.save_config.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
+
+    def test_nxos_config_save_changed_true(self):
+        args = dict(save_when='changed', lines=['hostname foo', 'interface GigabitEthernet0/0', 'no ip address'])
+        set_module_args(args)
+        self.execute_module(changed=True)
+        self.assertEqual(self.save_config.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.load_config.call_count, 1)
+
+    def test_nxos_config_save_changed_false(self):
+        args = dict(save_when='changed')
+        set_module_args(args)
+        self.execute_module()
+        self.assertEqual(self.save_config.call_count, 0)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
