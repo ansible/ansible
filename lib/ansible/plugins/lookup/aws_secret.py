@@ -21,11 +21,11 @@ description:
   - Lookup is based on the secret's `Name` value.
   - Optional parameters can be passed into this lookup; `version_id` and `version_stage`
 options:
-  _term:
+  _terms:
     description: Name of the secret to look up in AWS Secrets Manager.
     required: True
   version_id:
-    description: Version of the secret.
+    description: Version of the secret(s).
     required: False
   version_stage:
     description: Stage of the secret version.
@@ -95,7 +95,7 @@ def _get_credentials(options):
 
 
 class LookupModule(LookupBase):
-    def run(self, term, variables, **kwargs):
+    def run(self, terms, variables, **kwargs):
 
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = _get_credentials(self._options)
@@ -103,18 +103,22 @@ class LookupModule(LookupBase):
         region = self._options['region']
         client = _boto3_conn(region, boto_credentials)
 
-        params = {}
-        params['SecretId'] = term[0]
-        if kwargs.get('version_id'):
-            params['VersionId'] = kwargs.get('version_id')
-        if kwargs.get('version_stage'):
-            params['VersionStage'] = kwargs.get('version_stage')
+        secrets = []
+        for term in terms:
+            params = {}
+            params['SecretId'] = term
+            if kwargs.get('version_id'):
+                params['VersionId'] = kwargs.get('version_id')
+            if kwargs.get('version_stage'):
+                params['VersionStage'] = kwargs.get('version_stage')
 
-        try:
-            response = client.get_secret_value(**params)
-            if 'SecretBinary' in response:
-                return response['SecretBinary']
-            if 'SecretString' in response:
-                return ''.join(response['SecretString'])
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
+            try:
+                response = client.get_secret_value(**params)
+                if 'SecretBinary' in response:
+                    secrets.append(response['SecretBinary'])
+                if 'SecretString' in response:
+                    secrets.append(response['SecretString'])
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
+
+        return secrets
