@@ -1,0 +1,4 @@
+---
+config_s3_bucket: '{{ resource_prefix }}-config-records'
+config_sns_name: '{{ resource_prefix }}-delivery-channel-test-topic'
+config_role_name: 'config-recorder-test-{{ resource_prefix }}'
