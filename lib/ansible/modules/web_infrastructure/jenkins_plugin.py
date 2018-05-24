@@ -261,7 +261,7 @@ state:
     sample: "present"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native
@@ -491,7 +491,7 @@ class JenkinsPlugin(object):
                 sha1sum_old = base64.b64encode(sha1_old.digest())
 
                 # If the latest version changed, download it
-                if sha1sum_old != plugin_data['sha1']:
+                if sha1sum_old != to_bytes(plugin_data['sha1']):
                     if not self.module.check_mode:
                         r = self._download_plugin(plugin_url)
                         self._write_file(plugin_file, r)
