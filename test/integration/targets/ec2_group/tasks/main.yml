@@ -8,159 +8,8 @@
 
 # - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
+- include: ./credential_tests.yml
 - block:
-
-    # ============================================================
-    - name: test failure with no parameters
-      ec2_group:
-      register: result
-      ignore_errors: true
-
-    - name: assert failure with no parameters
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "one of the following is required: name, group_id"'
-
-    # ============================================================
-    - name: test failure with only name
-      ec2_group:
-        name: '{{ec2_group_name}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert failure with only name
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "Must provide description when state is present."'
-
-    # ============================================================
-    - name: test failure with only description
-      ec2_group:
-        description: '{{ec2_group_description}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert failure with only description
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "one of the following is required: name, group_id"'
-
-    # ============================================================
-    - name: test failure with empty description (AWS API requires non-empty string desc)
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: ''
-        region: '{{ec2_region}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert failure with empty description
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "Must provide description when state is present."'
-
-    # ============================================================
-    - name: test valid region parameter
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        region: '{{ec2_region}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert valid region parameter
-      assert:
-        that:
-           - 'result.failed'
-           - '"Unable to locate credentials" in result.msg'
-
-    # ============================================================
-    - name: test environment variable EC2_REGION
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert environment variable EC2_REGION
-      assert:
-        that:
-           - 'result.failed'
-           - '"Unable to locate credentials" in result.msg'
-
-    # ============================================================
-    - name: test invalid ec2_url parameter
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-      environment:
-        EC2_URL: bogus.example.com
-      register: result
-      ignore_errors: true
-
-    - name: assert invalid ec2_url parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("The ec2_group module requires a region")'
-
-    # ============================================================
-    - name: test valid ec2_url parameter
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-      environment:
-        EC2_URL: '{{ec2_url}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert valid ec2_url parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("The ec2_group module requires a region")'
-
-    # ============================================================
-    - name: test credentials from environment
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: bogus_access_key
-        EC2_SECRET_KEY: bogus_secret_key
-      register: result
-      ignore_errors: true
-
-    - name: assert ec2_group with valid ec2_url
-      assert:
-        that:
-           - 'result.failed'
-           - '"validate the provided access credentials" in result.msg'
-
-    # ============================================================
-    - name: test credential parameters
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: 'bogus_access_key'
-        ec2_secret_key: 'bogus_secret_key'
-      register: result
-      ignore_errors: true
-
-    - name: assert credential parameters
-      assert:
-        that:
-           - 'result.failed'
-           - '"validate the provided access credentials" in result.msg'
-
     # ============================================================
     - name: set up aws connection info
       set_fact:
@@ -193,8 +42,26 @@
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
       register: vpc_result
+    - include: ./rule_group_create.yml
+    - include: ./egress_tests.yml
+    - include: ./data_validation.yml
 
     # ============================================================
+    - name: test state=absent (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: absent
+      check_mode: true
+      register: result
+
+    - name: assert no changes would be made
+      assert:
+        that:
+          - not result.changed
+
+    # ===========================================================
     - name: test state=absent
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -202,6 +69,21 @@
         <<: *aws_connection_info
         state: absent
       register: result
+
+    # ============================================================
+    - name: test state=present (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
 
     # ============================================================
     - name: test state=present (expected changed=true)
@@ -217,6 +99,21 @@
         that:
            - 'result.changed'
            - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present different description (expected changed=false) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}CHANGED'
+        <<: *aws_connection_info
+        state: present
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+           - 'not result.changed'
 
     # ============================================================
     - name: test state=present different description (expected changed=false)
@@ -251,57 +148,27 @@
 
     # ============================================================
     - name: tests IPv6 with the default VPC
-      block:
-
-        # ============================================================
-        - name: test state=present for ipv6 (expected changed=true)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-               - 'result.group_id.startswith("sg-")'
-
-        # ============================================================
-        - name: test rules_egress state=present for ipv6 (expected changed=true)
-          ec2_group:
-            name: '{{ec2_group_name}}'
-            description: '{{ec2_group_description}}'
-            <<: *aws_connection_info
-            state: present
-            rules:
-            - proto: "tcp"
-              from_port: 8182
-              to_port: 8182
-              cidr_ipv6: "64:ff9b::/96"
-            rules_egress:
-            - proto: "tcp"
-              from_port: 8181
-              to_port: 8181
-              cidr_ipv6: "64:ff9b::/96"
-          register: result
-
-        - name: assert state=present (expected changed=true)
-          assert:
-            that:
-               - 'result.changed'
-               - 'result.group_id.startswith("sg-")'
-
+      include: ./ipv6_default_tests.yml
       when: default_vpc
 
     - name: test IPv6 with a specified VPC
       block:
+
+        # ============================================================
+        - name: test state=present (expected changed=true) (CHECK MODE)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
+          check_mode: true
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
 
         # ============================================================
         - name: test state=present (expected changed=true)
@@ -320,6 +187,27 @@
                - 'result.group_id.startswith("sg-")'
 
         # ============================================================
+        - name: test state=present for ipv6 (expected changed=true) (CHECK MODE)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          check_mode: true
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+
+        # ============================================================
         - name: test state=present for ipv6 (expected changed=true)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
@@ -341,8 +229,28 @@
                - 'result.group_id.startswith("sg-")'
 
         # ============================================================
+        - name: test state=present for ipv6 (expected changed=false) (CHECK MODE)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          check_mode: true
+          register: result
 
-        - name: test state=present for ipv6 (expected changed=true)
+        - name: assert nothing changed
+          assert:
+            that:
+              - 'not result.changed'
+
+        # ============================================================
+        - name: test state=present for ipv6 (expected changed=false)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
             description: '{{ ec2_group_description }}-2'
@@ -362,6 +270,32 @@
               - 'not result.changed'
 
         # ============================================================
+        - name: test rules_egress state=present for ipv6 (expected changed=true) (CHECK MODE)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            rules_egress:
+            - proto: "tcp"
+              from_port: 8181
+              to_port: 8181
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          check_mode: true
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+
+        # ============================================================
         - name: test rules_egress state=present for ipv6 (expected changed=true)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
@@ -388,7 +322,22 @@
                - 'result.group_id.startswith("sg-")'
 
         # ============================================================
+        - name: test state=absent (expected changed=true) (CHECK MODE)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: absent
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
+          check_mode: true
+          register: result
 
+        - name: assert group was removed
+          assert:
+            that:
+              - 'result.changed'
+
+        # ============================================================
         - name: test state=absent (expected changed=true)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
@@ -404,11 +353,29 @@
               - 'result.changed'
 
     # ============================================================
+    - name: test state=present for ipv4 (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+        - 'result.changed'
+
+    # ============================================================
     - name: test state=present for ipv4 (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
         <<: *aws_connection_info
         rules:
         - proto: "tcp"
@@ -424,6 +391,22 @@
         - 'result.group_id.startswith("sg-")'
         - 'result.ip_permissions|length == 1'
         - 'result.ip_permissions_egress|length == 1'
+
+    # ============================================================
+    - name: add same rule to the existing group  (expected changed=false) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      check_mode: true
+      register: check_result
+
 
     # ============================================================
     - name: add same rule to the existing group  (expected changed=false)
@@ -445,6 +428,33 @@
           - 'not result.changed'
           - 'result.group_id.startswith("sg-")'
 
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+          - 'not check_result.changed'
+
+    # ============================================================
+    - name: add a rule that auto creates another security group (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        purge_rules: no
+        rules:
+        - proto: "tcp"
+          group_name: "{{ resource_prefix }} - Another security group"
+          group_desc: Another security group
+          ports: 7171
+      check_mode: true
+      register: result
+
+    - name: check that there are now two rules
+      assert:
+        that:
+          - result.changed
+
+    # ============================================================
     - name: add a rule that auto creates another security group
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -467,6 +477,31 @@
           - result.ip_permissions[0].user_id_group_pairs or
             result.ip_permissions[1].user_id_group_pairs
           - 'result.ip_permissions_egress[0].ip_protocol == "-1"'
+
+    # ============================================================
+    - name: test ip rules convert port numbers from string to int (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: "8183"
+          to_port: "8183"
+          cidr_ip: "1.1.1.1/32"
+        rules_egress:
+        - proto: "tcp"
+          from_port: "8184"
+          to_port: "8184"
+          cidr_ip: "1.1.1.1/32"
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
 
     # ============================================================
     - name: test ip rules convert port numbers from string to int (expected changed=true)
@@ -497,6 +532,31 @@
 
 
     # ============================================================
+    - name: test group rules convert port numbers from string to int (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: "8185"
+          to_port: "8185"
+          group_id: "{{result.group_id}}"
+        rules_egress:
+        - proto: "tcp"
+          from_port: "8186"
+          to_port: "8186"
+          group_id: "{{result.group_id}}"
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+
+    # ============================================================
     - name: test group rules convert port numbers from string to int (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -521,9 +581,30 @@
            - 'result.changed'
            - 'result.group_id.startswith("sg-")'
 
+    # ============================================================
+    - name: test adding a range of ports and ports given as strings (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8183-8190
+            - '8192'
+          cidr_ip: 1.1.1.1/32
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
 
     # ============================================================
-
     - name: test adding a range of ports and ports given as strings (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -547,7 +628,28 @@
           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+    - name: test adding a rule with a IPv4 CIDR with host bits set (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      check_mode: true
+      register: result
 
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
     - name: test adding a rule with a IPv4 CIDR with host bits set (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -570,7 +672,23 @@
           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+    - name: test adding the same rule with a IPv4 CIDR with host bits set (expected changed=false) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      check_mode: true
+      register: check_result
 
+    # ============================================================
     - name: test adding the same rule with a IPv4 CIDR with host bits set (expected changed=false and a warning)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -589,6 +707,11 @@
     - name: assert state=present (expected changed=false and a warning)
       assert:
         that:
+          - 'not check_result.changed'
+
+    - name: assert state=present (expected changed=false and a warning)
+      assert:
+        that:
           # No way to assert for warnings?
           - 'not result.changed'
           - 'result.group_id.startswith("sg-")'
@@ -597,14 +720,33 @@
     - name: test using the default VPC
       block:
 
+        - name: test adding a rule with a IPv6 CIDR with host bits set (expected changed=true) (CHECK MODE)
+          ec2_group:
+            name: '{{ec2_group_name}}'
+            description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
+            state: present
+            # set purge_rules to false so we don't get a false positive from previously added rules
+            purge_rules: false
+            rules:
+            - proto: "tcp"
+              ports:
+                - 8196
+              cidr_ipv6: '2001:db00::1/24'
+          check_mode: true
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+              - 'result.changed'
+
+        # ============================================================
         - name: test adding a rule with a IPv6 CIDR with host bits set (expected changed=true)
           ec2_group:
             name: '{{ec2_group_name}}'
             description: '{{ec2_group_description}}'
-            ec2_region: '{{ec2_region}}'
-            ec2_access_key: '{{ec2_access_key}}'
-            ec2_secret_key: '{{ec2_secret_key}}'
-            security_token: '{{security_token}}'
+            <<: *aws_connection_info
             state: present
             # set purge_rules to false so we don't get a false positive from previously added rules
             purge_rules: false
@@ -648,6 +790,20 @@
       when: default_vpc
 
     # ============================================================
+    - name: test state=absent (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        state: absent
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+
+    # ============================================================
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -661,6 +817,28 @@
            - 'result.changed'
            - 'not result.group_id'
 
+    # ============================================================
+    - name: create security group in the VPC (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      check_mode: true
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
     - name: create security group in the VPC
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -683,7 +861,30 @@
           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+    - name: test adding tags (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+      check_mode: true
+      register: result
 
+    - name: assert that tags were added (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
     - name: test adding tags (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -699,7 +900,6 @@
         tags:
           tag1: test1
           tag2: test2
-
       register: result
 
     - name: assert that tags were added (expected changed=true)
@@ -709,7 +909,31 @@
           - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
 
     # ============================================================
+    - name: test that tags are present (expected changed=False) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        purge_rules_egress: false
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+      check_mode: true
+      register: result
 
+    - name: assert that tags were not changed (expected changed=False)
+      assert:
+        that:
+          - 'not result.changed'
+
+    # ============================================================
     - name: test that tags are present (expected changed=False)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -735,7 +959,29 @@
           - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
 
     # ============================================================
+    - name: test purging tags (expected changed=True) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+      check_mode: true
+      register: result
 
+    - name: assert that tag2 was removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
     - name: test purging tags (expected changed=True)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -804,7 +1050,47 @@
           - 'not result.tags'
 
     # ============================================================
+    - name: test adding a rule and egress rule descriptions (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        # purge the other rules so assertions work for the subsequent tests for rule descriptions
+        purge_rules_egress: true
+        purge_rules: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 1
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 1
+      check_mode: true
+      register: result
 
+    - name: assert that rule descriptions are created (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed changes should still have changed due to purged rules (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+
+    # ============================================================
     - name: test adding a rule and egress rule descriptions (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -847,7 +1133,46 @@
       when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
+    - name: test modifying rule and egress rule descriptions (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      check_mode: true
+      register: result
 
+    - name: assert that rule descriptions were modified (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined and result.ip_permissions_egress[1].ip_ranges[0].description is undefined
+
+    # ============================================================
     - name: test modifying rule and egress rule descriptions (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -921,7 +1246,46 @@
           - 'result.ip_permissions_egress|length == 1'
 
     # ============================================================
+    - name: test that keeping the same rule descriptions (expected changed=false) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      check_mode: true
+      register: result
 
+    - name: assert that rule descriptions stayed the same (expected changed=false)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+
+    # ============================================================
     - name: test that keeping the same rule descriptions (expected changed=false)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -963,7 +1327,46 @@
       when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
+    - name: test removing rule descriptions (expected changed=true) (CHECK MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc:
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc:
+      check_mode: true
+      register: result
 
+    - name: assert that rule descriptions were removed (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+
+    # ============================================================
     - name: test removing rule descriptions (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -986,23 +1389,23 @@
           cidr_ip: 2.2.2.2/32
           rule_desc:
       register: result
+      ignore_errors: true
 
-    - name: assert that rule descriptions were removed (expected changed=true)
+    - name: assert that rule descriptions were removed (expected changed=true with newer botocore)
       # Only assert this if rule description is defined as the botocore version may < 1.7.2.
       # It's still helpful to have these tests run on older versions since it verifies backwards
       # compatibility with this feature.
       assert:
         that:
-          - 'result.changed'
-          - 'not result.ip_permissions[0].ipv6_ranges[0].description'
-          - 'not result.ip_permissions_egress[0].ip_ranges[0].description'
-      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+          - 'result.ip_permissions[0].ipv6_ranges[0].description is undefined'
+          - 'result.ip_permissions_egress[0].ip_ranges[0].description is undefined'
+      when: result is changed
 
     - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
       assert:
         that:
           - 'not result.changed'
-      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+      when: result.failed
 
     # ============================================================
 
@@ -1020,7 +1423,6 @@
            - 'not result.group_id'
 
   always:
-
     # ============================================================
     - name: tidy up security group
       ec2_group:

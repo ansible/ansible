@@ -27,6 +27,24 @@ ec2_data = {
                 },
             ]
         },
+        "SecurityGroupExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSecurityGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(SecurityGroups[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidGroup.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
         "SubnetExists": {
             "delay": 5,
             "maxAttempts": 40,
@@ -178,6 +196,12 @@ waiters_by_name = {
         ec2_model('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
+        )),
+    ('EC2', 'security_group_exists'): lambda ec2: core_waiter.Waiter(
+        'security_group_exists',
+        ec2_model('SecurityGroupExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_security_groups
         )),
     ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
         'subnet_exists',
