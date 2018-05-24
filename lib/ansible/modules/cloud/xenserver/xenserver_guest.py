@@ -625,6 +625,11 @@ class XenServerVM(XenServerObject):
                             }
 
                             self.xapi_session.xenapi.VIF.create(vif)
+                    elif change.get('custom_params'):
+                        for position in change['custom_params']:
+                            custom_param_key = self.module.params['custom_params'][position]['key']
+                            custom_param_value = self.module.params['custom_params'][position]['value']
+                            self.xapi_session.xenapi_request("VM.set_%s" % custom_param_key, (self.vm_ref, custom_param_value))
 
             if self.module.params.get('is_template'):
                 self.xapi_session.xenapi.VM.set_is_a_template(self.vm_ref, True)
@@ -1080,6 +1085,30 @@ class XenServerVM(XenServerObject):
 
             if config_new_networks:
                 config_changes.append({"networks_new": config_new_networks})
+
+            config_changes_custom_params = []
+
+            if self.module.params['custom_params']:
+                for position in range(len(self.module.params['custom_params'])):
+                    custom_param = self.module.params['custom_params'][position]
+
+                    if "key" not in custom_param:
+                        self.module.fail_json(msg="custom_params[%s]: key not found!" % position)
+                    elif "value" not in custom_param:
+                        self.module.fail_json(msg="custom_params[%s]: value not found!" % position)
+
+                    custom_param_key = custom_param['key']
+                    custom_param_value = custom_param['value']
+
+                    if custom_param_key not in self.vm_params:
+                        self.module.fail_json(msg="custom_params[%s]: unknown VM param '%s'!" % (position, custom_param_key))
+
+                    if custom_param_value != self.vm_params[custom_param_key]:
+                        # We only need to track custom param posutuin.
+                        config_changes_custom_params.append(position)
+
+            if config_changes_custom_params:
+                config_changes.append({"custom_params": config_changes_custom_params})
 
             if need_poweredoff:
                 config_changes.append('need_poweredoff')
