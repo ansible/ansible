@@ -265,6 +265,8 @@ class StrategyModule(StrategyBase):
                         results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) not in ('noop', 'reset_connection'):
                             run_once = True
+                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                            any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:
@@ -402,7 +404,9 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    if res.is_failed() and iterator.is_failed(res._host):
+                    # execute_meta() does not set 'failed' in the TaskResult
+                    # so we skip checking it with the meta tasks and look just at the iterator
+                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
