@@ -70,6 +70,14 @@ options:
   bootdisk:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
+  ciuser:
+    description:
+      - Set username used in Cloud-Init Config.
+  cipassword:
+      - Set password used in Cloud-Init Config (NOT RECOMMENDED, use sshkeys instead).
+  citype:
+    description:
+      - Specifies the cloud-init configuration format.
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
@@ -150,6 +158,15 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+  ipconfig:
+    description:
+      - A hash/dictionary of ip's used in the Cloud-Init Configuration.
+      - Keys allowed are - C(ipconfig[n]).
+      - Values allowed are - C("gw=IP/CIDR,gw6=IP6/CIDR,ip=IP/CIDR,ip6=IP/CIDR").
+      - C(gw) is the IPv4 Default Gateway.
+      - C(gw6) is the IPv6 Default Gateway.
+      - C(ip) is the IPv4 IP Address.
+      - C(ip6) is the IPv6 IP Address.
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
@@ -186,6 +203,9 @@ options:
     description:
       - Specifies the VM name. Only used on the configuration web interface.
       - Required only for C(state=present).
+  nameserver:
+    description:
+      - Specifies the DNS Nameserver used by Cloud-Init Config.
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
@@ -264,6 +284,9 @@ options:
     description:
       - Specifies the SCSI controller model.
     choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
+  searchdomain:
+    description:
+      - The DNS Search Domain used by Cloud-Init Config.
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
@@ -290,6 +313,9 @@ options:
     description:
       - Sets the number of CPU sockets. (1 - N).
     default: 1
+  sshkeys:
+    description:
+      - The SSH Keys used by Cloud-Init Config (OpenSSH Format).
   startdate:
     description:
       - Sets the initial date of the real time clock.
@@ -628,7 +654,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
     # Sanitize kwargs. Remove not defined args and ensure True and False converted to int.
     kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
 
-    # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
+    # Convert all dict in kwargs to elements. For hostpci[n], ide[n], ipconfig[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
     for k in kwargs.keys():
         if isinstance(kwargs[k], dict):
             kwargs.update(kwargs[k])
@@ -643,6 +669,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
             mac[interface] = k
         if (re.match(r'virtio[0-9]', k) is not None or
                 re.match(r'ide[0-9]', k) is not None or
+                re.match(r'ipconfig[0-9]', k) is not None or
                 re.match(r'scsi[0-9]', k) is not None or
                 re.match(r'sata[0-9]', k) is not None):
             device = k
@@ -672,7 +699,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     only_v4 = ['force', 'protection', 'skiplock']
 
     # valide clone parameters
-    valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
+    valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target' ]
     clone_params = {}
     # Default args for vm. Note: -args option is for experts only. It allows you to pass arbitrary arguments to kvm.
     vm_args = "-serial unix:/var/run/qemu-server/{}.serial,server,nowait".format(vmid)
@@ -797,6 +824,9 @@ def main():
             bios=dict(choices=['seabios', 'ovmf']),
             boot=dict(type='str', default='cnd'),
             bootdisk=dict(type='str'),
+            ciuser=dict(type='str', default='root'),
+            cipassword=dict(type='str'),
+            citype=dict(type='str', default='nocloud', choices=['nocloud','configdrive2']),
             clone=dict(type='str', default=None),
             cores=dict(type='int', default=1),
             cpu=dict(type='str', default='kvm64'),
@@ -813,6 +843,7 @@ def main():
             hotplug=dict(type='str'),
             hugepages=dict(choices=['any', '2', '1024']),
             ide=dict(type='dict', default=None),
+            ipconfig=dict(type='dict', default=None),
             keyboard=dict(type='str'),
             kvm=dict(type='bool', default='yes'),
             localtime=dict(type='bool'),
@@ -822,6 +853,7 @@ def main():
             migrate_downtime=dict(type='int'),
             migrate_speed=dict(type='int'),
             name=dict(type='str'),
+            nameserver=dict(type='str'),
             net=dict(type='dict'),
             newid=dict(type='int', default=None),
             node=dict(),
@@ -837,12 +869,14 @@ def main():
             sata=dict(type='dict'),
             scsi=dict(type='dict'),
             scsihw=dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
+            searchdomain=dict(type='str'),
             serial=dict(type='dict'),
             shares=dict(type='int'),
             skiplock=dict(type='bool'),
             smbios=dict(type='str'),
             snapname=dict(type='str'),
             sockets=dict(type='int', default=1),
+            sshkeys=dict(type='str'),
             startdate=dict(type='str'),
             startup=dict(),
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
@@ -971,6 +1005,9 @@ def main():
                       bios=module.params['bios'],
                       boot=module.params['boot'],
                       bootdisk=module.params['bootdisk'],
+                      ciuser=module.params['ciuser'],
+                      cipassword=module.params['cipassword'],
+                      citype=module.params['citype'],
                       cpulimit=module.params['cpulimit'],
                       cpuunits=module.params['cpuunits'],
                       description=module.params['description'],
@@ -981,6 +1018,7 @@ def main():
                       hotplug=module.params['hotplug'],
                       hugepages=module.params['hugepages'],
                       ide=module.params['ide'],
+                      ipconfig=module.params['ipconfig'],
                       keyboard=module.params['keyboard'],
                       kvm=module.params['kvm'],
                       localtime=module.params['localtime'],
@@ -988,6 +1026,7 @@ def main():
                       machine=module.params['machine'],
                       migrate_downtime=module.params['migrate_downtime'],
                       migrate_speed=module.params['migrate_speed'],
+                      nameserver=module.params['nameserver'],
                       net=module.params['net'],
                       numa=module.params['numa'],
                       numa_enabled=module.params['numa_enabled'],
@@ -1000,11 +1039,13 @@ def main():
                       sata=module.params['sata'],
                       scsi=module.params['scsi'],
                       scsihw=module.params['scsihw'],
+                      searchdomain=module.params['searchdomain'],
                       serial=module.params['serial'],
                       shares=module.params['shares'],
                       skiplock=module.params['skiplock'],
                       smbios1=module.params['smbios'],
                       snapname=module.params['snapname'],
+                      sshkeys=module.params['sshkeys'],
                       startdate=module.params['startdate'],
                       startup=module.params['startup'],
                       tablet=module.params['tablet'],
