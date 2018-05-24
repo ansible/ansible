@@ -149,6 +149,10 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+  details:
+    description:
+      - Map to specify custom parameters.
+    version_added: '2.6'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -290,6 +294,12 @@ default_ip:
   returned: success
   type: string
   sample: 10.23.37.42
+default_ip6:
+  description: Default IPv6 address of the instance.
+  returned: success
+  type: string
+  sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
+  version_added: '2.6'
 public_ip:
   description: Public IP address with instance via static NAT rule.
   returned: success
@@ -614,17 +624,18 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return user_data
 
     def get_details(self):
-        res = None
+        details = self.module.params.get('details')
         cpu = self.module.params.get('cpu')
         cpu_speed = self.module.params.get('cpu_speed')
         memory = self.module.params.get('memory')
         if all([cpu, cpu_speed, memory]):
-            res = [{
+            details.extends({
                 'cpuNumber': cpu,
                 'cpuSpeed': cpu_speed,
                 'memory': memory,
-            }]
-        return res
+            })
+
+        return details
 
     def deploy_instance(self, start_vm=True):
         self.result['changed'] = True
@@ -873,8 +884,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['affinity_groups'] = affinity_groups
             if 'nic' in instance:
                 for nic in instance['nic']:
-                    if nic['isdefault'] and 'ipaddress' in nic:
-                        self.result['default_ip'] = nic['ipaddress']
+                    if nic['isdefault']:
+                        if 'ipaddress' in nic:
+                            self.result['default_ip'] = nic['ipaddress']
+                        if 'ip6address' in nic:
+                            self.result['default_ip6'] = nic['ip6address']
         return self.result
 
 
@@ -915,6 +929,7 @@ def main():
         ssh_key=dict(),
         force=dict(type='bool', default=False),
         tags=dict(type='list', aliases=['tag']),
+        details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
     ))
 
