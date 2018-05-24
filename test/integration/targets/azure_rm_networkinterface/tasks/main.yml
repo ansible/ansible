@@ -17,6 +17,40 @@
     name: ansiblepip3
     resource_group: '{{ resource_group }}'
 
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: ansiblepip3
+    backend_address_pools:
+      - name: backendaddrpool0
+      - name: backendaddrpool1
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
+        protocol: Tcp
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
+        backend_port: 8080
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+  register: lb
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+
 - name: Create NIC (check mode)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -33,26 +67,28 @@
     that:
       - output.changed
 
-- name: Create NIC using virtual_network_resource_group parameter
+- name: Create NIC using virtual_network resource_group parameter
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001rg
-      virtual_network: testnic001
-      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network:
+        name: testnic001
+        resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001rg
       public_ip_allocation_method: Static
       security_group: testnic001
   register: output
 
-- name: Create NIC using virtual_network_resource_group parameter (idempotent)
+- name: Create NIC using virtual_network resource_group parameter (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001rg
-      virtual_network: testnic001
-      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network:
+        name: testnic001
+        resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
-      public_ip_name: testnic001
+      public_ip_name: testnic001rg
       public_ip_allocation_method: Static
       security_group: testnic001
   register: output
@@ -66,7 +102,7 @@
       resource_group: "{{ resource_group }}"
       name: testnic001rg
       state: absent
-  
+
 - name: Create NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -75,7 +111,9 @@
       subnet: testnic001
       public_ip_name: testnic001
       public_ip_allocation_method: Static
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
   register: output
 
 - assert:
@@ -87,7 +125,9 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -110,7 +150,9 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group: 
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -122,6 +164,10 @@
           public_ip_allocation_method: Static
         - name: ipconfig1
           public_ip_name: testnic003
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: lbtestfromansible
   register: output
 
 - assert:
@@ -129,12 +175,13 @@
       - output.changed
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 3
+      - output.state.network_security_group.name == 'testnic002'
 
 - name: Update the NIC with mutilple ip configurations (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group: "{{ output.state.network_security_group.id }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -146,6 +193,10 @@
           public_ip_allocation_method: Static
         - name: ipconfig1
           public_ip_name: testnic003
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: lbtestfromansible
   register: output
 
 - assert:
@@ -156,12 +207,18 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group: testnic001
+      security_group:
+        name: testnic002
+        resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
         - name: ipconfig1
           public_ip_name: testnic003
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: lbtestfromansible
         - name: default
           public_ip_name: testnic001
           public_ip_allocation_method: Static
@@ -173,10 +230,11 @@
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 2
 
-- name: IP configuration without public IP
+- name: IP configuration without public IP and NSG
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001noip
+      create_with_security_group: False
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
@@ -187,6 +245,7 @@
 - assert:
     that:
       - output.state.ip_configurations[0].public_ip_address == None
+      - output.state.network_security_group == None
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:
