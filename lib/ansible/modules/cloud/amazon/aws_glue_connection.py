@@ -130,6 +130,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_
 
 # Non-ansible imports
 import copy
+import time
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
@@ -257,8 +258,11 @@ def create_or_update_glue_connection(connection, connection_ec2, module, glue_co
     # If changed, get the Glue connection again
     if changed:
         glue_connection = None
-        while glue_connection is None:
+        for i in range(10):
             glue_connection = _get_glue_connection(connection, module)
+            if glue_connection is not None:
+                break
+            time.sleep(10)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(glue_connection))
 
