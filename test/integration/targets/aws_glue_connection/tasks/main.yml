@@ -1,0 +1,87 @@
+- block:
+
+    # TODO: description, match_criteria, security_groups, and subnet_id are unused module options
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create glue connection
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        connection_properties:
+          JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}"
+          USERNAME: my-username
+          PASSWORD: my-password
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: test idempotence creating glue connection
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        connection_properties:
+          JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}"
+          USERNAME: my-username
+          PASSWORD: my-password
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - not result.changed
+
+    - name: test updating JDBC connection url
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        connection_properties:
+          JDBC_CONNECTION_URL: "jdbc:mysql://mydb:3306/{{ resource_prefix }}-updated"
+          USERNAME: my-username
+          PASSWORD: my-password
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: delete glue connection
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: test idempotence removing glue connection
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - not result.changed
+
+  always:
+
+    - name: delete glue connection
+      aws_glue_connection:
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
