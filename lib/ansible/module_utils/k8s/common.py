@@ -215,16 +215,7 @@ class K8sAnsibleMixin(object):
         if not HAS_DICTDIFFER:
             return False, []
 
-        def get_shared_attrs(o1, o2):
-            shared_attrs = {}
-            for k, v in o2.items():
-                if isinstance(v, dict):
-                    shared_attrs[k] = get_shared_attrs(o1.get(k, {}), v)
-                else:
-                    shared_attrs[k] = o1.get(k)
-            return shared_attrs
-
-        diffs = list(dictdiffer.diff(new, get_shared_attrs(existing, new)))
+        diffs = list(dictdiffer.diff(new, existing))
         match = len(diffs) == 0
         return match, diffs
 
