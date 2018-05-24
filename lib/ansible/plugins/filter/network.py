@@ -399,16 +399,16 @@ def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
     return False
 
 
-def vlan_parser(vlan_list):
+def vlan_parser(vlan_list, first_line_len=48, other_line_len=44):
 
     '''
         Input: Unsorted list of vlan integers
-        Output: Sorted list of integers according to Cisco IOS vlan list rules
+        Output: Sorted string list of integers according to IOS-like vlan list rules
 
         1. Vlans are listed in ascending order
         2. Runs of 3 or more consecutive vlans are listed with a dash
-        3. The first line of the list can be 48 characters long
-        4. Subsequent list lines can be 44 characters
+        3. The first line of the list can be first_line_len characters long
+        4. Subsequent list lines can be other_line_len characters
     '''
 
     # Sort and remove duplicates
@@ -445,7 +445,7 @@ def vlan_parser(vlan_list):
     for vlans in parse_list:
         # First line (" switchport trunk allowed vlan ")
         if line_count == 0:
-            if len(result[line_count] + vlans) > 48:
+            if len(result[line_count] + vlans) > first_line_len:
                 result.append('')
                 line_count += 1
                 result[line_count] += vlans + ','
@@ -454,7 +454,7 @@ def vlan_parser(vlan_list):
 
         # Subsequent lines (" switchport trunk allowed vlan add ")
         else:
-            if len(result[line_count] + vlans) > 44:
+            if len(result[line_count] + vlans) > other_line_len:
                 result.append('')
                 line_count += 1
                 result[line_count] += vlans + ','
