@@ -611,8 +611,11 @@ class PyVmomiCache(object):
                 result = None
                 objects = self.get_all_objs(content, types, confine_to_datacenter=True)
                 for obj in objects:
-                    if name is None or obj.name == name:
-                        return obj
+                    try:
+                        if name is None or obj.name == name:
+                            return obj
+                    except vmodl.fault.ManagedObjectNotFound:
+                        pass
         return result
 
     def get_all_objs(self, content, types, confine_to_datacenter=True):
