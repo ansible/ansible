@@ -150,7 +150,7 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group:
+      security_group: 
         name: testnic002
         resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
@@ -181,9 +181,7 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
-      security_group:
-        name: testnic002
-        resource_group: "{{ resource_group_secondary }}"
+      security_group: "{{ output.state.network_security_group.id }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
