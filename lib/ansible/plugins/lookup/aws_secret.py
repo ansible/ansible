@@ -24,6 +24,12 @@ options:
   _term:
     description: Name of the secret to look up in AWS Secrets Manager.
     required: True
+  version_id:
+    description: Version of the secret.
+    required: False
+  version_stage:
+    description: Stage of the secret version.
+    required: False
 """
 
 EXAMPLES = r"""
@@ -98,7 +104,7 @@ class LookupModule(LookupBase):
         client = _boto3_conn(region, boto_credentials)
 
         params = {}
-        params['SecretId'] = term
+        params['SecretId'] = term[0]
         if kwargs.get('version_id'):
             params['VersionId'] = kwargs.get('version_id')
         if kwargs.get('version_stage'):
