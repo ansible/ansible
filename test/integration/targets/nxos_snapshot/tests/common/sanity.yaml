@@ -13,7 +13,7 @@
       action: create
       snapshot_name: test_snapshot1
       description: Ansible
-      provider: "{{ connection }}"
+      save_snapshot_locally: true
 
   - name: create another snapshot
     nxos_snapshot:
@@ -24,7 +24,7 @@
       show_command: show ip interface brief
       row_id: ROW_intf
       element_key1: intf-name
-      provider: "{{ connection }}"
+      save_snapshot_locally: true
 
   - name: compare snapshots
     nxos_snapshot:
@@ -34,7 +34,6 @@
       comparison_results_file: compare_snapshots.txt
       compare_option: summary
       path: '.'
-      provider: "{{ connection }}"
 
   - name: FAIL compare snapshots
     nxos_snapshot:
@@ -43,7 +42,6 @@
       snapshot2: test_snapshot2
       compare_option: summary
       path: '.'
-      provider: "{{ connection }}"
     register: result
     ignore_errors: yes
 
@@ -58,7 +56,6 @@
   - name: delete snapshot
     nxos_snapshot:
       action: delete_all
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_snapshot sanity test"

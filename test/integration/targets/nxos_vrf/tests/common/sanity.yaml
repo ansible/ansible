@@ -13,16 +13,15 @@
   when: (platform is not match("N35|N7K")) and ((imagetag != 'I2'))
 
 - set_fact: vnind="5000"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3L")
 
 - set_fact: vnid="default"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3L")
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -36,7 +35,6 @@
       interfaces:
         - "{{ intname1 }}"
         - "{{ intname2 }}"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -61,7 +59,6 @@
       vni: "{{vnid|default(omit)}}"
       rd: "{{rdd|default(omit)}}"
       interfaces: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -76,7 +73,6 @@
     nxos_vrf: &remove
       vrf: ntc
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -95,7 +91,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_vrf sanity test"

@@ -11,7 +11,7 @@ DOCUMENTATION = """
     short_description: fetch data from Redis
     deprecated:
         why: This lookup uses options intermingled with terms which blurs the interface between settings and data
-        version: '2.9'
+        removed_in: '2.9'
         alternative: new 'redis' lookup
     description:
       - this lookup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse

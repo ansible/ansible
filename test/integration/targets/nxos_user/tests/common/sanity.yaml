@@ -15,7 +15,6 @@
       update_password: on_create
       roles: network-operator
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -36,7 +35,6 @@
     nxos_user: &remove
       name: netend
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -54,7 +52,6 @@
 #      name: ansible
 #      sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 #      state: present
-#      provider: "{{ connection }}"
 #    register: result
 #
 #  - assert: *true
@@ -79,7 +76,6 @@
       roles: 
         - network-admin
         - network-operator
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -97,7 +93,6 @@
     nxos_user: &tear
       name: ansible
       purge: yes
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

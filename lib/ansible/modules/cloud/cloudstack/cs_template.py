@@ -422,11 +422,12 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'volumeid': self.get_root_volume('id')
+            'volumeid': self.get_root_volume('id'),
+            'fetch_list': True,
         }
         snapshots = self.query_api('listSnapshots', **args)
         if snapshots:
-            for s in snapshots['snapshot']:
+            for s in snapshots:
                 if snapshot in [s['name'], s['id']]:
                     return self._get_by_key(key, s)
         self.module.fail_json(msg="Snapshot '%s' not found" % snapshot)

@@ -6,7 +6,6 @@
 
 - name: test getting default facts
   nxos_facts:
-    provider: "{{ connection }}"
   register: result
 
 - assert:

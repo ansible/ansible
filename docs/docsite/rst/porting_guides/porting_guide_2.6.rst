@@ -17,7 +17,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+* The deprecated task option ``always_run`` has been removed, please use ``check_mode: no`` instead.
 
 Deprecated
 ==========
@@ -51,6 +51,18 @@ Noteworthy module changes
 * The ``win_iis_webapppool`` module no longer accepts a string for the ``atributes`` module option; use the free form dictionary value instead
 * The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks
 * The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path
+* The :ref:`file_module` now emits a deprecation warning when ``src`` is specified with a state
+  other than ``hard`` or ``link`` as it is only supposed to be useful with those.  This could have
+  an effect on people who were depending on a buggy interaction between src and other state's to
+  place files into a subdirectory.  For instance::
+
+    $ ansible localhost -m file -a 'path=/var/lib src=/tmp/ state=directory'
+
+  Would create a directory named ``/tmp/lib``.  Instead of the above, simply spell out the entire
+  destination path like this::
+
+    $ ansible localhost -m file -a 'path=/tmp/lib state=directory'
+
 
 Plugins
 =======

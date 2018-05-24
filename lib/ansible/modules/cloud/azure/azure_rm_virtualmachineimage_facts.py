@@ -26,9 +26,6 @@ description:
     - Get facts for virtual machine images.
 
 options:
-    name:
-        description:
-            - Only show results for a specific security group.
     location:
         description:
             - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a
@@ -126,7 +123,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
         self.sku = None
         self.version = None
 
-        super(AzureRMVirtualMachineImageFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMVirtualMachineImageFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 

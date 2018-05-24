@@ -29,7 +29,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
@@ -144,7 +144,13 @@ def run_commands(module, commands, check_rc=True):
             prompt = None
             answer = None
 
-        out = connection.get(command, prompt, answer)
+        try:
+            out = connection.get(command, prompt, answer)
+        except ConnectionError as e:
+            if check_rc:
+                raise
+            else:
+                out = e
 
         try:
             out = to_text(out, errors='surrogate_or_strict')
@@ -159,4 +165,4 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, commands):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    return connection.edit_config(commands)

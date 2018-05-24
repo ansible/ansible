@@ -132,5 +132,76 @@
       - "module_uninstall_2 is not changed"
       - "module_uninstall_3 is changed"
 
+- name: Create repository path
+  win_file:
+    path: "{{custom_repo_path}}"
+    state: directory
+
+- name: Make sure sample module is uninstalled
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_4
+
+- name: Copy some module to custom repo
+  win_shell: |
+
+    # Need PSGet 1.6.0 for publishing and named repo usage
+    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"};
+    Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
+    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -EV missingProvider -Force | Out-Null;
+
+    if($missingProvider){
+      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
       
-      
+      # Unload previous version
+      Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
+      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
+    }
+
+    $modName = "{{powershell_module}}";
+    $temp = $env:Temp;
+
+    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null;
+
+    $repoName = "{{custom_repo_name}}";
+    $repoPath = "{{custom_repo_path}}";
+
+    if(!(Test-Path $repoPath)){
+      New-Item -Type Directory $repoPath -Force | Out-Null;
+    }
+
+    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null;
+    
+    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null;
+    Get-ChildItem "$repoPath\\*" | ? Name -match "$modName.*.nupkg" | % Name;
+    
+  register: saved_package
+
+- name: Validate sample module in custom repo
+  assert:
+    that:
+      - "powershell_module in (saved_package.stdout_lines | last)"
+
+- name: Install module from custom Powershell repository
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    repository: "{{custom_repo_name}}"
+    url: "{{custom_repo_path}}"
+  register: module_from_custom_repo
+
+- name: Test custom Powershell repository module install
+  assert:
+    that:
+      - "module_from_custom_repo is changed"
+      - "module_from_custom_repo.output == 'Module {{ powershell_module }} installed'"
+
+- name: Verify module was installed from custom repo
+  win_shell: (Get-InstalledModule -Name "{{powershell_module}}").Repository
+  register: is_package_customrepo
+
+- name: Validate sample module is installed from custom repo
+  assert:
+    that:
+      - "is_package_customrepo.stdout_lines[0] == custom_repo_name"

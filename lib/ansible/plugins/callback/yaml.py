@@ -26,6 +26,8 @@ import string
 import sys
 from ansible.plugins.callback import CallbackBase, strip_internal_keys
 from ansible.plugins.callback.default import CallbackModule as Default
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
 
@@ -113,7 +115,7 @@ class CallbackModule(Default):
 
         if abridged_result:
             dumped += '\n'
-            dumped += yaml.dump(abridged_result, width=1000, Dumper=AnsibleDumper, default_flow_style=False)
+            dumped += to_text(yaml.dump(abridged_result, allow_unicode=True, width=1000, Dumper=AnsibleDumper, default_flow_style=False))
 
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()

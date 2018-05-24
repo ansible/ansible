@@ -85,6 +85,18 @@ options:
           I(category_names). It will not force the module to install an update
           if it was not in the category specified.
         version_added: '2.5'
+    use_scheduled_task:
+        description:
+        - Will not auto elevate the remote process with I(become) and use a
+          scheduled task instead.
+        - Set this to C(yes) when using this module with async on Server 2008,
+          2008 R2, or Windows 7, or on Server 2008 that is not authenticated
+          with basic or credssp.
+        - Can also be set to C(yes) on newer hosts where become does not work
+          due to further privilege restrictions from the OS defaults.
+        type: bool
+        default: 'no'
+        version_added: '2.6'
 author:
 - Matt Davis (@nitzmahone)
 notes:
@@ -100,16 +112,17 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Install all security, critical, and rollup updates
+- name: Install all security, critical, and rollup updates without a scheduled task
   win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
 
-- name: Install only security updates
+- name: Install only security updates as a scheduled task for Server 2008
   win_updates:
     category_names: SecurityUpdates
+    use_scheduled_task: yes
 
 - name: Search-only, return list of found updates (if any), log to C:\ansible_wu.txt
   win_updates:
@@ -139,37 +152,6 @@ EXAMPLES = r'''
     blacklist:
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
-
-# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
-- name: Search for Windows updates asynchronously
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 10
-  register: updates_to_install
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
-
-# Async can also be run in the background in a fire and forget fashion
-- name: Search for Windows updates asynchronously (poll and forget)
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 0
-  register: updates_to_install_async
-
-- name: get status of Windows Update async job
-  async_status:
-    jid: '{{ updates_to_install_async.ansible_job_id }}'
-  register: updates_to_install_result
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
 '''
 
 RETURN = r'''

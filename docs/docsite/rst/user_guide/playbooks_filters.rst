@@ -127,7 +127,7 @@ Flatten a list (same thing the `flatten` lookup does)::
 
 Flatten only the first level of a list (akin to the `items` lookup)::
 
-    {{ [3, [4, [2]] ]|flatten(level=1) }}
+    {{ [3, [4, [2]] ]|flatten(levels=1) }}
 
 
 .. _set_theory_filters:
@@ -183,6 +183,65 @@ into::
       value: payment
     - key: Environment
       value: dev
+
+subelements Filter
+``````````````````
+
+.. versionadded:: 2.7
+
+Produces a product of an object, and subelement values of that object, similar to the ``subelements`` lookup::
+
+    {{ users|subelements('groups', skip_missing=True) }}
+
+Which turns::
+
+    users:
+      - name: alice
+        authorized:
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+        groups:
+          - wheel
+          - docker
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+
+Into::
+
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - wheel
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - docker
+    -
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+      - docker
+
+An example of using this filter with ``loop``::
+
+    - name: Set authorized ssh key, extracting just that data from 'users'
+      authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
+      loop: "{{ users|subelements('authorized') }}"
 
 .. _random_filter:
 

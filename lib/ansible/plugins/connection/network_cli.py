@@ -138,8 +138,8 @@ options:
         will fail
     default: 30
     ini:
-      section: persistent_connection
-      key: persistent_connect_timeout
+      - section: persistent_connection
+        key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
@@ -151,8 +151,8 @@ options:
         close
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
@@ -188,6 +188,8 @@ class Connection(ConnectionBase):
     transport = 'network_cli'
     has_pipelining = True
     force_persistence = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -298,7 +300,7 @@ class Connection(ConnectionBase):
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
         self._ssh_shell = ssh.ssh.invoke_shell()
-        self._ssh_shell.settimeout(self._play_context.timeout)
+        self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
         network_os = self._play_context.network_os
         if not network_os:

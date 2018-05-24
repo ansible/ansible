@@ -20,7 +20,7 @@ description:
 version_added: "2.1"
 author:
   - Ritesh Khadgaray (@ritzk)
-  - Abhijeet Kasurde (@akasurde)
+  - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 5.5
     - Only the first match against vm_id is used, even if there are multiple matches

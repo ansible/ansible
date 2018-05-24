@@ -159,7 +159,8 @@ logging.getLogger('ncclient').setLevel(logging.INFO)
 
 NETWORK_OS_DEVICE_PARAM_MAP = {
     "nxos": "nexus",
-    "ios": "default"
+    "ios": "default",
+    "sros": "alu"
 }
 
 
@@ -169,6 +170,8 @@ class Connection(ConnectionBase):
     transport = 'netconf'
     has_pipelining = False
     force_persistence = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

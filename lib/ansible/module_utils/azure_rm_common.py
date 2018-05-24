@@ -35,7 +35,8 @@ AZURE_COMMON_ARGS = dict(
     password=dict(type='str', no_log=True),
     cloud_environment=dict(type='str', default='AzureCloud'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
-    api_profile=dict(type='str', default='latest')
+    api_profile=dict(type='str', default='latest'),
+    adfs_authority_url=dict(type='str', default=None)
     # debug=dict(type='bool', default=False),
 )
 
@@ -49,6 +50,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     password='AZURE_PASSWORD',
     cloud_environment='AZURE_CLOUD_ENVIRONMENT',
     cert_validation_mode='AZURE_CERT_VALIDATION_MODE',
+    adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
 )
 
 # FUTURE: this should come from the SDK or an external location.
@@ -127,9 +129,10 @@ except ImportError as exc:
 
 try:
     from enum import Enum
+    from msrestazure.azure_active_directory import AADTokenCredentials
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_active_directory import MSIAuthentication
-    from msrestazure.tools import resource_id, is_valid_resource_id
+    from msrestazure.tools import parse_resource_id, resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
     from azure.mgmt.network.version import VERSION as network_client_version
@@ -147,6 +150,7 @@ try:
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
+    from adal.authentication_context import AuthenticationContext
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -268,6 +272,8 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._adfs_authority_url = None
+        self._resource = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -318,6 +324,17 @@ class AzureRMModuleBase(object):
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
 
+        # get authentication authority
+        # for adfs, user could pass in authority or not.
+        # for others, use default authority from cloud environment
+        if self.credentials.get('adfs_authority_url') is None:
+            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
+        else:
+            self._adfs_authority_url = self.credentials.get('adfs_authority_url')
+
+        # get resource from cloud environment
+        self._resource = self._cloud_environment.endpoints.active_directory_resource_id
+
         if self.credentials.get('credentials') is not None:
             # AzureCLI credentials
             self.azure_credentials = self.credentials['credentials']
@@ -329,6 +346,19 @@ class AzureRMModuleBase(object):
                                                                      tenant=self.credentials['tenant'],
                                                                      cloud_environment=self._cloud_environment,
                                                                      verify=self._cert_validation_mode == 'validate')
+
+        elif self.credentials.get('ad_user') is not None and \
+                self.credentials.get('password') is not None and \
+                self.credentials.get('client_id') is not None and \
+                self.credentials.get('tenant') is not None:
+
+                self.azure_credentials = self.acquire_token_with_username_password(
+                    self._adfs_authority_url,
+                    self._resource,
+                    self.credentials['ad_user'],
+                    self.credentials['password'],
+                    self.credentials['client_id'],
+                    self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -342,8 +372,9 @@ class AzureRMModuleBase(object):
                                                          verify=self._cert_validation_mode == 'validate')
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
-                      "Credentials must include client_id, secret and tenant or ad_user and password or "
-                      "be logged using AzureCLI.")
+                      "Credentials must include client_id, secret and tenant or ad_user and password, or "
+                      "ad_user, password, client_id, tenant and adfs_authority_url(optional) for ADFS authentication, or "
+                      "be logged in using AzureCLI.")
 
         # common parameter validation
         if self.module.params.get('tags'):
@@ -352,6 +383,17 @@ class AzureRMModuleBase(object):
         if not skip_exec:
             res = self.exec_module(**self.module.params)
             self.module.exit_json(**res)
+
+    def acquire_token_with_username_password(self, authority, resource, username, password, client_id, tenant):
+        authority_uri = authority
+
+        if tenant is not None:
+            authority_uri = authority + '/' + tenant
+
+        context = AuthenticationContext(authority_uri)
+        token_response = context.acquire_token_with_username_password(resource, username, password, client_id)
+
+        return AADTokenCredentials(token_response)
 
     def check_client_version(self, client_type):
         # Ensure Azure modules are at least 2.0.0rc5.
@@ -608,6 +650,17 @@ class AzureRMModuleBase(object):
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
         return None
+
+    def parse_resource_to_dict(self, resource):
+        '''
+        Return a dict of the give resource, which contains name and resource group.
+
+        :param resource: It can be a resource name, id or a dict contains name and resource group.
+        '''
+        resource_dict = parse_resource_id(resource) if not isinstance(resource, dict) else resource
+        resource_dict['resource_group'] = resource_dict.get('resource_group', self.resource_group)
+        resource_dict['subscription_id'] = resource_dict.get('subscription_id', self.subscription_id)
+        return resource_dict
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''

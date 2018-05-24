@@ -8,7 +8,6 @@
     community: TESTING7
     group: network-operator
     state: absent 
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -18,7 +17,6 @@
       community: TESTING7
       group: network-operator
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -38,7 +36,6 @@
       community: TESTING7
       group: network-admin
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -66,7 +63,6 @@
       community: TESTING7
       access: ro
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -95,7 +91,6 @@
       access: rw
       acl: ansible_acl
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -112,7 +107,6 @@
       access: rw
       acl: new_acl
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -129,7 +123,6 @@
       access: rw
       acl: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

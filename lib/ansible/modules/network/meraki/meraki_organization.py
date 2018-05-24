@@ -98,6 +98,15 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
+def get_org(meraki, org_id, data):
+    # meraki.fail_json(msg=str(org_id), data=data, oid0=data[0]['id'], oid1=data[1]['id'])
+    for o in data:
+        # meraki.fail_json(msg='o', data=o['id'], type=str(type(o['id'])))
+        if o['id'] == org_id:
+            return o
+    return -1
+
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
@@ -164,7 +173,6 @@ def main():
                 if o['id'] == meraki.params['org_id']:
                     meraki.result['data'] = o
         else:  # Query all organizations, no matter what
-            orgs = meraki.get_orgs()
             meraki.result['data'] = orgs
     elif meraki.params['state'] == 'present':
         if meraki.params['clone']:  # Cloning
@@ -177,6 +185,7 @@ def main():
                     ),
                     payload=json.dumps(payload),
                     method='POST'))
+            meraki.result['changed'] = True
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
             meraki.result['data'] = json.loads(
@@ -184,19 +193,26 @@ def main():
                     meraki.construct_path('create'),
                     method='POST',
                     payload=json.dumps(payload)))
+            meraki.result['changed'] = True
         elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
             payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
                        }
-            meraki.result['data'] = json.loads(
-                meraki.request(
-                    meraki.construct_path(
-                        'update',
-                        org_id=meraki.params['org_id']
-                    ),
-                    method='PUT',
-                    payload=json.dumps(payload)))
-
+            if meraki.is_update_required(
+                get_org(
+                    meraki,
+                    meraki.params['org_id'],
+                    orgs),
+                    payload):
+                meraki.result['data'] = json.loads(
+                    meraki.request(
+                        meraki.construct_path(
+                            'update',
+                            org_id=meraki.params['org_id']
+                        ),
+                        method='PUT',
+                        payload=json.dumps(payload)))
+                meraki.result['changed'] = True
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)

@@ -32,6 +32,11 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
+try:
+    from lxml.etree import Element, SubElement, tostring, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+
 
 def ensure_connected(func):
     @wraps(func)
@@ -106,26 +111,39 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             resp = self.m.rpc(obj)
             return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
         except RPCError as exc:
-            msg = exc.data_xml if hasattr(exc, 'data_xml') else exc.xml
+            msg = exc.xml
             raise Exception(to_xml(msg))
 
     @ensure_connected
-    def get_config(self, *args, **kwargs):
-        """Retrieve all or part of a specified configuration.
-           :source: name of the configuration datastore being queried
-           :filter: specifies the portion of the configuration to retrieve
-           (by default entire configuration is retrieved)"""
-        resp = self.m.get_config(*args, **kwargs)
+    def get_config(self, source=None, filter=None):
+        """Retrieve all or part of a specified configuration
+           (by default entire configuration is retrieved).
+
+        :param source: Name of the configuration datastore being queried, defaults to running datastore
+        :param filter: This argument specifies the portion of the configuration data to retrieve
+        :return: Returns xml string containing the RPC response received from remote host
+        """
+        if isinstance(filter, list):
+            filter = tuple(filter)
+
+        if not source:
+            source = 'running'
+        resp = self.m.get_config(source=source, filter=filter)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def get(self, *args, **kwargs):
-        """Retrieve running configuration and device state information.
-        *filter* specifies the portion of the configuration to retrieve
-        (by default entire configuration is retrieved)
+    def get(self, filter=None):
+        """Retrieve device configuration and state information.
+
+        :param filter: This argument specifies the portion of the state data to retrieve
+                        (by default entire state data is retrieved)
+        :return: Returns xml string containing the RPC response received from remote host
         """
-        resp = self.m.get(*args, **kwargs)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        if isinstance(filter, list):
+            filter = tuple(filter)
+        resp = self.m.get(filter=filter)
+        response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return response
 
     @ensure_connected
     def edit_config(self, *args, **kwargs):
@@ -162,26 +180,51 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def lock(self, *args, **kwargs):
-        """Allows the client to lock the configuration system of a device.
-        *target* is the name of the configuration datastore to lock
+    def dispatch(self, request):
+        """Execute operation on the remote device
+        :request: is the rpc request including attributes as XML string
         """
-        resp = self.m.lock(*args, **kwargs)
+        req = fromstring(request)
+        resp = self.m.dispatch(req)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def unlock(self, *args, **kwargs):
+    def lock(self, target=None):
+        """
+        Allows the client to lock the configuration system of a device.
+        :param target: is the name of the configuration datastore to lock,
+                        defaults to candidate datastore
+        :return: Returns xml string containing the RPC response received from remote host
+        """
+        if not target:
+            target = 'candidate'
+        resp = self.m.lock(target=target)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+    @ensure_connected
+    def unlock(self, target=None):
+        """
+        Release a configuration lock, previously obtained with the lock operation.
+        :param target: is the name of the configuration datastore to unlock,
+                       defaults to candidate datastore
+        :return: Returns xml string containing the RPC response received from remote host
+        """
         """Release a configuration lock, previously obtained with the lock operation.
         :target: is the name of the configuration datastore to unlock
         """
-        resp = self.m.unlock(*args, **kwargs)
+        if not target:
+            target = 'candidate'
+        resp = self.m.unlock(target=target)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def discard_changes(self, *args, **kwargs):
-        """Revert the candidate configuration to the currently running configuration.
-        Any uncommitted changes are discarded."""
-        resp = self.m.discard_changes(*args, **kwargs)
+    def discard_changes(self):
+        """
+        Revert the candidate configuration to the currently running configuration.
+        Any uncommitted changes are discarded.
+        :return: Returns xml string containing the RPC response received from remote host
+        """
+        resp = self.m.discard_changes()
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
@@ -197,13 +240,6 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :timeout: specifies the confirm timeout in seconds
         """
         resp = self.m.commit(*args, **kwargs)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
-
-    @ensure_connected
-    def validate(self, *args, **kwargs):
-        """Validate the contents of the specified configuration.
-           :source: name of configuration data store"""
-        resp = self.m.validate(*args, **kwargs)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
@@ -244,5 +280,29 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def fetch_file(self, source, destination):
         """Fetch file over scp from remote device"""
         pass
+
+    def get_device_operations(self, server_capabilities):
+        operations = {}
+        capabilities = '\n'.join(server_capabilities)
+        operations['supports_commit'] = ':candidate' in capabilities
+        operations['supports_defaults'] = ':with-defaults' in capabilities
+        operations['supports_confirm_commit'] = ':confirmed-commit' in capabilities
+        operations['supports_startup'] = ':startup' in capabilities
+        operations['supports_xpath'] = ':xpath' in capabilities
+        operations['supports_writable_running'] = ':writable-running' in capabilities
+
+        operations['lock_datastore'] = []
+        if operations['supports_writable_running']:
+            operations['lock_datastore'].append('running')
+
+        if operations['supports_commit']:
+            operations['lock_datastore'].append('candidate')
+
+        if operations['supports_startup']:
+            operations['lock_datastore'].append('startup')
+
+        operations['supports_lock'] = True if len(operations['lock_datastore']) else False
+
+        return operations
 
 # TODO Restore .xml, when ncclient supports it for all platforms
