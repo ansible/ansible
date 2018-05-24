@@ -474,7 +474,7 @@ def map_obj_to_commands(updates, module):
             else:
                 commands.append(interface)
                 # Don't run switchport command for loopback and svi interfaces
-                if interface_type in ('ethernet', 'portchannel'):
+                if get_interface_type(name) in ('ethernet', 'portchannel'):
                     if mode == 'layer2':
                         commands.append('switchport')
                     elif mode == 'layer3':
