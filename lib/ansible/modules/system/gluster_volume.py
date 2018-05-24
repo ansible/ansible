@@ -111,6 +111,16 @@ EXAMPLES = """
     options:
       performance.cache-size: 256MB
 
+- name: Set multiple options on GlusterFS volume
+  gluster_volume:
+    state: present
+    name: test1
+    options:
+      { performance.cache-size: 128MB,
+        write-behind: 'off',
+        quick-read: 'on'
+      }
+
 - name: start gluster volume
   gluster_volume:
     state: started
@@ -409,8 +419,8 @@ def main():
     if cluster is not None and len(cluster) > 1 and cluster[-1] == '':
         cluster = cluster[0:-1]
 
-    if cluster is None or cluster[0] == '':
-        cluster = [myhostname]
+    if cluster is None:
+        cluster = []
 
     if brick_paths is not None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
