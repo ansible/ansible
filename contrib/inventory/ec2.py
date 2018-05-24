@@ -790,11 +790,11 @@ class Ec2Inventory(object):
                 # because we also want nodes' information
                 _marker = 1
                 while _marker:
-                   if _marker == 1:
-                       _marker = None
-                   response = conn.describe_cache_clusters(None, None, _marker, True)
-                   _marker = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['Marker']
-                  
+                     if _marker == 1:
+                         _marker = None
+                     response = conn.describe_cache_clusters(None, None, _marker, True)
+                     _marker = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['Marker']
+
         except boto.exception.BotoServerError as e:
             error = e.reason
 
