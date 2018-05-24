@@ -187,6 +187,10 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
+        docker_api_version = self.version()["ApiVersion"]
+        if self.module.params.get("init") and LooseVersion(docker_api_version) < LooseVersion("1.25"):
+            self.fail("docker API version is %s. Minimum version required is 1.25 to set init option." % (docker_api_version,))
+
     def log(self, msg, pretty_print=False):
         pass
         # if self.debug:
