@@ -59,20 +59,22 @@ options:
     description:
     - The beggining (from range) of the card range block for the leaf access port block.
     aliases: [ from_card_range ]
+    version_added: '2.6'
   to_card:
     description:
     - The end (to range) of the card range block for the leaf access port block.
     aliases: [ to_card_range ]
+    version_added: '2.6'
   policy_group:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
     aliases: [ policy_group_name ]
   interface_type:
-    version_added: '2.6'
     description:
     - The type of interface for the static EPG deployement.
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
+    version_added: '2.6'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
