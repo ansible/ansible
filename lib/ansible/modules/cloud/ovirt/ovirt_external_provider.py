@@ -252,6 +252,68 @@ class ExternalProviderModule(BaseModule):
         )
 
 
+    def update_volume_provider_auth_keys(
+        self, provider, providers_service, keys
+    ):
+        """
+        Update auth keys for volume provider, if not exist add them or remove
+        if they are not specified and there are already defined in the external
+        volume provider.
+
+        Args:
+            provider (dict): Volume provider details.
+            providers_service (openstack_volume_providers_service): Provider
+                service.
+            keys (list): Keys to be updated/added to volume provider, each key
+                is represented as dict with keys: uuid, value.
+        """
+
+        provider_service = providers_service.provider_service(provider['id'])
+        auth_keys_service = provider_service.authentication_keys_service()
+        provider_keys = auth_keys_service.list()
+        # removing keys which are not defined
+        for key in [
+            k.id for k in provider_keys if k.uuid not in [
+                defined_key['uuid'] for defined_key in keys
+            ]
+        ]:
+            self.changed = True
+            if not self._module.check_mode:
+                auth_keys_service.key_service(key).remove()
+        if not (provider_keys or keys):
+            # Nothing need to do when both are empty.
+            return
+        for key in keys:
+            key_id_for_update = None
+            for existing_key in provider_keys:
+                if key['uuid'] == existing_key.uuid:
+                    key_id_for_update = existing_key.id
+
+            auth_key_usage_type = (
+                otypes.OpenstackVolumeAuthenticationKeyUsageType("ceph")
+            )
+            auth_key = otypes.OpenstackVolumeAuthenticationKey(
+                usage_type=auth_key_usage_type,
+                uuid=key['uuid'],
+                value=key['value'],
+            )
+
+            if not key_id_for_update:
+                self.changed = True
+                if not self._module.check_mode:
+                    auth_keys_service.add(auth_key)
+            else:
+                # We cannot really distinguish here if it was really updated cause
+                # we cannot take key value to check if it was changed or not. So
+                # for sure we update here always.
+                self.changed = True
+                if not self._module.check_mode:
+                    auth_key_service = (
+                        auth_keys_service.key_service(key_id_for_update)
+                    )
+                    auth_key_service.update(auth_key)
+
+
 def _external_provider_service(provider_type, system_service):
     if provider_type == OS_IMAGE:
         return otypes.OpenStackImageProvider, system_service.openstack_image_providers_service()
@@ -261,67 +323,6 @@ def _external_provider_service(provider_type, system_service):
         return otypes.OpenStackVolumeProvider, system_service.openstack_volume_providers_service()
     elif provider_type == FOREMAN:
         return otypes.ExternalHostProvider, system_service.external_host_providers_service()
-
-
-def update_openstack_volume_provider_auth_keys(
-    provider, providers_service, keys
-):
-    """
-    Update auth keys for volume provider, if not exist add them or remove if
-    they are not specified and there are already defined in the external volume
-    provider.
-
-    Args:
-        provider (dict): Volume provider details.
-        providers_service (openstack_volume_providers_service): Provider service.
-        keys (list): Keys to be updated/added to volume provider, each key is
-            represented as dict with keys: uuid, value.
-    """
-
-    provider_service = providers_service.provider_service(provider['id'])
-    auth_keys_service = provider_service.authentication_keys_service()
-    provider_keys = auth_keys_service.list()
-    # removing keys which are not defined
-    for key in [
-        k.id for k in provider_keys if k.uuid not in [
-            defined_key['uuid'] for defined_key in keys
-        ]
-    ]:
-        self.changed = True
-        if not self._module.check_mode:
-            auth_keys_service.key_service(key).remove()
-    if not (provider_keys or keys):
-        # Nothing need to do when both are empty.
-        return
-    for key in keys:
-        key_id_for_update = None
-        for existing_key in provider_keys:
-            if key['uuid'] == existing_key.uuid:
-                key_id_for_update = existing_key.id
-
-        auth_key_usage_type = (
-            otypes.OpenstackVolumeAuthenticationKeyUsageType("ceph")
-        )
-        auth_key = otypes.OpenstackVolumeAuthenticationKey(
-            usage_type=auth_key_usage_type,
-            uuid=key['uuid'],
-            value=key['value'],
-        )
-
-        if not key_id_for_update:
-            self.changed = True
-            if not self._module.check_mode:
-                auth_keys_service.add(auth_key)
-        else:
-            # We cannot really distinguish here if it was really updated cause
-            # we cannot take key value to check if it was changed or not. So
-            # for sure we update here always.
-            self.changed = True
-            if not self._module.check_mode:
-                auth_key_service = (
-                    auth_keys_service.key_service(key_id_for_update)
-                )
-                auth_key_service.update(auth_key)
 
 
 def main():
@@ -391,7 +392,7 @@ def main():
                 provider_type_param == OS_VOLUME and
                 openstack_volume_provider_id
             ):
-                update_openstack_volume_provider_auth_keys(
+                external_providers_module.update_volume_provider_auth_keys(
                     ret, external_providers_service,
                     module.params.get('authentication_keys'),
                 )
