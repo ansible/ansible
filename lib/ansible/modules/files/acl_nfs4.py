@@ -256,7 +256,7 @@ def entry_equal(t1, t2):
         return False
 
     if entity[0] != entity[1]:
-        return false
+        return False
 
     # Permissions:
     # Expand RWX shorthand. Try for both the directory and regular file expansion.
