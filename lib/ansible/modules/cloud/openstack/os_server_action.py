@@ -87,6 +87,10 @@ _action_map = {'stop': 'SHUTOFF',
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
 
+def _action_url(server_id):
+    return '/servers/{server_id}/action'.format(server_id=server_id)
+
+
 def _wait(timeout, cloud, server, action, module, sdk):
     """Wait for the server to reach the desired state for the given action."""
 
@@ -148,7 +152,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.stop(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'os-stop': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
@@ -157,7 +163,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.start(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'os-start': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
@@ -166,7 +174,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.pause(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'pause': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
@@ -175,26 +185,34 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.unpause(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'unpause': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'lock':
             # lock doesn't set a state, just do it
-            cloud.nova_client.servers.lock(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'lock': None})
             module.exit_json(changed=True)
 
         elif action == 'unlock':
             # unlock doesn't set a state, just do it
-            cloud.nova_client.servers.unlock(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'unlock': None})
             module.exit_json(changed=True)
 
         elif action == 'suspend':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.suspend(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'suspend': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -203,7 +221,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.resume(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'resume': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -215,7 +235,9 @@ def main():
                 module.fail_json(msg="Image does not exist")
 
             # rebuild doesn't set a state, just do it
-            cloud.nova_client.servers.rebuild(server=server.id, image=image.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'rebuild': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
