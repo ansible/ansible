@@ -454,10 +454,7 @@ def run_command(module, commands):
             sendonly = False
             newline = True
 
-        try:
-            out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
-        except ConnectionError as e:
-            out = e
+        out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
         try:
             responses.append(to_text(out, errors='surrogate_or_strict'))
