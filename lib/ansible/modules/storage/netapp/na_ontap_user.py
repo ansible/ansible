@@ -30,7 +30,6 @@ options:
   state:
     description:
     - Whether the specified user should exist or not.
-    required: true
     choices: ['present', 'absent']
     default: 'present'
 
@@ -41,7 +40,7 @@ options:
 
   application:
     description:
-    - Applications to grant access to.
+    - Application to grant access to.
     required: true
     choices: ['console', 'http','ontapi','rsh','snmp','sp','ssh','telnet']
 
@@ -74,7 +73,7 @@ options:
 
   lock_user:
     description:
-    - To ock/unlock user.
+    - Whether the specified user account is locked.
     type: bool
 
   vserver:

@@ -30,9 +30,8 @@ options:
   state:
     description:
     - Whether the specified user should exist or not.
-    required: true
     choices: ['present', 'absent']
-    default: 'present'
+    default: present
 
   name:
     description:
@@ -48,7 +47,7 @@ options:
     description:
     - The name of the role to manage.
     choices: ['none', 'readonly', 'all']
-    default: 'all'
+    default: all
 
   vserver:
     description:

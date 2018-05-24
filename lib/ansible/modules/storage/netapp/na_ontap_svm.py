@@ -59,11 +59,8 @@ options:
         this field represents the security style for the Vserver root volume.
     -   When specified as part of vserver-get-iter call,
         this will return the list of matching Vservers.
-    -   Possible values are 'unix', 'ntfs', 'mixed'.
     -   The 'unified' security style, which applies only to Infinite Volumes,
         cannot be applied to a Vserver's root volume.
-    -   Valid options are "unix" for NFS, "ntfs" for CIFS,
-        "mixed" for Mixed, "unified" for Unified.
     -   Required when C(state=present)
     choices: ['unix', 'ntfs', 'mixed', 'unified']
 

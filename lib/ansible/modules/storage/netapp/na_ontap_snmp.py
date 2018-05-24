@@ -124,7 +124,7 @@ class NetAppONTAPSnmp(object):
     def apply(self):
         """
         Apply action to SNMP community
-        We want the module to be idempotent
+        This module is not idempotent:
         Add doesn't fail the playbook if user is trying
         to add an already existing snmp community
         """
