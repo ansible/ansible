@@ -317,7 +317,7 @@ def main():
             hosts=dict(required=False, type='list'),
             api_url=dict(required=True),
             api_username=dict(required=True),
-            validate_certs=dict(type='bool'),
+            validate_certs=dict(type='bool', default=True),
             api_password=dict(required=True, no_log=True)
         ),
         supports_check_mode=False,
