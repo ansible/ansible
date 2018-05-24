@@ -1,6 +1,5 @@
 ---
 - debug: msg="START nxos nxapi/net_system.yaml on connection={{ ansible_connection }}"
-- debug: msg="Using provider={{ connection.transport }}"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
