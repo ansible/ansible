@@ -51,6 +51,10 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
+  extra_flags:
+    description:
+      - Flags to pass directly to chocolatey, for example '--x86'
+    type: string
   install_args:
     description:
       - Arguments to pass to the native installer.
@@ -152,6 +156,11 @@ EXAMPLES = r'''
   win_chocolatey:
     name: notepadplusplus
     version: '6.6'
+
+- name: Install notepadplusplus 32 bit version
+  win_chocolatey:
+    name: notepadplusplus
+    extra_flags: '--x86'
 
 - name: Install git from specified repository
   win_chocolatey:
