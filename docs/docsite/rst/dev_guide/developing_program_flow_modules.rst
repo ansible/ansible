@@ -517,7 +517,7 @@ Why pass args over stdin?
 
 Passing arguments via stdin was chosen for the following reasons:
 
-* When combined with :ref:`pipelining`, this keeps the module's arguments from
+* When combined with :ref:`ANSIBLE_PIPELINING`, this keeps the module's arguments from
   temporarily being saved onto disk on the remote machine.  This makes it
   harder (but not impossible) for a malicious user on the remote machine to
   steal any sensitive information that may be present in the arguments.

@@ -169,14 +169,37 @@ class AnsibleAWSModule(object):
         except AttributeError:
             response = None
 
-        if response is None:
-            self._module.fail_json(msg=message, exception=last_traceback)
-        else:
-            self._module.fail_json(msg=message, exception=last_traceback,
-                                   **camel_dict_to_snake_dict(response))
+        failure = dict(
+            msg=message,
+            exception=last_traceback,
+            **self._gather_versions()
+        )
+
+        if response is not None:
+            failure.update(**camel_dict_to_snake_dict(response))
+
+        self._module.fail_json(**failure)
+
+    def _gather_versions(self):
+        """Gather AWS SDK (boto3 and botocore) dependency versions
+
+        Returns {'boto3_version': str, 'botocore_version': str}
+        Returns {} if neither are installed
+        """
+        if not HAS_BOTO3:
+            return {}
+        import boto3
+        import botocore
+        return dict(boto3_version=boto3.__version__,
+                    botocore_version=botocore.__version__)
 
 
 class _RetryingBotoClientWrapper(object):
+    __never_wait = (
+        'get_paginator', 'can_paginate',
+        'get_waiter', 'generate_presigned_url',
+    )
+
     def __init__(self, client, retry):
         self.client = client
         self.retry = retry
@@ -194,7 +217,9 @@ class _RetryingBotoClientWrapper(object):
 
     def __getattr__(self, name):
         unwrapped = getattr(self.client, name)
-        if callable(unwrapped):
+        if name in self.__never_wait:
+            return unwrapped
+        elif callable(unwrapped):
             wrapped = self._create_optional_retry_wrapper_function(unwrapped)
             setattr(self, name, wrapped)
             return wrapped

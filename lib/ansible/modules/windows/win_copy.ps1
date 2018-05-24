@@ -18,10 +18,10 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 #   query: win_copy action plugin wants to get the state of remote files to check whether it needs to send them
 #   remote: all copy action is happening remotely (remote_src=True)
 #   single: a single file has been copied, also used with template
-$mode = Get-AnsibleParam -obj $params -name "mode" -type "str" -default "single" -validateset "explode","query","remote","single"
+$copy_mode = Get-AnsibleParam -obj $params -name "_copy_mode" -type "str" -default "single" -validateset "explode","query","remote","single"
 
 # used in explode, remote and single mode
-$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($mode -in @("explode","process","single"))
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($copy_mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 
 # used in single mode
@@ -224,7 +224,7 @@ Function Extract-ZipLegacy($src, $dest) {
     }
 }
 
-if ($mode -eq "query") {
+if ($copy_mode -eq "query") {
     # we only return a list of files/directories that need to be copied over
     # the source of the local file will be the key used
     $changed_files = @()
@@ -271,7 +271,7 @@ if ($mode -eq "query") {
     $result.files = $changed_files
     $result.directories = $changed_directories
     $result.symlinks = $changed_symlinks
-} elseif ($mode -eq "explode") {
+} elseif ($copy_mode -eq "explode") {
     # a single zip file containing the files and directories needs to be
     # expanded this will always result in a change as the calculation is done
     # on the win_copy action plugin and is only run if a change needs to occur
@@ -294,7 +294,7 @@ if ($mode -eq "query") {
     }
 
     $result.changed = $true
-} elseif ($mode -eq "remote") {
+} elseif ($copy_mode -eq "remote") {
     # all copy actions are happening on the remote side (windows host), need
     # too copy source and dest using PS code
     $result.src = $src
@@ -359,7 +359,7 @@ if ($mode -eq "query") {
     if ($diff_mode) {
         $result.diff.prepared = $diff
     }
-} elseif ($mode -eq "single") {
+} elseif ($copy_mode -eq "single") {
     # a single file is located in src and we need to copy to dest, this will
     # always result in a change as the calculation is done on the Ansible side
     # before this is run. This should also never run in check mode

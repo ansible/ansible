@@ -77,6 +77,26 @@
 - name: now put it back in case someone wanted it (like us!)
   pip: name={{ pip_test_package }} state=present
 
+# download the test package and assert that a change occurs the first time
+- name: download the test package to /tmp dir and check that a change occurred
+  pip: name={{ pip_test_package }} state=downloaded
+  register: test_package_dl_first
+
+- name: assert a change occurred on download first time
+  assert:
+    that:
+      - "test_package_dl_first.changed"
+
+# download the test package and assert that a change does not occurr the second time
+- name: download the test package to /tmp dir again
+  pip: name={{ pip_test_package }} state=downloaded
+  register: test_package_dl_second
+
+- name: assert no change on second attempt to download to same location as first download call
+  assert:
+    that:
+      - "not test_package_dl_second.changed"
+
 
 # Test virtualenv installations
 

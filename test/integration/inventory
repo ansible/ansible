@@ -1,6 +1,6 @@
 [local]
 testhost ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role3
-testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
+testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role2
 # For testing delegate_to
 testhost3 ansible_ssh_host=127.0.0.3
 testhost4 ansible_ssh_host=127.0.0.4

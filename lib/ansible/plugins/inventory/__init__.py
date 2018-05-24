@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -69,7 +69,7 @@ def expand_hostname_range(line=None):
     appearance. They are replaced in this function with '|' to ease
     string splitting.
 
-    References: http://ansible.github.com/patterns.html#hosts-and-groups
+    References: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#hosts-and-groups
     '''
     all_hosts = []
     if line:

@@ -44,7 +44,7 @@ EXAMPLES = """
       - bar
 
 - name: same copy but specific paths
-  copy: src={{lookup('first_found', findme, mypaths}} dest=/some/file
+  copy: src={{lookup('first_found', findme, mypaths)}} dest=/some/file
   vars:
     findme:
       - foo

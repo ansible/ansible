@@ -55,7 +55,7 @@ options:
       tower_address:
         description:
         - IP address or DNS name of Tower server. Must be accessible via this address from the VPC that this instance will be launched in.
-      template_id:
+      job_template_id:
         description:
         - Either the integer ID of the Tower Job Template, or the name (name supported only for Tower 3.2+)
       host_config_key:
