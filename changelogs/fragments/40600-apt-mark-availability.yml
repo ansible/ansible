@@ -1,0 +1,2 @@
+bugfixes:
+- skip marking packages as manually installed when apt-mark is not available (https://github.com/ansible/ansible/pull/40600)
