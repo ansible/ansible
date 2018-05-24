@@ -869,7 +869,6 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
-            spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
         if interface_params.get('private_ip_address'):
             spec['PrivateIpAddress'] = interface_params.get('private_ip_address')
