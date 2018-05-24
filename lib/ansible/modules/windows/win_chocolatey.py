@@ -51,6 +51,12 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
+  x86:
+    description:
+      - Install 32 bit version
+    version_added: '2.7'
+    type: bool
+    default: 'no'
   install_args:
     description:
       - Arguments to pass to the native installer.
@@ -153,6 +159,11 @@ EXAMPLES = r'''
   win_chocolatey:
     name: notepadplusplus
     version: '6.6'
+
+- name: Install notepadplusplus 32 bit version
+  win_chocolatey:
+    name: notepadplusplus
+    x86: yes
 
 - name: Install git from specified repository
   win_chocolatey:
