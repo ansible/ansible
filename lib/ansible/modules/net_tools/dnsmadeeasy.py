@@ -665,7 +665,7 @@ def main():
         if not current_record:
             record = DME.createRecord(DME.prepareRecord(new_record))
 
-            if monitor is False
+            if monitor is False:
                 module.exit_json(changed=True, result=dict(record=record))
 
             result = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
