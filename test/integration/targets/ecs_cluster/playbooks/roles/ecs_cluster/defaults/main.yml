@@ -3,6 +3,8 @@
 ecs_agent_images:
   us-east-1: ami-71ef560b
   us-east-2: ami-1b8ca37e
+  us-west-2: ami-d2f489aa
+  us-west-1: ami-6b81980b
 
 ecs_cluster_name: "{{ resource_prefix }}"
 user_data: |
@@ -33,3 +35,11 @@ ecs_service_placement_strategy:
 ecs_task_container_port: 8080
 ecs_target_group_name: "{{ resource_prefix[:28] }}-tg"
 ecs_load_balancer_name: "{{ resource_prefix[:29] }}-lb"
+ecs_fargate_task_containers:
+- name: "{{ ecs_task_name }}"
+  image: "{{ ecs_task_image_path }}"
+  essential: true
+  portMappings:
+  - containerPort: "{{ ecs_task_container_port }}"
+    hostPort: "{{ ecs_task_host_port|default(0) }}"
+  #mountPoints: "{{ ecs_task_mount_points|default([]) }}"
