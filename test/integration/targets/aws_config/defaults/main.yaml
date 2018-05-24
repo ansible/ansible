@@ -1,0 +1,2 @@
+---
+config_s3_bucket: 'test-aws-config-bucket'
