@@ -372,8 +372,7 @@ def main():
                                Port=dict(type='int', required=True),
                                SslPolicy=dict(type='str'),
                                Certificates=dict(type='list'),
-                               DefaultActions=dict(type='list', required=True),
-                               Rules=dict(type='list')
+                               DefaultActions=dict(type='list', required=True)
                            )
                            ),
             name=dict(required=True, type='str'),
