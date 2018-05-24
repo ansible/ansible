@@ -13,6 +13,8 @@
     tags:
       testing: testing
       delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
 
 - assert:
     that:
