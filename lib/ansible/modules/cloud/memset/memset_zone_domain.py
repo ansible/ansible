@@ -228,7 +228,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
             domain=dict(required=True, aliases=['name'], type='str'),
             zone=dict(required=True, type='str')
