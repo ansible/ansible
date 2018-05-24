@@ -251,7 +251,6 @@ class ExternalProviderModule(BaseModule):
             equal(self._module.params.get('username'), entity.username)
         )
 
-
     def update_volume_provider_auth_keys(
         self, provider, providers_service, keys
     ):
