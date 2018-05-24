@@ -364,6 +364,7 @@ The mkpasswd utility that is available on most Linux systems is a great option:
 .. code-block:: shell-session
 
     mkpasswd --method=sha-512
+    
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
@@ -381,6 +382,12 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
 You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`../user_guide/playbooks_vault` to encrypt sensitive data.
+
+In OpenBSD, a similar option is available in the base system called encrypt(1):
+
+.. code-block:: shell-session
+
+    encrypt
 
 .. _commercial_support:
 
