@@ -23,8 +23,8 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -115,10 +115,10 @@ class Cliconf(CliconfBase):
 
             try:
                 out = self.get(cmd)
-            except ConnectionError as e:
+            except AnsibleConnectionFailure as e:
                 if check_rc:
                     raise
-                out = e
+                out = getattr(e, 'err', e)
 
             try:
                 out = to_text(out, errors='surrogate_or_strict').strip()
