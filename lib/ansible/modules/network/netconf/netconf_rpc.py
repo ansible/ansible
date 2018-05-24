@@ -143,6 +143,9 @@ output:
     formatted_output:
       - Contains formatted response received from remote host as per the value in display format.
 """
+
+import ast
+
 try:
     from lxml.etree import tostring
 except ImportError:
@@ -178,7 +181,7 @@ def get_xml_request(module, request, xmlns, content):
 
         try:
             # trying if content contains dict
-            content = eval(content)
+            content = ast.literal_eval(content)
         except:
             module.fail_json(msg='unsupported content value `%s`' % content)
 

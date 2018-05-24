@@ -44,16 +44,16 @@
       - "{{ result['output']['rpc-reply'] is defined}}"
       - "{{ result['output']['rpc-reply']['ok'] is defined}}"
 
-#- name: copy running to startup
-#  netconf_rpc:
-#    rpc: copy-config
-#    content:
-#      source:
-#        running:
-#      target:
-#        startup:
-#  register: result
-#  connection: netconf
+- name: copy running to startup
+  netconf_rpc:
+    rpc: copy-config
+    content:
+      source:
+        running:
+      target:
+        startup:
+  register: result
+  connection: netconf
 
 - name: get schema list (content is multiple lines of XML)
   netconf_rpc:
@@ -74,6 +74,11 @@
       - "{{ result['output']['data']['netconf-state'] is defined}}"
       - "{{ result['output']['data']['netconf-state']['schemas'] is defined}}"
       - "{{ result['output']['data']['netconf-state']['schemas']['schema'] is defined}}"
+
+# The following two test-cases have been validated against a pre-release implementation. 
+# To make this playbook work with the regular Nokia SROS 16.0 release, those test-cases
+# have been commented out. As soon the <get-schema> operation is supported by SROS
+# those test-cases shall be included.
 
 #- name: get-schema
 #  netconf_rpc:
