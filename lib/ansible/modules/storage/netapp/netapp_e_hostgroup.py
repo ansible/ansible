@@ -36,7 +36,7 @@ options:
       - The url to the SANtricity WebServices Proxy or embedded REST API.
   validate_certs:
       default: true
-      choices: ['true', 'false']
+      type: boolean
       description:
       - Should https certificates be validated?
   ssid:
