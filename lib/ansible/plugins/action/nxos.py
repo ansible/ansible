@@ -44,8 +44,16 @@ class ActionModule(_ActionModule):
         socket_path = None
 
         if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
-                and self._task.action == 'nxos_nxapi':
+                and self._task.action in ('nxos_file_copy', 'nxos_nxapi'):
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
+
+        if self._task.action == 'nxos_file_copy':
+            self._task.args['host'] = self._play_context.remote_addr
+            self._task.args['password'] = self._play_context.password
+            if self._play_context.connection == 'network_cli':
+                self._task.args['username'] = self._play_context.remote_user
+            elif self._play_context.connection == 'local':
+                self._task.args['username'] = self._play_context.connection_user
 
         if self._play_context.connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
@@ -55,6 +63,7 @@ class ActionModule(_ActionModule):
             if self._task.args.get('transport'):
                 display.warning('transport is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['transport']
+
         elif self._play_context.connection == 'local':
             provider = load_provider(nxos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
