@@ -1,0 +1,72 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: test creating an NLB with invalid listener options
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      #security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: TCP
+          Port: 80
+          Certificates: {'CertificateArn': 'test', 'IsDefault': 'True'}
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: nlb
+
+  - assert:
+      that:
+        - nlb is failed
+        - "'unable to convert to list' in nlb.msg"
+
+  - name: test creating an NLB without providing required listener options
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      #security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Port: 80
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: nlb
+
+  - assert:
+      that:
+        - nlb is failed
+        - '"missing required arguments" in nlb.msg'
+        - '"Protocol" in nlb.msg'
+        - '"DefaultActions" in nlb.msg'
+
+  - name: test creating an NLB providing an invalid listener option type
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      #security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: TCP
+          Port: "bad type"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: nlb
+
+  - assert:
+      that:
+        - nlb is failed
+        - "'unable to convert to int' in nlb.msg"
