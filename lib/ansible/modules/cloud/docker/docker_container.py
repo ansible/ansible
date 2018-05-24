@@ -135,6 +135,7 @@ options:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
         This option requires Docker API 1.25+.
+    type: bool
     default: 'no'
     version_added: "2.6"
   interactive:
