@@ -103,3 +103,5 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
+
+/SYMLINK_CACHE.json
