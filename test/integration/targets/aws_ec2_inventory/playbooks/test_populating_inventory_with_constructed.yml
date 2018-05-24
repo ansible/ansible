@@ -1,0 +1,78 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - block:
+
+        # Create VPC, subnet, security group, and find image_id to create instance
+
+        - include_tasks: setup.yml
+
+        # Create new host, refresh inventory
+
+        - name: set connection information for all tasks
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: '{{ aws_access_key }}'
+              aws_secret_key: '{{ aws_secret_key }}'
+              security_token: '{{ security_token }}'
+              region: '{{ aws_region }}'
+          no_log: yes
+
+        - name: create a new host
+          ec2:
+            image: '{{ image_id }}'
+            exact_count: 1
+            count_tag:
+              Name: '{{ resource_prefix }}'
+            instance_tags:
+              Name: '{{ resource_prefix }}'
+              tag1: value1
+              tag2: value2
+            instance_type: t2.micro
+            wait: yes
+            group_id: '{{ sg_id }}'
+            vpc_subnet_id: '{{ subnet_id }}'
+            <<: *aws_connection_info
+          register: setup_instance
+
+        - meta: refresh_inventory
+
+        - name: register the keyed sg group name
+          set_fact:
+            sg_group_name: "security_groups_{{ sg_id | replace('-', '_') }}"
+
+        - name: register one of the keyed tag groups name
+          set_fact:
+            tag_group_name: "tag_Name_{{ resource_prefix | replace('-', '_') }}"
+
+        - name: assert the keyed groups and groups from constructed config were added to inventory and composite var added to hostvars
+          assert:
+            that:
+              # There are 9 groups: all, ungrouped, aws_ec2, sg keyed group, 3 tag keyed group (one per tag), arch keyed group, constructed group
+              - "groups | length == 9"
+              - "groups[tag_group_name] | length == 1"
+              - "groups[sg_group_name] | length == 1"
+              - "groups.arch_x86_64 | length == 1"
+              - "groups.tag_with_name_key | length == 1"
+              - vars.hostvars[groups.aws_ec2.0]['test_compose_var_sum'] == 'value1value2'
+
+      always:
+
+        - name: remove setup ec2 instance
+          ec2:
+            instance_type: t2.micro
+            instance_ids: '{{ setup_instance.instance_ids }}'
+            state: absent
+            wait: yes
+            instance_tags:
+              Name: '{{ resource_prefix }}'
+            group_id: "{{ sg_id }}"
+            vpc_subnet_id: "{{ subnet_id }}"
+            <<: *aws_connection_info
+          ignore_errors: yes
+          when: setup_instance is defined
+
+        - include_tasks: tear_down.yml
