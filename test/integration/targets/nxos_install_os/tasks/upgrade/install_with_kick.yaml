@@ -5,7 +5,6 @@
     system_image_file: "{{ si }}"
     kickstart_image_file: "{{ ki }}"
     issu: "{{ issu }}"
-    provider: "{{ connection | combine({'timeout': 500}) }}"
   register: result
 
 - debug: msg=" {{ result['install_state'] }}"

@@ -3,13 +3,11 @@
   nxos_feature:
     feature: scp-server
     state: enabled
-    provider: "{{ connection }}"
 
 - name: "Copy {{ si }} to bootflash"
   nxos_file_copy:
     local_file: "{{image_dir}}{{ si }}"
     file_system: "bootflash:"
-    provider: "{{ connection }}"
     host: "{{ inventory_hostname }}"
   register: result
 
@@ -21,7 +19,6 @@
   nxos_file_copy:
     local_file: "{{image_dir}}/{{ ki }}"
     file_system: "bootflash:"
-    provider: "{{ connection }}"
     host: "{{ inventory_hostname }}"
   register: result
   when: ki is defined
