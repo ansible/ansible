@@ -208,9 +208,6 @@ def main():
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
         module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
 
-    if lock == 'always' and not operations.get('supports_lock', False):
-        module.fail_json(msg='lock operation is not supported on this device')
-
     # If source is None, NETCONF <get> operation is issued, reading config/state data
     # from the running datastore. The python expression "(source or 'running')" results
     # in the value of source (if not None) or the value 'running' (if source is None).
@@ -220,13 +217,10 @@ def main():
     elif (source or 'running') in operations.get('lock_datastore', []):
         # lock is requested (always/if-support) and supported => lets do it
         execute_lock = True
-    elif lock == 'if-supported':
-        # lock is desired, but not supported => issue warning and continue
-        module.warn("lock operation on '%s' source is not supported on this device" % (source or 'running'))
-        execute_lock = False
     else:
-        # lock is enforced, but not supported => issue failure and stop
-        module.fail_json(msg="lock operation on '%s' source is not supported on this device" % (source or 'running'))
+        # lock is requested (always/if-supported) but not supported => issue warning
+        module.warn("lock operation on '%s' source is not supported on this device" % (source or 'running'))
+        execute_lock = (lock == 'always')
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
