@@ -1,0 +1,2 @@
+bugfixes:
+- win_get_url - fixed issue when authenticating when force=yes https://github.com/ansible/ansible/pull/40641
