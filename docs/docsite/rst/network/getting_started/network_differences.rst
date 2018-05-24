@@ -11,7 +11,11 @@ Execution on the Control Node
 
 Unlike most Ansible modules, network modules do not run on the managed nodes. From a user's point of view, network modules work like any other modules. They work with ad-hoc commands, playbooks, and roles. Behind the scenes, however, network modules use a different methodology than the other (Linux/Unix and Windows) modules use. Ansible is written and executed in Python. Because the majority of network devices can not run Python, the Ansible network modules are executed on the Ansible control node, where ``ansible`` or ``ansible-playbook`` runs. 
 
-Network modules also use the control node as a destination for backup files, for those modules that offer a ``backup`` option. With Linux/Unix modules, where a configuration file already exists on the managed node(s), the backup file gets written by default in the same directory as the new, changed file. Network modules do not update configuration files on the managed nodes, because network configuration is not written in files. Network modules write backup files on the control node, usually in the `backup` directory under the playbook root directory.
+Execution on the control node shapes two other differences in how network modules function:
+
+- Network modules do not run every task in a playbook. They request current config first, compare current config to the state described by the task or playbook, and execute a task only if it changes the state of the managed node.
+
+- Network modules that offer a backup option write the backup files onto the control node. With Linux/Unix modules, where a configuration file already exists on the managed node(s), the backup file gets written by default in the same directory as the new, changed file. Network modules do not update configuration files on the managed nodes, because network configuration is not written in files. Network modules write backup files on the control node, in the `backup` directory under the playbook root directory.
 
 Multiple Communication Protocols
 ================================================================================
@@ -19,15 +23,14 @@ Multiple Communication Protocols
 Because network modules execute on the control node instead of on the managed nodes, they can support multiple communication protocols. The communication protocol (XML over SSH, CLI over SSH, API over HTTPS) selected for each network module depends on the platform and the purpose of the module. Some network modules support only one protocol; some offer a choice. The most common protocol is CLI over SSH. You set the communication protocol with the ``ansible_connection`` variable:
 
 .. csv-table::
-   :header: "Value of ansible_connection", "Protocol", "Requires", "Persistent?"
-   :widths: 30, 10, 10, 10
+   :header: "Value of ansible_connection", "Protocol", "Requires"
+   :widths: 30, 10, 10
 
-   "network_cli", "CLI over SSH", "network_os setting", "yes"
-   "netconf", "XML over SSH", "network_os setting", "yes"
-   "httpapi", "API over HTTP/HTTPS", "network_os setting", "yes"
-   "local", "depends on provider", "provider setting", "no"
+   "network_cli", "CLI over SSH", "network_os setting"
+   "netconf", "XML over SSH", "network_os setting"
+   "local", "depends on provider", "provider setting"
 
-Beginning with Ansible 2.6, we recommend using one of the persistent connection types listed above instead of ``local``. With persistent connections, you can define the hosts and credentials only once, rather than in every task. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
+Beginning with Ansible 2.5, we recommend using ``network_cli`` or ``netconf`` for ``ansible_connection`` whenever possible. For details on using API over HTTPS connections, see the :ref:`platform-specific <platform_options>` pages.
 
 
 Modules Organized by Network Platform
@@ -43,15 +46,12 @@ A network platform is a set of network devices with a common operating system th
 All modules within a network platform share certain requirements. Some network platforms have specific differences - see the :ref:`platform-specific <platform_options>` documentation for details.
 
 
-Privilege Escalation: ``enable`` mode, ``become``, and ``authorize``
+Privilege Escalation: `authorize` and `become`
 ================================================================================
 
-Several network platforms support privilege escalation, where certain tasks must be done by a privileged user. On network devices this is called ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. For details of which platforms support ``enable`` mode, with examples of how to use it, see the :ref:`platform-specific <platform_options>` documentation.
+Several network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
 
-Using ``become`` for privilege escalation
------------------------------------------
-
-As of Ansible 2.6, you can use the top-level Ansible parameter ``become: yes`` with ``become_method: enable`` to run a task, play, or playbook with escalated privileges on any network platform that supports privilege escalation. You must use either ``connection: network_cli`` or ``connection: httpapi`` with ``become: yes`` with ``become_method: enable``. If you are using ``network_cli`` to connect Ansible to your network devices, a ``group_vars`` file would look like:
+Network platforms that support ``connection: network_cli`` and privilege escalation use the top-level Ansible parameter ``become: yes`` with ``become_method: enable``. For modules in these platforms, a ``group_vars`` file would look like:
 
 .. code-block:: yaml
 
@@ -60,10 +60,9 @@ As of Ansible 2.6, you can use the top-level Ansible parameter ``become: yes`` w
    ansible_become: yes
    ansible_become_method: enable
 
-Legacy playbooks: ``authorize`` for privilege escalation
------------------------------------------------------------------
+We recommend using ``network_cli`` connections whenever possible. 
 
-If you are running Ansible 2.5 or older, some network platforms support privilege escalation but not ``network_cli`` or ``httpapi`` connections. This includes all platforms in versions 2.4 and older, and HTTPS connections using ``eapi`` in version 2.5. With a ``local`` connection, you must use a ``provider`` dictionary and include ``authorize: yes`` and ``auth_pass: my_enable_password``. For that use case, a ``group_vars`` file looks like:
+Some network platforms support privilege escalation but cannot use ``network_cli`` connections yet. This includes all platforms in older versions of Ansible (< 2.5) and HTTPS connections using ``eapi`` in version 2.5. With these connections, you must use a ``provider`` dictionary and include ``authorize: yes`` and ``auth_pass: my_enable_password``. For that use case, a ``group_vars`` file looks like:
 
 .. code-block:: yaml
 
@@ -77,7 +76,7 @@ If you are running Ansible 2.5 or older, some network platforms support privileg
      transport: eapi
      use_ssl: no
 
-And you use the ``eapi`` variable in your task(s):
+And you use the ``eapi`` variable in your play(s) or task(s):
 
 .. code-block:: yaml
 
@@ -91,7 +90,5 @@ And you use the ``eapi`` variable in your task(s):
          string
        state: present
        provider: "{{ eapi }}"
-
-Note that while Ansible 2.6 supports the use of ``connection: local`` with ``provider`` dictionaries, this usage will be deprecated in future and eventually removed.
 
 For more information, see :ref:`Become and Networks<become-network>`

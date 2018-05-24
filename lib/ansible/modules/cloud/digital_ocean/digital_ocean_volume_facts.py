@@ -21,7 +21,7 @@ module: digital_ocean_volume_facts
 short_description: Gather facts about DigitalOcean volumes
 description:
     - This module can be used to gather facts about DigitalOcean provided volumes.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 options:
   region_name:

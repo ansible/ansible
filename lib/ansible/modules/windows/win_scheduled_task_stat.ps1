@@ -8,8 +8,6 @@
 #Requires -Module Ansible.ModuleUtils.SID
 
 $params = Parse-Args -arguments $args
-$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
-
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str"
 
@@ -17,7 +15,7 @@ $result = @{
     changed = $false
 }
 
-$task_enums = @"
+Add-Type -TypeDefinition @"
 public enum TASK_ACTION_TYPE
 {
     TASK_ACTION_EXEC          = 0,
@@ -68,14 +66,6 @@ public enum TASK_TRIGGER_TYPE2
     TASK_TRIGGER_SESSION_STATE_CHANGE  = 11
 }
 "@
-
-$original_tmp = $env:TMP
-$original_temp = $env:TEMP
-$env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
-Add-Type -TypeDefinition $task_enums
-$env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 Function Get-PropertyValue($task_property, $com, $property) {
     $raw_value = $com.$property

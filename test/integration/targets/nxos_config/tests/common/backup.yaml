@@ -1,5 +1,7 @@
 ---
-- debug: msg="START common/backup.yaml on connection={{ ansible_connection }}"
+- debug: msg="START connection={{ ansible_connection }}/backup.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -12,6 +14,7 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: collect any backup files
   find: &backups
@@ -34,6 +37,7 @@
     parents:
       - "interface {{ intname }}"
     backup: yes
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -50,4 +54,4 @@
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END common/backup.yaml on connection={{ ansible_connection }}"
+- debug: msg="END connection={{ ansible_connection }}/backup.yaml"

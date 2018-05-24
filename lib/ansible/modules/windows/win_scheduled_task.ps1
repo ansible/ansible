@@ -14,7 +14,6 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
-$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
@@ -83,7 +82,7 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-$task_enums = @"
+Add-Type -TypeDefinition @"
 public enum TASK_ACTION_TYPE // https://msdn.microsoft.com/en-us/library/windows/desktop/aa383553(v=vs.85).aspx
 {
     TASK_ACTION_EXEC          = 0,
@@ -136,14 +135,6 @@ public enum TASK_TRIGGER_TYPE2 // https://msdn.microsoft.com/en-us/library/windo
     TASK_TRIGGER_SESSION_STATE_CHANGE  = 11
 }
 "@
-
-$original_tmp = $env:TMP
-$original_temp = $env:TEMP
-$env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
-Add-Type -TypeDefinition $task_enums
-$env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 ########################
 ### HELPER FUNCTIONS ###

@@ -36,10 +36,6 @@ class YamllintTest(SanitySingleVersion):
 
             [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
              os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/plugins/')],
-
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
              i.path.startswith('lib/ansible/modules/')],
 
             [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and

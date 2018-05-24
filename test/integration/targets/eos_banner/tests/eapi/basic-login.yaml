@@ -1,5 +1,4 @@
 ---
-- debug: msg="START eapi/basic-login.yaml on connection={{ ansible_connection }}"
 
 - name: Remove previous login banner
   eos_config:
@@ -7,7 +6,7 @@
     authorize: yes
     provider: "{{ eapi }}"
 
-- name: Create login banner
+- name: Set login
   eos_banner:
     banner: login
     text: |
@@ -22,11 +21,12 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'banner login' in result.commands[0]" # does this break due to "contains?"
+      - "result.commands.0.cmd == 'banner login'"
+      - "result.commands.0.input == 'this is my login banner\nthat has a multiline\nstring'"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: Create login banner again (idempotent)
+- name: Set login again (idempotent)
   eos_banner:
     banner: login
     text: |
@@ -60,7 +60,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'no banner login' in result.commands" # does this break due to "contains?"
+      - "result.commands.0.cmd == 'no banner login'"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 

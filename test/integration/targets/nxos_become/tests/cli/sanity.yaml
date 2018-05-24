@@ -10,6 +10,7 @@
         - username admin role priv-14
         - no username admin role priv-15
         - enable secret 0 cisco
+      provider: "{{ cli }}"
 
   - name: reset_connection
     meta: reset_connection
@@ -17,6 +18,7 @@
   - name: run commands with become
     nxos_command:
       commands: 'show privilege'
+      provider: "{{ cli }}"
     become: yes
     register: result
   
@@ -31,6 +33,7 @@
         - username admin role priv-15
         - no username admin role priv-14
         - no enable secret
+      provider: "{{ cli }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }}/sanity.yaml" 

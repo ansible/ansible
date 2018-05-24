@@ -22,7 +22,7 @@ short_description: Gather facts about DigitalOcean images
 description:
     - This module can be used to gather facts about DigitalOcean provided images.
     - These images can be either of type C(distribution), C(application) and C(private).
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 options:
   image_type:

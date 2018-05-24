@@ -7,6 +7,7 @@
   nxos_feature:
     feature: ospf
     state: enabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -14,6 +15,7 @@
     nxos_ospf: &config
       ospf: 1
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -33,6 +35,7 @@
     nxos_feature:
       feature: ospf
       state: disabled
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   always:
@@ -40,6 +43,7 @@
     nxos_ospf: &unconfig
       ospf: 1
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

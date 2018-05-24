@@ -1,13 +1,14 @@
 ---
-- debug: msg="START eapi/equal.yaml on connection={{ ansible_connection }}"
+- debug: msg="START eapi/equal.yaml"
 
 - name: test eq operator
   eos_command:
     commands:
       - show version
-      - show interfaces Management1 | json
+      - show interfaces Management1
     wait_for:
       - "result[1].interfaces.Management1.name eq Management1"
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -19,9 +20,10 @@
   eos_command:
     commands:
       - show version
-      - show interfaces Management1 | json
+      - show interfaces Management1
     wait_for:
       - "result[1].interfaces.Management1.name == Management1"
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -29,4 +31,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END eapi/equal.yaml on connection={{ ansible_connection }}"
+- debug: msg="END eapi/equal.yaml"

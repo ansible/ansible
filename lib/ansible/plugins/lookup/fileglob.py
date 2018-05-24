@@ -17,8 +17,7 @@ DOCUMENTATION = """
         description: path(s) of files to read
         required: True
     notes:
-      - Patterns are only supported on files, not directory/paths.
-      - Matching is against local system files.
+      - Patterns ore only supported on files, not directory/paths.
 """
 
 EXAMPLES = """

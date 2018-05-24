@@ -578,6 +578,7 @@ class Base(FieldAttributeBase):
     # flags and misc. settings
     _environment = FieldAttribute(isa='list', extend=True, prepend=True)
     _no_log = FieldAttribute(isa='bool')
+    _always_run = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')

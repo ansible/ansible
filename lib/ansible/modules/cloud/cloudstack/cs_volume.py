@@ -245,12 +245,11 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                 'zoneid': self.get_zone(key='id'),
                 'displayvolume': self.module.params.get('display_volume'),
                 'type': 'DATADISK',
-                'fetch_list': True,
             }
             volumes = self.query_api('listVolumes', **args)
             if volumes:
                 volume_name = self.module.params.get('name')
-                for v in volumes:
+                for v in volumes['volume']:
                     if volume_name.lower() == v['name'].lower():
                         self.volume = v
                         break

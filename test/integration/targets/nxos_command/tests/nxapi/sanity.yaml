@@ -1,16 +1,20 @@
 ---
-- debug: msg="START nxapi/sanity.yaml on connection={{ ansible_connection }}"
+- debug: msg="START TRANSPORT:NXAPI nxos_command sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
     state: disabled
+    provider: "{{ nxapi }}"
 
 - block:
   - name: "Run show running-config bgp - should fail"
     nxos_command:
       commands:
         - sh running-config bgp
+      provider: "{{ nxapi }}"
     ignore_errors: yes
     register: result
 
@@ -22,12 +26,14 @@
     nxos_feature:
       feature: bgp
       state: enabled
+      provider: "{{ nxapi }}"
 
   - name: "Configure BGP defaults"
     nxos_bgp: &configure_default
       asn: 65535
       router_id: 1.1.1.1
       state: present
+      provider: "{{ nxapi }}"
     register: result
 
   - assert: &true
@@ -37,7 +43,10 @@
   - name: "Run show running-config bgp - should pass"
     nxos_command:
       commands: 
-        - sh running-config bgp
+        - command: sh running-config bgp
+          output: text
+      provider: "{{ nxapi }}"
+      timeout: 120
     register: result
 
   - assert:
@@ -49,6 +58,7 @@
     nxos_command:
       commands:
         - show interface bief
+      provider: "{{ nxapi }}"
     ignore_errors: yes
     register: result
 
@@ -62,5 +72,6 @@
     nxos_feature:
       feature: bgp
       state: disabled
+      provider: "{{ nxapi }}"
 
-- debug: msg="END nxapi/sanity.yaml on connection={{ ansible_connection }}"
+  - debug: msg="END TRANSPORT:NXAPI nxos_command sanity test"

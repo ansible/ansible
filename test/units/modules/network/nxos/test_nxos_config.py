@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible

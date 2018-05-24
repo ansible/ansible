@@ -192,12 +192,11 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             args = {
                 'listall': True,
                 'domainid': self.get_domain(key='id'),
-                'fetch_list': True,
             }
             accounts = self.query_api('listAccounts', **args)
             if accounts:
                 account_name = self.module.params.get('name')
-                for a in accounts:
+                for a in accounts['account']:
                     if account_name == a['name']:
                         self.account = a
                         break

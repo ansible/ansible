@@ -9,9 +9,6 @@
 
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args $args -supports_check_mode $true
-$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
-
 $session_util = @'
 using System;
 using System.Collections;
@@ -783,14 +780,7 @@ namespace Ansible
 }
 '@
 
-$original_tmp = $env:TMP
-$original_temp = $env:TEMP
-$env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $session_util
-$env:TMP = $original_tmp
-$env:TEMP = $original_temp
-
 $session_info = [Ansible.SessionUtil]::GetSessionInfo()
 
 Function Convert-Value($value) {

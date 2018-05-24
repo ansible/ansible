@@ -80,7 +80,8 @@ EXAMPLES = '''
   zfs:
     name: rpool/cloned_fs
     state: present
-    origin: rpool/myfs@mysnapshot
+    extra_zfs_properties:
+      origin: rpool/myfs@mysnapshot
 
 - name: Destroy a filesystem
   zfs:
@@ -143,7 +144,9 @@ class Zfs(object):
             self.changed = True
             return
         properties = self.properties
-        origin = self.module.params.get('origin', None)
+        volsize = properties.pop('volsize', None)
+        volblocksize = properties.pop('volblocksize', None)
+        origin = properties.pop('origin', None)
         cmd = [self.zfs_cmd]
 
         if "@" in self.name:
@@ -158,15 +161,14 @@ class Zfs(object):
         if action in ['create', 'clone']:
             cmd += ['-p']
 
+        if volsize:
+            cmd += ['-V', volsize]
+        if volblocksize:
+            cmd += ['-b', volblocksize]
         if properties:
             for prop, value in properties.items():
-                if prop == 'volsize':
-                    cmd += ['-V', value]
-                elif prop == 'volblocksize':
-                    cmd += ['-b', value]
-                else:
-                    cmd += ['-o', '%s="%s"' % (prop, value)]
-        if origin and action == 'clone':
+                cmd += ['-o', '%s="%s"' % (prop, value)]
+        if origin:
             cmd.append(origin)
         cmd.append(self.name)
         (rc, out, err) = self.module.run_command(' '.join(cmd))
@@ -226,9 +228,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
-            origin=dict(type='str', default=None),
-            # createparent is meaningless after 2.3, but this shouldn't
-            # be removed until check_invalid_arguments is.
+            # No longer used. Deprecated and due for removal
             createparent=dict(type='bool', default=None),
             extra_zfs_properties=dict(type='dict', default={}),
         ),
@@ -237,11 +237,8 @@ def main():
         check_invalid_arguments=False,
     )
 
-    state = module.params.get('state')
-    name = module.params.get('name')
-
-    if module.params.get('origin') and '@' in name:
-        module.fail_json(msg='cannot specify origin when operating on a snapshot')
+    state = module.params.pop('state')
+    name = module.params.pop('name')
 
     # The following is deprecated.  Remove in Ansible 2.9
     # Get all valid zfs-properties
@@ -265,7 +262,7 @@ def main():
         for prop, value in module.params['extra_zfs_properties'].items():
             properties[prop] = value
 
-        module.params['extra_zfs_properties'] = properties
+        module.params['extras_zfs_properties'] = properties
     # End deprecated section
 
     # Reverse the boolification of zfs properties

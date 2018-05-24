@@ -141,13 +141,12 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             path = "root/" + path
 
         args = {
-            'listall': True,
-            'fetch_list': True,
+            'listall': True
         }
 
         domains = self.query_api('listDomains', **args)
         if domains:
-            for d in domains:
+            for d in domains['domain']:
                 if path == d['path'].lower():
                     return d
         return None

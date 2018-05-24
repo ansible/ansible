@@ -7,6 +7,7 @@
   nxos_feature:
     feature: ospf
     state: enabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -23,6 +24,7 @@
       vrf: test
       passive_interface: true
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -48,6 +50,7 @@
       vrf: default
       passive_interface: true
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -68,6 +71,7 @@
       passive_interface: false
       vrf: default
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -83,6 +87,7 @@
       ospf: 2
       vrf: default
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -98,6 +103,7 @@
       ospf: 1
       vrf: test
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -113,6 +119,7 @@
     nxos_feature:
       feature: ospf
       state: disabled
+      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_ospf_vrf sanity test"

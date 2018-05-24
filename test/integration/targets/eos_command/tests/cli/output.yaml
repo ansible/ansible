@@ -4,6 +4,7 @@
 - name: get output for single command
   eos_command:
     commands: ['show version']
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -16,6 +17,7 @@
     commands:
       - show version
       - show interfaces
+    provider: "{{ cli }}"
   register: result
 
 - assert:

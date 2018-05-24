@@ -58,13 +58,6 @@ options:
     - Override the path to the gem executable
     required: false
     version_added: "1.4"
-  install_dir:
-    description:
-    - Install the gems into a specific directory.
-      These gems will be independant from the global installed ones.
-      Specifying this requires user_install to be false.
-    required: false
-    version_added: "2.6"
   env_shebang:
     description:
       - Rewrite the shebang line on installed scripts to use /usr/bin/env.
@@ -140,12 +133,6 @@ def get_rubygems_version(module):
     return tuple(int(x) for x in match.groups())
 
 
-def get_rubygems_environ(module):
-    if module.params['install_dir']:
-        return {'GEM_HOME': module.params['install_dir']}
-    return None
-
-
 def get_installed_versions(module, remote=False):
 
     cmd = get_rubygems_path(module)
@@ -156,9 +143,7 @@ def get_installed_versions(module, remote=False):
             cmd.extend(['--source', module.params['repository']])
     cmd.append('-n')
     cmd.append('^%s$' % module.params['name'])
-
-    environ = get_rubygems_environ(module)
-    (rc, out, err) = module.run_command(cmd, environ_update=environ, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
     installed_versions = []
     for line in out.splitlines():
         match = re.match(r"\S+\s+\((.+)\)", line)
@@ -170,6 +155,7 @@ def get_installed_versions(module, remote=False):
 
 
 def exists(module):
+
     if module.params['state'] == 'latest':
         remoteversions = get_installed_versions(module, remote=True)
         if remoteversions:
@@ -189,18 +175,14 @@ def uninstall(module):
     if module.check_mode:
         return
     cmd = get_rubygems_path(module)
-    environ = get_rubygems_environ(module)
     cmd.append('uninstall')
-    if module.params['install_dir']:
-        cmd.extend(['--install-dir', module.params['install_dir']])
-
     if module.params['version']:
         cmd.extend(['--version', module.params['version']])
     else:
         cmd.append('--all')
         cmd.append('--executable')
     cmd.append(module.params['name'])
-    module.run_command(cmd, environ_update=environ, check_rc=True)
+    module.run_command(cmd, check_rc=True)
 
 
 def install(module):
@@ -229,8 +211,6 @@ def install(module):
         cmd.append('--user-install')
     else:
         cmd.append('--no-user-install')
-    if module.params['install_dir']:
-        cmd.extend(['--install-dir', module.params['install_dir']])
     if module.params['pre_release']:
         cmd.append('--pre')
     if not module.params['include_doc']:
@@ -258,7 +238,6 @@ def main():
             repository=dict(required=False, aliases=['source'], type='str'),
             state=dict(required=False, default='present', choices=['present', 'absent', 'latest'], type='str'),
             user_install=dict(required=False, default=True, type='bool'),
-            install_dir=dict(required=False, type='path'),
             pre_release=dict(required=False, default=False, type='bool'),
             include_doc=dict(required=False, default=False, type='bool'),
             env_shebang=dict(required=False, default=False, type='bool'),
@@ -273,8 +252,6 @@ def main():
         module.fail_json(msg="Cannot specify version when state=latest")
     if module.params['gem_source'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot maintain state=latest when installing from local source")
-    if module.params['user_install'] and module.params['install_dir']:
-        module.fail_json(msg="install_dir requires user_install=false")
 
     if not module.params['gem_source']:
         module.params['gem_source'] = module.params['name']

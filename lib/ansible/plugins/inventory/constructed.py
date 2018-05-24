@@ -19,7 +19,7 @@ DOCUMENTATION = '''
       - constructed
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
     # inventory.config file in YAML format
     plugin: constructed
     strict: False

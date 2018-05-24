@@ -21,7 +21,7 @@ module: digital_ocean_load_balancer_facts
 short_description: Gather facts about DigitalOcean load balancers
 description:
     - This module can be used to gather facts about DigitalOcean provided load balancers.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 options:
   load_balancer_id:

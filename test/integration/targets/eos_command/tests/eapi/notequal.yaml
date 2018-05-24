@@ -1,13 +1,14 @@
 ---
-- debug: msg="START eapi/notequal.yaml on connection={{ ansible_connection }}"
+- debug: msg="START eapi/notequal.yaml"
 
 - name: test neq operator
   eos_command:
     commands:
       - show version
-      - show interfaces Management1 | json
+      - show interfaces Management1
     wait_for:
       - "result[1].interfaces.Management1.name neq Ethernet"
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -19,9 +20,10 @@
   eos_command:
     commands:
       - show version
-      - show interfaces Management1 | json
+      - show interfaces Management1
     wait_for:
       - "result[1].interfaces.Management1.name != Ethernet"
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -29,4 +31,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END eapi/notequal.yaml on connection={{ ansible_connection }}"
+- debug: msg="END eapi/notequal.yaml"

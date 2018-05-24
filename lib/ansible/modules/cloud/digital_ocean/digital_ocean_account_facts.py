@@ -21,7 +21,7 @@ module: digital_ocean_account_facts
 short_description: Gather facts about DigitalOcean User account
 description:
     - This module can be used to gather facts about User account.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 
 requirements:

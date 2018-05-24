@@ -13,6 +13,7 @@
     before: no ip access-list test
     after: exit
     match: none
+    provider: "{{ eapi }}"
 
 - name: configure sub level command using exact match
   eos_config:
@@ -25,6 +26,7 @@
     parents: ip access-list test
     after: exit
     match: exact
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -47,6 +49,7 @@
     before: no ip access-list test
     parents: ip access-list test
     match: exact
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
@@ -57,5 +60,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
+    provider: "{{ eapi }}"
 
 - debug: msg="END eapi/sublevel_exact.yaml"

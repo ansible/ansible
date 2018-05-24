@@ -18,7 +18,7 @@ module: digital_ocean_certificate
 short_description: Manage certificates in DigitalOcean.
 description:
     - Create, Retrieve and remove certificates DigitalOcean.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.5"
 options:
   name:

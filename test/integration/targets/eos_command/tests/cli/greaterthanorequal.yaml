@@ -8,6 +8,7 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.mtu ge 0"
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -22,6 +23,7 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.mtu >= 0"
+    provider: "{{ cli }}"
   register: result
 
 - assert:

@@ -6,6 +6,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.256
      parents: interface Loopback911
+     provider: "{{ cli }}"
   become: yes
   check_mode: 1
   environment:
@@ -24,6 +25,7 @@
     before:
       - "no ip access-list test"
     src: basic/cmds.j2
+    provider: "{{ cli }}"
   become: yes
   check_mode: yes
   register: config
@@ -32,6 +34,7 @@
   eos_command:
     commands:
       - show configuration sessions | json
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -44,6 +47,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.256
      parents: interface Loopback911
+     provider: "{{ cli }}"
   become: yes
   check_mode: 1
   environment:
@@ -60,6 +64,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.255
      parents: interface Loopback911
+     provider: "{{ cli }}"
   become: yes
   check_mode: yes
   register: result

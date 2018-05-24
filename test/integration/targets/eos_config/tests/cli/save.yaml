@@ -9,12 +9,14 @@
     parents:
       - interface Ethernet2
     match: none
+    provider: "{{ cli }}"
   become: yes
 
 
 - name: save config always
   eos_config:
     save_when: always
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -25,6 +27,7 @@
 - name: save always again (not idempotent)
   eos_config:
     save_when: always
+    provider: "{{ cli }}"
   become: yes
   register: result
 

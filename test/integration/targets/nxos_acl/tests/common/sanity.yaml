@@ -11,6 +11,7 @@
     name: TEST_ACL
     seq: 10
     state: delete_acl
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Configure ACE10"
@@ -37,6 +38,7 @@
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: &true
@@ -75,6 +77,7 @@
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -92,6 +95,7 @@
     action: remark
     remark: test_remark
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -109,6 +113,7 @@
     action: remark
     remark: changed_remark
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -130,6 +135,7 @@
     fragments: enable
     precedence: network
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -150,6 +156,7 @@
     dest: any
     precedence: network
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -172,6 +179,7 @@
     dest: any
     precedence: network
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -192,6 +200,7 @@
     dest: any
     precedence: network
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true
@@ -207,6 +216,7 @@
     name: TEST_ACL
     seq: 30
     state: absent
+    provider: "{{ connection }}"
   register: result
 
 - assert: *true

@@ -11,7 +11,6 @@ DOCUMENTATION = """
     requirements:
       - CyberArk AIM tool installed
     description:
-      - Get secrets from CyberArk AIM.
     options :
       _command:
         description: Cyberark CLI utility.

@@ -13,6 +13,7 @@
     before: no ip access-list test
     after: exit
     match: none
+    provider: "{{ cli }}"
   become: yes
 
 - name: configure sub level command using strict match
@@ -27,6 +28,7 @@
     after: exit
     match: strict
     replace: block
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -49,6 +51,7 @@
       - 40 permit ip host 4.4.4.4 any log
     parents: ip access-list test
     match: strict
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -60,6 +63,7 @@
   eos_config:
     lines: no ip access-list test
     match: none
+    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/sublevel_strict.yaml on connection={{ ansible_connection }}"

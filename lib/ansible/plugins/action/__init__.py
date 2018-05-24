@@ -246,13 +246,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
-        # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
-        # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
-        # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
-        if getattr(self._connection, '_remote_is_local', False):
-            tmpdir = C.DEFAULT_LOCAL_TMP
-        else:
-            tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
+        tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
@@ -574,16 +568,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         expand_path = split_path[0]
 
         if expand_path == '~':
-            # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
-            # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
-            # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
-            if getattr(self._connection, '_remote_is_local', False):
-                pass
-            elif sudoable and self._play_context.become and self._play_context.become_user:
+            if sudoable and self._play_context.become and self._play_context.become_user:
                 expand_path = '~%s' % self._play_context.become_user
             else:
                 # use remote user instead, if none set default to current user
-                expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
+                expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)

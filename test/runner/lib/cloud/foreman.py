@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Foreman plugin for integration tests."""
 
 from __future__ import absolute_import, print_function

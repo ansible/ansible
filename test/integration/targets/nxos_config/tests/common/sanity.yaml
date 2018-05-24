@@ -1,12 +1,15 @@
 ---
-- debug: msg="START common/sanity.yaml on connection={{ ansible_connection }}"
+- debug: msg="START connection={{ ansible_connection }} nxos_config sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
     lines: ip access-list test
+    provider: "{{ connection }}"
     match: none
 
-- name: "nxos_config sanity test"
+- name: "TRANSPORT:CLI nxos_config sanity test"
   nxos_config:
     lines:
       - 10 permit ip 1.1.1.1/32 any log
@@ -17,8 +20,9 @@
     parents: ip access-list test
     before: no ip access-list test
     match: exact
+    provider: "{{ connection }}"
 
-- name: "nxos_config sanity test - replace block"
+- name: "TRANSPORT:CLI nxos_config sanity test - replace block"
   nxos_config:
     lines:
       - 10 permit ip 1.1.1.1/32 any log
@@ -28,10 +32,12 @@
     parents: ip access-list test
     before: no ip access-list test
     replace: block
+    provider: "{{ connection }}"
 
 - name: teardown
   nxos_config:
     lines: no ip access-list test
+    provider: "{{ connection }}"
     match: none
 
-- debug: msg="END common/sanity.yaml on connection={{ ansible_connection }}"
+- debug: msg="END connection={{ ansible_connection }} nxos_config sanity test"

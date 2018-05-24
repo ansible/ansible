@@ -5,6 +5,7 @@
   nxos_banner: &remove
     banner: motd
     state: absent
+    provider: "{{ nxapi }}"
 
 - name: Set motd
   nxos_banner: &motd
@@ -14,6 +15,7 @@
       that has a multiline
       string
     state: present
+    provider: "{{ nxapi }}"
   register: result
 
 - assert:

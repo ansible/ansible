@@ -22,13 +22,12 @@ description:
 author:
     - Andy Hill (@andyhky)
     - Tim Rupp
-    - Robin Lee (@cheese)
 options: {}
 '''
 
 EXAMPLES = '''
 - name: Gather facts from xenserver
-  xenserver_facts:
+  xenserver:
 
 - name: Print running VMs
   debug:
@@ -92,8 +91,11 @@ def get_xenapi_session():
 
 def get_networks(session):
     recs = session.xenapi.network.get_all_records()
-    networks = change_keys(recs, key='name_label')
-    return networks
+    xs_networks = {}
+    networks = change_keys(recs, key='uuid')
+    for network in networks.values():
+        xs_networks[network['name_label']] = network
+    return xs_networks
 
 
 def get_pifs(session):
@@ -130,13 +132,6 @@ def change_keys(recs, key='uuid', filter_func=None):
         if filter_func is not None and not filter_func(rec):
             continue
 
-        for param_name, param_value in rec.items():
-            # param_value may be of type xmlrpc.client.DateTime,
-            # which is not simply convertable to str.
-            # Use 'value' attr to get the str value,
-            # following an example in xmlrpc.client.DateTime document
-            if hasattr(param_value, "value"):
-                rec[param_name] = param_value.value
         new_recs[rec[key]] = rec
         new_recs[rec[key]]['ref'] = ref
 
@@ -151,19 +146,26 @@ def get_host(session):
 
 
 def get_vms(session):
-    recs = session.xenapi.VM.get_all_records()
+    xs_vms = {}
+    recs = session.xenapi.VM.get_all()
     if not recs:
         return None
-    vms = change_keys(recs, key='name_label')
-    return vms
+
+    vms = change_keys(recs, key='uuid')
+    for vm in vms.values():
+        xs_vms[vm['name_label']] = vm
+    return xs_vms
 
 
 def get_srs(session):
-    recs = session.xenapi.SR.get_all_records()
+    xs_srs = {}
+    recs = session.xenapi.SR.get_all()
     if not recs:
         return None
-    srs = change_keys(recs, key='name_label')
-    return srs
+    srs = change_keys(recs, key='uuid')
+    for sr in srs.values():
+        xs_srs[sr['name_label']] = sr
+    return xs_srs
 
 
 def main():
@@ -202,7 +204,7 @@ def main():
     if xs_srs:
         data['xs_srs'] = xs_srs
 
-    module.exit_json(ansible_facts=data)
+    module.exit_json(ansible=data)
 
 
 if __name__ == '__main__':

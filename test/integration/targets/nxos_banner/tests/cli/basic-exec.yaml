@@ -6,6 +6,7 @@
       nxos_banner: &remove
         banner: exec
         state: absent
+        provider: "{{ cli }}"
 
     - name: Set exec
       nxos_banner: &exec
@@ -15,6 +16,7 @@
           that has a multiline
           string
         state: present
+        provider: "{{ cli }}"
       register: result
 
     - assert:

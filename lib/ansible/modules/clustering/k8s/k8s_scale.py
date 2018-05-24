@@ -21,9 +21,7 @@ short_description: Set a new size for a Deployment, ReplicaSet, Replication Cont
 
 version_added: "2.5"
 
-author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Fabian von Feilitzsch (@fabianvf)"
+author: "Chris Houseknecht (@chouseknecht)"
 
 description:
   - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicatSet,
@@ -37,7 +35,7 @@ extends_documentation_fragment:
 
 requirements:
     - "python >= 2.7"
-    - "openshift >= 0.6"
+    - "openshift == 0.4.3"
     - "PyYAML >= 3.11"
 '''
 

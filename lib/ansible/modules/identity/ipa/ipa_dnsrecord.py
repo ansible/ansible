@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_dnsrecord
-author: Abhijeet Kasurde (@Akasurde)
+author: Abhijeet Kasurde (@akasurde)
 short_description: Manage FreeIPA DNS records
 description:
 - Add, modify and delete an IPA DNS Record using IPA API.

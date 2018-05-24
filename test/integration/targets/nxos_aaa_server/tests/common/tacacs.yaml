@@ -7,6 +7,7 @@
   nxos_feature:
     feature: tacacs+
     state: enabled
+    provider: "{{ connection }}"
 
 - name: "Setup"
   nxos_aaa_server: &remove
@@ -15,6 +16,7 @@
     server_timeout: default
     directed_request: default
     state: default
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -22,6 +24,7 @@
     nxos_aaa_server: &configure_default_tacacs
       server_type: tacacs
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - name: "Check Idempotence"
@@ -39,6 +42,7 @@
       deadtime: 20
       directed_request: enabled
       state: present
+      provider: "{{ connection }}"
     register: result
   
   - assert: &true
@@ -63,6 +67,7 @@
       encrypt_type: 7
       global_key: test_key
       state: present
+      provider: "{{ connection }}"
     register: result
    
   - assert: *true
@@ -81,6 +86,7 @@
       global_key: default
       directed_request: default
       state: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -105,5 +111,6 @@
     nxos_feature:
       feature: tacacs+
       state: disabled
+      provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server tacacs.yaml sanity test"

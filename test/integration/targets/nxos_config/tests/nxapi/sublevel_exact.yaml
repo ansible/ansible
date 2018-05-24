@@ -10,6 +10,7 @@
       - 40 permit ip 4.4.4.4/32 any log
       - 50 permit ip 5.5.5.5/32 any log
     parents: ip access-list test
+    provider: "{{ nxapi }}"
     match: none
   ignore_errors: yes
 
@@ -24,6 +25,7 @@
     before: no ip access-list test
     match: exact
     replace: block
+    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -45,6 +47,7 @@
       - 40 permit ip 4.4.4.4/32 any log
     parents: ip access-list test
     match: exact
+    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -54,6 +57,7 @@
 - name: teardown
   nxos_config:
     lines: no ip access-list test
+    provider: "{{ nxapi }}"
     match: none
 
 - debug: msg="END nxapi/sublevel_exact.yaml"

@@ -153,12 +153,11 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
             args = {
                 'account': self.get_account(key='name'),
-                'domainid': self.get_domain(key='id'),
-                'fetch_list': True,
+                'domainid': self.get_domain(key='id')
             }
             projects = self.query_api('listProjects', **args)
             if projects:
-                for p in projects:
+                for p in projects['project']:
                     if project.lower() in [p['name'].lower(), p['id']]:
                         self.project = p
                         break

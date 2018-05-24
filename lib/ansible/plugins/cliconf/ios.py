@@ -72,7 +72,6 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def edit_config(self, command):
-        results = []
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
             if isinstance(cmd, dict):
                 command = cmd['command']
@@ -85,8 +84,7 @@ class Cliconf(CliconfBase):
                 answer = None
                 newline = True
 
-            results.append(self.send_command(command, prompt, answer, False, newline))
-        return results[1:-1]
+            self.send_command(command, prompt, answer, False, newline)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)

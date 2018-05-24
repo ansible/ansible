@@ -5,10 +5,11 @@
   eos_command:
     commands:
       - show version
-      - show interfaces Management1 | json
+      - show interface Management1 | json
     wait_for:
       - "result[0] contains EOS"
       - "result[1].interfaces.Management1.name contains Manage"
+    provider: "{{ cli }}"
   register: result
 
 - assert:

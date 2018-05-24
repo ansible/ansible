@@ -21,7 +21,7 @@ module: digital_ocean_certificate_facts
 short_description: Gather facts about DigitalOcean certificates
 description:
     - This module can be used to gather facts about DigitalOcean provided certificates.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 options:
   certificate_id:

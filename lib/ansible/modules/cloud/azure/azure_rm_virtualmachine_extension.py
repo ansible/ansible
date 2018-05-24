@@ -45,6 +45,7 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
+        default: resource_group location
         required: false
     virtual_machine_name:
         description:
@@ -74,7 +75,6 @@ options:
         description:
             - Whether the extension handler should be automatically upgraded across minor versions.
         required: false
-        type: bool
 
 extends_documentation_fragment:
     - azure

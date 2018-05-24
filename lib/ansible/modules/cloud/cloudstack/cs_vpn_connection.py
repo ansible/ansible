@@ -206,14 +206,13 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
-            'projectid': self.get_project(key='id'),
-            'fetch_list': True,
+            'projectid': self.get_project(key='id')
         }
 
         vpn_customer_gateway = identifier or self.module.params.get('vpn_customer_gateway')
         vcgws = self.query_api('listVpnCustomerGateways', **args)
         if vcgws:
-            for vcgw in vcgws:
+            for vcgw in vcgws['vpncustomergateway']:
                 if vpn_customer_gateway.lower() in [vcgw['id'], vcgw['name'].lower()]:
                     self.vpn_customer_gateway = vcgw
                     return self._get_by_key(key, self.vpn_customer_gateway)

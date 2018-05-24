@@ -213,19 +213,23 @@ module.
 Become and Networks
 ===================
 
-As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all :ref:`Ansible-maintained platforms<network_supported>` that support ``enable`` mode: `eos``, ``ios``, and ``nxos``. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
-You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+network_cli and become
+----------------------
 
-You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
+Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
 
-If you see this error message, the task that generated it requires ``enable`` mode to succeed:
+This functionality requires the host connection type to be using ``connection: network_cli``. In Ansible 2.5 this is limited to ``eos`` and ``ios``.
+
+This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
+
+If a task fails with the following then it's an indicator that `enable` mode is required:
 
 .. code-block:: console
 
    Invalid input (privileged mode required)
 
-To set ``enable`` mode for a specific task, add ``become`` at the task level:
+The following example shows how to set enable mode for a specific task:
 
 .. code-block:: yaml
 
@@ -236,7 +240,7 @@ To set ``enable`` mode for a specific task, add ``become`` at the task level:
      become: yes
      become_method: enable
 
-To set enable mode for all tasks in a single play, add ``become`` at the play level:
+The following example shows how to set enable mode for `all` tests in this play:
 
 .. code-block:: yaml
 
@@ -252,7 +256,7 @@ To set enable mode for all tasks in a single play, add ``become`` at the play le
 Setting enable mode for all tasks
 ---------------------------------
 
-Often you wish for all tasks in all plays to run using privilege mode, that is best achieved by using ``group_vars``:
+Often you wish for all tasks to run using privilege mode, that is best achieved by using ``group_vars``:
 
 **group_vars/eos.yml**
 
@@ -268,19 +272,22 @@ Often you wish for all tasks in all plays to run using privilege mode, that is b
 Passwords for enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you need a password to enter ``enable`` mode, you can specify it in one of two ways:
+If a password is required to enter enable mode this can be specified by doing one of the following:
 
 * providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
 * setting the ``ansible_become_pass`` connection variable
 
 .. warning::
 
-   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
+   As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
+
+
+.. _become-network-auth-and-auth-password:
 
 authorize and auth_pass
 -----------------------
 
-Ansible still supports ``enable`` mode with ``connection: local`` for legacy playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
+For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
 
 .. code-block:: yaml
 
@@ -295,7 +302,7 @@ Ansible still supports ``enable`` mode with ``connection: local`` for legacy pla
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+Note that over time more platforms will move to support ``become``. Check the :ref:`network_modules` for details.
 
 .. _become-windows:
 

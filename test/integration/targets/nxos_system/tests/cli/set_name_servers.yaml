@@ -2,12 +2,13 @@
 - debug: msg="START cli/set_name_servers.yaml"
 
 - name: setup
-  nxos_config: &reset
+  nxos_config:
     lines:
       - no ip name-server 1.1.1.1
       - no ip name-server 2.2.2.2
       - no ip name-server 3.3.3.3
     match: none
+    provider: "{{ cli }}"
 
 - name: configure name_servers
   nxos_system:
@@ -15,6 +16,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -30,6 +32,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -42,6 +45,7 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
+#    provider: "{{ cli }}"
 #  register: result
 
 #- assert:
@@ -57,6 +61,7 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
+#    provider: "{{ cli }}"
 #  register: result
 #
 #- assert:
@@ -68,6 +73,7 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -76,25 +82,13 @@
       - result.commands|length == 1
       - "'no ip name-server 3.3.3.3' in result.commands"
 
-- name: default name server
-  nxos_system: &defns
-    name_servers: default
-  register: result
-
-- assert:
-    that:
-      - result.changed == true
-
-- name: Idempotent check
-  nxos_system: *defns
-  register: result
-
-- assert:
-    that:
-      - result.changed == false
-
 - name: teardown
-  nxos_config: *reset
+  nxos_config:
+    lines:
+      - no ip lookup source-interface
+    match: none
+    provider: "{{ cli }}"
   ignore_errors: yes
+  # FIXME Copied from iosxr, not sure what we need here
 
 - debug: msg="END cli/set_name_servers.yaml"

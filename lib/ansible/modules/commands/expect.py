@@ -45,8 +45,7 @@ options:
     required: true
   timeout:
     description:
-      - Amount of time in seconds to wait for the expected strings. Use
-        C(null) to disable timeout.
+      - Amount of time in seconds to wait for the expected strings.
     default: 30
   echo:
     description:

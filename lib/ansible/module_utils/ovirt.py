@@ -135,12 +135,8 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
-    url = auth.get('url')
-    if url is None and auth.get('hostname') is not None:
-        url = 'https://{0}/ovirt-engine/api'.format(auth.get('hostname'))
-
     return sdk.Connection(
-        url=url,
+        url=auth.get('url'),
         username=auth.get('username'),
         password=auth.get('password'),
         ca_file=auth.get('ca_file', None),
@@ -342,7 +338,6 @@ def wait(
 
 def __get_auth_dict():
     OVIRT_URL = os.environ.get('OVIRT_URL')
-    OVIRT_HOSTNAME = os.environ.get('OVIRT_HOSTNAME')
     OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
     OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
     OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
@@ -350,8 +345,6 @@ def __get_auth_dict():
     OVIRT_INSECURE = OVIRT_CAFILE is None
 
     env_vars = None
-    if OVIRT_URL is None and OVIRT_HOSTNAME is not None:
-        OVIRT_URL = 'https://{0}/ovirt-engine/api'.format(OVIRT_HOSTNAME)
     if OVIRT_URL and ((OVIRT_USERNAME and OVIRT_PASSWORD) or OVIRT_TOKEN):
         env_vars = {
             'url': OVIRT_URL,

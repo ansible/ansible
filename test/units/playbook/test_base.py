@@ -114,6 +114,8 @@ class TestBase(unittest.TestCase):
         data = {'no_log': False,
                 'remote_user': None,
                 'vars': self.assorted_vars,
+                # 'check_mode': False,
+                'always_run': False,
                 'environment': [],
                 'run_once': False,
                 'connection': None,

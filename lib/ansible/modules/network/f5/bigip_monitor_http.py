@@ -201,23 +201,22 @@ class Parameters(AnsibleF5Parameters):
     api_map = {
         'timeUntilUp': 'time_until_up',
         'defaultsFrom': 'parent',
-        'recv': 'receive',
-        'recvDisable': 'receive_disable'
+        'recv': 'receive'
     }
 
     api_attributes = [
         'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
-        'destination', 'username', 'password', 'recvDisable'
+        'destination', 'username', 'password'
     ]
 
     returnables = [
         'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
-        'time_until_up', 'receive_disable'
+        'time_until_up'
     ]
 
     updatables = [
         'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
-        'target_username', 'target_password', 'receive_disable'
+        'target_username', 'target_password'
     ]
 
     def to_return(self):

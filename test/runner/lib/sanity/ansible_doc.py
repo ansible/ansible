@@ -1,8 +1,6 @@
 """Sanity test for ansible-doc."""
 from __future__ import absolute_import, print_function
 
-import collections
-import os
 import re
 
 from lib.sanity import (
@@ -40,87 +38,51 @@ class AnsibleDocTest(SanityMultipleVersion):
         with open('test/sanity/ansible-doc/skip.txt', 'r') as skip_fd:
             skip_modules = set(skip_fd.read().splitlines())
 
-        plugin_type_blacklist = set([
-            # not supported by ansible-doc
-            'action',
-            'cliconf',
-            'filter',
-            'httpapi',
-            'netconf',
-            'terminal',
-            'test',
-        ])
-
         modules = sorted(set(m for i in targets.include_external for m in i.modules) -
                          set(m for i in targets.exclude_external for m in i.modules) -
                          skip_modules)
 
-        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-                   os.path.basename(i.path) != '__init__.py' and
-                   re.search(r'^lib/ansible/plugins/[^/]+/', i.path)
-                   and i.path != 'lib/ansible/plugins/cache/base.py']
-
-        doc_targets = collections.defaultdict(list)
-        target_paths = collections.defaultdict(dict)
-
-        for module in modules:
-            doc_targets['module'].append(module)
-
-        for plugin_type, plugin_name, plugin_path in plugins:
-            if plugin_type in plugin_type_blacklist:
-                continue
-
-            doc_targets[plugin_type].append(plugin_name)
-            target_paths[plugin_type][plugin_name] = plugin_path
-
-        if not doc_targets:
+        if not modules:
             return SanitySkipped(self.name, python_version=python_version)
 
-        target_paths['module'] = dict((t.module, t.path) for t in targets.targets if t.module)
+        module_paths = dict((t.module, t.path) for t in targets.targets if t.module)
 
         env = ansible_environment(args, color=False)
-        error_messages = []
+        cmd = ['ansible-doc'] + modules
 
-        for doc_type in sorted(doc_targets):
-            cmd = ['ansible-doc', '-t', doc_type] + sorted(doc_targets[doc_type])
+        try:
+            stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
+            status = 0
+        except SubprocessError as ex:
+            stdout = ex.stdout
+            stderr = ex.stderr
+            status = ex.status
 
-            try:
-                stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
-                status = 0
-            except SubprocessError as ex:
-                stdout = ex.stdout
-                stderr = ex.stderr
-                status = ex.status
+        if stderr:
+            errors = stderr.strip().splitlines()
+            messages = [self.parse_error(e, module_paths) for e in errors]
 
-            if stderr:
-                errors = stderr.strip().splitlines()
-                messages = [self.parse_error(e, target_paths) for e in errors]
+            if messages and all(messages):
+                return SanityFailure(self.name, messages=messages, python_version=python_version)
 
-                if messages and all(messages):
-                    error_messages += messages
-                    continue
+        if status:
+            summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+            return SanityFailure(self.name, summary=summary, python_version=python_version)
 
-            if status:
-                summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
-                return SanityFailure(self.name, summary=summary, python_version=python_version)
+        if stdout:
+            display.info(stdout.strip(), verbosity=3)
 
-            if stdout:
-                display.info(stdout.strip(), verbosity=3)
-
-            if stderr:
-                summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
-                return SanityFailure(self.name, summary=summary, python_version=python_version)
-
-        if error_messages:
-            return SanityFailure(self.name, messages=error_messages, python_version=python_version)
+        if stderr:
+            summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+            return SanityFailure(self.name, summary=summary, python_version=python_version)
 
         return SanitySuccess(self.name, python_version=python_version)
 
     @staticmethod
-    def parse_error(error, target_paths):
+    def parse_error(error, module_paths):
         """
         :type error: str
-        :type target_paths: dict[str, dict[str, str]]
+        :type module_paths: dict[str, str]
         :rtype: SanityMessage | None
         """
         # example error messages from lib/ansible/cli/doc.py:
@@ -135,10 +97,10 @@ class AnsibleDocTest(SanityMultipleVersion):
             error_name = groups['name']
             error_text = groups['text']
 
-            if error_name in target_paths.get(error_type, {}):
+            if error_type == 'module' and error_name in module_paths:
                 return SanityMessage(
                     message=error_text,
-                    path=target_paths[error_type][error_name],
+                    path=module_paths[error_name],
                 )
 
         return None

@@ -319,9 +319,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             file_path = os.path.join(root, file_name)
 
             if os.path.islink(file_path):
-                # special case to allow a symlink of ansible_release.py -> ../release.py
-                if file_path != 'lib/ansible/module_utils/ansible_release.py':
-                    continue
+                continue
 
             yield TestTarget(file_path, module_path, prefix, path)
 

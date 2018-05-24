@@ -19,6 +19,12 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
+tasks:
+  - name: show dictionary
+    debug: msg="{{item.key}}: {{item.value}}"
+    with_dict: {a: 1, b: 2, c: 3}
+
+# with predefined vars
 vars:
   users:
     alice:
@@ -28,16 +34,10 @@ vars:
       name: Bob Bananarama
       telephone: 987-654-3210
 tasks:
-  # with predefined vars
   - name: Print phone records
     debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
     loop: "{{ lookup('dict', users) }}"
-  # with inline dictionary
-  - name: show dictionary
-    debug:
-      msg: "{{item.key}}: {{item.value}}"
-    with_dict: {a: 1, b: 2, c: 3}
 """
 
 RETURN = """

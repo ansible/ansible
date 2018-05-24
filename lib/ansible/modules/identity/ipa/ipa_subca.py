@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_subca
-author: Abhijeet Kasurde (@Akasurde)
+author: Abhijeet Kasurde (@akasurde)
 short_description: Manage FreeIPA Lightweight Sub Certificate Authorities.
 description:
 - Add, modify, enable, disable and delete an IPA Lightweight Sub Certificate Authorities using IPA API.

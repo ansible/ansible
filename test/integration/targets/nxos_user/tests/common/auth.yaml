@@ -5,6 +5,7 @@
       name: auth_user
       role: network-operator
       state: present
+      provider: "{{ connection }}"
       configured_password: pass123
 
   - name: test login
@@ -31,4 +32,5 @@
     nxos_user:
       name: auth_user
       state: absent
+      provider: "{{ connection }}"
     register: result

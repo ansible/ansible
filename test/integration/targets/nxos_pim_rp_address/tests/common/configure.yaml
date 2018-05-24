@@ -3,27 +3,26 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- set_fact: bidir="true"
-- set_fact: bidir="false"
-  when: platform is match("N3L")
-
 - block:
   - name: "Disable feature PIM"
     nxos_feature: &disable_feature
       feature: pim
       state: disabled
+      provider: "{{ connection }}"
 
   - name: "Enable feature PIM"
     nxos_feature: &enable_feature
       feature: pim
       state: enabled
+      provider: "{{ connection }}"
 
   - name: Configure rp_address + group_list 
     nxos_pim_rp_address: &configgl
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
-      bidir: "{{ bidir }}"
+      bidir: True
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -44,25 +43,23 @@
       group_list: "224.0.0.0/8"
       bidir: False
       state: present
+      provider: "{{ connection }}"
     register: result
-    when: platform is not match("N3L")
 
   - assert: *true
-    when: platform is not match("N3L")
 
   - name: Check idempotence rp_address + group_list remove bidir
     nxos_pim_rp_address: *configglnb
     register: result
-    when: platform is not match("N3L")
 
   - assert: *false
-    when: platform is not match("N3L")
 
   - name: Configure rp_address + bidir 
     nxos_pim_rp_address: &configbi
       rp_address: "10.1.1.20"
-      bidir: "{{ bidir }}"
+      bidir: True
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -78,25 +75,23 @@
       rp_address: "10.1.1.20"
       bidir: False
       state: present
+      provider: "{{ connection }}"
     register: result
-    when: platform is not match("N3L")
 
   - assert: *true
-    when: platform is not match("N3L")
 
   - name: Check idempotence rp_address remove bidir
     nxos_pim_rp_address: *confignbi
     register: result
-    when: platform is not match("N3L")
 
   - assert: *false
-    when: platform is not match("N3L")
 
   - name: Remove rp_address + group_list 
     nxos_pim_rp_address: &configglr
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -111,6 +106,7 @@
     nxos_pim_rp_address: &configbir
       rp_address: "10.1.1.20"
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -125,8 +121,9 @@
     nxos_pim_rp_address: &configpl
       rp_address: "10.1.1.20"
       prefix_list: "pim_prefix_list"
-      bidir: "{{ bidir }}"
+      bidir: True
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -143,19 +140,16 @@
       prefix_list: "pim_prefix_list"
       bidir: False
       state: present
+      provider: "{{ connection }}"
     register: result
-    when: platform is not match("N3L")
 
   - assert: *true
-    when: platform is not match("N3L")
 
   - name: Check idempotence rp_address + prefix_list
     nxos_pim_rp_address: *configplnbi
     register: result
-    when: platform is not match("N3L")
 
   - assert: *false
-    when: platform is not match("N3L")
 
   - name: Remove rp_address + prefix_list 
     nxos_pim_rp_address: &configplr
@@ -163,6 +157,7 @@
       prefix_list: "pim_prefix_list"
       bidir: False
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -177,8 +172,9 @@
     nxos_pim_rp_address: &configrm
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"
-      bidir: "{{ bidir }}"
+      bidir: True
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -195,19 +191,16 @@
       route_map: "pim_routemap"
       bidir: False
       state: present
+      provider: "{{ connection }}"
     register: result
-    when: platform is not match("N3L")
 
   - assert: *true
-    when: platform is not match("N3L")
 
   - name: Check idempotence rp_address + route_map
     nxos_pim_rp_address: *configrmnbi
     register: result
-    when: platform is not match("N3L")
 
   - assert: *false
-    when: platform is not match("N3L")
 
   - name: Remove rp_address + route_map 
     nxos_pim_rp_address: &configrmr
@@ -215,6 +208,7 @@
       route_map: "pim_routemap"
       bidir: False
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

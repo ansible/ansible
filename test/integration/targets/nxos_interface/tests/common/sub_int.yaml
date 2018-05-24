@@ -22,6 +22,7 @@
     description: "sub-interface Configured by Ansible"
     admin_state: up
     mtu: 800
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -42,6 +43,7 @@
     description: "sub-interface Configured by Ansible"
     admin_state: down
     mtu: 800
+    provider: "{{ connection }}"
   register: result
 
 - assert:

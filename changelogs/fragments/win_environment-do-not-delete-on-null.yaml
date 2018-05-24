@@ -1,2 +1,0 @@
-bugfixes:
-- win_environment - Fix for issue where the environment value was deleted when a null value or empty string was set - https://github.com/ansible/ansible/issues/40450

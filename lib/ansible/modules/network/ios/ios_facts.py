@@ -281,9 +281,7 @@ class Interfaces(FactsBase):
             self.populate_ipv6_interfaces(data)
 
         data = self.responses[3]
-        lldp_errs = ['Invalid input', 'LLDP is not enabled']
-
-        if data and not any(err in data for err in lldp_errs):
+        if data:
             neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
                 self.facts['neighbors'] = self.parse_neighbors(neighbors[0])

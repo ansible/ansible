@@ -9,18 +9,21 @@
   nxos_feature: &disable
     feature: ospf
     state: disabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup - Enable feature OSPF"
   nxos_feature: &enable
     feature: ospf
     state: enabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Put interface into default state"
   nxos_config: &intdefault
     lines:
       - "default interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove switchport config"
@@ -29,6 +32,7 @@
       - no switchport
     parents:
       - "interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove possibly existing port-channel and loopback ints"
@@ -38,6 +42,7 @@
       - no interface port-channel11
       - no interface loopback55
       - no interface loopback77
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -51,6 +56,7 @@
       hello_interval: 15
       dead_interval: 75
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -75,6 +81,7 @@
       hello_interval: 17
       dead_interval: 70
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -94,6 +101,7 @@
       hello_interval: 10
       dead_interval: default
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -115,6 +123,7 @@
       message_digest_encryption_type: 3des
       message_digest_password: b69f7bc54725b1bfd1ea93afa7b09400
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -136,6 +145,7 @@
       message_digest_encryption_type: default
       message_digest_password: default
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -154,6 +164,7 @@
         - interface loopback55
         - interface loopback77
       match: none
+      provider: "{{ connection }}"
 
   - name: "Ensure port-channels are layer3"
     nxos_config:
@@ -161,6 +172,7 @@
         - no switchport
       parents:
         - "interface {{ item }}"
+      provider: "{{ connection }}"
     with_items:
       - port-channel10
       - port-channel11
@@ -175,6 +187,7 @@
       hello_interval: 15
       dead_interval: 75
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -195,6 +208,7 @@
       hello_interval: 15
       dead_interval: 75
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -214,6 +228,7 @@
       hello_interval: 15
       dead_interval: 75
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -233,6 +248,7 @@
       hello_interval: 45
       dead_interval: 75
       state: present
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -253,6 +269,7 @@
       hello_interval: 15
       dead_interval: 75
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

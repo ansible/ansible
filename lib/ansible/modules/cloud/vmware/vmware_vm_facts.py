@@ -23,7 +23,7 @@ description:
 version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
-- Abhijeet Kasurde (@Akasurde)
+- Abhijeet Kasurde (@akasurde)
 notes:
 - Tested on vSphere 5.5 and vSphere 6.5
 requirements:

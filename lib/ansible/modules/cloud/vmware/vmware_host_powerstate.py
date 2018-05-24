@@ -26,7 +26,7 @@ description:
 - State 'reboot-host', 'shutdown-host' and 'power-down-to-standby' are not supported by all the host systems.
 version_added: 2.6
 author:
-- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 requirements:
 - python >= 2.6
 - PyVmomi

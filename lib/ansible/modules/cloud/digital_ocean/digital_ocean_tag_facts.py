@@ -21,7 +21,7 @@ module: digital_ocean_tag_facts
 short_description: Gather facts about DigitalOcean tags
 description:
     - This module can be used to gather facts about DigitalOcean provided tags.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 options:
   tag_name:

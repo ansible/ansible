@@ -253,7 +253,6 @@ files:
   $modules/cloud/linode/linode.py: intheclouddan rwaweber zbal
   $modules/cloud/lxc/lxc_container.py: cloudnull
   $modules/cloud/lxd/: hnakamur
-  $modules/cloud/memset/: analbeard
   $modules/cloud/misc/helm.py: flaper87
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk
@@ -268,7 +267,6 @@ files:
   $modules/cloud/misc/virt_pool.py: drybjed
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-    maintainers: cheese
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
@@ -466,9 +464,8 @@ files:
   $modules/network/eos/: privateip trishnaguha
   $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
-    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel $team_networking
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel
     maintainers: caphrim007
-  $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
@@ -479,9 +476,7 @@ files:
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
   $modules/network/meraki/: $team_meraki
-  $modules/network/netconf/netconf_config.py: lpenz userlerueda $team_networking
-  $modules/network/netconf/netconf_get.py: wisotzky $team_networking
-  $modules/network/netconf/netconf_rpc.py: wisotzky $team_networking
+  $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
@@ -599,7 +594,7 @@ files:
   $modules/source_control/git_config.py: djmattyg007
   $modules/source_control/github_deploy_key.py: bincyber
   $modules/source_control/github_hooks.py: pcgentry
-  $modules/source_control/github_issue.py: Akasurde
+  $modules/source_control/github_issue.py: akasurde
   $modules/source_control/github_key.py:
     ignored: erydo
   $modules/source_control/github_release.py: adrianmoisey
@@ -630,7 +625,7 @@ files:
   $modules/system/facter.py: $team_ansible
   $modules/system/filesystem.py: abulimov pilou-
   $modules/system/firewalld.py: maxamillion
-  $modules/system/gconftool2.py: Akasurde kevensen
+  $modules/system/gconftool2.py: akasurde kevensen
   $modules/system/getent.py: bcoca
   $modules/system/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
@@ -670,7 +665,7 @@ files:
     maintainers: $team_ansible
   $modules/system/solaris_zone.py: pmarkham
   $modules/system/svc.py: bcoca
-  $modules/system/sysctl.py: Akasurde davixx
+  $modules/system/sysctl.py: akasurde davixx
   $modules/system/systemd.py: $team_ansible
   $modules/system/timezone.py: jasperla tmshn
   $modules/system/ufw.py: ahtik ovcharenko pyykkis
@@ -869,9 +864,6 @@ files:
   $module_utils/network/meraki:
     maintainers: $team_meraki
     labels: networking
-  $module_utils/network/netconf:
-    maintainers: $team_networking
-    labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
@@ -907,11 +899,6 @@ files:
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
-  $module_utils/onepassword.py:
-    maintainers: samdoran
-  $module_utils/memset.py:
-    maintainers: analbeard
-    labels: cloud
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -1051,15 +1038,6 @@ files:
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/lookup/onepassword.py:
-    maintainers: samdoran
-    ignored: azenk
-  lib/ansible/plugins/lookup/onepassword_raw.py:
-    maintainers: samdoran
-    ignored: azenk
-  lib/ansible/plugins/netconf/sros.py:
-    maintainers: wisotzky $team_networking
-    labels: networking
   lib/ansible/plugins/shell/powershell.py:
     maintainers: $team_windows_core
     labels:
@@ -1114,8 +1092,6 @@ files:
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
     labels: networking
-  lib/ansible/release.py:
-    notify: mattclay nitzmahone
   lib/ansible/template:
     keywords:
     - jinja
@@ -1188,10 +1164,10 @@ macros:
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
   team_extreme: bigmstone LindsayHill
-  team_ipa: Nosmoht Akasurde
+  team_ipa: Nosmoht akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
+  team_netapp: hulquest lmprice broncofan amit0701
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha gdpak
@@ -1204,6 +1180,6 @@ macros:
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
-  team_vmware: Akasurde dav1x warthog9
+  team_vmware: akasurde dav1x warthog9
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

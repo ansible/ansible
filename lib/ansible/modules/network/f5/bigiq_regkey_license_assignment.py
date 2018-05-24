@@ -115,7 +115,16 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-# only common fields returned
+param1:
+  description: The new param1 value of the resource.
+  returned: changed
+  type: bool
+  sample: true
+param2:
+  description: The new param2 value of the resource.
+  returned: changed
+  type: string
+  sample: Foo is bar
 '''
 
 import re

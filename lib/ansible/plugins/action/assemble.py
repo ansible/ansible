@@ -134,7 +134,13 @@ class ActionModule(ActionBase):
             for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
                 if opt in new_module_args:
                     del new_module_args[opt]
-            new_module_args['dest'] = dest
+
+            new_module_args.update(
+                dict(
+                    dest=dest,
+                    original_basename=os.path.basename(src),
+                )
+            )
 
             if path_checksum != dest_stat['checksum']:
 

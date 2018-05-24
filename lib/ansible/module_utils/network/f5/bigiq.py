@@ -62,9 +62,7 @@ class F5Client(F5BaseClient):
 
 class F5RestClient(F5BaseClient):
     def __init__(self, *args, **kwargs):
-        params = kwargs.get('module').params
-        module = kwargs.pop('module')
-        super(F5RestClient, self).__init__(module=module, **params)
+        super(F5RestClient, self).__init__(*args, **kwargs)
         self.provider = self.merge_provider_params()
 
     @property

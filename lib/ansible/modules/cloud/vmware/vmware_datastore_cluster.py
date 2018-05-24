@@ -24,7 +24,7 @@ description:
     - All parameters and VMware object values are case sensitive.
 version_added: 2.6
 author:
--  Abhijeet Kasurde (@Akasurde)
+-  Abhijeet Kasurde (@akasurde)
 notes:
     - Tested on vSphere 6.0, 6.5
 requirements:

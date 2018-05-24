@@ -39,7 +39,7 @@ options:
             - Dynamic
             - Static
         default: Dynamic
-    domain_name:
+    domain_name_label:
         description:
             - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting. If
               no value is provided, any existing value will be removed on an existing public IP.
@@ -60,6 +60,7 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
+        default: resource_group location
     sku:
         description:
             - The public IP address SKU.

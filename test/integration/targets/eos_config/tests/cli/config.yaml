@@ -5,11 +5,13 @@
   eos_config:
     lines: hostname {{ inventory_hostname_short }}
     match: none
+    provider: "{{ cli }}"
   become: yes
 
 - name: get current running-config
   eos_command:
     commands: show running-config
+    provider: "{{ cli }}"
   become: yes
   register: config
 
@@ -17,6 +19,7 @@
   eos_config:
     lines: hostname foo
     config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -28,6 +31,7 @@
 - name: get current running-config
   eos_command:
     commands: show running-config
+    provider: "{{ cli }}"
   become: yes
   register: config
 
@@ -35,6 +39,7 @@
   eos_config:
     lines: hostname foo
     config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -46,6 +51,7 @@
   eos_config:
     lines: hostname {{ inventory_hostname_short }}
     match: none
+    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/config.yaml on connection={{ ansible_connection }}"

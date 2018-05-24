@@ -14,12 +14,14 @@
   nxos_feature:
     feature: bgp
     state: disabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
     state: enabled
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -29,6 +31,7 @@
     nxos_bgp: &set1
       asn: 65535
       isolate: false
+      provider: "{{ connection }}"
     register: result
     when: bgp_isolate
 
@@ -51,6 +54,7 @@
     nxos_bgp: &reset1
       asn: 65535
       isolate: true
+      provider: "{{ connection }}"
     register: result
     when: bgp_isolate
 
@@ -73,6 +77,7 @@
     nxos_feature:
       feature: bgp
       state: disabled
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

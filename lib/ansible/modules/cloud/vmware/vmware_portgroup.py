@@ -25,7 +25,7 @@ version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
-- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 5.5, 6.5
 requirements:

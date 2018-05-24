@@ -21,7 +21,7 @@ module: digital_ocean_size_facts
 short_description: Gather facts about DigitalOcean Droplet sizes
 description:
     - This module can be used to gather facts about droplet sizes.
-author: "Abhijeet Kasurde (@Akasurde)"
+author: "Abhijeet Kasurde (@akasurde)"
 version_added: "2.6"
 requirements:
   - "python >= 2.6"

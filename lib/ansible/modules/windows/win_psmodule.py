@@ -30,10 +30,10 @@ options:
     default: 'no'
   repository:
     description:
-      - Name of the custom repository to register or use.
+      - Name of the custom repository to register.
   url:
     description:
-      - URL of the custom repository to register.
+      - URL of the custom repository.
   state:
     description:
       - If C(present) a new module is installed.
@@ -59,12 +59,6 @@ EXAMPLES = '''
     name: MyCustomModule
     repository: MyRepository
     url: https://myrepo.com
-    state: present
-
-- name: Add a powershell module from a specific repository
-  win_psmodule:
-    name: PowershellModule
-    repository: MyRepository
     state: present
 
 - name: Remove a powershell module

@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_factory
-author: "Anil Kumar Muraleedharan (@amuraleedhar)"
+author: "Dave Kasberg (@dkasberg)"
 short_description: Reset the switch's startup configuration to default (factory) on devices running Lenovo CNOS
 description:
     - This module allows you to reset a switch's startup configuration. The method provides a way to reset the
@@ -53,8 +53,8 @@ Tasks : The following are examples of using the module cnos_reload. These are wr
 - name: Test Reset to factory
   cnos_factory:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
+      username: "{{ hostvars[inventory_hostname]['username'] }}"
+      password: "{{ hostvars[inventory_hostname]['password'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       outputfile: "./results/test_factory_{{ inventory_hostname }}_output.txt"
 

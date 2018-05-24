@@ -1,3 +1,0 @@
----
-test_zone: ansible-dns-record-tests
-duplicate_zone: ansible-dns-zone-dupe

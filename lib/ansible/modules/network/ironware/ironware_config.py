@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ironware_config
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Manage configuration sections on Extreme Ironware devices
+short_description: Manage configuration sections on Brocade Ironware devices
 description:
-  - Extreme Ironware configurations use a simple block indent file syntax
+  - Brocade Ironware configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
     an implementation for working with Ironware configuration sections in
     a deterministic way.

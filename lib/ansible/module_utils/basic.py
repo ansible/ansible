@@ -938,14 +938,6 @@ class AnsibleModule(object):
         # clean it up once finished.
         if self._tmpdir is None:
             basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
-            if not os.path.exists(basedir):
-                self.warn("Module remote_tmp %s did not exist and was created "
-                          "with a mode of 0700, this may cause issues when "
-                          "running as another user. To avoid this, create the "
-                          "remote_tmp dir with the correct permissions "
-                          "manually" % basedir)
-                os.makedirs(basedir, mode=0o700)
-
             basefile = "ansible-moduletmp-%s-" % time.time()
             tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
             if not self._keep_remote_files:
@@ -2532,16 +2524,17 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
                                exception=traceback.format_exc())
             else:
+                b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
-                b_dest_dir = os.path.dirname(b_dest)
-                b_suffix = os.path.basename(b_dest)
+                native_dest_dir = b_dest_dir
+                native_suffix = os.path.basename(b_dest)
+                native_prefix = b('.ansible_tmp')
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
-                                                                  dir=b_dest_dir, suffix=b_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:

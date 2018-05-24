@@ -108,7 +108,6 @@ Function Install-PsModule {
     param(
       [Parameter(Mandatory=$true)]
       [string]$Name,
-      [string]$Repository,
       [bool]$AllowClobber,
       [bool]$CheckMode
     )
@@ -118,27 +117,15 @@ Function Install-PsModule {
     else {      
       try{
         # Install NuGet Provider if needed
-        Install-NugetProvider -CheckMode $CheckMode;
+        Install-NugetProvider -CheckMode $CheckMode
 
-        $ht = @{
-            Name      = $Name;
-            WhatIf    = $CheckMode;
-            ErrorAction = "Stop";
-            Force     = $true;
-        };
-
-        # If specified, use repository name to select module source
-        if ($Repository) {
-            $ht["Repository"] = "$Repository";
+        # Check Powershell Version (-AllowClobber was introduced in early version only)
+        if ($PsVersion.Minor -ge 1){
+          Install-Module -Name $Name -Force -ErrorAction Stop -Whatif:$CheckMode -AllowClobber:$AllowClobber | out-null
         }
-
-        # Check Powershell Version (-AllowClobber was introduced in PowerShellGet 1.6.0)
-        if ("AllowClobber" -in ((Get-Command PowerShellGet\Install-Module | Select -ExpandProperty Parameters).Keys)) {
-          $ht['AllowClobber'] = $AllowClobber;
+        else {
+          Install-Module -Name $Name -Force -ErrorAction Stop -Whatif:$CheckMode | out-null
         }
-        
-        Install-Module @ht | out-null;
-        
         $result.output = "Module $($Name) installed"
         $result.changed = $true
       }
@@ -187,8 +174,7 @@ if ($state -eq "present") {
     else {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
     }
-
-    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -AllowClobber $allow_clobber;
+    Install-PsModule -Name $Name -CheckMode $check_mode -AllowClobber $allow_clobber
 }
 else {  
     if ($repo) {   

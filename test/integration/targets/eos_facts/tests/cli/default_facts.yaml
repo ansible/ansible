@@ -4,6 +4,7 @@
 
 - name: test getting default facts
   eos_facts:
+    provider: "{{ cli }}"
   become: yes
   register: result
 
