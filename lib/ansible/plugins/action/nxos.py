@@ -43,19 +43,17 @@ class ActionModule(_ActionModule):
 
         socket_path = None
 
-        if self._task.action == 'nxos_file_copy':
-            if self._play_context.connection == 'network_cli':
-                self._task.args['host'] = self._play_context.remote_addr
-                self._task.args['username'] = self._play_context.remote_user
-                self._task.args['password'] = self._play_context.password
-            elif self._play_context.connection == 'local':
-                self._task.args['host'] = self._play_context.remote_addr
-                self._task.args['username'] = self._play_context.connection_user
-                self._task.args['password'] = self._play_context.password
-
         if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
                 and self._task.action in ('nxos_file_copy', 'nxos_nxapi'):
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
+
+        if self._task.action == 'nxos_file_copy':
+            self._task.args['host'] = self._play_context.remote_addr
+            self._task.args['password'] = self._play_context.password
+            if self._play_context.connection == 'network_cli':
+                self._task.args['username'] = self._play_context.remote_user
+            elif self._play_context.connection == 'local':
+                self._task.args['username'] = self._play_context.connection_user
 
         if self._play_context.connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
