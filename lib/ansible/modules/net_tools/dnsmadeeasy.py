@@ -664,10 +664,10 @@ def main():
         # create record and monitor as the record does not exist
         if not current_record:
             record = DME.createRecord(DME.prepareRecord(new_record))
-            
-            if not monitor
+
+            if monitor is False
                 module.exit_json(changed=True, result=dict(record=record))
-              
+
             result = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
             module.exit_json(changed=True, result=dict(record=record, monitor=result))
 
