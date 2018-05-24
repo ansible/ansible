@@ -1057,6 +1057,9 @@ files:
   lib/ansible/plugins/lookup/onepassword_raw.py:
     maintainers: samdoran
     ignored: azenk
+  lib/ansible/plugins/netconf/sros.py:
+    maintainers: wisotzky $team_networking
+    labels: networking
   lib/ansible/plugins/shell/powershell.py:
     maintainers: $team_windows_core
     labels:
