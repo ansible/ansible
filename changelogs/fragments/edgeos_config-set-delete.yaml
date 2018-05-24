@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos_config - check for a corresponding set command when issuing delete commands to ensure the desired state is met (https://github.com/ansible/ansible/issues/40437)
