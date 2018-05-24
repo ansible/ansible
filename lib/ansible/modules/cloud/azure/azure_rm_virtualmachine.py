@@ -649,6 +649,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                  default='ReadOnly'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
+            os_disk_size=dict(default=None, type='int'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
@@ -681,6 +682,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_container_name = None
         self.storage_blob_name = None
         self.os_type = None
+        self.os_disk_size = None
         self.os_disk_caching = None
         self.managed_disk_type = None
         self.network_interface_names = None
@@ -965,6 +967,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
+                                disk_size_gb=self.os_disk_size,
                                 caching=self.os_disk_caching,
                             ),
                             image_reference=image_reference,
@@ -1094,6 +1097,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
                             ),
