@@ -580,6 +580,7 @@ def main():
     record_name = module.params["record_name"]
     record_type = module.params["record_type"]
     record_value = module.params["record_value"]
+    monitor = module.params["monitor"]
 
     # Follow Keyword Controlled Behavior
     if record_name is None:
@@ -663,8 +664,12 @@ def main():
         # create record and monitor as the record does not exist
         if not current_record:
             record = DME.createRecord(DME.prepareRecord(new_record))
-            monitor = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
-            module.exit_json(changed=True, result=dict(record=record, monitor=monitor))
+            
+            if not monitor
+                module.exit_json(changed=True, result=dict(record=record))
+              
+            result = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
+            module.exit_json(changed=True, result=dict(record=record, monitor=result))
 
         # update the record
         updated = False
