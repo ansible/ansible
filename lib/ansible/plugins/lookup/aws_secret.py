@@ -115,6 +115,6 @@ class LookupModule(LookupBase):
             if 'SecretBinary' in response:
                 return response['SecretBinary']
             if 'SecretString' in response:
-                return response['SecretString']
+                return ''.join(response['SecretString'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
