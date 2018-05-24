@@ -737,56 +737,57 @@ def ipsubnet(value, query='', index='x'):
 
     if not query:
         return str(value)
+    else:
+        strquery = str(query)
+        elif strquery.isdigit():
+            vsize = ipaddr(v, 'size')
+            query = int(query)
 
-    elif str(query).isdigit():
-        vsize = ipaddr(v, 'size')
-        query = int(query)
+            try:
+                float(index)
+                index = int(index)
 
-        try:
-            float(index)
-            index = int(index)
+                if vsize > 1:
+                    try:
+                        return str(list(value.subnet(query))[index])
+                    except:
+                        return False
 
-            if vsize > 1:
-                try:
-                    return str(list(value.subnet(query))[index])
-                except:
-                    return False
+                elif vsize == 1:
+                    try:
+                        return str(value.supernet(query)[index])
+                    except:
+                        return False
 
-            elif vsize == 1:
-                try:
-                    return str(value.supernet(query)[index])
-                except:
-                    return False
+            except:
+                if vsize > 1:
+                    try:
+                        return str(len(list(value.subnet(query))))
+                    except:
+                        return False
 
-        except:
-            if vsize > 1:
-                try:
-                    return str(len(list(value.subnet(query))))
-                except:
-                    return False
+                elif vsize == 1:
+                    try:
+                        return str(value.supernet(query)[0])
+                    except:
+                        return False
+        elif strquery:
+            try:
+                vtype = ipaddr(query, 'type')
+                if vtype == 'address':
+                    v = ipaddr(query, 'cidr')
+                elif vtype == 'network':
+                    v = ipaddr(query, 'subnet')
 
-            elif vsize == 1:
-                try:
-                    return str(value.supernet(query)[0])
-                except:
-                    return False
-    elif str(query):
-        try:
-            vtype = ipaddr(query, 'type')
-            if vtype == 'address':
-                v = ipaddr(query, 'cidr')
-            elif vtype == 'network':
-                v = ipaddr(query, 'subnet')
+                query = netaddr.IPNetwork(v)
+            except:
+                return False
 
-            query = netaddr.IPNetwork(v)
-        except:
-            return False
-
-        if network_in_network(query, value):
-            subnetlist = list(query.subnet(value.prefixlen))
-            for i in range(0, len(subnetlist)):
-                if (subnetlist[i] == value):
-                    return str(i + 1)
+            if network_in_network(query, value):
+                subnetlist = list(query.subnet(value.prefixlen))
+                for i in range(0, len(subnetlist)):
+                    if (subnetlist[i] == value):
+                        return str(i + 1)
 
     return False
 
