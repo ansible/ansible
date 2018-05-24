@@ -30,7 +30,6 @@ options:
   service_state:
     description:
     - Whether the specified nfs should be enabled or disabled. Creates nfs service if doesnt exist.
-    required: false
     choices: ['started', 'stopped']
   vserver:
     description:
@@ -39,37 +38,30 @@ options:
   nfsv3:
     description:
     - status of nfsv3.
-    required: false
     choices: ['enabled', 'disabled']
   nfsv4:
     description:
     - status of nfsv4.
-    required: false
     choices: ['enabled', 'disabled']
   nfsv41:
     description:
     - status of nfsv41.
     aliases: ['nfsv4.1']
-    required: false
     choices: ['enabled', 'disabled']
   vstorage_state:
     description:
     - status of vstorage_state.
-    required: false
     choices: ['enabled', 'disabled']
   nfsv4_id_domain:
     description:
     - Name of the nfsv4_id_domain to use.
-    required: false
   tcp:
     description:
-    - Name of the tcp to use.
-    required: false
+    - Enable TCP.
     choices: ['enabled', 'disabled']
   udp:
     description:
-    - Name of the udp to use.
-    required: false
+    - Enable UDP.
     choices: ['enabled', 'disabled']
 """
 

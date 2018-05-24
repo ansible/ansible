@@ -201,7 +201,7 @@ class NetAppOntapServiceProcessorNetwork(object):
             service_obj.add_new_child("ip-address", self.ip_address)
         if self.netmask:
             service_obj.add_new_child("netmask", self.netmask)
-        if self.prefix_length:
+        if self.prefix_length is not None:
             service_obj.add_new_child("prefix-length", str(self.prefix_length))
 
         try:

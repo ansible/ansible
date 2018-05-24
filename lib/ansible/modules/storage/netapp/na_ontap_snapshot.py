@@ -30,8 +30,8 @@ options:
     default: present
   snapshot:
     description:
-    - Name of the snapshot to be created.
-    - The maximum string length is 256 characters.
+      Name of the snapshot to be managed.
+      The maximum string length is 256 characters.
     required: true
   volume:
     description:
@@ -43,13 +43,12 @@ options:
     type: bool
   comment:
     description:
-    - A human readable comment attached with the snapshot.
-    - The size of the comment can be at most 255 characters.
+      A human readable comment attached with the snapshot.
+      The size of the comment can be at most 255 characters.
   snapmirror_label:
     description:
-    - A human readable SnapMirror Label attached with the snapshot.
-    - Size of the label can be at most 31 characters.
-    required: false
+      A human readable SnapMirror Label attached with the snapshot.
+      Size of the label can be at most 31 characters.
   ignore_owners:
     description:
     - if this field is true, snapshot will be deleted
@@ -63,9 +62,9 @@ options:
     - The Vserver name
   new_comment:
     description:
-    - A human readable comment attached with the snapshot.
-    - The size of the comment can be at most 255 characters.
-    - This will replace the existing comment
+      A human readable comment attached with the snapshot.
+      The size of the comment can be at most 255 characters.
+      This will replace the existing comment
 '''
 EXAMPLES = """
     - name: create SnapShot

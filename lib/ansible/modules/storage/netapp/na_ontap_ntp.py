@@ -34,7 +34,6 @@ options:
   version:
     description:
     - give version for ntp server
-    required: False
     choices: ['auto', '3', '4']
     default: 'auto'
 """
