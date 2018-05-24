@@ -394,6 +394,7 @@ except ImportError as exc:
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
+DEFAULT_TLS_HOSTNAME = "localhost"
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_SSH_PORT = '22'
 
@@ -409,6 +410,7 @@ DOCKER_ENV_ARGS = dict(
     ssl_version='DOCKER_SSL_VERSION',
     tls='DOCKER_TLS',
     tls_verify='DOCKER_TLS_VERIFY',
+    tls_hostname='DOCKER_TLS_HOSTNAME',
     timeout='DOCKER_TIMEOUT',
     private_ssh_port='DOCKER_DEFAULT_SSH_PORT',
     default_ip='DOCKER_DEFAULT_IP',
@@ -692,7 +694,7 @@ class DockerInventory(object):
                 api_version = host.get('version') or def_version or self._args.api_version or \
                     self._env_args.api_version or DEFAULT_DOCKER_API_VERSION
                 tls_hostname = host.get('tls_hostname') or def_tls_hostname or self._args.tls_hostname or \
-                    self._env_args.tls_hostname
+                    self._env_args.tls_hostname or DEFAULT_TLS_HOSTNAME
                 tls_verify = host.get('tls_verify') or def_tls_verify or self._args.tls_verify or \
                     self._env_args.tls_verify or DEFAULT_TLS_VERIFY
                 tls = host.get('tls') or def_tls or self._args.tls or self._env_args.tls or DEFAULT_TLS
@@ -716,8 +718,8 @@ class DockerInventory(object):
 
                 timeout = host.get('timeout') or def_timeout or self._args.timeout or self._env_args.timeout or \
                     DEFAULT_TIMEOUT_SECONDS
-                default_ip = host.get('default_ip') or def_ip or self._args.default_ip_address or \
-                    DEFAULT_IP
+                default_ip = host.get('default_ip') or def_ip or self._env_args.default_ip or \
+                    self._args.default_ip_address or DEFAULT_IP
                 default_ssh_port = host.get('private_ssh_port') or def_ssh_port or self._args.private_ssh_port or \
                     DEFAULT_SSH_PORT
                 host_dict = dict(
@@ -740,7 +742,8 @@ class DockerInventory(object):
             docker_host = def_host or self._args.docker_host or self._env_args.docker_host or DEFAULT_DOCKER_HOST
             api_version = def_version or self._args.api_version or self._env_args.api_version or \
                 DEFAULT_DOCKER_API_VERSION
-            tls_hostname = def_tls_hostname or self._args.tls_hostname or self._env_args.tls_hostname
+            tls_hostname = def_tls_hostname or self._args.tls_hostname or self._env_args.tls_hostname or \
+                DEFAULT_TLS_HOSTNAME
             tls_verify = def_tls_verify or self._args.tls_verify or self._env_args.tls_verify or DEFAULT_TLS_VERIFY
             tls = def_tls or self._args.tls or self._env_args.tls or DEFAULT_TLS
             ssl_version = def_ssl_version or self._args.ssl_version or self._env_args.ssl_version
@@ -758,7 +761,7 @@ class DockerInventory(object):
                 key_path = os.path.join(key_path, 'key.pem')
 
             timeout = def_timeout or self._args.timeout or self._env_args.timeout or DEFAULT_TIMEOUT_SECONDS
-            default_ip = def_ip or self._args.default_ip_address or DEFAULT_IP
+            default_ip = def_ip or self._env_args.default_ip or self._args.default_ip_address or DEFAULT_IP
             default_ssh_port = def_ssh_port or self._args.private_ssh_port or DEFAULT_SSH_PORT
             host_dict = dict(
                 docker_host=docker_host,
@@ -846,8 +849,8 @@ class DockerInventory(object):
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
                                  % (DEFAULT_DOCKER_HOST))
-        parser.add_argument('--tls-hostname', action='store', default='localhost',
-                            help="Host name to expect in TLS certs. Defaults to 'localhost'")
+        parser.add_argument('--tls-hostname', action='store', default=None,
+                            help="Host name to expect in TLS certs. Defaults to %s" % DEFAULT_TLS_HOSTNAME)
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
