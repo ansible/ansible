@@ -143,6 +143,9 @@ class InventoryModule(BaseFileInventoryPlugin):
                 else:
                     self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
+        else:
+            self.display.warning("Skipping '%s' as this is not a valid group name" % group)
+
     def _parse_host(self, host_pattern):
         '''
         Each host key can be a pattern, try to process it and add variables as needed
