@@ -81,14 +81,13 @@ def memset_api_call(api_key, api_method, payload=None):
             errorcode = None
 
         has_failed = True
-        error_json = json.loads(e.read().decode('utf-8'))
         response.content = e.read().decode('utf8')
-        response.status_code = e.code
+        response.status_code = errorcode
 
         if response.status_code is not None:
-            msg = "Memset API returned a {0} response ({1}, {2})." . format(response.status_code, error_json['error_type'], error_json['error'])
+            msg = "Memset API returned a {0} response ({1}, {2})." . format(response.status_code, response.json()['error_type'], response.json()['error'])
         else:
-            msg = "Memset API returned an error ({0}, {1})." . format(error_json['error_type'], error_json['error'])
+            msg = "Memset API returned an error ({0}, {1})." . format(response.json()['error_type'], response.json()['error'])
 
     del payload['api_key']
 
