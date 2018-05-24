@@ -379,8 +379,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         update_attributes = []
 
         if self.cross_zone_load_balancing is not None and str(self.cross_zone_load_balancing).lower() != \
-            self.elb_attributes['load_balancing_cross_zone_enabled']:
-                update_attributes.append({'Key': 'load_balancing.cross_zone.enabled', 'Value': str(self.cross_zone_load_balancing).lower()})
+                self.elb_attributes['load_balancing_cross_zone_enabled']:
+            update_attributes.append({'Key': 'load_balancing.cross_zone.enabled', 'Value': str(self.cross_zone_load_balancing).lower()})
         if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
             update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
 
