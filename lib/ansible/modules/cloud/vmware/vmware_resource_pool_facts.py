@@ -94,37 +94,41 @@ class ResourcePoolFactsManager(PyVmomi):
         resource_pool_facts = []
         rps = get_all_objs(self.content, [vim.ResourcePool])
         for rp in rps:
-            tmp_facts = dict(
-                name=rp.name,
-                cpu_allocation_reservation=rp.config.cpuAllocation.reservation,
-                cpu_allocation_expandable_reservation=rp.config.cpuAllocation.expandableReservation,
-                cpu_allocation_limit=rp.config.cpuAllocation.limit,
-                cpu_allocation_shares=rp.config.cpuAllocation.shares.shares,
-                cpu_allocation_shares_level=rp.config.cpuAllocation.shares.level,
-                cpu_allocation_overhead_limit=rp.config.cpuAllocation.overheadLimit,
-                mem_allocation_reservation=rp.config.memoryAllocation.reservation,
-                mem_allocation_expandable_reservation=rp.config.memoryAllocation.expandableReservation,
-                mem_allocation_limit=rp.config.memoryAllocation.limit,
-                mem_allocation_shares=rp.config.memoryAllocation.shares.shares,
-                mem_allocation_shares_level=rp.config.memoryAllocation.shares.level,
-                mem_allocation_overhead_limit=rp.config.memoryAllocation.overheadLimit,
-                owner=rp.owner.name,
-                overall_status=rp.summary.runtime.overallStatus,
-                runtime_cpu_reservation_used=rp.summary.runtime.cpu.reservationUsed,
-                runtime_cpu_reservation_used_vm=rp.summary.runtime.cpu.reservationUsedForVm,
-                runtime_cpu_unreserved_for_pool=rp.summary.runtime.cpu.unreservedForPool,
-                runtime_cpu_unreserved_for_vm=rp.summary.runtime.cpu.unreservedForVm,
-                runtime_cpu_overall_usage=rp.summary.runtime.cpu.overallUsage,
-                runtime_cpu_max_usage=rp.summary.runtime.cpu.maxUsage,
-                runtime_memory_reservation_used=rp.summary.runtime.memory.reservationUsed,
-                runtime_memory_reservation_used_vm=rp.summary.runtime.memory.reservationUsedForVm,
-                runtime_memory_unreserved_for_pool=rp.summary.runtime.memory.unreservedForPool,
-                runtime_memory_unreserved_for_vm=rp.summary.runtime.memory.unreservedForVm,
-                runtime_memory_overall_usage=rp.summary.runtime.memory.overallUsage,
-                runtime_memory_max_usage=rp.summary.runtime.memory.maxUsage,
-            )
+            try:
+                tmp_facts = dict(
+                    name=rp.name,
+                    cpu_allocation_reservation=rp.config.cpuAllocation.reservation,
+                    cpu_allocation_expandable_reservation=rp.config.cpuAllocation.expandableReservation,
+                    cpu_allocation_limit=rp.config.cpuAllocation.limit,
+                    cpu_allocation_shares=rp.config.cpuAllocation.shares.shares,
+                    cpu_allocation_shares_level=rp.config.cpuAllocation.shares.level,
+                    cpu_allocation_overhead_limit=rp.config.cpuAllocation.overheadLimit,
+                    mem_allocation_reservation=rp.config.memoryAllocation.reservation,
+                    mem_allocation_expandable_reservation=rp.config.memoryAllocation.expandableReservation,
+                    mem_allocation_limit=rp.config.memoryAllocation.limit,
+                    mem_allocation_shares=rp.config.memoryAllocation.shares.shares,
+                    mem_allocation_shares_level=rp.config.memoryAllocation.shares.level,
+                    mem_allocation_overhead_limit=rp.config.memoryAllocation.overheadLimit,
+                    owner=rp.owner.name,
+                    overall_status=rp.summary.runtime.overallStatus,
+                    runtime_cpu_reservation_used=rp.summary.runtime.cpu.reservationUsed,
+                    runtime_cpu_reservation_used_vm=rp.summary.runtime.cpu.reservationUsedForVm,
+                    runtime_cpu_unreserved_for_pool=rp.summary.runtime.cpu.unreservedForPool,
+                    runtime_cpu_unreserved_for_vm=rp.summary.runtime.cpu.unreservedForVm,
+                    runtime_cpu_overall_usage=rp.summary.runtime.cpu.overallUsage,
+                    runtime_cpu_max_usage=rp.summary.runtime.cpu.maxUsage,
+                    runtime_memory_reservation_used=rp.summary.runtime.memory.reservationUsed,
+                    runtime_memory_reservation_used_vm=rp.summary.runtime.memory.reservationUsedForVm,
+                    runtime_memory_unreserved_for_pool=rp.summary.runtime.memory.unreservedForPool,
+                    runtime_memory_unreserved_for_vm=rp.summary.runtime.memory.unreservedForVm,
+                    runtime_memory_overall_usage=rp.summary.runtime.memory.overallUsage,
+                    runtime_memory_max_usage=rp.summary.runtime.memory.maxUsage,
+                )
 
-            resource_pool_facts.append(tmp_facts)
+                resource_pool_facts.append(tmp_facts)
+            except vmodl.fault.ManagedObjectNotFound:
+                pass
+
         return resource_pool_facts
 
 

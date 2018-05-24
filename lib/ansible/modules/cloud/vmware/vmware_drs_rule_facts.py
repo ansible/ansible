@@ -175,8 +175,7 @@ class VmwareDrsFactManager(PyVmomi):
                     else:
                         cluster_rule_facts[cluster_name].append(self.normalize_vm_vm_rule_spec(rule_obj=drs_rule))
             except vmodl.fault.ManagedObjectNotFound:
-                uster_rule_facts.pop(cluster_name, None)  # Remove incomplete list if it was created
-                pass
+                cluster_rule_facts.pop(cluster_name, None)  # Remove incomplete list if it was created
 
         return cluster_rule_facts
 
