@@ -32,6 +32,12 @@ else:
         pass
     mac_linux.word_fmt = '%.2x'
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 from ansible import errors
 
 
@@ -640,6 +646,9 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     # If version does not match, return False
     if version and v.version != version:
         return False
+
+    if query in ['address/prefix', 'gateway',  'gw', 'query_func_map', 'hostnet', 'router', 'subnet']:
+        display.warning("Filter '%s' will be deprecated as either redundant or incorrect implementation please look into alternate solutions" % (query))
 
     extras = []
     for arg in query_func_extra_args.get(query, tuple()):
