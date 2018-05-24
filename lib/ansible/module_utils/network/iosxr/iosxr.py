@@ -454,7 +454,7 @@ def run_command(module, commands):
             sendonly = False
             newline = True
 
-        out = conn.get(command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
         try:
             responses.append(to_text(out, errors='surrogate_or_strict'))
