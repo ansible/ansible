@@ -75,6 +75,46 @@
 - assert:
     that: not output.changed
 
+- name: Create network security group in another resource group
+  azure_rm_securitygroup:
+    name: secgroupfoo
+    resource_group: "{{ resource_group_secondary }}"
+  register: nsg
+
+- name: Update the subnet
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: "10.1.0.0/16"
+    security_group:
+      name: secgroupfoo
+      resource_group: "{{ resource_group_secondary }}"
+    tags:
+       testing: testing
+       delete: on-fini
+  register: output
+
+- assert:
+    that: 
+    - output.changed
+    - output.state.network_security_group.id == nsg.state.id
+
+- name: Update the subnet (idempotent)
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: "10.1.0.0/16"
+    security_group: "{{ nsg.state.id }}"
+    tags:
+       testing: testing
+       delete: on-fini
+  register: output
+
+- assert:
+    that: not output.changed
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
