@@ -30,8 +30,8 @@ from ansible.module_utils._text import to_bytes, to_text
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br'[\r\n]?(?!\s*<)?(\x1b\S+)*[a-zA-Z_]{1}[a-zA-Z0-9-_.]*[>|#|%](?:\s*)*(\x1b\S+)*$'),
-        re.compile(br'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
+        re.compile(br'[\r\n]?(?!\s*<)?(\x1b\S+)*[a-zA-Z_0-9]{1}[a-zA-Z0-9-_.]*[>|#|%](?:\s*)*(\x1b\S+)*$'),
+        re.compile(br'[\r\n]?[a-zA-Z0-9]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
     ]
 
     terminal_stderr_re = [
