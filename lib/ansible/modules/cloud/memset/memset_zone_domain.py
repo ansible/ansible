@@ -92,7 +92,7 @@ def api_validation(args=None):
     # zone domain length must be less than 250 chars
     if len(args['domain']) > 250:
         stderr = 'Zone domain must be less than 250 characters in length.'
-        module.fail_json(failed=True, msg=stderr, stderr=stderr)
+        module.fail_json(failed=True, msg=stderr)
 
 
 def check(args=None):
@@ -206,7 +206,6 @@ def create_or_delete_domain(args=None):
 
         retvals['failed'] = has_failed
         retvals['msg'] = stderr
-        retvals['stderr'] = stderr
         return(retvals)
 
     if args['state'] == 'present':
