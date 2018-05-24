@@ -25,17 +25,15 @@ DOCUMENTATION = '''
         projects:
           description: A list of projects in which to describe GCE instances.
         filters:
-          description: A list of filter value pairs. Available filters are listed here
-              U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
-              Each additional filter in the list will act be added as an AND condition
-              (filter1 and filter2)
+          description: >
+            A list of filter value pairs. Available filters are listed here
+            U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
+            Each additional filter in the list will act be added as an AND condition
+            (filter1 and filter2)
         hostnames:
           description: A list of options that describe the ordering for which
-              hostnames should be assigned.
-          options:
-              - public_ip
-              - private_ip
-              - name
+              hostnames should be assigned. Currently supported hostnames are
+              'public_ip', 'private_ip', or 'name'.
           default: ['public_ip', 'private_ip', 'name']
 '''
 
