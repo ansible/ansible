@@ -24,8 +24,8 @@ import time
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -128,7 +128,12 @@ class Cliconf(CliconfBase):
             elif command == 'EOF' and multiline:
                 multiline = False
 
-            out = self.get(command, prompt, answer, multiline)
+            try:
+                out = self.get(command, prompt, answer, multiline)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', e)
 
             if out is not None:
                 try:
@@ -152,7 +157,7 @@ class Cliconf(CliconfBase):
 
         try:
             self.run_commands(commands)
-        except ConnectionError:
+        except AnsibleConnectionFailure:
             self.close_session(session)
             raise
 
