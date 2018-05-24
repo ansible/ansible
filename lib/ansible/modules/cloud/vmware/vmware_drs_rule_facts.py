@@ -166,12 +166,17 @@ class VmwareDrsFactManager(PyVmomi):
         """
         cluster_rule_facts = dict()
         for cluster_obj in self.cluster_obj_list:
-            cluster_rule_facts[cluster_obj.name] = []
-            for drs_rule in cluster_obj.configuration.rule:
-                if isinstance(drs_rule, vim.cluster.VmHostRuleInfo):
-                    cluster_rule_facts[cluster_obj.name].append(self.normalize_vm_host_rule_spec(rule_obj=drs_rule))
-                else:
-                    cluster_rule_facts[cluster_obj.name].append(self.normalize_vm_vm_rule_spec(rule_obj=drs_rule))
+            try:
+                cluster_name = cluster_obj.name
+                cluster_rule_facts[cluster_name] = []
+                for drs_rule in cluster_obj.configuration.rule:
+                    if isinstance(drs_rule, vim.cluster.VmHostRuleInfo):
+                        cluster_rule_facts[cluster_name].append(self.normalize_vm_host_rule_spec(rule_obj=drs_rule))
+                    else:
+                        cluster_rule_facts[cluster_name].append(self.normalize_vm_vm_rule_spec(rule_obj=drs_rule))
+            except vmodl.fault.ManagedObjectNotFound:
+                uster_rule_facts.pop(cluster_name, None)  # Remove incomplete list if it was created
+                pass
 
         return cluster_rule_facts
 
