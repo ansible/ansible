@@ -122,7 +122,7 @@
     - name: destroy target group if it was created
       elb_target_group:
         name: "{{ tg_name }}"
-        protocol: http
+        protocol: tcp
         port: 80
         vpc_id: "{{ vpc.vpc.id }}"
         state: absent
