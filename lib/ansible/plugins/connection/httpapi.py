@@ -188,6 +188,8 @@ class Connection(ConnectionBase):
 
         self._httpapi = httpapi_loader.get(network_os, self)
         if self._httpapi:
+            if hasattr(self._httpapi, 'set_become'):
+                self._httpapi.set_become(play_context)
             display.vvvv('loaded API plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
         else:
             raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % network_os)
@@ -229,13 +231,8 @@ class Connection(ConnectionBase):
         play_context.deserialize(pc_data)
 
         messages = ['updating play_context for connection']
-        if self._play_context.become is False and play_context.become is True:
-            self._enable = True
-            messages.append('authorizing connection')
-
-        elif self._play_context.become is True and not play_context.become:
-            self._enable = False
-            messages.append('deauthorizing connection')
+        if self._play_context.become ^ play_context.become:
+            self._httpapi.set_become(play_context)
 
         self._play_context = play_context
         return messages

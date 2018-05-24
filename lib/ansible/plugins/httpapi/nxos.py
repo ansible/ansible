@@ -22,12 +22,19 @@ class HttpApi:
         self.connection = connection
 
     def _run_queue(self, queue, output):
+        if self._become:
+            display.vvvv('firing event: on_become')
+            queue.insert(0, 'enable')
         request = request_builder(queue, output)
-
         headers = {'Content-Type': 'application/json'}
+
         response = self.connection.send('/ins', request, headers=headers, method='POST')
         response = json.loads(to_text(response.read()))
-        return handle_response(response)
+        results = handle_response(response)
+
+        if self._become:
+            results = results[1:]
+        return results
 
     def send_request(self, data, **message_kwargs):
         output = None
@@ -61,6 +68,10 @@ class HttpApi:
         if len(responses) == 1:
             return responses[0]
         return responses
+
+    def set_become(self, play_context):
+        self._become = play_context.become
+        self._become_pass = getattr(play_context, 'become_pass') or ''
 
     # Migrated from module_utils
     def edit_config(self, command):
