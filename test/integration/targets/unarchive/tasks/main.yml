@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make sure we start fresh
 
-# Need unzup for unarchive module, and zip for archive creation.
+# Need unzip for unarchive module, and zip for archive creation.
 - name: Ensure zip and unzip is present to create test archive (yum)
   yum: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'yum'
@@ -26,11 +26,11 @@
   #  dnf: name=zip state=latest
   #  when: ansible_pkg_mgr  ==  'dnf'
 
-- name: Ensure zip & unzup is present to create test archive (apt)
+- name: Ensure zip & unzip is present to create test archive (apt)
   apt: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'apt'
 
-- name: Ensure zip & unzup is present to create test archive (pkg)
+- name: Ensure zip & unzip is present to create test archive (pkg)
   pkgng: name=zip,unzip state=present
   when: ansible_pkg_mgr  ==  'pkgng'
 
@@ -51,18 +51,18 @@
 
 # This gets around an unzip timestamp bug in some distributions
 # Recent unzip on Ubuntu and BSD will randomly round some timestamps up.
-# But that doesn't seem to happen when the timestamp has an even second. 
+# But that doesn't seem to happen when the timestamp has an even second.
 - name: Bug work around
   command: touch -t "201705111530.00" {{output_dir}}/foo-unarchive.txt {{output_dir}}/foo-unarchive-777.txt {{output_dir}}/FOO-UNAR.TXT
 # See Ubuntu bug 1691636: https://bugs.launchpad.net/ubuntu/+source/unzip/+bug/1691636
-# When these are fixed, this code should be removed.  
+# When these are fixed, this code should be removed.
 
 - name: prep a zip file
   shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
 - name: add a file with Windows permissions to zip file
   shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
-  
+
 - name: prep a subdirectory
   file: path={{output_dir}}/unarchive-dir state=directory
 
@@ -178,11 +178,31 @@
 - name: repeat the last request to verify no changes
   unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03b
-  
+
 - name: verify that the task was not marked as changed
   assert:
     that:
       - "unarchive03b.changed == false"
+
+- name: "Create {{ output_dir }}/exclude directory"
+  file:
+    state: directory
+    path: "{{ output_dir }}/exclude"
+
+- name: Unpack zip file excluding one file.
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.zip"
+    dest: "{{ output_dir }}/exclude"
+    exclude: "foo-unarchive-*.txt"
+
+- name: verify that the file was unarchived
+  shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
+  register: unarchive_dir01
+
+- name: verify that zip extraction excluded file
+  assert:
+    that:
+      - "'foo-unarchive-777.txt' not in unarchive_dir01.stdout"
 
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
@@ -204,7 +224,7 @@
   when: unarchive04.stat.exists
 
 - name: try unarchiving to /tmp
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes 
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes
   register: unarchive05
 
 - name: verify that the file was marked as changed
@@ -251,7 +271,6 @@
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=directory
 
-
 - name: unarchive over existing extraction and set mode to 0644
   unarchive:
     src: "{{ output_dir }}/test-unarchive.tar.gz"
@@ -292,7 +311,6 @@
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
-
 
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=directory
@@ -358,10 +376,8 @@
 - name: remove our zip unarchive destination
   file: path={{ output_dir }}/test-unarchive-zip state=absent
 
-
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=directory
-
 
 - name: create a directory with quotable chars
   file: path="{{ output_dir }}/test-quotes~root" state=directory
@@ -502,7 +518,6 @@
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
-
 
 - name: Create a file
   file:
