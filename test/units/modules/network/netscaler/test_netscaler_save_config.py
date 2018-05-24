@@ -54,7 +54,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -79,7 +79,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -102,7 +102,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -128,7 +128,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
 
         class MockException(Exception):
