@@ -72,7 +72,7 @@ EXAMPLES = '''
         {% endfor %}
     commit: true
     description: "Ansible - add swps1-48"
-    
+
 - name: Fetch Details From All Interfaces In JSON Format
   nclu:
     commands:
