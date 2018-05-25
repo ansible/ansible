@@ -279,6 +279,11 @@ def _ssh_retry(func):
                     # 255 = failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError) as e:
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
+                    cmd = args[0]
+                    if self._play_context.password and isinstance(cmd, list):
+                        # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
+                        self.sshpass_pipe = os.pipe()
+                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
