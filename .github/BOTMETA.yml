@@ -686,6 +686,7 @@ files:
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
   $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
   $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
@@ -864,6 +865,8 @@ files:
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
+  $module_utils/letsencrypt.py:
+    maintainers: mgruener resmo felixfontein
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/network/meraki:
