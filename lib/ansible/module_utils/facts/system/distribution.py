@@ -427,7 +427,7 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -502,7 +502,9 @@ class Distribution(object):
     def get_distribution_FreeBSD(self):
         freebsd_facts = {}
         freebsd_facts['distribution_release'] = platform.release()
-        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE).*', freebsd_facts['distribution_release'])
+        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', freebsd_facts['distribution_release'])
+        if 'trueos' in platform.version():
+            freebsd_facts['distribution'] = 'TrueOS'
         if data:
             freebsd_facts['distribution_major_version'] = data.group(1)
             freebsd_facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
