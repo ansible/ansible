@@ -217,7 +217,8 @@ def test_open_url_no_validate_certs(urlopen_mock, install_opener_mock):
     assert ssl_handler is not None
     context = ssl_handler._context
     assert context.protocol == ssl.PROTOCOL_SSLv23
-    assert context.options & ssl.OP_NO_SSLv2
+    if ssl.OP_NO_SSLv2:
+        assert context.options & ssl.OP_NO_SSLv2
     assert context.options & ssl.OP_NO_SSLv3
     assert context.verify_mode == ssl.CERT_NONE
     assert context.check_hostname is False
