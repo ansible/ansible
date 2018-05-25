@@ -229,6 +229,9 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         self.access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
         self.idle_timeout = module.params.get("idle_timeout")
 
+        if self.elb is not None and self.elb['Type'] != 'application':
+            self.module.fail_json(msg="The load balancer type you are trying to manage is not application. Try elb_network_lb module instead.")
+
     def create_elb(self):
         """
         Create a load balancer
@@ -339,6 +342,9 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Ansible module parameters specific to NLBs
         self.type = 'network'
         self.cross_zone_load_balancing = module.params.get('cross_zone_load_balancing')
+
+        if self.elb is not None and self.elb['Type'] != 'network':
+            self.module.fail_json(msg="The load balancer type you are trying to manage is not network. Try elb_application_lb module instead.")
 
     def create_elb(self):
         """
