@@ -740,7 +740,6 @@ def ipv6(value, query=''):
 #  - address/prefix | ipsubnet(subnet/prefix)
 #      return the index of the subnet in the subnet
 def ipsubnet(value, query='', index='x'):
-    strquery = str(query)
     ''' Manipulate IPv4/IPv6 subnets '''
 
     try:
@@ -753,10 +752,11 @@ def ipsubnet(value, query='', index='x'):
         value = netaddr.IPNetwork(v)
     except:
         return False
-
+    querystr = str(query)
     if not query:
         return str(value)
-    elif strquery.isdigit():
+
+    elif querystr.isdigit():
         vsize = ipaddr(v, 'size')
         query = int(query)
 
@@ -788,7 +788,7 @@ def ipsubnet(value, query='', index='x'):
                     return str(value.supernet(query)[0])
                 except:
                     return False
-    elif strquery:
+    elif querystr:
         try:
             vtype = ipaddr(query, 'type')
             if vtype == 'address':
