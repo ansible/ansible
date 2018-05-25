@@ -111,6 +111,70 @@
         state: absent
         <<: *aws_connection_info
 # ============================================================
+- name: test register email identity check mode
+  block:
+    - name: register email identity check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - import_tasks: assert_defaults.yaml
+      vars:
+        identity: "{{ email_identity }}"
+
+  always:
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert nothing to clean up since check mode
+      assert:
+        that:
+          - result.changed == False
+# ============================================================
+- name: test register domain identity check mode
+  block:
+    - name: register domain identity check mode
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - import_tasks: assert_defaults.yaml
+      vars:
+        identity: "{{ domain_identity }}"
+
+  always:
+    - name: cleanup domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert nothing to clean up since check mode
+      assert:
+        that:
+          - result.changed == False
+# ============================================================
 - name: remove non-existent email identity
   aws_ses_identity:
     identity: "{{ email_identity }}"
@@ -132,6 +196,74 @@
   assert:
     that:
       - result.changed == False
+# ============================================================
+- name: test remove email identity check mode
+  block:
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: remove email identity check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+  always:
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert something to clean up since remove was check mode
+      assert:
+        that:
+          - result.changed == True
+# ============================================================
+- name: test remove domain identity check mode
+  block:
+    - name: register domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: remove domain identity check mode
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+  always:
+    - name: cleanup domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert something to clean up since remove was check mode
+      assert:
+        that:
+          - result.changed == True
 # ============================================================
 - name: test set notification queues
   block:
@@ -234,6 +366,95 @@
         - bounce
         - complaint
         - delivery
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+# ============================================================
+- name: test change notification settings check mode
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-{{ item }}"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+      with_items:
+        - bounce
+        - complaint
+        - delivery
+
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+
+    - name: set notification settings check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        bounce_notifications:
+          topic: "{{ topic_info.results[0].sns_arn }}"
+          include_headers: Yes
+        complaint_notifications:
+          topic: "{{ topic_info.results[1].sns_arn }}"
+          include_headers: Yes
+        delivery_notifications:
+          topic: "{{ topic_info.results[2].sns_arn }}"
+          include_headers: Yes
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: assert notification settings
+      assert:
+        that:
+          - result.notification_attributes.bounce_topic == topic_info.results[0].sns_arn
+          - result.notification_attributes.headers_in_bounce_notifications_enabled == True
+          - result.notification_attributes.delivery_topic == topic_info.results[2].sns_arn
+          - result.notification_attributes.headers_in_delivery_notifications_enabled == True
+          - result.notification_attributes.complaint_topic == topic_info.results[1].sns_arn
+          - result.notification_attributes.headers_in_complaint_notifications_enabled == True
+          - result.notification_attributes.forwarding_enabled == False
+
+    - name: re-register base email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert no change since notifications were check mode
+      assert:
+        that:
+          - result.changed == False
+          - "'bounce_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_bounce_notifications_enabled == False
+          - "'delivery_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_delivery_notifications_enabled == False
+          - "'complaint_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_complaint_notifications_enabled == False
+          - result.notification_attributes.forwarding_enabled == True
+
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      with_items:
+        - bounce
+        - complaint
+        - delivery
+
     - name: cleanup email identity
       aws_ses_identity:
         identity: "{{ email_identity }}"
