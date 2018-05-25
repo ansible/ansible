@@ -27,7 +27,7 @@ options:
       - Accepts local users as .\username, and SERVERNAME\username.
       - Accepts domain users and groups as DOMAIN\username and username@DOMAIN.
       - Accepts service users as NT AUTHORITY\username.
-      - Accepts all local, domain and service user types as username, 
+      - Accepts all local, domain and service user types as username,
         favoring domain lookups when in a domain.
     required: yes
   state:
