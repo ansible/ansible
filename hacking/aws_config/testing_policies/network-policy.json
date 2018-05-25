@@ -2,21 +2,6 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "ManageVPCsForRoute53Testing",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:CreateTags",
-                "ec2:CreateVpc",
-                "ec2:DeleteVpc",
-                "ec2:DescribeTags",
-                "ec2:DescribeVpcAttribute",
-                "ec2:DescribeVpcClassicLink",
-                "ec2:DescribeVpcs",
-                "ec2:ModifyVpcAttribute"
-            ],
-            "Resource": "*"
-        },
-        {
             "Sid": "ManageRoute53ForTests",
             "Effect": "Allow",
             "Action": [
