@@ -721,13 +721,15 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
 
     # Verify Cloud-Init support
     if PVE_FULL_VERSION < 5.2:
-        if ('ciuser' in kwargs or
-            'cipassword' in kwargs or
+        if (
+            'ciuser' in kwargs or
+                'cipassword' in kwargs or
             'citype' in kwargs or
             'ipconfig' in kwargs or
-            ' nameserver' in kwargs or
+            'nameserver' in kwargs or
             'searchdomain' in kwargs or
-            'sshkeys' in kwargs):
+            'sshkeys' in kwargs
+        ):
             module.fail_json(msg='Cloud-Init is not supported on Proxmox Versions older than 5.2, your version: %s' % PVE_FULL_VERSION)
 
     # The features work only on PVE 4
