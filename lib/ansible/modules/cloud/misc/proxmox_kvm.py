@@ -719,6 +719,11 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
     kwargs.update(dict([k, int(v)] for k, v in kwargs.items() if isinstance(v, bool)))
 
+    # Verify Cloud-Init support
+    if PVE_FULL_VERSION < 5.2:
+      if 'ciuser' in kwargs or 'cipassword' in kwargs or 'citype' or 'ipconfig' in kwargs or 'nameserver' in kwargs or 'searchdomain' in kwargs or 'sshkeys' in kwargs:
+        module.fail_json(msg='Cloud-Init is not supported on Proxmox Versions older than 5.2, your version: %s' % PVE_FULL_VERSION)
+
     # The features work only on PVE 4
     if PVE_MAJOR_VERSION < 4:
         for p in only_v4:
@@ -835,7 +840,7 @@ def main():
             bootdisk=dict(type='str'),
             ciuser=dict(type='str', default='root'),
             cipassword=dict(type='str'),
-            citype=dict(type='str', default='nocloud', choices=['nocloud', 'configdrive2']),
+            citype=dict(type='str', default=None, choices=['nocloud', 'configdrive2']),
             clone=dict(type='str', default=None),
             cores=dict(type='int', default=1),
             cpu=dict(type='str', default='kvm64'),
@@ -941,7 +946,9 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
+        global PVE_FULL_VERSION
         PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_FULL_VERSION = float(proxmox.version.get()['version'])
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
