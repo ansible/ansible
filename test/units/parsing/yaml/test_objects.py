@@ -1,4 +1,5 @@
 # This file is part of Ansible
+# -*- coding: utf-8 -*-
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -149,3 +150,8 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
             return avu == seq
 
         self.assertRaises(AnsibleError, compare, avu, seq)
+
+    def test_vaulted_utf8_value_37258(self):
+        seq = u"aöffü"
+        avu = self._from_plaintext(seq)
+        self.assert_values(avu, seq)
