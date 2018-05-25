@@ -79,6 +79,15 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+    
+- name: Fetch Status Of Interface
+  nclu:
+    commands:
+        - show interface swp1
+  register: output
+- name: Print Status Of Interface
+  debug:
+    var: output
 '''
 
 RETURN = '''
