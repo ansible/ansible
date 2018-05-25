@@ -815,7 +815,7 @@ class AzureInventory(object):
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
 
-       if self.group_by_os_family:
+        if self.group_by_os_family:
             if not self._inventory.get(operating_system_type):
                 self._inventory[operating_system_type] = []
             self._inventory[operating_system_type].append(host_name)
