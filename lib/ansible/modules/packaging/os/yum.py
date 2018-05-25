@@ -1073,6 +1073,10 @@ class YumModule(YumDnf):
                     installed = self.is_installed(repoq, pkg)
 
                 if installed:
+                    # Return a mesage so it's obvious to the user why yum failed
+                    # and which package couldn't be removed. More details:
+                    # https://github.com/ansible/ansible/issues/35672
+                    res['msg'] = "Package '%s' couldn't be removed!" % pkg
                     self.module.fail_json(**res)
 
             res['changed'] = True
@@ -1306,7 +1310,6 @@ class YumModule(YumDnf):
         return res
 
     def ensure(self, repoq):
-
         pkgs = self.names
 
         # autoremove was provided without `name`
