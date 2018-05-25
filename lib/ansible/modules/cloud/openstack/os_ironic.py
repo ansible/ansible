@@ -157,7 +157,7 @@ def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
     info = p.get('power')
     if not info:
-        raise sdk.OpenStackCloudException(
+        raise sdk.exceptions.OpenStackCloudException(
             "driver_info['power'] is required")
     if p.get('console'):
         info.update(p.get('console'))

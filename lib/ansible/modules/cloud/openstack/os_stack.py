@@ -168,7 +168,7 @@ def _create_stack(module, stack, cloud, sdk):
             return stack
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         if hasattr(e, 'response'):
             module.fail_json(msg=to_native(e), response=e.response.json())
         else:
@@ -191,7 +191,7 @@ def _update_stack(module, stack, cloud, sdk):
         else:
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
-    except sdk.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         if hasattr(e, 'response'):
             module.fail_json(msg=to_native(e), response=e.response.json())
         else:

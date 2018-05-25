@@ -249,12 +249,12 @@ def _get_quotas(sdk, module, cloud, project):
     quota = {}
     try:
         quota['volume'] = _get_volume_quotas(cloud, project)
-    except sdk.OpenStackCloudURINotFound:
+    except sdk.exceptions.OpenStackCloudURINotFound:
         module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
 
     try:
         quota['network'] = _get_network_quotas(cloud, project)
-    except sdk.OpenStackCloudURINotFound:
+    except sdk.exceptions.OpenStackCloudURINotFound:
         module.warn("No public endpoint for network service was found. Ignoring network quotas.")
 
     quota['compute'] = _get_compute_quotas(cloud, project)
@@ -403,7 +403,7 @@ def main():
                 quota_call = getattr(cloud, 'delete_%s_quotas' % (quota_type))
                 try:
                     quota_call(cloud_params['name'])
-                except sdk.OpenStackCloudException as e:
+                except sdk.exceptions.OpenStackCloudException as e:
                     error_msg = str(e)
                     if error_msg.find(neutron_msg1) > -1 and error_msg.find(neutron_msg2) > -1:
                         pass
