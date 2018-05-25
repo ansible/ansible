@@ -190,7 +190,7 @@ options:
     version_added: 2.6
 '''
 
-EXAMPLES = '''
+EXAMPLES = R'''
 ### Example with HTTP challenge ###
 
 - name: Create a challenge for sample.com using a account key from a variable.
