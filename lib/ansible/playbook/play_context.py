@@ -557,6 +557,11 @@ class PlayContext(Base):
                 prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
 
+            elif self.become_method == 'machinectl':
+
+                exe = self.become_exe or 'machinectl'
+                becomecmd = '%s shell -q %s %s@ %s' % (exe, flags, self.become_user, command)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
