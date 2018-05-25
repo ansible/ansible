@@ -316,6 +316,7 @@ options:
   runtime:
     description:
       - Runtime to use for the container.
+    version_added: "2.6"
   shm_size:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
