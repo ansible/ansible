@@ -79,6 +79,13 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Set OSPF router ID
+  nclu:
+    commands:
+    - add ospf router-id {{ rid }}
+    atomic: true
+    description: "Set OSPF router ID"
 '''
 
 RETURN = '''
