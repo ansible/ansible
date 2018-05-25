@@ -23,3 +23,4 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_startnstep
    ../reference_appendices/playbooks_keywords
    playbooks_lookups
+   playbooks_module_defaults
