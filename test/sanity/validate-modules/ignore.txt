@@ -154,7 +154,6 @@ lib/ansible/modules/cloud/cloudscale/cloudscale_server.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_domain.py E325
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_instance.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
