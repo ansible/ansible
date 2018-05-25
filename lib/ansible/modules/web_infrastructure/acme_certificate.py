@@ -43,7 +43,7 @@ description:
    - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
 extends_documentation_fragment:
-  - letsencrypt
+  - acme
 options:
   account_email:
     description:
@@ -291,7 +291,7 @@ account_uri:
   version_added: "2.5"
 '''
 
-from ansible.module_utils.letsencrypt import (
+from ansible.module_utils.acme import (
     ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, ACMEAccount
 )
 
