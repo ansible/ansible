@@ -297,7 +297,7 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
             if 'cidrlist' in vpn_conn:
                 self.result['cidrs'] = vpn_conn['cidrlist'].split(',') or [vpn_conn['cidrlist']]
             # Ensure we return a bool
-            self.result['force_encap'] = True if vpn_conn['forceencap'] else False
+            self.result['force_encap'] = True if vpn_conn.get('forceencap') else False
             args = {
                 'key': 'name',
                 'identifier': vpn_conn['s2scustomergatewayid'],
