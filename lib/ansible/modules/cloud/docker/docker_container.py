@@ -313,6 +313,9 @@ options:
     description:
        - Use with restart policy to control maximum number of restart attempts.
     default: 0
+  runtime:
+    description:
+      - Runtime to use for the container.
   shm_size:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
@@ -691,6 +694,7 @@ class TaskParameters(DockerBaseClass):
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
+        self.runtime = None
         self.shm_size = None
         self.security_opts = None
         self.state = None
@@ -908,6 +912,7 @@ class TaskParameters(DockerBaseClass):
             pid_mode='pid_mode',
             tmpfs='tmpfs',
             init='init'
+            runtime='runtime',
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
@@ -1262,6 +1267,7 @@ class Container(DockerBaseClass):
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
             restart_retries=restart_policy.get('MaximumRetryCount'),
+            runtime=host_config.get('Runtime'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -2042,6 +2048,7 @@ def main():
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=None),
+        runtime=dict(type='str'),
         shm_size=dict(type='str'),
         security_opts=dict(type='list'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
