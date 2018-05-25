@@ -82,7 +82,7 @@
 - name: Create deployment
   k8s:
     state: present
-    inline: &dc
+    inline: &deployment
       apiVersion: Apps/V1Beta1
       kind: Deployment
       metadata:
@@ -121,7 +121,7 @@
 - name: Create deployment again
   k8s:
     state: present
-    inline: *dc
+    inline: *deployment
   register: output
 
 - name: Deployment creation should be idempotent
@@ -141,72 +141,6 @@
 - name: show output
   debug:
     var: output
-
-- name: Create a service
-  k8s:
-    state: present
-    resource_definition: &svc
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: web
-        namespace: testing
-        labels:
-          app: galaxy
-          service: web
-      spec:
-        selector:
-          app: galaxy
-          service: web
-        ports:
-        - protocol: TCP
-          targetPort: 8000
-          name: port-8000-tcp
-          port: 8000
-  register: output
-
-- name: show output
-  debug:
-    var: output
-
-- name: Create the service again
-  k8s:
-    state: present
-    resource_definition: *svc
-  register: output
-
-- name: Service creation should be idempotent
-  assert:
-    that: not output.changed
-
-- name: Create PVC
-  k8s:
-    state: present
-    inline: &pvc
-      apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: elastic-volume
-        namespace: testing
-      spec:
-        resources:
-          requests:
-            storage: 5Gi
-        accessModes:
-        - ReadWriteOnce
-
-- name: Show output
-  debug:
-    var: output
-
-- name: Create the PVC again
-  k8s:
-    state: present
-    inline: *pvc
-
-- name: PVC creation should be idempotent
-  assert:
-    that: not output.changed
 
 - name: Create deployment config
   k8s:
