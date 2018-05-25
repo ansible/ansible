@@ -205,16 +205,14 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = None
+    org_id = meraki.params['org_id']
 
-    if not meraki.params['org_id']:
+    if org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    else:
-        org_id = meraki.params['org_id']
 
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_snmp(meraki, org_id)
-    if meraki.params['state'] == 'present':
+    elif meraki.params['state'] == 'present':
         meraki.result['data'] = set_snmp(meraki, org_id)
 
     # in the event of a successful module execution, you will want to
