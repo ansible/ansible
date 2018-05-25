@@ -153,7 +153,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def has_expired(self, key):
 
         if self._timeout == 0:
-            return True
+            return False
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
