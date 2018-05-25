@@ -33,3 +33,8 @@
   when:
     - ansible_distribution == 'Fedora'
     - ansible_distribution_major_version|int >= 23
+
+- include: 'dnfreleasever.yml'
+  when:
+    - ansible_distribution == 'Fedora'
+    - ansible_distribution_major_version|int >= 23
