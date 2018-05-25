@@ -1,0 +1,58 @@
+- name: cleanup a new network view
+  nios_network_view:
+    name: ansible
+    state: absent
+    provider: "{{ nios_provider }}"
+
+- name: configure a new network view
+  nios_network_view:
+    name: ansible
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_create1
+
+- name: configure a new network view
+  nios_network_view:
+    name: ansible
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_create2
+
+- name: update the comment for network view
+  nios_network_view:
+    name: ansible
+    comment: this is an example comment
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_update1
+
+- name: update the comment for network view
+  nios_network_view:
+    name: ansible
+    comment: this is an example comment
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_update2
+
+- name: remove the network view
+  nios_network_view:
+    name: ansible
+    state: absent
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_delete1
+
+- name: remove the network view
+  nios_network_view:
+    name: ansible
+    state: absent
+    provider: "{{ nios_provider }}"
+  register: nios_network_view_delete2
+
+- assert:
+    that:
+        - "nios_network_view_create1.changed"
+        - "not nios_network_view_create2.changed"
+        - "nios_network_view_update1.changed"
+        - "not nios_network_view_update2.changed"
+        - "nios_network_view_delete1.changed"
+        - "not nios_network_view_delete2.changed"
