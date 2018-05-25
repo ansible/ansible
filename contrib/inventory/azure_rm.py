@@ -261,6 +261,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
     group_by_tag='AZURE_GROUP_BY_TAG',
+    group_by_os_family='AZURE_GROUP_BY_OS_FAMILY',
     use_private_ip='AZURE_USE_PRIVATE_IP'
 )
 
@@ -571,6 +572,7 @@ class AzureInventory(object):
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
+        self.group_by_os_family = True
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
@@ -808,9 +810,15 @@ class AzureInventory(object):
 
         host_name = self._to_safe(vars['name'])
         resource_group = self._to_safe(vars['resource_group'])
+        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'])
         security_group = None
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
+
+       if self.group_by_os_family:
+            if not self._inventory.get(operating_system_type):
+                self._inventory[operating_system_type] = []
+            self._inventory[operating_system_type].append(host_name)
 
         if self.group_by_resource_group:
             if not self._inventory.get(resource_group):
