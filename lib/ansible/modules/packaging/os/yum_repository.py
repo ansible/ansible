@@ -405,6 +405,7 @@ class YumRepo(object):
         'enablegroups',
         'exclude',
         'failovermethod',
+        'file',
         'gpgcakey',
         'gpgcheck',
         'gpgkey',
