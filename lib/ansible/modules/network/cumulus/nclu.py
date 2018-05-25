@@ -79,6 +79,16 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+    
+- name: Enable OSPF area 0 on all interfaces in the 192.168.0.0/16 subnet
+  nclu:
+    commands:
+    - add ospf network {{ item.prefix }} area {{ item.area }}
+    atomic: true
+    description: "Enable OSPF area 0 on all interfaces in the 192.168.0.0/16 subnet"
+  loop:
+    - { prefix: 192.168.0.0/16, area: 0.0.0.0 }
+    
 '''
 
 RETURN = '''
