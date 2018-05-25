@@ -73,7 +73,7 @@ options:
       - The request timeout in seconds
     required: false
     default: 10
-author: "Vladislav Gorbunov (@vadikso), Sergio Millan Rodriguez (@sermilrod)"
+author: "Vladislav Gorbunov (@vadikgo), Sergio Millan Rodriguez (@sermilrod)"
 notes:
     - Since the build can do anything this does not report on changes.
       Knowing the build is being run it's important to set changed_when
@@ -231,6 +231,7 @@ class JenkinsBuild:
             if self.console_output:
                 result['build_info']['console_output'] = self.server.get_build_console_output(
                     self.name, number=self.build_number)
+        result['changed'] = True
         return result
 
 
