@@ -20,7 +20,7 @@ options:
   name:
     description:
       - Name of the local group to manage membership on.
-    required: true
+    required: yes
   members:
     description:
       - A list of members to ensure are present/absent from the group.
@@ -29,13 +29,11 @@ options:
       - Accepts service users as NT AUTHORITY\username.
       - Accepts all local, domain and service user types as username, 
         favoring domain lookups when in a domain.
-    required: true
+    required: yes
   state:
     description:
       - Desired state of the members in the group.
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
     default: present
 author:
     - Andrew Saraceni (@andrewsaraceni)
