@@ -114,7 +114,6 @@
       - "file_attributes_result_4 is not changed"
   when: file_attributes_result_4 is changed
 
-
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
