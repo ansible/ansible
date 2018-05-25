@@ -7,6 +7,16 @@
     issu: "{{ issu }}"
   register: result
 
+- name: "Install OS image {{ si }}"
+  check_mode: "{{ checkmode }}"
+  nxos_install_os:
+    system_image_file: "{{ si }}"
+    kickstart_image_file: "{{ ki }}"
+    issu: "{{ issu }}"
+    provider: "{{ connection }}"
+  register: result
+  when: connection is defined
+
 - debug: msg=" {{ result['install_state'] }}"
 
 - name: Wait for device to come back up with new image

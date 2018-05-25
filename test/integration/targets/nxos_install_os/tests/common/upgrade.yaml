@@ -1,7 +1,7 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_os_install upgrade"
 - debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+  when: connection is defined
 
 - set_fact: checkmode='no'
 - set_fact: issu='desired'

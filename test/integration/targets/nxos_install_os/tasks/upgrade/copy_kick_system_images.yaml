@@ -3,13 +3,30 @@
   nxos_feature:
     feature: scp-server
     state: enabled
+    provider: "{{ connection }}"
+
+- name: "Setup - Turn on feature scp-server"
+  nxos_feature:
+    feature: scp-server
+    state: enabled
+  when: connection is defined
 
 - name: "Copy {{ si }} to bootflash"
   nxos_file_copy:
     local_file: "{{image_dir}}{{ si }}"
     file_system: "bootflash:"
-    host: "{{ inventory_hostname }}"
   register: result
+  ignore_errors: yes
+  when: ansible_connection == 'httpapi'
+
+
+- name: "Copy {{ si }} to bootflash"
+  nxos_file_copy:
+    local_file: "{{image_dir}}{{ si }}"
+    file_system: "bootflash:"
+  register: result
+  ignore_errors: yes
+  when: ansible_connection == 'httpapi'
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
@@ -19,9 +36,10 @@
   nxos_file_copy:
     local_file: "{{image_dir}}/{{ ki }}"
     file_system: "bootflash:"
-    host: "{{ inventory_hostname }}"
   register: result
   when: ki is defined
+  ignore_errors: yes
+  when: ansible_connection == 'httpapi'
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
