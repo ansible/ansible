@@ -1372,7 +1372,7 @@ class AnsibleModule(object):
                     diff['before']['attributes'] = existing.get('attr_flags')
                     if 'after' not in diff:
                         diff['after'] = {}
-                    diff['after']['attributes'] = attributes
+                    diff['after']['attributes'] = '%s%s' % (attr_mod, attributes)
 
                 if not self.check_mode:
                     try:
