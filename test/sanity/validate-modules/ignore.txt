@@ -1228,7 +1228,6 @@ lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/solaris_zone.py E324
 lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/svc.py E324
-lib/ansible/modules/system/timezone.py E326
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/system/ufw.py E326
 lib/ansible/modules/system/user.py E324
