@@ -1,0 +1,48 @@
+# make an installroot
+- name: Create installroot
+  local_action:
+    module: command mktemp -d "{{lookup('env', 'TMPDIR') | default('/tmp', true)}}/ansible.test.XXXXXX"
+  register: dnfroot
+
+- name: Make a necessary directory
+  file:
+    path: "/{{dnfroot.stdout}}/etc/dnf/vars"
+    state: directory
+    mode: 0755
+
+- name: Populate directory
+  copy:
+    content: "{{ansible_distribution_version}}\n"
+    dest: "/{{dnfroot.stdout}}/etc/dnf/vars/releasever"
+
+- name: attempt releasever to the installroot
+  dnf:
+    name: filesystem
+    installroot: '/{{dnfroot.stdout}}'
+    releasever: 22
+  register: dnf_result
+
+- name: check filesystem version
+  shell: rpm -q filesystem --root="/{{dnfroot.stdout}}/"
+  failed_when: False
+  register: rpm_result
+
+- debug: var=dnf_result
+- debug: var=rpm_result
+
+- name: verify installation was done
+  assert:
+    that:
+      - "not dnf_result.failed | default(False)"
+      - "dnf_result.changed"
+      - "rpm_result.rc == 0"
+
+- name: verify the version
+  assert:
+    that:
+      - "rpm_result.stdout.find('fc22') != -1"
+
+- name: cleanup installroot
+  file:
+    path: "/{{dnfroot.stdout}}/"
+    state: absent

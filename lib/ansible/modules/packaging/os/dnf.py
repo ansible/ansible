@@ -70,6 +70,14 @@ options:
     version_added: "2.3"
     default: "/"
 
+  releasever:
+    description:
+      - Specifies an alternative release from which all packages will be
+        installed.
+    required: false
+    version_added: "2.6"
+    default: null
+
   autoremove:
     description:
       - If C(yes), removes all "leaf" packages from the system that were originally
@@ -180,7 +188,7 @@ def _ensure_dnf(module):
                                  "Please install `{0}` package.".format(package))
 
 
-def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/'):
+def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/', releasever=None):
     """Configure the dnf Base object."""
     conf = base.conf
 
@@ -195,6 +203,10 @@ def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/')
 
     # Set installroot
     conf.installroot = installroot
+
+    # Set releasever
+    if releasever is not None:
+        conf.substitutions['releasever'] = releasever
 
     # Change the configuration file path if provided
     if conf_file:
@@ -225,10 +237,10 @@ def _specify_repositories(base, disablerepo, enablerepo):
             repo.enable()
 
 
-def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
+def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, releasever):
     """Return a fully configured dnf Base object."""
     base = dnf.Base()
-    _configure_base(module, base, conf_file, disable_gpg_check, installroot)
+    _configure_base(module, base, conf_file, disable_gpg_check, installroot, releasever)
     _specify_repositories(base, disablerepo, enablerepo)
     base.fill_sack(load_system_repo='auto')
     return base
@@ -477,6 +489,7 @@ def main():
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
             autoremove=dict(type='bool'),
+            releasever=dict(default=None),
         ),
         required_one_of=[['name', 'list', 'autoremove']],
         mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
@@ -501,7 +514,8 @@ def main():
     if params['list']:
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'], params['installroot'])
+            params['disablerepo'], params['enablerepo'], params['installroot'],
+            params['releasever'])
         list_items(module, base, params['list'])
     else:
         # Note: base takes a long time to run so we want to check for failure
@@ -510,7 +524,8 @@ def main():
             module.fail_json(msg="This command has to be run under the root user.")
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'], params['installroot'])
+            params['disablerepo'], params['enablerepo'], params['installroot'],
+            params['releasever'])
 
         ensure(module, base, params['state'], params['name'], params['autoremove'])
 
