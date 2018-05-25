@@ -120,8 +120,8 @@ commands:
 
 import re
 
-from copy import deepcopy
 
+from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
 from ansible.module_utils.network.ios.ios import get_config, load_config
@@ -165,7 +165,14 @@ def map_obj_to_commands(updates, module, os_version):
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {0}'.format(facility))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'facility' and entry['facility'] == facility:
+                        present = True
+
+                if not present:
+                    commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
                 if '12.' in os_version:
@@ -177,10 +184,17 @@ def map_obj_to_commands(updates, module, os_version):
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                if level and level != 'debugging':
-                    commands.append('logging buffered {0} {1}'.format(size, level))
-                else:
-                    commands.append('logging buffered {0}'.format(size))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'buffered' and entry['size'] == size and entry['level'] == level:
+                        present = True
+
+                if not present:
+                    if level and level != 'debugging':
+                        commands.append('logging buffered {0} {1}'.format(size, level))
+                    else:
+                        commands.append('logging buffered {0}'.format(size))
 
             else:
                 if dest:
@@ -293,7 +307,6 @@ def map_config_to_obj(module):
                         'facility': parse_facility(line, dest),
                         'level': parse_level(line, dest)
                     })
-
     return obj
 
 
@@ -355,7 +368,6 @@ def map_params_to_obj(module, required_if=None):
                 'level': module.params['level'],
                 'state': module.params['state']
             })
-
     return obj
 
 
@@ -411,6 +423,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
