@@ -211,12 +211,13 @@ module.
 Environment variables populated by pam_systemd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default methods used by ``become`` use the default PAM login modules, but
-in most distributions they do not open a new "session", in the sense of
-systemd. Because the ``pam_systemd`` module is never called, you might have
-surprises compared to a normal session opened through ssh: some environment
-variables set by ``pam_systemd``, most notably ``XDG_RUNTIME_DIR``, are not
-populated for the new user and instead inherited or just emptied.
+For most Linux distributions using ``systemd`` as their init, the default
+methods used by ``become`` do not open a new "session", in the sense of
+systemd.  Because the ``pam_systemd`` module will not fully initialize a new
+session, you might have surprises compared to a normal session opened through
+ssh: some environment variables set by ``pam_systemd``, most notably
+``XDG_RUNTIME_DIR``, are not populated for the new user and instead inherited
+or just emptied.
 
 This might cause trouble when trying to invoke systemd commands that depend on
 ``XDG_RUNTIME_DIR`` to access the bus:
