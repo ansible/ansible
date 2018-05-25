@@ -234,6 +234,7 @@ def list_ec2_images(ec2_client, module):
             # describing launch permissions of images owned by others is not permitted, but shouldn't cause failures
             pass
 
+    images.sort(key=lambda e: e.get('creation_date', ''))  # it may be possible that creation_date does not always exist
     module.exit_json(images=images)
 
 
