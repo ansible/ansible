@@ -25,7 +25,7 @@ description:
       (CA), run for the public's benefit. For details see U(https://letsencrypt.org)."
    - "This module only works with the ACME v2 protocol."
 extends_documentation_fragment:
-  - letsencrypt
+  - acme
 options:
   state:
     description:
@@ -111,7 +111,7 @@ account_uri:
   type: string
 '''
 
-from ansible.module_utils.letsencrypt import (
+from ansible.module_utils.acme import (
     ModuleFailException, ACMEAccount
 )
 
