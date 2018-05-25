@@ -377,12 +377,12 @@ deb-src-upload: deb-src
 
 .PHONY: epub
 epub:
-	(cd docs/docsite/; CPUS=$(CPUS) make epub)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) epub)
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 .PHONY: webdocs
 webdocs:
-	(cd docs/docsite/; CPUS=$(CPUS) make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
@@ -391,7 +391,7 @@ generate_rst: lib/ansible/cli/*.py
 
 
 docs: generate_rst
-	make $(MANPAGES)
+	$(MAKE) $(MANPAGES)
 
 .PHONY: alldocs
 alldocs: docs webdocs
