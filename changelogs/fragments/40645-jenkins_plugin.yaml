@@ -1,0 +1,2 @@
+bugfixes:
+- jenkins_plugin: fix plugin always updated even if already uptodate (https://github.com/ansible/ansible/pull/40645)
