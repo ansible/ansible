@@ -226,13 +226,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    # stack API introduced in shade 1.8.0
-    min_version = '0.13.0'
-    tag = module.params['tag']
-    if tag is not None:
-        # stack tag API was introduced in 1.26.0
-        min_version = '0.13.0'
-
     state = module.params['state']
     name = module.params['name']
     # Check for required parameters when state == 'present'
@@ -241,7 +234,7 @@ def main():
             if not module.params[p]:
                 module.fail_json(msg='%s required with present state' % p)
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version='0.13.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         stack = cloud.get_stack(name)
 

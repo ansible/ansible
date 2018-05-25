@@ -151,13 +151,7 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
-    if domain:
-        min_version = '0.13.0'
-    else:
-        min_version = None
-
-    sdk, cloud = openstack_cloud_from_module(
-        module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain:
             try:

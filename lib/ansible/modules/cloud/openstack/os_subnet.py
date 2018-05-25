@@ -257,10 +257,6 @@ def main():
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
 
-    min_version = None
-    if use_default_subnetpool:
-        min_version = '0.13.0'
-
     # Check for required parameters when state == 'present'
     if state == 'present':
         if not module.params['network_name']:
@@ -279,7 +275,7 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)

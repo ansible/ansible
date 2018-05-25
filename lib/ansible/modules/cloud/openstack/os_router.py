@@ -383,11 +383,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if module.params['project']:
-        min_version = '0.13.0'
-    else:
-        min_version = None
-
     state = module.params['state']
     name = module.params['name']
     network = module.params['network']
@@ -396,7 +391,7 @@ def main():
     if module.params['external_fixed_ips'] and not network:
         module.fail_json(msg='network is required when supplying external_fixed_ips')
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)

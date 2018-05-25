@@ -229,11 +229,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if module.params['wait']:
-        min_version = '0.13.0'
-    else:
-        min_version = None
-
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears disabled, Please "
@@ -250,7 +245,7 @@ def main():
     if not node_id:
         module.fail_json(msg="A uuid or name value must be defined "
                              "to use this module.")
-    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         node = cloud.get_machine(node_id)
 

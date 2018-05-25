@@ -152,11 +152,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if module.params['nat_destination']:
-        min_version = '0.13.0'
-    else:
-        min_version = None
-
     server_name_or_id = module.params['server']
     state = module.params['state']
     network = module.params['network']
@@ -168,7 +163,7 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    sdk, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
 
         server = cloud.get_server(server_name_or_id)
