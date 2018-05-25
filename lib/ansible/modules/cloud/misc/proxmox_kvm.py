@@ -20,7 +20,7 @@ short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluste
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 version_added: "2.3"
-author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
+author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>, Thijs Cramer <thijs.cramer at gmail.com>"
 options:
   acpi:
     description:
@@ -71,11 +71,15 @@ options:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
   ciuser:
+    version_added: 2.6
     description:
       - Set username used in Cloud-Init Config.
   cipassword:
+    version_added: 2.6
+    description:
       - Set password used in Cloud-Init Config (NOT RECOMMENDED, use sshkeys instead).
   citype:
+    version_added: 2.6
     description:
       - Specifies the cloud-init configuration format.
   clone:
@@ -159,10 +163,11 @@ options:
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
   ipconfig:
+    version_added: 2.6
     description:
       - A hash/dictionary of ip's used in the Cloud-Init Configuration.
       - Keys allowed are - C(ipconfig[n]).
-      - Values allowed are - C("gw=IP/CIDR,gw6=IP6/CIDR,ip=IP/CIDR,ip6=IP/CIDR").
+      - 'Values allowed are - C("gw=IP/CIDR,gw6=IP6/CIDR,ip=IP/CIDR,ip6=IP/CIDR").'
       - C(gw) is the IPv4 Default Gateway.
       - C(gw6) is the IPv6 Default Gateway.
       - C(ip) is the IPv4 IP Address.
@@ -204,6 +209,7 @@ options:
       - Specifies the VM name. Only used on the configuration web interface.
       - Required only for C(state=present).
   nameserver:
+    version_added: 2.6
     description:
       - Specifies the DNS Nameserver used by Cloud-Init Config.
   net:
@@ -285,6 +291,7 @@ options:
       - Specifies the SCSI controller model.
     choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
   searchdomain:
+    version_added: 2.6
     description:
       - The DNS Search Domain used by Cloud-Init Config.
   serial:
@@ -314,6 +321,7 @@ options:
       - Sets the number of CPU sockets. (1 - N).
     default: 1
   sshkeys:
+    version_added: 2.6
     description:
       - The SSH Keys used by Cloud-Init Config (OpenSSH Format).
   startdate:
