@@ -11,7 +11,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ======
 
-Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
+Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
 
 
 .. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
@@ -31,7 +31,7 @@ become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`/`machinectl`
 
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
@@ -91,7 +91,7 @@ Command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas | machinectl ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
@@ -207,6 +207,33 @@ a temporary file name which changes every time.  If you have '/sbin/service'
 or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that ansible creates to run the
 module.
+
+Environment variables populated by pam_systemd
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For most Linux distributions using ``systemd`` as their init, the default
+methods used by ``become`` do not open a new "session", in the sense of
+systemd.  Because the ``pam_systemd`` module will not fully initialize a new
+session, you might have surprises compared to a normal session opened through
+ssh: some environment variables set by ``pam_systemd``, most notably
+``XDG_RUNTIME_DIR``, are not populated for the new user and instead inherited
+or just emptied.
+
+This might cause trouble when trying to invoke systemd commands that depend on
+``XDG_RUNTIME_DIR`` to access the bus:
+
+.. code-block:: console
+
+   $ echo $XDG_RUNTIME_DIR
+
+   $ systemctl --user status
+   Failed to connect to bus: Permission denied
+
+To force ``become`` to open a new systemd session that goes through
+``pam_systemd``, you can use ``become_method: machinectl``.
+
+For more information, see `this systemd issue
+<https://github.com/systemd/systemd/issues/825#issuecomment-127917622>`_.
 
 .. _become-network:
 

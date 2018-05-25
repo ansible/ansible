@@ -59,7 +59,7 @@ def set_constant(name, value, export=vars()):
 
 
 # CONSTANTS ### yes, actual ones
-BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable']
+BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable', 'machinectl']
 BECOME_ERROR_STRINGS = {
     'sudo': 'Sorry, try again.',
     'su': 'Authentication failure',
@@ -70,6 +70,7 @@ BECOME_ERROR_STRINGS = {
     'ksu': 'Password incorrect',
     'pmrun': 'You are not permitted to run this command',
     'enable': '',
+    'machinectl': '',
 }  # FIXME: deal with i18n
 BECOME_MISSING_STRINGS = {
     'sudo': 'sorry, a password is required to run sudo',
@@ -81,6 +82,7 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': '',
     'enable': '',
+    'machinectl': '',
 }  # FIXME: deal with i18n
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BOOL_TRUE = BOOLEANS_TRUE
