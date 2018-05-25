@@ -238,6 +238,11 @@ options:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
     version_added: "2.2"
+  output_logs:
+    description:
+      - If set to true, output of the container command will be printed (only when log_driver is set to json-file or journald.
+    type: bool
+    default: 'no'
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -661,6 +666,7 @@ class TaskParameters(DockerBaseClass):
         self.labels = None
         self.links = None
         self.log_driver = None
+        self.output_logs = None
         self.log_options = None
         self.mac_address = None
         self.memory = None
@@ -1758,6 +1764,9 @@ class ContainerManager(DockerBaseClass):
     def fail(self, msg, **kwargs):
         self.client.module.fail_json(msg=msg, **kwargs)
 
+    def _output_logs(self, msg):
+        self.client.module.log(msg=msg)
+
     def _get_container(self, container):
         '''
         Expects container ID or Name. Returns a container object
@@ -1898,6 +1907,8 @@ class ContainerManager(DockerBaseClass):
 
                 if logging_driver == 'json-file' or logging_driver == 'journald':
                     output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    if self.parameters.output_logs:
+                        self._output_logs(msg=output)
                 else:
                     output = "Result logged using `%s` driver" % logging_driver
 
@@ -2022,6 +2033,7 @@ def main():
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         paused=dict(type='bool', default=False),
+        output_logs=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
         published_ports=dict(type='list', aliases=['ports']),
