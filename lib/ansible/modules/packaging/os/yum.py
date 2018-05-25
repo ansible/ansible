@@ -116,6 +116,12 @@ options:
     type: bool
     default: "no"
     version_added: "2.4"
+  bugfix:
+    description:
+      - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+    required: false
+    default: "no"
+    version_added: "2.6"
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
@@ -1272,7 +1278,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
-           installroot='/', allow_downgrade=False, disable_plugin=None, enable_plugin=None):
+           bugfix, installroot='/', allow_downgrade=False, disable_plugin=None, enable_plugin=None):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1382,6 +1388,8 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--nogpgcheck')
         if security:
             yum_basecmd.append('--security')
+        if bugfix:
+            yum_basecmd.append('--bugfix')
         res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, enable_plugin, disable_plugin, update_only, installroot=installroot)
     else:
         # should be caught by AnsibleModule argument_spec
@@ -1422,6 +1430,7 @@ def main():
             install_repoquery=dict(type='bool', default=True),
             allow_downgrade=dict(type='bool', default=False),
             security=dict(type='bool', default=False),
+            bugfix=dict(required=False, type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
         ),
@@ -1481,10 +1490,11 @@ def main():
         skip_broken = params['skip_broken']
         update_only = params['update_only']
         security = params['security']
+        bugfix = params['bugfix']
         allow_downgrade = params['allow_downgrade']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, update_only, security, params['installroot'], allow_downgrade,
+                         skip_broken, update_only, security, bugfix, params['installroot'], allow_downgrade,
                          disable_plugin=disable_plugin, enable_plugin=enable_plugin)
         if repoquery:
             results['msg'] = '%s %s' % (
