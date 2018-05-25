@@ -79,7 +79,7 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
-    
+
 - name: Fetch Status Of Interface
   nclu:
     commands:
