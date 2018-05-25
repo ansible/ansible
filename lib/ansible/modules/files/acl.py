@@ -74,11 +74,11 @@ options:
     default: 'no'
     version_added: "2.0"
 
-  nomask:
+  recalculate_mask:
     description:
-      - Don't recalculate the effective rights mask of the files. Incompatible with C(state=query).
-    type: bool
-    default: 'no'
+      - Select if and when to recalculate the effective right masks of the files, see setfacl documentation for more info. Incompatible with C(state=query).
+    choices: [ default, mask, no_mask ]
+    default: 'default'
     version_added: "2.6"
 
 author:
@@ -182,7 +182,7 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     return etype + ':' + entity
 
 
-def build_command(module, mode, path, follow, default, recursive, nomask, entry=''):
+def build_command(module, mode, path, follow, default, recursive, recalculate_mask, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
@@ -200,7 +200,9 @@ def build_command(module, mode, path, follow, default, recursive, nomask, entry=
     if recursive:
         cmd.append('--recursive')
 
-    if nomask and (mode == 'set' or mode == 'rm'):
+    if recalculate_mask == 'mask' and mode in ['set', 'rm']:
+        cmd.append('--mask')
+    elif recalculate_mask == 'no_mask' and mode in ['set', 'rm']:
         cmd.append('--no-mask')
 
     if not follow:
@@ -272,7 +274,12 @@ def main():
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
             recursive=dict(required=False, type='bool', default=False),
-            nomask=dict(required=False, type='bool', default=False),
+            recalculate_mask=dict(
+                required=False,
+                default='default',
+                choices=['default', 'mask', 'no_mask'],
+                type='str'
+            ),
             use_nfsv4_acls=dict(required=False, type='bool', default=False)
         ),
         supports_check_mode=True,
@@ -290,7 +297,7 @@ def main():
     follow = module.params.get('follow')
     default = module.params.get('default')
     recursive = module.params.get('recursive')
-    nomask = module.params.get('nomask')
+    recalculate_mask = module.params.get('recalculate_mask')
     use_nfsv4_acls = module.params.get('use_nfsv4_acls')
 
     if not os.path.exists(path):
@@ -300,8 +307,8 @@ def main():
         if recursive:
             module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
 
-        if nomask:
-            module.fail_json(msg="'nomask' MUST NOT be set when 'state=query'.")
+        if recalculate_mask in ['mask', 'no_mask']:
+            module.fail_json(msg="'recalculate_mask' MUST NOT be set to 'mask' or 'no_mask' when 'state=query'.")
 
     if not entry:
         if state == 'absent' and permissions:
@@ -341,7 +348,7 @@ def main():
         entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
-            default, recursive, nomask, entry
+            default, recursive, recalculate_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -353,7 +360,7 @@ def main():
         entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
-            default, recursive, nomask, entry
+            default, recursive, recalculate_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -366,7 +373,7 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default, recursive, nomask)
+        build_command(module, 'get', path, follow, default, recursive, recalculate_mask)
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
