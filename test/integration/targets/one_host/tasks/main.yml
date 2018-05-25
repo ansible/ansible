@@ -27,10 +27,10 @@
     api_token: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
@@ -47,10 +47,10 @@
     api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{item}}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{item}}"
   ignore_errors: true
   register: result
   with_items:
@@ -77,10 +77,10 @@
     api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}"
   register: result
 
 - name: "assert test_{{test_number}} worked"
@@ -102,10 +102,10 @@
     api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
@@ -132,10 +132,10 @@
         - custom
       TEST_VALUE: 2
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
@@ -162,10 +162,10 @@
     attributes:
       TEST_VALUE: "2"
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
@@ -187,10 +187,10 @@
     api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
@@ -212,10 +212,10 @@
     api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
-    ONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
-    ONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
-    ONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
-    ONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
+    PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
+    PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
+    PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"
+    PYONE_TEST_FIXTURE_UNIT: "test_{{test_number}}_{{ item }}"
   with_items: "{{opennebula_test.hosts}}"
   register: result
 
