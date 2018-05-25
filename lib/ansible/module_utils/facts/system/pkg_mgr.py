@@ -78,5 +78,10 @@ class PkgMgrFactCollector(BaseFactCollector):
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
 
+        if pkg_mgr_name == 'apt' and \
+                os.path.exists('/usr/bin/rpm') and \
+                not os.path.exists('/usr/bin/dpkg'):
+            pkg_mgr_name = 'apt_rpm'
+
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict
