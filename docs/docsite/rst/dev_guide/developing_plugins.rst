@@ -199,7 +199,11 @@ For examples on how to implement an inventory plug in, see the source code here:
 Lookup Plugins
 --------------
 
-Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks for both looping --- playbook language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins --- and to return values into a variable or parameter.
+Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented via lookup plugins --- and to return values into a variable or parameter.
+
+Lookup plugins are very flexible, allowing you to retrieve and return any type of data. When writing lookup plugins, always return data of a consistent type that can be easily consumed in a playbook. Avoid parameters that change the returned data type. If there is a need to return a single value sometimes and a complex dictionary other times, write two different lookup plugins.
+
+Ansible includes many :ref:`filters <playbooks_filters>` which can be used to manipulate the data returned by a lookup plugin. Sometimes it makes sense to do the filtering inside the lookup plugin, other times it is better to return results that can be filtered in the playbook. Keep in mind how the data will be referenced when determing the appropriate level of filtering to be done inside the lookup plugin.
 
 Here's a simple lookup plugin implementation --- this lookup returns the contents of a text file as a variable:
 
@@ -275,7 +279,8 @@ The following is an example of how this lookup is called::
 
     tasks:
 
-       - debug: msg="the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}"
+       - debug:
+           msg: the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}
 
 For more example lookup plugins, check out the source code for the lookup plugins that are included with Ansible here: `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
 
