@@ -66,8 +66,10 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(removed) specifies that the device mount's entry will be removed from
+        I(fstab) and will also unmount the device.
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, removed ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
@@ -559,7 +561,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'removed']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -625,7 +627,9 @@ def main():
         open(args['fstab'], 'a').close()
 
     # absent:
-    #   Remove from fstab and unmounted.
+    #   Remove from fstab, unmounted and mount point removed.
+    # removed:
+    #   Remove from fstab, and unmounted.
     # unmounted:
     #   Do not change fstab state, but unmount.
     # present:
@@ -638,7 +642,7 @@ def main():
     name = module.params['path']
     changed = False
 
-    if state == 'absent':
+    if state == 'absent' or state == 'removed':
         name, changed = unset_mount(module, args)
 
         if changed and not module.check_mode:
@@ -649,7 +653,7 @@ def main():
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
 
-            if os.path.exists(name):
+            if state == 'absent' and os.path.exists(name):
                 try:
                     os.rmdir(name)
                 except (OSError, IOError) as e:
