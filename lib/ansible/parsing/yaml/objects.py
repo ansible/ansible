@@ -104,7 +104,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         if not self.vault:
             # FIXME: raise exception?
             return self._ciphertext
-        return self.vault.decrypt(self._ciphertext).decode()
+        return to_text(self.vault.decrypt(self._ciphertext))
 
     @data.setter
     def data(self, value):
