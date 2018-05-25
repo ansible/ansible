@@ -240,7 +240,7 @@ options:
     version_added: "2.2"
   output_logs:
     description:
-      - If set to true, output of the container command will be printed (only when log_driver is set to json-file or journald.
+      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
     type: bool
     default: 'no'
   paused:
