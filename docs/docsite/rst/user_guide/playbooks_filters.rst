@@ -886,6 +886,9 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
+    
+    # case insensitive search in multiline mode
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
