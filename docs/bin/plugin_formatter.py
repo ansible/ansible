@@ -251,7 +251,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         module_info[module] = {'path': module_path,
                                'source': os.path.relpath(module_path, module_dir),
                                'deprecated': deprecated,
-                               'aliases': set(),
+                               'aliases': module_info[module].get('aliases', set()),
                                'metadata': metadata,
                                'doc': doc,
                                'examples': examples,
