@@ -317,9 +317,9 @@ files:
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
   $modules/clustering/etcd3.py: evrardjp
-  $modules/clustering/k8s: chouseknecht samdoran maxamillion fabianvf flaper87
+  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
-  $modules/clustering/openshift: chouseknecht samdoran maxamillion fabianvf flaper87
+  $modules/clustering/openshift: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
   $modules/clustering/znode.py: treyperry
   $modules/commands/command.py: $team_ansible
@@ -357,7 +357,7 @@ files:
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
-  $modules/files/lineinfile.py: ahtik $team_ansible dhozac
+  $modules/files/lineinfile.py: ahtik $team_ansible dhozac samdoran
   $modules/files/replace.py: EvanK
   $modules/files/stat.py: bpennypacker
   $modules/files/synchronize.py: $team_ansible tima
@@ -661,7 +661,7 @@ files:
   $modules/system/puppet.py: emonty nibalizer
   $modules/system/runit.py: jsumners
   $modules/system/seboolean.py: $team_ansible sfromm
-  $modules/system/selinux.py: goozbach
+  $modules/system/selinux.py: goozbach samdoran
   $modules/system/selinux_permissive.py: mscherer
   $modules/system/seport.py: dankeder
   $modules/system/service.py: $team_ansible
@@ -674,7 +674,7 @@ files:
   $modules/system/systemd.py: $team_ansible
   $modules/system/timezone.py: jasperla tmshn
   $modules/system/ufw.py: ahtik ovcharenko pyykkis
-  $modules/system/user.py: $team_ansible sfromm
+  $modules/system/user.py: $team_ansible sfromm samdoran
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
   $modules/utilities/logic/async_status.py: $team_ansible
@@ -863,7 +863,7 @@ files:
     maintainers: paulquack
     labels: networking
   $module_utils/k8s_common.py:
-    maintainers: chouseknecht samdoran maxamillion fabianvf flaper87
+    maintainers: chouseknecht maxamillion fabianvf flaper87
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
