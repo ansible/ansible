@@ -88,8 +88,10 @@ class CobblerInventory(object):
 
         self.inventory = dict()  # A list of groups and the hosts in that group
         self.cache = dict()  # Details about hosts in the inventory
+        self.ignore_settings = False  # used to only look at env vars for settings.
 
-        # Read settings and parse CLI arguments
+        # Read env vars, read settings, and parse CLI arguments
+        self.parse_env_vars()
         self.read_settings()
         self.parse_cli_args()
 
@@ -137,6 +139,9 @@ class CobblerInventory(object):
     def read_settings(self):
         """ Reads the settings from the cobbler.ini file """
 
+        if(self.ignore_settings):
+            return
+
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
@@ -153,6 +158,34 @@ class CobblerInventory(object):
         self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
         self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
         self.cache_max_age = config.getint('cobbler', 'cache_max_age')
+
+    def parse_env_vars(self):
+        """ Reads the settings from the environment """
+
+        # Env. Vars:
+        #   COBBLER_host
+        #   COBBLER_username
+        #   COBBLER_password
+        #   COBBLER_cache_path
+        #   COBBLER_cache_max_age
+        #   COBBLER_ignore_settings
+
+        self.cobbler_host = os.getenv('COBBLER_host', None)
+        self.cobbler_username = os.getenv('COBBLER_username', None)
+        self.cobbler_password = os.getenv('COBBLER_password', None)
+
+        # Cache related
+        cache_path = os.getenv('COBBLER_cache_path', None)
+        if(cache_path is not None):
+            self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
+            self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
+
+        self.cache_max_age = int(os.getenv('COBBLER_cache_max_age', "30"))
+
+        # ignore_settings is used to ignore the settings file, for use in Ansible
+        # Tower (or AWX inventory scripts and not throw python exceptions.)
+        if(os.getenv('COBBLER_ignore_settings', False) == "True"):
+            self.ignore_settings = True
 
     def parse_cli_args(self):
         """ Command line argument processing """
