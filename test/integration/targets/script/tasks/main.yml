@@ -221,3 +221,21 @@
     that:
       - _check_mode_test3 is skipped
       - '_check_mode_test3.msg == "{{ output_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
+
+# executable
+
+- name: Run script with shebang omitted
+  script: no_shebang.py
+  args:
+    executable: python
+  register: _shebang_omitted_test
+  tags:
+    - noshebang
+
+- name: Assert that script with shebang omitted succeeded
+  assert:
+    that:
+      - _shebang_omitted_test is success
+      - _shebang_omitted_test.stdout == 'Script with shebang omitted'
+  tags:
+    - noshebang
