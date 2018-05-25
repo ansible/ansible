@@ -439,7 +439,7 @@ EXAMPLES = r'''
       arguments: /c whoami
     triggers:
     - type: daily
-      start_boundary: 2017-10-09T09:00:00
+      start_boundary: '2017-10-09T09:00:00'
     username: SYSTEM
     state: present
     enabled: yes
