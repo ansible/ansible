@@ -496,7 +496,6 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'ip': _ip_query,
         'ip/prefix': _ip_prefix_query,
         'ip_netmask': _ip_netmask_query,
-        # 'ip_wildcard': _ip_wildcard_query, built then could not think of use case
         'ipv4': _ipv4_query,
         'ipv6': _ipv6_query,
         'last_usable': _last_usable_query,
@@ -507,7 +506,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'net': _net_query,
         'next_usable': _next_usable_query,
         'netmask': _netmask_query,
-        'network': _network_query,
+        'network': _network_query,  # deprecate
         'network_id': _network_id_query,
         'network/prefix': _subnet_query,
         'network_netmask': _network_netmask_query,
@@ -647,8 +646,20 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     if version and v.version != version:
         return False
 
-    if query in ['address/prefix', 'gateway',  'gw', 'query_func_map', 'hostnet', 'router', 'subnet']:
-        display.warning("Filter '%s' will be deprecated as either redundant or incorrect implementation please look into alternate solutions" % (query))
+    redundant_msg = "Filter '%s' will be deprecated in 2.10, as it is redundant and uses incorrect terminology please use first_usable instead" % (query)
+    network_msg = "Filter '%s' will be deprecated in 2.10, as it does not properly handle /32 networks, please use network_id instead" % (query)
+
+    deprecate_map = {
+        'address/prefix': network_msg,
+        'host/prefix': network_msg,
+        'gateway': redundant_msg,
+        'gw': redundant_msg,
+        'hostnet': redundant_msg,
+        'router': redundant_msg,
+        'network': network_msg
+    }
+    if deprecate_map.get(query):
+        display.deprecated(deprecate_map[query])
 
     extras = []
     for arg in query_func_extra_args.get(query, tuple()):
