@@ -72,7 +72,7 @@ options:
     description:
       - If this is set to True the first newline after a block is removed (block, not variable tag!).
     type: bool
-    default: 'no'
+    default: 'yes'
     version_added: '2.4'
   lstrip_blocks:
     description:
