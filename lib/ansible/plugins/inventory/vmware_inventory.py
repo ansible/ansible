@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: vmware
+    name: vmware_inventory
     plugin_type: inventory
     short_description: VMware inventory source
     description:
@@ -59,16 +59,14 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-Sample configuration file for VMware dynamic inventory
-
-plugin: vmware_inventory
-strict: False
-hostname: 10.65.223.31
-username: administrator@vsphere.local
-password: Esxi@123$%
-validate_certs: False
-with_tags: True
-
+    #Sample configuration file for VMware dynamic inventory
+    plugin: vmware_inventory
+    strict: False
+    hostname: 10.65.223.31
+    username: administrator@vsphere.local
+    password: Esxi@123$%
+    validate_certs: False
+    with_tags: True
 '''
 
 import ssl
@@ -141,7 +139,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise AnsibleError("Missing one of the following : hostname, username, password. Please read "
                                "the documentation for more information.")
 
-    def login_vapi(self):
+    def _login_vapi(self):
         """
         Login to vCenter API using REST call
         Returns: connection object
@@ -176,7 +174,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise AnsibleError("Failed to login to %s using %s" % (self.hostname, self.username))
         return stub_config
 
-    def login(self):
+    def _login(self):
         """
         Login to vCenter or ESXi server
         Returns: connection object
@@ -260,7 +258,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         source_data = None
         if cache:
-            cache = self._options.get('cache')
+            cache = self.get_option('cache')
 
         update_cache = False
         if cache:
@@ -273,9 +271,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self._consume_options(config_data)
 
         self._set_credentials()
-        self.content = self.login()
+        self.content = self._login()
         if self.with_tags:
-            self.rest_content = self.login_vapi()
+            self.rest_content = self._login_vapi()
 
         using_current_cache = cache and not update_cache
         cacheable_results = self._populate_from_source(source_data, using_current_cache)
@@ -309,7 +307,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         cacheable_results = {}
         hostvars = {}
-        objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+        objects = self._get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
 
         if self.with_tags:
             tag_svc = Tag(self.rest_content)
@@ -364,7 +362,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return cacheable_results
 
-    def get_managed_objects_properties(self, vim_type, properties=None):
+    def _get_managed_objects_properties(self, vim_type, properties=None):
         """
         Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
