@@ -1,0 +1,44 @@
+---
+- name: test cloud-init
+  # TODO: check for a workaround
+  # install 'cloud-init'' failed: dpkg-divert: error: `diversion of /etc/init/ureadahead.conf
+  # to /etc/init/ureadahead.conf.disabled by cloud-init' clashes with `local diversion of
+  # /etc/init/ureadahead.conf to /etc/init/ureadahead.conf.distrib
+  # https://bugs.launchpad.net/ubuntu/+source/ureadahead/+bug/997838
+  when: ansible_distribution != "Ubuntu" or ansible_distribution_major_version|int != 14
+  block:
+  - name: setup install cloud-init
+    package:
+      name: cloud-init
+
+  - name: setup run cloud-init
+    service:
+      name: cloud-init-local
+      state: restarted
+
+  - name: test gather cloud-init facts in check mode
+    cloud_init_data_facts:
+    check_mode: yes
+    register: result
+  - name: verify test gather cloud-init facts in check mode
+    assert:
+      that:
+        - result.cloud_init_data_facts.status.v1 is defined
+        - result.cloud_init_data_facts.status.v1.stage is defined
+        - not result.cloud_init_data_facts.status.v1.stage
+        - cloud_init_data_facts.status.v1 is defined
+        - cloud_init_data_facts.status.v1.stage is defined
+        - not cloud_init_data_facts.status.v1.stage
+
+  - name: test gather cloud-init facts
+    cloud_init_data_facts:
+    register: result
+  - name: verify test gather cloud-init facts
+    assert:
+      that:
+        - result.cloud_init_data_facts.status.v1 is defined
+        - result.cloud_init_data_facts.status.v1.stage is defined
+        - not result.cloud_init_data_facts.status.v1.stage
+        - cloud_init_data_facts.status.v1 is defined
+        - cloud_init_data_facts.status.v1.stage is defined
+        - not cloud_init_data_facts.status.v1.stage
