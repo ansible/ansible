@@ -538,10 +538,12 @@ def _update_server(module, cloud, server):
     return (changed, server)
 
 
-def _delete_floating_ip_list(cloud, server, extra_ips):
+def _detach_ip_list(cloud, server, extra_ips):
     for ip in extra_ips:
-        cloud.nova_client.servers.remove_floating_ip(
-            server=server.id, address=ip)
+        ip_id = cloud.get_floating_ip(
+            id=None, filters={'floating_ip_address': ip})
+        cloud.detach_ip_from_server(
+            server_id=server.id, floating_ip_id=ip_id)
 
 
 def _check_ips(module, cloud, server):
@@ -582,7 +584,7 @@ def _check_ips(module, cloud, server):
                 if ip not in floating_ips:
                     extra_ips.append(ip)
             if extra_ips:
-                _delete_floating_ip_list(cloud, server, extra_ips)
+                _detach_ip_list(cloud, server, extra_ips)
                 changed = True
     elif auto_ip:
         if server['interface_ip']:
