@@ -87,10 +87,6 @@ def update_resources(module, p):
     by name using their unique field (identity)
     '''
     params = p.copy()
-    for key in p:
-        if key.startswith('tower_'):
-            params.pop(key)
-    params.pop('state', None)
     identity_map = {
         'user': 'username',
         'team': 'name',
@@ -134,7 +130,7 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     role_type = module.params.pop('role')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     json_output = {'role': role_type, 'state': state}
 

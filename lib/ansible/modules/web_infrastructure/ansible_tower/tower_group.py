@@ -134,7 +134,7 @@ def main():
     name = module.params.get('name')
     inventory = module.params.get('inventory')
     credential = module.params.get('credential')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     variables = module.params.get('variables')
     if variables:
