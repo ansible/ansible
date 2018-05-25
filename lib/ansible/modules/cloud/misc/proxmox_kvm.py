@@ -82,6 +82,7 @@ options:
     version_added: 2.6
     description:
       - Specifies the cloud-init configuration format.
+    choices: ['nocloud', 'configdrive2']
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
