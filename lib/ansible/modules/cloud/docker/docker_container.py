@@ -911,8 +911,8 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
-            init='init'
-            runtime='runtime',
+            init='init',
+            runtime='runtime'
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
