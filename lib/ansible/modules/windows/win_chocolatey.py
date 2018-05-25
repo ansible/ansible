@@ -54,7 +54,7 @@ options:
   extra_flags:
     description:
       - Flags to pass directly to chocolatey, for example '--x86'
-    type: string
+    version_added: '2.6'
   install_args:
     description:
       - Arguments to pass to the native installer.
