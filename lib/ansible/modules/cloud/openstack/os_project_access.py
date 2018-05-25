@@ -57,7 +57,7 @@ requirements:
 
 EXAMPLES = '''
 - name: "Enable access to tiny flavor to your tenant."
-  os_project_Access:
+  os_project_access:
     cloud: mycloud
     state: present
     target_project_id: f0f1f2f3f4f5f67f8f9e0e1
@@ -66,7 +66,7 @@ EXAMPLES = '''
 
 
 - name: "Disable access to the given flavor to project"
-  os_project_Access:
+  os_project_access:
     cloud: mycloud
     state: absent
     target_project_id: f0f1f2f3f4f5f67f8f9e0e1
@@ -102,13 +102,6 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
-
-
-def _get_allowed_projects(cloud, flavor_id):
-    return [x.tenant_id
-            for x
-            in cloud.nova_client.flavor_access.list(flavor=flavor_id)
-            ]
 
 
 def main():
