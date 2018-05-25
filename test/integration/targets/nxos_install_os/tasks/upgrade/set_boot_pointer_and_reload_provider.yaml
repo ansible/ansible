@@ -1,5 +1,5 @@
 ---
-- name: "Reload to upgrade to OS image {{ si }}"
+- name: "Reload to upgrade to OS image {{ si }} using provider"
   nxos_config:
     lines:
       - terminal dont-ask
@@ -7,6 +7,7 @@
       - "boot nxos bootflash:{{ si }}"
       - reload
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Wait for device to come back up with new image

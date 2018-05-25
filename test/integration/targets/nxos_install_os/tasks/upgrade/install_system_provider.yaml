@@ -1,10 +1,10 @@
 ---
-- name: "Install OS image {{ si }}"
+- name: "Install OS image {{ si }} using provider"
   check_mode: "{{ checkmode }}"
   nxos_install_os:
     system_image_file: "{{ si }}"
-    kickstart_image_file: "{{ ki }}"
     issu: "{{ issu }}"
+    provider: "{{ connection }}"
   register: result
 
 - debug: msg=" {{ result['install_state'] }}"

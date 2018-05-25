@@ -1,0 +1,10 @@
+---
+- debug: msg="***WARNING*** Remove meta end_play to verify this module ***WARNING***"
+
+- meta: end_play
+
+- include: targets/nxos_install_os/tasks/upgrade/install_os.yaml
+  when: connection is not defined
+
+- include: targets/nxos_install_os/tasks/upgrade/install_os_provider.yaml
+  when: connection is defined

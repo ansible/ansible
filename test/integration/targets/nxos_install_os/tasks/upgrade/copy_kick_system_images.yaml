@@ -1,14 +1,12 @@
 ---
-- name: "Setup - Turn on feature scp-server"
-  nxos_feature:
-    feature: scp-server
-    state: enabled
-    provider: "{{ connection }}"
+- set_fact: ignore_errors_httpapi='no'
+- set_fact: ignore_errors_httpapi='yes'
+  when: ansible_connection == 'httpapi'
 
-- name: "Setup - Turn on feature scp-server"
-  nxos_feature:
-    feature: scp-server
-    state: enabled
+- include: targets/nxos_install_os/tasks/upgrade/enable_scp_server.yaml
+  when: connection is not defined
+
+- include: targets/nxos_install_os/tasks/upgrade/enable_scp_server_provider.yaml
   when: connection is defined
 
 - name: "Copy {{ si }} to bootflash"
@@ -16,17 +14,14 @@
     local_file: "{{image_dir}}{{ si }}"
     file_system: "bootflash:"
   register: result
-  ignore_errors: yes
-  when: ansible_connection == 'httpapi'
-
+  ignore_errors: "{{ ignore_errors_httpapi }}"
 
 - name: "Copy {{ si }} to bootflash"
   nxos_file_copy:
     local_file: "{{image_dir}}{{ si }}"
     file_system: "bootflash:"
   register: result
-  ignore_errors: yes
-  when: ansible_connection == 'httpapi'
+  ignore_errors: "{{ ignore_errors_httpapi }}"
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
@@ -38,8 +33,7 @@
     file_system: "bootflash:"
   register: result
   when: ki is defined
-  ignore_errors: yes
-  when: ansible_connection == 'httpapi'
+  ignore_errors: "{{ ignore_errors_httpapi }}"
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
