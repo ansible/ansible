@@ -221,11 +221,15 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of command executions.
         if glob.glob(creates):
+            startd = datetime.datetime.now()
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % creates,
                 changed=False,
-                rc=0
+                rc=0,
+                start=str(startd),
+                end=str(startd),
+                delta=str(0)
             )
 
     if removes:
@@ -233,11 +237,15 @@ def main():
         # and the filename does not exist.  This allows idempotence
         # of command executions.
         if not glob.glob(removes):
+            startd = datetime.datetime.now()
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % removes,
                 changed=False,
-                rc=0
+                rc=0,
+                start=str(startd),
+                end=str(startd),
+                delta=str(0)
             )
 
     if warn:
