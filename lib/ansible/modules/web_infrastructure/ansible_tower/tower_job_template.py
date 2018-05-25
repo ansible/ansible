@@ -222,7 +222,7 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     name = module.params.get('name')
-    state = module.params.get('state')
+    state = module.params.pop('state')
     json_output = {'job_template': name, 'state': state}
 
     tower_auth = tower_auth_config(module)
