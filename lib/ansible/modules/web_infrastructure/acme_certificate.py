@@ -63,6 +63,17 @@ options:
     type: bool
     default: 'no'
     version_added: "2.5"
+  modify_account:
+    description:
+      - "Boolean indicating whether the module should create the account if
+         necessary, and update its contact data."
+      - "Set to C(no) if you want to use C(acme_account) to manage your
+         account instead, and to avoid accidental creation of a new account
+         using an old key if you changed the account key with C(acme_account)."
+      - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
+    type: bool
+    default: 'yes'
+    version_added: "2.6"
   challenge:
     description: The challenge to be performed.
     choices: [ 'http-01', 'dns-01']
@@ -355,14 +366,25 @@ class ACMEClient(object):
         self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
         # Make sure account exists
-        contact = []
-        if module.params['account_email']:
-            contact.append('mailto:' + module.params['account_email'])
-        self.changed = self.account.init_account(
-            contact,
-            agreement=module.params.get('agreement'),
-            terms_agreed=module.params.get('terms_agreed')
-        )
+        modify_account = module.params['modify_account']
+        if modify_account or self.version > 1:
+            contact = []
+            if module.params['account_email']:
+                contact.append('mailto:' + module.params['account_email'])
+            self.changed = self.account.init_account(
+                contact,
+                agreement=module.params.get('agreement'),
+                terms_agreed=module.params.get('terms_agreed'),
+                allow_creation=modify_account,
+                update_contact=modify_account
+            )
+        else:
+            # This happens if modify_account is False and the ACME v1
+            # protocol is used. In this case, we do not call init_account()
+            # to avoid accidental creation of an account. This is OK
+            # since for ACME v1, the account URI is not needed to send a
+            # signed ACME request.
+            pass
 
         # Extract list of domains from CSR
         if not os.path.exists(self.csr):
@@ -777,6 +799,7 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
+            modify_account=dict(required=False, type='bool', default=True),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
             acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
             validate_certs=dict(required=False, default=True, type='bool'),
