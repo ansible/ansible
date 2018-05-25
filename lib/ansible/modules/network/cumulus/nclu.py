@@ -79,8 +79,8 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
-    
-- name: Check BGP Status 
+
+- name: Check BGP Status
   nclu:
     commands:
         - show bgp summary json
