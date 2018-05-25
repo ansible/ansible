@@ -108,7 +108,7 @@ staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
 
 epub:
-	(CPUS=$(CPUS) make -f Makefile.sphinx epub)
+	(CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx epub)
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
