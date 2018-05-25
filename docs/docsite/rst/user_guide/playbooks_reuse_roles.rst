@@ -395,14 +395,14 @@ Ansible Galaxy
 
 `Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
-You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
+The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the "About" page on the Galaxy site for more information.
+Read the Ansible Galaxy introduction <https://galaxy.ansible.com/intro>_ page for more information
 
 .. seealso::
 
    :ref:`ansible_galaxy`
-       How to share roles on galaxy, role management
+       How to create new roles, share roles on Galaxy, role management
    :ref:`yaml_syntax`
        Learn about YAML syntax
    :ref:`working_with_playbooks`
