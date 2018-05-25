@@ -205,3 +205,160 @@
       - _state_test1.msg == 'Policy non-existing-selinux-policy does not exist in /etc/selinux/'
       - ansible_selinux.config_mode == 'enforcing'
       - ansible_selinux.type == 'targeted'
+
+
+# Fourth Test
+# ##############################################################################
+# Test if check mode returns correct changed values and
+# doesn't make any changes
+
+
+- name: TEST 4 | Set SELinux to enforcing
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test1
+
+- debug:
+    var: _check_mode_test1
+    verbosity: 1
+
+- name: TEST 4 | Set SELinux to enforcing in check mode
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test1
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode is idempotent
+  assert:
+    that:
+      - _check_mode_test1 is success
+      - not _check_mode_test1.reboot_required
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to permissive in check mode
+  selinux:
+    state: permissive
+    policy: targeted
+  register: _check_mode_test2
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode doesn't set state permissive and returns changed
+  assert:
+    that:
+      - _check_mode_test2 is changed
+      - not _check_mode_test2.reboot_required
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test3
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode didn't change anything, status is changed, reboot_required is True, a warning was displayed
+  assert:
+    that:
+      - _check_mode_test3 is changed
+      - _check_mode_test3.reboot_required
+      - (_check_mode_test3.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to permissive
+  selinux:
+    state: permissive
+    policy: targeted
+  register: _check_mode_test4
+
+- debug:
+    var: _check_mode_test4
+    verbosity: 1
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test4
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode didn't change anything, status is changed, reboot_required is True, a warning was displayed
+  assert:
+    that:
+      - _check_mode_test4 is changed
+      - _check_mode_test4.reboot_required
+      - (_check_mode_test3.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'permissive'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to enforcing
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test5
+
+- debug:
+    var: _check_mode_test5
+    verbosity: 1
+
+- name: TEST 4 | Disable SELinux
+  selinux:
+    state: disabled
+  register: _check_mode_test5
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test5
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that in check mode status was not changed, reboot_required is True, a warning was displayed, and SELinux is configured properly
+  assert:
+    that:
+      - _check_mode_test5 is success
+      - _check_mode_test5.reboot_required
+      - (_check_mode_test5.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'disabled'
+      - ansible_selinux.type == 'targeted'
