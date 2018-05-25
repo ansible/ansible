@@ -1,6 +1,8 @@
 ---
 - name: setup instance to be absent
-  cs_instance: name={{ cs_resource_prefix }}-vm-{{ instance_number }} state=absent
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
   register: instance
 - name: verify instance to be absent
   assert:
@@ -82,6 +84,10 @@
     - instance.state == "Running"
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
+
+- name: gather host facts of running instance
+  cs_instance_facts:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
 
 - name: test running instance not updated in check mode
   cs_instance:
@@ -206,9 +212,28 @@
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Stopped"
 
-- name: test starting instance in check mdoe
+- name: setup zone facts
+  cs_zone_facts:
+    name: "{{ cs_common_zone_basic }}"
+
+- name: setup find the host name
+  shell: cs listHosts type=routing zoneid="{{ cloudstack_zone.id }}"
+  args:
+    chdir: "{{ playbook_dir }}"
+  register: host
+
+- name: host convert from json
+  set_fact:
+    host_json: "{{ host.stdout | from_json }}"
+
+- name: select a host on which the instance is not running on
+  set_fact:
+    host: "{{ host_json | json_query('host[?name!=`' + cloudstack_instance.host + '`] | [0]') }}"
+
+- name: test starting instance in check mode
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
     state: started
   register: instance
   check_mode: true
@@ -220,11 +245,13 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.host is not defined
     - instance.state == "Stopped"
 
 - name: test starting instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
     state: started
   register: instance
 - name: verify starting instance
@@ -235,11 +262,14 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    # TODO: this fails randomly, cloudstack issue?
+    #- instance.host == "{{ host.name }}"
     - instance.state == "Running"
 
 - name: test starting instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    host: "{{ host.name }}"
     state: started
   register: instance
 - name: verify starting instance idempotence
@@ -250,12 +280,19 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    # TODO: this fails randomly, cloudstack issue?
+    #- instance.host == "{{ host.name }}"
     - instance.state == "Running"
+
+- name: select a host on which the instance is not running on
+  set_fact:
+    host: "{{ host_json | json_query('host[?name!=`' + instance.host + '`] | [0]') }}"
 
 - name: test force update running instance in check mode
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     service_offering: "{{ test_cs_instance_offering_1 }}"
+    host: "{{ host.name }}"
     force: true
   register: instance
   check_mode: true
@@ -267,12 +304,14 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.host != "{{ host.name }}"
     - instance.state == "Running"
 
 - name: test force update running instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     service_offering: "{{ test_cs_instance_offering_1 }}"
+    host: "{{ host.name }}"
     force: true
   register: instance
 - name: verify force update running instance
@@ -283,12 +322,14 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.host == "{{ host.name }}"
     - instance.state == "Running"
 
 - name: test force update running instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     service_offering: "{{ test_cs_instance_offering_1 }}"
+    host: "{{ host.name }}"
     force: true
   register: instance
 - name: verify force update running instance idempotence
@@ -299,6 +340,7 @@
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.host == "{{ host.name }}"
     - instance.state == "Running"
 
 - name: test restore instance in check mode
