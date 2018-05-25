@@ -707,7 +707,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     only_v4 = ['force', 'protection', 'skiplock']
 
     # valide clone parameters
-    valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target' ]
+    valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
     clone_params = {}
     # Default args for vm. Note: -args option is for experts only. It allows you to pass arbitrary arguments to kvm.
     vm_args = "-serial unix:/var/run/qemu-server/{}.serial,server,nowait".format(vmid)
@@ -834,7 +834,7 @@ def main():
             bootdisk=dict(type='str'),
             ciuser=dict(type='str', default='root'),
             cipassword=dict(type='str'),
-            citype=dict(type='str', default='nocloud', choices=['nocloud','configdrive2']),
+            citype=dict(type='str', default='nocloud', choices=['nocloud', 'configdrive2']),
             clone=dict(type='str', default=None),
             cores=dict(type='int', default=1),
             cpu=dict(type='str', default='kvm64'),
