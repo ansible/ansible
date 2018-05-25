@@ -106,7 +106,7 @@
 - name: explicitly remove file attributes
   file: path={{output_dir}}/baz.txt attributes=""
   register: file_attributes_result_4
-  when: file_attributes_result3 is changed
+  when: file_attributes_result_3 is changed
 
 - name: verify that the file was not marked as changed
   assert:
