@@ -152,7 +152,9 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
         _changed = True
 
     # Do the commit.
-    if do_commit:
+    if module.check_mode:
+        command_helper(module, "abort")
+    elif do_commit:
         result = command_helper(module, "commit description '%s'" % description)
         if "commit ignored" in result:
             _changed = False
@@ -175,6 +177,7 @@ def main(testing=False):
                             ('commit', 'atomic'),
                             ('abort', 'atomic')]
     )
+    supports_check_mode=True
     command_list = module.params.get('commands', None)
     command_string = module.params.get('template', None)
     commit = module.params.get('commit')
