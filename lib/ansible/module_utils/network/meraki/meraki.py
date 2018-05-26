@@ -122,16 +122,18 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-    def is_update_required(self, original, proposed):
+    def is_update_required(self, original, proposed, optional_ignore=None):
         ''' Compare original and proposed data to see if an update is needed '''
         is_changed = False
         ignored_keys = ('id', 'organizationId')
+        if not optional_ignore:
+            optional_ignore = ('')
 
         # self.fail_json(msg="Update required check", original=original, proposed=proposed)
 
         for k, v in original.items():
             try:
-                if k not in ignored_keys:
+                if k not in ignored_keys and k not in optional_ignore:
                     if v != proposed[k]:
                         is_changed = True
             except KeyError:
@@ -139,7 +141,7 @@ class MerakiModule(object):
                     is_changed = True
         for k, v in proposed.items():
             try:
-                if k not in ignored_keys:
+                if k not in ignored_keys and k not in optional_ignore:
                     if v != original[k]:
                         is_changed = True
             except KeyError:
