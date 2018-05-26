@@ -100,6 +100,10 @@ def main():
     try:
         server = cloud.get_server(module.params['server'])
         volume = cloud.get_volume(module.params['volume'])
+
+        if not volume:
+            module.fail_json(msg='volume %s is not found' % module.params['volume'])
+
         dev = cloud.get_volume_attach_device(volume, server.id)
 
         if module.check_mode:
