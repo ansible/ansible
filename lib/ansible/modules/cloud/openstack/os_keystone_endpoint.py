@@ -51,7 +51,7 @@ options:
      choices: [present, absent]
      default: present
 requirements:
-    - shade >= 1.11.0
+    - openstacksdk >= 0.13.0
 '''
 
 EXAMPLES = '''
@@ -105,8 +105,6 @@ endpoint:
             sample: True
 '''
 
-from distutils.version import StrictVersion
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
@@ -147,8 +145,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.11.0')
-
     service_name_or_id = module.params['service']
     interface = module.params['endpoint_interface']
     url = module.params['url']
@@ -156,8 +152,8 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name_or_id)
         if service is None:
@@ -204,7 +200,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

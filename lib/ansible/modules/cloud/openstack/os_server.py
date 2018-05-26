@@ -167,7 +167,7 @@ options:
        - Availability zone in which to create the server.
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -717,7 +717,7 @@ def main():
                     "if state == 'present'"
             )
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
             _get_server_state(module, cloud)
@@ -725,7 +725,7 @@ def main():
         elif state == 'absent':
             _get_server_state(module, cloud)
             _delete_server(module, cloud)
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

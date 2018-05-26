@@ -43,7 +43,7 @@ options:
        - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -127,7 +127,7 @@ def main():
 
     domain_id = module.params.pop('domain_id')
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain_id:
             group = cloud.get_group(name, filters={'domain_id': domain_id})
@@ -159,7 +159,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
