@@ -93,11 +93,9 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
-simple_config_file:
-    plugin: openstack
-    inventory_hostname: 'name'
-    expand_hostvars: true
-    fail_on_errors: true
+plugin: openstack
+expand_hostvars: yes
+fail_on_errors: yes
 '''
 
 import collections
