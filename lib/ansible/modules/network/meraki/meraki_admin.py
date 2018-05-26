@@ -17,12 +17,12 @@ DOCUMENTATION = r'''
 ---
 module: meraki_admin
 short_description: Manage administrators in the Meraki cloud
-version_added: "2.6"
+version_added: '2.6'
 description:
-- Allows for creation, management, and visibility into administrators within Meraki
+- Allows for creation, management, and visibility into administrators within Meraki.
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki
+- Some of the options are likely only used for developers within Meraki.
 options:
     name:
         description:
@@ -36,7 +36,7 @@ options:
     orgAccess:
         description:
         - Privileges assigned to the administrator in the organization.
-        choices: ['full','read-only','none']
+        choices: [ full, none, read-only ]
     tags:
         description:
         - Tags the administrator has privileges on.
@@ -49,7 +49,7 @@ options:
     state:
         description:
         - Create or modify an organization
-        choices: ['present', 'absent', 'query']
+        choices: [ absent, present, query ]
         required: true
     org_name:
         description:
@@ -59,7 +59,7 @@ options:
         aliases: ['organization']
     org_id:
         description:
-        - ID of organization
+        - ID of organization.
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -71,16 +71,19 @@ EXAMPLES = r'''
     auth_key: abc12345
     state: query
   delegate_to: localhost
+
 - name: Query information about a single administrator by name
   meraki_admin:
     auth_key: abc12345
     state: query
     name: Jane Doe
+
 - name: Query information about a single administrator by email
   meraki_admin:
     auth_key: abc12345
     state: query
     email: jane@doe.com
+
 - name: Create a new administrator with organization access
   meraki_admin:
     auth_key: abc12345
@@ -88,6 +91,7 @@ EXAMPLES = r'''
     name: Jane Doe
     orgAccess: read-only
     email: jane@doe.com
+
 - name: Create a new administrator with organization access
   meraki_admin:
     auth_key: abc12345
@@ -95,6 +99,7 @@ EXAMPLES = r'''
     name: Jane Doe
     orgAccess: read-only
     email: jane@doe.com
+
 - name: Revoke access to an organization for an administrator
   meraki_admin:
     auth_key: abc12345
