@@ -1,2 +1,0 @@
-bugfixes:
-- powershell - use the tmpdir set by `remote_tmp` for become/async tasks instead of the generic $env:TEMP - https://github.com/ansible/ansible/pull/40210

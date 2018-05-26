@@ -1,3 +1,0 @@
-minor_changes:
-- Added an ``encoding`` option to the ``b64encode`` and ``b64decode`` filters
-  to specify the encoding of the string that is base64 encoded.

@@ -1,5 +1,0 @@
----
-bugfixes:
-- template action plugin - fix the encoding of filenames to avoid tracebacks on
-  Python2 when characters that are not present in the user's locale are
-  present. (https://github.com/ansible/ansible/pull/39424)

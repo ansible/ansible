@@ -1,3 +1,0 @@
----
-bugfixes:
-- copy module - fixed recursive copy with relative paths (https://github.com/ansible/ansible/pull/40166)

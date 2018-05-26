@@ -1,8 +1,0 @@
----
-bugfixes:
-- file module - The file module allowed the user to specify src as a parameter
-  when state was not link or hard.  This is documented as only applying to
-  state=link or state=hard but in previous Ansible, this could have an effect
-  in rare cornercases.  For instance, "ansible -m file -a 'state=directory
-  path=/tmp src=/var/lib'" would create /tmp/lib.  This has been disabled and
-  a warning emitted (will change to an error in Ansible-2.10).

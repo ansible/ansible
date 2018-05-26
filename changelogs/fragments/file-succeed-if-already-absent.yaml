@@ -1,5 +1,0 @@
----
-bugfixes:
-- file module - Eliminate an error if we're asked to remove a file but
-  something removes it while we are processing the request
-  (https://github.com/ansible/ansible/pull/39466)
