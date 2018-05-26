@@ -21,11 +21,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: k8s
+    lookup: openshift
 
     version_added: "2.5"
 
-    short_description: Query the K8s API
+    short_description: Query the OpenShift API
 
     description:
       - Uses the OpenShift Python client to fetch a specific object by name, all matching objects within a
@@ -60,8 +60,9 @@ DOCUMENTATION = """
         - Specific fields on which to query. Ignored when I(resource_name) is provided.
       resource_definition:
         description:
-        - "Provide a YAML configuration for an object. NOTE: I(kind), I(api_version), I(resource_name),
-          and I(namespace) will be overwritten by corresponding values found in the provided I(resource_definition)."
+        - "Provide a YAML configuration for an object. NOTE: I(kind), I(api_version), I(resource_name), I(namespace),
+          and I(resource_version) will be overwritten by corresponding values found in the provided
+          I(resource_definition)."
       src:
         description:
         - "Provide a path to a file containing a valid YAML definition of an object dated. Mutually
@@ -97,8 +98,7 @@ DOCUMENTATION = """
       cert_file:
         description:
         - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
-          environment
-          variable.
+          environment variable.
       key_file:
         description:
         - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_HOST environment
@@ -125,25 +125,25 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- name: Fetch a list of namespaces
+- name: Fetch a list of projects
   set_fact:
-    projects: "{{ lookup('k8s', api_version='v1', kind='Namespace') }}"
+    projects: "{{ lookup('openshift', api_version='v1', kind='Project') }}"
 
 - name: Fetch all deployments
   set_fact:
-    deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing') }}"
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing') }}"
 
 - name: Fetch all deployments in a namespace
   set_fact:
-    deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing') }}"
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing') }}"
 
 - name: Fetch a specific deployment by name
   set_fact:
-    deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing', resource_name='elastic') }}"
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing', resource_name='elastic') }}"
 
 - name: Fetch with label selector
   set_fact:
-    service: "{{ lookup('k8s', kind='Service', label_selector='app=galaxy') }}"
+    service: "{{ lookup('openshift', kind='Service', label_selector='app=galaxy') }}"
 
 # Use parameters from a YAML config
 
@@ -153,17 +153,17 @@ EXAMPLES = """
 
 - name: Using the config (loaded from a file in prior task), fetch the latest version of the object
   set_fact:
-    service: "{{ lookup('k8s', resource_definition=config) }}"
+    service: "{{ lookup('openshift', resource_definition=config) }}"
 
 - name: Use a config from the local filesystem
   set_fact:
-    service: "{{ lookup('k8s', src='service.yml') }}"
+    service: "{{ lookup('openshift', src='service.yml') }}"
 """
 
 RETURN = """
   _list:
     description:
-      - One ore more object definitions returned from the API.
+      - One or more object definitions returned from the API.
     type: complex
     contains:
       api_version:
@@ -189,10 +189,9 @@ RETURN = """
 """
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.k8s.lookup import KubernetesLookup
+from ansible.module_utils.k8s.lookup import OpenShiftLookup
 
 
 class LookupModule(LookupBase):
-
     def run(self, terms, variables=None, **kwargs):
-        return KubernetesLookup().run(terms, variables=variables, **kwargs)
+        return OpenShiftLookup().run(terms, variables=variables, **kwargs)
