@@ -1,0 +1,217 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create new administrator
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jane Doe
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
+    orgAccess: read-only
+  delegate_to: localhost
+  register: create_orgaccess
+
+- name: Create new admin assertion
+  assert:
+    that:
+      - create_orgaccess.changed == true
+      - 'create_orgaccess.data.name == "Jane Doe"'
+
+- name: Create administrator with tags
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: John Doe
+    email: '{{email_prefix}}+johndoe@{{email_domain}}'
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "beta", "access": "full" }
+  delegate_to: localhost
+  register: create_tags
+
+- assert:
+    that:
+      - create_tags.changed == true
+      - create_tags.data.name == "John Doe"
+      - create_tags.data.tags | length == 2
+
+- name: Create administrator with invalid tags
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jake Doe
+    email: '{{email_prefix}}+jakedoe@{{email_domain}}'
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "alpha", "access": "invalid" }
+  delegate_to: localhost
+  register: create_tags_invalid
+  ignore_errors: yes
+
+- assert:
+    that:
+      - '"400" in create_tags_invalid.msg'
+      # - '"must contain only valid tags" in create_tags_invalid.msg'
+
+- name: Create administrator with invalid tag permission
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jake Doe
+    email: '{{email_prefix}}+jakedoe@{{email_domain}}'
+    orgAccess: none
+    tags:
+      - { "tag": "production", "access": "read-only" }
+      - { "tag": "beta", "access": "invalid" }
+  delegate_to: localhost
+  register: create_tags_invalid_permission
+  ignore_errors: yes
+
+- assert:
+    that:
+      - '"400" in create_tags_invalid_permission.msg'
+      # - '"Invalid permission type" in create_tags_invalid_permission.msg'
+
+- name: Create administrator with networks
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "read-only" }
+      - { "network": "TestNet2", "access": "full" }
+  delegate_to: localhost
+  register: create_network
+
+- assert:
+    that:
+      - create_network.changed == true
+      - create_network.data.name == "Jim Doe"
+      - create_network.data.networks | length == 2
+
+- name: Update administrator
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "full" }
+  delegate_to: localhost
+  register: update_network
+
+- assert:
+    that:
+      - update_network.changed == true
+      - update_network.data.networks.0.access == "full"
+      - update_network.data.networks | length == 1
+
+- name: Update administrator for idempotency check
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: Jim Doe
+    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+    orgAccess: none
+    networks:
+      - { "network": "TestNet", "access": "full" }
+  delegate_to: localhost
+  register: update_network_idempotent
+
+- assert:
+    that:
+      - update_network_idempotent.changed == false
+
+- name: Create administrator with invalid network
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    name: John Doe
+    email: '{{email_prefix}}+John@{{email_domain}}'
+    orgAccess: none
+    networks:
+      - { "network": "readnet", "access": "read-only" }
+  delegate_to: localhost
+  register: create_network_invalid
+  ignore_errors: yes
+
+- assert:
+    that:
+      - '"No network found with the name" in create_network_invalid.msg'
+      # - '"400" in create_network_invalid.msg'
+
+- name: Query all administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+  delegate_to: localhost
+  register: query_all
+
+- assert:
+    that:
+      - query_all.data | length == 4
+      - query_all.changed == False
+
+- name: Query admin by name
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+    name: Jane Doe
+  delegate_to: localhost
+  register: query_name
+
+- name: Query admin by email
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
+  delegate_to: localhost
+  register: query_email
+
+- assert:
+    that:
+      - query_name.data.name == "Jane Doe"
+      - 'query_email.data.email == "{{email_prefix}}+janedoe@{{email_domain}}"'
+
+- name: Delete administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    email: '{{item}}'
+  delegate_to: localhost
+  register: delete_all
+  loop:
+      - '{{email_prefix}}+janedoe@{{email_domain}}'
+      - '{{email_prefix}}+johndoe@{{email_domain}}'
+      - '{{email_prefix}}+jimdoe@{{email_domain}}'
+
+- name: Query all administrators
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+  delegate_to: localhost
+  register: query_all_deleted
+
+- assert:
+    that:
+      - query_all_deleted.data | length == 1
