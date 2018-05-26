@@ -15,17 +15,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: k8s_scale
+module: openshift_scale
 
-short_description: Set a new size for a Deployment, ReplicaSet, Replication Controller, or Job.
+short_description: Set a new size for a Deployment Config, Deployment, Replica Set, Replication Controller, or Job.
 
 version_added: "2.5"
 
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicatSet,
-    or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
+  - Similar to the oc scale command. Use to set the number of replicas for a Deployment Config, Deployment,
+    ReplicatSet, or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
 
 extends_documentation_fragment:
   - k8s_name_options
@@ -40,26 +40,26 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Scale deployment up, and extend timeout
-  k8s_scale:
+- name: Scale deployment config up, and extend timeout
+  openshift_scale:
     api_version: v1
-    kind: Deployment
+    kind: DeploymentConfig
     name: elastic
     namespace: myproject
     replicas: 3
     wait_timeout: 60
 
-- name: Scale deployment down when current replicas match
-  k8s_scale:
+- name: Scale deployment config down when current replicas match
+  openshift_scale:
     api_version: v1
-    kind: Deployment
+    kind: DeploymentConfig
     name: elastic
     namespace: myproject
     current_replicas: 3
     replicas: 2
 
 - name: Increase job parallelism
-  k8s_scale:
+  openshift_scale:
     api_version: batch/v1
     kind: job
     name: pi-with-timeout
@@ -69,19 +69,19 @@ EXAMPLES = '''
 # Match object using local file or inline definition
 
 - name: Scale deployment based on a file from the local filesystem
-  k8s_scale:
+  openshift_scale:
     src: /myproject/elastic_deployment.yml
     replicas: 3
     wait: no
 
 - name: Scale deployment based on a template output
-  k8s_scale:
+  openshift_scale:
     resource_definition: "{{ lookup('template', '/myproject/elastic_deployment.yml') | from_yaml }}"
     replicas: 3
     wait: no
 
 - name: Scale deployment based on a file from the Ansible controller filesystem
-  k8s_scale:
+  openshift_scale:
     resource_definition: "{{ lookup('file', '/myproject/elastic_deployment.yml') | from_yaml }}"
     replicas: 3
     wait: no
@@ -116,11 +116,11 @@ result:
        type: complex
 '''
 
-from ansible.module_utils.k8s.scale import KubernetesAnsibleScaleModule
+from ansible.module_utils.k8s.scale import OpenShiftAnsibleScaleModule
 
 
 def main():
-    KubernetesAnsibleScaleModule().execute_module()
+    OpenShiftAnsibleScaleModule().execute_module()
 
 
 if __name__ == '__main__':
