@@ -177,7 +177,7 @@ def main(testing=False):
                             ('commit', 'atomic'),
                             ('abort', 'atomic')]
     )
-    supports_check_mode=True
+    supports_check_mode = True
     command_list = module.params.get('commands', None)
     command_string = module.params.get('template', None)
     commit = module.params.get('commit')
