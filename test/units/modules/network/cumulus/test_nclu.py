@@ -234,7 +234,6 @@ class TestNclu(unittest.TestCase):
 
     def test_check_mode(self):
         module = FakeModule()
-        module.check_mode = False
         module.check_mode = True
         changed, output = nclu.run_nclu(module,
                                         ['add int swp1', 'add int swp2'],
