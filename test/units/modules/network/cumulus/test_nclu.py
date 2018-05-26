@@ -220,3 +220,14 @@ class TestNclu(unittest.TestCase):
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
         self.assertEqual(changed, False)
+
+    def test_check_mode(self):
+        module = FakeModule()
+        module.check_mode = True
+        changed, output = nclu.run_nclu(module,
+                                        ['add int swp1', 'add int swp2'],
+                                        None, False, True, False, "atomically")
+
+        self.assertEqual(len(module.pending), 0)
+        self.assertEqual(module.fail_code, {})
+        self.assertEqual(changed, False)
