@@ -97,7 +97,7 @@ options:
        - Ignored. Present for backwards compatibility
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -257,10 +257,6 @@ def main():
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
 
-    min_version = None
-    if use_default_subnetpool:
-        min_version = '1.16.0'
-
     # Check for required parameters when state == 'present'
     if state == 'present':
         if not module.params['network_name']:
@@ -279,7 +275,7 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -340,7 +336,7 @@ def main():
                 cloud.delete_subnet(subnet_name)
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
