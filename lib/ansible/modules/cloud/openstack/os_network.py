@@ -69,7 +69,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -171,7 +171,7 @@ def main():
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.6.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -212,7 +212,7 @@ def main():
                 cloud.delete_network(name)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

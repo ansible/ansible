@@ -106,7 +106,7 @@ options:
       description:
         - Ignored. Present for backwards compatibility
 
-requirements: ["shade", "jsonpatch"]
+requirements: ["openstacksdk", "jsonpatch"]
 '''
 
 EXAMPLES = '''
@@ -153,11 +153,11 @@ def _parse_properties(module):
     return props
 
 
-def _parse_driver_info(shade, module):
+def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
     info = p.get('power')
     if not info:
-        raise shade.OpenStackCloudException(
+        raise sdk.exceptions.OpenStackCloudException(
             "driver_info['power'] is required")
     if p.get('console'):
         info.update(p.get('console'))
@@ -225,7 +225,7 @@ def main():
 
     node_id = _choose_id_value(module)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_machine(node_id)
         if module.params['state'] == 'present':
@@ -234,7 +234,7 @@ def main():
                                      "to set a node to present.")
 
             properties = _parse_properties(module)
-            driver_info = _parse_driver_info(shade, module)
+            driver_info = _parse_driver_info(sdk, module)
             kwargs = dict(
                 driver=module.params['driver'],
                 properties=properties,
@@ -328,7 +328,7 @@ def main():
             else:
                 module.exit_json(changed=False, result="Server not found")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
