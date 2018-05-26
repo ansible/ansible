@@ -118,7 +118,7 @@ def main():
         public_key = open(module.params['public_key_file']).read()
         public_key = public_key.rstrip()
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         keypair = cloud.get_keypair(name)
 
@@ -148,7 +148,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=False)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

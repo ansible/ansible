@@ -23,7 +23,7 @@ notes:
     - Facts are placed in the C(openstack) variable.
 requirements:
     - "python >= 2.6"
-    - "shade"
+    - "openstacksdk"
 options:
    image:
      description:
@@ -139,13 +139,13 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         image = cloud.get_image(module.params['image'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_image=image))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -96,15 +96,10 @@ metadata:
     sample: {'key1': 'value1', 'key2': 'value2'}
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import (openstack_full_argument_spec,
-                                            openstack_module_kwargs)
+                                            openstack_module_kwargs,
+                                            openstack_cloud_from_module)
 
 
 def _needs_update(server_metadata=None, metadata=None):
@@ -134,17 +129,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     server_param = module.params['server']
     meta_param = module.params['meta']
     changed = False
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
-
         server = cloud.get_server(server_param)
         if not server:
             module.fail_json(
@@ -172,7 +163,7 @@ def main():
         module.exit_json(
             changed=changed, server_id=server.id, metadata=server.metadata)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 
