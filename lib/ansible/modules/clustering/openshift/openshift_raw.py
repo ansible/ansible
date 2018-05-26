@@ -15,21 +15,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: k8s
+module: openshift_raw
 
-short_description: Manage Kubernetes (K8s) objects
+short_description: Manage OpenShift objects
 
-version_added: "2.6"
+version_added: "2.5"
 
-author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Fabian von Feilitzsch (@fabianvf)"
+author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Use the OpenShift Python client to perform CRUD operations on K8s objects.
+  - Use the OpenShift Python client to perform CRUD operations on OpenShift objects.
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates.
-  - Access to the full range of K8s APIs.
+  - Access to the full range of K8s and OpenShift APIs.
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
 
@@ -39,84 +37,125 @@ extends_documentation_fragment:
   - k8s_resource_options
   - k8s_auth_options
 
+options:
+  description:
+    description:
+    - Use only when creating a project, otherwise ignored. Adds a description to the project
+      metadata.
+  display_name:
+    description:
+    - Use only when creating a project, otherwise ignored. Adds a display name to the project
+      metadata.
+
 requirements:
-  - "python >= 2.7"
-  - "openshift >= 0.6"
-  - "PyYAML >= 3.11"
+    - "python >= 2.7"
+    - "openshift == 0.4.3"
+    - "PyYAML >= 3.11"
 '''
 
 EXAMPLES = '''
-- name: Create a k8s namespace
-  k8s_raw:
-    name: testing
+- name: Create a project
+  openshift_raw:
     api_version: v1
-    kind: Namespace
+    kind: Project
+    name: testing
+    description: Testing
+    display_name: "This is a test project."
     state: present
 
-- name: Create a Service object from an inline definition
-  k8s_raw:
+- name: Create a Persistent Volume Claim from an inline definition
+  openshift_raw:
     state: present
     definition:
       apiVersion: v1
-      kind: Service
+      kind: PersistentVolumeClaim
       metadata:
-        name: web
+        name: elastic-volume
         namespace: testing
+      spec:
+        resources:
+          requests:
+            storage: 5Gi
+        accessModes:
+        - ReadWriteOnce
+
+- name: Create a Deployment from an inline definition
+  openshift_raw:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: elastic
         labels:
           app: galaxy
-          service: web
+          service: elastic
+        namespace: testing
       spec:
-        selector:
-          app: galaxy
-          service: web
-        ports:
-        - protocol: TCP
-          targetPort: 8000
-          name: port-8000-tcp
-          port: 8000
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ["elasticsearch"]
+                image: "ansible/galaxy-elasticsearch:2.4.6"
+            volumes:
+              - name: elastic-volume
+                persistentVolumeClaim:
+                  claimName: elastic-volume
+          replicas: 1
+          strategy:
+            type: Rolling
 
-- name: Create a Service object by reading the definition from a file
-  k8s_raw:
-    state: present
-    src: /testing/service.yml
-
-- name: Get an existing Service object
-  k8s_raw:
+- name: Remove an existing Deployment
+  openshift_raw:
     api_version: v1
-    kind: Service
-    name: web
+    kind: DeploymentConfig
+    name: elastic
     namespace: testing
-  register: web_service
-
-- name: Get a list of all service objects
-  k8s_raw:
-    api_version: v1
-    kind: ServiceList
-    namespace: testing
-  register: service_list
-
-- name: Remove an existing Service object
-  k8s_raw:
     state: absent
-    api_version: v1
-    kind: Service
+
+- name: Create a Secret
+  openshift_raw:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: mysecret
+        namespace: testing
+      type: Opaque
+      data:
+        username: "{{ 'admin' | b64encode }}"
+        password: "{{ 'foobard' | b64encode }}"
+
+- name: Retrieve a Secret
+  openshift_raw:
+    api: v1
+    kind: Secret
+    name: mysecret
     namespace: testing
-    name: web
+  register: mysecret
 
 # Passing the object definition from a file
 
 - name: Create a Deployment by reading the definition from a local file
-  k8s_raw:
+  openshift_raw:
     state: present
     src: /testing/deployment.yml
 
 - name: Read definition file from the Ansible controller file system
-  k8s_raw:
+  openshift_raw:
     state: present
     definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
-  k8s_raw:
+  openshift_raw:
     state: present
     definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
 '''
@@ -154,11 +193,11 @@ result:
        type: list
 '''
 
-from ansible.module_utils.k8s.raw import KubernetesRawModule
+from ansible.module_utils.k8s.raw import OpenShiftRawModule
 
 
 def main():
-    KubernetesRawModule().execute_module()
+    OpenShiftRawModule().execute_module()
 
 
 if __name__ == '__main__':
