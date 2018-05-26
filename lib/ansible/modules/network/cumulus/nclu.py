@@ -152,7 +152,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
         _changed = True
 
     # Do the commit.
-    if module.check_mode:
+    if check_mode:
         command_helper(module, "abort")
     elif do_commit:
         result = command_helper(module, "commit description '%s'" % description)
