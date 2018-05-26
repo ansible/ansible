@@ -1,5 +1,0 @@
----
-bugfixes:
-- winrm connection plugin - Fix exception messages sometimes raising
-  a traceback when the winrm connection plugin encounters an unrecoverable
-  error.  https://github.com/ansible/ansible/pull/39333

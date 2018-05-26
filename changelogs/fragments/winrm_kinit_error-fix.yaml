@@ -1,2 +1,0 @@
-bugfixes:
-- winrm - Add better error handling when the kinit process fails

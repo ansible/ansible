@@ -1,5 +1,0 @@
----
-bugfixes:
-  - file module - Fix error when recursively assigning permissions and
-    a symlink to a nonexistent file is present in the directory tree
-    (https://github.com/ansible/ansible/issues/39456)
