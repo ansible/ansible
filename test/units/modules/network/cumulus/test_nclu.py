@@ -103,6 +103,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_helper(self):
         module = FakeModule()
+        module.check_mode = False
         module.mock_output("/usr/bin/net add int swp1", 0, "", "")
 
         result = nclu.command_helper(module, 'add int swp1', 'error out')
@@ -111,6 +112,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_helper_error_code(self):
         module = FakeModule()
+        module.check_mode = False
         module.mock_output("/usr/bin/net fake fail command", 1, "", "")
 
         result = nclu.command_helper(module, 'fake fail command', 'error out')
@@ -118,6 +120,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_helper_error_msg(self):
         module = FakeModule()
+        module.check_mode = False
         module.mock_output("/usr/bin/net fake fail command", 0,
                            "ERROR: Command not found", "")
 
@@ -126,6 +129,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_helper_no_error_msg(self):
         module = FakeModule()
+        module.check_mode = False
         module.mock_output("/usr/bin/net fake fail command", 0,
                            "ERROR: Command not found", "")
 
@@ -134,6 +138,7 @@ class TestNclu(unittest.TestCase):
 
     def test_empty_run(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module, None, None, False, False, False, "")
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
                                                   '/usr/bin/net pending'])
@@ -142,6 +147,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_list(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module, ['add int swp1', 'add int swp2'],
                                         None, False, False, False, "")
 
@@ -155,6 +161,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_list_commit(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module,
                                         ['add int swp1', 'add int swp2'],
                                         None, True, False, False, "committed")
@@ -171,6 +178,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_atomic(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module,
                                         ['add int swp1', 'add int swp2'],
                                         None, False, True, False, "atomically")
@@ -188,6 +196,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_abort_first(self):
         module = FakeModule()
+        module.check_mode = False
         module.pending = "dirty"
         nclu.run_nclu(module, None, None, False, False, True, "")
 
@@ -195,6 +204,7 @@ class TestNclu(unittest.TestCase):
 
     def test_command_template_commit(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module, None,
                                         "    add int swp1\n    add int swp2",
                                         True, False, False, "committed")
@@ -211,6 +221,7 @@ class TestNclu(unittest.TestCase):
 
     def test_commit_ignored(self):
         module = FakeModule()
+        module.check_mode = False
         changed, output = nclu.run_nclu(module, None, None, True, False, False, "ignore me")
 
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
@@ -223,6 +234,7 @@ class TestNclu(unittest.TestCase):
 
     def test_check_mode(self):
         module = FakeModule()
+        module.check_mode = False
         module.check_mode = True
         changed, output = nclu.run_nclu(module,
                                         ['add int swp1', 'add int swp2'],
