@@ -1,2 +1,0 @@
-bugfixes:
-  - selinux - correct check mode behavior to report same changes as normal mode (https://github.com/ansible/ansible/pull/40721)
