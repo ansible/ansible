@@ -289,7 +289,7 @@ Implicit use of inventory script
 
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/lib/ansible/plugins/inventory/openstack.py
     chmod +x openstack.py
     sudo cp openstack.py /etc/ansible/hosts
 
