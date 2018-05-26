@@ -1,4 +1,0 @@
----
-bugfixes:
-- copy - fixed copy to only follow symlinks for files in the non-recursive case
-- file - fixed the default follow behaviour of file to be true

@@ -1,3 +1,0 @@
----
-bugfixes:
-- spwd - With python 3.6 spwd.getspnam returns PermissionError instead of KeyError if user does not have privileges (https://github.com/ansible/ansible/issues/39472)
