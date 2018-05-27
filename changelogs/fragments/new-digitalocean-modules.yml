@@ -1,0 +1,13 @@
+new_features:
+- 'New Digital Ocean Cloud module: digital_ocean_account_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_certificate_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_domain_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_floating_ip_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_image_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_load_balancer_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_region_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_size_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_snapshot_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_sshkey_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_tag_facts'
+- 'New Digital Ocean Cloud module: digital_ocean_volume_facts'
