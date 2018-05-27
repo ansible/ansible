@@ -1,21 +1,10 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright: (c) 2018, Bojan Vitnik <bvitnik@mainstream.rs>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2018, Bojan Vitnik <bvitnik@mainstream.rs>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import atexit
 import time
@@ -31,6 +20,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
 from ansible.module_utils.basic import env_fallback
+
 
 def xenserver_common_argument_spec():
     return dict(
@@ -55,6 +45,7 @@ def xenserver_common_argument_spec():
                             fallback=(env_fallback, ['XENSERVER_VALIDATE_CERTS'])),
     )
 
+
 def gather_vm_params(module, vm_ref):
     # We silently return empty vm_params if bad vm_ref was supplied.
     if not vm_ref or vm_ref == "OpaqueRef:NULL":
@@ -75,7 +66,7 @@ def gather_vm_params(module, vm_ref):
             vm_params['affinity'] = {}
 
         # VBDs.
-        vm_vbd_params_list = [ xapi_session.xenapi.VBD.get_record(vm_vbd_ref) for vm_vbd_ref in vm_params['VBDs'] ]
+        vm_vbd_params_list = [xapi_session.xenapi.VBD.get_record(vm_vbd_ref) for vm_vbd_ref in vm_params['VBDs']]
 
         # List of VBDs is usually sorted by userdevice but we sort just
         # in case. We need this list sorted by userdevice so that we can
@@ -93,7 +84,7 @@ def gather_vm_params(module, vm_ref):
             vm_vbd_params['VDI'] = vm_vdi_params
 
         # VIFs.
-        vm_vif_params_list = [ xapi_session.xenapi.VIF.get_record(vm_vif_ref) for vm_vif_ref in vm_params['VIFs'] ]
+        vm_vif_params_list = [xapi_session.xenapi.VIF.get_record(vm_vif_ref) for vm_vif_ref in vm_params['VIFs']]
 
         # List of VIFs is usually sorted by device but we sort just
         # in case. We need this list sorted by device so that we can
@@ -122,6 +113,7 @@ def gather_vm_params(module, vm_ref):
 
     return vm_params
 
+
 def gather_vm_facts(module, vm_params):
     # We silently return empty vm_facts if no vm_params are available.
     if not vm_params:
@@ -146,7 +138,7 @@ def gather_vm_facts(module, vm_params):
         "hardware": {
             "num_cpus": int(vm_params['VCPUs_max']),
             "num_cpu_cores_per_socket": int(vm_params['platform'].get('cores-per-socket', '1')),
-            "memory_mb": int(vm_params['memory_dynamic_max'])/1048576,
+            "memory_mb": int(vm_params['memory_dynamic_max']) / 1048576,
         },
         "disks": [],
         "cdrom": {},
@@ -196,6 +188,7 @@ def gather_vm_facts(module, vm_params):
 
     return vm_facts
 
+
 def wait_for_task(module, task_ref, timeout=300):
     xapi_session = XAPI.connect(module)
 
@@ -229,6 +222,7 @@ def wait_for_task(module, task_ref, timeout=300):
 
     return result
 
+
 class XAPI(object):
     _xapi_session = None
 
@@ -247,13 +241,26 @@ class XAPI(object):
             username = ''
             password = ''
         else:
-            cls._xapi_session = XenAPI.Session("http://%s/" % hostname, ignore_ssl=ignore_ssl)
+            # If scheme is not specified we default to http:// because https://
+            # is problematic in most setups.
+            if not hostname.startswith("http://") and not hostname.startswith("https://"):
+                hostname = "http://%s" % hostname
+
+            try:
+                # ignore_ssl is supported in XenAPI.py 7.2 onward but there
+                # is no way to tell which version we are using. TypeError will
+                # be raised if ignore_ssl is not supported. Additionally,
+                # ignore_ssl requires Python 2.7.9 or newer.
+                cls._xapi_session = XenAPI.Session(hostname, ignore_ssl=ignore_ssl)
+            except TypeError:
+                # Try without ignore_ssl.
+                cls._xapi_session = XenAPI.Session(hostname)
 
             if not password:
                 password = ''
 
         try:
-            cls._xapi_session.login_with_password(username, password, '1.0', 'xenserver_guest.py')
+            cls._xapi_session.login_with_password(username, password, '2.6', 'xenserver_guest.py')
         except XenAPI.Failure as f:
             module.fail_json(msg="Unable to log on to XenServer at %s as %s: %s" % (hostname, username, f.details))
 
@@ -261,6 +268,7 @@ class XAPI(object):
         if disconnect_atexit:
             atexit.register(cls._xapi_session.logout)
         return cls._xapi_session
+
 
 class XenServerObject(object):
     def __init__(self, module):

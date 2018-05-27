@@ -17,13 +17,16 @@ module: xenserver_guest
 short_description: Manages virtual machines running on Citrix XenServer host or pool
 description:
 - Create new virtual machines from templates or other virtual machines.
-- Manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,.
+- Manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.
 - Modify, rename or remove a virtual machine.
-version_added: '2.6'
+version_added: '2.7'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
-- Tested on XenServer 6.5 and 7.1
+- Minimal supported version of XenServer is 5.6
+- Module was tested with XenServer 6.5, 7.1 and 7.2
+- To use https:// scheme for C(hostname) and C(validate_certs=no), XenAPI.py from XenServer 7.2 SDK or newer and Python 2.7.9 or newer are needed.
+- If no scheme is specified in C(hostname), module defaults to http:// because https:// is problematic in most setups.
 requirements:
 - python >= 2.6
 - XenAPI
@@ -369,9 +372,8 @@ class XenServerVM(XenServerObject):
 
             # If template is one of built-in XenServer templates, we have to
             # do some additional steps.
-            # Note: for some reason, VM.get_is_default_template() does not work.
-            #       We get MESSAGE_METHOD_UNKNOWN error from XAPI so we use
-            #       an alternative way.
+            # Note: VM.get_is_default_template() is supported from XenServer 7.2
+            #       onward so we use an alternative way.
             templ_other_config = self.xapi_session.xenapi.VM.get_other_config(templ_ref)
 
             if "default_template" in templ_other_config and templ_other_config['default_template']:
@@ -825,7 +827,7 @@ class XenServerVM(XenServerObject):
                 # higher than a number of existing disks attached to the VM.
                 # We don't support removal or detachment of disks.
                 if len(self.module.params['disks']) < len(vm_disk_params_list):
-                    self.module.fail_json(msg="Provided disks configuration has less disks than the target VM (%d vs %d)!" %
+                    self.module.fail_json(msg="Provided disks configuration has less disks than the target VM (%d < %d)!" %
                                           (len(self.module.params['disks']), len(vm_disk_params_list)))
 
                 # Iterate over existing disks.
@@ -985,7 +987,7 @@ class XenServerVM(XenServerObject):
                 # higher than a number of existing VIFs attached to the VM.
                 # We don't support removal of VIFs.
                 if len(self.module.params['networks']) < len(self.vm_params['VIFs']):
-                    self.module.fail_json(msg="Provided networks configuration has less interfaces than the target VM (%d vs %d)!" %
+                    self.module.fail_json(msg="Provided networks configuration has less interfaces than the target VM (%d < %d)!" %
                                           (len(self.module.params['networks']), len(self.vm_params['VIFs'])))
 
                 # Iterate over existing VIFs.
