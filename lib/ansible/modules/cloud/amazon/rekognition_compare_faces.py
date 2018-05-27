@@ -21,7 +21,7 @@ description:
     - Successful matches will return a `changed` state to Ansible.
     - Ansible does not currently support looking up binary files.  Comparisons are done against files hosted on S3.
 author: "Aaron Smith (@slapula)"
-version_added: "2.6"
+version_added: "2.7"
 requirements: [ 'botocore', 'boto3' ]
 options:
   source_image:
