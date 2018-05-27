@@ -75,7 +75,7 @@
     # Module Tests
     # ============================================================
 
-    - name: Compare local image file to S3 target file (Successful match)
+    - name: Compare source image file to target file (Successful match)
       rekognition_compare_faces:
         <<: *aws_connection_info
         source_image:
@@ -95,7 +95,7 @@
             - result.changed
             - result.analysis is not none
 
-    - name: Compare local image file to S3 target file (Unsuccessful match)
+    - name: Compare source image file to target file (Unsuccessful match)
       rekognition_compare_faces:
         <<: *aws_connection_info
         source_image:
