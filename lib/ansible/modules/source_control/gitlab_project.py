@@ -34,6 +34,7 @@ options:
             - When using https if SSL certificate needs to be verified.
         required: false
         default: true
+        type: bool
         aliases:
             - verify_ssl
     login_user:
@@ -77,52 +78,52 @@ options:
         description:
             - Whether you want to create issues or not.
         required: false
-        choices: ["true", "false"]
+        type: bool
         default: true
     merge_requests_enabled:
         description:
             - If merge requests can be made or not.
         required: false
-        choices: ["true", "false"]
+        type: bool
         default: true
     wiki_enabled:
         description:
             - If an wiki for this project should be available or not.
         required: false
-        choices: ["true", "false"]
+        type: bool
         default: true
     builds_enabled:
         description:
             - If a build creation for this project should be available or not.
-        choices: ["true", "false"]
+        type: bool
         default: false
         version_added: "2.7"
     public_builds:
         description:
             - If true, builds can be viewed by non-project-members.
             - Will only work if "builds_enabled" is set to True.
-        choices: ["true", "false"]
+        type: bool
         default: false
         version_added: "2.7"
-                    only_allow_merge_if_build_succeeds:
+    only_allow_merge_if_build_succeeds:
         description:
             - Set whether merge requests can only be merged with successful builds.
             - Will only work if "builds_enabled" is set to True.
-        choices: ["true", "false"]
+        type: bool
         default: false
         version_added: "2.7"
     container_registry_enabled:
         description:
             - Enable container registry for this project.
             - Will only work if "builds_enabled" is set to True.
-        choices: ["true", "false"]
+        type: bool
         default: false
         version_added: "2.7"
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
         required: false
-        choices: ["true", "false"]
+        type: bool
         default: true
     public:
         description:
@@ -130,7 +131,7 @@ options:
             - Setting this to true is same as setting visibility_level to 20.
             - Possible values are true and false.
         required: false
-        choices: ["true", "false"]
+        type: bool
         default: false
     visibility_level:
         description:
@@ -170,7 +171,7 @@ EXAMPLES = '''
 - name: "Create Gitlab Project in group Ansible"
   local_action:
     gitlab_project:
-        server_url: https://gitlab.dj-wasabi.local 
+        server_url: https://gitlab.dj-wasabi.local
         validate_certs: True
         login_user: dj-wasabi
         login_password: "MySecretPassword"
@@ -249,7 +250,7 @@ class GitLabProject(object):
 
         if changed:
             if self._module.check_mode:
-                module.exit_json(changed=True, result="Project should have updated.")
+                self._module.exit_json(changed=True, result="Project should have updated.")
             try:
                 project.save()
             except Exception as e:
