@@ -68,7 +68,6 @@ options:
     description:
       - Add password for unarchive password protected file.
     version_added: "2.6"
-    required: false
   extra_opts:
     description:
       - Specify additional options by passing in an array.
@@ -570,8 +569,6 @@ class ZipArchive(object):
 
     def unarchive(self):
         cmd = [self.cmd_path, '-o']
-        if self.password:
-            cmd.extend(['-P', self.password])
         if self.opts:
             cmd.extend(self.opts)
         cmd.append(self.src)
@@ -582,8 +579,21 @@ class ZipArchive(object):
         if self.excludes:
             cmd.extend(['-x'] + self.excludes)
         cmd.extend(['-d', self.dest])
-        rc, out, err = self.module.run_command(cmd)
-        return dict(cmd=cmd, rc=rc, out=out, err=err)
+        if self.password:
+            try:
+                import pexpect
+            except ImportError:
+                self.module.fail_json(msg="The pexpect python module is required for password option")
+            out = ""
+            rc = 0
+            try:
+                (out, rc) = pexpect.run(" ".join(cmd), withexitstatus=1, events={'(?i)password': self.password + '\n'})
+            except:
+                return dict(cmd=cmd, rc=82, out=out, err='failed to unzip package')
+            return dict(cmd=cmd, rc=rc, out=out, err='')
+        else:
+            rc, out, err = self.module.run_command(cmd)
+            return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
         if not self.cmd_path:
@@ -779,7 +789,7 @@ def main():
             src=dict(type='path', required=True),
             original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
-            password=dict(required=False, type='str', default=None),
+            password=dict(no_log=True),
             remote_src=dict(type='bool', default=False),
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),

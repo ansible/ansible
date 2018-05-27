@@ -1,5 +1,6 @@
 - name: create file
-  shell: touch somefile chdir={{output_dir}}
+  file: path={{output_dir}}/somefile state=touch
+
 - name: create zip with password
   shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
 
@@ -8,12 +9,16 @@
 
 - name: verify that the file was unarchived
   file: path=/tmp/somefile state=file
+
 - name: clean up test artifacts
-  shell: rm {{output_dir}}/test-password.zip /tmp/somefile
+  file: path={{output_dir}}/test-password.zip state=absent
+
+- name: clean up test artifacts
+  file: path={{output_dir}}/somefile state=absent
 
 # negative case unzip with wrong password
 - name: create file
-  shell: touch somefile chdir={{output_dir}}
+  file: path={{output_dir}}/somefile state=touch
 
 - name: create zip with password
   shell:  zip --password 1234 test-password.zip somefile chdir={{output_dir}}
@@ -29,4 +34,4 @@
       - '"failed to unpack" in unarchive.msg'
 
 - name: clean up test artifacts
-  shell: rm {{output_dir}}/test-password.zip
+  file: path={{output_dir}}/test-password.zip state=absent
