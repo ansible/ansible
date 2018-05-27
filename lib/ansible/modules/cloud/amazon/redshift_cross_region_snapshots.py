@@ -1,18 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2018, JR Kerkstra <jrkerkstra@example.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -25,8 +14,8 @@ short_description: Manage Redshift Cross Region Snapshots
 description:
   - Manage Redshift Cross Region Snapshots. Supports KMS-Encrypted Snapshots.
   - For more information, see https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html#cross-region-snapshot-copy
-version_added: "2.5"
-author: John Kerkstra (@captainkerk)
+version_added: "2.6"
+author: JR Kerkstra (@captainkerk)
 options:
   cluster_name:
     description:
@@ -93,8 +82,8 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec
 
 
 class SnapshotController(object):
@@ -162,7 +151,7 @@ def run_module():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
@@ -171,10 +160,7 @@ def run_module():
         changed=False,
         message=''
     )
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='redshift',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('redshift')
 
     snapshot_controller = SnapshotController(client=connection,
                                              cluster_name=module.params.get('cluster_name'))
@@ -188,24 +174,21 @@ def run_module():
                 module.fail_json(msg=message, **result)
             if needs_update(current_config, module.params):
                 result['changed'] = True
-                if module.check_mode:
-                    return result
-                snapshot_controller.modify_snapshot_copy_retention_period(
-                    module.params.get('snapshot_retention_period')
-                )
+                if not module.check_mode:
+                    snapshot_controller.modify_snapshot_copy_retention_period(
+                        module.params.get('snapshot_retention_period')
+                    )
         else:
             result['changed'] = True
-            if module.check_mode:
-                return result
-            snapshot_controller.disable_snapshot_copy()
+            if not module.check_mode:
+                snapshot_controller.disable_snapshot_copy()
     else:
         if module.params.get('state') == 'present':
             result['changed'] = True
-            if module.check_mode:
-                return result
-            snapshot_controller.enable_snapshot_copy(module.params.get('destination_region'),
-                                                     module.params.get('snapshot_copy_grant'),
-                                                     module.params.get('snapshot_retention_period'))
+            if not module.check_mode:
+                snapshot_controller.enable_snapshot_copy(module.params.get('destination_region'),
+                                                         module.params.get('snapshot_copy_grant'),
+                                                         module.params.get('snapshot_retention_period'))
     module.exit_json(**result)
 
 
