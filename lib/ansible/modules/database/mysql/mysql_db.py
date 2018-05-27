@@ -82,6 +82,8 @@ EXAMPLES = '''
     state: import
     target: /tmp/dump.sql.bz2
 
+# Dump all databases to /tmp/hostname.sql on the remote host and then import them again
+
 - name: Dump all databases to hostname.sql
   mysql_db:
     state: dump
