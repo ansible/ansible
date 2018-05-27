@@ -61,7 +61,7 @@ options:
             - A description for the group.
         required: false
         default: null
-        version_added: "2.6"
+        version_added: "2.7"
     state:
         description:
             - create or delete group.
