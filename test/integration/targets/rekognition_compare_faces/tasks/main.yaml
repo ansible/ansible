@@ -1,0 +1,130 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+    # ============================================================
+    # Testing Prerequisites
+    # ============================================================
+
+    - name: create image repository bucket on S3
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-image-repository"
+
+    - name: upload source image to S3 for testing (valid match)
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-image-repository"
+        object: 'face1.jpg'
+        src: 'files/face1.jpg'
+        mode: put
+
+    - name: upload source image to S3 for testing (invalid match)
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-image-repository"
+        object: 'face2.jpg'
+        src: 'files/face2.jpg'
+        mode: put
+
+    - name: upload target image to S3 for testing
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-image-repository"
+        object: 'faces.jpg'
+        src: 'files/faces.jpg'
+        mode: put
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+
+    - name: test with no parameters
+      rekognition_compare_faces:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      rekognition_compare_faces:
+        source_image:
+          file: "{{ lookup('file', 'files/face1.jpg') }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    # ============================================================
+    # Module Tests
+    # ============================================================
+
+    - name: Compare local image file to S3 target file (Successful match)
+      rekognition_compare_faces:
+        <<: *aws_connection_info
+        source_image:
+            s3_object:
+                bucket: "{{ resource_prefix }}-test-image-repository"
+                name: 'face1.jpg'
+        target_image:
+            s3_object:
+                bucket: "{{ resource_prefix }}-test-image-repository"
+                name: 'faces.jpg'
+        similarity_threshold: 80.0
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+            - result.analysis is not none
+
+    - name: Compare local image file to S3 target file (Unsuccessful match)
+      rekognition_compare_faces:
+        <<: *aws_connection_info
+        source_image:
+            s3_object:
+                bucket: "{{ resource_prefix }}-test-image-repository"
+                name: 'face2.jpg'
+        target_image:
+            s3_object:
+                bucket: "{{ resource_prefix }}-test-image-repository"
+                name: 'faces.jpg'
+        similarity_threshold: 80.0
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - not result.changed
+            - result.analysis is not none
+
+  always:
+
+    # ============================================================
+    # Tear down testing resources
+    # ============================================================
+
+    - name: destroy S3 bucket
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-image-repository"
+        state: absent
+        force: yes
+      ignore_errors: yes
