@@ -799,7 +799,6 @@ class Ec2Inventory(object):
                         # CacheNodes. Because of that we can't make use of the get_list
                         # method in the AWSQueryConnection. Let's do the work manually
                         clusters = clusters + response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
-
                     except KeyError as e:
                         error = "ElastiCache query to AWS failed (unexpected format)."
                         self.fail_with_error(error, 'getting ElastiCache clusters')
@@ -815,7 +814,6 @@ class Ec2Inventory(object):
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
             self.fail_with_error(error, 'getting ElastiCache clusters')
-
 
         for cluster in clusters:
             self.add_elasticache_cluster(cluster, region)
