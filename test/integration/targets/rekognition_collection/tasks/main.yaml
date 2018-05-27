@@ -1,0 +1,66 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+
+    - name: test with no parameters
+      rekognition_collection:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    # ============================================================
+    # Module Tests
+    # ============================================================
+
+    - name: Create the collection
+      rekognition_collection:
+        <<: *aws_connection_info
+        name: 'mytestcollection'
+        state: present
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+
+    - name: No changes to collection
+      rekognition_collection:
+        <<: *aws_connection_info
+        name: 'mytestcollection'
+        state: present
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - not result.changed
+
+    - name: Destroy the collection
+      rekognition_collection:
+        <<: *aws_connection_info
+        name: 'mytestcollection'
+        state: absent
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
