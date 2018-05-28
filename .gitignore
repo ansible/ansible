@@ -57,7 +57,6 @@ credentials.yml
 # test output
 *.retry
 *.out
-.pytest_cache/
 .tox
 .cache
 .pytest_cache
@@ -103,5 +102,3 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
-
-/SYMLINK_CACHE.json
