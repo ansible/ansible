@@ -1,37 +1,43 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Matt Martz <matt@sivel.net>
+# Copyright: (c) 2017, Matt Martz <matt@sivel.net>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 author: 'Matt Martz (@sivel)'
-short_description: 'Deploys a VMware VM from an OVF or OVA file'
+short_description: 'Deploys a VMware virtual machine from an OVF or OVA file'
 description:
-- 'Deploys a VMware VM from an OVF or OVA file'
+- 'This module can be used to deploy a VMware VM from an OVF or OVA file'
 module: vmware_deploy_ovf
 notes: []
 options:
     allow_duplicates:
         default: "yes"
         description:
-          - 'Whether or not to allow duplicate VM names. ESXi allows duplicates, vCenter may not'
+          - Whether or not to allow duplicate VM names. ESXi allows duplicates, vCenter may not.
         type: bool
     datacenter:
         default: ha-datacenter
         description:
-        - 'Datacenter to deploy to'
+        - Datacenter to deploy to.
     datastore:
         default: datastore1
         description:
-        - 'Datastore to deploy to'
+        - Datastore to deploy to.
     deployment_option:
         description:
-        - The key of the chosen deployment option
+        - The key of the chosen deployment option.
     disk_provisioning:
         choices:
         - flat
@@ -46,46 +52,46 @@ options:
         - monolithicFlat
         default: thin
         description:
-        - 'Disk provisioning type'
+        - Disk provisioning type.
     fail_on_spec_warnings:
         description:
-        - Cause the module to treat OVF Import Spec warnings as errors
+        - Cause the module to treat OVF Import Spec warnings as errors.
         default: "no"
         type: bool
     folder:
         description:
-        - Absolute path of folder to place the VM. If not specified, defaults to the value of
-          C(datacenter.vmFolder)
+        - Absolute path of folder to place the virtual machine.
+        - If not specified, defaults to the value of C(datacenter.vmFolder).
     name:
         description:
         - Name of the VM to work with.
-        - VM names in vCenter are not necessarily unique, which may be problematic
+        - Virtual machine names in vCenter are not necessarily unique, which may be problematic.
     networks:
         default:
             VM Network: VM Network
         description:
-        - 'C(key: value) mapping of OVF network name, to the vCenter network name'
+        - 'C(key: value) mapping of OVF network name, to the vCenter network name.'
     ovf:
         description:
-        - 'Path to OVF or OVA file to deploy'
+        - 'Path to OVF or OVA file to deploy.'
         aliases:
             - ova
     power_on:
         default: true
         description:
-        - 'Whether or not to power on the VM after creation'
+        - 'Whether or not to power on the virtual machine after creation.'
         type: bool
     properties:
         description:
-        - The assignment of values to the properties found in the OVF as key value pairs
+        - The assignment of values to the properties found in the OVF as key value pairs.
     resource_pool:
         default: Resources
         description:
-        - 'Resource Pool to deploy to'
+        - 'Resource Pool to deploy to.'
     wait:
         default: true
         description:
-        - 'Wait for the host to power on'
+        - 'Wait for the host to power on.'
         type: bool
     wait_for_ip_address:
         default: false
@@ -95,11 +101,11 @@ options:
         type: bool
 requirements:
     - pyvmomi
-version_added: "2.6"
+version_added: "2.7"
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - vmware_deploy_ovf:
     hostname: esx.example.org
     username: root
@@ -108,11 +114,8 @@ EXAMPLES = '''
     wait_for_ip_address: true
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
 
-RETURN = '''
+RETURN = r'''
 instance:
     description: metadata about the new virtualmachine
     returned: always

@@ -45,17 +45,15 @@ def wait_for_task(task):
             time.sleep(15)
 
 
-def wait_for_vm_ip(content, vm, poll=100, sleep=5):
-    ips = None
-    facts = {}
-    thispoll = 0
-    while not ips and thispoll <= poll:
+def wait_for_vm_ip(content, vm, timeout=300):
+    facts = dict()
+    interval = 15
+    while timeout > 0:
         facts = gather_vm_facts(content, vm)
         if facts['ipv4'] or facts['ipv6']:
-            ips = True
-        else:
-            time.sleep(sleep)
-            thispoll += 1
+            break
+        time.sleep(interval)
+        timeout -= interval
 
     return facts
 
