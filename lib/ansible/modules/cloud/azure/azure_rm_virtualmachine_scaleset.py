@@ -50,7 +50,6 @@ options:
     short_hostname:
         description:
             - Short host name
-        version_added: 2.6
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
