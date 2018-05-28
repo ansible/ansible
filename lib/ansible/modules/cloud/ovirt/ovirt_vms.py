@@ -1232,7 +1232,6 @@ class VmsModule(BaseModule):
     def _post_start_action(self, entity):
         vm_service = self._service.service(entity.id)
         self._wait_for_UP(vm_service)
-        self._attach_cd(vm_service.get())
         self._migrate_vm(vm_service.get())
 
     def _attach_cd(self, entity):
@@ -1939,6 +1938,7 @@ def main():
 
             vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
+            vms_module._attach_cd(vm)
             if state == 'running':
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
