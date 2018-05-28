@@ -329,13 +329,21 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         os.chmod(sshdir, int('0700', 8))
 
     if not os.path.exists(keysfile):
+        f = None
         basedir = os.path.dirname(keysfile)
         if not os.path.exists(basedir):
             os.makedirs(basedir)
         try:
             f = open(keysfile, "w")  # touches file so we can set ownership and perms
+        except (IOError, OSError) as ex:
+            module.fail_json(
+                msg="Failed to write to authorized keys file : %s" % (
+                    to_native(ex)
+                )
+            )
         finally:
-            f.close()
+            if f is not None:
+              f.close()
         if module.selinux_enabled():
             module.set_default_selinux_context(keysfile, False)
 
