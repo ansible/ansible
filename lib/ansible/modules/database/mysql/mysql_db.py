@@ -61,7 +61,7 @@ options:
       - A list of table names that will be ignored in the dump of the form database_name.table_name
     required: false
     default: []
-    version_added: "2.6"
+    version_added: "2.7"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
