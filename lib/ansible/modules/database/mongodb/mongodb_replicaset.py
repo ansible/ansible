@@ -368,7 +368,7 @@ def main():
                 if login_user is not None and login_password is not None:
                     client.admin.authenticate(login_user, login_password, source=login_database)
                 else:
-                    raise exceps
+                    raise excep
             else:
                 raise excep
 
