@@ -100,7 +100,7 @@ options:
         - Dictionary with extra key/value pairs passed to the API
      required: false
      default: {}
-     version_added: "2.6"
+     version_added: "2.7"
 requirements:
     - "python >= 2.6"
     - "shade"
