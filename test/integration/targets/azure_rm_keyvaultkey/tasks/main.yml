@@ -4,6 +4,20 @@
     tenant_id: "{{ lookup('env','AZURE_TENANT') }}"
   run_once: yes
 
+- name: set service principal info
+  set_fact:
+    azure_client_id: "{{ lookup('env','AZURE_CLIENT_ID') }}"
+    azure_secret: "{{ lookup('env','AZURE_SECRET') }}"
+  no_log: yes
+
+- name: lookup service principal object id
+  set_fact:
+    object_id: "{{ lookup('azure_service_principal_attribute',
+                   azure_client_id=azure_client_id,
+                   azure_secret=azure_secret,
+                   azure_tenant=tenant_id) }}"
+  register: object_id
+
 - name: Create instance of Key Vault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
@@ -15,7 +29,7 @@
       family: A
     access_policies:
       - tenant_id: "{{ tenant_id }}"
-        object_id: 97567bfa-cf13-4217-8fa3-cc56bc1867fe
+        object_id: '{{ object_id }}'
         keys:
           - get
           - list
