@@ -41,7 +41,7 @@ options:
             - It can be name of existing app service plan in same resource group as web app.
             - "It can be resource id of existing app service plan. eg.,
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
-            - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).              
+            - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).
               name.  Name of app service plan.
               resource_group. Resource group name of app service plan.
               sku. SKU of app service plan. For allowed sku, please refer to https://azure.microsoft.com/en-us/pricing/details/app-service/linux/.
