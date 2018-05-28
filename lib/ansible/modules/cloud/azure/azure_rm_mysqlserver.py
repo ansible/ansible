@@ -72,7 +72,6 @@ options:
         description:
             - Create mode of SQL Server
         default: Default
-        version_added: 2.6
     state:
         description:
             - Assert the state of the MySQL Server. Use 'present' to create or update a server and 'absent' to delete it.
@@ -80,7 +79,6 @@ options:
         choices:
             - absent
             - present
-        version_added: 2.6
 
 extends_documentation_fragment:
     - azure
