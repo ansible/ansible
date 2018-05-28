@@ -32,7 +32,6 @@ options:
     tags:
         description:
             - List of tags to be matched
-        version_added: 2.6
     format:
         description:
             - Format of the data returned.
