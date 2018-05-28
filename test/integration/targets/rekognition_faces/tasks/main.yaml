@@ -1,0 +1,195 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+    # ============================================================
+    # Testing Prerequisites
+    # ============================================================
+
+    - name: create image repository bucket on S3
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-image-repository"
+
+    - name: upload source image to S3 for testing
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-image-repository"
+        object: 'faces1.jpg'
+        src: 'files/faces1.jpg'
+        mode: put
+
+    - name: upload modified source image to S3
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-image-repository"
+        object: 'faces2.jpg'
+        src: 'files/faces2.jpg'
+        mode: put
+
+    - name: create collection for face data
+      rekognition_collection:
+        <<: *aws_connection_info
+        name: 'testcollection'
+        state: present
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+
+    - name: test with no parameters
+      rekognition_faces:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      rekognition_faces:
+        collection: 'testcollection'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      rekognition_faces:
+        collection: 'testcollection'
+        index_id: 'crowd1'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      rekognition_faces:
+        collection: 'testcollection'
+        image:
+          s3_object:
+            bucket: 'fake-image-repository'
+            name: 'faces1.jpg'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    # ============================================================
+    # Module Tests
+    # ============================================================
+
+    - name: Index source image and assign detected faces to a test collection
+      rekognition_faces:
+        <<: *aws_connection_info
+        index_id: 'crowd1'
+        state: present
+        collection: 'testcollection'
+        image:
+          s3_object:
+            bucket: "{{ resource_prefix }}-test-image-repository"
+            name: 'faces1.jpg'
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+            - result.face_records is not none
+
+    - name: No changes to image index
+      rekognition_faces:
+        <<: *aws_connection_info
+        index_id: 'crowd1'
+        state: present
+        collection: 'testcollection'
+        image:
+          s3_object:
+            bucket: "{{ resource_prefix }}-test-image-repository"
+            name: 'faces1.jpg'
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - not result.changed
+            - result.face_records is not none
+
+    - name: Re-index new image
+      rekognition_faces:
+        <<: *aws_connection_info
+        index_id: 'crowd1'
+        state: present
+        collection: 'testcollection'
+        image:
+          s3_object:
+            bucket: "{{ resource_prefix }}-test-image-repository"
+            name: 'faces2.jpg'
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+            - result.face_records is not none
+
+    - name: Remove index and associated faces
+      rekognition_faces:
+        <<: *aws_connection_info
+        index_id: 'crowd1'
+        state: absent
+        collection: 'testcollection'
+        image:
+          s3_object:
+            bucket: "{{ resource_prefix }}-test-image-repository"
+            name: 'faces2.jpg'
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+            - result.face_records is not none
+
+  always:
+
+    # ============================================================
+    # Tear down testing resources
+    # ============================================================
+
+    - name: destroy S3 bucket
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-image-repository"
+        state: absent
+        force: yes
+      ignore_errors: yes
+
+    - name: destroy collection
+      rekognition_collection:
+        <<: *aws_connection_info
+        name: 'testcollection'
+        state: absent
+      ignore_errors: yes
