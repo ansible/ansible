@@ -276,7 +276,15 @@ options:
             `C(custom_compatibility_version)` is set, it overrides the cluster's compatibility version
             for this particular virtual machine."
         version_added: "2.7"
-
+    host_devices:
+        description:
+            - Single Root I/O Virtualization - technology that allows single device to expose multiple endpoints that can be passed to VMs
+            - PF - Physical Function - refers to a physical device (possibly supporting SR-IOV)
+            - VF - Virtual Function - virtual function exposed by SR-IOV capable device
+            - IOMMU group - unit of isolation created by the kernel IOMMU driver. Each IOMMU group is isolated from other IOMMU groups with respect to DMA. For our purposes, IOMMU groups are a set of PCI devices which may span multiple PCI buses.
+            - VFIO[2] - Virtual Function I/O - virtualization device driver, replacement of the pci-stub driver
+            - mdev - mediated devices - devices that are capable of creating and assigning device instances to a VMs (similar to SR-IOV)
+        version_added: "2.7"
     delete_protected:
         description:
             - If I(yes) Virtual Machine will be set as delete protected.
@@ -867,6 +875,18 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
+
+# Default value of state is present
+- name: Attach host device to VM
+  host: host
+  placement_policy: pinned
+  host_devices:
+    - name: pci_0000_00_06_0
+    - name: pci_0000_00_07_0
+      state: absent
+    - name: pci_0000_00_08_0
+      state: present
+
 '''
 
 
@@ -1602,6 +1622,33 @@ class VmsModule(BaseModule):
             )
         return self._initialization
 
+    def __attach_host_devices(self, entity):
+        vm_service = self._service.service(entity.id)
+        host_devices_service = vm_service.host_devices_service()
+        host_devices = self.param('host_devices')
+        updated = False
+        if host_devices:
+            device_names = [dev.name for dev in host_devices_service.list()]
+            for device in host_devices:
+                device_name = device.get('name')
+                state = device.get('state', 'present')
+                if state == 'absent' and device_name in device_names:
+                    updated = True
+                    if not self._module.check_mode:
+                        device_id = get_id_by_name(host_devices_service, device.get('name'))
+                        host_devices_service.device_service(device_id).remove()
+
+                elif state == 'present' and device_name not in device_names:
+                    updated = True
+                    if not self._module.check_mode:
+                        host_devices_service.add(
+                            otypes.HostDevice(
+                                name=device.get('name'),
+                            )
+                        )
+
+        return updated
+
 
 def _get_role_mappings(module):
     roleMappings = list()
@@ -1918,6 +1965,7 @@ def main():
         numa_nodes=dict(type='list', default=[]),
         custom_properties=dict(type='list'),
         watchdog=dict(type='dict'),
+        host_devices=dict(type='list'),
         graphical_console=dict(type='dict'),
     )
     module = AnsibleModule(
