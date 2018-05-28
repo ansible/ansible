@@ -1,4 +1,4 @@
-- name: create public ip
+- name: create public ip - xxx
   azure_rm_publicipaddress:
     name: ansiblepipstandard
     sku: Standard

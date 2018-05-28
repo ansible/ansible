@@ -1,4 +1,4 @@
-- name: Delete virtual network, if it exists
+- name: Delete virtual network, if it exists - xxx
   azure_rm_virtualnetwork:
     name: my_test_network
     resource_group: "{{ resource_group }}"

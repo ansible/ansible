@@ -1,4 +1,4 @@
-- name: Create security group
+- name: Create security group -- xxx
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
       name: mysecgroup
