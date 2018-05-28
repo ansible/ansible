@@ -181,7 +181,7 @@
       sku: Stable
       version: latest
     upgrade_policy: Manual
-    network_security_group: testNetworkSecurityGroup
+    security_group: testNetworkSecurityGroup
     enable_accelerated_networking: yes
   register: results
 
@@ -223,8 +223,9 @@
       sku: Stable
       version: latest
     upgrade_policy: Manual
-    network_security_group: testNetworkSecurityGroup2
-    network_security_group_resource_group: "{{ resource_group_secondary }}"
+    security_group:
+      name: testNetworkSecurityGroup2
+      resource_group: "{{ resource_group_secondary }}"
   register: results
 
 - name: Assert that VMSS ran
