@@ -10,6 +10,17 @@
     address_prefixes_cidr:
       - 10.1.0.0/16
       - 172.100.0.0/16
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    name: my_test_network
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
     dns_servers:
       - 127.0.0.1
       - 127.0.0.3
