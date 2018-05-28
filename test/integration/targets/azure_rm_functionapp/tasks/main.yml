@@ -2,7 +2,7 @@
   set_fact:
     fixed_resource_prefix: "{{ (resource_prefix | replace('-','x'))[-22:] }}"
 
-- name: create storage account for function apps
+- name: create storage account for function apps - xxx
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
     name: sa{{ fixed_resource_prefix }}
