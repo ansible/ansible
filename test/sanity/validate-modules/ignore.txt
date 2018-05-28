@@ -1036,9 +1036,6 @@ lib/ansible/modules/packaging/os/apt_repository.py E325
 lib/ansible/modules/packaging/os/apt_rpm.py E322
 lib/ansible/modules/packaging/os/apt_rpm.py E324
 lib/ansible/modules/packaging/os/apt_rpm.py E326
-lib/ansible/modules/packaging/os/dnf.py E322
-lib/ansible/modules/packaging/os/dnf.py E324
-lib/ansible/modules/packaging/os/dnf.py E326
 lib/ansible/modules/packaging/os/homebrew.py E326
 lib/ansible/modules/packaging/os/homebrew_cask.py E326
 lib/ansible/modules/packaging/os/layman.py E322
