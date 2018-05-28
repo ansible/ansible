@@ -1124,7 +1124,6 @@ lib/ansible/modules/source_control/github_issue.py E324
 lib/ansible/modules/source_control/github_issue.py E326
 lib/ansible/modules/source_control/gitlab_group.py E325
 lib/ansible/modules/source_control/gitlab_project.py E324
-lib/ansible/modules/source_control/gitlab_project.py E326
 lib/ansible/modules/source_control/gitlab_user.py E326
 lib/ansible/modules/source_control/subversion.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
