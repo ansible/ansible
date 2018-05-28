@@ -428,6 +428,18 @@ class DigitalOceanInventory(object):
             self.data['tags'] = self.manager.all_tags()
             self.cache_refreshed = True
 
+    def add_inventory_group(self, key):
+        """ Method to create group dict """
+        host_dict = {'hosts': [], 'vars': {}}
+        self.inventory[key] = host_dict
+        return
+
+    def add_host(self, group, host):
+        """ Helper method to reduce host duplication """
+        if host not in self.inventory[group]['hosts']:
+            self.inventory[group]['hosts'].append(host)
+        return
+
     def build_inventory(self):
         """ Build Ansible inventory of droplets """
         self.inventory = {
@@ -448,8 +460,13 @@ class DigitalOceanInventory(object):
 
             self.inventory['all']['hosts'].append(dest)
 
-            self.inventory[droplet['id']] = [dest]
-            self.inventory[droplet['name']] = [dest]
+            if droplet['id'] not in self.inventory:
+                self.add_inventory_group(droplet['id'])
+            self.inventory[droplet['id']]['hosts'].append(dest)
+
+            if droplet['name'] not in self.inventory:
+                self.add_inventory_group(droplet['name'])
+            self.inventory[droplet['name']]['hosts'].append(dest)
 
             # groups that are always present
             for group in ('region_' + droplet['region']['slug'],
@@ -458,7 +475,7 @@ class DigitalOceanInventory(object):
                           'distro_' + DigitalOceanInventory.to_safe(droplet['image']['distribution']),
                           'status_' + droplet['status']):
                 if group not in self.inventory:
-                    self.inventory[group] = {'hosts': [], 'vars': {}}
+                    self.add_inventory_group(group)
                 self.inventory[group]['hosts'].append(dest)
 
             # groups that are not always present
@@ -467,14 +484,14 @@ class DigitalOceanInventory(object):
                 if group:
                     image = 'image_' + DigitalOceanInventory.to_safe(group)
                     if image not in self.inventory:
-                        self.inventory[image] = {'hosts': [], 'vars': {}}
+                        self.add_inventory_group(image)
                     self.inventory[image]['hosts'].append(dest)
 
             if droplet['tags']:
                 for tag in droplet['tags']:
                     if tag not in self.inventory:
-                        self.inventory[tag] = {'hosts': [], 'vars': {}}
-                    self.inventory[tag]['hosts'].append(dest)
+                        self.add_inventory_group(tag)
+                    self.add_host(tag, dest)
 
             # hostvars
             info = self.do_namespace(droplet)
