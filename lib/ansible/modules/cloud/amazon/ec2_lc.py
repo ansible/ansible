@@ -44,7 +44,7 @@ options:
   state:
     description:
       - Register or deregister the instance
-    required: true
+    default: present
     choices: ['present', 'absent']
   name:
     description:
@@ -389,6 +389,7 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
+    # TODO seems unused, remove?
     MAX_IOPS_TO_SIZE_RATIO = 30
 
     # device_type has been used historically to represent volume_type,
