@@ -304,6 +304,25 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def unit_supports_reload(module, systemctl_executable, systemd_unit):
+    """Feature-detect whether given unit supports reload action.
+
+    Args:
+        module (AnsibleModule): Instance of ansible module singleton.
+        systemctl_executable (str): systemctl executable with default
+            arguments pre-filled.
+        systemd_unit (str): Name of systemd unit being checked.
+
+    Returns:
+        bool: True if systemd unit supports reload, False otherwise.
+    """
+    rc, out, err = module.run_command(
+        r"%s %s '%s' | grep ^ExecReload="
+        % (systemctl_executable, 'cat', systemd_unit)
+    )
+    return rc == 0
+
+
 # ===========================================
 # Main control flow
 
@@ -515,16 +534,17 @@ def main():
 
                 if action is not DO_NOTHING:
                     result['changed'] = True
-                    if action == 'reloaded':
-                        rc, out, err = module.run_command(
-                            r"%s %s '%s' | grep ^ExecReload="
-                            % (systemctl, 'cat', unit)
+                    if action == 'reloaded' and not unit_supports_reload(module, systemctl, unit):
+                        module.warn(
+                            'The service (%s) does not support '
+                            '`reload` action and it is likely to fail. '
+                            'you may try `reloaded-or-restarted`, '
+                            '`tried-reloading-or-restarting` or anything else '
+                            'which suits your needs better. '
+                            'If you maintain this unit, you might want to '
+                            'implement ExecReload there first.'
+                            % unit
                         )
-                        if rc != 0:
-                            module.warn(
-                                'The service (%s) does not support `reload` action and it is likely to fail.'
-                                % unit
-                            )
                     if not module.check_mode:
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
