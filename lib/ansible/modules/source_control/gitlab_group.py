@@ -16,6 +16,7 @@ short_description: Creates/updates/deletes Gitlab Groups
 description:
    - When the group does not exist in Gitlab, it will be created.
    - When the group does exist and state=absent, the group will be deleted.
+   - As of Ansible version 2.7, this module make use of a different python module and thus some arguments are deprecated.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
