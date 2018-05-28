@@ -65,6 +65,7 @@ Noteworthy module changes
   destination path like this::
 
     $ ansible localhost -m file -a 'path=/tmp/lib state=directory'
+
 * The ``k8s_raw`` and ``openshift_raw`` modules have been aliased to the new ``k8s`` module.
 * The ``k8s`` module supports all Kubernetes resources including those from Custom Resource Definitions and aggregated API servers. This includes all OpenShift resources.
 * The ``k8s`` module will not accept resources where subkeys have been snake_cased. This was a workaround that was suggested with the ``k8s_raw`` and ``openshift_raw`` modules.
@@ -73,7 +74,7 @@ Noteworthy module changes
 * The ``k8s`` module will not automatically change ``Project`` creation requests into ``ProjectRequest`` creation requests as the ``openshift_raw`` module did. You must now specify the ``ProjectRequest`` kind explicitly.
 * The ``k8s`` module will not automatically remove secrets from the Ansible return values (and by extension the log). In order to prevent secret values in a task from being logged, specify the ``no_log`` parameter on the task block.
 * The ``k8s_scale`` module now supports scalable OpenShift objects, such as ``DeploymentConfig``.
-
+* Openstack modules are no longer using ``shade`` library. Instead ``openstacksdk`` is used. Since ``openstacksdk`` should be already present as a dependency to ``shade`` no additional actions are required
 
 Plugins
 =======
