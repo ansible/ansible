@@ -81,7 +81,7 @@ options:
               available
         type: bool
         default: 'no'
-        version_added: "2.6.0"
+        version_added: "2.7.0"
 '''
 EXAMPLES = '''
 - homebrew_cask:
@@ -120,7 +120,7 @@ EXAMPLES = '''
     state: upgraded
     install_options: force
 
-- homebrew_cask
+- homebrew_cask:
     name: 1password
     state: upgraded
     greedy: True
@@ -428,7 +428,7 @@ class HomebrewCask(object):
                 'outdated',
             ]
             + (['--greedy'] if self.greedy else [])
-            + [ self.current_cask ]
+            + [self.current_cask]
         )
 
         rc, out, err = self.module.run_command(cask_is_outdated_command)
