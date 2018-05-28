@@ -311,7 +311,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
 from ansible.module_utils._text import to_native
 
 
@@ -446,6 +446,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
+        self.location = normalize_location_name(self.location)
 
         # parse the virtual network resource group and name
         self.virtual_network = self.parse_resource_to_dict(self.virtual_network)
