@@ -22,14 +22,53 @@
 - name: state dump/import - create database
   mysql_db: name={{ db_name }} state=present
 
+- name: state dump/import - create table department
+  command: mysql {{ db_name }} '-e create table department(id int, name varchar(100));'
+
 - name: state dump/import - create table employee
   command: mysql {{ db_name }} '-e create table employee(id int, name varchar(100));'
 
 - name: state dump/import - insert data into table employee
   command: mysql {{ db_name }} "-e insert into employee value(47,'Joe Smith');"
 
+- name: state dump/import - insert data into table department
+  command: mysql {{ db_name }} "-e insert into department value(2,'Engineering');"
+
 - name: state dump/import - file name should not exist
   file: name={{ db_file_name }} state=absent
+
+- name: state dump without department table.
+  mysql_db:
+    name: "{{ db_name }}"
+    state: dump
+    target: "{{ db_file_name }}"
+    ignore_tables:
+        - "{{ db_name }}.department"
+  register: result
+
+- name: assert successful completion of dump operation
+  assert:
+    that:
+       - "result.changed == true"
+
+- name: state dump/import - file name should exist
+  file: name={{ db_file_name }} state=file
+
+- name: state dump/import - remove database
+  mysql_db: name={{ db_name }} state=absent
+
+- name: test state=import to restore the database of type {{ format_type }} (expect changed=true)
+  mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
+  register: result
+
+- name: show the tables
+  command: mysql {{ db_name }} "-e show tables;"
+  register: result
+
+- name: assert that the department table is absent.
+  assert:
+    that:
+       - "'department' not in result.stdout"
 
 - name: test state=dump to backup the database of type {{ format_type }} (expect changed=true)
   mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
@@ -41,7 +80,7 @@
        - "result.changed == true"
        - "result.db =='{{ db_name }}'"
 
-- name: assert database was backup successfully
+- name: assert database was backed up successfully
   command: file {{ db_file_name }}
   register: result
 
