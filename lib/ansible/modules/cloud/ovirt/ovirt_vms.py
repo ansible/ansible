@@ -1228,6 +1228,7 @@ class VmsModule(BaseModule):
         self.changed = self.__attach_numa_nodes(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
+        self.changed = self.__attach_host_devices(entity)
 
     def pre_remove(self, entity):
         # Forcibly stop the VM, if it's not in DOWN state:
