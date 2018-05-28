@@ -144,7 +144,7 @@
 - name: Should be idempotent with linux web app created
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}9"
+    name: "{{ win_app_name }}8"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
@@ -159,7 +159,7 @@
 - name: Update nodejs framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}9"
+    name: "{{ win_app_name }}8"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"

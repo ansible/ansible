@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_webapp
-version_added: "2.6"
+version_added: "2.7"
 short_description: Manage Web App instance.
 description:
     - Create, update and delete instance of Web App.
@@ -39,8 +39,8 @@ options:
         description:
             - App service plan. Required for creation.
             - It can be name of existing app service plan in same resource group as web app.
-            - It can be resource id of existing app service plan. eg., 
-              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>
+            - "It can be resource id of existing app service plan. eg.,
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
             - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).              
               name.  Name of app service plan.
               resource_group. Resource group name of app service plan.
@@ -85,7 +85,7 @@ options:
                     - Mutually exclusive with java_version
 
 
-    linux_framework:        
+    linux_framework:
         description:
             - The runtime stack used for your linux-based webapp.
             - Only applies for linux web app. See https://aka.ms/linux-stacks for more info.
@@ -310,7 +310,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from msrest.serialization import Model    
+    from msrest.serialization import Model
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
         AppServicePlan, SkuDescription, NameValuePair
@@ -349,6 +349,7 @@ windows_framework_spec = dict(
     java_version=dict(type='str')
 )
 
+
 def _normalize_sku(sku):
     if sku is None:
         return sku
@@ -359,6 +360,7 @@ def _normalize_sku(sku):
     elif sku == 'SHARED':
         return 'D1'
     return sku
+
 
 def get_sku_name(tier):
     tier = tier.upper()
@@ -376,6 +378,7 @@ def get_sku_name(tier):
         return 'PREMIUMV2'
     else:
         return None
+
 
 class Actions:
     NoAction, CreateOrUpdate, UpdateAppSettings, Delete = range(4)
@@ -466,7 +469,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.dns_registration = None
         self.skip_custom_domain_verification = None
         self.ttl_in_seconds = None
-        self.https_only = None        
+        self.https_only = None
 
         self.tags = None
 
@@ -497,12 +500,12 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.to_do = Actions.NoAction
 
         self.windows_framework = None
-        # set site_config value from kwargs        
+        # set site_config value from kwargs
         self.site_config_updatable_properties = ["net_framework_version",
-                                       "java_version",
-                                       "php_version",
-                                       "python_version",
-                                       "scm_type"]
+                                                 "java_version",
+                                                 "php_version",
+                                                 "python_version",
+                                                 "scm_type"]
 
         # updatable_properties
         self.updatable_properties = ["client_affinity_enabled",
@@ -525,7 +528,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "scm_type":
                     self.site_config[key] = kwargs[key]
-                
+
                 # azure sdk linux_fx_version:
                 # for docker web app, value is like DOCKER|imagename:tag
                 # for linux web app, value is like NODE|6.6
@@ -553,7 +556,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         if self.plan:
             self.plan = self.parse_resource_to_dict(self.plan)
-        
+
         if self.container_settings is not None:
             if hasattr(self.site_config, 'linux_fx_version'):
                 self.fail("Cannot set linux_framework with container_settings at same time.")
@@ -656,9 +659,10 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.is_site_config_changed(old_config):
                     to_be_updated = True
                     self.to_do = Actions.CreateOrUpdate
-                
+
                 # check if linux_fx_version changed
                 if old_config.linux_fx_version != self.site_config.get('linux_fx_version', None):
+                    to_be_updated = True
                     self.to_do = Actions.CreateOrUpdate
 
                 self.app_settings_strDic = self.list_app_settings()
@@ -675,7 +679,6 @@ class AzureRMWebApps(AzureRMModuleBase):
                     if self.app_settings is not None:
                         for key in self.app_settings.keys():
                             self.app_settings_strDic.properties[key] = self.app_settings[key]
-
 
         if old_response:
             self.results['ansible_facts']['azure_webapp'] = old_response
@@ -721,8 +724,8 @@ class AzureRMWebApps(AzureRMModuleBase):
         for fx_version in self.site_config_updatable_properties:
             if self.site_config.get(fx_version, None) is not None:
                 if not getattr(existing_config, fx_version) or \
-                    getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
-                        return True
+                        getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
+                            return True
 
         return False
 
