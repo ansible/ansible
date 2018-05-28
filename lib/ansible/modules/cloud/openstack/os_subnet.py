@@ -324,9 +324,9 @@ def main():
                 if dup_args:
                     raise ValueError('Duplicate key(s) {0} in extra_specs'
                                      .format(list(dup_args)))
-                kwargs = dict(kwargs, **extra_specs)
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
+                kwargs = dict(kwargs, **extra_specs)
                 subnet = cloud.create_subnet(network_name, **kwargs)
                 changed = True
             else:
