@@ -15,23 +15,29 @@
       is_linux: false
       sku: S1
 
-- name: Create a windows web app with existing app service plan, try to update some root level params
+- name: Create a windows web app with existing app service plan
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}2"
-    plan:
-      name: "{{ win_plan_name }}"
-    skip_dns_registration: true
+    plan: "{{ win_plan_name }}"
+  register: output
+
+- name: Create a windows web app with existing app service plan, try to update some root level params
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    plan: '{{ output.ansible_facts.azure_webapp.server_farm_id }}'
+    dns_registration: true
     https_only: true
   register: output
 
 - name: Create a win web app with java run time specific
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}3"
-    plan:
-      name: "{{ win_plan_name }}"
-    java_version: "1.8"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
+    windows_framework: 
+      java_version: "1.8"
     java_container_settings:
       name: "Tomcat"
       version: "8.0"
@@ -46,10 +52,10 @@
 - name: Update app settings
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}3"
-    plan:
-      name: "{{ win_plan_name }}"
-    java_version: "1.8"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
+    windows_framework: 
+      java_version: "1.8"
     java_container_settings:
       name: "Tomcat"
       version: "8.0"
@@ -64,9 +70,8 @@
 - name: Purge all existing app settings
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}3"
-    plan:
-      name: "{{ win_plan_name }}"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
     purge_app_settings: true
   register: output
 
@@ -74,13 +79,14 @@
   assert:
     that: output.changed
 
-- name: Create a win web app with python run time
+- name: Create a win web app with python run time and php run time
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}4"
-    plan:
-      name: "{{ win_plan_name }}"
-    python_version: "2.7"
+    name: "{{ win_app_name }}5"
+    plan: "{{ win_plan_name }}"
+    windows_framework:
+      python_version: "2.7"
+      php_version: "7.0"
   register: output
 
 - name: Assert the web app was created
@@ -90,7 +96,7 @@
 - name: Create a docker web app with some app settings
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}5"
+    name: "{{ win_app_name }}6"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
@@ -108,7 +114,7 @@
 - name: Create a docker web app with private acr registry
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}6"
+    name: "{{ win_app_name }}7"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
@@ -126,21 +132,25 @@
 - name: Create a linux web app with nodejs framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}7"
+    name: "{{ win_app_name }}8"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
-    linux_fx_version: "node|6.6"
+    linux_framework: 
+      name: "node"
+      version: "6.6"
   register: output
 
 - name: Should be idempotent with linux web app created
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}7"
+    name: "{{ win_app_name }}9"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
-    linux_fx_version: "node|6.6"
+    linux_framework: 
+      name: "node"
+      version: "6.6"
   register: output
 
 - assert:
@@ -149,11 +159,13 @@
 - name: Update nodejs framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}7"
+    name: "{{ win_app_name }}9"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
-    linux_fx_version: "node|6.9"
+    linux_framework: 
+      name: "node"
+      version: "6.9"
   register: output
 
 - name: Assert the web app was created
@@ -163,7 +175,7 @@
 - name: Create a linux web app with deployment source github
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}8"
+    name: "{{ win_app_name }}10"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
@@ -187,3 +199,15 @@
 - name: Assert the web app was deleted
   assert:
     that: output.changed
+
+- name: assert error in windows_framework, suboption java_version is mutually exclusive with other framework version
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}11"
+    plan: "{{ win_plan_name }}"
+    windows_framework:
+      python_version: "2.7"
+      php_version: "7.0"
+      java_version: "1.8"
+  register: fail_win_java_version_mutual_exclusive
+  failed_when: fail_win_java_version_mutual_exclusive.msg != "java_version is mutually exclusive with other framework version in windows_framework."

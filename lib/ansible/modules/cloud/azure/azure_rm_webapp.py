@@ -37,55 +37,73 @@ options:
 
     plan:
         description:
-            - App Service Plan.
+            - app service plan. Required for creation.
+            - It can be name of existing app service plan in same resource group as web app.
+            - It can be resource id of existing app service plan. eg., 
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>
+            - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).              
+              name.  Name of app service plan.
+              resource_group. Resource group name of app service plan.
+              sku. SKU of app service plan. For allowed sku, please refer to https://azure.microsoft.com/en-us/pricing/details/app-service/linux/.
+              is_linux. Indicate is linux app service plan. type bool. default False.
+              number_of_workers. Number of workers.
+
+    windows_framework:
+        description:
+            - Describe windows web app framework. See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
+            - Can set mulitple framework at same time.
+            - suboption java_version is mutually exclusive with other suboptions
+        suboptions:
+            net_framework_version:
+                description:
+                    - The version used to run your web app if using .NET Framework, e.g., 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
+                    - Only applys for windows web app.
+                    - mutually exclusive with java_version
+
+            java_version:
+                description:
+                    - The version used to run your web app if using Java, e.g., '1.7' for Java 7, '1.8' for Java 8.
+                    - Only applys for windows web app.
+                    - mutually exclusive with other suboptions
+
+            php_version:
+                description:
+                    - The version used to run your web app if using PHP, e.g., 5.5, 5.6, 7.0.
+                    - Only applys for windows web app.
+                    - mutually exclusive with java_version
+
+            python_version:
+                description:
+                    - The version used to run your web app if using Python, e.g., 2.7, 3.4.
+                    - Only applys for windows web app.
+                    - mutually exclusive with java_version
+
+            node_version:
+                description:
+                    - The version used to run your web app if using nodejs, e.g., 6.6, 6.9.
+                    - Only applys for windows web app.
+                    - mutually exclusive with java_version
+
+
+    linux_framework:        
+        description:
+            - The runtime stack used for your linux-based webapp, e.g., 'RUBY|2.3', 'NODE|6.9', 'PHP|5.6', 'DOTNETCORE|1.1.0', 'JAVA|8.0'.
+            - Only applys for linux web app. See https://aka.ms/linux-stacks for more info.
+            - mutually exclusive with windows_framework
         suboptions:
             name:
                 description:
-                    - Name of app service lan.
-                required: true
-            resoruce_group:
+                    - Name of linux runtime framework. e.g., RUBY, NODE, PHP, DOTNETCORE, JAVA.
+                choices:
+                    - ruby
+                    - node
+                    - php
+                    - dotnetcore
+                    - java
+            version:
                 description:
-                    - Resource group name of app service plan.
-            sku:
-                description:
-                    - Sku of app service plan. Eg. B1, B2, B3, D1, F1, FREE, P1, P1V2, P2, P2V2, P3, P3V2, S1, S2, S3, SHARED.
-                    - Please refer to https://azure.microsoft.com/en-us/pricing/details/app-service/linux/ for detail.
-            is_linux:
-                description:
-                    - Indicate is linux app service plan.
-                default: False
-            number_of_workers:
-                description:
-                    - Number of workers.
-    net_framework_version:
-        description:
-            - The version used to run your web app if using .NET Framework, e.g., 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
-            - Only applys for windows web app.
-
-    java_version:
-        description:
-            - The version used to run your web app if using Java, e.g., '1.7' for Java 7, '1.8' for Java 8.
-            - Only applys for windows web app.
-
-    php_version:
-        description:
-            - The version used to run your web app if using PHP, e.g., 5.5, 5.6, 7.0.
-            - Only applys for windows web app.
-
-    python_version:
-        description:
-            - The version used to run your web app if using Python, e.g., 2.7, 3.4.
-            - Only applys for windows web app.
-
-    node_version:
-        description:
-            - The version used to run your web app if using nodejs, e.g., 6.6, 6.9.
-            - Only applys for windows web app.
-
-    linux_fx_version:
-        description:
-            - The runtime stack used for your linux-based webapp, e.g., 'RUBY|2.3', 'NODE|6.6', 'PHP|5.6', 'DOTNETCORE|1.1.0'.
-            - Only applys for linx web app. See https://aka.ms/linux-stacks for more info.
+                    - Version of linux runtime framework.
+                    - Please see https://aka.ms/linux-stacks for supported value.
 
     java_container_settings:
         description: Java container settings.
@@ -140,20 +158,17 @@ options:
             - Configures web site to accept only https requests.
         type: bool
 
-    skip_dns_registration:
+    dns_registration:
         description:
             - If true web app hostname is not registered with DNS on creation. This parameter is
             - only used for app creation.
-        type: bool
+        choices:
+            - skip
+            - force
 
     skip_custom_domain_verification:
         description:
             - If true, custom (non *.azurewebsites.net) domains associated with web app are not verified.
-        type: bool
-
-    force_dns_registration:
-        description:
-            - If true, web app hostname is force registered with DNS.
         type: bool
 
     ttl_in_seconds:
@@ -218,8 +233,7 @@ EXAMPLES = '''
       azure_rm_webapp:
         resource_group: myresourcegroup
         name: mydockerwebapp
-        plan:
-          name: myappplan
+        plan: myappplan
         app_settings:
           testkey: testvalue
         container_settings:
@@ -237,7 +251,9 @@ EXAMPLES = '''
           name: myappplan
         app_settings:
           testkey: testvalue
-        linux_fx_version: node|6.6
+        linux_framework:
+          name: node
+          version: 6.6
 '''
 
 RETURN = '''
@@ -297,7 +313,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from msrest.serialization import Model
+    from msrest.serialization import Model    
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
         AppServicePlan, SkuDescription, NameValuePair
@@ -305,14 +321,6 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
-app_service_plan_spec = dict(
-    resource_group=dict(type='str'),
-    name=dict(type='str', required=True),
-    is_linux=dict(type='bool', default=False),
-    number_of_workers=dict(type='int'),
-    sku=dict(type='str')
-)
 
 container_settings_spec = dict(
     name=dict(type='str', required=True),
@@ -331,6 +339,18 @@ deployment_source_spec = dict(
     branch=dict(type='str')
 )
 
+linux_framework_spec = dict(
+    name=dict(type='str', required=True),
+    version=dict(type='str', required=True)
+)
+
+windows_framework_spec = dict(
+    net_framework_version=dict(type='str'),
+    php_version=dict(type='str'),
+    python_version=dict(type='str'),
+    node_version=dict(type='str'),
+    java_version=dict(type='str')
+)
 
 def _normalize_sku(sku):
     if sku is None:
@@ -342,7 +362,6 @@ def _normalize_sku(sku):
     elif sku == 'SHARED':
         return 'D1'
     return sku
-
 
 def get_sku_name(tier):
     tier = tier.upper()
@@ -361,9 +380,8 @@ def get_sku_name(tier):
     else:
         return None
 
-
 class Actions:
-    NoAction, Create, Update, Delete = range(4)
+    NoAction, CreateOrUpdate, UpdateAppSettings, Delete = range(4)
 
 
 class AzureRMWebApps(AzureRMModuleBase):
@@ -383,23 +401,14 @@ class AzureRMWebApps(AzureRMModuleBase):
                 type='str'
             ),
             plan=dict(
+                type='raw'
+            ),
+            windows_framework=dict(
+                type='dict'
+            ),
+            linux_framework=dict(
                 type='dict',
-                options=app_service_plan_spec
-            ),
-            net_framework_version=dict(
-                type='str'
-            ),
-            java_version=dict(
-                type='str',
-            ),
-            php_version=dict(
-                type='str'
-            ),
-            python_version=dict(
-                type='str'
-            ),
-            node_version=dict(
-                type='str'
+                options=linux_framework_spec
             ),
             java_container_settings=dict(
                 type='dict',
@@ -419,20 +428,16 @@ class AzureRMWebApps(AzureRMModuleBase):
             startup_file=dict(
                 type='str'
             ),
-            linux_fx_version=dict(
-                type='str'
-            ),
             client_affinity_enabled=dict(
                 type='bool',
                 default=True
             ),
-            force_dns_registration=dict(
-                type='bool'
+            dns_registration=dict(
+                type='str',
+                default=None,
+                choices=['skip','force']
             ),
             https_only=dict(
-                type='bool'
-            ),
-            skip_dns_registration=dict(
                 type='bool'
             ),
             skip_custom_domain_verification=dict(
@@ -455,17 +460,18 @@ class AzureRMWebApps(AzureRMModuleBase):
             )
         )
 
+        mutually_exclusive = [['windows_framework', 'linux_framework']]
+
         self.resource_group = None
         self.name = None
         self.location = None
 
         # update in create_or_update as parameters
         self.client_affinity_enabled = True
-        self.force_dns_registration = None
-        self.skip_dns_registration = None
+        self.dns_registration = None
         self.skip_custom_domain_verification = None
         self.ttl_in_seconds = None
-        self.https_only = None
+        self.https_only = None        
 
         self.tags = None
 
@@ -476,6 +482,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         # app service plan
         self.plan = None
+
         # siteSourceControl
         self.deployment_source = dict()
 
@@ -494,12 +501,12 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        # set site_config value from kwargs
-        self.site_config_properties = ["net_framework_version",
+        self.windows_framework = None
+        # set site_config value from kwargs        
+        self.site_config_updatable_properties = ["net_framework_version",
                                        "java_version",
                                        "php_version",
                                        "python_version",
-                                       "linux_fx_version",
                                        "scm_type"]
 
         # updatable_properties
@@ -510,6 +517,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                                      "ttl_in_seconds"]
 
         super(AzureRMWebApps, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                             mutually_exclusive=mutually_exclusive,
                                              supports_check_mode=True,
                                              supports_tags=True)
 
@@ -520,9 +528,14 @@ class AzureRMWebApps(AzureRMModuleBase):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
-                if key in self.site_config_properties:
-
+                if key == "scm_type":
                     self.site_config[key] = kwargs[key]
+                
+                # azure sdk linux_fx_version:
+                # for docker web app, value is like DOCKER|imagename:tag
+                # for linux web app, value is like NODE|6.6
+                if key == "linux_framework":
+                    self.site_config['linux_fx_version'] = (kwargs[key]['name'] + '|' + kwargs[key]['version']).upper()
 
                 if key == "java_container_settings":
                     if 'name' in kwargs['java_container_settings']:
@@ -530,27 +543,32 @@ class AzureRMWebApps(AzureRMModuleBase):
                     if 'version' in kwargs['java_container_settings']:
                         self.site_config['java_container_version'] = kwargs['java_container_settings']['version']
 
-        # start main flow
         old_response = None
         response = None
         to_be_updated = False
 
+        if self.windows_framework is not None:
+            if self.windows_framework.get('java_version', None) is not None and len(self.windows_framework) > 1:
+                self.fail('java_version is mutually exclusive with other framework version in windows_framework.')
+            for key in list(self.windows_framework.keys()):
+                self.site_config[key] = self.windows_framework[key]
+
         if self.app_settings is None:
             self.app_settings = dict()
 
+        if self.plan:
+            self.plan = self.parse_resource_to_dict(self.plan)
+        
         if self.container_settings is not None:
-
             if hasattr(self.site_config, 'linux_fx_version'):
-                self.fail(
-                    "Cannot set linux_fx_version with container_settings at same time.")
+                self.fail("Cannot set linux_framework with container_settings at same time.")
 
             linux_fx_version = 'DOCKER|'
 
             if self.container_settings.get('registry_server_url', None) is not None:
-                self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + \
-                    self.container_settings['registry_server_url']
+                self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + self.container_settings['registry_server_url']
 
-                linux_fx_version += self.container_settings['registry_server_url']
+                linux_fx_version += self.container_settings['registry_server_url'] + '/'
 
             linux_fx_version += self.container_settings['name']
 
@@ -567,6 +585,15 @@ class AzureRMWebApps(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
+        # init site
+        self.site = Site(location=self.location, site_config=self.site_config)
+
+        if self.https_only is not None:
+            self.site.https_only = self.https_only
+
+        if self.client_affinity_enabled:
+            self.site.client_affinity_enabled = self.client_affinity_enabled
+
         # get existing web app
         old_response = self.get_webapp()
 
@@ -574,82 +601,47 @@ class AzureRMWebApps(AzureRMModuleBase):
         if not old_response:
             self.log("Web App instance doesn't exist")
 
-            if self.state == 'absent':
-                self.log("Old instance didn't exist")
-            else:
-                self.to_do = Actions.Create
+            if self.state == "present":
                 to_be_updated = True
+                self.to_do = Actions.CreateOrUpdate
 
                 # service plan is required for creation
                 if not self.plan:
-                    self.fail(
-                        "Please specify app service plan in plan parameter.")
-
-                # if not specify resource group in plan, then use same one as webapp
-                if self.plan['resource_group'] is None:
-                    self.plan['resource_group'] = self.resource_group
+                    self.fail("Please specify app service plan in plan parameter.")
 
                 # get app service plan
                 old_plan = self.get_app_service_plan()
 
                 if not old_plan:
                     # no existing service plan, create one
-                    if (self.plan['name'] is None or self.plan['is_linux'] is None or self.plan['sku'] is None):
-                        self.fail(
-                            'Please specify name, is_linux, sku in plan')
+                    if (self.plan['name'] is None or self.plan['sku'] is None):
+                        self.fail('Please specify name, is_linux, sku in plan')
 
                     if 'location' not in self.plan:
-                        plan_resource_group = self.get_resource_group(
-                            self.plan['resource_group'])
+                        plan_resource_group = self.get_resource_group(self.plan['resource_group'])
                         self.plan['location'] = plan_resource_group.location
 
                     old_plan = self.create_app_service_plan()
 
-                plan_id = old_plan['id']
+                self.site.server_farm_id = old_plan['id']
 
-                if hasattr(old_plan, "is_linux"):
-                    old_plan['reserved'] = old_plan['is_linux']
-
-                # prepare to create web app
-
-                # if linux, setup linux_fx_version
-                # linux_fx_version is mapping to sdk linux_fx_version, which is only for linux web app
-                # linux_fx_version for docker web app is like DOCKER|imagename:tag
-                # xxx_version is mapping to sdk xxx_version, which is only for windows web app
-                if old_plan['reserved']:
+                # if linux, setup startup_file
+                if hasattr(old_plan, 'is_linux'):
                     if hasattr(self, 'startup_file'):
                         self.site_config['app_command_line'] = self.startup_file
-
-                self.site = Site(server_farm_id=plan_id,
-                                 location=self.location, site_config=self.site_config)
-
-                if hasattr(self, "client_affinity_enabled"):
-                    self.site.client_affinity_enabled = self.client_affinity_enabled
 
                 # set app setting
                 if self.app_settings is not None:
                     app_settings = []
                     for key in self.app_settings.keys():
-                        app_settings.append(NameValuePair(
-                            key, self.app_settings[key]))
+                        app_settings.append(NameValuePair(key, self.app_settings[key]))
 
                     self.site_config['app_settings'] = app_settings
-
-                # create web app
-                if not self.check_mode:
-                    response = self.create_update_webapp()
-
         else:
             # existing web app, do update
             self.log("Web App instance already exists")
-            if self.state == 'absent':
-                self.to_do = Actions.Delete
 
-            elif self.state == 'present':
-                self.log(
-                    "Need to check if Web App instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
-
+            if self.state == 'present':
                 self.log('Result: {0}'.format(old_response))
 
                 update_tags, old_response['tags'] = self.update_tags(
@@ -658,56 +650,39 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if update_tags:
                     to_be_updated = True
 
-                self.site = Site(location=self.location,
-                                 site_config=self.site_config)
-
-                # if root level property changed, call create_or_update
+                # check if root level property changed
                 if self.is_updatable_property_changed(old_response):
-
                     to_be_updated = True
-                    if not self.check_mode:
-                        response = self.create_update_webapp()
+                    self.to_do = Actions.CreateOrUpdate
 
                 # check if site_config changed
                 old_config = self.get_webapp_configuration()
 
-                if (old_config):
-                    if self.is_site_config_changed(old_config):
+                if self.is_site_config_changed(old_config):
+                    to_be_updated = True
+                    self.to_do = Actions.CreateOrUpdate
+                
+                # check if linux_fx_version changed
+                if old_config.linux_fx_version != self.site_config.get('linux_fx_version', None):
+                    self.to_do = Actions.CreateOrUpdate
 
-                        to_be_updated = True
-                        if not self.check_mode:
-                            response = self.create_update_webapp()
-
-                # get existing app_settings
                 self.app_settings_strDic = self.list_app_settings()
 
                 # purge existing app_settings:
                 if self.purge_app_settings:
                     self.app_settings_strDic.properties = dict()
 
+                # check if app settings changed
+                if self.purge_app_settings or self.is_app_settings_changed():
+                    to_be_updated = True
+                    self.to_do = Actions.UpdateAppSettings
+
                     if self.app_settings is not None:
                         for key in self.app_settings.keys():
                             self.app_settings_strDic.properties[key] = self.app_settings[key]
 
-                    to_be_updated = True
 
-                    if not self.check_mode:
-                        update_as_response = self.update_app_settings()
-
-                # merge app_settings
-                elif self.is_app_settings_changed():
-                    # if app_settings changed, call create_or_update_appsetting
-                    for key in self.app_settings.keys():
-                        self.app_settings_strDic.properties[key] = self.app_settings[key]
-
-                    to_be_updated = True
-
-                    if not self.check_mode:
-                        update_as_response = self.update_app_settings()
-
-        if response:
-            self.results['ansible_facts']['azure_webapp'] = response
-        elif old_response:
+        if old_response:
             self.results['ansible_facts']['azure_webapp'] = old_response
 
         if to_be_updated:
@@ -717,8 +692,16 @@ class AzureRMWebApps(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-        if self.to_do == Actions.Delete:
-            self.log("Web App instance deleted")
+            if self.to_do == Actions.CreateOrUpdate:
+                response = self.create_update_webapp()
+                self.results['ansible_facts']['azure_webapp'] = response
+
+            if self.to_do == Actions.UpdateAppSettings:
+                response = self.update_app_settings()
+                self.results['ansible_facts']['azure_webapp']['app_settings'] = response
+
+        if self.state == 'absent' and old_response:
+            self.log("Delete Web App instance")
             self.results['changed'] = True
 
             if self.check_mode:
@@ -726,7 +709,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             self.delete_webapp()
 
-            self.log('web app deleted')
+            self.log('Web App instance deleted')
 
         return self.results
 
@@ -740,10 +723,11 @@ class AzureRMWebApps(AzureRMModuleBase):
 
     # compare xxx_version
     def is_site_config_changed(self, existing_config):
-        for fx_version in self.site_config_properties:
-            if fx_version in self.site_config:
-                if self.site_config.get(fx_version).upper() != getattr(existing_config, fx_version).upper():
-                    return True
+        for fx_version in self.site_config_updatable_properties:
+            if self.site_config.get(fx_version, None) is not None:
+                if not getattr(existing_config, fx_version) or \
+                    getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
+                        return True
 
         return False
 
@@ -783,12 +767,15 @@ class AzureRMWebApps(AzureRMModuleBase):
             "Creating / Updating the Web App instance {0}".format(self.name))
 
         try:
+            skip_dns_registration = None if not self.dns_registration else (self.dns_registration == "skip")
+            force_dns_registration = None if not self.dns_registration else (self.dns_registration == "force")
+
             response = self.web_client.web_apps.create_or_update(resource_group_name=self.resource_group,
                                                                  name=self.name,
                                                                  site_envelope=self.site,
-                                                                 skip_dns_registration=self.skip_dns_registration,
+                                                                 skip_dns_registration=skip_dns_registration,
                                                                  skip_custom_domain_verification=self.skip_custom_domain_verification,
-                                                                 force_dns_registration=self.force_dns_registration,
+                                                                 force_dns_registration=force_dns_registration,
                                                                  ttl_in_seconds=self.ttl_in_seconds)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
@@ -873,9 +860,9 @@ class AzureRMWebApps(AzureRMModuleBase):
             sku = _normalize_sku(self.plan['sku'])
 
             sku_def = SkuDescription(tier=get_sku_name(
-                sku), name=sku, capacity=(self.plan['number_of_workers'] or None))
+                sku), name=sku, capacity=(self.plan.get('number_of_workers', None)))
             plan_def = AppServicePlan(
-                location=self.plan['location'], app_service_plan_name=self.plan['name'], sku=sku_def, reserved=(self.plan['is_linux'] or None))
+                location=self.plan['location'], app_service_plan_name=self.plan['name'], sku=sku_def, reserved=(self.plan.get('is_linux', None)))
 
             poller = self.web_client.app_service_plans.create_or_update(
                 self.plan['resource_group'], self.plan['name'], plan_def)
