@@ -37,7 +37,7 @@ options:
 
     plan:
         description:
-            - app service plan. Required for creation.
+            - App service plan. Required for creation.
             - It can be name of existing app service plan in same resource group as web app.
             - It can be resource id of existing app service plan. eg., 
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>
@@ -52,48 +52,48 @@ options:
         description:
             - Describe windows web app framework. See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
             - Can set mulitple framework at same time.
-            - suboption java_version is mutually exclusive with other suboptions
+            - Suboption java_version is mutually exclusive with other suboptions
         suboptions:
             net_framework_version:
                 description:
                     - The version used to run your web app if using .NET Framework, e.g., 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
-                    - Only applys for windows web app.
-                    - mutually exclusive with java_version
+                    - Only applies for windows web app.
+                    - Mutually exclusive with java_version
 
             java_version:
                 description:
                     - The version used to run your web app if using Java, e.g., '1.7' for Java 7, '1.8' for Java 8.
-                    - Only applys for windows web app.
-                    - mutually exclusive with other suboptions
+                    - Only applies for windows web app.
+                    - Mutually exclusive with other suboptions
 
             php_version:
                 description:
                     - The version used to run your web app if using PHP, e.g., 5.5, 5.6, 7.0.
-                    - Only applys for windows web app.
-                    - mutually exclusive with java_version
+                    - Only applies for windows web app.
+                    - Mutually exclusive with java_version
 
             python_version:
                 description:
                     - The version used to run your web app if using Python, e.g., 2.7, 3.4.
-                    - Only applys for windows web app.
-                    - mutually exclusive with java_version
+                    - Only applies for windows web app.
+                    - Mutually exclusive with java_version
 
             node_version:
                 description:
                     - The version used to run your web app if using nodejs, e.g., 6.6, 6.9.
-                    - Only applys for windows web app.
-                    - mutually exclusive with java_version
+                    - Only applies for windows web app.
+                    - Mutually exclusive with java_version
 
 
     linux_framework:        
         description:
-            - The runtime stack used for your linux-based webapp, e.g., 'RUBY|2.3', 'NODE|6.9', 'PHP|5.6', 'DOTNETCORE|1.1.0', 'JAVA|8.0'.
-            - Only applys for linux web app. See https://aka.ms/linux-stacks for more info.
-            - mutually exclusive with windows_framework
+            - The runtime stack used for your linux-based webapp.
+            - Only applies for linux web app. See https://aka.ms/linux-stacks for more info.
+            - Mutually exclusive with windows_framework
         suboptions:
             name:
                 description:
-                    - Name of linux runtime framework. e.g., RUBY, NODE, PHP, DOTNETCORE, JAVA.
+                    - Name of linux runtime framework.
                 choices:
                     - ruby
                     - node
@@ -144,7 +144,7 @@ options:
     startup_file:
         description:
             - The web's startup file.
-            - This only applys for linux web app.
+            - This only applies for linux web app.
 
     client_affinity_enabled:
         description:
@@ -160,11 +160,8 @@ options:
 
     dns_registration:
         description:
-            - If true web app hostname is not registered with DNS on creation. This parameter is
-            - only used for app creation.
-        choices:
-            - skip
-            - force
+            - If true web app hostname is not registered with DNS on creation.
+        type: bool
 
     skip_custom_domain_verification:
         description:
@@ -433,9 +430,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 default=True
             ),
             dns_registration=dict(
-                type='str',
-                default=None,
-                choices=['skip','force']
+                type='bool'
             ),
             https_only=dict(
                 type='bool'
@@ -767,8 +762,8 @@ class AzureRMWebApps(AzureRMModuleBase):
             "Creating / Updating the Web App instance {0}".format(self.name))
 
         try:
-            skip_dns_registration = None if not self.dns_registration else (self.dns_registration == "skip")
-            force_dns_registration = None if not self.dns_registration else (self.dns_registration == "force")
+            skip_dns_registration = self.dns_registration
+            force_dns_registration = None if self.dns_registration is None else not self.dns_registration
 
             response = self.web_client.web_apps.create_or_update(resource_group_name=self.resource_group,
                                                                  name=self.name,
