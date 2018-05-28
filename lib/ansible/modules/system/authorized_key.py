@@ -343,7 +343,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
             )
         finally:
             if f is not None:
-              f.close()
+                f.close()
         if module.selinux_enabled():
             module.set_default_selinux_context(keysfile, False)
 
