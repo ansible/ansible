@@ -75,26 +75,26 @@ options:
         description:
             - Find the exact match
         type: bool
-        default: False
+        default: no
     remove_duplicate:
         description:
             - Remove duplicate host from host result
         type: bool
-        default: False
+        default: yes
 '''
 
 EXAMPLES = '''
 - name: Get host info
   local_action:
-    module: zabbix_host_get
+    module: zabbix_host_facts
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
     host_name: ExampleHost
     host_ip: 127.0.0.1
     timeout: 10
-    exact_match: false
-    remove_duplicate: true
+    exact_match: no
+    remove_duplicate: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -188,7 +188,7 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             timeout=dict(type='int', default=10),
             exact_match=dict(type='bool', required=False, default=False),
-            remove_duplicate=dict(type='bool', required=False, default=False)
+            remove_duplicate=dict(type='bool', required=False, default=True)
         ),
         supports_check_mode=True
     )
