@@ -6,10 +6,17 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 lookup: azure_service_principal_attribute
+
+requirements:
+  - azure-graphrbac
+
 author:
   - Yunge Zhu <yungez@microsoft.com>
+
 version_added: "2.7"
+
 short_description: Look up Azure service principal attributes.
+
 description:
   - Describes object id of your Azure service principal account.
 options:
@@ -22,13 +29,13 @@ options:
   azure_tenant:
     description: azure tenant
   azure_cloud_environment:
-    description: azure cloud environment    
+    description: azure cloud environment
 """
 
 EXAMPLES = """
 set_fact:
-  object_id: "{{ lookup('azure_service_principal_attribute', 
-                         azure_client_id=azure_client_id, 
+  object_id: "{{ lookup('azure_service_principal_attribute',
+                         azure_client_id=azure_client_id,
                          azure_secret=azure_secret,
                          azure_tenant=azure_secret) }}"
 """
@@ -44,12 +51,13 @@ import copy
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
 
 try:
     from azure.common.credentials import ServicePrincipalCredentials
     from azure.graphrbac import GraphRbacManagementClient
     from msrestazure import azure_cloud
-    from msrestazure.azure_exceptions import CloudError    
+    from msrestazure.azure_exceptions import CloudError
 except ImportError:
     raise AnsibleError(
         "The lookup azure_service_principal_attribute requires azure.graphrbac, msrest")
@@ -57,7 +65,7 @@ except ImportError:
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
-        
+
         self.set_options(direct=kwargs)
 
         credentials = {}
@@ -69,7 +77,7 @@ class LookupModule(LookupBase):
             raise AnsibleError("Must specify azure_client_id and azure_secret")
 
         _cloud_environment = azure_cloud.AZURE_PUBLIC_CLOUD
-        if self.get_option('azure_cloud_environment', None) is not None:        
+        if self.get_option('azure_cloud_environment', None) is not None:
             cloud_environment = azure_cloud.get_cloud_from_metadata_endpoint(credentials['azure_cloud_environment'])
 
         try:
@@ -81,8 +89,7 @@ class LookupModule(LookupBase):
             client = GraphRbacManagementClient(azure_credentials, credentials['azure_tenant'],
                                                base_url=_cloud_environment.endpoints.active_directory_graph_resource_id)
 
-        
-            response = list(client.service_principals.list(filter="appId eq '{}'".format(credentials['azure_client_id'])))
+            response = list(client.service_principals.list(filter="appId eq '{0}'".format(credentials['azure_client_id'])))
             sp = response[0]
 
             return sp.object_id.split(',')
