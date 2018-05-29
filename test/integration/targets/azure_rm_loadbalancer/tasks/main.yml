@@ -1,26 +1,34 @@
+- name: Prepare random number
+  set_fact:
+    pipaname: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    pipbname: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbvnname: "lbvn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
 - name: create public ip
   azure_rm_publicipaddress:
-    name: ansiblepipstandard
+    name: "{{ pipbname }}"
     sku: Standard
     allocation_method: Static
     resource_group: '{{ resource_group }}'
 
 - name: create public ip
   azure_rm_publicipaddress:
-    name: ansiblepip3
+    name: "{{ pipaname }}"
     resource_group: '{{ resource_group }}'
 
 - name: clear load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
 
 - name: create load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
-    public_ip: ansiblepip3
+    name: "{{ lbname }}"
+    public_ip: "{{ pipaname }}"
   register: output
 
 - name: assert load balancer created
@@ -30,7 +38,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
   register: output
 
@@ -41,7 +49,7 @@
 - name: delete load balancer (idempotent)
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
   register: output
 
@@ -52,9 +60,9 @@
 - name: create another load balancer with more options
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     sku: Standard
-    public_ip_address: ansiblepipstandard
+    public_ip_address: "{{ pipbname }}"
     probe_protocol: Tcp
     probe_port: 80
     probe_interval: 10
@@ -79,16 +87,16 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     frontend_ip_configurations:
       - name: frontendipconf0
-        public_ip_address: ansiblepip3
+        public_ip_address: "{{ pipaname }}"
     backend_address_pools:
       - name: backendaddrpool0
     probes:
@@ -117,27 +125,27 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: lbtestfromansiblevn
+      name: "{{ lbvnname }}"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: lbtestfromansiblesb
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
       address_prefix: "10.10.0.0/24"
-      virtual_network: lbtestfromansiblevn
+      virtual_network: "{{ lbvnname }}"
   register: subnet
 
 - name: create internal loadbalancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         private_ip_address: 10.10.0.10
@@ -171,7 +179,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
+    name: "{{ lbname }}"
     state: absent
 
 - name: cleanup public ip
@@ -180,18 +188,18 @@
     resource_group: '{{ resource_group }}'
     state: absent
   with_items:
-  - ansiblepip3
-  - ansiblepipstandard
+  - "{{ pipaname }}"
+  - "{{ pipbname }}"
 
 - name: cleanup subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: lbtestfromansiblesb
-      virtual_network: lbtestfromansiblevn
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
+      virtual_network: "{{ lbvnname }}"
       state: absent
 
 - name: cleanup virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: lbtestfromansiblevn
+      name: "{{ lbvnname }}"
       state: absent
