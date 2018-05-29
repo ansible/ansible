@@ -1,26 +1,31 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
 - name: create public ip
   azure_rm_publicipaddress:
-    name: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "pipb{{ rpfx }}"
     sku: Standard
     allocation_method: Static
     resource_group: '{{ resource_group }}'
 
 - name: create public ip
   azure_rm_publicipaddress:
-    name: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "pipa{{ rpfx }}"
     resource_group: '{{ resource_group }}'
 
 - name: clear load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
 
 - name: create load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    public_ip: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
+    public_ip: "pipa{{ rpfx }}"
   register: output
 
 - name: assert load balancer created
@@ -30,7 +35,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
   register: output
 
@@ -41,7 +46,7 @@
 - name: delete load balancer (idempotent)
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
   register: output
 
@@ -52,9 +57,9 @@
 - name: create another load balancer with more options
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     sku: Standard
-    public_ip_address: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    public_ip_address: "pipb{{ rpfx }}"
     probe_protocol: Tcp
     probe_port: 80
     probe_interval: 10
@@ -79,16 +84,16 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     frontend_ip_configurations:
       - name: frontendipconf0
-        public_ip_address: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+        public_ip_address: "pipa{{ rpfx }}"
     backend_address_pools:
       - name: backendaddrpool0
     probes:
@@ -117,27 +122,27 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
+      name: "lb{{ rpfx }}vn"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}sb"
+      name: "lb{{ rpfx }}sb"
       address_prefix: "10.10.0.0/24"
-      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
+      virtual_network: "lb{{ rpfx }}vn"
   register: subnet
 
 - name: create internal loadbalancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         private_ip_address: 10.10.0.10
@@ -171,7 +176,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "lb{{ rpfx }}"
     state: absent
 
 - name: cleanup public ip
@@ -180,18 +185,18 @@
     resource_group: '{{ resource_group }}'
     state: absent
   with_items:
-  - "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-  - "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  - "pipa{{ rpfx }}"
+  - "pipb{{ rpfx }}"
 
 - name: cleanup subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}sb"
-      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
+      name: "lb{{ rpfx }}sb"
+      virtual_network: "lb{{ rpfx }}vn"
       state: absent
 
 - name: cleanup virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
+      name: "lb{{ rpfx }}vn"
       state: absent
