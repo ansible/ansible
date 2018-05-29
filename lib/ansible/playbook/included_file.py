@@ -23,6 +23,7 @@ import os
 
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
+from ansible.playbook.role import hash_params
 from ansible.template import Templar
 
 try:
@@ -46,7 +47,10 @@ class IncludedFile:
             self._hosts.append(host)
 
     def __eq__(self, other):
-        return other._filename == self._filename and other._args == self._args and other._task._parent._uuid == self._task._parent._uuid
+        return self._identifier() == other._identifier()
+
+    def _identifier(self):
+        return (self._filename, hash_params(self._args), self._task._parent._uuid)
 
     def __repr__(self):
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
@@ -54,6 +58,7 @@ class IncludedFile:
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
+        included_files_dict = {}
         task_vars_cache = {}
 
         for res in results:
@@ -163,10 +168,10 @@ class IncludedFile:
                         inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
 
                     try:
-                        pos = included_files.index(inc_file)
-                        inc_file = included_files[pos]
-                    except ValueError:
+                        inc_file = included_files_dict[inc_file._identifier()]
+                    except KeyError:
                         included_files.append(inc_file)
+                        included_files_dict[inc_file._identifier()] = inc_file
 
                     inc_file.add_host(original_host)
 
