@@ -1,0 +1,12 @@
+---
+- debug: msg="START netconf_rpc junos/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Change configuration (JUNOS)
+  netconf_set:
+    content: |
+      <configuration>
+        <!-- need to add some netconf content here -->
+      </configuration>
+    backup: true
+
+- debug: msg="END netconf_rpc junos/basic.yaml on connection={{ ansible_connection }}"
