@@ -27,9 +27,11 @@ options:
     description:
       - The name of the imported file is specified directly without any other option.
       - Unlike M(import_tasks), most keywords, including loops and conditionals, apply to this statement.
+    version_added: '2.7'
   apply:
     description:
       - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    version_added: '2.7'
 notes:
   - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
 '''
