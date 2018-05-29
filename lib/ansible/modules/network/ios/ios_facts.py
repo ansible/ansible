@@ -232,7 +232,7 @@ class Hardware(FactsBase):
                 warnings.append('Unable to gather memory statistics')
             else:
                 processor_line = [l for l in data.splitlines()
-                                if 'Processor' in l].pop()
+                                  if 'Processor' in l].pop()
                 match = re.findall(r'\s(\d+)\s', processor_line)
                 if match:
                     self.facts['memtotal_mb'] = int(match[0]) / 1024
@@ -451,6 +451,7 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 global warnings
 warnings = list()
+
 
 def main():
     """main entry point for module execution
