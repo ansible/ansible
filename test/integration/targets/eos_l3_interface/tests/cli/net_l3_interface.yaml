@@ -12,8 +12,6 @@
   net_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -22,8 +20,6 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.108.0.1/24
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -37,8 +33,6 @@
   net_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 

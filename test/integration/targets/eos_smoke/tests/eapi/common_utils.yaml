@@ -12,6 +12,7 @@
     - no ip route 192.168.3.0/24 192.168.0.1
     authorize: yes
     provider: "{{ eapi }}"
+  become: yes
 
 - name: configure static route
   eos_static_route:
@@ -20,6 +21,7 @@
     admin_distance: 2
     authorize: yes
     provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -34,6 +36,7 @@
     admin_distance: 2
     authorize: yes
     provider: "{{ eapi }}"
+  become: yes
   register: result
   ignore_errors: yes
 
@@ -47,6 +50,7 @@
     - no ip route 192.168.3.0/24 192.168.0.1
     authorize: yes
     provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END cli/common_utils.yaml on connection={{ ansible_connection }}"
 
@@ -63,4 +67,5 @@
     rx_rate: ge(0)
     authorize: yes
     provider: "{{ eapi }}"
+  become: yes
   register: result

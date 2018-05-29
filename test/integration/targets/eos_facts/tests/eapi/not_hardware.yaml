@@ -1,15 +1,16 @@
 ---
-- debug: msg="START eapi/not_hardware_facts.yaml"
+- debug: msg="START eapi/not_hardware.yaml"
 
 - name: Make sure LLDP is running (setup)
   eos_config:
     lines: lldp run
-    authorize: yes
+  become: yes
 
 - name: test not hardware
   eos_facts:
     gather_subset:
       - "!hardware"
+  become: yes
   register: result
 
 - assert:
@@ -30,9 +31,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- name: Make sure LLDP is running (teardown)
-  eos_config:
-    lines: no lldp run
-    authorize: yes
-
-- debug: msg="END eapi/not_hardware_facts.yaml"
+- debug: msg="END eapi/not_hardware.yaml"
