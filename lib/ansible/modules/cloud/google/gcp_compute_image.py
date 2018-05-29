@@ -146,7 +146,8 @@ options:
                 required: false
     source_disk:
         description:
-            - A reference to Disk resource.
+            - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
+              property but not both to create an image.
         required: false
     source_disk_encryption_key:
         description:
@@ -364,7 +365,8 @@ RETURN = '''
                 type: str
     source_disk:
         description:
-            - A reference to Disk resource.
+            - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
+              property but not both to create an image.
         returned: success
         type: dict
     source_disk_encryption_key:

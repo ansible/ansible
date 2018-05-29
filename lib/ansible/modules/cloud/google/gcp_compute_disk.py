@@ -61,6 +61,10 @@ options:
             - An optional description of this resource. Provide this property when you create
               the resource.
         required: false
+    labels:
+        description:
+            - Labels to apply to this disk.  A list of key->value pairs.
+        required: false
     licenses:
         description:
             - Any applicable publicly visible licenses.
@@ -96,9 +100,14 @@ options:
               family. Replace the image name with family/family-name:  global/images/family/my-private-family
               .'
         required: false
+    type:
+        description:
+            - URL of the disk type resource describing which disk type to use to create the disk.
+              Provide this when creating the disk.
+        required: false
     zone:
         description:
-            - A reference to Zone resource.
+            - A reference to the zone where the disk resides.
         required: true
     disk_encryption_key:
         description:
@@ -209,6 +218,11 @@ RETURN = '''
             - Last dettach timestamp in RFC3339 text format.
         returned: success
         type: str
+    labels:
+        description:
+            - Labels to apply to this disk.  A list of key->value pairs.
+        returned: success
+        type: dict
     licenses:
         description:
             - Any applicable publicly visible licenses.
@@ -262,7 +276,7 @@ RETURN = '''
         type: list
     zone:
         description:
-            - A reference to Zone resource.
+            - A reference to the zone where the disk resides.
         returned: success
         type: str
     disk_encryption_key:
@@ -378,10 +392,12 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
+            labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),
             name=dict(type='str'),
             size_gb=dict(type='int'),
             source_image=dict(type='str'),
+            type=dict(type='str'),
             zone=dict(required=True, type='str'),
             disk_encryption_key=dict(type='dict', options=dict(
                 raw_key=dict(type='str'),
@@ -447,10 +463,12 @@ def resource_to_request(module):
         u'sourceImageEncryptionKey': DiskSourImagEncrKey(module.params.get('source_image_encryption_key', {}), module).to_request(),
         u'sourceSnapshotEncryptionKey': DiskSourSnapEncrKey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
         u'description': module.params.get('description'),
+        u'labels': module.params.get('labels'),
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
-        u'sourceImage': module.params.get('source_image')
+        u'sourceImage': module.params.get('source_image'),
+        u'type': module.params.get('type')
     }
     return_vals = {}
     for k, v in request.items():
@@ -523,6 +541,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'lastAttachTimestamp': response.get(u'lastAttachTimestamp'),
         u'lastDetachTimestamp': response.get(u'lastDetachTimestamp'),
+        u'labels': response.get(u'labels'),
         u'licenses': response.get(u'licenses'),
         u'name': response.get(u'name'),
         u'sizeGb': response.get(u'sizeGb'),

@@ -83,7 +83,12 @@ options:
                 required: false
             group:
                 description:
-                    - A reference to InstanceGroup resource.
+                    - This instance group defines the list of instances that serve traffic. Member virtual
+                      machine instances from each instance group must live in the same zone as the instance
+                      group itself.
+                    - No two backends in a backend service are allowed to use same Instance Group resource.
+                    - When the BackendService has load balancing scheme INTERNAL, the instance group must
+                      be in a zone within the same region as the BackendService.
                 required: false
             max_connections:
                 description:
@@ -215,7 +220,8 @@ options:
         choices: ['HTTP', 'HTTPS', 'TCP', 'SSL']
     region:
         description:
-            - A reference to Region resource.
+            - The region where the regional backend service resides.
+            - This field is not applicable to global backend services.
         required: false
     session_affinity:
         description:
@@ -318,7 +324,12 @@ RETURN = '''
                 type: str
             group:
                 description:
-                    - A reference to InstanceGroup resource.
+                    - This instance group defines the list of instances that serve traffic. Member virtual
+                      machine instances from each instance group must live in the same zone as the instance
+                      group itself.
+                    - No two backends in a backend service are allowed to use same Instance Group resource.
+                    - When the BackendService has load balancing scheme INTERNAL, the instance group must
+                      be in a zone within the same region as the BackendService.
                 returned: success
                 type: dict
             max_connections:
@@ -476,7 +487,8 @@ RETURN = '''
         type: str
     region:
         description:
-            - A reference to Region resource.
+            - The region where the regional backend service resides.
+            - This field is not applicable to global backend services.
         returned: success
         type: str
     session_affinity:

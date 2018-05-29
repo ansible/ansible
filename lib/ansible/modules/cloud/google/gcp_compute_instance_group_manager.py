@@ -65,7 +65,8 @@ options:
         required: false
     instance_template:
         description:
-            - A reference to InstanceTemplate resource.
+            - The instance template that is specified for this managed instance group. The group
+              uses this template to create all new instances in the managed instance group.
         required: true
     name:
         description:
@@ -100,7 +101,7 @@ options:
         required: false
     zone:
         description:
-            - A reference to Zone resource.
+            - The zone the managed instance group resides.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -255,12 +256,13 @@ RETURN = '''
         type: int
     instance_group:
         description:
-            - A reference to InstanceGroup resource.
+            - The instance group being managed.
         returned: success
         type: dict
     instance_template:
         description:
-            - A reference to InstanceTemplate resource.
+            - The instance template that is specified for this managed instance group. The group
+              uses this template to create all new instances in the managed instance group.
         returned: success
         type: dict
     name:
@@ -289,7 +291,7 @@ RETURN = '''
                 type: int
     region:
         description:
-            - A reference to Region resource.
+            - The region this managed instance group resides (for regional resources).
         returned: success
         type: str
     target_pools:
@@ -307,7 +309,7 @@ RETURN = '''
         type: int
     zone:
         description:
-            - A reference to Zone resource.
+            - The zone the managed instance group resides.
         returned: success
         type: str
 '''

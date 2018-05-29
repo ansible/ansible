@@ -82,7 +82,9 @@ options:
         choices: ['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']
     backend_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to a BackendService to receive the matched traffic.
+            - This is used for internal load balancing.
+            - "(not used for external load balancing) ."
         required: false
     ip_version:
         description:
@@ -110,7 +112,10 @@ options:
         required: true
     network:
         description:
-            - A reference to Network resource.
+            - For internal load balancing, this field identifies the network that the load balanced
+              IP should belong to for this Forwarding Rule. If this field is not specified, the
+              default network will be used.
+            - This field is not used for external load balancing.
         required: false
     port_range:
         description:
@@ -136,15 +141,25 @@ options:
         required: false
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - A reference to a subnetwork.
+            - For internal load balancing, this field identifies the subnetwork that the load
+              balanced IP should belong to for this Forwarding Rule.
+            - If the network specified is in auto subnet mode, this field is optional. However,
+              if the network is in custom subnet mode, a subnetwork must be specified.
+            - This field is not used for external load balancing.
         required: false
     target:
         description:
-            - A reference to TargetPool resource.
+            - A reference to a TargetPool resource to receive the matched traffic.
+            - For regional forwarding rules, this target must live in the same region as the forwarding
+              rule. For global forwarding rules, this target must be a global load balancing resource.
+              The forwarded traffic must be of a type appropriate to the target object.
+            - This field is not used for internal load balancing.
         required: false
     region:
         description:
-            - A reference to Region resource.
+            - A reference to the region where the regional forwarding rule resides.
+            - This field is not applicable to global forwarding rules.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -235,7 +250,9 @@ RETURN = '''
         type: str
     backend_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to a BackendService to receive the matched traffic.
+            - This is used for internal load balancing.
+            - "(not used for external load balancing) ."
         returned: success
         type: dict
     ip_version:
@@ -265,7 +282,10 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - For internal load balancing, this field identifies the network that the load balanced
+              IP should belong to for this Forwarding Rule. If this field is not specified, the
+              default network will be used.
+            - This field is not used for external load balancing.
         returned: success
         type: dict
     port_range:
@@ -294,17 +314,27 @@ RETURN = '''
         type: list
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - A reference to a subnetwork.
+            - For internal load balancing, this field identifies the subnetwork that the load
+              balanced IP should belong to for this Forwarding Rule.
+            - If the network specified is in auto subnet mode, this field is optional. However,
+              if the network is in custom subnet mode, a subnetwork must be specified.
+            - This field is not used for external load balancing.
         returned: success
         type: dict
     target:
         description:
-            - A reference to TargetPool resource.
+            - A reference to a TargetPool resource to receive the matched traffic.
+            - For regional forwarding rules, this target must live in the same region as the forwarding
+              rule. For global forwarding rules, this target must be a global load balancing resource.
+              The forwarded traffic must be of a type appropriate to the target object.
+            - This field is not used for internal load balancing.
         returned: success
         type: dict
     region:
         description:
-            - A reference to Region resource.
+            - A reference to the region where the regional forwarding rule resides.
+            - This field is not applicable to global forwarding rules.
         returned: success
         type: str
 '''

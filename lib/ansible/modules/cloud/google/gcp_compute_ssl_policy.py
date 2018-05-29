@@ -30,13 +30,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gcp_compute_instance_group
+module: gcp_compute_ssl_policy
 description:
-    - Represents an Instance Group resource. Instance groups are self-managed and can
-      contain identical or different instances. Instance groups do not use an instance
-      template. Unlike managed instance groups, you must create and add instances to an
-      instance group manually.
-short_description: Creates a GCP InstanceGroup
+    - Represents a SSL policy. SSL policies give you the ability to control the features
+      of SSL that your SSL proxy or HTTPS load balancer negotiates.
+short_description: Creates a GCP SslPolicy
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -51,78 +49,40 @@ options:
         default: 'present'
     description:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+            - An optional description of this resource.
         required: false
     name:
         description:
-            - The name of the instance group.
-            - The name must be 1-63 characters long, and comply with RFC1035.
-        required: false
-    named_ports:
-        description:
-            - Assigns a name to a port number.
-            - 'For example: {name: "http", port: 80}.'
-            - This allows the system to reference ports by the assigned name instead of a port
-              number. Named ports can also contain multiple ports.
-            - 'For example: [{name: "http", port: 80},{name: "http", port: 8080}]  Named ports
-              apply to all instances in this instance group.'
-        required: false
-        suboptions:
-            name:
-                description:
-                    - The name for this named port.
-                    - The name must be 1-63 characters long, and comply with RFC1035.
-                required: false
-            port:
-                description:
-                    - The port number, which can be a value between 1 and 65535.
-                required: false
-    network:
-        description:
-            - The network to which all instances in the instance group belong.
-        required: false
-    region:
-        description:
-            - The region where the instance group is located (for regional resources).
-        required: false
-    subnetwork:
-        description:
-            - The subnetwork to which all instances in the instance group belong.
-        required: false
-    zone:
-        description:
-            - A reference to the zone where the instance group resides.
+            - Name of the resource. Provided by the client when the resource is created. The name
+              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+              which means the first character must be a lowercase letter, and all following characters
+              must be a dash, lowercase letter, or digit, except the last character, which cannot
+              be a dash.
         required: true
+    profile:
+        description:
+            - Profile specifies the set of SSL features that can be used by the load balancer
+              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
+              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
+              in the `customFeatures` field.
+        required: false
+        choices: ['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']
+    min_tls_version:
+        description:
+            - The minimum version of SSL protocol that can be used by the clients to establish
+              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
+        required: false
+        choices: ['TLS_1_0', 'TLS_1_1', 'TLS_1_2']
+    custom_features:
+        description:
+            - A list of features enabled when the selected profile is CUSTOM. The method returns
+              the set of features that can be specified in this list. This field must be empty
+              if the profile is not CUSTOM.
+        required: false
 extends_documentation_fragment: gcp
 '''
 
-EXAMPLES = '''
-- name: create a network
-  gcp_compute_network:
-      name: 'network-instancegroup'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
-  register: network
-- name: create a instance group
-  gcp_compute_instance_group:
-      name: testObject
-      named_ports:
-        - name: ansible
-          port: 1234
-      network: "{{ network }}"
-      zone: 'us-central1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
-'''
 
 RETURN = '''
     creation_timestamp:
@@ -132,63 +92,73 @@ RETURN = '''
         type: str
     description:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+            - An optional description of this resource.
         returned: success
         type: str
     id:
         description:
-            - A unique identifier for this instance group.
+            - The unique identifier for the resource.
         returned: success
         type: int
     name:
         description:
-            - The name of the instance group.
-            - The name must be 1-63 characters long, and comply with RFC1035.
+            - Name of the resource. Provided by the client when the resource is created. The name
+              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+              which means the first character must be a lowercase letter, and all following characters
+              must be a dash, lowercase letter, or digit, except the last character, which cannot
+              be a dash.
         returned: success
         type: str
-    named_ports:
+    profile:
         description:
-            - Assigns a name to a port number.
-            - 'For example: {name: "http", port: 80}.'
-            - This allows the system to reference ports by the assigned name instead of a port
-              number. Named ports can also contain multiple ports.
-            - 'For example: [{name: "http", port: 80},{name: "http", port: 8080}]  Named ports
-              apply to all instances in this instance group.'
+            - Profile specifies the set of SSL features that can be used by the load balancer
+              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
+              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
+              in the `customFeatures` field.
+        returned: success
+        type: str
+    min_tls_version:
+        description:
+            - The minimum version of SSL protocol that can be used by the clients to establish
+              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
+        returned: success
+        type: str
+    enabled_features:
+        description:
+            - The list of features enabled in the SSL policy.
+        returned: success
+        type: list
+    custom_features:
+        description:
+            - A list of features enabled when the selected profile is CUSTOM. The method returns
+              the set of features that can be specified in this list. This field must be empty
+              if the profile is not CUSTOM.
+        returned: success
+        type: list
+    fingerprint:
+        description:
+            - Fingerprint of this resource. A hash of the contents stored in this object. This
+              field is used in optimistic locking.
+        returned: success
+        type: str
+    warnings:
+        description:
+            - If potential misconfigurations are detected for this SSL policy, this field will
+              be populated with warning messages.
         returned: success
         type: complex
         contains:
-            name:
+            code:
                 description:
-                    - The name for this named port.
-                    - The name must be 1-63 characters long, and comply with RFC1035.
+                    - A warning code, if applicable.
                 returned: success
                 type: str
-            port:
+            message:
                 description:
-                    - The port number, which can be a value between 1 and 65535.
+                    - A human-readable description of the warning code.
                 returned: success
-                type: int
-    network:
-        description:
-            - The network to which all instances in the instance group belong.
-        returned: success
-        type: dict
-    region:
-        description:
-            - The region where the instance group is located (for regional resources).
-        returned: success
-        type: str
-    subnetwork:
-        description:
-            - The subnetwork to which all instances in the instance group belong.
-        returned: success
-        type: dict
-    zone:
-        description:
-            - A reference to the zone where the instance group resides.
-        returned: success
-        type: str
+                type: str
 '''
 
 ################################################################################
@@ -197,7 +167,6 @@ RETURN = '''
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
-import re
 import time
 
 ################################################################################
@@ -212,20 +181,15 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            name=dict(type='str'),
-            named_ports=dict(type='list', elements='dict', options=dict(
-                name=dict(type='str'),
-                port=dict(type='int')
-            )),
-            network=dict(type='dict'),
-            region=dict(type='str'),
-            subnetwork=dict(type='dict'),
-            zone=dict(required=True, type='str')
+            name=dict(required=True, type='str'),
+            profile=dict(type='str', choices=['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']),
+            min_tls_version=dict(type='str', choices=['TLS_1_0', 'TLS_1_1', 'TLS_1_2']),
+            custom_features=dict(type='list', elements='str')
         )
     )
 
     state = module.params['state']
-    kind = 'compute#instanceGroup'
+    kind = 'compute#sslPolicy'
 
     fetch = fetch_resource(module, self_link(module), kind)
     changed = False
@@ -257,7 +221,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    module.fail_json(msg="InstanceGroup cannot be edited")
+    auth = GcpSession(module, 'compute')
+    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
 def delete(module, link, kind, fetch):
@@ -267,13 +232,12 @@ def delete(module, link, kind, fetch):
 
 def resource_to_request(module):
     request = {
-        u'kind': 'compute#instanceGroup',
+        u'kind': 'compute#sslPolicy',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'namedPorts': InstaGroupNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
-        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'region': region_selflink(module.params.get('region'), module.params),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'profile': module.params.get('profile'),
+        u'minTlsVersion': module.params.get('min_tls_version'),
+        u'customFeatures': module.params.get('custom_features')
     }
     return_vals = {}
     for k, v in request.items():
@@ -289,11 +253,11 @@ def fetch_resource(module, link, kind):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups/{name}".format(**module.params)
+    return "https://www.googleapis.com/compute/v1/projects/{project}/global/sslPolicies/{name}".format(**module.params)
 
 
 def collection(module):
-    return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups".format(**module.params)
+    return "https://www.googleapis.com/compute/v1/projects/{project}/global/sslPolicies".format(**module.params)
 
 
 def return_if_object(module, response, kind):
@@ -342,29 +306,22 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'description': response.get(u'description'),
+        u'description': module.params.get('description'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
-        u'namedPorts': InstaGroupNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
-        u'network': response.get(u'network'),
-        u'region': response.get(u'region'),
-        u'subnetwork': response.get(u'subnetwork')
+        u'name': module.params.get('name'),
+        u'profile': response.get(u'profile'),
+        u'minTlsVersion': response.get(u'minTlsVersion'),
+        u'enabledFeatures': response.get(u'enabledFeatures'),
+        u'customFeatures': response.get(u'customFeatures'),
+        u'fingerprint': response.get(u'fingerprint'),
+        u'warnings': SslPolicyWarningArray(response.get(u'warnings', []), module).from_response()
     }
-
-
-def region_selflink(name, params):
-    if name is None:
-        return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
-    if not re.match(url, name):
-        name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
-    return name
 
 
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/operations/{op_id}"
+    url = "https://www.googleapis.com/compute/v1/projects/{project}/global/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
@@ -376,7 +333,7 @@ def wait_for_operation(module, response):
         return None
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceGroup')
+    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#sslPolicy')
 
 
 def wait_for_completion(status, op_result, module):
@@ -398,7 +355,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InstaGroupNamedPortsArray(object):
+class SslPolicyWarningArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -420,14 +377,14 @@ class InstaGroupNamedPortsArray(object):
 
     def _request_for_item(self, item):
         return remove_nones_from_dict({
-            u'name': item.get('name'),
-            u'port': item.get('port')
+            u'code': item.get('code'),
+            u'message': item.get('message')
         })
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({
-            u'name': item.get(u'name'),
-            u'port': item.get(u'port')
+            u'code': item.get(u'code'),
+            u'message': item.get(u'message')
         })
 
 if __name__ == '__main__':

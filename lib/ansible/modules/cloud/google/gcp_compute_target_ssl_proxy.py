@@ -68,7 +68,7 @@ options:
         choices: ['NONE', 'PROXY_V1']
     service:
         description:
-            - A reference to BackendService resource.
+            - A reference to the BackendService resource.
         required: true
     ssl_certificates:
         description:
@@ -207,7 +207,7 @@ RETURN = '''
         type: str
     service:
         description:
-            - A reference to BackendService resource.
+            - A reference to the BackendService resource.
         returned: success
         type: dict
     ssl_certificates:

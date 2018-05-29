@@ -90,7 +90,8 @@ options:
         required: false
     network:
         description:
-            - A reference to Network resource.
+            - The network this subnet belongs to.
+            - Only networks that are in the distributed mode can have subnetworks.
         required: false
     private_ip_google_access:
         description:
@@ -100,7 +101,8 @@ options:
         type: bool
     region:
         description:
-            - A reference to Region resource.
+            - URL of the region where the regional address resides.
+            - This field is not applicable to global addresses.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -174,7 +176,8 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - The network this subnet belongs to.
+            - Only networks that are in the distributed mode can have subnetworks.
         returned: success
         type: dict
     private_ip_google_access:
@@ -185,7 +188,8 @@ RETURN = '''
         type: bool
     region:
         description:
-            - A reference to Region resource.
+            - URL of the region where the regional address resides.
+            - This field is not applicable to global addresses.
         returned: success
         type: str
 '''

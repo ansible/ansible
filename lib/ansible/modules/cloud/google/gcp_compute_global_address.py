@@ -122,7 +122,7 @@ RETURN = '''
         type: str
     region:
         description:
-            - A reference to Region resource.
+            - A reference to the region where the regional address resides.
         returned: success
         type: str
 '''

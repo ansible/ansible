@@ -62,7 +62,7 @@ options:
         required: true
     url_map:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -159,7 +159,7 @@ RETURN = '''
         type: str
     url_map:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         returned: success
         type: dict
 '''

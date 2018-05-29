@@ -49,7 +49,7 @@ options:
         default: 'present'
     default_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
         required: true
     description:
         description:
@@ -93,7 +93,8 @@ options:
         suboptions:
             default_service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
                 required: false
             description:
                 description:
@@ -116,7 +117,7 @@ options:
                         required: false
                     service:
                         description:
-                            - A reference to BackendService resource.
+                            - A reference to the BackendService resource if this rule is matched.
                         required: false
     tests:
         description:
@@ -138,7 +139,7 @@ options:
                 required: false
             service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to expected BackendService resource the given URL should be mapped to.
                 required: false
 extends_documentation_fragment: gcp
 '''
@@ -204,7 +205,7 @@ RETURN = '''
         type: str
     default_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
         returned: success
         type: dict
     description:
@@ -261,7 +262,8 @@ RETURN = '''
         contains:
             default_service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
                 returned: success
                 type: dict
             description:
@@ -289,7 +291,7 @@ RETURN = '''
                         type: list
                     service:
                         description:
-                            - A reference to BackendService resource.
+                            - A reference to the BackendService resource if this rule is matched.
                         returned: success
                         type: dict
     tests:
@@ -316,7 +318,7 @@ RETURN = '''
                 type: str
             service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to expected BackendService resource the given URL should be mapped to.
                 returned: success
                 type: dict
 '''

@@ -77,7 +77,7 @@ options:
         required: false
     network:
         description:
-            - A reference to Network resource.
+            - The network that this route applies to.
         required: false
     priority:
         description:
@@ -166,7 +166,7 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - The network that this route applies to.
         returned: success
         type: dict
     priority:

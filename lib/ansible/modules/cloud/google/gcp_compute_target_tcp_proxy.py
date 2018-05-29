@@ -59,7 +59,7 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     proxy_header:
         description:
             - Specifies the type of proxy header to append before sending data to the backend,
@@ -68,8 +68,8 @@ options:
         choices: ['NONE', 'PROXY_V1']
     service:
         description:
-            - A reference to BackendService resource.
-        required: false
+            - A reference to the BackendService resource.
+        required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -165,7 +165,7 @@ RETURN = '''
         type: str
     service:
         description:
-            - A reference to BackendService resource.
+            - A reference to the BackendService resource.
         returned: success
         type: dict
 '''
@@ -190,9 +190,9 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
-            service=dict(type='dict')
+            service=dict(required=True, type='dict')
         )
     )
 
@@ -205,10 +205,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                fetch = update(module, self_link(module), kind, fetch)
                 changed = True
         else:
-            delete(module, self_link(module), kind)
+            delete(module, self_link(module), kind, fetch)
             fetch = {}
             changed = True
     else:
@@ -228,12 +228,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind):
+def delete(module, link, kind, fetch):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -313,9 +313,9 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'description': response.get(u'description'),
+        u'description': module.params.get('description'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
         u'proxyHeader': response.get(u'proxyHeader'),
         u'service': response.get(u'service')
     }
