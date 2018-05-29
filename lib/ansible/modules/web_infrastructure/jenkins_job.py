@@ -36,6 +36,7 @@ options:
       - Whether the job should be enabled or disabled.
       - Mutually exclusive with C(config).
       - Considered if C(state=present).
+    type: bool
     required: false
   name:
     description:
