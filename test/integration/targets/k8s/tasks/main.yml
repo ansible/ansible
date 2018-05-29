@@ -133,8 +133,6 @@
   k8s:
     name: testing
     kind: project
-    description: My testing project
-    display_name: Testing Project
     api_version: v1
   register: output
 
