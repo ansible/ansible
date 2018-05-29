@@ -55,6 +55,8 @@ class Connection(ConnectionBase):
 
     transport = 'local'
     has_pipelining = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
