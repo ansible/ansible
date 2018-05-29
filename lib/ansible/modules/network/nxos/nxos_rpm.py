@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_rpm
 extends_documentation_fragment: nxos
-version_added: "2.6"
+version_added: "2.7"
 short_description: Install rpms on Cisco NX-OS devices.
 description:
     - Install software maintenance upgrade (smu) RPMS and
