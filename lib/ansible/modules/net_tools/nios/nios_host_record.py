@@ -26,7 +26,7 @@ extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the fully qualified hostname to add or remove from
+      - Specifies the fully qualified hostname to add or remove or update from
         the system
     required: true
   view:
@@ -34,19 +34,6 @@ options:
       - Sets the DNS view to associate this host record with.  The DNS
         view must already be configured on the system
     required: true
-    default: default
-    aliases:
-      - dns_view
-  old_name:
-    description:
-      - Specifies the fully qualified hostname to update or modify from
-        the system
-    required: false
-  view:
-    description:
-      - Sets the DNS view to associate this host record with. The DNS
-        view must already be configured on the system
-    required: false
     default: default
     aliases:
       - dns_view
@@ -139,8 +126,7 @@ EXAMPLES = '''
   connection: local
 - name: update an ipv4 host record
   nios_host_record:
-    name: host-new.ansible.com
-    old_name: host.ansible.com
+    name: {new_name: host-new.ansible.com, old_name: host.ansible.com}
     ipv4:
       - address: 192.168.10.1
     state: present
@@ -184,6 +170,14 @@ def ipv4addrs(module):
 def ipv6addrs(module):
     return ipaddr(module, 'ipv6addrs', filtered_keys=['address'])
 
+def check_name_type(value):
+  if isinstance(value, str):
+       name = value
+       return name
+  elif isinstance(value, dict):
+      new_name = value.get('new_name')
+      old_name = value.get('old_name')
+      return {'new_name': new_name, 'old_name': old_name}
 
 def main():
     ''' Main entry point for module execution
@@ -198,8 +192,7 @@ def main():
     )
 
     ib_spec = dict(
-        name=dict(required=True, ib_req=True),
-        old_name=dict(required=False, ib_req=True),
+        name=dict(required=True, type=check_name_type, ib_req=True),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
