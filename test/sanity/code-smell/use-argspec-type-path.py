@@ -20,6 +20,7 @@ def main():
         'lib/ansible/modules/web_infrastructure/ansible_tower/tower_host.py',
         'lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py',
         'lib/ansible/modules/web_infrastructure/jenkins_plugin.py',
+        'lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py',
         # fix uses of expanduser in the following modules and remove them from the following list
         'lib/ansible/modules/cloud/rackspace/rax.py',
         'lib/ansible/modules/cloud/rackspace/rax_scaling_group.py',
