@@ -1123,6 +1123,7 @@ lib/ansible/modules/source_control/gitlab_project.py E324
 lib/ansible/modules/source_control/gitlab_project.py E326
 lib/ansible/modules/source_control/gitlab_user.py E326
 lib/ansible/modules/source_control/subversion.py E322
+lib/ansible/modules/storage/glusterfs/gluster_volume.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
 lib/ansible/modules/storage/infinidat/infini_export.py E324
 lib/ansible/modules/storage/infinidat/infini_export_client.py E323
@@ -1196,7 +1197,6 @@ lib/ansible/modules/system/firewalld.py E322
 lib/ansible/modules/system/firewalld.py E324
 lib/ansible/modules/system/firewalld.py E325
 lib/ansible/modules/system/firewalld.py E326
-lib/ansible/modules/system/gluster_volume.py E322
 lib/ansible/modules/system/group.py E325
 lib/ansible/modules/system/iptables.py E325
 lib/ansible/modules/system/iptables.py E326
