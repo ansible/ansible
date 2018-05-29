@@ -161,7 +161,7 @@ PARAM_TO_DEFAULT_KEYMAP = {
 
 def execute_show_command(command, module):
     device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
+    network_api = device_info.get('network_api')
 
     if network_api == 'cliconf':
         command += ' | json'
@@ -429,7 +429,7 @@ def main():
             module.fail_json(msg='Inavlid auth_string, only 0 or 7 allowed')
 
     device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
+    network_api = device_info.get('network_api')
 
     intf_type = get_interface_type(interface)
     if (intf_type != 'ethernet' and network_api == 'cliconf'):

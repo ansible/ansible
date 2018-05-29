@@ -89,9 +89,13 @@ class HttpApi:
             out = to_text(exc)
 
         out = to_list(out)
+        if not out[0]:
+            return out
+
         for index, response in enumerate(out):
             if response[0] == '{':
                 out[index] = json.loads(response)
+
         return out
 
 
