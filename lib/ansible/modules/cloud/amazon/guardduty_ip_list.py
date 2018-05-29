@@ -18,7 +18,7 @@ short_description: Manage Trusted/Threat IP list for AWS GuardDuty.
 description:
     - Manage a Trusted/Threat IP list assigned to a AWS GuardDuty detector.
 author: "Aaron Smith (@slapula)"
-version_added: "2.6"
+version_added: "2.7"
 requirements: [ 'botocore', 'boto3' ]
 options:
   name:
