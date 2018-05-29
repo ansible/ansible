@@ -46,8 +46,6 @@ _raw:
     Returns object id of service principal.
 """
 
-import copy
-
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
