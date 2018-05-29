@@ -123,15 +123,15 @@
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"vn
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"sb
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}sb"
       address_prefix: "10.10.0.0/24"
-      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"vn
+      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
   register: subnet
 
 - name: create internal loadbalancer
@@ -186,12 +186,12 @@
 - name: cleanup subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"sb
-      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"vn
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}sb"
+      virtual_network: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
       state: absent
 
 - name: cleanup virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}"vn
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}vn"
       state: absent
