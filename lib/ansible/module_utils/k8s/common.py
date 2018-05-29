@@ -122,13 +122,14 @@ class K8sAnsibleMixin(object):
         self._argspec_cache = argument_spec
         return self._argspec_cache
 
-    def get_api_client(self, **auth):
+    def get_api_client(self, **auth_params):
         auth_args = AUTH_ARG_SPEC.keys()
 
-        auth = auth or getattr(self, 'params', {})
+        auth_params = auth_params or getattr(self, 'params', {})
+        auth = copy.deepcopy(auth_params)
 
         configuration = kubernetes.client.Configuration()
-        for key, value in iteritems(auth):
+        for key, value in iteritems(auth_params):
             if key in auth_args and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
@@ -138,6 +139,7 @@ class K8sAnsibleMixin(object):
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
                     setattr(configuration, key, env_value)
+                    auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
 
