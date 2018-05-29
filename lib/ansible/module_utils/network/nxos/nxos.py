@@ -479,3 +479,24 @@ def normalize_interface(name):
         proper_interface = name
 
     return proper_interface
+
+
+def get_interface_type(interface):
+    """Gets the type of interface
+    """
+    if interface.upper().startswith('ET'):
+        return 'ethernet'
+    elif interface.upper().startswith('VL'):
+        return 'svi'
+    elif interface.upper().startswith('LO'):
+        return 'loopback'
+    elif interface.upper().startswith('MG'):
+        return 'management'
+    elif interface.upper().startswith('MA'):
+        return 'management'
+    elif interface.upper().startswith('PO'):
+        return 'portchannel'
+    elif interface.upper().startswith('NV'):
+        return 'nve'
+    else:
+        return 'unknown'
