@@ -1980,7 +1980,7 @@ def main():
                         initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
-            else:   
+            else:
                 vms_module._attach_cd(vm)
             if state == 'next_run':
                 # Apply next run configuration, if needed:
