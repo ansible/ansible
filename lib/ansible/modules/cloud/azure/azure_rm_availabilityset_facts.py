@@ -32,7 +32,6 @@ options:
     tags:
         description:
             - List of tags to be matched
-        version_added: 2.6
 
 extends_documentation_fragment:
     - azure

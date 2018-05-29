@@ -54,7 +54,6 @@ options:
         choices:
             - absent
             - present
-        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure
