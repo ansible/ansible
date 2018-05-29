@@ -1203,7 +1203,6 @@ lib/ansible/modules/system/iptables.py E326
 lib/ansible/modules/system/java_cert.py E324
 lib/ansible/modules/system/java_cert.py E325
 lib/ansible/modules/system/known_hosts.py E324
-lib/ansible/modules/system/lvol.py E324
 lib/ansible/modules/system/make.py E317
 lib/ansible/modules/system/mount.py E324
 lib/ansible/modules/system/open_iscsi.py E322

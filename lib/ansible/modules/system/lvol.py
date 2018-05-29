@@ -16,6 +16,7 @@ DOCUMENTATION = '''
 author:
     - Jeroen Hoekx (@jhoekx)
     - Alexander Bulimov (@abulimov)
+    - Marco Rodrigues (@gothicx)
 module: lvol
 short_description: Configure LVM logical volumes
 description:
@@ -28,6 +29,12 @@ options:
   lv:
     description:
     - The name of the logical volume.
+  min_size:
+    description:
+    - The minimum size to extend the logical volume up to. The size must be in
+      megabytes (mM) or gigabytes (gG); Float values must begin with a digit.
+      If the actual lv size is greater than the minimum size it does nothing.
+    version_added: "2.6"
   size:
     description:
     - The size of the logical volume, according to lvcreate(8) --size, by
@@ -80,7 +87,7 @@ options:
     description:
     - Resize the underlying filesystem together with the logical volume.
     type: bool
-    default: 'yes'
+    default: 'false'
     version_added: "2.5"
 notes:
   - You must specify lv (when managing the state of logical volumes) or thinpool (when managing a thin provisioned volume).
@@ -151,6 +158,13 @@ EXAMPLES = '''
     lv: test
     size: 80%VG
     force: yes
+
+- name: Extend the logical volume up to a minimal size
+  lvol:
+    vg: firefly
+    lv: test
+    min_size: 3g
+    resizefs: true
 
 - name: Reduce the logical volume to 512m
   lvol:
@@ -261,6 +275,7 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             lv=dict(type='str'),
+            min_size=dict(type='str'),
             size=dict(type='str'),
             opts=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -290,6 +305,7 @@ def main():
 
     vg = module.params['vg']
     lv = module.params['lv']
+    min_size = module.params['min_size']
     size = module.params['size']
     opts = module.params['opts']
     state = module.params['state']
@@ -316,6 +332,18 @@ def main():
         test_opt = ' --test'
     else:
         test_opt = ''
+
+    if min_size:
+        if min_size[-1].lower() in 'mg':
+            min_size_unit = min_size[-1].lower()
+            min_size = min_size[0:-1]
+
+        try:
+            float(min_size)
+            if not min_size[0].isdigit():
+                raise ValueError()
+        except ValueError:
+            module.fail_json(msg="Bad min_size specification of '%s'" % min_size)
 
     if size:
         # LVCREATE(8) -l --extents option with percentage
@@ -457,9 +485,6 @@ def main():
             else:
                 module.fail_json(msg="Failed to remove logical volume %s" % (lv), rc=rc, err=err)
 
-        elif not size:
-            pass
-
         elif size_opt == 'l':
             # Resize LV based on % value
             tool = None
@@ -507,9 +532,17 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if int(size) > this_lv['size']:
-                tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and int(size) < this_lv['size']:
+            if size is not None:
+                if int(size) > this_lv['size']:
+                    tool = module.get_bin_path("lvextend", required=True)
+            elif min_size is not None:
+                if min_size_unit.lower() in 'm':
+                    if int(min_size) > this_lv['size']:
+                        tool = module.get_bin_path("lvextend", required=True)
+                elif min_size_unit.lower() in 'g':
+                    if int(min_size) > (this_lv['size'] / 1024):
+                        tool = module.get_bin_path("lvextend", required=True)
+            elif not min_size and shrink and int(size) < this_lv['size']:
                 if int(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
@@ -521,6 +554,11 @@ def main():
             if tool:
                 if resizefs:
                     tool = '%s %s' % (tool, '--resizefs')
+
+                if min_size:
+                    size = min_size
+                    size_unit = min_size_unit
+
                 cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:
