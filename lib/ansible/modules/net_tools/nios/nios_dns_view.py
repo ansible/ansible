@@ -26,16 +26,10 @@ extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the name of the DNS view to add and/or remove from the
-        system configuration based on the setting of the C(state) argument.
+      - Specifies the name of the DNS view to add and/or remove and/or update
+        from the system configuration based on the setting of the C(state)
+        argument.
     required: true
-    aliases:
-      - view
-  old_name:
-    description:
-      - Specifies the old name of DNS view to update/or modify from the
-        system configuration based on the setting of the C(setting) argument.
-    required: false
     aliases:
       - view
   network_view:
@@ -101,9 +95,8 @@ EXAMPLES = '''
   connection: local
 - name: update the dns view instance
   nios_dns_view:
-    name: ansible-dns-new
-    old_name: ansible-dns
-    state: absent
+    name: {new_name: ansible-dns-new, old_name: ansible-dns}
+    state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
@@ -118,12 +111,20 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.net_tools.nios.api import NIOS_DNS_VIEW
 
 
+def check_name_type(value):
+  if isinstance(value, str):
+       name = value
+       return name
+  elif isinstance(value, dict):
+      new_name = value.get('new_name')
+      old_name = value.get('old_name')
+      return {'new_name': new_name, 'old_name': old_name}
+
 def main():
     ''' Main entry point for module execution
     '''
     ib_spec = dict(
-        name=dict(required=True, aliases=['view'], ib_req=True),
-        old_name=dict(required=False, aliases=['view'], ib_req=True),
+        name=dict(required=True, aliases=['view'], type=check_name_type, ib_req=True),
         network_view=dict(default='default', ib_req=True),
 
         extattrs=dict(type='dict'),
