@@ -101,13 +101,13 @@ from ansible.module_utils.net_tools.nios.api import NIOS_NETWORK_VIEW
 
 
 def check_name_type(value):
-  if isinstance(value, str):
-       name = value
-       return name
-  elif isinstance(value, dict):
-      new_name = value.get('new_name')
-      old_name = value.get('old_name')
-      return {'new_name': new_name, 'old_name': old_name}
+    if isinstance(value, str):
+        name = value
+        return name
+    elif isinstance(value, dict):
+        new_name = value.get('new_name')
+        old_name = value.get('old_name')
+        return {'new_name': new_name, 'old_name': old_name}
 
 def main():
     ''' Main entry point for module execution
