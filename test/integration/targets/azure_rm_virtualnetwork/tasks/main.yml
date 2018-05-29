@@ -1,12 +1,12 @@
 - name: Delete virtual network, if it exists
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     resource_group: "{{ resource_group }}"
     state: absent
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     address_prefixes_cidr:
       - 10.1.0.0/16
       - 172.100.0.0/16
@@ -17,7 +17,7 @@
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     address_prefixes_cidr:
       - 10.1.0.0/16
       - 172.100.0.0/16
@@ -40,7 +40,7 @@
 - name: Gather facts by name, tags
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     tags:
       - testing
 
@@ -66,7 +66,7 @@
 
 - name: Should be idempotent
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     address_prefixes_cidr:
       - 10.1.0.0/16
       - 172.100.0.0/16
@@ -84,7 +84,7 @@
 
 - name: Update tags
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     tags:
       testing: 'no'
       delete: never
@@ -97,7 +97,7 @@
 
 - name: Purge tags
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     tags:
       testing: 'always'
     resource_group: "{{ resource_group }}"
@@ -110,7 +110,7 @@
 
 - name: Should require address_prefixes_cidr when purge_address_prefixes
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     purge_address_prefixes: true
     resource_group: "{{ resource_group }}"
   register: output
@@ -121,7 +121,7 @@
 
 - name: Purge address prefixes
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     address_prefixes_cidr: 10.1.0.0/16
     purge_address_prefixes: true
     resource_group: "{{ resource_group }}"
@@ -136,7 +136,7 @@
 
 - name: Purge DNS servers
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     purge_dns_servers: true
     resource_group: "{{ resource_group }}"
   register: output
@@ -147,13 +147,13 @@
 - name: Gather facts
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
 
 - assert:
     that: "azure_virtualnetworks | length == 1"
 
 - name: Delete virtual network
   azure_rm_virtualnetwork:
-    name: my_test_network
+    name: "net{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     resource_group: "{{ resource_group }}"
     state: absent
