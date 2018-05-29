@@ -6,9 +6,8 @@
     lines:
       - no ip name-server
       - vrf definition ansible
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure name_servers
   eos_system:
@@ -16,8 +15,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -34,8 +32,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -48,7 +45,7 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ eapi }}"
+#  become: yes
 #  register: result
 
 #- assert:
@@ -64,9 +61,9 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ eapi }}"
+#  become: yes
 #  register: result
-
+#
 #- assert:
 #    that:
 #      - result.changed == false
@@ -76,8 +73,7 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -91,8 +87,7 @@
     lines:
       - no ip domain lookup source-interface
       - no vrf definition ansible
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/set_name_servers.yaml"

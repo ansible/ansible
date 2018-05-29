@@ -7,18 +7,13 @@
 - name: Remove previous motd banner (setup)
   eos_config:
     lines: no banner motd
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
-
 
 - name: create motd
   net_banner:
     banner: motd
     text: this is my motd banner configure by net_banner
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -32,8 +27,6 @@
 - name: Remove previous motd banner (teardown)
   eos_config:
     lines: no banner motd
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END eos cli/net_banner.yaml on connection={{ ansible_connection }}"
