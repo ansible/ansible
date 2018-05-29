@@ -119,32 +119,8 @@ commands:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
-
-
-def get_interface_type(interface):
-    """Gets the type of interface
-    Args:
-        interface (str): full name of interface, i.e. Ethernet1/1, loopback10,
-            port-channel20, vlan20
-    Returns:
-        type of interface: ethernet, svi, loopback, management, portchannel,
-         or unknown
-    """
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def get_interface_mode(interface, module):
