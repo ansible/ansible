@@ -26,16 +26,9 @@ extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the name of the network view to either add or remove
-        from the configuration.
+      - Specifies the name of the network view to either add or remove or
+        update from the configuration.
     required: true
-    aliases:
-      - network_view
-  old_name:
-    description:
-      - Specifies the name of the network view to either update or modify
-        from the configuration.
-    required: false
     aliases:
       - network_view
   extattrs:
@@ -91,8 +84,7 @@ EXAMPLES = '''
   connection: local
 - name: update a existing network view
   nios_network_view:
-    name: ansible-new
-    old_name: ansible
+    name: {new_name: ansible-new, old_name: ansible}
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -108,12 +100,20 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.net_tools.nios.api import NIOS_NETWORK_VIEW
 
 
+def check_name_type(value):
+  if isinstance(value, str):
+       name = value
+       return name
+  elif isinstance(value, dict):
+      new_name = value.get('new_name')
+      old_name = value.get('old_name')
+      return {'new_name': new_name, 'old_name': old_name}
+
 def main():
     ''' Main entry point for module execution
     '''
     ib_spec = dict(
-        name=dict(required=True, aliases=['network_view'], ib_req=True),
-        old_name=dict(required=False, aliases=['network_view'], ib_req=True),
+        name=dict(required=True, aliases=['network_view'], type=check_name_type, ib_req=True),
         extattrs=dict(type='dict'),
         comment=dict(),
     )
