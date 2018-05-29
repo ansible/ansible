@@ -632,7 +632,7 @@ files:
   $modules/system/firewalld.py: maxamillion
   $modules/system/gconftool2.py: Akasurde kevensen
   $modules/system/getent.py: bcoca
-  $modules/system/gluster_volume.py: rosmo
+  $modules/storage/gluster/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
   $modules/system/interfaces_file.py: hryamzik obourdon
   $modules/system/iptables.py: LinusU
