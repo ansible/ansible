@@ -51,35 +51,53 @@ class Group:
     def __setstate__(self, data):
         return self.deserialize(data)
 
-    def serialize(self):
-        parent_groups = []
-        for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
-
-        self._hosts = None
-
-        result = dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            parent_groups=parent_groups,
-            depth=self.depth,
-            hosts=self.hosts,
+    @staticmethod
+    def _serialize_local(group):
+        return dict(
+            name=group.name,
+            vars=group.vars.copy(),
+            depth=group.depth,
+            hosts=group.hosts,
         )
 
-        return result
+    def serialize(self):
+        # Serialize all ancestors and self
+        cached_groups = {self.name: self}
+        serializations = {self.name: Group._serialize_local(self)}
+        for ancestor in self.get_ancestors():
+            cached_groups[ancestor.name] = ancestor
+            serializations[ancestor.name] = Group._serialize_local(ancestor)
 
-    def deserialize(self, data):
+        # Within serialization, add links to parents
+        for group in cached_groups.values():
+            group._hosts = None
+            parent_groups = []
+            for parent in group.parent_groups:
+                if parent == group:
+                    continue
+                parent_groups.append(serializations[parent.name])
+            serializations[group.name]['parent_groups'] = parent_groups
+
+        return serializations[self.name]
+
+    def deserialize(self, data, cached_groups=None):
+        if cached_groups is None:
+            cached_groups = {}
         self.__init__()
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
         self.hosts = data.get('hosts', [])
         self._hosts = None
+        cached_groups[self.name] = self
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
-            g = Group()
-            g.deserialize(parent_data)
+            if 'name' in parent_data and parent_data['name'] in cached_groups:
+                g = cached_groups[parent_data['name']]
+            else:
+                g = Group()
+                g.deserialize(parent_data, cached_groups=cached_groups)
             self.parent_groups.append(g)
 
     def _walk_relationship(self, rel):

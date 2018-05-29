@@ -112,6 +112,24 @@ class TestGroup(unittest.TestCase):
             ])
         )
 
+    def test_shared_parentage_deserialization(self):
+        apex = Group('apex')
+        mid1 = Group('mid1')
+        mid2 = Group('mid2')
+        apex.add_child_group(mid1)
+        apex.add_child_group(mid2)
+        bottom = Group('bottom')
+        mid1.add_child_group(bottom)
+        mid2.add_child_group(bottom)
+        serialized_bottom = bottom.serialize()
+
+        re_loaded_bottom = Group()
+        re_loaded_bottom.deserialize(serialized_bottom)
+        assert (
+            re_loaded_bottom.parent_groups[0].parent_groups[0] is
+            re_loaded_bottom.parent_groups[1].parent_groups[0]
+        )
+
     def test_ancestors_recursive_loop_safe(self):
         '''
         The get_ancestors method may be referenced before circular parenting
