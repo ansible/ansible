@@ -54,7 +54,6 @@
 
 - debug: msg="END cli/common_utils.yaml on connection={{ ansible_connection }}"
 
-
 # hit conditional()
 - name: Set test interface
   set_fact:

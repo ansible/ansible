@@ -8,11 +8,13 @@
     lines: hostname {{ inventory_hostname_short }}
     match: none
     provider: "{{ eapi }}"
+  become: yes
 
 - name: get current running-config
   eos_command:
     commands: show running-config
     provider: "{{ eapi }}"
+  become: yes
   register: config
 
 - name: configure hostname
@@ -20,6 +22,7 @@
     lines: hostname foo
     config: "{{ config.stdout[0] }}"
     provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -31,6 +34,7 @@
   eos_command:
     commands: show running-config
     provider: "{{ eapi }}"
+  become: yes
   register: config
 
 - name: teardown
@@ -38,6 +42,7 @@
     lines: hostname {{ inventory_hostname_short }}
     match: none
     provider: "{{ eapi }}"
+  become: yes
 
 # hit block and diffs
 - block:
@@ -52,6 +57,7 @@
         after: exit
         match: strict
         provider: "{{ eapi }}"
+      become: yes
 
     - name: configure sub level command using block replace
       eos_config:
@@ -65,6 +71,7 @@
         after: exit
         provider: "{{ eapi }}"
         match: line
+      become: yes
       register: result
 
     - assert:
@@ -88,6 +95,7 @@
         after: exit
         provider: "{{ eapi }}"
         match: exact
+      become: yes
       register: result
 
   always:
@@ -96,5 +104,6 @@
         lines: no ip access-list test
         match: none
         provider: "{{ eapi }}"
+      become: yes
 
 - debug: msg="END cli/common_config.yaml on connection={{ ansible_connection }}"
