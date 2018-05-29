@@ -67,7 +67,7 @@ def locked_config(module, target=None):
         unlock_configuration(module, target=target)
 
 
-def get_config(module, source, filter, lock=False):
+def get_config(module, source, filter=None, lock=False):
     conn = get_connection(module)
     try:
         locked = False
@@ -110,6 +110,74 @@ def dispatch(module, request):
     conn = get_connection(module)
     try:
         response = conn.dispatch(request)
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def edit_config(module, config, target='candidate', default_operation=None,
+                test_option=None, error_option=None):
+    conn = get_connection(module)
+    try:
+        response = conn.edit_config(config=config, target=target, default_operation=default_operation,
+                                    test_option=test_option, error_option=error_option)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def copy_config(module, source, target):
+    conn = get_connection(module)
+    try:
+        response = conn.copy_config(source=source, target=target)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def delete_config(module, target):
+    conn = get_connection(module)
+    try:
+        response = conn.delete_config(target=target)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def discard_changes(module):
+    conn = get_connection(module)
+    try:
+        response = conn.discard_changes()
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def validate(module, source="candidate"):
+    conn = get_connection(module)
+    try:
+        response = conn.validate(source=source)
+
+    except ConnectionError as e:
+        module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
+
+    return response
+
+
+def commit(module, confirmed=False, timeout=None):
+    conn = get_connection(module)
+    try:
+        response = conn.commit(confirmed=confirmed, timeout=timeout)
+
     except ConnectionError as e:
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
 
