@@ -132,32 +132,6 @@ See :ref:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
-Using a loop on a package module via squash_actions
----------------------------------------------------
-
-The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.11.
-
-Instead of relying on implicit squashing, tasks should instead supply the list directly to the ``name``, ``pkg`` or ``package`` parameter of the module. This functionality has been supported in most modules since Ansible 2.3.
-
-**OLD** In Ansible 2.6 (and earlier) the following task would invoke the "yum" module only 1 time to install multiple packages
-
-.. code-block:: yaml
-
-    - name: Install packages
-      yum:
-        name: "{{ item }}"
-        state: present
-      with_items: "{{ packages }}"
-
-**NEW** In Ansible 2.7 it should be changed to look like this:
-
-.. code-block:: yaml
-
-    - name: Install packages
-      yum:
-        name: "{{ packages }}"
-        state: present
-
 Modules
 =======
 
