@@ -304,8 +304,7 @@ class MavenDownloader:
             path = "/%s/%s" % (artifact.path(), self.metadata_file_name)
             content = self._getContent(self.base + path, "Failed to retrieve the maven metadata file: " + path)
             xml = etree.fromstring(content)
-            timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
-            buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
                 classifier = snapshotArtifact.xpath("classifier/text()")
                 artifact_classifier = classifier[0] if classifier else ''
@@ -313,7 +312,11 @@ class MavenDownloader:
                 artifact_extension = extension[0] if extension else ''
                 if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
-            return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
+            timestamp_xmlpath = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")
+            if timestamp_xmlpath:
+                timestamp = timestamp_xmlpath[0]
+                build_number = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+                return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + build_number))
 
         return self._uri_for_artifact(artifact, artifact.version)
 
