@@ -3,6 +3,7 @@
         - 'i_one|type_debug == "int"'
         - 's_one|type_debug == "AnsibleUnicode"'
         - 'dict_one|type_debug == "dict"'
+        - 'dict_one is mapping'
         - 'list_one|type_debug == "list"'
         - 'b_true|type_debug == "bool"'
         - 's_true|type_debug == "AnsibleUnicode"'

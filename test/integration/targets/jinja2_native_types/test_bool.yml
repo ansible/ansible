@@ -4,7 +4,7 @@
 
 - assert:
     that:
-        - 'bool_var_true == True'
+        - 'bool_var_true is sameas true'
         - 'bool_var_true|type_debug == "bool"'
 
 - name: test bool False
@@ -13,7 +13,7 @@
 
 - assert:
     that:
-        - 'bool_var_false == False'
+        - 'bool_var_false is sameas false'
         - 'bool_var_false|type_debug == "bool"'
 
 - name: test bool expr True
@@ -22,7 +22,7 @@
 
 - assert:
     that:
-        - 'bool_var_expr_true == True'
+        - 'bool_var_expr_true is sameas true'
         - 'bool_var_expr_true|type_debug == "bool"'
 
 - name: test bool expr False
@@ -31,7 +31,7 @@
 
 - assert:
     that:
-        - 'bool_var_expr_false == False'
+        - 'bool_var_expr_false is sameas false'
         - 'bool_var_expr_false|type_debug == "bool"'
 
 - name: test bool expr with None, True
@@ -40,7 +40,7 @@
 
 - assert:
     that:
-        - 'bool_var_none_expr_true == True'
+        - 'bool_var_none_expr_true is sameas true'
         - 'bool_var_none_expr_true|type_debug == "bool"'
 
 - name: test bool expr with None, False
@@ -49,5 +49,5 @@
 
 - assert:
     that:
-        - 'bool_var_none_expr_false == False'
+        - 'bool_var_none_expr_false is sameas false'
         - 'bool_var_none_expr_false|type_debug == "bool"'
