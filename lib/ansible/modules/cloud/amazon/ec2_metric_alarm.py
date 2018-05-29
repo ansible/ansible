@@ -151,6 +151,49 @@ from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws,
                                       get_aws_connection_info)
 
 
+class CheckModeCloudWatchConnection:
+    def __init__(self, connection):
+        self.connection = connection
+        self.created_alarms = []
+
+    def create_alarm(self, alarm):
+        self.created_alarms.append(alarm)
+        return alarm
+
+    def delete_alarms(self, names):
+        not_names = filter(self.__alarm_name_is_not(names[0]), self.created_alarms)
+        del self.created_alarms[:]
+        self.created_alarms.extend(not_names)
+
+    def describe_alarms(self, **params):
+        alarms = self.connection.describe_alarms(**params)
+        if alarms:
+            return alarms
+        else:
+            name = params['alarm_names'][0]
+            return list(filter(self.__alarm_name_is(name), self.created_alarms))
+
+    def __alarm_name_is(self, value):
+        return lambda a: getattr(a, 'name') == value
+
+    def __alarm_name_is_not(self, value):
+        return lambda a: getattr(a, 'name') != value
+
+
+class CloudWatchConnection:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def create_alarm(self, alarm):
+        return self.connection.create_alarm(alarm)
+
+    def delete_alarms(self, names):
+        self.connection.delete_alarms(names)
+
+    def describe_alarms(self, **params):
+        return self.connection.describe_alarms(**params)
+
+
 def create_metric_alarm(connection, module):
 
     name = module.params.get('name')
@@ -293,7 +336,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -309,6 +352,11 @@ def main():
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
+
+    if module.check_mode:
+        connection = CheckModeCloudWatchConnection(connection)
+    else:
+        connection = CloudWatchConnection(connection)
 
     if state == 'present':
         create_metric_alarm(connection, module)
