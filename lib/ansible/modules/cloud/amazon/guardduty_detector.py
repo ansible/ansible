@@ -56,7 +56,12 @@ EXAMPLES = r'''
 '''
 
 
-RETURN = r'''#'''
+RETURN = r'''
+detector_id:
+    description: The ID of the Guardduty detector you just created or updated.
+    returned: always
+    type: string
+'''
 
 import os
 
@@ -132,7 +137,8 @@ def main():
     )
 
     result = {
-        'changed': False
+        'changed': False,
+        'detector_id': ''
     }
 
     desired_state = module.params.get('state')
@@ -151,7 +157,7 @@ def main():
         if detector_status:
             delete_detector(client, module, result)
 
-    module.exit_json(changed=result['changed'], results=result)
+    module.exit_json(changed=result['changed'], detector_id=result['detector_id'])
 
 
 if __name__ == '__main__':

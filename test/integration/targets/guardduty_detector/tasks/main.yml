@@ -21,7 +21,20 @@
       - result.changed
       - result.detector_id is not none
 
-- name: disable GuardDuty detector
+- name: no changes to detector
+  guardduty_detector:
+    <<: *aws_connection_info
+    state: present
+    enabled: true
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - not result.changed
+      - result.detector_id is not none
+
+- name: disable detector
   guardduty_detector:
     <<: *aws_connection_info
     state: present
@@ -34,7 +47,7 @@
       - result.changed
       - result.detector_id is not none
 
-- name: destroy GuardDuty detector
+- name: destroy detector
   guardduty_detector:
     <<: *aws_connection_info
     state: absent
