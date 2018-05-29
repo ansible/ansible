@@ -7,6 +7,13 @@
 - set_fact: testint2="{{ nxos_int2 }}"
 
 - block:
+  - name: Install and Enable FabricPath feature set
+    nxos_config:
+      lines:
+        - install feature-set fabricpath
+        - feature-set fabricpath
+    when: platform is search('N5K|N7K')
+
   - name: "Enable feature vn segment"
     nxos_config: 
       commands:
@@ -114,41 +121,41 @@
     when: platform is search('N3K|N7K')
 
 # Uncomment this once the get_capabilities() work on nxapi as well
-#  - name: Change mode
-#    nxos_vlan: &mode1
-#      vlan_id: 50
-#      mode: fabricpath
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *true
-#    when: platform is search('N5k|N7K')
-#
-#  - name: "mode1 Idempotence"
-#    nxos_vlan: *mode1
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *false
-#    when: platform is search('N5k|N7K')
-#
-#  - name: Change mode again
-#    nxos_vlan: &mode2
-#      vlan_id: 50
-#      mode: ce
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *true
-#    when: platform is search('N5k|N7K')
-#
-#  - name: "mode2 Idempotence"
-#    nxos_vlan: *mode2
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *false
-#    when: platform is search('N5k|N7K')
+  - name: Change mode
+    nxos_vlan: &mode1
+      vlan_id: 50
+      mode: fabricpath
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode1 Idempotence"
+    nxos_vlan: *mode1
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
+
+  - name: Change mode again
+    nxos_vlan: &mode2
+      vlan_id: 50
+      mode: ce
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode2 Idempotence"
+    nxos_vlan: *mode2
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
 
   - name: Ensure VLAN is NOT on the device
     nxos_vlan: &no_vlan
