@@ -86,6 +86,24 @@ class TestHost(unittest.TestCase):
         hostA_clone.deserialize(hostA_data)
         self.assertEquals(self.hostA, hostA_clone)
 
+    def test_shared_parentage_deserialization(self):
+        group_bottom = Group('group_bottom')
+        group_top = Group('group_top')
+        group_top.add_child_group(group_bottom)
+        self.hostA.add_group(group_bottom)
+        self.hostA.add_group(group_top)
+        hostA_data = self.hostA.serialize()
+
+        hostA_clone = Host()
+        hostA_clone.deserialize(hostA_data)
+        groups = hostA_clone.get_groups()
+        for group in groups:
+            if group.name == 'group_bottom':
+                group_bottom_clone = group
+            elif group.name == 'group_top':
+                group_top_clone = group
+        assert group_bottom_clone.parent_groups[0] is group_top_clone
+
     def test_set_state(self):
         group = Group('some_group')
         self.hostA.add_group(group)

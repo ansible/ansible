@@ -60,16 +60,18 @@ class Group:
             hosts=group.hosts,
         )
 
-    def serialize(self):
-        # Serialize all ancestors and self
-        cached_groups = {self.name: self}
-        serializations = {self.name: Group._serialize_local(self)}
-        for ancestor in self.get_ancestors():
-            cached_groups[ancestor.name] = ancestor
-            serializations[ancestor.name] = Group._serialize_local(ancestor)
+    @staticmethod
+    def serialize_set(groups):
+        '''
+        Two-pass serialization of groups so that shared ancestors are
+        not serialized multiple times, preserving link integrity
+        '''
+        serializations = {}
+        for group in groups:
+            serializations[group.name] = Group._serialize_local(group)
 
         # Within serialization, add links to parents
-        for group in cached_groups.values():
+        for group in groups:
             group._hosts = None
             parent_groups = []
             for parent in group.parent_groups:
@@ -77,6 +79,14 @@ class Group:
                     continue
                 parent_groups.append(serializations[parent.name])
             serializations[group.name]['parent_groups'] = parent_groups
+
+        return serializations
+
+    def serialize(self):
+        # Serialize all ancestors and self
+        groups = self.get_ancestors()
+        groups.add(self)
+        serializations = self.serialize_set(groups)
 
         return serializations[self.name]
 

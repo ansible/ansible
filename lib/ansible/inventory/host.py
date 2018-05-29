@@ -54,20 +54,20 @@ class Host:
         return self.get_name()
 
     def serialize(self):
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
+        serializations = Group.serialize_set(self.groups)
 
         return dict(
             name=self.name,
             vars=self.vars.copy(),
             address=self.address,
             uuid=self._uuid,
-            groups=groups,
+            groups=list(serializations.values()),
             implicit=self.implicit,
         )
 
-    def deserialize(self, data):
+    def deserialize(self, data, cached_groups=None):
+        if cached_groups is None:
+            cached_groups = {}
         self.__init__(gen_uuid=False)
 
         self.name = data.get('name')
@@ -78,8 +78,11 @@ class Host:
 
         groups = data.get('groups', [])
         for group_data in groups:
-            g = Group()
-            g.deserialize(group_data)
+            if 'name' in group_data and group_data['name'] in cached_groups:
+                g = cached_groups[group_data['name']]
+            else:
+                g = Group()
+                g.deserialize(group_data, cached_groups=cached_groups)
             self.groups.append(g)
 
     def __init__(self, name=None, port=None, gen_uuid=True):
