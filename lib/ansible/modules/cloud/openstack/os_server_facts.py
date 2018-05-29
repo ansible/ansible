@@ -24,7 +24,7 @@ notes:
     - This module creates a new top-level C(openstack_servers) fact, which
       contains a list of servers.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    server:
