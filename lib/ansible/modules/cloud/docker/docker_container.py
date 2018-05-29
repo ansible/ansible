@@ -605,6 +605,7 @@ docker_container:
 import os
 import re
 import shlex
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
@@ -616,6 +617,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
+    from ansible.module_utils.docker_common import docker_version
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -2090,6 +2092,13 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
+
+    if client.params.get("init"):
+        docker_api_version = client.version()['ApiVersion']
+        if LooseVersion(docker_api_version) < LooseVersion('1.25'):
+            client.fail('docker API version is %s. Minimum version required is 1.25 to set init option.' % (docker_api_version,))
+        if LooseVersion(docker_version) < LooseVersion('2.2'):
+            client.fail('docker-py version is %s. Minimum version required is 2.2 to set init option.' % (docker_version,))
 
     if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
         client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
