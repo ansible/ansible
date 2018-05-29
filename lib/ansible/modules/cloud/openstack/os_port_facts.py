@@ -22,7 +22,7 @@ description:
 notes:
     - Facts are placed in the C(openstack_ports) variable.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
     port:

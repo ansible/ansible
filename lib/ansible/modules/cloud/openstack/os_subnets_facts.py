@@ -21,7 +21,7 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more subnets from OpenStack.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    subnet:

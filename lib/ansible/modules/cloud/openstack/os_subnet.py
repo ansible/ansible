@@ -102,7 +102,7 @@ options:
      default: {}
      version_added: "2.7"
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 

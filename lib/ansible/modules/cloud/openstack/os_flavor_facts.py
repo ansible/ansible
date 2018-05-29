@@ -29,7 +29,7 @@ notes:
     - This module creates a new top-level C(openstack_flavors) fact, which
       contains a list of unsorted flavors.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    name:
