@@ -159,21 +159,6 @@ PARAM_TO_DEFAULT_KEYMAP = {
 }
 
 
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def apply_key_map(key_map, table):
     new_dict = {}
     for key in table:
@@ -205,11 +190,11 @@ def get_interface_type(interface):
 
 
 def get_interface_mode(interface, intf_type, module):
-    command = 'show interface {0}'.format(interface)
+    command = 'show interface {0} | json'.format(interface)
     interface = {}
     mode = 'unknown'
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
     except IndexError:
         return None
 
@@ -224,7 +209,7 @@ def get_interface_mode(interface, intf_type, module):
 
 
 def get_hsrp_group(group, interface, module):
-    command = 'show hsrp group {0} all'.format(group)
+    command = 'show hsrp group {0} all | json'.format(group)
     hsrp = {}
 
     hsrp_key = {
@@ -240,9 +225,9 @@ def get_hsrp_group(group, interface, module):
     }
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         hsrp_table = body['TABLE_grp_detail']['ROW_grp_detail']
-    except (AttributeError, IndexError, TypeError):
+    except (AttributeError, IndexError, TypeError, KeyError):
         return {}
 
     if isinstance(hsrp_table, dict):
@@ -365,7 +350,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command], check_rc=False)[0]
         if 'invalid' in body.lower():
             return 'DNE'
         else:
