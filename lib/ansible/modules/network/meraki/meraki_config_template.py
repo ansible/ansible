@@ -37,7 +37,6 @@ options:
     org_id:
         description:
         - ID of organization associated to a configuration template.
-        type: int
     config_template:
         description:
         - Name of the configuration template within an organization to manipulate.
@@ -80,16 +79,19 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
+
 def get_config_templates(meraki, org_id):
     path = meraki.construct_path('get_all', org_id=org_id)
     response = meraki.request(path, 'GET')
     return json.loads(response)
+
 
 def get_template_id(meraki, name, data):
     for template in data:
         if name == template['name']:
             return template['id']
     meraki.fail_json(msg='No configuration template named {0} found'.format(name))
+
 
 def is_network_bound(meraki, nets, net_name, template_id):
     for net in nets:
@@ -103,12 +105,14 @@ def is_network_bound(meraki, nets, net_name, template_id):
                 pass
     return False
 
+
 def delete_template(meraki, org_id, name, data):
     template_id = get_template_id(meraki, name, data)
     path = meraki.construct_path('delete', org_id=org_id)
     path = path + '/' + template_id
     response = meraki.request(path, 'DELETE')
     return json.loads(response)
+
 
 def bind(meraki, org_name, net_name, name, data):
     template_id = get_template_id(meraki, name, data)
@@ -123,6 +127,7 @@ def bind(meraki, org_name, net_name, name, data):
             payload['autoBind'] = meraki.params['auto_bind']
         meraki.result['changed'] = True
         return meraki.request(path, method='POST', payload=json.dumps(payload))
+
 
 def unbind(meraki, org_name, net_name, name, data):
     template_id = get_template_id(meraki, name, data)
@@ -144,7 +149,7 @@ def main():
                          org_id=dict(type='int'),
                          config_template=dict(type='str', aliases=['name']),
                          net_name=dict(type='str'),
-                         config_template_id=dict(type='str', aliases=['id']),
+                         # config_template_id=dict(type='str', aliases=['id']),
                          auto_bind=dict(type='bool'),
                          )
 
@@ -176,7 +181,7 @@ def main():
                  }
 
     unbind_urls = {'config_template': '/networks/{net_id}/unbind',
-                 }
+                   }
 
     meraki.url_catalog['get_all']['config_template'] = '/organizations/{org_id}/configTemplates'
     meraki.url_catalog['delete'] = delete_urls
@@ -219,13 +224,12 @@ def main():
                                                     meraki.params['config_template'],
                                                     get_config_templates(meraki, org_id))
         else:
-            config_unbind = unbind(meraki, 
+            config_unbind = unbind(meraki,
                                    meraki.params['org_name'],
                                    meraki.params['net_name'],
                                    meraki.params['config_template'],
                                    get_config_templates(meraki, org_id))
             # meraki.result['data'] = json.loads(config_unbind)
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
