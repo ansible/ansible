@@ -13,23 +13,20 @@
 
 
 - name: save config always
-  eos_config:
+  eos_config: &always
     save_when: always
   become: yes
   register: result
 
-- assert:
+- assert: &changed
     that:
       - "result.changed == true"
 
-- name: save always again (not idempotent)
-  eos_config:
-    save_when: always
+- name: save should always run
+  eos_config: *always
   become: yes
   register: result
 
-- assert:
-    that:
-      - "result.changed == true"
+- assert: *changed
 
 - debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

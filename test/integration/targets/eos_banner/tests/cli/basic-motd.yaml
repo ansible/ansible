@@ -4,11 +4,9 @@
 - name: Remove previous motd banner
   eos_config:
     lines: no banner motd
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
 
-- name: Create motd
+- name: Set motd
   eos_banner:
     banner: motd
     text: |
@@ -16,8 +14,6 @@
       that has a multiline
       string
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -29,7 +25,7 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: Create motd again (idempotent)
+- name: Set motd again (idempotent)
   eos_banner:
     banner: motd
     text: |
@@ -37,8 +33,6 @@
       that has a multiline
       string
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -57,8 +51,6 @@
       that has a multiline
       string
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -77,8 +69,6 @@
       that has a multiline
       string
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
