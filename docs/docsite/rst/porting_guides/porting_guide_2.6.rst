@@ -42,9 +42,9 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
 
-* :ref:`k8s_raw <k8s_raw_module>` use :ref:`k8s <k8s_module>` instead.
-* :ref:`openshift_raw <openshift_raw_module>` use :ref:`k8s <k8s_module>` instead.
-* :ref:`openshift_scale <openshift_scale_module>` use :ref:`k8s_scale <k8s_scale_module>` instead.
+* ``k8s_raw`` use :ref:`k8s <k8s_module>` instead.
+* ``openshift_raw`` use :ref:`k8s <k8s_module>` instead.
+* ``openshift_scale`` use :ref:`k8s_scale <k8s_scale_module>` instead.
 
 Noteworthy module changes
 -------------------------
