@@ -57,7 +57,7 @@ options:
         default: 'present'
     bucket:
         description:
-            - A reference to Bucket resource.
+            - The name of the bucket.
         required: true
     entity:
         description:
@@ -123,7 +123,7 @@ EXAMPLES = '''
 RETURN = '''
     bucket:
         description:
-            - A reference to Bucket resource.
+            - The name of the bucket.
         returned: success
         type: dict
     domain:

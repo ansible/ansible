@@ -53,7 +53,7 @@ options:
         required: false
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
         required: false
     push_config:
         description:
@@ -121,7 +121,7 @@ RETURN = '''
         type: str
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
         returned: success
         type: dict
     push_config:

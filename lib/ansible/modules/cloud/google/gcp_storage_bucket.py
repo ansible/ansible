@@ -58,7 +58,7 @@ options:
         suboptions:
             bucket:
                 description:
-                    - A reference to Bucket resource.
+                    - The name of the bucket.
                 required: true
             domain:
                 description:
@@ -312,7 +312,7 @@ RETURN = '''
         contains:
             bucket:
                 description:
-                    - A reference to Bucket resource.
+                    - The name of the bucket.
                 returned: success
                 type: dict
             domain:

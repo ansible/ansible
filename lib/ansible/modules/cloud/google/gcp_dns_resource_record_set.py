@@ -69,7 +69,8 @@ options:
         required: false
     managed_zone:
         description:
-            - A reference to ManagedZone resource.
+            - Identifies the managed zone addressed by this request.
+            - Can be the managed zone name or id.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -127,7 +128,8 @@ RETURN = '''
         type: list
     managed_zone:
         description:
-            - A reference to ManagedZone resource.
+            - Identifies the managed zone addressed by this request.
+            - Can be the managed zone name or id.
         returned: success
         type: dict
 '''

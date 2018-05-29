@@ -199,7 +199,7 @@ options:
                         required: false
     cluster:
         description:
-            - A reference to Cluster resource.
+            - The cluster this node pool belongs to.
         required: true
     zone:
         description:
@@ -409,7 +409,7 @@ RETURN = '''
                         type: str
     cluster:
         description:
-            - A reference to Cluster resource.
+            - The cluster this node pool belongs to.
         returned: success
         type: dict
     zone:
