@@ -608,6 +608,8 @@ files:
   $modules/source_control/gitlab_user.py: dj-wasabi
   $modules/source_control/hg.py: yeukhon
   $modules/source_control/subversion.py: dsummersl
+  $modules/storage/glusterfs/gluster_volume.py: rosmo
+  $modules/storage/glusterfs/gluster_peer.py: sac
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/: sdodsley
@@ -632,7 +634,6 @@ files:
   $modules/system/firewalld.py: maxamillion
   $modules/system/gconftool2.py: Akasurde kevensen
   $modules/system/getent.py: bcoca
-  $modules/storage/gluster/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
   $modules/system/interfaces_file.py: hryamzik obourdon
   $modules/system/iptables.py: LinusU
