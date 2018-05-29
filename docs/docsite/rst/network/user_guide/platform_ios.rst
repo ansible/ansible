@@ -4,7 +4,7 @@
 IOS Platform Options
 ***************************************
 
-IOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible 2.5. 
+IOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible 2.6. 
 
 .. contents:: Topics
 
@@ -34,7 +34,7 @@ Connections Available
 
 For legacy playbooks, IOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI ``group_vars/ios.yml``
