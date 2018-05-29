@@ -120,6 +120,7 @@ def check_name_type(value):
         old_name = value.get('old_name')
         return {'new_name': new_name, 'old_name': old_name}
 
+
 def main():
     ''' Main entry point for module execution
     '''
