@@ -70,7 +70,6 @@ EXAMPLES = '''
 '''
 
 import errno
-import filecmp
 import os
 import platform
 import random
@@ -711,12 +710,17 @@ class BSDTimezone(Timezone):
         #   but it's intended to avoid useless diff.
         planned = self.value['name']['planned']
         try:
-            already_planned_state = filecmp.cmp(os.path.join(zoneinfo_dir, planned), localtime_file)
+            planned_zonefile = os.path.join(zoneinfo_dir, planned)
+            already_planned_state = filecmp.cmp(planned_zonefile, localtime_file)
+
         except OSError:
             # Even if reading planned zoneinfo file gives an OSError, don't abort here,
             # because a bit more detailed check will be done in `set`.
             already_planned_state = False
-        if already_planned_state:
+        # Handle the case where the file comp previously would claim UTC and Etc/UTC
+        # are the same because they are the same file, but not the same path. This
+        # breaks idempotent task runs.
+        if already_planned_state and (planned_zonefile == os.path.realpath(planned_zonefile)):
             return planned
 
         # Strategy 3:
