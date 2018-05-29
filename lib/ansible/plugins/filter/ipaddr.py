@@ -752,11 +752,11 @@ def ipsubnet(value, query='', index='x'):
         value = netaddr.IPNetwork(v)
     except:
         return False
-    querystr = str(query)
+    query_string = str(query)
     if not query:
         return str(value)
 
-    elif querystr.isdigit():
+    elif query_string.isdigit():
         vsize = ipaddr(v, 'size')
         query = int(query)
 
@@ -788,7 +788,7 @@ def ipsubnet(value, query='', index='x'):
                     return str(value.supernet(query)[0])
                 except:
                     return False
-    elif querystr:
+    elif query_string:
         try:
             vtype = ipaddr(query, 'type')
             if vtype == 'address':
@@ -800,11 +800,9 @@ def ipsubnet(value, query='', index='x'):
         except:
             return False
 
-        if network_in_network(query, value):
-            subnetlist = list(query.subnet(value.prefixlen))
-            for i in range(0, len(subnetlist)):
-                if (subnetlist[i] == value):
-                    return str(i + 1)
+        for i, subnet in enumerate(query.subnet(value.prefixlen)):
+            if subnet == value:
+                return str(i)
 
     return False
 
