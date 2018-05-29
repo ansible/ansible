@@ -104,3 +104,8 @@ Networking
 ==========
 
 No notable changes.
+
+Dynamic inventory scripts
+=========================
+
+* contrib/inventory/openstack.py is renamed to contrib/inventory/openstack_inventory.py.
