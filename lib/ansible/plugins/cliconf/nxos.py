@@ -95,8 +95,11 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = {}
         result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
+        if isinstance(self._connection, NetworkCli):
+            result['network_api'] = 'cliconf'
+        else:
+            result['network_api'] = 'nxapi'
         return json.dumps(result)
 
     # Migrated from module_utils
