@@ -327,7 +327,7 @@ LOCALHOST_WARNING:
   description:
     - By default Ansible will issue a warning when there are no hosts in the
       inventory.
-    - These warnings can be silenced by adjusting this setting to False. 
+    - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_LOCALHOST_WARNING}]
   ini:
   - {key: localhost_warning, section: defaults}
@@ -508,7 +508,7 @@ DEFAULT_DEBUG:
   description:
     - "Toggles debug output in Ansible. This is *very* verbose and can hinder
       multiprocessing.  Debug output can also include secret information
-      despite no_log settings being enabled, which means debug mode should not be used in 
+      despite no_log settings being enabled, which means debug mode should not be used in
       production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
@@ -703,7 +703,7 @@ DEFAULT_JINJA2_NATIVE:
   - {key: jinja2_native, section: defaults}
   type: boolean
   yaml: {key: jinja2_native}
-  version_added: 2.5
+  version_added: 2.7
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
