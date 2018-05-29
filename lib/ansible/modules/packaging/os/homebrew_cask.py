@@ -720,7 +720,7 @@ def main():
             greedy=dict(
                 default=False,
                 type='bool',
-            )
+            ),
         ),
         supports_check_mode=True,
     )
