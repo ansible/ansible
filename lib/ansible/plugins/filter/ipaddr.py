@@ -800,7 +800,7 @@ def ipsubnet(value, query='', index='x'):
         except:
             return False
 
-        for i, subnet in enumerate(query.subnet(value.prefixlen)):
+        for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
             if subnet == value:
                 return str(i)
 
