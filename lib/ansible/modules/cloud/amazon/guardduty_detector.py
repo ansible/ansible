@@ -18,7 +18,7 @@ short_description: Enable/Disable the AWS GuardDuty detector.
 description:
     - Enable/Disable the GuardDuty detector for a given AWS account.
 author: "Aaron Smith (@slapula)"
-version_added: "2.6"
+version_added: "2.7"
 requirements: [ 'botocore', 'boto3' ]
 options:
   state:
@@ -56,12 +56,7 @@ EXAMPLES = r'''
 '''
 
 
-RETURN = r'''
-detector_id:
-    description: The ID of the Guardduty detector you just created or updated.
-    returned: always
-    type: string
-'''
+RETURN = r'''#'''
 
 import os
 
@@ -137,8 +132,7 @@ def main():
     )
 
     result = {
-        'changed': False,
-        'detector_id': ''
+        'changed': False
     }
 
     desired_state = module.params.get('state')
@@ -157,7 +151,7 @@ def main():
         if detector_status:
             delete_detector(client, module, result)
 
-    module.exit_json(changed=result['changed'], detector_id=result['detector_id'])
+    module.exit_json(changed=result['changed'], results=result)
 
 
 if __name__ == '__main__':
