@@ -658,6 +658,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'router': redundant_msg,
         'network': network_msg
     }
+
     if deprecate_map.get(query):
         display.deprecated(deprecate_map[query])
 
