@@ -37,7 +37,7 @@ options:
     choices: [present, absent]
     default: present
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 

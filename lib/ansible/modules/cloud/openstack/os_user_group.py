@@ -39,7 +39,7 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
