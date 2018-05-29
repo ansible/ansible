@@ -19,7 +19,7 @@ module: java_keystore
 short_description: Create or delete a Java keystore in JKS format.
 description:
      - Create or delete a Java keystore in JKS format for a given certificate.
-version_added: "2.6"
+version_added: "2.7"
 options:
     name:
         description:
