@@ -458,7 +458,7 @@ def parse_interfaces(module, vlan):
     vlan_int = []
     interfaces = vlan.get('vlanshowplist-ifidx')
     if interfaces:
-        for i in interfaces.split(','):
+        for i in interfaces:
             if 'eth' in i.lower() and '-' in i:
                 int_range = i.split('-')
                 stop = int((int_range)[1])
