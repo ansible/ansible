@@ -1245,7 +1245,6 @@ lib/ansible/modules/web_infrastructure/django_manage.py E325
 lib/ansible/modules/web_infrastructure/django_manage.py E326
 lib/ansible/modules/web_infrastructure/gunicorn.py E322
 lib/ansible/modules/web_infrastructure/htpasswd.py E326
-lib/ansible/modules/web_infrastructure/jenkins_job.py E325
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E322
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E324
 lib/ansible/modules/web_infrastructure/jira.py E322
