@@ -28,7 +28,6 @@
 
 import os
 from functools import partial
-
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
@@ -61,6 +60,7 @@ NIOS_PROVIDER_SPEC = {
     'wapi_version': dict(default='2.1'),
     'max_results': dict(type='int', default=1000)
 }
+
 
 def get_connector(*args, **kwargs):
     ''' Returns an instance of infoblox_client.connector.Connector
@@ -127,6 +127,7 @@ class WapiBase(object):
 
     def __init__(self, provider):
         self.connector = get_connector(**provider)
+
     def __getattr__(self, name):
         try:
             return self.__dict__[name]
@@ -183,7 +184,6 @@ class WapiModule(WapiBase):
         else:
             self.module.fail_json(msg=to_native(exc))
 
-
     def run(self, ib_obj_type, ib_spec):
         ''' Runs the module and performans configuration tasks
         :args ib_obj_type: the WAPI object type to operate against
@@ -199,12 +199,7 @@ class WapiModule(WapiBase):
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
 
-        # to delete old_name key from ib_spec dictionary as return_fields
-        # dictionary from nios doesn't expect 'old_name' key
-        if 'old_name' in ib_spec:
-            del ib_spec['old_name']
-        ib_obj_ref = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
-
+        ib_obj_ref, update = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
         if ib_obj_ref:
             current_object = ib_obj_ref[0]
             if 'extattrs' in current_object:
@@ -221,6 +216,10 @@ class WapiModule(WapiBase):
                     proposed_object[key] = value['transform'](self.module)
                 else:
                     proposed_object[key] = self.module.params[key]
+
+        # checks if the name's field has been updated
+        if update and 'name' in proposed_object:
+            proposed_object['name'] = proposed_object['name']['new_name']
 
         res = None
         modified = not self.compare_objects(current_object, proposed_object)
@@ -295,21 +294,25 @@ class WapiModule(WapiBase):
         return True
 
     def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
-        ''' this function gets and returns the current object based on obj_type passed'''
-        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-
-        if ib_obj is None:
-            # to check for the existing old name object to get the reference of exiting object
-            for k, v in iteritems(obj_filter):
-                if (k is not 'view'):
-                    if (ib_obj_type == NIOS_HOST_RECORD):
-                        test_obj_filter = dict([('name', obj_filter[k]), ('view', obj_filter['view'])])
-                    else:
-                        test_obj_filter = dict([('name', obj_filter[k])])
-                    ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
-                    if ib_obj:
-                        break
-        return ib_obj
+        ''' this function gets and returns the current object based on name/old_name passed'''
+        update = False
+        if (isinstance(obj_filter['name'], dict)):
+            old_name = obj_filter['name'].get('old_name')
+            new_name = obj_filter['name'].get('new_name')
+            if (ib_obj_type == NIOS_HOST_RECORD):
+                test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
+            else:
+                test_obj_filter = dict([('name', old_name)])
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+            if ib_obj:
+                obj_filter['name'] = new_name
+            else:
+                test_obj_filter['name'] = new_name
+                ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+            update = True
+        else:
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+        return ib_obj, update
 
     def on_update(self, proposed_object, ib_spec):
         ''' Event called before the update is sent to the API endpoing
@@ -325,5 +328,4 @@ class WapiModule(WapiBase):
             update = ib_spec[key].get('update', True)
             if not update:
                 keys.add(key)
-
         return dict([(k, v) for k, v in iteritems(proposed_object) if k not in keys])
