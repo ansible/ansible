@@ -3,8 +3,6 @@ requests[security]
 azure-cli-core==2.0.35
 azure-cli-nspkg==3.0.2
 azure-common==1.1.11
-azure-graphrbac==0.40.0
-azure-keyvault==1.0.0a1
 azure-mgmt-batch==4.1.0
 azure-mgmt-compute==2.1.0
 azure-mgmt-containerinstance==0.4.0
@@ -23,3 +21,5 @@ azure-nspkg==2.0.0
 azure-storage==0.35.1
 msrest==0.4.29
 msrestazure==0.4.31
+azure-keyvault==1.0.0a1
+azure-graphrbac==0.40.0
