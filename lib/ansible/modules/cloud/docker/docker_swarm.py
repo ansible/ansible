@@ -75,6 +75,7 @@ options:
             - Maximum number of tasks history stored.
     snapshot_interval:
         description: Number of logs entries between snapshot.
+        default: 10000
     keep_old_snapshots:
         description: Number of snapshots to keep beyond the current snapshot.
     log_entries_for_slow_followers:
@@ -119,24 +120,24 @@ EXAMPLES = '''
 
 - name: Init a new swarm
   docker_swarm:
-    state: "init"
-    advertise_addr: "192.168.1.1"
+    state: init
+    advertise_addr: 192.168.1.1
 
 - name: Add nodes
   docker_swarm:
-    state: "join"
-    advertise_addr: "192.168.1.2"
-    join_token: "SWMTKN-1--xxxxx"
+    state: join
+    advertise_addr: 192.168.1.2
+    join_token: SWMTKN-1--xxxxx
     remote_addrs: ["192.168.1.1:2377"]
 
 - name: Leave swarm
   docker_swarm:
-    state: "leave"
+    state: leave
 
 - name: Remove node from swarm
   docker_swarm:
-    state: "remove"
-    node_id: "mynode"
+    state: remove
+    node_id: mynode
 
 '''
 
