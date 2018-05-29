@@ -4,10 +4,11 @@
 - name: Make sure LLDP is running (setup)
   eos_config:
     lines: lldp run
-    authorize: yes
+  become: yes
 
 - name: test getting default facts
   eos_facts:
+  become: yes
   register: result
 
 - assert:
@@ -30,10 +31,5 @@
 
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config
-
-- name: Make sure LLDP is running (setup)
-  eos_config:
-    lines: lldp run
-    authorize: yes
 
 - debug: msg="END eapi/default.yaml"

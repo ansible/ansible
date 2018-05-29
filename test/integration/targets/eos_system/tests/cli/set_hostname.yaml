@@ -5,13 +5,11 @@
   eos_config:
     lines: hostname switch
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure hostname
   eos_system:
     hostname: foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -22,7 +20,6 @@
 - name: verify hostname
   eos_system:
     hostname: foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -34,7 +31,6 @@
   eos_config:
     lines: "hostname {{ inventory_hostname }}"
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/set_hostname.yaml on connection={{ ansible_connection }}"

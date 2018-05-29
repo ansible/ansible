@@ -7,7 +7,6 @@
       - no ip name-server
       - vrf definition ansible
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure name_servers
@@ -16,7 +15,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -34,7 +32,6 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -48,7 +45,7 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ cli }}"
+#  become: yes
 #  register: result
 
 #- assert:
@@ -64,7 +61,7 @@
 #      - 1.1.1.1
 #      - { server: 2.2.2.2, vrf: ansible }
 #      - 3.3.3.3
-#    provider: "{{ cli }}"
+#  become: yes
 #  register: result
 #
 #- assert:
@@ -76,7 +73,6 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -92,7 +88,6 @@
       - no ip domain lookup source-interface
       - no vrf definition ansible
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"

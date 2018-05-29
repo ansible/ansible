@@ -12,8 +12,7 @@
     description: test-interface-1
     mtu: 1800
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Configure interface
@@ -21,8 +20,7 @@
     name: "{{ test_interface_1 }}"
     description: test-interface-initial
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -36,8 +34,7 @@
     name: "{{ test_interface_1 }}"
     description: test-interface-initial
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -50,8 +47,7 @@
     description: test-interface
     mtu: 2000
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -67,8 +63,7 @@
     description: test-interface-1
     mtu: 1800
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -82,8 +77,7 @@
   eos_interface:
     name: "{{ test_interface_1 }}"
     enabled: False
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -96,8 +90,7 @@
   eos_interface:
     name: "{{ test_interface_1 }}"
     enabled: True
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -112,8 +105,7 @@
     description: test-interface-initial
     mtu: 1800
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Add interface aggregate
@@ -122,8 +114,7 @@
     - { name: "{{ test_interface_1 }}", mtu: 2000, description: test-interface-1 }
     - { name: "{{ test_interface_2 }}", mtu: 2000, description: test-interface-2 }
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -141,8 +132,7 @@
     - { name: "{{ test_interface_1 }}", mtu: 2000, description: test-interface-1 }
     - { name: "{{ test_interface_2 }}", mtu: 2000, description: test-interface-2 }
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -156,8 +146,7 @@
     - { name: "{{ test_interface_2 }}" }
     enabled: False
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -175,8 +164,7 @@
     - { name: "{{ test_interface_2 }}" }
     enabled: True
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -193,8 +181,7 @@
     - name: loopback9
     - name: loopback10
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: Create loopback interface aggregate
   eos_interface:
@@ -202,8 +189,7 @@
     - name: loopback9
     - name: loopback10
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -218,8 +204,7 @@
     - name: loopback9
     - name: loopback10
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -234,8 +219,7 @@
     - name: loopback9
     - name: loopback10
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:

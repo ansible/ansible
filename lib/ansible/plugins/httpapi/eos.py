@@ -45,8 +45,11 @@ class HttpApi:
         return results
 
     def get_prompt(self):
-        # Hack to keep @enable_mode working
-        return '#'
+        # Fake a prompt for @enable_mode
+        if self._become:
+            return '#'
+        else:
+            return '>'
 
     def set_become(self, play_context):
         self._become = play_context.become

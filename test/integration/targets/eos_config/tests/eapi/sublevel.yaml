@@ -5,12 +5,14 @@
   eos_config:
     lines: no ip access-list test
     match: none
+  become: yes
 
 - name: configure sub level command
   eos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
     after: exit
+  become: yes
   register: result
 
 - assert:
@@ -23,6 +25,7 @@
   eos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
+  become: yes
   register: result
 
 - assert:
@@ -33,5 +36,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
+  become: yes
 
 - debug: msg="END eapi/sublevel.yaml"

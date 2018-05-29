@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"
+- debug: msg="START cli/not_hardware.yaml on connection={{ ansible_connection }}"
 
 
 - name: test not hardware
@@ -27,4 +27,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"
+- debug: msg="END cli/not_hardware.yaml on connection={{ ansible_connection }}"

@@ -6,8 +6,6 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -21,8 +19,6 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -35,8 +31,6 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -50,8 +44,6 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -64,8 +56,6 @@
     dest: console
     level: warnings
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -78,8 +68,6 @@
   eos_logging:
     dest: buffered
     size: 480000
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -93,8 +81,6 @@
     aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: buffered, size: 480000, state: absent }
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 

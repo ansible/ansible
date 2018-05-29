@@ -10,6 +10,7 @@
     parents: ip access-list test
     before: no ip access-list test
     match: none
+  become: yes
 
 - name: configure sub level command using block resplace
   eos_config:
@@ -21,6 +22,7 @@
     parents: ip access-list test
     after: end
     replace: block
+  become: yes
   register: result
 
 - assert:
@@ -41,6 +43,7 @@
       - 40 permit ip host 4.4.4.4 any log
     parents: ip access-list test
     replace: block
+  become: yes
   register: result
 
 - assert:
@@ -51,5 +54,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
+  become: yes
 
 - debug: msg="END eapi/sublevel_block.yaml"
