@@ -21,7 +21,7 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more networks from OpenStack.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "sdk"
 options:
    name:
