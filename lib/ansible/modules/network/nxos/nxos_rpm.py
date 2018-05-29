@@ -78,12 +78,19 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
+    iteration = 0
     cmds = [{
         'command': command,
         'output': 'text',
     }]
 
-    return run_commands(module, cmds)[0]
+    while iteration < 10:
+        body = run_commands(module, cmds)[0]
+        if body:
+            return body
+        else:
+            time.sleep(2)
+            iteration += 1
 
 
 def remote_file_exists(module, dst, file_system):
