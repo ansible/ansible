@@ -105,7 +105,7 @@ options:
 
 
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk >= 0.13.0"
 '''
 
