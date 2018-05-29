@@ -21,7 +21,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack domains
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "sdk"
 options:
    name:
