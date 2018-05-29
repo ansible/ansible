@@ -13,6 +13,7 @@
     before: no ip access-list test
     after: exit
     match: none
+  become: yes
 
 - name: configure sub level command using exact match
   eos_config:
@@ -21,10 +22,11 @@
       - 20 permit ip host 2.2.2.2 any log
       - 30 permit ip host 3.3.3.3 any log
       - 40 permit ip host 4.4.4.4 any log
-    before: no ip access-list test
     parents: ip access-list test
+    before: no ip access-list test
     after: exit
     match: exact
+  become: yes
   register: result
 
 - assert:
@@ -47,6 +49,7 @@
     before: no ip access-list test
     parents: ip access-list test
     match: exact
+  become: yes
   register: result
 
 - assert:
@@ -57,5 +60,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
+  become: yes
 
 - debug: msg="END eapi/sublevel_exact.yaml"
