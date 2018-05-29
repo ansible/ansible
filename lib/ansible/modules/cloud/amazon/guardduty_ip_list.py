@@ -172,7 +172,6 @@ def delete_ip_list(client, module, result):
                 DetectorId=module.params.get('detector_id'),
                 IpSetId=result['trusted_set_id']
             )
-            result['trusted_set_id'] = response['IpSetId']
             result['changed'] = True
             return result
         if module.params.get('list_type') == 'threat':
@@ -180,7 +179,6 @@ def delete_ip_list(client, module, result):
                 DetectorId=module.params.get('detector_id'),
                 ThreatIntelSetId=result['threat_set_id']
             )
-            result['threat_set_id'] = response['ThreatIntelSetId']
             result['changed'] = True
             return result
     except (BotoCoreError, ClientError) as e:

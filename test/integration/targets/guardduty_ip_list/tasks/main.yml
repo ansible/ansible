@@ -14,7 +14,7 @@
       state: present
       name: "{{ resource_prefix }}-test-guardduty-bucket"
 
-  - name: Simple PUT operation
+  - name: upload IP lists for testing
     aws_s3:
       <<: *aws_connection_info
       bucket: "{{ resource_prefix }}-test-guardduty-bucket"
@@ -42,7 +42,7 @@
       enabled: true
       detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/whitelist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
 
   - name: assert correct keys are returned
@@ -60,7 +60,7 @@
       enabled: false
       detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/whitelist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
 
   - name: assert correct keys are returned
@@ -78,7 +78,7 @@
       enabled: false
       detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/whitelist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
 
   - name: assert correct keys are returned
@@ -95,7 +95,7 @@
       enabled: true
       detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/threatlist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
 
   - name: assert correct keys are returned
@@ -113,7 +113,7 @@
       enabled: false
       detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/threatlist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
 
   - name: assert correct keys are returned
@@ -129,9 +129,9 @@
       list_type: threat
       state: absent
       enabled: false
-      detector_id: "{{ gd_detector.detector_id }}"
+      detector_id: "{{ gd_detector.results.detector_id }}"
       format: 'TXT'
-      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.{{ aws_region }}.amazonaws.com/files/threatlist.txt"
+      location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
 
   - name: assert correct keys are returned
