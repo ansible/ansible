@@ -1,4 +1,4 @@
-- name: Create storage account name
+- name: Create storage account name -- xxx
   set_fact:
       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 

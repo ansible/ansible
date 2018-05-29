@@ -1,4 +1,4 @@
-- name: Prepare random number
+- name: Prepare random number -- xxx
   set_fact:
     rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
   run_once: yes
