@@ -7,7 +7,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure domain_list
@@ -15,7 +14,6 @@
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -30,7 +28,6 @@
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -42,7 +39,6 @@
   eos_system:
     domain_list:
       - ansible.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -55,7 +51,6 @@
   eos_system:
     domain_list:
       - ansible.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -68,7 +63,6 @@
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -82,7 +76,6 @@
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -95,7 +88,6 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -111,7 +103,6 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -126,7 +117,6 @@
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/set_domain_list.yaml on connection={{ ansible_connection }}"

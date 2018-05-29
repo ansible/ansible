@@ -12,6 +12,7 @@
     parents: ip access-list test
     before: no ip access-list test
     match: none
+  become: yes
 
 - name: configure sub level command using strict match
   eos_config:
@@ -25,6 +26,7 @@
     after: exit
     match: strict
     replace: block
+  become: yes
   register: result
 
 - assert:
@@ -46,6 +48,7 @@
       - 40 permit ip host 4.4.4.4 any log
     parents: ip access-list test
     match: strict
+  become: yes
   register: result
 
 - assert:
@@ -56,5 +59,6 @@
   eos_config:
     lines: no ip access-list test
     match: none
+  become: yes
 
 - debug: msg="END eapi/sublevel_strict.yaml"
