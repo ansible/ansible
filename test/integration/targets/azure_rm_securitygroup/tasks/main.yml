@@ -1,7 +1,14 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    secgroupaname: "sg{{ rpfx }}"
+  run_once: yes
+
+
 - name: Create security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -39,7 +46,7 @@
 - name: Add/Update rules on existing security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       rules:
           - name: AllowSSH
             protocol: Tcp
@@ -62,7 +69,7 @@
 - name: Test idempotence
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       rules:
           - name: AllowSSH
             protocol: Tcp
@@ -83,7 +90,7 @@
 - name: Update tags
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: never
@@ -98,7 +105,7 @@
 - name: Purge tags
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -112,7 +119,7 @@
 - name: Gather facts for one accounts
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
   register: output
 
 - assert:
@@ -131,7 +138,7 @@
 - name: Create security group with source_address_prefixes
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -159,7 +166,7 @@
 - name: Create security group with source_address_prefixes(idempontent)
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit

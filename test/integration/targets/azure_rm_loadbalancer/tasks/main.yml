@@ -1,31 +1,35 @@
 - name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    pipaname: "pipa{{ rpfx }}"
+    pipbname: "pipb{{ rpfx }}"
+    lbname: "lb{{ rpfx }}"
+    lbvnname: "lbvn{{ rpfx }}"
   run_once: yes
 
 - name: create public ip
   azure_rm_publicipaddress:
-    name: "pipb{{ rpfx }}"
+    name: "{{ pipbname }}"
     sku: Standard
     allocation_method: Static
     resource_group: '{{ resource_group }}'
 
 - name: create public ip
   azure_rm_publicipaddress:
-    name: "pipa{{ rpfx }}"
+    name: "{{ pipaname }}"
     resource_group: '{{ resource_group }}'
 
 - name: clear load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
 
 - name: create load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
-    public_ip: "pipa{{ rpfx }}"
+    name: "{{ lbname }}"
+    public_ip: "{{ pipaname }}"
   register: output
 
 - name: assert load balancer created
@@ -35,7 +39,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
   register: output
 
@@ -46,7 +50,7 @@
 - name: delete load balancer (idempotent)
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
   register: output
 
@@ -57,9 +61,9 @@
 - name: create another load balancer with more options
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     sku: Standard
-    public_ip_address: "pipb{{ rpfx }}"
+    public_ip_address: "{{ pipbname }}"
     probe_protocol: Tcp
     probe_port: 80
     probe_interval: 10
@@ -84,16 +88,16 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     frontend_ip_configurations:
       - name: frontendipconf0
-        public_ip_address: "pipa{{ rpfx }}"
+        public_ip_address: "{{ pipaname }}"
     backend_address_pools:
       - name: backendaddrpool0
     probes:
@@ -122,13 +126,13 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ rpfx }}vn"
+      name: "{{ lbvnname }}"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
@@ -136,13 +140,13 @@
       resource_group: "{{ resource_group }}"
       name: "lb{{ rpfx }}sb"
       address_prefix: "10.10.0.0/24"
-      virtual_network: "lb{{ rpfx }}vn"
+      virtual_network: "{{ lbvnname }}"
   register: subnet
 
 - name: create internal loadbalancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         private_ip_address: 10.10.0.10
@@ -176,7 +180,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lb{{ rpfx }}"
+    name: "{{ lbname }}"
     state: absent
 
 - name: cleanup public ip
@@ -185,18 +189,18 @@
     resource_group: '{{ resource_group }}'
     state: absent
   with_items:
-  - "pipa{{ rpfx }}"
-  - "pipb{{ rpfx }}"
+  - "{{ pipaname }}"
+  - "{{ pipbname }}"
 
 - name: cleanup subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
       name: "lb{{ rpfx }}sb"
-      virtual_network: "lb{{ rpfx }}vn"
+      virtual_network: "{{ lbvnname }}"
       state: absent
 
 - name: cleanup virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ rpfx }}vn"
+      name: "{{ lbvnname }}"
       state: absent
