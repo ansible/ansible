@@ -97,7 +97,10 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
-            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
+            state, task = iterator.get_next_task_for_host(host, peek=True)
+            if state:
+                state = iterator.get_active_state(state)
+            host_tasks[host.name] = (state, task)
         display.debug("done building task lists")
 
         num_setups = 0
