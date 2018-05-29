@@ -1,7 +1,6 @@
 - name: Prepare random number
   set_fact:
-    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    vnetname: "vnet{{ rpfx }}"
+    vnetname: "vnet{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Delete virtual network, if it exists
   azure_rm_virtualnetwork:

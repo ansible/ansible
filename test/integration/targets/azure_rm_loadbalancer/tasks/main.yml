@@ -1,10 +1,9 @@
 - name: Prepare random number
   set_fact:
-    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    pipaname: "pipa{{ rpfx }}"
-    pipbname: "pipb{{ rpfx }}"
-    lbname: "lb{{ rpfx }}"
-    lbvnname: "lbvn{{ rpfx }}"
+    pipaname: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    pipbname: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbvnname: "lbvn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: create public ip
@@ -138,7 +137,7 @@
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ rpfx }}sb"
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
       address_prefix: "10.10.0.0/24"
       virtual_network: "{{ lbvnname }}"
   register: subnet
@@ -195,7 +194,7 @@
 - name: cleanup subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: "lb{{ rpfx }}sb"
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
       virtual_network: "{{ lbvnname }}"
       state: absent
 
