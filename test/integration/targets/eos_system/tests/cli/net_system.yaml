@@ -10,7 +10,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure domain_list using platform agnostic module
@@ -18,7 +17,6 @@
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -34,7 +32,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END eos cli/net_system.yaml on connection={{ ansible_connection }}"
