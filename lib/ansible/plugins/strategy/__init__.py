@@ -493,7 +493,7 @@ class StrategyBase:
                     if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    if state and state.run_state == iterator.ITERATING_RESCUE:
+                    if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host,
                             dict(
