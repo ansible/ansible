@@ -19,7 +19,7 @@ module: netconf_set
 version_added: "2.6"
 author:
     - "Sven Wisotzky (@wisotzky)"
-    - "Ganesh Nalawade (@ganeshrn)"    
+    - "Ganesh Nalawade (@ganeshrn)"
 short_description: NETCONF module to modify device configuration
 description:
     - NETCONF is a network management protocol developed and standardized by
@@ -84,21 +84,21 @@ notes:
   - This module requires the NETCONF system service be enabled on the remote device
     being managed.
   - This module supports the use of connection=netconf.
-  - The module will do all actions required to apply the changes as expected:
-    - lock target datastore (depends on option I(lock))
-    - discard changes, in case of target datastore is candidate
-    - get-config of target datastore (before the change)
-    - edit-config
-    - get-config of target datastore (after the change)
-    - validate the target datastore (when validate)
-    - commit changes, in case of target datastore is candidate (not when dryrun/validate)
-    - unlock target datastore (depends on option I(lock))
-  - To provide content in XML format is the more flexible variant for better control:
-    - control the ordering of dict entries in the output
-    - provide multiple XML namespaces (per XML note/attribute)
-    - provide edit-config operations (e.g. to delete content)
+  - The module will do all actions required to apply the changes as expected
+  - lock target datastore (depends on option I(lock))
+  - discard changes, in case of target datastore is candidate
+  - get-config of target datastore (before the change)
+  - edit-config
+  - get-config of target datastore (after the change)
+  - validate the target datastore (when validate)
+  - commit changes, in case of target datastore is candidate (not when dryrun/validate)
+  - unlock target datastore (depends on option I(lock))
+  - To provide content in XML format is the more flexible variant for better control
+  - control the ordering of dict entries in the output
+  - provide multiple XML namespaces (per XML note/attribute)
+  - provide edit-config operations (e.g. to delete content)
   - Support for content in JSON/YAML format is to improve the playbook's readability
-    - specific encoding rules apply for lists - check examples
+  - specific encoding rules apply for lists - check examples
 """
 
 EXAMPLES = """
@@ -132,7 +132,7 @@ EXAMPLES = """
     mode: dryrun
     lock: always
     display: json
-  register: result 
+  register: result
 """
 
 RETURN = """
@@ -140,11 +140,13 @@ locked:
   description:
     - Returns I(true) if the target datastore was locked/unlocked during the operation.
   returned: always
+  type: boolean
 changed:
   description:
     - Returns I(true) if the target datastore was changed by that operation. Returns
       I(false) if the edit-config does not result in changes or dryrun/validate is exectued.
   returned: always
+  type: boolean
 datastore:
   description:
     - The target datastore is automatically determined by presence of the :candidate and
@@ -152,11 +154,13 @@ datastore:
       to I(running). The return value I(candidate) gives the caller an indication, which
       datastore has been automatically selected.
   returned: always
+  type: string
 diffs:
   description:
     - Contains the differences of the target datastore before and after the change.
       If option I(display) is not set, it will simply return I(true) or I(false).
   returned: always
+  type: complex
 """
 
 import ast
@@ -243,7 +247,7 @@ def main():
     backup = module.params['backup']
     mode = module.params['mode']
     display = module.params['display']
-    
+
     capabilities = netconf.get_capabilities(module)
     operations = capabilities['device_operations']
 
@@ -282,7 +286,7 @@ def main():
         # lock is requested (always/if-supported) but not supported => issue warning
         module.warn('lock operation on `%s` source is not supported on this device' % datastore)
         execute_lock = lock is 'always'
-    
+
     # content-builder
     if content is None:
         module.fail_json(msg='argument `content` must not be None')
@@ -308,7 +312,7 @@ def main():
 
         netconf.edit_config(module, target=datastore, config=content, default_operation=operation)
 
-        response = netconf.get_config(module, source=datastore)        
+        response = netconf.get_config(module, source=datastore)
         after = tostring(response)
 
         changed = False
@@ -329,9 +333,9 @@ def main():
 
                 if operations.get('supports_startup', False):
                     netconf.copy_config(module, source="running", target="startup")
-            
+
             if mode in ['validate', 'dryrun']:
-                netconf.discard_changes(module)                
+                netconf.discard_changes(module)
 
     except ConnectionError as e:
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
@@ -364,7 +368,7 @@ def main():
             tmp1 = jxmlease.parse(before).prettyprint(currdepth=1)
             tmp2 = jxmlease.parse(after).prettyprint(currdepth=1)
             patch = jsonpatch.make_patch(tmp1, tmp2)
-            result['diffs'] = patch.to_string()            
+            result['diffs'] = patch.to_string()
 
         # warning:
         #   diff result might become unnecessary complex using jsonpatch:
