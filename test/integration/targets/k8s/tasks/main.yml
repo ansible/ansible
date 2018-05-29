@@ -83,7 +83,7 @@
   k8s:
     state: present
     inline: &deployment
-      apiVersion: Apps/V1Beta1
+      apiVersion: apps/v1beta1
       kind: Deployment
       metadata:
         name: elastic
