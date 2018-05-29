@@ -50,7 +50,7 @@ options:
         description:
             - If the state is present, the rpm will be installed,
               if the state is absent, it will be removed.
-        default: present.
+        default: present
         choices: ['present', 'absent']
 '''
 
