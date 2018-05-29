@@ -45,6 +45,19 @@ def wait_for_task(task):
             time.sleep(15)
 
 
+def wait_for_vm_ip(content, vm, timeout=300):
+    facts = dict()
+    interval = 15
+    while timeout > 0:
+        facts = gather_vm_facts(content, vm)
+        if facts['ipv4'] or facts['ipv6']:
+            break
+        time.sleep(interval)
+        timeout -= interval
+
+    return facts
+
+
 def find_obj(content, vimtype, name, first=True):
     container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
     obj_list = container.view
@@ -91,6 +104,18 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
     return None
 
 
+def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+    if not isinstance(obj_type, list):
+        obj_type = [obj_type]
+
+    objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
+    for obj in objects:
+        if obj.name == name:
+            return obj
+
+    return None
+
+
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
     if datacenter:
@@ -98,22 +123,11 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
     else:
         folder = content.rootFolder
 
-    clusters = get_all_objs(content, [vim.ClusterComputeResource], folder)
-    for cluster in clusters:
-        if cluster.name == cluster_name:
-            return cluster
-
-    return None
+    return find_object_by_name(content, cluster_name, [vim.ClusterComputeResource], folder=folder)
 
 
 def find_datacenter_by_name(content, datacenter_name):
-
-    datacenters = get_all_objs(content, [vim.Datacenter])
-    for dc in datacenters:
-        if dc.name == datacenter_name:
-            return dc
-
-    return None
+    return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
 
 def get_parent_datacenter(obj):
@@ -132,32 +146,23 @@ def get_parent_datacenter(obj):
 
 
 def find_datastore_by_name(content, datastore_name):
-
-    datastores = get_all_objs(content, [vim.Datastore])
-    for ds in datastores:
-        if ds.name == datastore_name:
-            return ds
-
-    return None
+    return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
 def find_dvs_by_name(content, switch_name):
-
-    vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
-
-    for dvs in vmware_distributed_switches:
-        if dvs.name == switch_name:
-            return dvs
-    return None
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
 
 
 def find_hostsystem_by_name(content, hostname):
+    return find_object_by_name(content, hostname, [vim.HostSystem])
 
-    host_system = get_all_objs(content, [vim.HostSystem])
-    for host in host_system:
-        if host.name == hostname:
-            return host
-    return None
+
+def find_resource_pool_by_name(content, resource_pool_name):
+    return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
+
+
+def find_network_by_name(content, network_name):
+    return find_object_by_name(content, network_name, [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
@@ -197,11 +202,14 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
 
 def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+    return find_object_by_name(content, vm_name, [vim.VirtualMachine], folder=folder, recurse=recurse)
 
-    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
-    for vm in vms:
-        if vm.name == vm_name:
-            return vm
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
     return None
 
 
