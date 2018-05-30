@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netconf_set
-version_added: "2.6"
+version_added: "2.7"
 author:
     - "Ganesh Nalawade (@ganeshrn)"
     - "Sven Wisotzky (@wisotzky)"
@@ -66,6 +66,8 @@ options:
        module will save a copy of the configuration with a unique filename
        in the backup directory of the playbook.
        This option will only be active in case of mode is I(deploy).
+    type: bool
+    default: false
   display:
     description:
      - If this option is set, it will instruct this module to include the differences
@@ -156,9 +158,15 @@ datastore:
 diffs:
   description:
     - Contains the differences of the target datastore before and after the change.
-      If option I(display) is not set, it will simply return I(true) or I(false).
+    - If option I(display) is not set, it will return boolean value, I(true) or I(false).
+    - If option I(display) is set to I(xml), return value is of type I(complex),
+      providing two dictionary entries with keys I(before) and I(after).
+    - If option I(display) is set to I(json) and I(json_string), I(diffs) will
+      contain a rfc6902-complaint JSON PATCH reflecting the differences between
+      the target datastore before vs after the edit-config operation is executed.
+      In case of I(json) the JSON PATCH is returned as I(list) of tuples while in
+      case of I(json_string) it is returned as I(string).
   returned: always
-  type: complex
 """
 
 import ast
