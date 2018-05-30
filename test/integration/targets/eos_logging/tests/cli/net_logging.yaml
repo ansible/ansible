@@ -9,8 +9,6 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -19,8 +17,6 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -34,8 +30,6 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
