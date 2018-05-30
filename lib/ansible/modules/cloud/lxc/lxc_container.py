@@ -75,6 +75,11 @@ options:
     container_command:
         description:
           - Run a command within a container.
+    container_shell:
+        description:
+          - Shell used for executing *container_command*.
+        default: bash
+        version_added: "2.7"
     lxc_path:
         description:
           - Place container under PATH
@@ -166,9 +171,10 @@ notes:
     is "stopped" and the container does not exist it will be first created,
     "started", the command executed, and then "stopped". If you use a "|"
     in the variable you can use common script formatting within the variable
-    iteself The "container_command" option will always execute as BASH.
-    When using "container_command" a log file is created in the /tmp/ directory
-    which contains both stdout and stderr of any command executed.
+    itself. If your container doesn't have BASH installed, you can change
+    the shell by specifying "container_shell". When using "container_command"
+    a log file is created in the /tmp/ directory which contains both stdout
+    and stderr of any command executed.
   - If "archive" is **true** the system will attempt to create a compressed
     tarball of the running container. The "archive" option supports LVM backed
     containers and will create a snapshot of the running container when
@@ -531,13 +537,12 @@ LXC_ANSIBLE_STATES = {
 # container without using SSH.  The template will attempt to work within the
 # home directory of the user that was attached to the container and source
 # that users environment variables by default.
-ATTACH_TEMPLATE = """#!/usr/bin/env bash
-pushd "$(getent passwd $(whoami)|cut -f6 -d':')"
+ATTACH_TEMPLATE = """#!/usr/bin/env %(container_shell)s
+cd $(getent passwd $(whoami)|cut -f6 -d':')
     if [[ -f ".bashrc" ]];then
         source .bashrc
         unset HOSTNAME
     fi
-popd
 
 # User defined command
 %(container_command)s
@@ -550,15 +555,15 @@ def create_script(command):
     This method should be backward compatible with Python 2.4+ when executing
     from within the container.
 
-    :param command: command to run, this can be a script and can use spacing
+    :param command: shell and command to run, this can be a script and can use spacing
                     with newlines as separation.
-    :type command: ``str``
+    :type command: ``list``
     """
 
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
-        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}, errors='surrogate_or_strict'))
+        f.write(to_bytes(ATTACH_TEMPLATE % {'container_shell': command[0], 'container_command': command[1]}, errors='surrogate_or_strict'))
         f.flush()
     finally:
         f.close()
@@ -940,7 +945,7 @@ class LxcContainerManagement(object):
             elif container_state == 'stopped':
                 self._container_startup()
 
-            self.container.attach_wait(create_script, container_command)
+            self.container.attach_wait(create_script, [self.module.params.get('container_shell'), container_command])
             self.state_change = True
 
     def _container_startup(self, timeout=60):
@@ -1702,6 +1707,10 @@ def main():
             ),
             container_command=dict(
                 type='str'
+            ),
+            container_shell=dict(
+                type='str',
+                default='bash'
             ),
             container_config=dict(
                 type='str'
