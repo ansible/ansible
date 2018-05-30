@@ -99,7 +99,7 @@ snmp-server enable traps captive-portal client-connect
 snmp-server enable traps captive-portal client-db-full
 snmp-server enable traps captive-portal client-disconnect
 router bgp 11
-bgp router-id 1.1.1.1
+bgp router-id 192.0.2.1
 maximum-paths 2
 maximum-paths ibgp 2
 network 101.1.2.0 mask 255.255.255.0

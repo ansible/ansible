@@ -241,11 +241,11 @@ EXAMPLES = """
 - name: load new acl into device
   ios_config:
     lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-      - 50 permit ip host 5.5.5.5 any log
+      - 10 permit ip host 192.0.2.1 any log
+      - 20 permit ip host 192.0.2.2 any log
+      - 30 permit ip host 192.0.2.3 any log
+      - 40 permit ip host 192.0.2.4 any log
+      - 50 permit ip host 192.0.2.5 any log
     parents: ip access-list extended test
     before: no ip access-list extended test
     match: exact
@@ -279,12 +279,12 @@ updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 192.0.2.1']
 commands:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 192.0.2.1']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes

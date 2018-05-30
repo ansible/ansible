@@ -179,10 +179,10 @@
         interface: nve1
         vni: 8000
         peer_list: 
-          - 1.1.1.1
-          - 2.2.2.2
-          - 3.3.3.3
-          - 4.4.4.4
+          - 192.0.2.1
+          - 192.0.2.2
+          - 192.0.2.3
+          - 192.0.2.4
         ingress_replication: static
       register: result
   

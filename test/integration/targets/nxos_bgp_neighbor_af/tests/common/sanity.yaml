@@ -22,7 +22,7 @@
   - name: "Configure BGP neighbor address-family"
     nxos_bgp_neighbor_af: &configure1
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'enable'
@@ -63,7 +63,7 @@
   - name: "Configure BGP neighbor address-family def1"
     nxos_bgp_neighbor_af: &configure_def1
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'inherit'
@@ -100,7 +100,7 @@
   - name: "Setup: Remove BGP config"
     nxos_bgp_neighbor_af: &removenaf
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       state: absent
@@ -117,7 +117,7 @@
   - name: "Configure BGP neighbor address-family"
     nxos_bgp_neighbor_af: &configure2
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       allowas_in_max: '5'
@@ -142,7 +142,7 @@
   - name: "Configure BGP neighbor address-family def2"
     nxos_bgp_neighbor_af: &configure_def2
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       allowas_in_max: default
@@ -180,14 +180,14 @@
     nxos_bgp_neighbor:
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       remote_as: 2
 
   - name: "Configure BGP neighbor 3"
     nxos_bgp_neighbor_af: &configure3
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'disable'
@@ -211,7 +211,7 @@
     nxos_bgp_neighbor_af: &configure_def3
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'inherit'
@@ -241,13 +241,13 @@
   - name: "Configure BGP neighbor af route_reflector_client"
     nxos_bgp_neighbor:
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       remote_as: 65535
 
   - name: "Configure BGP neighbor 4"
     nxos_bgp_neighbor_af: &configure4
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       afi: ipv4
       safi: unicast
       route_reflector_client: 'true'
@@ -264,7 +264,7 @@
   - name: "Configure BGP neighbor def4"
     nxos_bgp_neighbor_af: &configure_def4
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       afi: ipv4
       safi: unicast
       route_reflector_client: False

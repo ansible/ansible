@@ -4,11 +4,11 @@
 - name: setup
   iosxr_config:
     commands:
-      - 10 permit ipv4 host 1.1.1.1 any log
-      - 20 permit ipv4 host 3.3.3.3 any log
-      - 30 permit ipv4 host 2.2.2.2 any log
-      - 40 permit ipv4 host 4.4.4.4 any log
-      - 50 permit ipv4 host 5.5.5.5 any log
+      - 10 permit ipv4 host 192.0.2.1 any log
+      - 20 permit ipv4 host 192.0.2.3 any log
+      - 30 permit ipv4 host 192.0.2.2 any log
+      - 40 permit ipv4 host 192.0.2.4 any log
+      - 50 permit ipv4 host 192.0.2.5 any log
     parents: ['ipv4 access-list test']
     before: ['no ipv4 access-list test']
     match: none
@@ -16,10 +16,10 @@
 - name: configure sub level command using strict match
   iosxr_config:
     commands:
-      - 10 permit ipv4 host 1.1.1.1 any log
-      - 20 permit ipv4 host 2.2.2.2 any log
-      - 30 permit ipv4 host 3.3.3.3 any log
-      - 40 permit ipv4 host 4.4.4.4 any log
+      - 10 permit ipv4 host 192.0.2.1 any log
+      - 20 permit ipv4 host 192.0.2.2 any log
+      - 30 permit ipv4 host 192.0.2.3 any log
+      - 40 permit ipv4 host 192.0.2.4 any log
     parents: ['ipv4 access-list test']
     before: ['no ipv4 access-list test']
     match: strict
@@ -30,19 +30,19 @@
     that:
       - "result.changed == true"
       - "'ipv4 access-list test' in result.commands"
-      - "'10 permit ipv4 host 1.1.1.1 any log' in result.commands"
-      - "'20 permit ipv4 host 2.2.2.2 any log' in result.commands"
-      - "'30 permit ipv4 host 3.3.3.3 any log' in result.commands"
-      - "'40 permit ipv4 host 4.4.4.4 any log' in result.commands"
-      - "'50 permit ipv4 host 5.5.5.5 any log' not in result.commands"
+      - "'10 permit ipv4 host 192.0.2.1 any log' in result.commands"
+      - "'20 permit ipv4 host 192.0.2.2 any log' in result.commands"
+      - "'30 permit ipv4 host 192.0.2.3 any log' in result.commands"
+      - "'40 permit ipv4 host 192.0.2.4 any log' in result.commands"
+      - "'50 permit ipv4 host 192.0.2.5 any log' not in result.commands"
 
 - name: check sub level command using strict match
   iosxr_config:
     commands:
-      - 10 permit ipv4 host 1.1.1.1 any log
-      - 20 permit ipv4 host 2.2.2.2 any log
-      - 30 permit ipv4 host 3.3.3.3 any log
-      - 40 permit ipv4 host 4.4.4.4 any log
+      - 10 permit ipv4 host 192.0.2.1 any log
+      - 20 permit ipv4 host 192.0.2.2 any log
+      - 30 permit ipv4 host 192.0.2.3 any log
+      - 40 permit ipv4 host 192.0.2.4 any log
     parents: ['ipv4 access-list test']
     match: strict
   register: result

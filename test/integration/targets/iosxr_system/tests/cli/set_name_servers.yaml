@@ -4,18 +4,18 @@
 - name: setup
   iosxr_config:
     lines:
-      - no ip name-server 1.1.1.1
-      - no ip name-server 2.2.2.2
-      - no ip name-server 3.3.3.3
+      - no ip name-server 192.0.2.1
+      - no ip name-server 192.0.2.2
+      - no ip name-server 192.0.2.3
     match: none
     provider: "{{ cli }}"
 
 - name: configure name_servers
   iosxr_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
     provider: "{{ cli }}"
   register: result
 
@@ -23,16 +23,16 @@
     that:
       - result.changed == true
       - result.commands|length == 3
-      - "'domain name-server 1.1.1.1' in result.commands"
-      - "'domain name-server 2.2.2.2' in result.commands"
-      - "'domain name-server 3.3.3.3' in result.commands"
+      - "'domain name-server 192.0.2.1' in result.commands"
+      - "'domain name-server 192.0.2.2' in result.commands"
+      - "'domain name-server 192.0.2.3' in result.commands"
 
 - name: verify name_servers
   iosxr_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
     provider: "{{ cli }}"
   register: result
 
@@ -43,8 +43,8 @@
 - name: remove one
   iosxr_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
+      - 192.0.2.1
+      - 192.0.2.2
     provider: "{{ cli }}"
   register: result
 
@@ -52,13 +52,13 @@
     that:
       - result.changed == true
       - result.commands|length == 1
-      - "'no domain name-server 3.3.3.3' in result.commands"
+      - "'no domain name-server 192.0.2.3' in result.commands"
 
 - name: setup
   iosxr_config:
     lines:
-      - no ip name-server 1.1.1.1
-      - no ip name-server 2.2.2.2
+      - no ip name-server 192.0.2.1
+      - no ip name-server 192.0.2.2
     match: none
     provider: "{{ cli }}"
 

@@ -47,11 +47,11 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor_af(self):
-        set_module_args(dict(asn=65535, neighbor='3.3.3.3', afi='ipv4',
+        set_module_args(dict(asn=65535, neighbor='192.0.2.3', afi='ipv4',
                              safi='unicast', route_reflector_client=True))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], [
-            'router bgp 65535', 'neighbor 3.3.3.3', 'address-family ipv4 unicast',
+            'router bgp 65535', 'neighbor 192.0.2.3', 'address-family ipv4 unicast',
             'route-reflector-client'
         ])
 

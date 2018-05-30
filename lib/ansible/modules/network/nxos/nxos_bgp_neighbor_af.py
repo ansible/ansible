@@ -213,7 +213,7 @@ EXAMPLES = '''
 - name: configure RR client
   nxos_bgp_neighbor_af:
     asn: 65535
-    neighbor: '3.3.3.3'
+    neighbor: '192.0.2.3'
     afi: ipv4
     safi: unicast
     route_reflector_client: true
@@ -225,7 +225,7 @@ commands:
   description: commands sent to the device
   returned: always
   type: list
-  sample: ["router bgp 65535", "neighbor 3.3.3.3",
+  sample: ["router bgp 65535", "neighbor 192.0.2.3",
            "address-family ipv4 unicast", "route-reflector-client"]
 '''
 

@@ -80,7 +80,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         self.nitro_base_patcher.stop()
@@ -94,7 +94,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -120,7 +120,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -144,7 +144,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -172,7 +172,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -199,7 +199,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -228,7 +228,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -256,7 +256,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
             save_config=False,
         ))
@@ -286,7 +286,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
             save_config=False,
         ))
@@ -315,7 +315,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -349,7 +349,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -386,7 +386,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -421,7 +421,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -457,7 +457,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -493,7 +493,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -531,7 +531,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -569,7 +569,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -606,7 +606,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -643,7 +643,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -680,7 +680,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service
@@ -709,7 +709,7 @@ class TestNetscalerGSLBSiteModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_gslb_service

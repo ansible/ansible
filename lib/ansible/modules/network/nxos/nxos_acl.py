@@ -158,7 +158,7 @@ EXAMPLES = '''
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     dest: any
     state: present
 '''
@@ -168,7 +168,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
+    sample: ["ip access-list ANSIBLE", "10 permit tcp 192.0.2.1/24 any"]
 '''
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
