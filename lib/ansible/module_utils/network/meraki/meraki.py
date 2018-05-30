@@ -151,7 +151,7 @@ class MerakiModule(object):
 
     def get_orgs(self):
         ''' Downloads all organizations '''
-        return json.loads(self.request('/organizations', method='GET'))
+        return self.request('/organizations', method='GET')
 
     def is_org_valid(self, data, org_name=None, org_id=None):
         ''' Checks whether a specific org exists and is duplicated '''
@@ -172,6 +172,7 @@ class MerakiModule(object):
             If org_id is specified as parameter, return that instead of a lookup
         '''
         orgs = self.get_orgs()
+        # self.fail_json(msg='ogs', orgs=orgs)
         if self.params['org_id'] is not None:
             if self.is_org_valid(orgs, org_id=self.params['org_id']) is True:
                 return self.params['org_id']
@@ -191,7 +192,7 @@ class MerakiModule(object):
             org_id = self.get_org_id(org_name)
         path = self.construct_path('get_all', org_id=org_id)
         r = self.request(path, method='GET')
-        return json.loads(r)
+        return r
 
     def get_net(self, org_name, net_name, data=None):
         ''' Return network information '''
@@ -213,7 +214,7 @@ class MerakiModule(object):
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Return network id from lookup or existing data '''
-        if not data:
+        if data is None:
             self.fail_json(msg='Must implement lookup')
         for n in data:
             if n['name'] == net_name:
@@ -225,7 +226,6 @@ class MerakiModule(object):
         if function is None:
             built_path = self.url_catalog[action][self.function]
         else:
-            self.function = function
             built_path = self.url_catalog[action][function]
         if org_name:
             org_id = self.get_org_id(org_name)
@@ -253,7 +253,10 @@ class MerakiModule(object):
 
         if self.status >= 300:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
-        return to_native(resp.read())
+        try:
+            return json.loads(to_native(resp.read()))
+        except:
+            pass
 
     def exit_json(self, **kwargs):
         self.result['response'] = self.response
