@@ -84,6 +84,11 @@ options:
     default: postgres
     version_added: "2.5"
   conn_limit:
+<<<<<<< HEAD
+=======
+    version_added: '2.7'
+    default: "-1"
+>>>>>>> Change version conn_limit will be / was added to 2.7
     description:
       - Specifies the database connection limit.
     type: str
