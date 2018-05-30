@@ -322,7 +322,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, ec2_argument_spec,
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict,
                                       compare_aws_tags, ansible_dict_to_boto3_tag_list)
 from ansible.module_utils.aws.waiters import get_waiter
 from distutils.version import LooseVersion
@@ -698,7 +698,7 @@ def delete_target_group(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
+    argument_spec = {}
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
