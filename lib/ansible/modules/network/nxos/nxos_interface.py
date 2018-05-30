@@ -267,7 +267,7 @@ def get_vlan_interface_attributes(name, intf_type, module):
     command = 'show run interface {0} all'.format(name)
     try:
         body = execute_show_command(command, module)[0]
-    except IndexError:
+    except (IndexError, TypeError):
         return None
     if body:
         command_list = body.split('\n')
@@ -504,7 +504,7 @@ def map_config_to_obj(want, module):
         if body:
             try:
                 interface_table = body['TABLE_interface']['ROW_interface']
-            except KeyError:
+            except (KeyError, TypeError):
                 return list()
 
             if interface_table:
@@ -599,11 +599,12 @@ def check_declarative_intent_params(module, want):
             return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
-        output = run_commands(module, cmd, check_rc=False)
-        if output:
-            out = output[0]
-        else:
+
+        try:
+            out = run_commands(module, cmd, check_rc=False)[0]
+        except (AttributeError, IndexError, TypeError):
             out = ''
+
         if want_tx_rate:
             match = re.search(r'output rate (\d+)', out, re.M)
             have_tx_rate = None
