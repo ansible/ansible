@@ -203,6 +203,7 @@ from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -229,27 +230,6 @@ def search_obj_in_list(name, lst):
             return o
 
     return None
-
-
-def get_interface_type(interface):
-    """Gets the type of interface
-    """
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    elif interface.upper().startswith('NV'):
-        return 'nve'
-    else:
-        return 'unknown'
 
 
 def get_interfaces_dict(module):
