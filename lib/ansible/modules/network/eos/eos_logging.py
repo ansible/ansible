@@ -113,7 +113,7 @@ commands:
 """
 
 import re
-
+import q
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
@@ -149,14 +149,15 @@ def map_obj_to_commands(updates, module):
         del w['state']
 
         if state == 'absent' and w in have:
-            if dest == 'host':
-                commands.append('no logging host {}'.format(name))
+            if dest:
+                if dest == 'host':
+                    commands.append('no logging host {}'.format(name))
 
-            elif dest in DEST_GROUP:
-                commands.append('no logging {}'.format(dest))
+                elif dest in DEST_GROUP:
+                    commands.append('no logging {}'.format(dest))
 
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+                else:
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
                 commands.append('no logging facility {}'.format(facility))
@@ -212,6 +213,8 @@ def map_obj_to_commands(updates, module):
 
                 commands.append(dest_cmd)
 
+    cmds = [item for item in commands]
+    q(cmds)
     return commands
 
 
