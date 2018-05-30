@@ -47,9 +47,9 @@ class TestNxosBgpModule(TestNxosModule):
         self.load_config.return_value = []
 
     def test_nxos_bgp(self):
-        set_module_args(dict(asn=65535, router_id='1.1.1.1'))
+        set_module_args(dict(asn=65535, router_id='192.0.2.1'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['router bgp 65535', 'router-id 1.1.1.1'])
+        self.assertEqual(result['commands'], ['router bgp 65535', 'router-id 192.0.2.1'])
 
     def test_nxos_bgp_change_nothing(self):
         set_module_args(dict(asn=65535, router_id='192.168.1.1'))
@@ -77,8 +77,8 @@ class TestNxosBgpModule(TestNxosModule):
         self.execute_module(changed=False)
 
     def test_nxos_bgp_vrf(self):
-        set_module_args(dict(asn=65535, vrf='test', router_id='1.1.1.1'))
-        result = self.execute_module(changed=True, commands=['router bgp 65535', 'vrf test', 'router-id 1.1.1.1'])
+        set_module_args(dict(asn=65535, vrf='test', router_id='192.0.2.1'))
+        result = self.execute_module(changed=True, commands=['router bgp 65535', 'vrf test', 'router-id 192.0.2.1'])
         self.assertEqual(result['warnings'], ["VRF test doesn't exist."])
 
     def test_nxos_bgp_global_param(self):

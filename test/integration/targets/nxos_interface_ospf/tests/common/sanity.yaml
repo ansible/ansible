@@ -209,7 +209,7 @@
     nxos_interface_ospf: &configurelb
       interface: LOOPBACK55
       ospf: 1
-      area: 4.4.4.4
+      area: 192.0.2.4
       cost: 55
       hello_interval: 15
       dead_interval: 75

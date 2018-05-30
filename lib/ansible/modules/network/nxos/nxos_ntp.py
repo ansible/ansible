@@ -73,30 +73,30 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "48",
+    sample: {"address": "192.0.2.2", "key_id": "48",
             "peer_type": "server", "prefer": "enabled",
-            "source": "3.3.3.3", "source_type": "source"}
+            "source": "192.0.2.3", "source_type": "source"}
 existing:
     description:
         - k/v pairs of existing ntp server/peer
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "32",
+    sample: {"address": "192.0.2.2", "key_id": "32",
             "peer_type": "server", "prefer": "enabled",
             "source": "ethernet2/1", "source_type": "source-interface"}
 end_state:
     description: k/v pairs of ntp info after module execution
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "48",
+    sample: {"address": "192.0.2.2", "key_id": "48",
             "peer_type": "server", "prefer": "enabled",
-            "source": "3.3.3.3", "source_type": "source"}
+            "source": "192.0.2.3", "source_type": "source"}
 updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["ntp server 2.2.2.2 prefer key 48",
-             "no ntp source-interface ethernet2/1", "ntp source 3.3.3.3"]
+    sample: ["ntp server 192.0.2.2 prefer key 48",
+             "no ntp source-interface ethernet2/1", "ntp source 192.0.2.3"]
 changed:
     description: check to see if a change was made on the device
     returned: always

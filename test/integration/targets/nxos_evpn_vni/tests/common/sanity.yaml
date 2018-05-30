@@ -31,7 +31,7 @@
       route_target_export:
           - auto
           - "5000:10"
-          - "1.1.1.1:43"
+          - "192.0.2.1:43"
     register: result
 
   - assert: &true
