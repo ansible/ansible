@@ -2,6 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -36,6 +37,22 @@ DOCUMENTATION = """
       port:
         description: The port of the target host to connect to.
         default: 8500
+      scheme:
+        default: http
+        description: Whether to use http or https
+        version_added: '2.6'
+      verify:
+        default: True
+        description: Whether to verify the ssl connection or not
+        env:
+          - name: ANSIBLE_CONSUL_CERT_VERIFY
+        version_added: '2.6'
+      cert:
+        default: None
+        description: The client cert to verify the ssl connection
+        env:
+          - name: ANSIBLE_CONSUL_CERT
+        version_added: '2.6'
 """
 
 EXAMPLES = """
@@ -62,7 +79,6 @@ RETURN = """
 """
 
 import os
-import sys
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
@@ -74,6 +90,7 @@ except ImportError:
 
 try:
     import consul
+
     HAS_CONSUL = True
 except ImportError as e:
     HAS_CONSUL = False
@@ -84,7 +101,8 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if not HAS_CONSUL:
-            raise AnsibleError('python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
+            raise AnsibleError(
+                'python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
 
         values = []
         try:
@@ -92,12 +110,17 @@ class LookupModule(LookupBase):
                 params = self.parse_params(term)
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
+                    verify = os.environ['ANSIBLE_CONSUL_CERT_VERIFY'] or True
+                    cert = os.environ['ANSIBLE_CONSUL_CERT']
                     u = urlparse(url)
-                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme)
+                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=verify, cert=cert)
                 except KeyError:
                     port = kwargs.get('port', '8500')
                     host = kwargs.get('host', 'localhost')
-                    consul_api = consul.Consul(host=host, port=port)
+                    scheme = kwargs.get('scheme', 'http')
+                    verify = kwargs.get('verify', True)
+                    cert = kwargs.get('cert', None)
+                    consul_api = consul.Consul(host=host, port=port, scheme=scheme, verify=verify, cert=cert)
 
                 results = consul_api.kv.get(params['key'],
                                             token=params['token'],
