@@ -19,7 +19,7 @@ module: keycloak_scope
 
 short_description: Allows administration of Keycloak scope mappings via the Keycloak REST API
 
-version_added: "2.6"
+version_added: "2.7"
 
 description:
     - This module allows the administration of Keycloak scope mappings through the Keycloak REST
