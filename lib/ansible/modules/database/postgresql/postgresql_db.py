@@ -224,7 +224,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
         if lc_ctype:
             query_fragments.append('LC_CTYPE %(ctype)s')
         if conn_limit:
-            query_fragments.append("CONNECTION_LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
+            query_fragments.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
         query = ' '.join(query_fragments)
         cursor.execute(query, params)
         return True
