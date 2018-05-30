@@ -10,7 +10,7 @@
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Contains CLIConf Plugin methods for ENOS Modules
+# Contains CLIConf Plugin methods for CNOS Modules
 # Lenovo Networking
 #
 from __future__ import (absolute_import, division, print_function)
