@@ -9,7 +9,7 @@
     key_id: 32
     prefer: disabled
     vrf_name: management
-    source_addr: 5.5.5.5
+    source_addr: 192.0.2.5
     state: absent
   ignore_errors: yes
 
@@ -21,7 +21,7 @@
       key_id: 32
       prefer: enabled
       vrf_name: management
-      source_addr: 5.5.5.5
+      source_addr: 192.0.2.5
       state: present
     register: result
 

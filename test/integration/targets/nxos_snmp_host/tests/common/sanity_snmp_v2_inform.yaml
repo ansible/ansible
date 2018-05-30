@@ -12,7 +12,7 @@
 
 - name: Setup - Remove snmp_host if configured
   nxos_snmp_host: &remove
-    snmp_host: 3.3.3.3
+    snmp_host: 192.0.2.3
     community: TESTING
     version: "{{ snmp_version }}" 
     snmp_type: "{{ snmp_type }}" 
@@ -27,7 +27,7 @@
 
   - name: Configure snmp host 
     nxos_snmp_host: &config
-      snmp_host: 3.3.3.3
+      snmp_host: 192.0.2.3
       community: TESTING
       version: "{{ snmp_version }}" 
       snmp_type: "{{ snmp_type }}" 
@@ -53,7 +53,7 @@
   - block:
     - name: Add another vrf to filter
       nxos_snmp_host: &config1
-        snmp_host: 3.3.3.3
+        snmp_host: 192.0.2.3
         vrf_filter: default
         udp: 222
         state: present 
@@ -70,7 +70,7 @@
 
   - name: remove some configuration
     nxos_snmp_host: &rem1
-      snmp_host: 3.3.3.3
+      snmp_host: 192.0.2.3
       udp: 222
       src_intf: "{{ intname|default(omit) }}"
       vrf: management
@@ -89,7 +89,7 @@
   - block:
     - name: remove some more configuration
       nxos_snmp_host: &rem2
-        snmp_host: 3.3.3.3
+        snmp_host: 192.0.2.3
         udp: 222
         vrf_filter: default
         state: absent

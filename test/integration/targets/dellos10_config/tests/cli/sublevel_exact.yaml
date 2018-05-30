@@ -4,11 +4,11 @@
 - name: setup
   dellos10_config:
     lines:
-      - seq 5 permit ip host 1.1.1.1 any count byte
-      - seq 10 permit ip host 2.2.2.2 any count byte
-      - seq 15 permit ip host 3.3.3.3 any count byte 
-      - seq 20 permit ip host 4.4.4.4 any count byte
-      - seq 25 permit ip host 5.5.5.5 any count byte
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+      - seq 20 permit ip host 192.0.2.4 any count byte
+      - seq 25 permit ip host 192.0.2.5 any count byte
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     after: ['exit']
@@ -18,10 +18,10 @@
 - name: configure sub level command using exact match
   dellos10_config:
     lines:
-      - seq 5 permit ip host 1.1.1.1 any count byte
-      - seq 10 permit ip host 2.2.2.2 any count byte
-      - seq 15 permit ip host 3.3.3.3 any count byte 
-      - seq 20 permit ip host 4.4.4.4 any count byte
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+      - seq 20 permit ip host 192.0.2.4 any count byte
     parents: ['ip access-list test']
     after: ['exit']
     match: exact
@@ -32,20 +32,20 @@
     that:
       - "result.changed == true"
       - "'ip access-list test' in result.updates"
-      - "'seq 5 permit ip host 1.1.1.1 any count byte' in result.updates"
-      - "'seq 10 permit ip host 2.2.2.2 any count byte' in result.updates"
-      - "'seq 15 permit ip host 3.3.3.3 any count byte' in result.updates"
-      - "'seq 20 permit ip host 4.4.4.4 any count byte' in result.updates"
-      - "'seq 25 permit ip host 5.5.5.5 any count byte' not in result.updates"
+      - "'seq 5 permit ip host 192.0.2.1 any count byte' in result.updates"
+      - "'seq 10 permit ip host 192.0.2.2 any count byte' in result.updates"
+      - "'seq 15 permit ip host 192.0.2.3 any count byte' in result.updates"
+      - "'seq 20 permit ip host 192.0.2.4 any count byte' in result.updates"
+      - "'seq 25 permit ip host 192.0.2.5 any count byte' not in result.updates"
 
 - name: check sub level command using exact match
   dellos10_config:
     lines:
-      - seq 5 permit ip host 1.1.1.1 any count byte
-      - seq 10 permit ip host 2.2.2.2 any count byte
-      - seq 15 permit ip host 3.3.3.3 any count byte 
-      - seq 20 permit ip host 4.4.4.4 any count byte
-      - seq 25 permit ip host 5.5.5.5 any count byte
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+      - seq 20 permit ip host 192.0.2.4 any count byte
+      - seq 25 permit ip host 192.0.2.5 any count byte
     parents: ['ip access-list test']
     after: ['exit']
     match: exact

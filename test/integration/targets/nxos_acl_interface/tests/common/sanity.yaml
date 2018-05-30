@@ -37,7 +37,7 @@
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     dest: any
 
 - block:
