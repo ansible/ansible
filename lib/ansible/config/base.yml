@@ -970,6 +970,10 @@ DEFAULT_SQUASH_ACTIONS:
   - {key: squash_actions, section: defaults}
   type: list
   version_added: "2.0"
+  deprecated:
+    why: Loop squashing is deprecated and this configuration will no longer be used
+    version: "2.11"
+    alternatives: a list directly with the module argument
 DEFAULT_SSH_TRANSFER_METHOD:
   # TODO: move to ssh plugin
   default:
