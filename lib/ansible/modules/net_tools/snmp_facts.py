@@ -395,7 +395,7 @@ def main():
             if v.ifMtu in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['mtu'] = current_val
-            if v.ifMtu in current_oid:
+            if v.ifSpeed in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['speed'] = current_val
             if v.ifPhysAddress in current_oid:
