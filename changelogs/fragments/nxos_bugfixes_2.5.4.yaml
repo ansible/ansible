@@ -1,0 +1,8 @@
+bugfixes:
+- Fix legacy Nexus 3k integration test and module issues (https://github.com/ansible/ansible/pull/40322).
+- Skip N35 and N3L platforms for nxos_evpn_global test (https://github.com/ansible/ansible/pull/40333).
+- Add normalize_interface in module_utils and fix nxos_l3_interface module (https://github.com/ansible/ansible/pull/40598).
+- Fix nxos_interface Disable switchport for loopback/svi (https://github.com/ansible/ansible/pull/40314).
+- fixes bug with matching nxos prompts (https://github.com/ansible/ansible/pull/40655).
+- fix nxos_vrf and migrate get_interface_type to module_utils (https://github.com/ansible/ansible/pull/40825).
+- Fix nxos_vlan vlan creation failure (https://github.com/ansible/ansible/pull/40822).
