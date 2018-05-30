@@ -1,3 +1,5 @@
+.. _playbooks_conditionals:
+
 Conditionals
 ============
 
@@ -132,7 +134,7 @@ If you need to skip the whole task depending on the loop variable being defined,
 If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          loop: "{{ lookup('dict', mydict|default({})) }}"
+          loop: "{{ query('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -140,7 +142,7 @@ If using a dict in a loop::
 Loading in Custom Facts
 ```````````````````````
 
-It's also easy to provide your own facts if you want, which is covered in :doc:`dev_guide/developing_modules`.  To run them, just
+It's also easy to provide your own facts if you want, which is covered in :ref:`developing_modules`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
 
@@ -167,7 +169,8 @@ Or with a role::
 
     - hosts: webservers
       roles:
-         - { role: debian_stock_config, when: ansible_os_family == 'Debian' }
+         - role: debian_stock_config
+           when: ansible_os_family == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
@@ -248,7 +251,7 @@ The following example shows how to template out a configuration file that was ve
       template:
           src: "{{ item }}"
           dest: /etc/myapp/foo.conf
-      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      loop: "{{ query('first_found', { 'files': myfiles, 'paths': mypaths}) }}"
       vars:
         myfiles:
           - "{{ansible_distribution}}.conf"
@@ -318,7 +321,7 @@ You may check the registered variable's string contents for emptiness::
 Commonly Used Facts
 ```````````````````
 
-The following Facts (see :ref:`_vars_and_facts`) are frequently used in Conditionals - see above for examples.
+The following Facts are frequently used in Conditionals - see above for examples.
 
 .. _ansible_distribution:
 
@@ -381,13 +384,13 @@ Possible values::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -28,7 +28,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION = '2.4'
+VERSION = '2.6'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -183,7 +183,7 @@ html_copy_source = False
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-# html_use_opensearch = ''
+html_use_opensearch = 'https://docs.ansible.com/ansible/latest/'
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 # html_file_suffix = ''

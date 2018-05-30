@@ -33,7 +33,7 @@ class AnsibleDocTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open('test/sanity/ansible-doc/skip.txt', 'r') as skip_fd:
             skip_modules = set(skip_fd.read().splitlines())

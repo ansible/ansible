@@ -20,7 +20,7 @@ PEP 8 and basic style checks
   * [PEP 8](https://www.python.org/dev/peps/pep-0008/) is a great Python style guide, which you should read.
   * PEP 8 must not be strictly followed in all aspects, but most of it is good advice.
   * The line is limited to 160 characters.
-  * To run checks for things we care about, use [ansible-test](http://docs.ansible.com/ansible/dev_guide/testing_pep8.html#running-locally).
+  * To run checks for things we care about, use [ansible-test](https://docs.ansible.com/ansible/dev_guide/testing_pep8.html#running-locally).
   * Similarly, additional checks can be made with "make pyflakes".
   * There is no need to submit code changes for PEP 8 and pyflakes fixes, as these break attribution history.  Project leadership will make these periodically.
   * Do not submit pull requests that simply adjust whitespace in the code.
@@ -290,9 +290,9 @@ In particular, metaclasses are probably not appropriate, however entertaining th
 Git Practices
 =============
 
-Pull requests cannot be accepted that contain merge commits.
+Pull requests cannot be accepted if they contain merge commits.
 
-Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge".
+Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge". See [rebasing a pull request](https://docs.ansible.com/ansible/latest/dev_guide/developing_rebasing.html) for more information.
 
 Always create a new branch for each pull request to avoid intermingling different features or fixes on the same branch.
 

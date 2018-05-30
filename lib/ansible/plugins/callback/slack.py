@@ -152,7 +152,7 @@ class CallbackModule(CallbackBase):
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self.get_options('remote_user'))
+            title.append('by *%s*' % self.get_option('remote_user'))
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]

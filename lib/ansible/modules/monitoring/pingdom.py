@@ -29,37 +29,23 @@ options:
         description:
             - Define whether or not the check should be running or paused.
         required: true
-        default: null
         choices: [ "running", "paused" ]
-        aliases: []
     checkid:
         description:
             - Pingdom ID of the check.
         required: true
-        default: null
-        choices: []
-        aliases: []
     uid:
         description:
             - Pingdom user ID.
         required: true
-        default: null
-        choices: []
-        aliases: []
     passwd:
         description:
             - Pingdom user password.
         required: true
-        default: null
-        choices: []
-        aliases: []
     key:
         description:
             - Pingdom API key.
         required: true
-        default: null
-        choices: []
-        aliases: []
 notes:
     - This module does not yet have support to add/remove checks.
 '''

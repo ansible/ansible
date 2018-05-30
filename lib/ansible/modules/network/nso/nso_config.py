@@ -37,7 +37,8 @@ description:
   - This module provides support for managing configuration in Cisco NSO and
     can also ensure services are in sync.
 requirements:
-  - Cisco NSO version 4.4.3 or higher.
+  - Cisco NSO version 3.4.12 or higher, 4.2.7 or higher,
+    4.3.8 or higher, 4.4.3 or higher, 4.5 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   data:
@@ -144,6 +145,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class NsoConfig(object):
+    REQUIRED_VERSIONS = [
+        (4, 5),
+        (4, 4, 3),
+        (4, 3, 8),
+        (4, 2, 7),
+        (3, 4, 12)
+    ]
+
     def __init__(self, check_mode, client, data):
         self._check_mode = check_mode
         self._client = client
@@ -257,7 +266,7 @@ def main():
     client = connect(p)
     nso_config = NsoConfig(module.check_mode, client, p['data'])
     try:
-        verify_version(client)
+        verify_version(client, NsoConfig.REQUIRED_VERSIONS)
 
         changes, diffs = nso_config.main()
         client.logout()

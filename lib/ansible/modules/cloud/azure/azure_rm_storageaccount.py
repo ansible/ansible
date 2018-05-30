@@ -31,29 +31,23 @@ options:
     name:
         description:
             - Name of the storage account to update or create.
-        required: false
-        default: null
     state:
         description:
             - Assert the state of the storage account. Use 'present' to create or update a storage account and
               'absent' to delete an account.
         default: present
-        required: false
         choices:
             - absent
             - present
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
         default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
               accounts cannot be changed to other account types, and other account types cannot be changed to
               Standard_ZRS or Premium_LRS."
-        required: false
-        default: null
         choices:
             - Premium_LRS
             - Standard_GRS
@@ -68,12 +62,9 @@ options:
               keys where 'name' is the CNAME source. Only one custom domain is supported per storage account at this
               time. To clear the existing custom domain, use an empty string for the custom domain name property.
             - Can be added to an existing storage account. Will be ignored during storage account creation.
-        required: false
-        default: null
     kind:
         description:
             - The 'kind' of storage.
-        required: false
         default: 'Storage'
         choices:
             - Storage
@@ -82,7 +73,6 @@ options:
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        required: false
         default: 'Storage'
         choices:
             - Hot
@@ -157,7 +147,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -177,8 +167,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in self.storage_models.SkuName:
-            self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+        if HAS_AZURE:
+            for key in self.storage_models.SkuName:
+                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,

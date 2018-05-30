@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     inventory: yaml
     version_added: "2.4"
-    short_description: Uses a specifically YAML file as inventory source.
+    short_description: Uses a specific YAML file as an inventory source.
     description:
         - "YAML based inventory, starts with the 'all' group and has hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
@@ -91,7 +91,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         try:
-            data = self.loader.load_from_file(path)
+            data = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(e)
 

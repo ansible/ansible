@@ -321,6 +321,18 @@ COMMAND_WARNINGS:
   - {key: command_warnings, section: defaults}
   type: boolean
   version_added: "1.8"
+LOCALHOST_WARNING:
+  name: Warning when using implicit inventory with only localhost
+  default: True
+  description:
+    - By default Ansible will issue a warning when there are no hosts in the
+      inventory.
+    - These warnings can be silenced by adjusting this setting to False. 
+  env: [{name: ANSIBLE_LOCALHOST_WARNING}]
+  ini:
+  - {key: localhost_warning, section: defaults}
+  type: boolean
+  version_added: "2.6"
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
@@ -493,7 +505,11 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
 DEFAULT_DEBUG:
   name: Debug mode
   default: False
-  description: Toggles debug output in Ansible, VERY verbose and can hinder multiprocessing.
+  description:
+    - "Toggles debug output in Ansible. This is *very* verbose and can hinder
+      multiprocessing.  Debug output can also include secret information
+      despite no_log settings being enabled, which means debug mode should not be used in 
+      production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
   - {key: debug, section: defaults}
@@ -619,7 +635,7 @@ DEFAULT_HASH_BEHAVIOUR:
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
-  description: Colon separated list of Ansible inventory sources
+  description: Comma separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_HOSTS
       deprecated:
@@ -738,7 +754,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
 DEFAULT_MANAGED_STR:
   name: Ansible managed
   default: 'Ansible managed'
-  description: Sets the macro for the 'ansible_managed' variable available for M(template) tasks.
+  description: Sets the macro for the 'ansible_managed' variable available for M(template) and M(win_template) modules.  This is only relevant for those two modules.
   env: []
   ini:
   - {key: ansible_managed, section: defaults}
@@ -1473,7 +1489,7 @@ PLUGIN_FILTERS_CFG:
   version_added: "2.5.0"
   description:
     - "A path to configuration for filtering which plugins installed on the system are allowed to be used."
-    - "See :doc:`plugin_filtering_config` for details of the filter file's format."
+    - "See :ref:`plugin_filtering_config` for details of the filter file's format."
     - " The default is /etc/ansible/plugin_filters.yml"
   ini:
   - key: plugin_filters_cfg

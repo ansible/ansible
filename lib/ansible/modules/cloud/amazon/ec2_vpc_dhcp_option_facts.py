@@ -25,14 +25,10 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
-    required: false
-    default: null
   dhcp_options_ids:
     description:
       - Get details of specific DHCP Option ID
       - Provide this value as a list
-    required: false
-    default: None
     aliases: ['DhcpOptionIds']
 extends_documentation_fragment:
     - aws
@@ -130,6 +126,10 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_vpc_dhcp_options_facts':
+        module.deprecate("The 'ec2_vpc_dhcp_options_facts' module has been renamed "
+                         "'ec2_vpc_dhcp_option_facts' (option is no longer plural)",
+                         version=2.8)
 
     # Validate Requirements
     if not HAS_BOTO3:

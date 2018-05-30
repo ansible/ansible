@@ -30,127 +30,108 @@ options:
   package:
     description:
       - Package atom or set, e.g. C(sys-apps/foo) or C(>foo-2.13) or C(@world)
-    required: false
-    default: null
 
   state:
     description:
       - State of the package atom
-    required: false
     default: "present"
     choices: [ "present", "installed", "emerged", "absent", "removed", "unmerged", "latest" ]
 
   update:
     description:
       - Update packages to the best version available (--update)
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   deep:
     description:
       - Consider the entire dependency tree of packages (--deep)
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   newuse:
     description:
       - Include installed packages where USE flags have changed (--newuse)
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   changed_use:
     description:
       - Include installed packages where USE flags have changed, except when
       - flags that the user has not enabled are added or removed
       - (--changed-use)
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: 1.8
 
   oneshot:
     description:
       - Do not add the packages to the world file (--oneshot)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   noreplace:
     description:
       - Do not re-emerge installed packages (--noreplace)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   nodeps:
     description:
       - Only merge packages but not their dependencies (--nodeps)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   onlydeps:
     description:
       - Only merge packages' dependencies but not the packages (--onlydeps)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   depclean:
     description:
       - Remove packages not needed by explicitly merged packages (--depclean)
       - If no package is specified, clean up the world's dependencies
       - Otherwise, --depclean serves as a dependency aware version of --unmerge
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   quiet:
     description:
       - Run emerge in quiet mode (--quiet)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   verbose:
     description:
       - Run emerge in verbose mode (--verbose)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   sync:
     description:
       - Sync package repositories first
       - If yes, perform "emerge --sync"
       - If web, perform "emerge-webrsync"
-    required: false
-    default: null
     choices: [ "web", "yes", "no" ]
 
   getbinpkg:
     description:
       - Prefer packages specified at PORTAGE_BINHOST in make.conf
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   usepkgonly:
     description:
       - Merge only binaries (no compiling). This sets getbinpkg=yes.
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
   keepgoing:
     description:
       - Continue as much as possible after an error.
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: 2.3
 
   jobs:
@@ -158,8 +139,6 @@ options:
       - Specifies the number of packages to build simultaneously.
       - "Since version 2.6: Value of 0 or False resets any previously added"
       - --jobs setting values
-    required: false
-    default: None
     version_added: 2.3
 
   loadavg:
@@ -168,16 +147,30 @@ options:
       - other builds running and the load average is at least LOAD
       - "Since version 2.6: Value of 0 or False resets any previously added"
       - --load-average setting values
-    required: false
-    default: None
     version_added: 2.3
+
+  quietbuild:
+    description:
+      - Redirect all build output to logs alone, and do not display it
+      - on stdout (--quiet-build)
+    type: bool
+    default: 'no'
+    version_added: 2.6
+
+  quietfail:
+    description:
+      - Suppresses display of the build log on stdout (--quiet-fail)
+      - Only the die message and the path of the build log will be
+      - displayed on stdout.
+    type: bool
+    default: 'no'
+    version_added: 2.6
 
 requirements: [ gentoolkit ]
 author:
     - "William L Thomson Jr (@wltjr)"
     - "Yap Sok Ann (@sayap)"
     - "Andrew Udvare"
-notes:  []
 '''
 
 EXAMPLES = '''
@@ -320,6 +313,8 @@ def emerge_packages(module, packages):
         'usepkgonly': '--usepkgonly',
         'usepkg': '--usepkg',
         'keepgoing': '--keep-going',
+        'quietbuild': '--quiet-build',
+        'quietfail': '--quiet-fail',
     }
     for flag, arg in emerge_flags.items():
         if p[flag]:
@@ -490,9 +485,16 @@ def main():
             keepgoing=dict(default=False, type='bool'),
             jobs=dict(default=None, type='int'),
             loadavg=dict(default=None, type='float'),
+            quietbuild=dict(default=False, type='bool'),
+            quietfail=dict(default=False, type='bool'),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
-        mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
+        mutually_exclusive=[
+            ['nodeps', 'onlydeps'],
+            ['quiet', 'verbose'],
+            ['quietbuild', 'verbose'],
+            ['quietfail', 'verbose'],
+        ],
         supports_check_mode=True,
     )
 

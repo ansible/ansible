@@ -33,12 +33,10 @@ options:
     description:
       - The directory name from which the variables should be loaded.
       - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
-    default: null
   name:
     version_added: "2.2"
     description:
       - The name of a variable into which assign the included vars. If omitted (null) they will be made top level vars.
-    default: null
   depth:
     version_added: "2.2"
     description:
@@ -49,18 +47,15 @@ options:
     version_added: "2.2"
     description:
       - Limit the files that are loaded within any directory to this regular expression.
-    default: null
   ignore_files:
     version_added: "2.2"
     description:
       - List of file names to ignore.
-    default: null
   extensions:
     version_added: "2.3"
     description:
       - List of file extensions to read when using C(dir).
     default: [yaml, yml, json]
-    required: False
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.

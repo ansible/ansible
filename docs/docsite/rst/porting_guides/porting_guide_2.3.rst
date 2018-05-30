@@ -26,7 +26,7 @@ In Ansible 2.2 (and possibly earlier) the `async:` keyword could not be used in 
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: yaml
+.. code-block:: guess
 
     - name: Install nginx asynchronously
       service:
@@ -43,7 +43,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **OLD** In Ansible 2.2 (and earlier)
 
 
-.. code-block:: yaml
+.. code-block:: guess
 
     "ansible_distribution": "OpenBSD"
     "ansible_distribution_release": "6.0",
@@ -52,7 +52,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: yaml
+.. code-block:: guess
 
     "ansible_distribution": "OpenBSD",
     "ansible_distribution_release": "release",
@@ -68,7 +68,7 @@ Blocks can now have names, this allows you to avoid the ugly `# this block is fo
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: yaml
+.. code-block:: guess
 
     - name: Block test case
       hosts: localhost
@@ -118,15 +118,15 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.5. Please update your playbooks accordingly.
 
-* :ref:`ec2_vpc <ec2_vpc>`
-* :ref:`cl_bond <cl_bond>`
-* :ref:`cl_bridge <cl_bridge>`
-* :ref:`cl_img_install <cl_img_install>`
-* :ref:`cl_interface <cl_interface>`
-* :ref:`cl_interface_policy <cl_interface_policy>`
-* :ref:`cl_license <cl_license>`
-* :ref:`cl_ports <cl_ports>`
-* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>` instead
+* :ref:`ec2_vpc <ec2_vpc_module>`
+* :ref:`cl_bond <cl_bond_module>`
+* :ref:`cl_bridge <cl_bridge_module>`
+* :ref:`cl_img_install <cl_img_install_module>`
+* :ref:`cl_interface <cl_interface_module>`
+* :ref:`cl_interface_policy <cl_interface_policy_module>`
+* :ref:`cl_license <cl_license_module>`
+* :ref:`cl_ports <cl_ports_module>`
+* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>` instead
 
 Noteworthy module changes
 -------------------------
@@ -176,7 +176,7 @@ Deprecation of top-level connection arguments
 
 **OLD** In Ansible 2.2:
 
-.. code-block:: yaml
+.. code-block:: guess
 
     - name: example of using top-level options for connection properties
       ios_command:
@@ -189,7 +189,7 @@ Deprecation of top-level connection arguments
 
 Will result in:
 
-.. code-block:: yaml
+.. code-block:: guess
 
    [WARNING]: argument username has been deprecated and will be removed in a future version
    [WARNING]: argument host has been deprecated and will be removed in a future version
@@ -199,7 +199,7 @@ Will result in:
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: yaml
+.. code-block:: guess
 
    - name: Gather facts
      eos_facts:

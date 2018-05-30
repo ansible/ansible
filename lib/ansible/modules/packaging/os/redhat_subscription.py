@@ -33,83 +33,63 @@ options:
     state:
         description:
           - whether to register and subscribe (C(present)), or unregister (C(absent)) a system
-        required: false
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
             - access.redhat.com or Sat6  username
-        required: False
-        default: null
     password:
         description:
             - access.redhat.com or Sat6 password
-        required: False
-        default: null
     server_hostname:
         description:
             - Specify an alternative Red Hat Subscription Management or Sat6 server
-        required: False
     server_insecure:
         description:
             - Enable or disable https server certificate verification when connecting to C(server_hostname)
-        required: False
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
-        required: False
     server_proxy_hostname:
         description:
             - Specify a HTTP proxy hostname
-        required: False
         version_added: "2.4"
     server_proxy_port:
         description:
             - Specify a HTTP proxy port
-        required: False
         version_added: "2.4"
     server_proxy_user:
         description:
             - Specify a user for HTTP proxy with basic authentication
-        required: False
         version_added: "2.4"
     server_proxy_password:
         description:
             - Specify a password for HTTP proxy with basic authentication
-        required: False
         version_added: "2.4"
     auto_attach:
         description:
             - Upon successful registration, auto-consume available subscriptions
-            - Added in favor of depracated autosubscribe in 2.5.
-        required: False
-        default: False
+            - Added in favor of deprecated autosubscribe in 2.5.
         type: bool
+        default: 'no'
         version_added: "2.5"
         aliases: [autosubscribe]
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     org_id:
         description:
             - Organization ID to use in conjunction with activationkey
-        required: False
-        default: null
         version_added: "2.0"
     environment:
         description:
             - Register with a specific environment in the destination org. Used with Red Hat Satellite 6.x or Katello
-        required: False
-        default: null
         version_added: "2.2"
     pool:
         description:
             - |
               Specify a subscription pool name to consume.  Regular expressions accepted. Use I(pool_ids) instead if
               possible, as it is much faster. Mutually exclusive with I(pool_ids).
-        required: False
         default: '^$'
     pool_ids:
         description:
@@ -124,14 +104,10 @@ options:
     consumer_type:
         description:
             - The type of unit to register, defaults to system
-        required: False
-        default: null
         version_added: "2.1"
     consumer_name:
         description:
             - Name of the system to register, defaults to the hostname
-        required: False
-        default: null
         version_added: "2.1"
     consumer_id:
         description:
@@ -140,14 +116,12 @@ options:
               for this system. If the  system's identity certificate is lost or corrupted,
               this option allows it to resume using its previous identity and subscriptions.
               The default is to not specify a consumer ID so a new ID is created.
-        required: False
-        default: null
         version_added: "2.1"
     force_register:
         description:
             -  Register the system even if it is already registered
-        required: False
-        default: False
+        type: bool
+        default: 'no'
         version_added: "2.2"
 '''
 
@@ -648,7 +622,8 @@ def main():
                               required=False),
             auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
             activationkey=dict(default=None,
-                               required=False),
+                               required=False,
+                               no_log=True),
             org_id=dict(default=None,
                         required=False),
             environment=dict(default=None,

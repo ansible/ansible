@@ -1,4 +1,6 @@
+.. _intro_inventory:
 .. _inventory:
+
 
 Working with Inventory
 ======================
@@ -11,7 +13,7 @@ which defaults to being saved in the location ``/etc/ansible/hosts``.
 You can specify a different inventory file using the ``-i <path>`` option on the command line.
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
-pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :doc:`intro_dynamic_inventory`.
+pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
 .. _inventoryformat:
@@ -22,7 +24,7 @@ Hosts and Groups
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
 For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this:
 
-.. code-block:: ini
+.. code-block:: guess
 
     mail.example.com
 
@@ -65,7 +67,7 @@ Ports listed in your SSH config file won't be used with the `paramiko` connectio
 
 To make things explicit, it is suggested that you set them if things are not running on the default port:
 
-.. code-block:: ini
+.. code-block:: guess
 
     badwolf.example.com:5309
 
@@ -74,7 +76,7 @@ You can also describe hosts via variables:
 
 In INI:
 
-.. code-block:: ini
+.. code-block:: guess
 
     jumper ansible_port=5555 ansible_host=192.0.2.50
 
@@ -98,24 +100,21 @@ Generally speaking, this is not the best way to define variables that describe y
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
-.. code-block:: ini
+.. code-block:: guess
 
     [webservers]
     www[01:50].example.com
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
 
-.. code-block:: ini
+.. code-block:: guess
 
     [databases]
     db-[a:f].example.com
 
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
-
 You can also select the connection type and user on a per host basis:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [targets]
 
@@ -132,7 +131,7 @@ Host Variables
 
 As described above, it is easy to assign variables to hosts that will be used later in playbooks:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
@@ -147,7 +146,7 @@ Variables can also be applied to an entire group at once:
 
 The INI way:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1
@@ -180,7 +179,7 @@ It is also possible to make groups of groups using the ``:children`` suffix in I
 You can apply variables using ``:vars`` or ``vars:``:
 
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1
@@ -259,7 +258,7 @@ The preferred practice in Ansible is to not store variables in the main inventor
 In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
 
 These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
-See :doc:`YAMLSyntax` if you are new to YAML.
+See :ref:`yaml_syntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
@@ -305,7 +304,7 @@ is an excellent way to track changes to your inventory and host variables.
 How Variables Are Merged
 ++++++++++++++++++++++++
 
-By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really surive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see the `hash_merge` setting to change this) . The order/precedence is (from lowest to highest):
+By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see the `hash_merge` setting to change this) . The order/precedence is (from lowest to highest):
 
 - all group (because it is the 'parent' of all other groups)
 - parent group
@@ -339,9 +338,6 @@ Host connection:
 
 ansible_connection
     Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
-
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 General for all connections:
 
@@ -392,21 +388,30 @@ ansible_become_flags
 
 Remote host environment parameters:
 
+.. _ansible_shell_type:
+
 ansible_shell_type
-    The shell type of the target system. You should not use this setting unless you have set the ``ansible_shell_executable`` to a non-Bourne (sh) compatible shell.
-    By default commands are formatted using ``sh``-style syntax.
-    Setting this to ``csh`` or ``fish`` will cause commands executed on target systems to follow those shell's syntax instead.
+    The shell type of the target system. You should not use this setting unless you have set the
+    :ref:`ansible_shell_executable<ansible_shell_executable>` to a non-Bourne (sh) compatible shell.  By default commands are
+    formatted using ``sh``-style syntax.  Setting this to ``csh`` or ``fish`` will cause commands
+    executed on target systems to follow those shell's syntax instead.
+
+.. _ansible_python_interpreter:
+
 ansible_python_interpreter
     The target host python path. This is useful for systems with more
     than one Python or not located at :command:`/usr/bin/python` such as \*BSD, or where :command:`/usr/bin/python`
     is not a 2.X series Python.  We do not use the :command:`/usr/bin/env` mechanism as that requires the remote user's
     path to be set right and also assumes the :program:`python` executable is named python, where the executable might
     be named something like :program:`python2.6`.
+
 ansible_*_interpreter
-    Works for anything such as ruby or perl and works just like ``ansible_python_interpreter``.
+    Works for anything such as ruby or perl and works just like :ref:`ansible_python_interpreter<ansible_python_interpreter>`.
     This replaces shebang of modules which will run on that host.
 
 .. versionadded:: 2.1
+
+.. _ansible_shell_executable:
 
 ansible_shell_executable
     This sets the shell the ansible controller will use on the target machine,
@@ -473,11 +478,11 @@ Here is an example of how to instantly deploy to created containers::
 
 .. seealso::
 
-   :doc:`intro_dynamic_inventory`
+   :ref:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning Ansible's configuration, deployment, and orchestration language.
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -39,39 +39,25 @@ options:
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
-    required: false
-    default: null
   message_retention_period:
     description:
       - The message retention period in seconds.
-    required: false
-    default: null
   maximum_message_size:
     description:
       - The maximum message size in bytes.
-    required: false
-    default: null
   delivery_delay:
     description:
       - The delivery delay in seconds.
-    required: false
-    default: null
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
-    required: false
-    default: null
   policy:
     description:
       - The json dict policy to attach to queue
-    required: false
-    default: null
     version_added: "2.1"
   redrive_policy:
     description:
       - json dict with the redrive_policy (see example)
-    required: false
-    default: null
     version_added: "2.2"
 extends_documentation_fragment:
     - aws

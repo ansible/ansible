@@ -1,0 +1,6 @@
+- name: >-
+    verify that multiple level of nested statements and
+    include+meta doesnt mess included files mecanisms
+  hosts: testhost
+  tasks:
+    - include_tasks: ./tasks/nested/nested.yml

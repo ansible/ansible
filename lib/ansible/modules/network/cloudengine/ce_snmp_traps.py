@@ -33,8 +33,6 @@ options:
     feature_name:
         description:
             - Alarm feature name.
-        required: false
-        default: null
         choices: ['aaa', 'arp', 'bfd', 'bgp', 'cfg', 'configuration', 'dad', 'devm',
                  'dhcpsnp', 'dldp', 'driver', 'efm', 'erps', 'error-down', 'fcoe',
                  'fei', 'fei_comm', 'fm', 'ifnet', 'info', 'ipsg', 'ipv6', 'isis',
@@ -47,25 +45,17 @@ options:
     trap_name:
         description:
             - Alarm trap name.
-        required: false
-        default: null
     interface_type:
         description:
             - Interface type.
-        required: false
-        default: null
         choices: ['Ethernet', 'Eth-Trunk', 'Tunnel', 'NULL', 'LoopBack', 'Vlanif', '100GE',
                  '40GE', 'MTunnel', '10GE', 'GE', 'MEth', 'Vbdif', 'Nve']
     interface_number:
         description:
             - Interface number.
-        required: false
-        default: null
     port_number:
         description:
             - Source port number.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''

@@ -207,7 +207,7 @@ def find_and_update_rule(client, module, rule_id):
     }
     if changed:
         try:
-            run_func_with_change_token_backoff(client, module, update, client.update_rule)
+            run_func_with_change_token_backoff(client, module, update, client.update_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
@@ -282,7 +282,7 @@ def ensure_rule_absent(client, module):
     if rule_id:
         remove_rule_conditions(client, module, rule_id)
         try:
-            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule)
+            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete rule')
     return False, {}

@@ -18,8 +18,7 @@ options:
   port:
     description:
     - Port number to be used for REST connection.
-    type: int
-    default: 443 (for https), 80 (for http)
+    - The default value depends on parameter `use_ssl`.
   username:
     description:
     - The username to use for authentication.
@@ -41,7 +40,6 @@ options:
     description:
     - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
     - It defaults to the C(private_key) basename, without extension.
-    default: private_key basename
     aliases: [ cert_name ]
   output_level:
     description:

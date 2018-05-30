@@ -61,7 +61,7 @@ The following example shows host vars configured for basic authentication::
 Basic authentication is not enabled by default on a Windows host but can be
 enabled by running the following in PowerShell:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
@@ -80,7 +80,7 @@ The following example shows host vars configured for certificate authentication:
 Certificate authentication is not enabled by default on a Windows host but can
 be enabled by running the following in PowerShell:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
@@ -128,7 +128,7 @@ To generate a certificate with ``OpenSSL``:
 
 To generate a certificate with ``New-SelfSignedCertificate``:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # set the name of the local user that will have the key mapped
     $username = "username"
@@ -168,7 +168,7 @@ both the issuing certificate and public key are the same.
 
 Following example shows how to import the issuing certificate:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("cert.pem")
@@ -186,7 +186,7 @@ Following example shows how to import the issuing certificate:
 
 The code to import the client certificate public key is:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("cert.pem")
@@ -205,7 +205,7 @@ Once the certificate has been imported, it needs to be mapped to the local user 
 
 This can be done with the following PowerShell command:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $username = "username"
     $password = ConvertTo-SecureString -String "password" -AsPlainText -Force
@@ -454,7 +454,7 @@ There are some extra host variables that can be set as shown below::
 CredSSP authentication is not enabled by default on a Windows host, but can
 be enabled by running the following in PowerShell:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     Enable-WSManCredSSP -Role Server -Force
 
@@ -489,7 +489,7 @@ needs to be installed.
 Once the update has been applied and the Windows host rebooted, run the following
 PowerShell commands to enable TLS 1.2:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProvider\SCHANNEL\Protocols\TLS 1.2"
     New-Item -Path $reg_path
@@ -512,7 +512,7 @@ another certificate.
 
 To explicitly set the certificate to use for CredSSP:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # note the value $certificate_thumbprint will be different in each
     # situation, this needs to be set based on the cert that is used.
@@ -526,7 +526,7 @@ Non-Administrator Accounts
 WinRM is configured by default to only allow connections from accounts in the local
 ``Administrators`` group. This can be changed by running:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     winrm configSDDL default
 
@@ -562,7 +562,7 @@ should only be used for development and debugging purposes, as anything sent
 from Ansible can viewed by anyone on the network. To disable the encryption
 requirement, run the following from PowerShell on the target host:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 
@@ -767,7 +767,7 @@ Some of these limitations can be mitigated by doing one of the following:
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

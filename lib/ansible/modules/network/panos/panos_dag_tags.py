@@ -33,27 +33,15 @@ description:
 author: "Vinay Venkataraghavan (@vinayvenkat)"
 version_added: "2.5"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is not supported.
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
     api_key:
         description:
             - API key that can be used instead of I(username)/I(password) credentials.
-    username:
-        description:
-            - username for authentication
-        default: "admin"
     description:
         description:
             - The purpose / objective of the static Address Group
@@ -74,6 +62,7 @@ options:
     ip_to_register:
         description:
             - IP that will be registered with the given tag names.
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

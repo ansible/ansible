@@ -45,22 +45,14 @@ def add_mocks(filename):
     pre_sys_modules = list(sys.modules.keys())
 
     module_mock = mock.MagicMock()
-    mocks = []
     for module_class in MODULE_CLASSES:
-        mocks.append(
-            mock.patch('%s.__init__' % module_class, new=module_mock)
-        )
-    for m in mocks:
-        p = m.start()
+        p = mock.patch('%s.__init__' % module_class, new=module_mock).start()
         p.side_effect = AnsibleModuleCallError('AnsibleModuleCallError')
-    mocks.append(
-        mock.patch('ansible.module_utils.basic._load_params').start()
-    )
+    mock.patch('ansible.module_utils.basic._load_params').start()
 
     yield module_mock
 
-    for m in mocks:
-        m.stop()
+    mock.patch.stopall()
 
     # Clean up imports to prevent issues with mutable data being used in modules
     for k in list(sys.modules.keys()):

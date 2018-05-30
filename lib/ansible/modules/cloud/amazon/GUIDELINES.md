@@ -43,6 +43,30 @@ Few other changes are required. One possible issue that you might encounter is t
 does not inherit methods from AnsibleModule by default, but most useful methods
 are included. If you do find an issue, please raise a bug report.
 
+When porting, keep in mind that AnsibleAWSModule also will add the default ec2
+argument spec by default. In pre-port modules, you should see common arguments
+specfied with:
+
+```
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    ))
+    module = AnsibleModule(argument_spec=argument_spec, ...)
+
+# can be replaced with
+def main():
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    )
+    module = AnsibleAWSModule(argument_spec=argument_spec, ...)
+```
+
 ## Bug fixing
 
 Bug fixes to code that relies on boto will still be accepted. When possible, the code should be
@@ -158,7 +182,7 @@ connection = boto3_conn(module, conn_type='client', resource='ec2', region=regio
 
 ### Common Documentation Fragments for Connection Parameters
 
-There are two [common documentation fragments](http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+There are two [common documentation fragments](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
 that should be included into almost all AWS modules:
 
 * `aws` - contains the common boto connection parameters
@@ -299,7 +323,7 @@ catch throttling exceptions to work correctly), you'd need to provide a backoff 
 and then put exception handling around the backoff function.
 
 You can use `exponential_backoff` or `jittered_backoff` strategies - see
-the [cloud module_utils](/tree/devel/lib/ansible/module_utils/cloud.py)
+the [cloud module_utils](/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
@@ -350,6 +374,32 @@ def describe_some_resource(client, module):
         module.fail_json_aws(e, msg="Could not describe resource %s" % name)
 ```
 
+To make use of AWSRetry easier, it can now be wrapped around a client returned
+by `AnsibleAWSModule`. any call from a client. To add retries to a client,
+create a client:
+
+```
+module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+```
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+```
+ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+# equivalent with normal AWSRetry
+@AWSRetry.jittered_backoff(retries=10)
+def describe_instances(client, **kwargs):
+    return ec2.describe_instances(**kwargs)
+
+describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
+```
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
+
 ### Returning Values
 
 When you make a call using boto3, you will probably get back some useful information that you
@@ -385,19 +435,29 @@ argument_spec.update(
 ```
 
 Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore,
-a helper function has been created to order policies before comparison.
+use the `compare_policies` helper function which handles this variance.
+
+`compare_policies` takes two dictionaries, recursively sorts and makes them hashable for comparison
+and returns True if they are different.
 
 ```python
-# Get the policy from AWS
-current_policy = aws_object.get_policy()
+from ansible.module_utils.ec2 import compare_policies
 
-# Compare the user submitted policy to the current policy but sort them first
-if sort_json_policy_dict(user_policy) == sort_json_policy_dict(current_policy):
-    # Nothing to do
-    pass
-else:
+import json
+
+......
+
+# Get the policy from AWS
+current_policy = json.loads(aws_object.get_policy())
+user_policy = json.loads(module.params.get('policy'))
+
+# Compare the user submitted policy to the current policy ignoring order
+if compare_policies(user_policy, current_policy):
     # Update the policy
     aws_object.set_policy(user_policy)
+else:
+    # Nothing to do
+    pass
 ```
 
 ### Dealing with tags
@@ -429,7 +489,7 @@ Ansible format, this function will convert the keys to snake_case.
 keys not to convert (this is usually useful for the `tags` dict, whose child keys should remain with
 case preserved)
 
-Another optional parameter is `reversible`. By default, `HTTPEndpoint` is converted to `http_endpoint`, 
+Another optional parameter is `reversible`. By default, `HTTPEndpoint` is converted to `http_endpoint`,
 which would then be converted by `snake_dict_to_camel_dict` to `HttpEndpoint`.
 Passing `reversible=True` converts HTTPEndpoint to `h_t_t_p_endpoint` which converts back to `HTTPEndpoint`.
 
@@ -472,13 +532,24 @@ Pass this function a list of security group names or combination of security gro
 and this function will return a list of IDs.  You should also pass the VPC ID if known because
 security group names are not necessarily unique across VPCs.
 
+#### compare_policies
+
+Pass two dicts of policies to check if there are any meaningful differences and returns true
+if there are. This recursively sorts the dicts and makes them hashable before comparison.
+
+This method should be used any time policies are being compared so that a change in order
+doesn't result in unnecessary changes.
+
 #### sort_json_policy_dict
 
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is
 useful because AWS rarely return lists in the same order that they were submitted so without this
 function, comparison of identical policies returns false.
 
-### compare_aws_tags
+Note if your goal is to check if two policies are the same you're better to use the `compare_policies`
+helper which sorts recursively.
+
+#### compare_aws_tags
 
 Pass two dicts of tags and an optional purge parameter and this function will return a dict
 containing key pairs you need to modify and a list of tag key names that you need to remove.  Purge
@@ -497,8 +568,8 @@ affect the module are detected. At a minimum this should cover the key API calls
 documented return values are present in the module result.
 
 For general information on running the integration tests see the [Integration Tests page of the
-Module Development Guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
-Particularly the [cloud test configuration section](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+Module Development Guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
 
 The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
 
@@ -508,7 +579,7 @@ available during the test run. Second putting the test in a test group causing i
 continuous integration build.
 
 Tests for new modules should be added to the same group as existing AWS tests. In general just copy
-an existing aliases file such as the [aws_s3 tests aliases file](https://github.com/ansible/ansible/blob/devel/test/integration/targets/aws_s3/aliases).
+an existing aliases file such as the [aws_s3 tests aliases file](/test/integration/targets/aws_s3/aliases).
 
 ### AWS Credentials for Integration Tests
 
@@ -546,7 +617,7 @@ for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2
 
 ### AWS Permissions for Integration Tests
 
-As explained in the [Integration Test guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+As explained in the [Integration Test guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
 there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
 to run the AWS integration test.
 

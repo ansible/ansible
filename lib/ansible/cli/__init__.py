@@ -819,7 +819,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         no_hosts = False
         if len(inventory.list_hosts()) == 0:
             # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
+            if C.LOCALHOST_WARNING:
+                display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
             no_hosts = True
 
         inventory.subset(subset)

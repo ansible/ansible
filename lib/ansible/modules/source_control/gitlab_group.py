@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exists in Gitlab, it will be created.
+   - When the group does not exist in Gitlab, it will be created.
    - When the group does exists and state=absent, the group will be deleted.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
@@ -30,25 +30,18 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
         default: true
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     name:
         description:
             - Name of the group you want to create.
@@ -57,13 +50,10 @@ options:
         description:
             - The path of the group you want to create, this will be server_url/group_path
             - If not supplied, the group_name will be used.
-        required: false
-        default: null
     state:
         description:
             - create or delete group.
             - Possible values are present and absent.
-        required: false
         default: "present"
         choices: ["present", "absent"]
 '''
@@ -209,7 +199,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+            module.exit_json(changed=False, result="Group deleted or does not exist")
         else:
             if group_exists:
                 module.exit_json(changed=False)

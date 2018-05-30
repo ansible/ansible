@@ -29,7 +29,6 @@ options:
         description:
             - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
               (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
-        required: False
         choices:
             - getslave
             - getmaster
@@ -88,8 +87,6 @@ options:
     master_auto_position:
         description:
             - does the host uses GTID based replication or not
-        required: false
-        default: null
         version_added: "2.0"
 
 extends_documentation_fragment: mysql

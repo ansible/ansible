@@ -32,27 +32,18 @@ options:
     vlan_id:
         description:
             - Single VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     vlan_range:
         description:
             - Range of VLANs such as C(2-10) or C(2,5,10-15), etc.
-        required: false
-        default: null
     name:
         description:
             - Name of VLAN, in the range from 1 to 31.
-        required: false
-        default: null
     description:
         description:
             - Specify VLAN description, in the range from 1 to 80.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -294,7 +285,7 @@ class Vlan(object):
 
     def init_module(self):
         """
-        init ansilbe NetworkModule.
+        init ansible NetworkModule.
         """
 
         required_one_of = [["vlan_id", "vlan_range"]]

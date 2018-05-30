@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Raul Melo
@@ -30,25 +30,16 @@ options:
         description:
             - package name.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: 1.4
     state:
         description:
             - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
         required: true
-        default: null
         choices: [ 'present', 'latest', 'absent']
-        aliases: []
         version_added: 1.4
     depot:
         description:
             - The source repository from which install or upgrade a package.
-        required: false
-        default: null
-        choices: []
-        aliases: []
         version_added: 1.4
 '''
 

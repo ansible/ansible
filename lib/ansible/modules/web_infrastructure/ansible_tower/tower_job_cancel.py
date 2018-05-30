@@ -29,7 +29,7 @@ options:
       required: True
     fail_if_not_running:
       description:
-        - Fail loudly if the job_id does not reference a running job.
+        - Fail loudly if the I(job_id) does not reference a running job.
       default: False
 extends_documentation_fragment: tower
 '''

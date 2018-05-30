@@ -44,26 +44,18 @@ options:
   group_list:
     description:
       - Group range for static RP. Valid values are multicast addresses.
-    required: false
-    default: null
   prefix_list:
     description:
       - Prefix list policy for static RP. Valid values are prefix-list
         policy names.
-    required: false
-    default: null
   route_map:
     description:
       - Route map policy for static RP. Valid values are route-map
         policy names.
-    required: false
-    default: null
   bidir:
     description:
       - Group range is treated in PIM bidirectional mode.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   state:
     description:
       - Specify desired state of the resource.

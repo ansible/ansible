@@ -1,0 +1,11 @@
+Section: misc
+Priority: optional
+Standards-Version: 2.3.3
+
+Package: foobar
+Version: 1.0.0
+Section: system
+Depends: foo
+Maintainer: John Doe <john@doe.com>
+Architecture: all
+Description: Dummy package

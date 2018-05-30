@@ -1,3 +1,5 @@
+.. _ansible_faq:
+
 Frequently Asked Questions
 ==========================
 
@@ -17,13 +19,12 @@ Setting environment variables can be done with the `environment` keyword. It can
 
 .. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
 
+.. _faq_setting_users_and_ports:
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Setting inventory variables in the inventory file is the easiest way.
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports:
 
@@ -105,25 +106,103 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python pathing not having a Python 2.X in /usr/bin/python on a remote machine?
+How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-While you can write ansible modules in any language, most ansible modules are written in Python, and some of these
-are important core ones.
+While you can write Ansible modules in any language, most Ansible modules are written in Python,
+including the ones central to letting Ansible work.
 
-By default, Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
-2.6 or higher.
+By default, Ansible assumes it can find a :command:`/usr/bin/python` on your remote system that is
+either Python2, version 2.6 or higher or Python3, 3.5 or higher.
 
-Setting the inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
-used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
-system does not point to a Python 2.X interpreter.
+Setting the inventory variable ``ansible_python_interpreter`` on any host will tell Ansible to
+auto-replace the Python interpreter with that value instead. Thus, you can point to any Python you
+want on the system if :command:`/usr/bin/python` on your system does not point to a compatible
+Python interpreter.
 
-Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
-get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
-support is being worked on but some Ansible modules are not yet ported to run under Python 3.0.  This is not a problem though
-as you can just install Python 2 also on a managed host.
+Some platforms may only have Python 3 installed by default. If it is not installed as
+:command:`/usr/bin/python`, you will need to configure the path to the interpreter via
+``ansible_python_interpreter``. Although most core modules will work with Python 3, there may be some
+special purpose ones which do not or you may encounter a bug in an edge case. As a temporary
+workaround you can install Python 2 on the managed host and configure Ansible to use that Python via
+``ansible_python_interpreter``. If there's no mention in the module's documentation that the module
+requires Python 2, you can also report a bug on our `bug tracker
+<https://github.com/ansible/ansible/issues>`_ so that the incompatibility can be fixed in a future release.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
+
+Common Platform Issues
+++++++++++++++++++++++
+
+Running in a virtualenv
+-----------------------
+
+You can install Ansible into a virtualenv on the controller quite simply:
+
+.. code-block:: shell
+
+    $ virtualenv ansible
+    $ source ./ansible/bin/activate
+    $ pip install ansible
+
+If you want to run under Python 3 instead of Python 2 you may want to change that slightly:
+
+.. code-block:: shell
+
+    $ virtualenv ansible
+    $ source ./ansible/bin/activate
+    $ pip3 install ansible
+
+If you need to use any libraries which are not available via pip (for instance, SELinux Python
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
+need to install them into the virtualenv.  There are two methods:
+
+* When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
+  installed in the system's Python:
+
+  .. code-block:: shell
+
+      $ virtualenv ansible --system-site-packages
+
+* Copy those files in manually from the system.  For instance, for SELinux bindings you might do:
+
+  .. code-block:: shell
+
+      $ virtualenv ansible --system-site-packages
+      $ cp -r -v /usr/lib64/python3.*/site-packages/selinux/ ./py3-ansible/lib64/python3.*/site-packages/
+      $ cp -v /usr/lib64/python3.*/site-packages/*selinux*.so ./py3-ansible/lib64/python3.*/site-packages/
+
+
+Running on BSD
+--------------
+
+.. seealso:: :ref:`working_with_bsd`
+
+
+Running on Solaris
+------------------
+
+By default, Solaris 10 and earlier run a non-POSIX shell which does not correctly expand the default
+tmp directory Ansible uses ( :file:`~/.ansible/tmp`). If you see module failures on Solaris machines, this
+is likely the problem. There are several workarounds:
+
+* You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`, and :ref:`Powershell<powershell_shell>`).  For
+  example, in the ansible config file you can set::
+
+    remote_tmp=$HOME/.ansible/tmp
+
+  In Ansible 2.5 and later, you can also set it per-host in inventory like this::
+
+    solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
+
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
+  instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
+  this in inventory like so::
+
+    solaris1 ansible_shell_executable=/usr/xpg4/bin/sh
+
+  (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
+
 
 .. _use_roles:
 

@@ -24,34 +24,23 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
     aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
-    required: false
-    default: null
   template:
     description:
       - Template used to create the database
-    required: false
-    default: null
   encoding:
     description:
       - Encoding of the database
-    required: false
-    default: null
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.
-    required: false
-    default: null
   lc_ctype:
     description:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
-    required: false
-    default: null
   state:
     description: |
         The database state. present implies that the database should be created if necessary.
@@ -61,7 +50,6 @@ options:
         (Added in 2.4) The format of the backup will be detected based on the target name.
         Supported compression formats for dump and restore are: .bz2, .gz, and .xz
         Supported formats for dump and restore are: .sql and .tar
-    required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
   target:

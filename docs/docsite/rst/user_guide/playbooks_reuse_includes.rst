@@ -108,21 +108,21 @@ Please refer to :doc:`playbooks_reuse_roles` for details on including and import
 
 .. seealso::
 
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditionals in playbooks
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Loops in playbooks
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source

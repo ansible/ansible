@@ -33,29 +33,20 @@ options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with given NTP server or peer.
-        required: false
-        default: null
     is_preferred:
         description:
             - Makes given NTP server or peer the preferred NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     vpn_name:
         description:
             - Makes the device communicate with the given
               NTP server or peer over a specific vpn.
-        required: false
         default: '_public_'
     source_int:
         description:
@@ -63,12 +54,9 @@ options:
               Must be fully qualified interface name, i.e. C(40GE1/0/22), C(vlanif10).
               Interface types, such as C(10GE), C(40GE), C(100GE), C(Eth-Trunk), C(LoopBack),
               C(MEth), C(NULL), C(Tunnel), C(Vlanif).
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

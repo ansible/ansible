@@ -38,88 +38,63 @@ options:
     description:
       - Name of the resource instance. Valid value is a string.
         The name 'default' is a valid VRF representing the global OSPF.
-    required: false
     default: default
   ospf:
     description:
       - Name of the OSPF instance.
     required: true
-    default: null
   router_id:
     description:
       - Router Identifier (ID) of the OSPF router VRF instance.
-    required: false
-    default: null
   default_metric:
     description:
       - Specify the default Metric value. Valid values are an integer
         or the keyword 'default'.
-    required: false
-    default: null
   log_adjacency:
     description:
       - Controls the level of log messages generated whenever a
         neighbor changes state. Valid values are 'log', 'detail',
         and 'default'.
-    required: false
     choices: ['log','detail','default']
-    default: null
   timer_throttle_lsa_start:
     description:
       - Specify the start interval for rate-limiting Link-State
         Advertisement (LSA) generation. Valid values are an integer,
         in milliseconds, or the keyword 'default'.
-    required: false
-    default: null
   timer_throttle_lsa_hold:
     description:
       - Specify the hold interval for rate-limiting Link-State
         Advertisement (LSA) generation. Valid values are an integer,
         in milliseconds, or the keyword 'default'.
-    required: false
-    default: null
   timer_throttle_lsa_max:
     description:
       - Specify the max interval for rate-limiting Link-State
         Advertisement (LSA) generation. Valid values are an integer,
         in milliseconds, or the keyword 'default'.
-    required: false
-    default: null
   timer_throttle_spf_start:
     description:
       - Specify initial Shortest Path First (SPF) schedule delay.
         Valid values are an integer, in milliseconds, or
         the keyword 'default'.
-    required: false
-    default: null
   timer_throttle_spf_hold:
     description:
       - Specify minimum hold time between Shortest Path First (SPF)
         calculations. Valid values are an integer, in milliseconds,
         or the keyword 'default'.
-    required: false
-    default: null
   timer_throttle_spf_max:
     description:
       - Specify the maximum wait time between Shortest Path First (SPF)
         calculations. Valid values are an integer, in milliseconds,
         or the keyword 'default'.
-    required: false
-    default: null
   auto_cost:
     description:
       - Specifies the reference bandwidth used to assign OSPF cost.
         Valid values are an integer, in Mbps, or the keyword 'default'.
-    required: false
-    default: null
   passive_interface:
     description:
-      - Setting to true will suppress routing update on interface.
-        Valid values are 'true' and 'false'.
+      - Setting to C(yes) will suppress routing update on interface.
     version_added: "2.4"
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   state:
     description:
       - State of ospf vrf configuration.

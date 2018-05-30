@@ -1,3 +1,5 @@
+.. _appendix_module_utilities:
+
 Appendix: Module Utilities
 ``````````````````````````
 
@@ -48,6 +50,7 @@ The following is a list of module_utils files and a general description. The mod
 - network/iosxr/iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices.
 - network/ironware/ironware.py - Module support utilities for managing Brocade IronWare devices.
 - network/junos/junos.py -  Definitions and helper functions for modules that manage Junos networking devices.
+- network/meraki/meraki.py - Utilities specifically for the Meraki network modules.
 - network/netscaler/netscaler.py - Utilities specifically for the netscaler network modules.
 - network/nso/nso.py - Utilities for modules that work with Cisco NSO.
 - network/nxos/nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices.

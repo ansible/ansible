@@ -1,3 +1,5 @@
+.. _playbooks_reuse:
+
 Creating Reusable Playbooks
 ===========================
 
@@ -67,17 +69,17 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditionals in playbooks
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Loops in playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`galaxy`
+   :ref:`ansible_galaxy`
        How to share roles on galaxy, role management
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source

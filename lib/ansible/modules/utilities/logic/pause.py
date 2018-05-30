@@ -28,25 +28,18 @@ options:
   minutes:
     description:
       - A positive number of minutes to pause for.
-    required: false
-    default: null
   seconds:
     description:
       - A positive number of seconds to pause for.
-    required: false
-    default: null
   prompt:
     description:
       - Optional text to use for the prompt message.
-    required: false
-    default: null
   echo:
     description:
       - Contols whether or not keyboard input is shown when typing.
       - Has no effect if 'seconds' or 'minutes' is set.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 2.5
 author: "Tim Bielawa (@tbielawa)"
 notes:

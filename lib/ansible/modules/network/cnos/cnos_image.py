@@ -55,35 +55,28 @@ options:
              to download the firmware image. The choices are FTP, SFTP, TFTP, or SCP. Any other protocols will
              result in error. If this parameter is not specified, there is no default value to be used.
         required: true
-        default: null
         choices: [SFTP, SCP, FTP, TFTP]
     serverip:
         description:
             - This specifies the IP Address of the remote server from where the software image will be downloaded.
         required: true
-        default: null
     imgpath:
         description:
             - This specifies the full file path of the image located on the remote server. In case the relative path
              is used as the variable value, the root folder for the user of the server needs to be specified.
         required: true
-        default: null
     imgtype:
         description:
             - This specifies the firmware image type to be downloaded
         required: true
-        default: null
         choices: [all, boot, os, onie]
     serverusername:
         description:
             - Specify the username for the server relating to the protocol used.
         required: true
-        default: null
     serverpassword:
         description:
             - Specify the password for the server relating to the protocol used.
-        required: false
-        default: null
 '''
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_image. These are written in the main.yml file of the tasks directory.

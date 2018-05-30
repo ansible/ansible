@@ -37,11 +37,9 @@ options:
       - An URL of the alternative overlays list that defines the overlay to install.
         This list will be fetched and saved under C(${overlay_defs})/${name}.xml), where
         C(overlay_defs) is readed from the Layman's configuration.
-    required: false
   state:
     description:
       - Whether to install (C(present)), sync (C(updated)), or uninstall (C(absent)) the overlay.
-    required: false
     default: present
     choices: [present, absent, updated]
   validate_certs:
@@ -49,9 +47,8 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.  Prior to 1.9.3 the code
         defaulted to C(no).
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: '1.9.3'
 '''
 

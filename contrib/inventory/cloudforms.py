@@ -138,7 +138,7 @@ class CloudFormsInventory(object):
             warnings.warn("No username specified, you need to specify a CloudForms username.")
 
         if config.has_option('cloudforms', 'password'):
-            self.cloudforms_pw = config.get('cloudforms', 'password')
+            self.cloudforms_pw = config.get('cloudforms', 'password', raw=True)
         else:
             self.cloudforms_pw = None
 

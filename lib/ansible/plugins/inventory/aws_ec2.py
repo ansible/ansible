@@ -46,7 +46,7 @@ DOCUMENTATION = '''
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
-              use the syntax tag:Name=Value to use the hostname Name_Value.
+              use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
@@ -56,38 +56,44 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-simple_config_file:
+plugin: aws_ec2
+boto_profile: aws_profile
+regions: # populate inventory with instances in these regions
+  - us-east-1
+  - us-east-2
+filters:
+  # all instances with their `Environment` tag set to `dev`
+  tag:Environment: dev
+  # all dev and QA hosts
+  tag:Environment:
+    - dev
+    - qa
+  instance.group-id: sg-xxxxxxxx
+# ignores 403 errors rather than failing
+strict_permissions: False
+hostnames:
+  - tag:Name=Tag1,Name=Tag2  # return specific hosts only
+  - tag:CustomDNSName
+  - dns-name
 
-    plugin: aws_ec2
-    boto_profile: aws_profile
-    regions: # populate inventory with instances in these regions
-      - us-east-1
-      - us-east-2
-    filters:
-      # all instances with their `Environment` tag set to `dev`
-      tag:Environment: dev
-      # all dev and QA hosts
-      tag:Environment:
-        - dev
-        - qa
-      instance.group-id: sg-xxxxxxxx
-    # ignores 403 errors rather than failing
-    strict_permissions: False
-    hostnames:
-      - tag:Name=Tag1,Name=Tag2
-      - dns-name
-
-    # constructed features may be used to create custom groups
-    strict: False
-    keyed_groups:
-      - prefix: arch
-        key: 'architecture'
-        value: 'x86_64'
-      - prefix: tag
-        key: tags
-        value:
-          "Name": "Test"
-
+# keyed_groups may be used to create custom groups
+strict: False
+keyed_groups:
+  # add e.g. x86_64 hosts to an arch_x86_64 group
+  - prefix: arch
+    key: 'architecture'
+  # add hosts to tag_Name_Value groups for each Name/Value tag pair
+  - prefix: tag
+    key: tags
+  # add hosts to e.g. instance_type_z3_tiny
+  - prefix: instance_type
+    key: instance_type
+  # create security_groups_sg_abcd1234 group for each SG
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+  # create a group for each value of the Application tag
+  - key: tag.Application
+    separator: ''
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -324,11 +330,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             tag_hostnames = tag_hostnames.split(',')
         else:
             tag_hostnames = [tag_hostnames]
+        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
         for v in tag_hostnames:
-            tag_name, tag_value = v.split('=')
-            tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-            if tags.get(tag_name) == tag_value:
-                return to_text(tag_name) + "_" + to_text(tag_value)
+            if '=' in v:
+                tag_name, tag_value = v.split('=')
+                if tags.get(tag_name) == tag_value:
+                    return to_text(tag_name) + "_" + to_text(tag_value)
+            else:
+                tag_value = tags.get(v)
+                if tag_value:
+                    return to_text(tag_value)
         return None
 
     def _get_hostname(self, instance, hostnames):

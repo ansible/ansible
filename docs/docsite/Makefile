@@ -26,7 +26,7 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
-DOC_PLUGINS ?= cache callback connection inventory lookup strategy vars
+DOC_PLUGINS ?= cache callback connection inventory lookup shell strategy vars
 
 assertrst:
 ifndef rst
@@ -112,4 +112,4 @@ epub:
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
-	@echo "Output is in $(BUILDDIR)/$(rst:.rst=.html)"
+	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"

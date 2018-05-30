@@ -1,3 +1,4 @@
+.. _intro_dynamic_inventory:
 .. _dynamic_inventory:
 
 Working With Dynamic Inventory
@@ -7,16 +8,16 @@ Working With Dynamic Inventory
 
 Often a user of a configuration management system will want to keep inventory
 in a different software system.  Ansible provides a basic text-based system as described in
-:doc:`intro_inventory` but what if you want to use something else?
+:ref:`inventory` but what if you want to use something else?
 
-Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <http://cobbler.github.com>`_,
+Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <https://cobbler.github.io>`_,
 or a piece of expensive enterprisey CMDB software.
 
 Ansible easily supports all of these options via an external inventory system.  The contrib/inventory directory contains some of these already -- including options for EC2/Eucalyptus, Rackspace Cloud, and OpenStack, examples of some of which will be detailed below.
 
-:doc:`tower` also provides a database to store inventory results that is both web and REST Accessible.  Tower syncs with all Ansible dynamic inventory sources you might be using, and also includes a graphical inventory editor. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
+:ref:`ansible_tower` also provides a database to store inventory results that is both web and REST Accessible.  Tower syncs with all Ansible dynamic inventory sources you might be using, and also includes a graphical inventory editor. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
 
-For information about writing your own dynamic inventory source, see :doc:`dev_guide/developing_inventory`.
+For information about writing your own dynamic inventory source, see :ref:`developing_inventory`.
 
 
 .. _cobbler_example:
@@ -24,7 +25,7 @@ For information about writing your own dynamic inventory source, see :doc:`dev_g
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <http://cobbler.github.com>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
+It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <https://cobbler.github.io>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has

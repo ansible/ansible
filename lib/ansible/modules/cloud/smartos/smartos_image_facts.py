@@ -29,8 +29,6 @@ options:
               manifest and 'published_date', 'published', 'source', 'clones',
               and 'size'. More informaton can be found at U(https://smartos.org/man/1m/imgadm)
               under 'imgadm list'.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''

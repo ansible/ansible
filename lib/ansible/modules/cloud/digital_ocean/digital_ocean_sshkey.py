@@ -30,20 +30,14 @@ options:
   fingerprint:
     description:
      - This is a unique identifier for the SSH key used to delete a key
-    required: false
-    default: None
     version_added: 2.4
     aliases: ['id']
   name:
     description:
      - The name for the SSH key
-    required: false
-    default: None
   ssh_pub_key:
     description:
      - The Public SSH key to add.
-    required: false
-    default: None
   oauth_token:
     description:
      - DigitalOcean OAuth token.

@@ -5,129 +5,123 @@
 # Commenting local user testcases as older vcsim docker image
 # does not support this.
 
-#- name: make sure pyvmomi is installed
-#  pip:
-#    name: pyvmomi
-#    state: latest
-#  when: "{{ ansible_user_id == 'root' }}"
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
 
-#- name: store the vcenter container ip
-#  set_fact:
-#    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
 
-#- debug: var=vcsim
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
 
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 5000
-#    state: started
-
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
 
 # Local user manager works only with standalone ESXi server
-#- name: start vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?esx=1
-#  register: vcsim_instance
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
 
-#- debug:
-#    var: vcsim_instance
+- debug:
+    var: vcsim_instance
 
-#- name: Wait for vcsim server to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 # Testcase 0001: Add Local user in ESXi server
-#- name: add local user
-#  vmware_local_user_manager:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
-#    validate_certs: no
-#    local_user_name: testuser_0001
-#    local_user_password: "SamplePassword!"
-#    state: present
-#  register: user_add_0001
+- name: add local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0001
+    local_user_password: "SamplePassword!"
+    state: present
+  register: user_add_0001
 
-#- name: ensure user is created
-#  assert:
-#    that:
-#        - user_add_0001.changed == true
+- name: ensure user is created
+  assert:
+    that:
+        - user_add_0001.changed == true
 
 # Testcase 0002: Delete Local user in ESXi server
-#- name: Delete local user
-#  vmware_local_user_manager:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
-#    validate_certs: no
-#    local_user_name: testuser_0001
-#    state: absent
-#  register: user_delete_0002
+- name: Delete local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0001
+    state: absent
+  register: user_delete_0002
 
-#- name: ensure user is deleted
-#  assert:
-#    that:
-#        - user_delete_0002.changed == true
+- name: ensure user is deleted
+  assert:
+    that:
+        - user_delete_0002.changed == true
 
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
 
 # Local user manager works only with standalone ESXi server not with vCenter
 # So testcase should check failures
-#- name: start vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?cluster=2
-#  register: vcsim_instance
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
 
-#- debug:
-#    var: vcsim_instance
+- debug:
+    var: vcsim_instance
 
-#- name: Wait for vcsim server to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 # Testcase 0003: Add Local user in vCenter server
-#- name: add local user
-#  vmware_local_user_manager:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
-#    validate_certs: no
-#    local_user_name: testuser_0003
-#    local_user_password: "SamplePassword!"
-#    state: present
-#  register: user_add_0003
-#  ignore_errors: yes
+- name: add local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0003
+    local_user_password: "SamplePassword!"
+    state: present
+  register: user_add_0003
+  ignore_errors: yes
 
-#- name: ensure user is created
-#  assert:
-#    that:
-#        - user_add_0003.changed == false
-#        - "{{ 'Failed to get local account manager settings' in user_add_0003.msg }}"
+- name: ensure user is created
+  assert:
+    that:
+        - user_add_0003.changed == false
+        - "{{ 'Failed to get local account manager settings' in user_add_0003.msg }}"
 
-## Testcase 0003: Delete Local user in vCenter server
-#- name: Delete local user
-#  vmware_local_user_manager:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
-#    validate_certs: no
-#    local_user_name: testuser_0003
-#    state: absent
-#  register: user_delete_0004
-#  ignore_errors: yes
+# Testcase 0003: Delete Local user in vCenter server
+- name: Delete local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0003
+    state: absent
+  register: user_delete_0004
+  ignore_errors: yes
 
-#- name: ensure user is deleted
-#  assert:
-#    that:
-#        - user_delete_0004.changed == false
-#        - "{{ 'Failed to get local account manager settings' in user_delete_0004.msg }}"
+- name: ensure user is deleted
+  assert:
+    that:
+        - user_delete_0004.changed == false
+        - "{{ 'Failed to get local account manager settings' in user_delete_0004.msg }}"

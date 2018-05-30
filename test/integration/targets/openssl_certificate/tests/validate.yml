@@ -7,7 +7,7 @@
   register: cert_modulus
 
 - name: Validate certificate (test - issuer value)
-  shell: 'openssl x509 -noout  -in {{ output_dir}}/cert.pem -text | grep "Issuer" | sed "s/.*: \(.*\)/\1/g"'
+  shell: 'openssl x509 -noout  -in {{ output_dir}}/cert.pem -text | grep "Issuer" | sed "s/.*: \(.*\)/\1/g; s/ //g;"'
   register: cert_issuer
 
 

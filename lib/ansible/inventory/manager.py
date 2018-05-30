@@ -28,7 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
@@ -86,12 +86,12 @@ def split_host_pattern(pattern):
     if isinstance(pattern, list):
         return list(itertools.chain(*map(split_host_pattern, pattern)))
     elif not isinstance(pattern, string_types):
-        pattern = to_native(pattern)
+        pattern = to_text(pattern, errors='surrogate_or_strict')
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-    if ',' in pattern:
-        patterns = pattern.split(',')
+    if u',' in pattern:
+        patterns = pattern.split(u',')
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -104,12 +104,12 @@ def split_host_pattern(pattern):
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
             patterns = re.findall(
-                r'''(?:             # We want to match something comprising:
+                to_text(r'''(?:     # We want to match something comprising:
                         [^\s:\[\]]  # (anything other than whitespace or ':[]'
                         |           # ...or...
                         \[[^\]]*\]  # a single complete bracketed expression)
                     )+              # occurring once or more
-                ''', pattern, re.X
+                '''), pattern, re.X
             )
 
     return [p.strip() for p in patterns]
@@ -236,9 +236,9 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_native(fullpath), cache=cache)
-                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
+                b_fullpath = os.path.join(b_source, i)
+                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
+                display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
@@ -254,7 +254,7 @@ class InventoryManager(object):
             # try source with each plugin
             failures = []
             for plugin in self._inventory_plugins:
-                plugin_name = to_native(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
                 display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
                 # initialize and figure out if plugin wants to attempt parsing this file
@@ -275,7 +275,7 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                     except Exception as e:
                         display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
                     display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
@@ -330,49 +330,52 @@ class InventoryManager(object):
         or applied subsets
         """
 
+        hosts = []
+
         # Check if pattern already computed
         if isinstance(pattern, list):
             pattern_hash = u":".join(pattern)
         else:
             pattern_hash = pattern
 
-        if not ignore_limits and self._subset:
-            pattern_hash += ":%s" % to_native(self._subset)
-
-        if not ignore_restrictions and self._restriction:
-            pattern_hash += ":%s" % to_native(self._restriction)
-
-        if pattern_hash not in self._hosts_patterns_cache:
-
-            patterns = split_host_pattern(pattern)
-            hosts = self._evaluate_patterns(patterns)
-
-            # mainly useful for hostvars[host] access
+        if pattern_hash:
             if not ignore_limits and self._subset:
-                # exclude hosts not in a subset, if defined
-                subset = self._evaluate_patterns(self._subset)
-                hosts = [h for h in hosts if h in subset]
+                pattern_hash += u":%s" % to_text(self._subset, errors='surrogate_or_strict')
 
             if not ignore_restrictions and self._restriction:
-                # exclude hosts mentioned in any restriction (ex: failed hosts)
-                hosts = [h for h in hosts if h.name in self._restriction]
+                pattern_hash += u":%s" % to_text(self._restriction, errors='surrogate_or_strict')
 
-            seen = set()
-            self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+            if pattern_hash not in self._hosts_patterns_cache:
 
-        # sort hosts list if needed (should only happen when called from strategy)
-        if order in ['sorted', 'reverse_sorted']:
-            from operator import attrgetter
-            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
-        elif order == 'reverse_inventory':
-            hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
-        else:
-            hosts = self._hosts_patterns_cache[pattern_hash][:]
-            if order == 'shuffle':
-                from random import shuffle
-                shuffle(hosts)
-            elif order not in [None, 'inventory']:
-                AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                patterns = split_host_pattern(pattern)
+                hosts = self._evaluate_patterns(patterns)
+
+                # mainly useful for hostvars[host] access
+                if not ignore_limits and self._subset:
+                    # exclude hosts not in a subset, if defined
+                    subset = self._evaluate_patterns(self._subset)
+                    hosts = [h for h in hosts if h in subset]
+
+                if not ignore_restrictions and self._restriction:
+                    # exclude hosts mentioned in any restriction (ex: failed hosts)
+                    hosts = [h for h in hosts if h.name in self._restriction]
+
+                seen = set()
+                self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+
+            # sort hosts list if needed (should only happen when called from strategy)
+            if order in ['sorted', 'reverse_sorted']:
+                from operator import attrgetter
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+            elif order == 'reverse_inventory':
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
+            else:
+                hosts = self._hosts_patterns_cache[pattern_hash][:]
+                if order == 'shuffle':
+                    from random import shuffle
+                    shuffle(hosts)
+                elif order not in [None, 'inventory']:
+                    AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
 
@@ -541,8 +544,10 @@ class InventoryManager(object):
             if implicit:
                 results.append(implicit)
 
-        if not results and pattern != 'all':
+        # Display warning if specified host pattern did not match any groups or hosts
+        if not results and not matching_groups and pattern != 'all':
             display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+
         return results
 
     def list_hosts(self, pattern="all"):

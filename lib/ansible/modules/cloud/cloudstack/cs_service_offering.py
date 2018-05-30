@@ -36,7 +36,7 @@ options:
   limit_cpu_usage:
     description:
       - Restrict the CPU usage to committed service offering.
-    choices: [ yes, no ]
+    type: bool
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
@@ -77,13 +77,13 @@ options:
   is_system:
     description:
       - Whether it is a system VM offering or not.
-    choices: [ yes, no ]
+    type: bool
     default: no
   is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
-    choices: [ yes, no ]
+    type: bool
     default: no
   memory:
     description:
@@ -99,7 +99,7 @@ options:
   offer_ha:
     description:
       - Whether HA is set for the service offering.
-    choices: [ yes, no ]
+    type: bool
     default: no
   provisioning_type:
     description:

@@ -26,6 +26,9 @@ description:
 extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
@@ -36,8 +39,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -45,8 +46,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -54,8 +53,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
     version_added: "2.2"
   before:
     description:
@@ -64,16 +61,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -84,7 +77,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -95,7 +87,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -107,9 +98,8 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.2"
   config:
     description:
@@ -120,34 +110,30 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
   admin:
     description:
       - Enters into administration configuration mode for making config
         changes to the device.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.4"
 """
 
@@ -168,6 +154,14 @@ EXAMPLES = """
     src: config.cfg
     replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """
@@ -182,12 +176,18 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
+
+CONFIG_MISPLACED_CHILDREN = [
+    re.compile(r'end-\s*(.+)$')
+]
 
 
 def copy_file_to_node(module):
@@ -231,6 +231,29 @@ def get_candidate(module):
     return candidate
 
 
+def sanitize_candidate_config(config):
+    last_parents = None
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(config):
+            if line._parents:
+                last_parents = line._parents
+            m = regex.search(line.text)
+            if m and m.group(0):
+                config[index]._parents = last_parents
+
+
+def sanitize_running_config(config):
+    last_parents = None
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(config):
+            if line._parents:
+                last_parents = line._parents
+            m = regex.search(line.text)
+            if m and m.group(0):
+                config[index].text = ' ' + m.group(0)
+                config[index]._parents = last_parents
+
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -242,6 +265,9 @@ def run(module, result):
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
+
+    sanitize_candidate_config(candidate_config.items)
+    sanitize_running_config(running_config.items)
 
     commands = None
     if match != 'none' and replace != 'config':

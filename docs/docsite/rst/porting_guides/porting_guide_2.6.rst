@@ -22,7 +22,7 @@ No notable changes.
 Deprecated
 ==========
 
-No notable changes.
+* In the :ref:`nxos_igmp_interface module<nxos_igmp_interface_module>`, ``oif_prefix`` and ``oif_source`` properties are deprecated. Use ``ois_ps`` parameter with a dictionary of prefix and source to values instead.
 
 Modules
 =======
@@ -40,13 +40,17 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.10. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
 
 
 Noteworthy module changes
 -------------------------
 
-No notable changes.
+* The ``upgrade`` module option for ``win_chocolatey`` has been removed; use ``state: latest`` instead.
+* The ``reboot`` module option for ``win_feature`` has been removed; use the ``win_reboot`` action plugin instead
+* The ``win_iis_webapppool`` module no longer accepts a string for the ``atributes`` module option; use the free form dictionary value instead
+* The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks
+* The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path
 
 Plugins
 =======
@@ -62,4 +66,3 @@ Networking
 ==========
 
 No notable changes.
-

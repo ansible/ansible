@@ -129,6 +129,11 @@ options:
                action before executing upgrade action."
         default: True
         version_added: 2.4
+    reboot_after_upgrade:
+        description:
+            - "If I(true) and C(state) is I(upgraded) reboot host after successful upgrade."
+        default: True
+        version_added: 2.6
 extends_documentation_fragment: ovirt
 '''
 
@@ -412,6 +417,7 @@ def main():
         activate=dict(default=True, type='bool'),
         iscsi=dict(default=None, type='dict'),
         check_upgrade=dict(default=True, type='bool'),
+        reboot_after_upgrade=dict(default=True, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -497,6 +503,7 @@ def main():
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
                 fail_condition=hosts_module.failed_state_after_reinstall,
+                reboot=module.params['reboot_after_upgrade'],
             )
         elif state == 'iscsidiscover':
             host_id = get_id_by_name(hosts_service, module.params['name'])
@@ -532,7 +539,7 @@ def main():
                 action='fence',
                 action_condition=lambda h: h.status == hoststate.DOWN,
                 wait_condition=lambda h: h.status in [hoststate.UP, hoststate.MAINTENANCE],
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='start',
             )
         elif state == 'stopped':
@@ -553,7 +560,7 @@ def main():
             ret = hosts_module.action(
                 action='fence',
                 wait_condition=lambda h: h.status == hoststate.UP,
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='restart',
             )
         elif state == 'reinstalled':

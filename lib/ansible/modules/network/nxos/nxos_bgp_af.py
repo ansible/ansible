@@ -60,115 +60,80 @@ options:
       - Install a backup path into the forwarding table and provide
         prefix independent convergence (PIC) in case of a PE-CE link
         failure.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   additional_paths_receive:
     description:
       - Enables the receive capability of additional paths for all of
         the neighbors under this address family for which the capability
         has not been disabled.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   additional_paths_selection:
     description:
       - Configures the capability of selecting additional paths for
         a prefix. Valid values are a string defining the name of
         the route-map.
-    required: false
-    default: null
   additional_paths_send:
     description:
       - Enables the send capability of additional paths for all of
         the neighbors under this address family for which the capability
         has not been disabled.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   advertise_l2vpn_evpn:
     description:
       - Advertise evpn routes.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   client_to_client:
     description:
       - Configure client-to-client route reflection.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   dampen_igp_metric:
     description:
       - Specify dampen value for IGP metric-related changes, in seconds.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_state:
     description:
       - Enable/disable route-flap dampening.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   dampening_half_time:
     description:
       - Specify decay half-life in minutes for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_max_suppress_time:
     description:
       - Specify max suppress time for route-flap dampening stable route.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_reuse_time:
     description:
       - Specify route reuse time for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
   dampening_routemap:
     description:
       - Specify route-map for route-flap dampening. Valid values are a
         string defining the name of the route-map.
-    required: false
-    default: null
   dampening_suppress_time:
     description:
       - Specify route suppress time for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   default_information_originate:
     description:
       - Default information originate.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   default_metric:
     description:
       - Sets default metrics for routes redistributed into BGP.
         Valid values are Integer or keyword 'default'
-    required: false
-    default: null
   distance_ebgp:
     description:
       - Sets the administrative distance for eBGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   distance_ibgp:
     description:
       - Sets the administrative distance for iBGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   distance_local:
     description:
       - Sets the administrative distance for local BGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   inject_map:
     description:
       - An array of route-map names which will specify prefixes to
@@ -178,19 +143,14 @@ options:
         the aggregate. For example [['lax_inject_map', 'lax_exist_map'],
         ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'],
         ['fsd_inject_map', 'fsd_exist_map']].
-    required: false
-    default: null
   maximum_paths:
     description:
       - Configures the maximum number of equal-cost paths for
         load sharing. Valid value is an integer in the range 1-64.
-    default: null
   maximum_paths_ibgp:
     description:
       - Configures the maximum number of ibgp equal-cost paths for
         load sharing. Valid value is an integer in the range 1-64.
-    required: false
-    default: null
   networks:
     description:
       - Networks to configure. Valid value is a list of network
@@ -199,14 +159,10 @@ options:
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
         ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
-    required: false
-    default: null
   next_hop_route_map:
     description:
       - Configure a route-map for valid nexthops. Valid values are a
         string defining the name of the route-map.
-    required: false
-    default: null
   redistribute:
     description:
       - A list of redistribute directives. Multiple redistribute entries
@@ -216,32 +172,23 @@ options:
         A route-map is highly advised but may be optional on some
         platforms, in which case it may be omitted from the array list.
         For example [['direct', 'rm_direct'], ['lisp', 'rm_lisp']].
-    required: false
-    default: null
   suppress_inactive:
     description:
       - Advertises only active routes to peers.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   table_map:
     description:
       - Apply table-map to filter routes downloaded into URIB.
         Valid values are a string.
-    required: false
-    default: null
   table_map_filter:
     description:
       - Filters routes rejected by the route-map and does not download
         them to the RIB.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -543,14 +490,16 @@ def get_network_command(existing, key, value):
                 command = '{0} {1}'.format(key, inet[0])
             elif len(inet) == 2:
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
-            commands.append(command)
+            if command:
+                commands.append(command)
     for enet in existing_networks:
         if enet not in value:
             if len(enet) == 1:
                 command = 'no {0} {1}'.format(key, enet[0])
             elif len(enet) == 2:
                 command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
-            commands.append(command)
+            if command:
+                commands.append(command)
     return commands
 
 
@@ -568,7 +517,8 @@ def get_inject_map_command(existing, key, value):
                 command = ('inject-map {0} exist-map {1} '
                            'copy-attributes'.format(maps[0],
                                                     maps[1]))
-            commands.append(command)
+            if command:
+                commands.append(command)
     for emaps in existing_maps:
         if emaps not in value:
             if len(emaps) == 2:
@@ -578,7 +528,8 @@ def get_inject_map_command(existing, key, value):
                 command = ('no inject-map {0} exist-map {1} '
                            'copy-attributes'.format(emaps[0],
                                                     emaps[1]))
-            commands.append(command)
+            if command:
+                commands.append(command)
     return commands
 
 

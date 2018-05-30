@@ -359,6 +359,14 @@ def validate_ip_address(address):
     return address.count('.') == 3
 
 
+def validate_ip_v6_address(address):
+    try:
+        socket.inet_pton(socket.AF_INET6, address)
+    except socket.error:
+        return False
+    return True
+
+
 def validate_prefix(prefix):
     if prefix and not 0 <= int(prefix) <= 32:
         return False

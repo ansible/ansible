@@ -43,10 +43,17 @@ class ActionModule(_ActionModule):
 
         socket_path = None
 
+        if self._task.args.get('provider', {}).get('transport') == 'nxapi' and self._task.action == 'nxos_nxapi':
+            return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
+
         if self._play_context.connection == 'network_cli':
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
+                del self._task.args['provider']
+            if self._task.args.get('transport'):
+                display.warning('transport is unnecessary when using network_cli and will be ignored')
+                del self._task.args['transport']
         elif self._play_context.connection == 'local':
             provider = load_provider(nxos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
@@ -63,6 +70,10 @@ class ActionModule(_ActionModule):
                 pc.password = provider['password'] or self._play_context.password
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
                 pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+                pc.become = provider['authorize'] or False
+                if pc.become:
+                    pc.become_method = 'enable'
+                pc.become_pass = provider['auth_pass']
 
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)

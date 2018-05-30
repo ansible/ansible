@@ -75,7 +75,6 @@ options:
     value:
         description:
             - Sets the record value.
-        default: None
 
 '''
 

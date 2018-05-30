@@ -128,7 +128,7 @@ class InventoryData(object):
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
-                    host.remove_group(self.groups['ungrouped'])
+                    self.groups['ungrouped'].remove_host(host)
 
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit

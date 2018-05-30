@@ -30,36 +30,20 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-        default: null
-    password:
-        description:
-            - password for authentication
-        required: true
-        default: null
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     dag_name:
         description:
             - name of the dynamic address group
         required: true
-        default: null
     dag_filter:
         description:
             - dynamic filter user by the dynamic address group
         required: true
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

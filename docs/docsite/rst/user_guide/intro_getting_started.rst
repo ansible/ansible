@@ -1,3 +1,5 @@
+.. _intro_getting_started:
+
 Getting Started
 ===============
 
@@ -8,7 +10,7 @@ Getting Started
 Foreword
 ````````
 
-Now that you've read :doc:`../installation_guide/intro_installation` and installed Ansible, it's time to get
+Now that you've read the :ref:`installation guide<installation_guide>` and installed Ansible, it's time to get
 started with some ad-hoc commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
@@ -28,7 +30,7 @@ By default, Ansible will try to use native
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
 
-Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :doc:`intro_configuration`.
+Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
 
 When speaking with remote machines, Ansible by default assumes you are using SSH keys.  SSH keys are encouraged but password authentication can also be used where needed by supplying the option ``--ask-pass``.  If using sudo features and when sudo requires a password, also supply ``--ask-become-pass`` (previously ``--ask-sudo-pass`` which has been deprecated).
 
@@ -145,15 +147,15 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 
 Ansible will log some information about module arguments on the remote system in the remote syslog, unless a task or play is marked with a "no_log: True" attribute. This is explained later.
 
-To enable basic logging on the control machine see :doc:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :doc:`tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
+To enable basic logging on the control machine see :ref:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :ref:`ansible_tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
 .. seealso::
 
-   :doc:`intro_inventory`
+   :ref:`intro_inventory`
        More information about inventory
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning Ansible's configuration management language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -32,58 +32,44 @@ options:
   eni_id:
     description:
       - The ID of the ENI (to modify); if null and state is present, a new eni will be created.
-    required: false
-    default: null
   instance_id:
     description:
       - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or
         detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
-    required: false
-    default: null
   private_ip_address:
     description:
       - Private IP address.
-    required: false
-    default: null
   subnet_id:
     description:
       - ID of subnet in which to create the ENI.
-    required: false
   description:
     description:
       - Optional description of the ENI.
-    required: false
-    default: null
   security_groups:
     description:
       - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you
         can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
-    required: false
-    default: null
   state:
     description:
       - Create or delete ENI
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   device_index:
     description:
       - The index of the device for the network interface attachment on the instance.
-    required: false
     default: 0
   attached:
     description:
       - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
         won't change
-    required: false
-    default: yes
+    default: 'yes'
     version_added: 2.2
+    type: bool
   force_detach:
     description:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
         to None or when deleting an interface with state=absent.
-    required: false
-    default: no
+    default: 'no'
   delete_on_termination:
     description:
       - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the
@@ -104,8 +90,7 @@ options:
     description:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
         Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
-    required: false
-    default: False
+    default: no
     version_added: 2.5
   secondary_private_ip_address_count:
     description:
@@ -157,8 +142,7 @@ EXAMPLES = '''
     subnet_id: subnet-xxxxxxxx
     eni_id: eni-yyyyyyyy
     state: present
-    secondary_private_ip_addresses:
-      -
+    secondary_private_ip_address_count: 0
 
 # Destroy an ENI, detaching it from any instance if necessary
 - ec2_eni:

@@ -32,4 +32,8 @@ options:
   password:
     description: NSO password
     required: true
+  timeout:
+    description: JSON-RPC request timeout in seconds
+    default: 300
+    version_added: "2.6"
 '''

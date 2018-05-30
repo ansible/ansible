@@ -422,6 +422,8 @@
         that:
         - 'result.changed'
         - 'result.group_id.startswith("sg-")'
+        - 'result.ip_permissions|length == 1'
+        - 'result.ip_permissions_egress|length == 1'
 
     # ============================================================
     - name: add same rule to the existing group  (expected changed=false)
@@ -464,6 +466,7 @@
           - result.ip_permissions|length == 2
           - result.ip_permissions[0].user_id_group_pairs or
             result.ip_permissions[1].user_id_group_pairs
+          - 'result.ip_permissions_egress[0].ip_protocol == "-1"'
 
     # ============================================================
     - name: test ip rules convert port numbers from string to int (expected changed=true)
@@ -489,6 +492,9 @@
         that:
            - 'result.changed'
            - 'result.group_id.startswith("sg-")'
+           - 'result.ip_permissions|length == 1'
+           - 'result.ip_permissions_egress[0].ip_protocol == "tcp"'
+
 
     # ============================================================
     - name: test group rules convert port numbers from string to int (expected changed=true)

@@ -53,28 +53,23 @@ options:
   admin_state:
     description:
       - Administrative state of the VRF.
-    required: false
     default: up
     choices: ['up','down']
   vni:
     description:
       - Specify virtual network identifier. Valid values are Integer
         or keyword 'default'.
-    required: false
-    default: null
     version_added: "2.2"
   rd:
     description:
       - VPN Route Distinguisher (RD). Valid values are a string in
         one of the route-distinguisher formats (ASN2:NN, ASN4:NN, or
         IPV4:NN); the keyword 'auto', or the keyword 'default'.
-    required: false
-    default: null
     version_added: "2.2"
   interfaces:
     description:
       - List of interfaces to check the VRF has been
-        configured correctly.
+        configured correctly or keyword 'default'.
     version_added: 2.5
   associated_interfaces:
     description:
@@ -88,19 +83,17 @@ options:
   purge:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
     version_added: 2.5
   state:
     description:
       - Manages desired state of the resource.
-    required: false
     default: present
     choices: ['present','absent']
   description:
     description:
-      - Description of the VRF.
-    required: false
-    default: null
+      - Description of the VRF or keyword 'default'.
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -257,7 +250,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('vrf context {0}'.format(name))
                 for item in args:
                     candidate = w.get(item)
-                    if candidate:
+                    if candidate and candidate != 'default':
                         cmd = item + ' ' + str(candidate)
                         commands.append(cmd)
                 if admin_state == 'up':
@@ -266,7 +259,7 @@ def map_obj_to_commands(updates, module):
                     commands.append('shutdown')
                 commands.append('exit')
 
-                if interfaces:
+                if interfaces and interfaces[0] != 'default':
                     for i in interfaces:
                         commands.append('interface {0}'.format(i))
                         commands.append('no switchport')
@@ -280,7 +273,11 @@ def map_obj_to_commands(updates, module):
 
                 for item in args:
                     candidate = w.get(item)
-                    if candidate and candidate != obj_in_have.get(item):
+                    if candidate == 'default':
+                        if obj_in_have.get(item):
+                            cmd = 'no ' + item + ' ' + obj_in_have.get(item)
+                            commands.append(cmd)
+                    elif candidate and candidate != obj_in_have.get(item):
                         cmd = item + ' ' + str(candidate)
                         commands.append(cmd)
                 if admin_state and admin_state != obj_in_have.get('admin_state'):
@@ -293,7 +290,7 @@ def map_obj_to_commands(updates, module):
                     commands.insert(0, 'vrf context {0}'.format(name))
                     commands.append('exit')
 
-                if interfaces:
+                if interfaces and interfaces[0] != 'default':
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
                             commands.append('vrf context {0}'.format(name))
@@ -313,6 +310,14 @@ def map_obj_to_commands(updates, module):
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
                         for i in superfluous_interfaces:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('no vrf member {0}'.format(name))
+                elif interfaces and interfaces[0] == 'default':
+                    if obj_in_have['interfaces']:
+                        for i in obj_in_have['interfaces']:
                             commands.append('vrf context {0}'.format(name))
                             commands.append('exit')
                             commands.append('interface {0}'.format(i))

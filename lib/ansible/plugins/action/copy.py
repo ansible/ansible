@@ -29,10 +29,30 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
+
+
+# Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
+# FILE_COMMON_ARGUMENTS contains things that are not arguments of file so remove those as well
+REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
+                          ('state', 'path', 'original_basename', 'recurse', 'force',
+                           '_diff_peek', 'src')).difference(
+                          ('content', 'decrypt', 'backup', 'remote_src', 'regexp', 'delimiter',
+                           'directory_mode', 'unsafe_writes'))
+
+
+def _create_remote_file_args(module_args):
+    """remove keys that are not relevant to file"""
+    return dict((k, v) for k, v in module_args.items() if k in REAL_FILE_ARGS)
+
+
+def _create_remote_copy_args(module_args):
+    """remove action plugin only keys"""
+    return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
 
 
 def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detector=None):
@@ -188,13 +208,9 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _create_remote_file_args(self, module_args):
-        # remove action plugin only keys
-        return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
-
-    def _copy_file(self, source_full, source_rel, content, content_tempfile, dest, task_vars):
+    def _copy_file(self, source_full, source_rel, content, content_tempfile,
+                   dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
         raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
@@ -283,12 +299,13 @@ class ActionModule(ActionBase):
 
             # src and dest here come after original and override them
             # we pass dest only to make sure it includes trailing slash in case of recursive copy
-            new_module_args = self._create_remote_file_args(self._task.args)
+            new_module_args = _create_remote_copy_args(self._task.args)
             new_module_args.update(
                 dict(
                     src=tmp_src,
                     dest=dest,
                     original_basename=source_rel,
+                    follow=follow
                 )
             )
             if not self._task.args.get('checksum'):
@@ -317,12 +334,13 @@ class ActionModule(ActionBase):
                     dest = dest_status_nofollow['lnk_source']
 
             # Build temporary module_args.
-            new_module_args = self._create_remote_file_args(self._task.args)
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args.update(
                 dict(
                     src=source_rel,
                     dest=dest,
                     original_basename=source_rel,
+                    recurse=False,
                     state='file',
                 )
             )
@@ -338,34 +356,6 @@ class ActionModule(ActionBase):
 
         result.update(module_return)
         return result
-
-    def _get_file_args(self):
-        new_module_args = {'recurse': False}
-
-        if 'attributes' in self._task.args:
-            new_module_args['attributes'] = self._task.args['attributes']
-        if 'follow' in self._task.args:
-            new_module_args['follow'] = self._task.args['follow']
-        if 'force' in self._task.args:
-            new_module_args['force'] = self._task.args['force']
-        if 'group' in self._task.args:
-            new_module_args['group'] = self._task.args['group']
-        if 'mode' in self._task.args:
-            new_module_args['mode'] = self._task.args['mode']
-        if 'owner' in self._task.args:
-            new_module_args['owner'] = self._task.args['owner']
-        if 'selevel' in self._task.args:
-            new_module_args['selevel'] = self._task.args['selevel']
-        if 'serole' in self._task.args:
-            new_module_args['serole'] = self._task.args['serole']
-        if 'setype' in self._task.args:
-            new_module_args['setype'] = self._task.args['setype']
-        if 'seuser' in self._task.args:
-            new_module_args['seuser'] = self._task.args['seuser']
-        if 'unsafe_writes' in self._task.args:
-            new_module_args['unsafe_writes'] = self._task.args['unsafe_writes']
-
-        return new_module_args
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
@@ -435,7 +425,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(task_vars=task_vars))
+            result.update(self._execute_module(module_name='copy', task_vars=task_vars))
             return result
         else:
             # find_needle returns a path that may not have a trailing slash on
@@ -491,7 +481,14 @@ class ActionModule(ActionBase):
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars)
+
+            # We only follow symlinks for files in the non-recursive case
+            if source_files['directories']:
+                follow = False
+            else:
+                follow = boolean(self._task.args.get('follow', False), strict=False)
+
+            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, follow)
             if module_return is None:
                 continue
 
@@ -512,10 +509,12 @@ class ActionModule(ActionBase):
                 continue
 
             # Use file module to create these
-            new_module_args = self._get_file_args()
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
             new_module_args['state'] = 'directory'
             new_module_args['mode'] = self._task.args.get('directory_mode', None)
+            new_module_args['recurse'] = False
+            del new_module_args['src']
 
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
@@ -523,11 +522,15 @@ class ActionModule(ActionBase):
 
         for target_path, dest_path in source_files['symlinks']:
             # Copy symlinks over
-            new_module_args = self._get_file_args()
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
             new_module_args['src'] = target_path
             new_module_args['state'] = 'link'
             new_module_args['force'] = True
+
+            # Only follow remote symlinks in the non-recursive case
+            if source_files['directories']:
+                new_module_args['follow'] = False
 
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True

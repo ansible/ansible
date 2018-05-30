@@ -248,6 +248,8 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
                 message += "\n"
             message += "Searched in:\n\t%s" % searched
 
+        message += " on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"
+
         super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
 

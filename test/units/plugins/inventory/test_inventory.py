@@ -198,6 +198,6 @@ class TestInventoryPlugins(unittest.TestCase):
         all_hosts = set(host.name for host in inventory.groups['all'].get_hosts())
         self.assertEqual(set(['host1', 'host2', 'host3', 'host4', 'host5']), all_hosts)
         ungrouped_hosts = set(host.name for host in inventory.groups['ungrouped'].get_hosts())
-        self.assertEqual(set(['host1', 'host2', 'host3']), ungrouped_hosts)
+        self.assertEqual(set(['host1', 'host2']), ungrouped_hosts)
         servers_hosts = set(host.name for host in inventory.groups['servers'].get_hosts())
         self.assertEqual(set(['host3', 'host4', 'host5']), servers_hosts)

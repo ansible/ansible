@@ -19,7 +19,7 @@ short_description: Manages F5 BIG-IP GTM servers
 description:
   - Manage BIG-IP server configuration. This module is able to manipulate the server
     definitions in a BIG-IP.
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
@@ -184,35 +184,27 @@ datacenter:
   sample: datacenter01
 '''
 
-from distutils.version import LooseVersion
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
-
-HAS_DEVEL_IMPORTS = False
+from distutils.version import LooseVersion
 
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -420,12 +412,16 @@ class Difference(object):
             devices = self.have.devices
         else:
             devices = self.want.devices
+        if self.have.devices is None:
+            have_devices = []
+        else:
+            have_devices = self.have.devices
         if len(devices) == 0:
             raise F5ModuleError(
                 "A GTM server must have at least one device associated with it."
             )
         want = [OrderedDict(sorted(d.items())) for d in devices]
-        have = [OrderedDict(sorted(d.items())) for d in self.have.devices]
+        have = [OrderedDict(sorted(d.items())) for d in have_devices]
         if want != have:
             return True
         return False
@@ -645,7 +641,9 @@ class BaseManager(object):
             self.want.update({'disabled': True})
         elif self.want.state in ['present', 'enabled']:
             self.want.update({'enabled': True})
-        self._set_changed_options()
+
+        self.adjust_server_type_by_version()
+        self.should_update()
 
         if self.want.devices is None:
             raise F5ModuleError(
@@ -662,7 +660,7 @@ class BaseManager(object):
             raise F5ModuleError("Failed to create the server")
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         self.client.api.tm.gtm.servers.server.create(
             name=self.want.name,
             partition=self.want.partition,
@@ -740,16 +738,17 @@ class V1Manager(BaseManager):
                 self.want.update({'server_type': 'single-bigip'})
             else:
                 self.want.update({'server_type': 'redundant-bigip'})
-        else:
-            if len(self.want.devices) == 1:
-                self.want.update({'server_type': 'single-bigip'})
-            else:
-                self.want.update({'server_type': 'redundant-bigip'})
         if self.want.link_discovery is None:
             self.want.update({'link_discovery': 'disabled'})
         if self.want.virtual_server_discovery is None:
             self.want.update({'virtual_server_discovery': 'disabled'})
         self._check_link_discovery_requirements()
+
+    def adjust_server_type_by_version(self):
+        if len(self.want.devices) == 1 and self.want.server_type == 'bigip':
+            self.want.update({'server_type': 'single-bigip'})
+        if len(self.want.devices) > 1 and self.want.server_type == 'bigip':
+            self.want.update({'server_type': 'redundant-bigip'})
 
 
 class V2Manager(BaseManager):
@@ -762,17 +761,30 @@ class V2Manager(BaseManager):
             self.want.update({'virtual_server_discovery': 'disabled'})
         self._check_link_discovery_requirements()
 
+    def adjust_server_type_by_version(self):
+        pass
+
 
 class ArgumentSpec(object):
     def __init__(self):
         self.states = ['absent', 'present', 'enabled', 'disabled']
         self.server_types = [
-            'alteon-ace-director', 'cisco-css', 'cisco-server-load-balancer',
-            'generic-host', 'radware-wsd', 'windows-nt-4.0', 'bigip',
-            'cisco-local-director-v2', 'extreme', 'generic-load-balancer',
-            'sun-solaris', 'cacheflow', 'cisco-local-director-v3',
-            'foundry-server-iron', 'netapp', 'standalone-bigip',
-            'redundant-bigip', 'windows-2000-server'
+            'alteon-ace-director',
+            'cisco-css',
+            'cisco-server-load-balancer',
+            'generic-host',
+            'radware-wsd',
+            'windows-nt-4.0',
+            'bigip',
+            'cisco-local-director-v2',
+            'extreme',
+            'generic-load-balancer',
+            'sun-solaris',
+            'cacheflow',
+            'cisco-local-director-v3',
+            'foundry-server-iron',
+            'netapp',
+            'windows-2000-server'
         ]
         self.supports_check_mode = True
         argument_spec = dict(

@@ -35,17 +35,14 @@ options:
         - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
         - Mutually exclusive with C(definition).
         - Required when no C(definition) is provided.
-      required: false
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
         - Required when C(definition) is provided.
-      required: false
   files:
       description:
         - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
         - Files are loaded and merged in the order given.
-      required: false
   state:
       description:
         - Desired state of the project.
@@ -55,33 +52,27 @@ options:
         - absent
         - present
       default: present
-      required: false
   services:
       description:
         - When C(state) is I(present) run I(docker-compose up) on a subset of services.
-      required: false
   scale:
       description:
         - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
-      required: false
   dependencies:
       description:
         - When C(state) is I(present) specify whether or not to include linked services.
       type: bool
-      required: false
-      default: true
+      default: 'yes'
   definition:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
         - Mutually exclusive with C(project_src) and C(files).
-      required: false
   hostname_check:
       description:
         - Whether or not to check the Docker daemon's hostname against the name provided in the client certificate.
       type: bool
-      required: false
-      default: false
+      default: 'no'
   recreate:
       description:
         - By default containers will be recreated when their configuration differs from the service definition.
@@ -101,53 +92,51 @@ options:
         - Use the C(nocache) option to ignore the image cache when performing the build.
         - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
       type: bool
-      required: false
-      default: false
+      default: 'no'
   pull:
       description:
         - Use with state I(present) to always pull images prior to starting the application.
         - Same as running docker-compose pull.
         - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
       type: bool
-      required: false
-      default: false
+      default: 'no'
       version_added: "2.2"
   nocache:
       description:
         - Use with the build option to ignore the cache during the image build process.
       type: bool
-      required: false
-      default: false
+      default: 'no'
       version_added: "2.2"
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
-      required: false
-      default: null
+      choices:
+          - 'all'
+          - 'local'
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
-      required: false
       type: bool
-      default: false
+      default: 'no'
   stopped:
       description:
         - Use with state I(present) to leave the containers in an exited or non-running state.
-      required: false
       type: bool
-      default: false
+      default: 'no'
   restarted:
       description:
         - Use with state I(present) to restart all containers.
-      required: false
       type: bool
-      default: false
-  debug:
+      default: 'no'
+  remove_orphans:
       description:
-        - Include I(actions) in the return values.
-      required: false
+        - Remove containers for services not defined in the compose file.
       type: bool
       default: false
+  timeout:
+    description:
+        - timeout in seconds for container shutdown when attached or when containers are already running.
+    default: 10
 
 extends_documentation_fragment:
     - docker

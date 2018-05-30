@@ -5,7 +5,7 @@
 # Written by Kim Nørgaard <jasen@jasen.dk>
 # Based on pkgng module written by bleader <bleader@ratonland.org>
 # that was based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn>
+# that was based on pacman module written by Afterburn <https://github.com/afterburn>
 # that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -45,7 +45,7 @@ options:
             - update the package database first
         required: false
         default: false
-        choices: [ true, false ]
+        type: bool
 
 author: Kim Nørgaard (@KimNorgaard)
 requirements: [ "Slackware >= 12.2" ]

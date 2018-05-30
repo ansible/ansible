@@ -88,7 +88,7 @@
           - result is not changed
 
 
-    - name: When in check mode, and deleting a policy that does not exists
+    - name: When in check mode, and deleting a policy that does not exist
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'

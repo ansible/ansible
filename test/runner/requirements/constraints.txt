@@ -1,4 +1,5 @@
 coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
+cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
 pywinrm >= 0.3.0 # message encryption support
 astroid == 1.5.3 ; python_version >= '3.5' # newer versions of astroid require newer versions of pylint to avoid bugs
 pylint == 1.7.4 ; python_version >= '3.5' # versions before 1.7.1 hang or fail to install on python 3.x
@@ -15,3 +16,4 @@ pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 
 ntlm-auth >= 1.0.6 # message encryption support
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
+voluptuous >= 0.11.0 # Schema recursion via Self

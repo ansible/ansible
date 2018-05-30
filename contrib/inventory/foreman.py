@@ -84,7 +84,7 @@ class ForemanInventory(object):
         try:
             self.foreman_url = config.get('foreman', 'url')
             self.foreman_user = config.get('foreman', 'user')
-            self.foreman_pw = config.get('foreman', 'password')
+            self.foreman_pw = config.get('foreman', 'password', raw=True)
             self.foreman_ssl_verify = config.getboolean('foreman', 'ssl_verify')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
             print("Error parsing configuration: %s" % e, file=sys.stderr)

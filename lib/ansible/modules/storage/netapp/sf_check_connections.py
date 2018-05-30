@@ -30,23 +30,17 @@ options:
   skip:
     description:
     - Skip checking connection to SVIP or MVIP.
-    required: false
     choices: ['svip', 'mvip']
-    default: None
 
   mvip:
     description:
     - Optionally, use to test connection of a different MVIP.
     - This is not needed to test the connection to the target cluster.
-    required: false
-    default: None
 
   svip:
     description:
     - Optionally, use to test connection of a different SVIP.
     - This is not needed to test the connection to the target cluster.
-    required: false
-    default: None
 
 '''
 

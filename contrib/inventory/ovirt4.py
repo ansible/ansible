@@ -138,7 +138,7 @@ def create_connection():
     return sdk.Connection(
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
-        password=config.get('ovirt', 'ovirt_password'),
+        password=config.get('ovirt', 'ovirt_password', raw=True),
         ca_file=config.get('ovirt', 'ovirt_ca_file'),
         insecure=config.get('ovirt', 'ovirt_ca_file') is None,
     )

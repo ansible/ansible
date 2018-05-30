@@ -153,8 +153,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                                                                    task_vars=task_vars, templar=self._templar,
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+                                                                    task_vars=task_vars,
                                                                     module_compression=self._play_context.module_compression,
                                                                     async_timeout=self._task.async_val,
                                                                     become=self._play_context.become,
@@ -236,12 +236,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root', remote_user]  # plugin does not support admin_users
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except KeyError:
-            remote_tmp = '~/ansible'
+        except AnsibleError:
+            remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -405,7 +405,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         try:
             admin_users = self._connection._shell.get_option('admin_users')
-        except KeyError:
+        except AnsibleError:
             admin_users = ['root']  # plugin does not support admin users
 
         if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
@@ -567,8 +567,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
 
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
+        if expand_path == '~':
+            if sudoable and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+            else:
+                # use remote user instead, if none set default to current user
+                expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
@@ -646,8 +650,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
-        # make sure all commands use the designated temporary directory
+        # make sure modules are aware if they need to keep the remote files
+        module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
+
+        # make sure all commands use the designated temporary directory if created
         module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+
+        # make sure the remote_tmp value is sent through in case modules needs to create their own
+        try:
+            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
+        except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
+            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
@@ -679,6 +693,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                             ' if they are responsible for removing it.')
         del delete_remote_tmp  # No longer used
 
+        tmpdir = self._connection._shell.tmpdir
+
+        # We set the module_style to new here so the remote_tmp is created
+        # before the module args are built if remote_tmp is needed (async).
+        # If the module_style turns out to not be new and we didn't create the
+        # remote tmp here, it will still be created. This must be done before
+        # calling self._update_module_args() so the module wrapper has the
+        # correct remote_tmp value set
+        if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
+            self._make_tmp_path()
+            tmpdir = self._connection._shell.tmpdir
+
         if task_vars is None:
             task_vars = dict()
 
@@ -696,7 +722,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        tmpdir = self._connection._shell.tmpdir
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -927,13 +952,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         out = self._strip_success_message(out)
 
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
-        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
+        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 

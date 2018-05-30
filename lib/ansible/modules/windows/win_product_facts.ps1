@@ -1,5 +1,5 @@
 #!powershell
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -8,7 +8,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args -arguments $args -supports_check_mode $true
+# This module does not use any module parameters, this avoids pslint complaining
+#$params = Parse-Args -arguments $args -supports_check_mode $true
 
 $result = @{
     changed = $false

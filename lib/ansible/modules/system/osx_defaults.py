@@ -27,14 +27,11 @@ options:
   domain:
     description:
       - The domain is a domain name of the form com.companyname.appname.
-    required: false
     default: NSGlobalDomain
   host:
     description:
       - The host on which the preference should apply. The special value "currentHost" corresponds to the
         "-currentHost" switch of the defaults commandline tool.
-    required: false
-    default: null
     version_added: "2.1"
   key:
     description:
@@ -43,24 +40,19 @@ options:
   type:
     description:
       - The type of value to write.
-    required: false
     default: string
     choices: [ "array", "bool", "boolean", "date", "float", "int", "integer", "string" ]
   array_add:
     description:
       - Add new elements to the array for a key which has an array as its value.
-    required: false
-    default: false
-    choices: [ "true", "false" ]
+    type: bool
+    default: 'no'
   value:
     description:
       - The value to write. Only required when state = present.
-    required: false
-    default: null
   state:
     description:
       - The state of the user defaults
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -236,7 +228,7 @@ class OSXDefaults(object):
         # First try to find out the type
         rc, out, err = self.module.run_command(self._base_command() + ["read-type", self.domain, self.key])
 
-        # If RC is 1, the key does not exists
+        # If RC is 1, the key does not exist
         if rc == 1:
             return None
 

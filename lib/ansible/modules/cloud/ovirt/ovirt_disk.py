@@ -82,6 +82,7 @@ options:
     interface:
         description:
             - "Driver of the storage interface."
+            - "It's required parameter when creating the new disk."
         choices: ['virtio', 'ide', 'virtio_scsi']
         default: 'virtio'
     format:
@@ -528,7 +529,7 @@ class DisksModule(BaseModule):
     def _update_check(self, entity):
         return (
             equal(self._module.params.get('description'), entity.description) and
-            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
@@ -616,7 +617,7 @@ def main():
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
-                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])

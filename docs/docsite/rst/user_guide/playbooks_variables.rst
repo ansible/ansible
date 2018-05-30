@@ -1,3 +1,5 @@
+.. _playbooks_variables:
+
 Variables
 =========
 
@@ -21,14 +23,14 @@ and the ``when`` conditional can also be used with variables, and to help manage
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
-For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
+For advice on best practices, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
 
 .. _valid_variable_names:
 
 What Makes A Valid Variable Name
 ````````````````````````````````
 
-Before we start using variables it's important to know what are valid variable names.
+Before we start using variables, it's important to know what are valid variable names.
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
@@ -100,11 +102,9 @@ Using Variables: About Jinja2
 
 It's nice enough to know about how to define variables, but how do you use them?
 
-Ansible allows you to
-reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
-things in Jinja, only the basics are things you really need to learn at first.
+Ansible allows you to reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex things in Jinja, only the basics are things you really need to learn at first.
 
-For instance, in a simple template, you can do something like::
+For example, in a simple template, you can do something like::
 
     My amp goes to {{ max_amp_value }}
 
@@ -148,7 +148,7 @@ Hey Wait, A YAML Gotcha
 ```````````````````````
 
 YAML syntax requires that if you start a value with ``{{ foo }}`` you quote the whole line, since it wants to be
-sure you aren't trying to start a YAML dictionary.  This is covered on the :doc:`YAMLSyntax` page.
+sure you aren't trying to start a YAML dictionary.  This is covered on the :ref:`yaml_syntax` documentation.
 
 This won't work::
 
@@ -179,7 +179,7 @@ To see what information is available, try the following::
 
 This will return a large amount of variable data, which may look like this, as taken from Ansible 1.4 running on a Ubuntu 12.04 system
 
-.. code-block: json
+.. code-block:: json
 
     {
         "ansible_all_ipv4_addresses": [
@@ -449,19 +449,17 @@ Local Facts (Facts.d)
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
 
-Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described
-in the API guide.  However, what if you want to have a simple way to provide system or user
-provided data for use in Ansible variables, without writing a fact module?  
+Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described in the API guide.  However, what if you want to have a simple way to provide system or user provided data for use in Ansible variables, without writing a fact module?
 
-For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+"Facts.d" is one mechanism for users to control some aspect of how their systems are managed.
 
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an ``/etc/ansible/facts.d`` directory, any files in this directory
 ending in ``.fact``, can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
-An alternate directory can be specified using the ``fact_path`` play directive.
+An alternate directory can be specified using the ``fact_path`` play keyword.
 
-For instance assume a ``/etc/ansible/facts.d/preferences.fact``::
+For example, assume ``/etc/ansible/facts.d/preferences.fact`` contains::
 
     [general]
     asdf=1
@@ -487,8 +485,7 @@ And this data can be accessed in a ``template/playbook`` as::
 
      {{ ansible_local.preferences.general.asdf }}
 
-The local namespace prevents any user supplied fact from overriding system facts
-or variables defined elsewhere in the playbook.
+The local namespace prevents any user supplied fact from overriding system facts or variables defined elsewhere in the playbook.
 
 .. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
 
@@ -503,7 +500,7 @@ Here is an example of what that might look like::
     tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
-      - name: install custom impi fact
+      - name: install custom ipmi fact
         copy: src=ipmi.fact dest=/etc/ansible/facts.d
       - name: re-read facts after adding custom fact
         setup: filter=ansible_local
@@ -545,12 +542,10 @@ current play, or another play up higher in the playbook.  This is the default co
 To avoid this, Ansible 1.8 allows the ability to save facts between playbook runs, but this feature must be manually
 enabled.  Why might this be useful?
 
-Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
-configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
+With a very large infrastructure with thousands of hosts, fact caching could be configured to run nightly. Configuration of a small set of servers could run ad-hoc or periodically throughout the day. With fact caching enabled, it would
 not be necessary to "hit" all servers to reference variables and information about them.
 
-With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
-the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
+With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
 
 To benefit from cached facts, you will want to change the ``gathering`` setting to ``smart`` or ``explicit`` or set ``gather_facts`` to ``False`` in most plays.
 
@@ -623,7 +618,7 @@ When using ``register`` with a loop the data structure placed in the variable du
 Accessing Complex Variable Data
 ````````````````````````````````
 
-We already talked about facts a little higher up in the documentation.
+We already described facts a little higher up in the documentation.
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple ``{{ foo }}`` is not sufficient, but it is still easy to do.   Here's how we get an IP address::
@@ -826,7 +821,7 @@ Variable Precedence: Where Should I Put A Variable?
 ````````````````````````````````````````````````````
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
-you know where to put a variable, and then you have to think about it a lot less.  
+you know where to put a variable, and then you have to think about it a lot less.
 
 Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".
 Why?  Because that's not Ansible's Zen philosophy of doing things.
@@ -839,18 +834,7 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
-
-In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
-
- * "role defaults", which lose in priority to everything and are the most easily overridden 
- * variables defined in inventory
- * facts discovered about a system
- * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
- * connection variables (``ansible_user``, etc.)
- * extra vars (``-e`` in the command line) always win
-
-In Ansible version 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
   * role defaults [1]_
   * inventory file or script group vars [2]_
@@ -871,10 +855,10 @@ In Ansible version 2.x, we have made the order of precedence more specific (with
   * role vars (defined in role/vars/main.yml)
   * block vars (only for tasks in block)
   * task vars (only for the task)
-  * role (and include_role) params
-  * include params
   * include_vars
   * set_facts / registered vars
+  * role (and include_role) params
+  * include params
   * extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
@@ -895,7 +879,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
 
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::
 
     ansible -u lola myhost
 
@@ -942,7 +926,7 @@ First off, group variables are powerful.
 
 Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
-in things like :doc:`tower` from the UI or API::
+in things like :ref:`ansible_tower` from the UI or API::
 
     ---
     # file: /etc/ansible/group_vars/all
@@ -996,7 +980,9 @@ Parameterized roles are useful.
 If you are using a role and want to override a default, pass it as a parameter to the role like so::
 
     roles:
-       - { role: apache, http_port: 8080 }
+       - role: apache
+         vars:
+            http_port: 8080
 
 This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
@@ -1005,10 +991,18 @@ role you are sharing with others.
 This can often be used for things that might apply to some hosts multiple times. For example::
 
     roles:
-       - { role: app_user, name: Ian    }
-       - { role: app_user, name: Terry  }
-       - { role: app_user, name: Graham }
-       - { role: app_user, name: John   }
+       - role: app_user
+         vars:
+            myname: Ian
+       - role: app_user
+         vars:
+           myname: Terry
+       - role: app_user
+         vars:
+           myname: Graham
+       - role: app_user
+         vars:
+           myname: John
 
 In this example, the same role was invoked multiple times.  It's quite likely there was
 no default for 'name' supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
@@ -1019,9 +1013,11 @@ Generally speaking, variables set in one role are available to others.  This mea
 can set variables in there and make use of them in other roles and elsewhere in your playbook::
 
      roles:
-        - { role: common_settings }
-        - { role: something, foo: 12 }
-        - { role: something_else }
+        - role: common_settings
+        - role: something
+          vars:
+            foo: 12
+        - role: something_else
 
 .. note:: There are some protections in place to avoid the need to namespace variables.
           In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if

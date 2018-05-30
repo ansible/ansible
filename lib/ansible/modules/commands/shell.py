@@ -30,42 +30,31 @@ options:
       - The shell module takes a free form command to run, as a string.  There's not an actual
         option named "free form".  See the examples!
     required: true
-    default: null
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
   removes:
     description:
       - a filename, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
-    required: no
-    default: null
   chdir:
     description:
       - cd into this directory before running the command
-    required: false
-    default: null
     version_added: "0.6"
   executable:
     description:
       - change the shell used to execute the command. Should be an absolute path to the executable.
-    required: false
-    default: null
     version_added: "0.9"
   warn:
     description:
       - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
-    required: false
-    default: True
+    type: bool
+    default: 'yes'
     version_added: "1.8"
   stdin:
     version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
-    required: false
-    default: null
 notes:
   -  If you want to execute a command securely and predictably, it may be
      better to use the M(command) module instead. Best practices when writing

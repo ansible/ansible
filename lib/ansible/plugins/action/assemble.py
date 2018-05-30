@@ -103,7 +103,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(task_vars=task_vars))
+                result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:

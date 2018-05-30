@@ -34,40 +34,29 @@ options:
       - >
         Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must
         be midnight and a GMT timezone must be specified.
-    required: false
-    default: null
   expiration_days:
     description:
       - "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer."
-    required: false
-    default: null
   prefix:
     description:
       - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
-    required: false
-    default: null
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
-    required: false
-    default: null
   state:
     description:
       - "Create or remove the lifecycle rule"
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   status:
     description:
       - "If 'enabled', the rule is currently being applied. If 'disabled', the rule is not currently being applied."
-    required: false
     default: enabled
     choices: [ 'enabled', 'disabled' ]
   storage_class:
     description:
       - "The storage class to transition to. Currently there are two supported values - 'glacier' or 'standard_ia'."
       - "The 'standard_ia' class is only being available from Ansible version 2.2."
-    required: false
     default: glacier
     choices: [ 'glacier', 'standard_ia']
   transition_date:
@@ -76,13 +65,9 @@ options:
         Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class.
         The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified,
         this parameter is required."
-    required: false
-    default: null
   transition_days:
     description:
       - "Indicates when, in days, an object transitions to a different storage class. If transition_date is not specified, this parameter is required."
-    required: false
-    default: null
 extends_documentation_fragment:
     - aws
     - ec2

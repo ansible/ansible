@@ -485,7 +485,9 @@ class ClustersModule(BaseModule):
                 name=self.param('network'),
             ) if self.param('network') else None,
             cpu=otypes.Cpu(
-                architecture=self.param('cpu_arch'),
+                architecture=otypes.Architecture(
+                    self.param('cpu_arch')
+                ) if self.param('cpu_arch') else None,
                 type=self.param('cpu_type'),
             ) if (
                 self.param('cpu_arch') or self.param('cpu_type')

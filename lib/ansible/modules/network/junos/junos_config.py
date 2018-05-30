@@ -32,8 +32,6 @@ options:
         lines to push into the remote device.  Each line must start with
         either C(set) or C(delete).  This argument is mutually exclusive
         with the I(src) argument.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -41,8 +39,6 @@ options:
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
-    required: false
-    default: null
     version_added: "2.2"
   src_format:
     description:
@@ -50,8 +46,6 @@ options:
         found int I(src).  If the I(src_format) argument is not provided,
         the module will attempt to determine the format of the configuration
         file specified in I(src).
-    required: false
-    default: null
     choices: ['xml', 'set', 'text', 'json']
     version_added: "2.2"
   rollback:
@@ -61,16 +55,12 @@ options:
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail.  To rollback
         to the most recent commit, set the C(rollback) argument to 0.
-    required: false
-    default: null
   zeroize:
     description:
       - The C(zeroize) argument is used to completely sanitize the
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
-    required: false
-    default: null
   confirm:
     description:
       - The C(confirm) argument will configure a time out value for
@@ -78,14 +68,12 @@ options:
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
-    required: false
     default: 0
   comment:
     description:
       - The C(comment) argument specifies a text string to be used
         when committing the configuration.  If the C(confirm) argument
         is set to False, this argument is silently ignored.
-    required: false
     default: configured by junos_config
   replace:
     description:
@@ -97,19 +85,18 @@ options:
         the equivalent, set the I(update) argument to C(replace). This argument
         will be removed in a future release. The C(replace) and C(update) argument
         is mutually exclusive.
-    required: false
-    choices: ['yes', 'no']
-    default: false
+    type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   update:
     description:
@@ -125,7 +112,6 @@ options:
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
-    required: false
     default: merge
     choices: ['merge', 'override', 'replace']
     version_added: "2.3"
@@ -133,18 +119,21 @@ options:
     description:
       - This argument will execute commit operation on remote device.
         It can be used to confirm a previous commit.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -171,6 +160,12 @@ EXAMPLES = """
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
+
+- name: for idempotency, use full-form commands
+  junos_config:
+    lines:
+      # - set int ge-0/0/1 unit 0 desc "Test interface"
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
 """
 
 RETURN = """

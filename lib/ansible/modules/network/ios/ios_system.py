@@ -86,7 +86,7 @@ EXAMPLES = """
   ios_system:
     hostname: ios01
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com
@@ -254,7 +254,7 @@ def parse_hostname(config):
 
 
 def parse_domain_name(config):
-    match = re.findall(r'^ip domain name (?:vrf (\S+) )*(\S+)', config, re.M)
+    match = re.findall(r'^ip domain[- ]name (?:vrf (\S+) )*(\S+)', config, re.M)
     matches = list()
     for vrf, name in match:
         if not vrf:
@@ -264,7 +264,7 @@ def parse_domain_name(config):
 
 
 def parse_domain_search(config):
-    match = re.findall(r'^ip domain list (?:vrf (\S+) )*(\S+)', config, re.M)
+    match = re.findall(r'^ip domain[- ]list (?:vrf (\S+) )*(\S+)', config, re.M)
     matches = list()
     for vrf, name in match:
         if not vrf:
@@ -285,7 +285,7 @@ def parse_name_servers(config):
 
 
 def parse_lookup_source(config):
-    match = re.search(r'ip domain lookup source-interface (\S+)', config, re.M)
+    match = re.search(r'ip domain[- ]lookup source-interface (\S+)', config, re.M)
     if match:
         return match.group(1)
 
@@ -297,7 +297,7 @@ def map_config_to_obj(module):
         'domain_name': parse_domain_name(config),
         'domain_search': parse_domain_search(config),
         'lookup_source': parse_lookup_source(config),
-        'lookup_enabled': 'no ip domain lookup' not in config,
+        'lookup_enabled': 'no ip domain lookup' not in config and 'no ip domain-lookup' not in config,
         'name_servers': parse_name_servers(config)
     }
 

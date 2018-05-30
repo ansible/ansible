@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Kevin Brebanov <https://github.com/kbrebanov>
-# Based on pacman (Afterburn <http://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
+# Based on pacman (Afterburn <https://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
 # and apt (Matthew Williams <matthew@flowroute.com>) modules.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -29,21 +29,16 @@ options:
     description:
       - During upgrade, reset versioned world dependencies and change logic to prefer replacing or downgrading packages (instead of holding them)
         if the currently installed package is no longer available from any repository.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.4"
   name:
     description:
       - A package name, like C(foo), or multiple packages, like C(foo, bar).
-    required: false
-    default: null
   repository:
     description:
       - A package repository or multiple repositories.
         Unlike with the underlying apk command, this list will override the system repositories rather than supplement them.
-    required: false
-    default: null
     version_added: "2.4"
   state:
     description:
@@ -51,21 +46,18 @@ options:
       - C(present) ensures the package(s) is/are present.
       - C(absent) ensures the package(s) is/are absent.
       - C(latest) ensures the package(s) is/are present and the latest version(s).
-    required: false
     default: present
     choices: [ "present", "absent", "latest" ]
   update_cache:
     description:
       - Update repository indexes. Can be run with other steps or on it's own.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   upgrade:
     description:
       - Upgrade all installed packages to their latest version.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 notes:
   - '"name" and "upgrade" are mutually exclusive.'
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.

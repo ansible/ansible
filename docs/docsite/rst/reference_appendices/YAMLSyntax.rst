@@ -1,3 +1,6 @@
+.. _yaml_syntax:
+
+
 YAML Syntax
 ===========
 
@@ -8,7 +11,7 @@ We use YAML because it is easier for humans to read and write than other common
 data formats like XML or JSON.  Further, there are libraries available in most
 programming languages for working with YAML.
 
-You may also wish to read :doc:`playbooks` at the same time to see how this
+You may also wish to read :ref:`working_with_playbooks` at the same time to see how this
 is used in practice.
 
 
@@ -217,7 +220,7 @@ value::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems

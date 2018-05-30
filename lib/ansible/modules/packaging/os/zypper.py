@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
@@ -62,6 +62,12 @@ options:
         choices: [ package, patch, pattern, product, srcpackage, application ]
         default: "package"
         version_added: "2.0"
+    extra_args_precommand:
+       version_added: "2.6"
+       required: false
+       description:
+         - Add additional global target options to C(zypper).
+         - Options should be supplied in a single line as if given in the command line.
     disable_gpg_check:
         description:
           - Whether to disable to GPG signature checking of the package
@@ -69,7 +75,7 @@ options:
             I(present) or I(latest).
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     disable_recommends:
         version_added: "1.8"
         description:
@@ -77,21 +83,21 @@ options:
             install recommended packages.
         required: false
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
     force:
         version_added: "2.2"
         description:
           - Adds C(--force) option to I(zypper). Allows to downgrade packages and change vendor or architecture.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     update_cache:
         version_added: "2.2"
         description:
           - Run the equivalent of C(zypper refresh) before the operation. Disabled in check mode.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
         aliases: [ "refresh" ]
     oldpackage:
         version_added: "2.2"
@@ -100,7 +106,7 @@ options:
             version is specified as part of the package name.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     extra_args:
         version_added: "2.4"
         required: false
@@ -308,10 +314,15 @@ def get_cmd(m, subcommand):
     is_install = subcommand in ['install', 'update', 'patch', 'dist-upgrade']
     is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
-
+    if m.params['extra_args_precommand']:
+        args_list = m.params['extra_args_precommand'].split()
+        cmd.extend(args_list)
     # add global options before zypper command
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
+
+    if subcommand == 'search':
+        cmd.append('--disable-repositories')
 
     cmd.append(subcommand)
     if subcommand not in ['patch', 'dist-upgrade'] and not is_refresh:
@@ -461,6 +472,7 @@ def main():
             name=dict(required=True, aliases=['pkg'], type='list'),
             state=dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
             type=dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
+            extra_args_precommand=dict(required=False, default=None),
             disable_gpg_check=dict(required=False, default='no', type='bool'),
             disable_recommends=dict(required=False, default='yes', type='bool'),
             force=dict(required=False, default='no', type='bool'),

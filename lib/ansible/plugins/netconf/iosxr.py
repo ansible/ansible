@@ -73,7 +73,6 @@ def transform_reply():
     if sys.version < '3':
         return reply
     else:
-        print("utf8")
         return reply.encode('UTF-8')
 
 

@@ -118,6 +118,14 @@ EXAMPLES = r'''
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
+
+- name: Unarchive a file with extra options
+  unarchive:
+    src: /tmp/foo.zip
+    dest: /usr/local/bin
+    extra_opts:
+    - --transform
+    - s/^xxx/yyy/
 '''
 
 import binascii
@@ -642,9 +650,17 @@ class TgzArchive(object):
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
             # filename = filename.decode('string_escape')
-            filename = codecs.escape_decode(filename)[0]
+            filename = to_native(codecs.escape_decode(filename)[0])
+
             if filename and filename not in self.excludes:
-                self._files_in_archive.append(to_native(filename))
+                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+                if filename.startswith('/'):
+                    filename = filename[1:]
+
+                self._files_in_archive.append(filename)
+
         return self._files_in_archive
 
     def is_unarchived(self):
@@ -869,6 +885,7 @@ def main():
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
+
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:

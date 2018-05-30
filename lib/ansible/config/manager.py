@@ -173,7 +173,7 @@ class ConfigManager(object):
 
         self._base_defs = {}
         self._plugins = {}
-        self._parser = None
+        self._parsers = {}
 
         self._config_file = conf_file
         self.data = ConfigData()
@@ -214,15 +214,15 @@ class ConfigManager(object):
         ftype = get_config_type(cfile)
         if cfile is not None:
             if ftype == 'ini':
-                self._parser = configparser.ConfigParser()
+                self._parsers[cfile] = configparser.ConfigParser()
                 try:
-                    self._parser.read(cfile)
+                    self._parsers[cfile].read(cfile)
                 except configparser.Error as e:
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files
             # elif ftype == 'yaml':
             #     with open(cfile, 'rb') as config_stream:
-            #         self._parser = yaml.safe_load(config_stream)
+            #         self._parsers[cfile] = yaml.safe_load(config_stream)
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
@@ -288,9 +288,8 @@ class ConfigManager(object):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
 
         if cfile is None:
+            # use default config
             cfile = self._config_file
-        else:
-            self._parse_config_file(cfile)
 
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
@@ -320,6 +319,9 @@ class ConfigManager(object):
                 origin = 'env: %s' % origin
 
             # try config file entries next, if we have one
+            if self._parsers.get(cfile, None) is None:
+                self._parse_config_file(cfile)
+
             if value is None and cfile is not None:
                 ftype = get_config_type(cfile)
                 if ftype and defs[config].get(ftype):
@@ -327,7 +329,7 @@ class ConfigManager(object):
                         # load from ini config
                         try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
                             for ini_entry in defs[config]['ini']:
-                                temp_value = get_ini_config_value(self._parser, ini_entry)
+                                temp_value = get_ini_config_value(self._parsers[cfile], ini_entry)
                                 if temp_value is not None:
                                     value = temp_value
                                     origin = cfile

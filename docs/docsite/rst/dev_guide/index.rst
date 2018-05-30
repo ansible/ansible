@@ -19,11 +19,11 @@ To get started, select one of the following topics.
    developing_plugins
    developing_inventory
    developing_core
-   developing_python3
+   developing_python_3
    developing_api
    developing_rebasing
    testing
    repomerge
-   ../release_and_maintenance
-   ../committer_guidelines
+   ../reference_appendices/release_and_maintenance
+   ../community/committer_guidelines
    ./style_guide/index

@@ -59,6 +59,7 @@ credentials.yml
 *.out
 .tox
 .cache
+.pytest_cache
 results.xml
 coverage.xml
 /test/units/cover-html
@@ -73,6 +74,7 @@ ansible.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
+.python-version
 # Release directory
 packaging/release/ansible_release
 /.cache/

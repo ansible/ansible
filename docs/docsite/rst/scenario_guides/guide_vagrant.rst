@@ -18,7 +18,7 @@ If you're not familiar with Vagrant, you should visit `the documentation
 <http://docs.vagrantup.com/v2/>`_.
 
 This guide assumes that you already have Ansible installed and working.
-Running from a Git checkout is fine. Follow the :doc:`intro_installation`
+Running from a Git checkout is fine. Follow the :ref:`installation_guide`
 guide for more information.
 
 .. _vagrant_setup:
@@ -149,6 +149,6 @@ The "Tips and Tricks" chapter of the `Ansible Provisioner documentation
         The Vagrant documentation for the Ansible provisioner
     `Vagrant Issue Tracker <https://github.com/mitchellh/vagrant/issues?q=is%3Aopen+is%3Aissue+label%3Aprovisioners%2Fansible>`_
         The open issues for the Ansible provisioner in the Vagrant project
-    :doc:`playbooks`
+    :ref:`working_with_playbooks`
         An introduction to playbooks
 

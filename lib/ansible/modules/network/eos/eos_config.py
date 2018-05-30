@@ -36,6 +36,8 @@ description:
 extends_documentation_fragment: eos
 notes:
   - Tested against EOS 4.15
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -44,17 +46,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
     aliases: ['commands']
-    default: null
   parents:
     description:
       - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -65,8 +63,6 @@ options:
         I(parents) arguments. It can be a Jinja2 template as well.
         src file must have same indentation as a live switch config.
         Arista EOS device config has 3 spaces indentation.
-    required: false
-    default: null
     version_added: "2.2"
   before:
     description:
@@ -75,16 +71,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -95,7 +87,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -106,7 +97,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -118,19 +108,18 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in Ansible 2.6.
-    required: false
-    default: false
     type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
@@ -141,8 +130,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for this module.
-    required: false
-    default: null
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -152,9 +139,8 @@ options:
         the command used to collect the running-config is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save:
     description:
@@ -166,9 +152,8 @@ options:
         return changed.
       - This option is deprecated as of Ansible 2.4 and will be removed
         in Ansible 2.8, use C(save_when) instead.
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save_when:
     description:
@@ -184,7 +169,6 @@ options:
         startup-config. If the argument is set to I(changed), then the running-config
         will only be copied to the startup-config if the task has made a change.
         I(changed) was added in Ansible 2.5.
-    required: false
     default: never
     choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
@@ -202,7 +186,6 @@ options:
         to any changes made to the device configuration.
       - When this option is configured as C(session), the diff returned will
         be based on the configuration session.
-    required: false
     default: session
     choices: ['startup', 'running', 'intended', 'session']
     version_added: "2.4"
@@ -212,7 +195,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
     version_added: "2.4"
   intended_config:
     description:
@@ -223,7 +205,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
     version_added: "2.4"
 """
 
@@ -256,6 +237,14 @@ EXAMPLES = """
   eos_config:
     diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+- name: for idempotency, use full-form commands
+  eos_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int eth1
+    parents: interface Ethernet1
 """
 
 RETURN = """

@@ -1,3 +1,5 @@
+.. _playbooks_reuse_roles:
+
 Roles
 =====
 
@@ -122,17 +124,23 @@ The name used for the role can be a simple name (see :ref:`role_search_path` bel
 
     - hosts: webservers
       roles:
-        - { role: '/path/to/my/roles/common' }
+        - role: '/path/to/my/roles/common'
 
-Roles can accept parameters::
+Roles can accept other keywords::
 
     ---
 
     - hosts: webservers
       roles:
         - common
-        - { role: foo_app_instance, dir: '/opt/a', app_port: 5000 }
-        - { role: foo_app_instance, dir: '/opt/b', app_port: 5001 }
+        - role: foo_app_instance
+          vars:
+             dir: '/opt/a'
+             app_port: 5000
+        - role: foo_app_instance
+          vars:
+             dir: '/opt/b'
+             app_port: 5001
 
 Or, using the newer syntax::
 
@@ -147,7 +155,7 @@ Or, using the newer syntax::
           app_port: 5000
       ...
 
-You can conditionally execute a role. This is not generally recommended with the classic syntax, but is common when using ``import_role`` or ``include_role``::
+You can conditionally import a role and execute it's tasks::
 
     ---
 
@@ -157,12 +165,17 @@ You can conditionally execute a role. This is not generally recommended with the
           name: some_role
         when: "ansible_os_family == 'RedHat'"
 
-Finally, you may wish to assign tags to the roles you specify. You can do so inline::
+
+
+Finally, you may wish to assign tags to the tasks inside the roles you specify. You can do::
 
     ---
 
     - hosts: webservers
       roles:
+        - role: bar
+          tags: ["foo"]
+        # using YAML shorthand, this is equivalent to the above
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -178,7 +191,20 @@ Or, again, using the newer syntax::
         - baz
 
 .. note::
-    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role. The tags in this example will *not* be added to tasks inside an ``include_role``. Tag the ``include_role`` task directly in order to apply tags to tasks in included roles. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
+    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role.
+
+On the other hand you might just want to tag the import of the role itself::
+
+    - hosts: webservers
+      tasks:
+      - include_role:
+          name: bar
+        tags:
+         - foo
+
+.. note:: The tags in this example will *not* be added to tasks inside an ``include_role``, you can use a surrounding ``block`` directive to do both.
+
+.. note:: There is no facility to import a role while specifying a subset of tags to execute. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 Role Duplication and Execution
 ``````````````````````````````
@@ -203,8 +229,10 @@ Example 1 - passing different parameters::
     ---
     - hosts: webservers
       roles:
-      - { role: foo, message: "first" }
-      - { role: foo, message: "second" }
+      - role: foo
+        vars:
+             message: "first"
+      - { role: foo, vars: { message: "second" } }
 
 In this example, because each role definition has different parameters, ``foo`` will run twice.
 
@@ -241,9 +269,16 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
     ---
     dependencies:
-      - { role: common, some_parameter: 3 }
-      - { role: apache, apache_port: 80 }
-      - { role: postgres, dbname: blarg, other_parameter: 12 }
+      - role: common
+        vars:
+          some_parameter: 3
+      - role: apache
+        vars:
+          apache_port: 80
+      - role: postgres
+        vars:
+          dbname: blarg
+          other_parameter: 12
 
 .. note::
     Role dependencies must use the classic role definition style.
@@ -257,17 +292,25 @@ For example, a role named ``car`` depends on a role named ``wheel`` as follows::
 
     ---
     dependencies:
-    - { role: wheel, n: 1 }
-    - { role: wheel, n: 2 }
-    - { role: wheel, n: 3 }
-    - { role: wheel, n: 4 }
+    - role: wheel
+      vars:
+         n: 1
+    - role: wheel
+      vars:
+         n: 2
+    - role: wheel
+      vars:
+         n: 3
+    - role: wheel
+      vars:
+         n: 4
 
 And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following::
 
     ---
     dependencies:
-    - { role: tire }
-    - { role: brake }
+    - role: tire
+    - role: brake
 
 And the ``meta/main.yml`` for ``tire`` and ``brake`` would contain the following::
 
@@ -298,7 +341,7 @@ Embedding Modules and Plugins In Roles
 
 This is an advanced topic that should not be relevant for most users.
 
-If you write a custom module (see :doc:`dev_guide/developing_modules`) or a plugin (see :doc:`dev_guide/developing_plugins`), you may wish to distribute it as part of a role.
+If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you may wish to distribute it as part of a role.
 Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
 A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
@@ -345,7 +388,7 @@ Ansible will search for roles in the following way:
 - A ``roles/`` directory, relative to the playbook file.
 - By default, in ``/etc/ansible/roles``
 
-In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
+In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :ref:`intro_configuration` for details about how to set this up in ansible.cfg.
 
 Ansible Galaxy
 ``````````````
@@ -358,23 +401,23 @@ Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 
-   :doc:`galaxy`
+   :ref:`ansible_galaxy`
        How to share roles on galaxy, role management
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditionals in playbooks
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Loops in playbooks
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source

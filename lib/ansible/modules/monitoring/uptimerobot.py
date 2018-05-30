@@ -27,23 +27,15 @@ options:
         description:
             - Define whether or not the monitor should be running or paused.
         required: true
-        default: null
         choices: [ "started", "paused" ]
-        aliases: []
     monitorid:
         description:
             - ID of the monitor to check.
         required: true
-        default: null
-        choices: []
-        aliases: []
     apikey:
         description:
             - Uptime Robot API key.
         required: true
-        default: null
-        choices: []
-        aliases: []
 notes:
     - Support for adding and removing monitors and alert contacts has not yet been implemented.
 '''
@@ -122,7 +114,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(required=True, choices=['started', 'paused']),
-            apikey=dict(required=True),
+            apikey=dict(required=True, no_log=True),
             monitorid=dict(required=True)
         ),
         supports_check_mode=SUPPORTS_CHECK_MODE

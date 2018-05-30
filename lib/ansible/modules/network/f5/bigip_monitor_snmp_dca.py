@@ -20,7 +20,7 @@ description:
   - The BIG-IP has an SNMP data collecting agent (DCA) that can query remote
     SNMP agents of various types, including the UC Davis agent (UCD) and the
     Windows 2000 Server agent (WIN2000).
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
@@ -222,30 +222,25 @@ disk_threshold:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -284,11 +279,6 @@ class Parameters(AnsibleF5Parameters):
         'memory_threshold', 'disk_coefficient', 'disk_threshold'
     ]
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
     def to_return(self):
         result = {}
         try:
@@ -325,7 +315,7 @@ class Parameters(AnsibleF5Parameters):
     def parent(self):
         if self._values['parent'] is None:
             return None
-        result = self._fqdn_name(self._values['parent'])
+        result = fq_name(self.partition, self._values['parent'])
         return result
 
     @property
@@ -608,7 +598,7 @@ class ArgumentSpec(object):
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
             community=dict(),
-            version=dict(),
+            version=dict(choices=['v1', 'v2c']),
             agent_type=dict(
                 choices=['UCD', 'WIN2000', 'GENERIC']
             ),

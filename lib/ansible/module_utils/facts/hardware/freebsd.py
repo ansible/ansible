@@ -66,12 +66,18 @@ class FreeBSDHardware(Hardware):
     def get_cpu_facts(self):
         cpu_facts = {}
         cpu_facts['processor'] = []
-        rc, out, err = self.module.run_command("/sbin/sysctl -n hw.ncpu")
-        cpu_facts['processor_count'] = out.strip()
+        sysctl = self.module.get_bin_path('sysctl')
+        if sysctl:
+            rc, out, err = self.module.run_command("%s -n hw.ncpu" % sysctl, check_rc=False)
+            cpu_facts['processor_count'] = out.strip()
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
-            rc, dmesg_boot, err = self.module.run_command("/sbin/dmesg")
+            try:
+                rc, dmesg_boot, err = self.module.run_command(self.module.get_bin_path("dmesg"), check_rc=False)
+            except Exception:
+                dmesg_boot = ''
+
         for line in dmesg_boot.splitlines():
             if 'CPU:' in line:
                 cpu = re.sub(r'CPU:\s+', r"", line)
@@ -84,29 +90,34 @@ class FreeBSDHardware(Hardware):
     def get_memory_facts(self):
         memory_facts = {}
 
-        rc, out, err = self.module.run_command("/sbin/sysctl vm.stats")
-        for line in out.splitlines():
-            data = line.split()
-            if 'vm.stats.vm.v_page_size' in line:
-                pagesize = int(data[1])
-            if 'vm.stats.vm.v_page_count' in line:
-                pagecount = int(data[1])
-            if 'vm.stats.vm.v_free_count' in line:
-                freecount = int(data[1])
-        memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
-        memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
-        # Get swapinfo.  swapinfo output looks like:
-        # Device          1M-blocks     Used    Avail Capacity
-        # /dev/ada0p3        314368        0   314368     0%
-        #
-        rc, out, err = self.module.run_command("/usr/sbin/swapinfo -k")
-        lines = out.splitlines()
-        if len(lines[-1]) == 0:
-            lines.pop()
-        data = lines[-1].split()
-        if data[0] != 'Device':
-            memory_facts['swaptotal_mb'] = int(data[1]) // 1024
-            memory_facts['swapfree_mb'] = int(data[3]) // 1024
+        sysctl = self.module.get_bin_path('sysctl')
+        if sysctl:
+            rc, out, err = self.module.run_command("%s vm.stats" % sysctl, check_rc=False)
+            for line in out.splitlines():
+                data = line.split()
+                if 'vm.stats.vm.v_page_size' in line:
+                    pagesize = int(data[1])
+                if 'vm.stats.vm.v_page_count' in line:
+                    pagecount = int(data[1])
+                if 'vm.stats.vm.v_free_count' in line:
+                    freecount = int(data[1])
+            memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
+            memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
+
+        swapinfo = self.module.get_bin_path('swapinfo')
+        if swapinfo:
+            # Get swapinfo.  swapinfo output looks like:
+            # Device          1M-blocks     Used    Avail Capacity
+            # /dev/ada0p3        314368        0   314368     0%
+            #
+            rc, out, err = self.module.run_command("%s -k" % swapinfo)
+            lines = out.splitlines()
+            if len(lines[-1]) == 0:
+                lines.pop()
+            data = lines[-1].split()
+            if data[0] != 'Device':
+                memory_facts['swaptotal_mb'] = int(data[1]) // 1024
+                memory_facts['swapfree_mb'] = int(data[3]) // 1024
 
         return memory_facts
 

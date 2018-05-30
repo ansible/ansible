@@ -36,22 +36,20 @@ description:
 extends_documentation_fragment: vyos
 notes:
   - Tested against VYOS 1.1.7
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
-    required: false
-    default: null
   src:
     description:
       - The C(src) argument specifies the path to the source config
         file to load.  The source config file can either be in
         bracket format or set format.  The source file can include
         Jinja2 template variables.
-    required: no
-    default: null
   match:
     description:
       - The C(match) argument controls the method used to match
@@ -60,7 +58,6 @@ options:
         deltas are loaded.  If the C(match) argument is set to C(none)
         the active configuration is ignored and the configuration is
         always loaded.
-    required: false
     default: line
     choices: ['line', 'none']
   backup:
@@ -68,16 +65,16 @@ options:
       - The C(backup) argument will backup the current devices active
         configuration to the Ansible control host prior to making any
         changes.  The backup file will be located in the backup folder
-        in the root of the playbook
-    required: false
-    default: false
-    choices: ['yes', 'no']
+        in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not
+        exist, it is created.
+    type: bool
+    default: 'no'
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by vyos_config'
   config:
     description:
@@ -85,17 +82,14 @@ options:
         to compare against the desired configuration.  If this value
         is not specified, the module will automatically retrieve the
         current active configuration from the remote device.
-    required: false
-    default: null
   save:
     description:
       - The C(save) argument controls whether or not changes made
         to the active configuration are saved to disk.  This is
         independent of committing the config.  When set to True, the
         active configuration is saved.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -110,6 +104,12 @@ EXAMPLES = """
   vyos_config:
     src: vyos.cfg
     backup: yes
+
+- name: for idempotency, use full-form commands
+  vyos_config:
+    lines:
+      # - set int eth eth2 description 'OUTSIDE'
+      - set interface ethernet eth2 description 'OUTSIDE'
 """
 
 RETURN = """

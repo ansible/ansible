@@ -28,8 +28,6 @@ options:
   name:
     description:
       - The name of the GCE instance template.
-    required: true
-    default: null
   size:
     description:
       - The desired machine type for the instance template.
@@ -38,18 +36,15 @@ options:
     description:
       - A source disk to attach to the instance.
         Cannot specify both I(image) and I(source).
-    default: null
   image:
     description:
       - The image to use to create the instance.
         Cannot specify both both I(image) and I(source).
-    default: null
   image_family:
     description:
       - The image family to use to create the instance.
         If I(image) has been used I(image_family) is ignored.
         Cannot specify both I(image) and I(source).
-    default: null
   disk_type:
     description:
       - Specify a C(pd-standard) disk or C(pd-ssd)
@@ -67,12 +62,12 @@ options:
   subnetwork:
     description:
       - The Subnetwork resource name for this instance.
-    default: null
   can_ip_forward:
     description:
-      - Set to True to allow instance to
+      - Set to C(yes) to allow instance to
         send/receive non-matching src/dst packets.
-    default: false
+    type: bool
+    default: 'no'
   external_ip:
     description:
       - The external IP address to use.
@@ -84,13 +79,11 @@ options:
   service_account_email:
     description:
       - service account email
-    default: null
   service_account_permissions:
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -102,61 +95,49 @@ options:
       - Defines whether the instance should be
         automatically restarted when it is
         terminated by Compute Engine.
-    default: null
   preemptible:
     description:
       - Defines whether the instance is preemptible.
-    default: null
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
-    default: null
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
-    default: null
   description:
     description:
       - description of instance template
-    default: null
   disks:
     description:
       - a list of persistent disks to attach to the instance; a string value
         gives the name of the disk; alternatively, a dictionary value can
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
-    default: null
   nic_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
-    default: null
   disks_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted formatted disks[] structure. Case sensitive.
         see U(https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource) for detailed information
-    default: null
     version_added: "2.4"
   project_id:
     description:
       - your GCE project ID
-    default: null
   pem_file:
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    default: null
   credentials_file:
     description:
       - path to the JSON file associated with the service account email
-    default: null
   subnetwork_region:
     version_added: "2.4"
     description:
       - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
-    default: null
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,

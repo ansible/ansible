@@ -33,13 +33,13 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'eos'
-        reply = self.get(b'show version | json')
+        reply = self.get('show version | json')
         data = json.loads(reply)
 
         device_info['network_os_version'] = data['version']
         device_info['network_os_model'] = data['modelName']
 
-        reply = self.get(b'show hostname | json')
+        reply = self.get('show hostname | json')
         data = json.loads(reply)
 
         device_info['network_os_hostname'] = data['hostname']
@@ -51,19 +51,18 @@ class Cliconf(CliconfBase):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
-        if format == 'text':
-            cmd = b'show %s ' % lookup[source]
-        else:
-            cmd = b'show %s | %s' % (lookup[source], format)
 
-        flags = [] if flags is None else flags
-        cmd += ' '.join(flags)
+        cmd = 'show %s ' % lookup[source]
+        if format and format is not 'text':
+            cmd += '| %s ' % format
+
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure'], to_list(command), [b'end']):
+        for cmd in chain(['configure'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):

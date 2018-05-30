@@ -356,6 +356,9 @@ class StorageDomainModule(BaseModule):
             return [(lun_id, storage.get('target')) for lun_id in lun_ids]
         elif storage.get('target_lun_map'):
             return [(target_map.get('lun_id'), target_map.get('target')) for target_map in storage.get('target_lun_map')]
+        else:
+            lun_ids = storage.get('lun_id') if isinstance(storage.get('lun_id'), list) else [(storage.get('lun_id'))]
+            return [(lun_id, None) for lun_id in lun_ids]
 
     def build_entity(self):
         storage_type = self._get_storage_type()
@@ -439,7 +442,7 @@ class StorageDomainModule(BaseModule):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
 
-        # Search the data_center name, if it does not exists, try to search by guid.
+        # Search the data_center name, if it does not exist, try to search by guid.
         dc = search_by_name(dcs_service, dc_name)
         if dc is None:
             dc = get_entity(dcs_service.service(dc_name))

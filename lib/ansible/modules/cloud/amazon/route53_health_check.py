@@ -38,14 +38,10 @@ options:
     description:
       - IP address of the end-point to check. Either this or `fqdn` has to be
         provided.
-    required: false
-    default: null
   port:
     description:
       - The port on the endpoint on which you want Amazon Route 53 to perform
         health checks. Required for TCP checks.
-    required: false
-    default: null
   type:
     description:
       - The type of health check that you want to create, which indicates how
@@ -61,22 +57,17 @@ options:
       - Required for all checks except TCP.
       - The path must begin with a /
       - Maximum 255 characters.
-    required: false
-    default: null
   fqdn:
     description:
       - Domain name of the endpoint to check. Either this or `ip_address` has
         to be provided. When both are given the `fqdn` is used in the `Host:`
         header of the HTTP request.
-    required: false
   string_match:
     description:
       - If the check type is HTTP_STR_MATCH or HTTP_STR_MATCH, the string
         that you want Amazon Route 53 to search for in the response body from
         the specified resource. If the string appears in the first 5120 bytes
         of the response body, Amazon Route 53 considers the resource healthy.
-    required: false
-    default: null
   request_interval:
     description:
       - The number of seconds between the time that Amazon Route 53 gets a

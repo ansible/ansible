@@ -203,7 +203,7 @@ class GalaxyAPI(object):
         """
 
         try:
-            url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
+            url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)

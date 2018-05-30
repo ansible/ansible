@@ -28,7 +28,6 @@ options:
       description:
         - Indicate desired state of the resource
       choices: ['present', 'absent']
-      required: false
       default: present
     name:
       description:
@@ -37,38 +36,28 @@ options:
     tag:
       description:
         - Tag for the stack that should be created, name could be char and digit, no space
-      required: false
-      default: None
       version_added: "2.5"
     template:
       description:
         - Path of the template file to use for the stack creation
-      required: false
-      default: None
     environment:
       description:
         - List of environment files that should be used for the stack creation
-      required: false
-      default: None
     parameters:
       description:
         - Dictionary of parameters for the stack creation
-      required: false
-      default: None
     rollback:
       description:
         - Rollback stack creation
-      required: false
-      default: false
+      type: bool
+      default: 'yes'
     timeout:
       description:
         - Maximum number of seconds to wait for the stack creation
-      required: false
       default: 3600
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -160,6 +149,7 @@ stack:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils._text import to_native
 
 
 def _create_stack(module, stack, cloud, shade):
@@ -179,7 +169,10 @@ def _create_stack(module, stack, cloud, shade):
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _update_stack(module, stack, cloud, shade):
@@ -199,7 +192,10 @@ def _update_stack(module, stack, cloud, shade):
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _system_state_change(module, stack, cloud):
@@ -271,7 +267,7 @@ def main():
                     module.fail_json(msg='delete stack failed for stack: %s' % name)
             module.exit_json(changed=changed)
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':

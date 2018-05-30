@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Red Hat, Inc
@@ -21,16 +21,16 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
+     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
 options:
   name:
     description:
-      - A package name , or package specifier with version, like C(name-1.0).
+      - A package name or package specifier with version, like C(name-1.0).
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be '*' which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
         To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
-    required: true
     aliases: [ pkg ]
   exclude:
     description:
@@ -101,8 +101,7 @@ options:
       - Has an effect only if state is I(latest)
     required: false
     default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
     version_added: "2.5"
 
   installroot:
@@ -178,6 +177,14 @@ EXAMPLES = '''
   yum:
     name: httpd
     state: latest
+
+- name: ensure a list of packages installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - httpd
+    - httpd-tools
 
 - name: remove the Apache package
   yum:
@@ -264,6 +271,8 @@ try:
     transaction_helpers = True
 except ImportError:
     transaction_helpers = False
+
+from contextlib import contextmanager
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -526,7 +535,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
     return set()
 
 
-def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, installroot='/'):
+def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -542,7 +551,19 @@ def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, 
             for rid in en_repos:
                 my.repos.enableRepo(rid)
 
-            pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+            try:
+                pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+            except Exception as e:
+                # If a repo with `repo_gpgcheck=1` is added and the repo GPG
+                # key was never accepted, quering this repo will throw an
+                # error: 'repomd.xml signature could not be verified'. In that
+                # situation we need to run `yum -y makecache` which will accept
+                # the key and try again.
+                if 'repomd.xml signature could not be verified' in to_native(e):
+                    module.run_command(yum_basecmd + ['makecache'])
+                    pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+                else:
+                    raise
             if not pkgs:
                 e, m, _ = my.pkgSack.matchPackageNames([req_spec])
                 pkgs.extend(e)
@@ -639,6 +660,37 @@ def local_envra(path):
                                header[rpm.RPMTAG_ARCH])
 
 
+@contextmanager
+def set_env_proxy(conf_file, installroot):
+    # setting system proxy environment and saving old, if exists
+    my = yum_base(conf_file, installroot)
+    namepass = ""
+    scheme = ["http", "https"]
+    old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
+    try:
+        if my.conf.proxy:
+            if my.conf.proxy_username:
+                namepass = namepass + my.conf.proxy_username
+                if my.conf.proxy_password:
+                    namepass = namepass + ":" + my.conf.proxy_password
+            namepass = namepass + '@'
+            for item in scheme:
+                os.environ[item + "_proxy"] = re.sub(r"(http://)",
+                                                     r"\1" + namepass, my.conf.proxy)
+        yield
+    except yum.Errors.YumBaseError:
+        raise
+    finally:
+        # revert back to previously system configuration
+        for item in scheme:
+            if os.getenv("{0}_proxy".format(item)):
+                del os.environ["{0}_proxy".format(item)]
+        if old_proxy_env[0]:
+            os.environ["http_proxy"] = old_proxy_env[0]
+        if old_proxy_env[1]:
+            os.environ["https_proxy"] = old_proxy_env[1]
+
+
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
         n, e, v, r, a, repo = pkgstr.split('|')
@@ -724,7 +776,7 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
     res['msg'] += err
     res['changed'] = True
 
-    if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+    if ('Nothing to do' in out and rc == 0) or ('does not have any packages' in err):
         res['changed'] = False
 
     if rc != 0:
@@ -761,7 +813,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 module.fail_json(**res)
 
             if '://' in spec:
-                package = fetch_rpm_from_url(spec, module=module)
+                with set_env_proxy(conf_file, installroot):
+                    package = fetch_rpm_from_url(spec, module=module)
             else:
                 package = spec
 
@@ -827,7 +880,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                     continue
 
             # look up what pkgs provide this
-            pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
                 res['results'].append("No package matching '%s' found available, installed or updated" % spec)
@@ -1074,7 +1127,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
             # URL
             elif '://' in spec:
                 # download package so that we can check if it's already installed
-                package = fetch_rpm_from_url(spec, module=module)
+                with set_env_proxy(conf_file, installroot):
+                    package = fetch_rpm_from_url(spec, module=module)
                 envra = local_envra(package)
 
                 if envra is None:
@@ -1091,7 +1145,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                     pkgs['update'].append(spec)
                 else:
                     pkgs['install'].append(spec)
-            pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             # FIXME..? may not be desirable to throw an exception here if a single package is missing
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
@@ -1342,9 +1396,9 @@ def main():
 
     error_msgs = []
     if not HAS_RPM_PYTHON:
-        error_msgs.append('python2 bindings for rpm are needed for this module')
+        error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
     if not HAS_YUM_PYTHON:
-        error_msgs.append('python2 yum module is needed for this  module')
+        error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
     if error_msgs:
         module.fail_json(msg='. '.join(error_msgs))

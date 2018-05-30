@@ -537,7 +537,6 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
-      $prop.Close()
     }
     &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
@@ -565,7 +564,6 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
-      $prop.Close()
     }
     &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
@@ -607,7 +605,6 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
-      $prop.Close()
     }
     &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
@@ -633,7 +630,6 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
-      $prop.Close()
     }
     &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
@@ -662,7 +658,7 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive_check
   check_mode: yes
@@ -688,7 +684,7 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive
 
@@ -713,7 +709,7 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive_again
 

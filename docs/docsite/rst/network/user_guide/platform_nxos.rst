@@ -25,8 +25,9 @@ Connections Available
 | |                         | |                                             | | Requires ``transport: nxapi``         |
 | |                         | |                                             | | in the ``provider`` dictionary        |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Enable Mode**         | | not supported by NXOS                       | | not supported by NXOS                 |
-| | (Privilege Escalation)  | |                                             |                                         |
+| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
+| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
+| | supported as of 2.5.3   | | and ``ansible_become_pass:``                | |                                       |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
@@ -44,6 +45,9 @@ Example CLI ``group_vars/nxos.yml``
    ansible_network_os: nxos
    ansible_user: myuser
    ansible_ssh_pass: !vault...
+   ansible_become: yes
+   ansible_become_method: enable
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
@@ -80,7 +84,7 @@ Before you can use NX-API to connect to a switch, you must enable NX-API. To ena
           enable_https: yes
       when: ansible_network_os == 'nxos'
 
-To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi>` module documentation.
+To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi_module>` module documentation.
 
 Once NX-API is enabled, change your ``group_vars/nxos.yml`` to use the NX-API connection.
 

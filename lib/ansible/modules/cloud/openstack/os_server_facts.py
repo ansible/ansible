@@ -30,24 +30,21 @@ options:
    server:
      description:
        - restrict results to servers with names or UUID matching
-         this glob expression (e.g., C<web*>).
-     required: false
-     default: None
+         this glob expression (e.g., <web*>).
    detailed:
      description:
         - when true, return additional detail about servers at the expense
           of additional API calls.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named C<web*>:
+# Gather facts about all servers named <web*>:
 - os_server_facts:
     cloud: rax-dfw
     server: web*

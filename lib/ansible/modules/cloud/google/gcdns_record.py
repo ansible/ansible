@@ -32,7 +32,6 @@ options:
     state:
         description:
             - Whether the given resource record should or should not be present.
-        required: false
         choices: ["present", "absent"]
         default: "present"
     record:
@@ -47,7 +46,6 @@ options:
               option, or the module will fail.
             - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
-        required: false
     zone_id:
         description:
             - The Google Cloud ID of the zone (e.g., example-com).
@@ -59,7 +57,6 @@ options:
               number of zones.
             - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
-        required: false
     type:
         description:
             - The type of resource record to add.
@@ -85,7 +82,6 @@ options:
         description:
             - The amount of time in seconds that a resource record will remain
               cached by a caching resolver.
-        required: false
         default: 300
     overwrite:
         description:
@@ -102,34 +98,25 @@ options:
               If I(state) is C(absent) and I(overwrite) is C(False), this
               module will fail if the provided record_data do not match exactly
               with the existing resource record's record_data.
-        required: false
-        choices: [True, False]
-        default: False
+        type: bool
+        default: 'no'
     service_account_email:
         description:
             - The e-mail address for a service account with access to Google
               Cloud DNS.
-        required: false
-        default: null
     pem_file:
         description:
             - The path to the PEM file associated with the service account
               email.
             - This option is deprecated and may be removed in a future release.
               Use I(credentials_file) instead.
-        required: false
-        default: null
     credentials_file:
         description:
             - The path to the JSON file associated with the service account
               email.
-        required: false
-        default: null
     project_id:
         description:
             - The Google Cloud Platform project ID to use.
-        required: false
-        default: null
 notes:
     - See also M(gcdns_zone).
     - This modules's underlying library does not support in-place updates for

@@ -43,13 +43,11 @@ options:
      description:
         - The name or id of the flavor in which the new instance has to be
           created. Mutually exclusive with flavor_ram
-     required: false
      default: 1
    flavor_ram:
      description:
         - The minimum amount of ram in MB that the flavor in which the new
           instance has to be created must have. Mutually exclusive with flavor.
-     required: false
      default: 1
    flavor_include:
      description:
@@ -60,21 +58,15 @@ options:
    key_name:
      description:
         - The key pair name to be used when creating a instance
-     required: false
-     default: None
    security_groups:
      description:
         - Names of the security groups to which the instance should be
           added. This may be a YAML list or a comma separated string.
-     required: false
-     default: None
    network:
      description:
         - Name or ID of a network to attach this instance to. A simpler
           version of the nics parameter, only one of network or nics should
           be supplied.
-     required: false
-     default: None
    nics:
      description:
         - A list of networks to which the instance's interface should
@@ -83,58 +75,47 @@ options:
         - 'Also this accepts a string containing a list of (net/port)-(id/name)
           Eg: nics: "net-id=uuid-1,port-name=myport"
           Only one of network or nics should be supplied.'
-     required: false
-     default: None
    auto_ip:
      description:
         - Ensure instance has public ip however the cloud wants to do that
-     required: false
+     type: bool
      default: 'yes'
      aliases: ['auto_floating_ip', 'public_ip']
    floating_ips:
      description:
         - list of valid floating IPs that pre-exist to assign to this node
-     required: false
-     default: None
    floating_ip_pools:
      description:
         - Name of floating IP pool from which to choose a floating IP
-     required: false
-     default: None
    meta:
      description:
         - 'A list of key value pairs that should be provided as a metadata to
           the new instance or a string containing a list of key-value pairs.
           Eg:  meta: "key1=value1,key2=value2"'
-     required: false
-     default: None
    wait:
      description:
         - If the module should wait for the instance to be created.
-     required: false
+     type: bool
      default: 'yes'
    timeout:
      description:
         - The amount of time the module should wait for the instance to get
           into active state.
-     required: false
      default: 180
    config_drive:
      description:
         - Whether to boot the server with config drive enabled
-     required: false
+     type: bool
      default: 'no'
    userdata:
      description:
         - Opaque blob of data which is made available to the instance
-     required: false
-     default: None
    boot_from_volume:
      description:
         - Should the instance boot from a persistent volume created based on
           the image given. Mututally exclusive with boot_volume.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    volume_size:
      description:
         - The size of the volume to create in GB if booting from volume based
@@ -143,23 +124,19 @@ options:
      description:
         - Volume name or id to use as the volume to boot from. Implies
           boot_from_volume. Mutually exclusive with image and boot_from_volume.
-     required: false
-     default: None
      aliases: ['root_volume']
    terminate_volume:
      description:
-        - If true, delete volume when deleting instance (if booted from volume)
-     default: false
+        - If C(yes), delete volume when deleting instance (if booted from volume)
+     type: bool
+     default: 'no'
    volumes:
      description:
        - A list of preexisting volumes names or ids to attach to the instance
-     required: false
      default: []
    scheduler_hints:
      description:
         - Arbitrary key/value pairs to the scheduler for custom use
-     required: false
-     default: None
      version_added: "2.1"
    state:
      description:
@@ -170,8 +147,8 @@ options:
      description:
        - When I(state) is absent and this option is true, any floating IP
          associated with the instance will be deleted along with the instance.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.2"
    reuse_ips:
      description:
@@ -182,13 +159,12 @@ options:
          concurrent server creation, it is highly recommended to set this to
          false and to delete the floating ip associated with a server when
          the server is deleted using I(delete_fip).
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
      version_added: "2.2"
    availability_zone:
      description:
        - Availability zone in which to create the server.
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

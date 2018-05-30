@@ -54,11 +54,15 @@ options:
   content:
     description:
     - When used instead of C(src), sets the payload of the API request directly.
-    - This may be convenient to template simple requests, for anything complex use the M(template) module.
+    - This may be convenient to template simple requests.
+    - For anything complex use the C(template) lookup plugin (see examples)
+      or the M(template) module with parameter C(src).
   src:
     description:
     - Name of the absolute path of the filname that includes the body
-      of the http request being sent to the ACI fabric.
+      of the HTTP request being sent to the ACI fabric.
+    - If you require a templated payload, use the C(content) parameter
+      together with the C(template) lookup plugin, or use M(template).
     aliases: [ config_file ]
 extends_documentation_fragment: aci
 '''
@@ -72,6 +76,16 @@ EXAMPLES = r'''
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
+  delegate_to: localhost
+
+- name: Add a tenant from a templated payload file from templates/
+  aci_rest:
+    host: apic
+    username: admin
+    private_key: pki/admin.key
+    method: post
+    path: /api/mo/uni.xml
+    content: "{{ lookup('template', 'aci/tenant.xml.j2') }}"
   delegate_to: localhost
 
 - name: Add a tenant using inline YAML
@@ -306,7 +320,6 @@ def main():
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
         src=dict(type='path', aliases=['config_file']),
         content=dict(type='raw'),
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

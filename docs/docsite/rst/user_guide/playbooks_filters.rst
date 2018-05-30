@@ -1,3 +1,5 @@
+.. _playbooks_filters:
+
 Filters
 -------
 
@@ -128,8 +130,6 @@ Flatten only the first level of a list (akin to the `items` lookup)::
     {{ [3, [4, [2]] ]|flatten(level=1) }}
 
 
-To get the minimum value from list of numbers::
-
 .. _set_theory_filters:
 
 Set Theory Filters
@@ -158,6 +158,31 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+
+.. _dict_filter:
+
+Dict Filter
+```````````
+
+.. versionadded:: 2.6
+
+
+To turn a dictionary into a list of items, suitable for looping, use `dict2items`::
+
+    {{ dict | dict2items }}
+
+Which turns::
+
+    tags:
+      Application: payment
+      Environment: dev
+
+into::
+
+    - key: Application
+      value: payment
+    - key: Environment
+      value: dev
 
 .. _random_filter:
 
@@ -357,74 +382,83 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-  {{ output | parse_cli('path/to/spec') }}
+    {{ output | parse_cli('path/to/spec') }}
+
 
 The ``parse_cli`` filter will load the spec file and pass the command output
 through it, returning JSON output. The YAML spec file defines how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
-will parse the output from the ``show vlan`` command.::
+will parse the output from the ``show vlan`` command.
 
-    ---
-    vars:
-      vlan:
-        vlan_id: "{{ item.vlan_id }}"
-        name: "{{ item.name }}"
-        enabled: "{{ item.state != 'act/lshut' }}"
-        state: "{{ item.state }}"
+.. code-block:: yaml
 
-    keys:
-      vlans:
-        value: "{{ vlan }}"
-        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
-      state_static:
-        value: present
+   ---
+   vars:
+     vlan:
+       vlan_id: "{{ item.vlan_id }}"
+       name: "{{ item.name }}"
+       enabled: "{{ item.state != 'act/lshut' }}"
+       state: "{{ item.state }}"
+
+   keys:
+     vlans:
+       value: "{{ vlan }}"
+       items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+     state_static:
+       value: present
+
 
 The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values
 directives.  Here is an example of how to parse the output into a hash
-value using the same ``show vlan`` command.::
+value using the same ``show vlan`` command.
 
-    ---
-    vars:
-      vlan:
-        key: "{{ item.vlan_id }}"
-        values:
-          vlan_id: "{{ item.vlan_id }}"
-          name: "{{ item.name }}"
-          enabled: "{{ item.state != 'act/lshut' }}"
-          state: "{{ item.state }}"
+.. code-block:: yaml
 
-    keys:
-      vlans:
-        value: "{{ vlan }}"
-        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
-      state_static:
-        value: present
+   ---
+   vars:
+     vlan:
+       key: "{{ item.vlan_id }}"
+       values:
+         vlan_id: "{{ item.vlan_id }}"
+         name: "{{ item.name }}"
+         enabled: "{{ item.state != 'act/lshut' }}"
+         state: "{{ item.state }}"
+
+   keys:
+     vlans:
+       value: "{{ vlan }}"
+       items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+     state_static:
+       value: present
+
 
 Another common use case for parsing CLI commands is to break a large command
 into blocks that can be parsed.  This can be done using the ``start_block`` and
-``end_block`` directives to break the command into blocks that can be parsed.::
+``end_block`` directives to break the command into blocks that can be parsed.
 
-    ---
-    vars:
-      interface:
-        name: "{{ item[0].match[0] }}"
-        state: "{{ item[1].state }}"
-        mode: "{{ item[2].match[0] }}"
+.. code-block:: yaml
 
-    keys:
-      interfaces:
-        value: "{{ interface }}"
-        start_block: "^Ethernet.*$"
-        end_block: "^$"
-        items:
-          - "^(?P<name>Ethernet\\d\\/\\d*)"
-          - "admin state is (?P<state>.+),"
-          - "Port mode is (.+)"
+   ---
+   vars:
+     interface:
+       name: "{{ item[0].match[0] }}"
+       state: "{{ item[1].state }}"
+       mode: "{{ item[2].match[0] }}"
+
+   keys:
+     interfaces:
+       value: "{{ interface }}"
+       start_block: "^Ethernet.*$"
+       end_block: "^$"
+       items:
+         - "^(?P<name>Ethernet\\d\\/\\d*)"
+         - "admin state is (?P<state>.+),"
+         - "Port mode is (.+)"
 
 
 The example above will parse the output of ``show interface`` into a list of
@@ -434,7 +468,7 @@ The network filters also support parsing the output of a CLI command using the
 TextFSM library.  To parse the CLI output with TextFSM use the following
 filter::
 
-  {{ output | parse_cli_textfsm('path/to/fsm') }}
+  {{ output.stdout[0] | parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 
@@ -455,54 +489,59 @@ The spec file should be valid formatted YAML. It defines how to parse the XML
 output and return JSON data.
 
 Below is an example of a valid spec file that
-will parse the output from the ``show vlan | display xml`` command.::
+will parse the output from the ``show vlan | display xml`` command.
 
-    ---
-    vars:
-      vlan:
-        vlan_id: "{{ item.vlan_id }}"
-        name: "{{ item.name }}"
-        desc: "{{ item.desc }}"
-        enabled: "{{ item.state.get('inactive') != 'inactive' }}"
-        state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+.. code-block:: yaml
 
-    keys:
-      vlans:
-        value: "{{ vlan }}"
-        top: configuration/vlans/vlan
-        items:
-          vlan_id: vlan-id
-          name: name
-          desc: description
-          state: ".[@inactive='inactive']"
+   ---
+   vars:
+     vlan:
+       vlan_id: "{{ item.vlan_id }}"
+       name: "{{ item.name }}"
+       desc: "{{ item.desc }}"
+       enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+       state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+   keys:
+     vlans:
+       value: "{{ vlan }}"
+       top: configuration/vlans/vlan
+       items:
+         vlan_id: vlan-id
+         name: name
+         desc: description
+         state: ".[@inactive='inactive']"
+
 
 The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values
 directives.  Here is an example of how to parse the output into a hash
-value using the same ``show vlan | display xml`` command.::
+value using the same ``show vlan | display xml`` command.
 
-    ---
-    vars:
-      vlan:
-        key: "{{ item.vlan_id }}"
-        values:
-            vlan_id: "{{ item.vlan_id }}"
-            name: "{{ item.name }}"
-            desc: "{{ item.desc }}"
-            enabled: "{{ item.state.get('inactive') != 'inactive' }}"
-            state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+.. code-block:: yaml
 
-    keys:
-      vlans:
-        value: "{{ vlan }}"
-        top: configuration/vlans/vlan
-        items:
-          vlan_id: vlan-id
-          name: name
-          desc: description
-          state: ".[@inactive='inactive']"
+   ---
+   vars:
+     vlan:
+       key: "{{ item.vlan_id }}"
+       values:
+           vlan_id: "{{ item.vlan_id }}"
+           name: "{{ item.name }}"
+           desc: "{{ item.desc }}"
+           enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+           state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+   keys:
+     vlans:
+       value: "{{ vlan }}"
+       top: configuration/vlans/vlan
+       items:
+         vlan_id: vlan-id
+         name: name
+         desc: description
+         state: ".[@inactive='inactive']"
 
 
 The value of ``top`` is the XPath relative to the XML root node.
@@ -868,6 +907,14 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
 
+To expand a path containing environment variables::
+
+    {{ path | expandvars }}
+
+.. note:: `expandvars` expands local variables; using it on remote paths can lead to errors.
+
+.. versionadded:: 2.6
+
 To get the real path of a link (new in version 1.8)::
 
     {{ path | realpath }}
@@ -885,6 +932,13 @@ To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
+
+As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
+
+    {{ encoded | b64decode(encoding='utf-16-le') }}
+    {{ decoded | b64encode(encoding='utf-16-le') }}
+
+.. versionadded:: 2.6
 
 To create a UUID from a string (new in version 1.9)::
 
@@ -904,22 +958,17 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
-.. versionadded:: 2.5
-
-The `slice` filter can be used to extract the values of specific keys from a
-hash::
-
-    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
-
-This will result in::
-
-    [1, 2]
-
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
-    # get amount of seconds between two dates, default date format is %Y-%m-%d %H:%M:%S but you can pass your own one
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).seconds  }}
+    # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).total_seconds()  }}
 
+    # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2016-08-14 18:00:00"|to_datetime)).seconds  }}
+    # This expression evaluates to "12" and not "132". Delta is 2 hours, 12 seconds
+
+    # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
 
 Combination Filters
 ````````````````````

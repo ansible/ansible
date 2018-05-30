@@ -84,15 +84,10 @@ EXAMPLES = r'''
         recurse: yes
         delete_archive: yes
 
-# Install PSCX to use for extracting a gz file
-- name: Grab PSCX msi
-  win_get_url:
-    url: http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=20959
-    dest: C:\Windows\Temp\pscx.msi
-
 - name: Install PSCX
-  win_msi:
-    path: C:\Windows\Temp\pscx.msi
+  win_psmodule:
+    name: Pscx
+    state: present
 '''
 
 RETURN = r'''

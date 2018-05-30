@@ -1,3 +1,5 @@
+.. _developing_api:
+
 Python API
 ==========
 
@@ -13,7 +15,7 @@ write plugins, and you can plug in inventory data from external data sources.  T
 gives a basic overview and examples of the Ansible execution and playbook API.
 
 If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously, 
-or have access control and logging demands, please see the `Ansible Tower documentation <http://docs.ansible.com/ansible-tower/>`_.
+or have access control and logging demands, please see the `Ansible Tower documentation <https://docs.ansible.com/ansible-tower/>`_.
 
 .. note:: Because Ansible relies on forking processes, this API is not thread safe.
 
@@ -27,6 +29,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
     #!/usr/bin/env python
 
     import json
+    import shutil
     from collections import namedtuple
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
@@ -34,6 +37,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
     from ansible.plugins.callback import CallbackBase
+    import ansible.constants as C
 
     class ResultCallback(CallbackBase):
         """A sample callback plugin used for performing an action as results come in
@@ -98,6 +102,9 @@ This example is a simple demonstration that shows how to minimally run a couple 
         # we always need to cleanup child procs and the structres we use to communicate with them
         if tqm is not None:
             tqm.cleanup()
+        
+        # Remove ansible tmpdir
+        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.

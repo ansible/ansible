@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from voluptuous import PREVENT_EXTRA, Any, Required, Schema
+from voluptuous import PREVENT_EXTRA, Any, Required, Schema, Self
 from ansible.module_utils.six import string_types
 list_string_types = list(string_types)
 
@@ -29,7 +29,9 @@ suboption_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, "bool")
+        'type': Any(None, "bool"),
+        # Recursive suboptions
+        'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
     extra=PREVENT_EXTRA
 )
@@ -171,6 +173,5 @@ def metadata_1_1_schema(deprecated):
 # 1) Don't allow empty options for choices, aliases, etc
 # 2) If type: bool ensure choices isn't set - perhaps use Exclusive
 # 3) both version_added should be quoted floats
-# 4) Use Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128 though don't allow two layers
 
 #  Tool that takes JSON and generates RETURN skeleton (needs to support complex structures)

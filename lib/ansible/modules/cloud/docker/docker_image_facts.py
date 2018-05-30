@@ -28,7 +28,6 @@ options:
     description:
       - An image name or a list of image names. Name format will be name[:tag] or repository/name[:tag], where tag is
         optional. If a tag is not provided, 'latest' will be used.
-    default: null
     required: true
 
 extends_documentation_fragment:
@@ -41,7 +40,6 @@ requirements:
 
 author:
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jctanner)
 
 '''
 

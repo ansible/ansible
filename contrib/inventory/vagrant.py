@@ -38,13 +38,16 @@ import os.path
 import subprocess
 import re
 from paramiko import SSHConfig
-from cStringIO import StringIO
 from optparse import OptionParser
 from collections import defaultdict
 try:
     import json
-except:
+except Exception:
     import simplejson as json
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import StringIO
+
 
 _group = 'vagrant'  # a default group
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
@@ -74,7 +77,8 @@ def get_ssh_config():
 
 # list all the running boxes
 def list_running_boxes():
-    output = subprocess.check_output(["vagrant", "status"]).split('\n')
+
+    output = to_text(subprocess.check_output(["vagrant", "status"]), errors='surrogate_or_strict').split('\n')
 
     boxes = []
 
@@ -90,7 +94,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = subprocess.check_output(["vagrant", "ssh-config", box_name])
+    output = to_text(subprocess.check_output(["vagrant", "ssh-config", box_name]), errors='surrogate_or_strict')
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
@@ -103,6 +107,7 @@ def get_a_ssh_config(box_name):
             host_config['identityfile'] = id
 
     return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
+
 
 # List out servers that vagrant has running
 # ------------------------------

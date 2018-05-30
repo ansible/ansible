@@ -41,7 +41,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
         with the remote device
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:
@@ -62,7 +61,8 @@ options:
       - Configures the user password used to authenticate to the remote device
         when first establishing the SSH connection.
     vars:
-      - name: ansible_pass
+      - name: ansible_password
+      - name: ansible_ssh_pass
   private_key_file:
     description:
       - The private SSH key or certificate file used to to authenticate to the
@@ -157,6 +157,7 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
+import getpass
 import json
 import logging
 import re
@@ -221,6 +222,11 @@ class Connection(ConnectionBase):
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
             return getattr(self._cliconf, name)
 
+    def _get_log_channel(self):
+        name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
+        name += "paramiko [%s]" % self._play_context.remote_addr
+        return name
+
     def get_prompt(self):
         """Returns the current prompt from the device"""
         return self._matched_prompt
@@ -284,6 +290,7 @@ class Connection(ConnectionBase):
             return
 
         self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        self.paramiko_conn._set_log_channel(self._get_log_channel())
         self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
         self.paramiko_conn.force_persistence = self.force_persistence
         ssh = self.paramiko_conn._connect()
@@ -312,7 +319,8 @@ class Connection(ConnectionBase):
         else:
             display.vvvv('unable to load cliconf for network_os %s' % network_os)
 
-        self.receive()
+        self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
+                     newline=self._terminal.terminal_inital_prompt_newline)
 
         display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
         self._terminal.on_open_shell()
@@ -362,15 +370,18 @@ class Connection(ConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device")
+            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
             if self._ssh_shell:
                 display.debug("firing event: on_close_shell()")
                 self._terminal.on_close_shell()
                 self._ssh_shell.close()
                 self._ssh_shell = None
                 display.debug("cli session is now closed")
+
+                self.paramiko_conn.close()
+                self.paramiko_conn = None
+                display.debug("ssh connection has been closed successfully")
             self._connected = False
-            display.debug("ssh connection has been closed successfully")
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''
@@ -487,6 +498,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 

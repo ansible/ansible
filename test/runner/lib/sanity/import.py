@@ -18,6 +18,7 @@ from lib.util import (
     intercept_command,
     remove_tree,
     display,
+    find_python,
 )
 
 from lib.ansible_util import (
@@ -40,7 +41,7 @@ class ImportTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open('test/sanity/import/skip.txt', 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
@@ -66,7 +67,7 @@ class ImportTest(SanityMultipleVersion):
 
         remove_tree(virtual_environment_path)
 
-        cmd = ['virtualenv', virtual_environment_path, '--python', 'python%s' % python_version, '--no-setuptools', '--no-wheel']
+        cmd = ['virtualenv', virtual_environment_path, '--python', find_python(python_version), '--no-setuptools', '--no-wheel']
 
         if not args.coverage:
             cmd.append('--no-pip')
@@ -84,8 +85,8 @@ class ImportTest(SanityMultipleVersion):
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
-            run_command(args, generate_pip_install('pip', 'sanity.import', packages=['setuptools']), env=env)
-            run_command(args, generate_pip_install('pip', 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['setuptools']), env=env)
+            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['coverage']), env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
 

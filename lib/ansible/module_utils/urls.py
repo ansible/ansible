@@ -51,6 +51,9 @@ except ImportError:
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+
+from ansible.module_utils.six import PY3
+
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -62,6 +65,8 @@ except ImportError:
     # python2
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
+
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
@@ -444,11 +449,11 @@ class RequestWithMethod(urllib_request.Request):
     Originally contained in library/net_infrastructure/dnsmadeeasy
     '''
 
-    def __init__(self, url, method, data=None, headers=None):
+    def __init__(self, url, method, data=None, headers=None, origin_req_host=None, unverifiable=True):
         if headers is None:
             headers = {}
         self._method = method.upper()
-        urllib_request.Request.__init__(self, url, data, headers)
+        urllib_request.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
 
     def get_method(self):
         if self._method:
@@ -476,36 +481,68 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
             if handler:
                 urllib_request._opener.add_handler(handler)
 
+            # Preserve urllib2 compatibility
             if follow_redirects == 'urllib2':
                 return urllib_request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+
+            # Handle disabled redirects
             elif follow_redirects in ['no', 'none', False]:
                 raise urllib_error.HTTPError(newurl, code, msg, hdrs, fp)
 
-            do_redirect = False
+            method = req.get_method()
+
+            # Handle non-redirect HTTP status or invalid follow_redirects
             if follow_redirects in ['all', 'yes', True]:
-                do_redirect = (code >= 300 and code < 400)
-
+                if code < 300 or code >= 400:
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             elif follow_redirects == 'safe':
-                m = req.get_method()
-                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
-
-            if do_redirect:
-                # be conciliant with URIs containing a space
-                newurl = newurl.replace(' ', '%20')
-                newheaders = dict((k, v) for k, v in req.headers.items()
-                                  if k.lower() not in ("content-length", "content-type"))
-                try:
-                    # Python 2-3.3
-                    origin_req_host = req.get_origin_req_host()
-                except AttributeError:
-                    # Python 3.4+
-                    origin_req_host = req.origin_req_host
-                return urllib_request.Request(newurl,
-                                              headers=newheaders,
-                                              origin_req_host=origin_req_host,
-                                              unverifiable=True)
+                if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
+
+            try:
+                # Python 2-3.3
+                data = req.get_data()
+                origin_req_host = req.get_origin_req_host()
+            except AttributeError:
+                # Python 3.4+
+                data = req.data
+                origin_req_host = req.origin_req_host
+
+            # Be conciliant with URIs containing a space
+            newurl = newurl.replace(' ', '%20')
+
+            # Suport redirect with payload and original headers
+            if code in (307, 308):
+                # Preserve payload and headers
+                headers = req.headers
+            else:
+                # Do not preserve payload and filter headers
+                data = None
+                headers = dict((k, v) for k, v in req.headers.items()
+                               if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
+
+                # http://tools.ietf.org/html/rfc7231#section-6.4.4
+                if code == 303 and method != 'HEAD':
+                    method = 'GET'
+
+                # Do what the browsers do, despite standards...
+                # First, turn 302s into GETs.
+                if code == 302 and method != 'HEAD':
+                    method = 'GET'
+
+                # Second, if a POST is responded to with a 301, turn it into a GET.
+                if code == 301 and method == 'POST':
+                    method = 'GET'
+
+            return RequestWithMethod(newurl,
+                                     method=method,
+                                     headers=headers,
+                                     data=data,
+                                     origin_req_host=origin_req_host,
+                                     unverifiable=True,
+                                     )
 
     return RedirectHandler
 
@@ -907,7 +944,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     # user defined headers now, which may override things we've set above
     if headers:
         if not isinstance(headers, dict):
-            raise ValueError("headers provided to fetch_url() must be a dict")
+            raise ValueError("headers provided to open_url() must be a dict")
         for header in headers:
             request.add_header(header, headers[header])
 
@@ -975,8 +1012,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data)
-                               header={Content-type': 'application/json'},
+                               data=module.jsonify(data),
+                               headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
         body = resp.read()
@@ -1015,11 +1052,33 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies)
-        info.update(r.info())
+        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        info.update(dict((k.lower(), v) for k, v in r.info().items()))
+
+        # Don't be lossy, append header values for duplicate headers
+        # In Py2 there is nothing that needs done, py2 does this for us
+        if PY3:
+            temp_headers = {}
+            for name, value in r.headers.items():
+                # The same as above, lower case keys to match py2 behavior, and create more consistent results
+                name = name.lower()
+                if name in temp_headers:
+                    temp_headers[name] = ', '.join((temp_headers[name], value))
+                else:
+                    temp_headers[name] = value
+            info.update(temp_headers)
+
         # parse the cookies into a nice dictionary
+        cookie_list = []
         cookie_dict = dict()
+        # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+        # Cookies with the same path are reversed from response order.
+        # This code makes no assumptions about that, and accepts the order given by python
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
+            cookie_list.append((cookie.name, cookie.value))
+        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
+
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
@@ -1050,6 +1109,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except httplib.BadStatusLine as e:
+        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
                     exception=traceback.format_exc())

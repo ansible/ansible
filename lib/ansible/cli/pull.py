@@ -30,7 +30,7 @@ import time
 
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -238,14 +238,14 @@ class PullCLI(CLI):
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if rc != 0:
             if self.options.force:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif self.options.ifchanged and '"changed": true' not in out:
+        elif self.options.ifchanged and b'"changed": true' not in b_out:
             display.display("Repository has not changed, quitting.")
             return 0
 
@@ -287,14 +287,14 @@ class PullCLI(CLI):
         # RUN THE PLAYBOOK COMMAND
         display.debug("running ansible-playbook to do actual work")
         display.debug('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if self.options.purge:
             os.chdir('/')
             try:
                 shutil.rmtree(self.options.dest)
             except Exception as e:
-                display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
+                display.error(u"Failed to remove %s: %s" % (self.options.dest, to_text(e)))
 
         return rc
 

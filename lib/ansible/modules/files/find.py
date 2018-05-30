@@ -38,7 +38,6 @@ options:
               least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     excludes:
-        default: null
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - Excludes is a patterns should not be returned in list. Multiple patterns can be specified
@@ -60,10 +59,10 @@ options:
         choices: [ any, directory, file, link ]
         default: file
     recurse:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - If target is a directory, recursively descend into the directory looking for files.
+        type: bool
+        default: 'no'
     size:
         description:
             - Select files whose size is equal to or greater than the specified size.
@@ -77,28 +76,26 @@ options:
         description:
             - Choose the file property against which we compare age.
     hidden:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - Set this to true to include hidden files, otherwise they'll be ignored.
-    follow:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    follow:
         description:
             - Set this to true to follow symlinks in path for systems with python 2.6+.
-    get_checksum:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    get_checksum:
         description:
             - Set this to true to retrieve a file's sha1 checksum.
-    use_regex:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    use_regex:
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+        type: bool
+        default: 'no'
     depth:
-        required: false
-        default: null
         description:
             - Set the maximum number of levels to decend into. Setting recurse
               to false will override this value, which is effectively depth 1.
@@ -253,19 +250,24 @@ def sizefilter(st, size):
 
 
 def contentfilter(fsname, pattern):
-    '''filter files which contain the given expression'''
+    """
+    Filter files which contain the given expression
+    :arg fsname: Filename to scan for lines matching a pattern
+    :arg pattern: Pattern to look for inside of line
+    :rtype: bool
+    :returns: True if one of the lines in fsname matches the pattern. Otherwise False
+    """
     if pattern is None:
         return True
 
-    try:
-        f = open(fsname)
-        prog = re.compile(pattern)
-        for line in f:
-            if prog.match(line):
-                f.close()
-                return True
+    prog = re.compile(pattern)
 
-        f.close()
+    try:
+        with open(fsname) as f:
+            for line in f:
+                if prog.match(line):
+                    return True
+
     except:
         pass
 

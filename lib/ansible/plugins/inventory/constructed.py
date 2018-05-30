@@ -43,7 +43,8 @@ EXAMPLES = '''
         multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
 
     keyed_groups:
-        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it
+        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it,
+        # using the default separator "_"
         - prefix: distro
           key: ansible_distribution
 
@@ -56,6 +57,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
@@ -98,7 +100,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = inventory.hosts[host].get_vars()
+                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
                 if host in fact_cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
@@ -106,7 +108,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
-                hostvars = inventory.hosts[host].get_vars()
+                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 

@@ -29,19 +29,14 @@ options:
         When using state=latest, this can be '*' which means run: dnf -y update.
         You can also pass a url or a local path to a rpm file."
     required: true
-    default: null
-    aliases: []
 
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
-    required: false
-    default: null
 
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-    required: false
     choices: [ "present", "latest", "absent" ]
     default: "present"
 
@@ -50,40 +45,28 @@ options:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   conf_file:
     description:
       - The remote dnf configuration file to use for the transaction.
-    required: false
-    default: null
-    aliases: []
 
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'no'
 
   installroot:
     description:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
-    required: false
     version_added: "2.3"
     default: "/"
 
@@ -92,8 +75,7 @@ options:
       - If C(yes), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
-    required: false
-    choices: [ "yes", "no" ]
+    type: bool
     version_added: "2.4"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -411,7 +393,10 @@ def ensure(module, base, state, names, autoremove):
                 # best effort causes to install the latest package
                 # even if not previously installed
                 base.conf.best = True
-                base.install(pkg_spec)
+                try:
+                    base.install(pkg_spec)
+                except dnf.exceptions.MarkingError as e:
+                    failures.append((pkg_spec, to_native(e)))
 
         else:
             # state == absent

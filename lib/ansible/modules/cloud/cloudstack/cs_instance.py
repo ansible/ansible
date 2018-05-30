@@ -55,7 +55,7 @@ options:
       - The memory allocated to the instance, used with custom service offerings
   template:
     description:
-      - Name or id of the template to be used for creating the new instance.
+      - Name, display text or id of the template to be used for creating the new instance.
       - Required when using C(state=present).
       - Mutually exclusive with C(ISO) option.
   iso:
@@ -67,8 +67,9 @@ options:
     description:
       - Name of the filter used to search for the template or iso.
       - Used for params C(iso) or C(template) on C(state=present).
+      - The filter C(all) was added in 2.6.
     default: executable
-    choices: [ featured, self, selfexecutable, sharedexecutable, executable, community ]
+    choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
     aliases: [ iso_filter ]
     version_added: '2.1'
   hypervisor:
@@ -303,7 +304,13 @@ template:
   description: Name of template the instance was deployed with.
   returned: success
   type: string
-  sample: Debian-8-64bit
+  sample: Linux Debian 9 64-bit
+template_display_text:
+  description: Display text of template the instance was deployed with.
+  returned: success
+  type: string
+  sample: Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
+  version_added: 2.6
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
@@ -348,8 +355,13 @@ instance_name:
 
 import base64
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import (AnsibleCloudStack, CS_HYPERVISORS, cs_argument_spec,
-                                             cs_required_together)
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CS_HYPERVISORS,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackInstance(AnsibleCloudStack):
@@ -366,6 +378,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'serviceofferingname': 'service_offering',
             'isoname': 'iso',
             'templatename': 'template',
+            'templatedisplaytext': 'template_display_text',
             'keypair': 'ssh_key',
         }
         self.instance = None
@@ -444,11 +457,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
                 'projectid': self.get_project(key='id'),
+                'fetch_list': True,
             }
             # Do not pass zoneid, as the instance name must be unique across zones.
             instances = self.query_api('listVirtualMachines', **args)
             if instances:
-                for v in instances['virtualmachine']:
+                for v in instances:
                     if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break
@@ -460,7 +474,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             return instance['userdata']
 
         user_data = ""
-        if self.get_user_data() is not None:
+        if self.get_user_data() is not None and instance.get('id'):
             res = self.query_api('getVirtualMachineUserData', virtualmachineid=instance['id'])
             user_data = res['virtualmachineuserdata'].get('userdata', "")
         return user_data
@@ -592,7 +606,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def get_user_data(self):
         user_data = self.module.params.get('user_data')
         if user_data is not None:
-            user_data = base64.b64encode(str(user_data))
+            user_data = to_text(base64.b64encode(to_bytes(user_data)))
         return user_data
 
     def get_details(self):
@@ -873,8 +887,11 @@ def main():
         memory=dict(type='int'),
         template=dict(),
         iso=dict(),
-        template_filter=dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable',
-                                                                                    'community']),
+        template_filter=dict(
+            default="executable",
+            aliases=['iso_filter'],
+            choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']
+        ),
         networks=dict(type='list', aliases=['network']),
         ip_to_networks=dict(type='list', aliases=['ip_to_network']),
         ip_address=dict(defaul=None),

@@ -40,8 +40,8 @@ deprecated:
     removed_in: '2.9'
     why: This module depended on outdated and old SDK. In 2.4 use M(panos_security_rule) instead.
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported
@@ -72,11 +72,9 @@ options:
     description:
         description:
             - Description for the security rule.
-        default: "None"
     tag:
         description:
             - Administrative tags that can be added to the rule. Note, tags must be already defined.
-        default: "None"
     from_zone:
         description:
             - List of source zones.
@@ -114,7 +112,6 @@ options:
     log_start:
         description:
             - Whether to log at session start.
-        default: false
     log_end:
         description:
             - Whether to log at session end.
@@ -127,40 +124,31 @@ options:
         description: >
             Security profile group that is already defined in the system. This property supersedes antivirus,
             vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
-        default: None
     antivirus:
         description:
             - Name of the already defined antivirus profile.
-        default: None
     vulnerability:
         description:
             - Name of the already defined vulnerability profile.
-        default: None
     spyware:
         description:
             - Name of the already defined spyware profile.
-        default: None
     url_filtering:
         description:
             - Name of the already defined url_filtering profile.
-        default: None
     file_blocking:
         description:
             - Name of the already defined file_blocking profile.
-        default: None
     data_filtering:
         description:
             - Name of the already defined data_filtering profile.
-        default: None
     wildfire_analysis:
         description:
             - Name of the already defined wildfire_analysis profile.
-        default: None
     devicegroup:
         description: >
             Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
-        default: None
     commit:
         description:
             - Commit configuration if changed.

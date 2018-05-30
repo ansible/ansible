@@ -30,8 +30,6 @@ options:
   key_name:
     description:
       - key pair to use on the instance
-    required: false
-    default: null
     aliases: ['keypair']
   id:
     version_added: "1.1"
@@ -39,196 +37,133 @@ options:
       - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
         This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on.
         For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
-    required: false
-    default: null
-    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
-    required: false
-    default: null
     aliases: [ 'groups' ]
   group_id:
     version_added: "1.1"
     description:
       - security group id (or list of ids) to use with the instance
-    required: false
-    default: null
-    aliases: []
   region:
     version_added: "1.2"
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used.
         If not specified then the value of the EC2_REGION environment variable, if any, is used.
         See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
-    required: false
-    default: null
     aliases: [ 'aws_region', 'ec2_region' ]
   zone:
     version_added: "1.2"
     description:
       - AWS availability zone in which to launch the instance
-    required: false
-    default: null
     aliases: [ 'aws_zone', 'ec2_zone' ]
   instance_type:
     description:
       - instance type to use for the instance, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
     required: true
-    default: null
-    aliases: []
   tenancy:
     version_added: "1.9"
     description:
       - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC.
         Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
-    required: false
     default: default
     choices: [ "default", "dedicated" ]
-    aliases: []
   spot_price:
     version_added: "1.5"
     description:
       - Maximum spot price to bid, If not set a regular on-demand instance is requested. A spot request is made with this maximum bid.
         When it is filled, the instance is started.
-    required: false
-    default: null
-    aliases: []
   spot_type:
     version_added: "2.0"
     description:
       - Type of spot request; one of "one-time" or "persistent". Defaults to "one-time" if not supplied.
-    required: false
     default: "one-time"
     choices: [ "one-time", "persistent" ]
-    aliases: []
   image:
     description:
        - I(ami) ID to use for the instance
     required: true
-    default: null
-    aliases: []
   kernel:
     description:
       - kernel I(eki) to use for the instance
-    required: false
-    default: null
-    aliases: []
   ramdisk:
     description:
       - ramdisk I(eri) to use for the instance
-    required: false
-    default: null
-    aliases: []
   wait:
     description:
       - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for' example for details.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    aliases: []
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-    aliases: []
   spot_wait_timeout:
     version_added: "1.5"
     description:
       - how long to wait for the spot instance request to be fulfilled
     default: 600
-    aliases: []
   count:
     description:
       - number of instances to launch
-    required: False
     default: 1
-    aliases: []
   monitoring:
     version_added: "1.1"
     description:
       - enable detailed monitoring (CloudWatch) for instance
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
-    aliases: []
+    type: bool
+    default: 'no'
   user_data:
     version_added: "0.9"
     description:
       - opaque blob of data which is made available to the ec2 instance
-    required: false
-    default: null
-    aliases: []
   instance_tags:
     version_added: "1.0"
     description:
       - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
-    aliases: []
   placement_group:
     version_added: "1.3"
     description:
       - placement group for the instance when using EC2 Clustered Compute
-    required: false
-    default: null
-    aliases: []
   vpc_subnet_id:
     version_added: "1.1"
     description:
       - the subnet ID in which to launch the instance (VPC)
-    required: false
-    default: null
-    aliases: []
   assign_public_ip:
     version_added: "1.5"
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
-    aliases: []
+    type: bool
   private_ip:
     version_added: "1.2"
     description:
       - the private ip address to assign the instance (from the vpc subnet)
-    required: false
-    default: null
-    aliases: []
   instance_profile_name:
     version_added: "1.3"
     description:
       - Name of the IAM instance profile to use. Boto library must be 2.5.0+
-    required: false
-    default: null
-    aliases: []
   instance_ids:
     version_added: "1.3"
     description:
       - "list of instance ids, currently used for states: absent, running, stopped"
-    required: false
-    default: null
     aliases: ['instance_id']
   source_dest_check:
     version_added: "1.6"
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   termination_protection:
     version_added: "2.0"
     description:
       - Enable or Disable the Termination Protection
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
     description:
     - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store
       images (which require termination on shutdown).
-    required: false
     default: 'stop'
     choices: [ "stop", "terminate" ]
   state:
@@ -238,56 +173,41 @@ options:
         The state 'restarted' was added in 2.2
     required: false
     default: 'present'
-    aliases: []
     choices: ['present', 'absent', 'running', 'restarted', 'stopped']
   volumes:
     version_added: "1.5"
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type,
-        iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
-    required: false
-    default: null
-    aliases: []
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
     description:
       - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
-    required: false
-    default: 'false'
+    default: 'no'
   exact_count:
     version_added: "1.5"
     description:
       - An integer value which indicates how many instances that match the 'count_tag' parameter should be running.
         Instances are either created or terminated based on this value.
-    required: false
-    default: null
-    aliases: []
   count_tag:
     version_added: "1.5"
     description:
       - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.
         This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers
         that are tagged with "class=webserver". The specified tag must already exist or be passed in as the 'instance_tags' option.
-    required: false
-    default: null
-    aliases: []
   network_interfaces:
     version_added: "2.0"
     description:
       - A list of existing network interfaces to attach to the instance at launch. When specifying existing network interfaces,
         none of the assign_public_ip, private_ip, vpc_subnet_id, group, or group_id parameters may be used. (Those parameters are
         for creating a new network interface at launch.)
-    required: false
-    default: null
     aliases: ['network_interface']
   spot_launch_group:
     version_added: "2.1"
     description:
       - Launch group for spot request, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-spot-instances-work.html#spot-launch-group)
-    required: false
-    default: null
 
 author:
     - "Tim Gerla (@tgerla)"
@@ -620,15 +540,15 @@ EXAMPLES = '''
 
 '''
 
-import traceback
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code, string_types
-from ansible.module_utils._text import to_text
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
-from distutils.version import LooseVersion
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import boto.ec2
@@ -1121,7 +1041,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'user_data': user_data}
+                      'user_data': to_bytes(user_data, errors='surrogate_or_strict')}
 
             if ebs_optimized:
                 params['ebs_optimized'] = ebs_optimized
@@ -1639,7 +1559,7 @@ def warn_if_public_ip_assignment_changed(module, instance):
 
     # Check that public ip assignment is the same and warn if not
     public_dns_name = getattr(instance, 'public_dns_name', None)
-    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or assign_public_ip is False):
         module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
                     "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
@@ -1669,7 +1589,7 @@ def main():
             user_data=dict(),
             instance_tags=dict(type='dict'),
             vpc_subnet_id=dict(),
-            assign_public_ip=dict(type='bool', default=False),
+            assign_public_ip=dict(type='bool'),
             private_ip=dict(),
             instance_profile_name=dict(),
             instance_ids=dict(type='list', aliases=['instance_id']),

@@ -38,16 +38,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a changed needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -56,7 +52,6 @@ options:
         match is set to I(strict), command lines are matched with respect
         to position.  Finally if match is set to I(exact), command lines
         must be an equal match.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact']
   replace:
@@ -67,7 +62,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   force:
@@ -76,9 +70,8 @@ options:
         current devices running-config.  When set to true, this will
         cause the module to push the contents of I(src) into the device
         without first checking if already configured.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -88,8 +81,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuruation to use as the base
         config for comparison.
-    required: false
-    default: null
 """
 
 EXAMPLES = """

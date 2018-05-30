@@ -47,7 +47,7 @@ class Galaxy(object):
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)
-        type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
+        type_path = getattr(self.options, 'role_type', "default")
         self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
 
     @property

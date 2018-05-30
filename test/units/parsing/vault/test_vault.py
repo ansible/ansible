@@ -888,6 +888,26 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         # assert we throw an error
         self.v.decrypt(b_invalid_ciphertext)
 
+    def test_decrypt_and_get_vault_id(self):
+        b_expected_plaintext = to_bytes('foo bar\n')
+        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+65616435333934613466373335363332373764363365633035303466643439313864663837393234
+3330656363343637313962633731333237313636633534630a386264363438363362326132363239
+39363166646664346264383934393935653933316263333838386362633534326664646166663736
+6462303664383765650a356637643633366663643566353036303162386237336233393065393164
+6264'''
+
+        vault_secrets = self._vault_secrets_from_password('ansible_devel', 'ansible')
+        v = vault.VaultLib(vault_secrets)
+
+        b_vaulttext = to_bytes(vaulttext)
+
+        b_plaintext, vault_id_used, vault_secret_used = v.decrypt_and_get_vault_id(b_vaulttext)
+
+        self.assertEqual(b_expected_plaintext, b_plaintext)
+        self.assertEqual(vault_id_used, 'ansible_devel')
+        self.assertEqual(vault_secret_used.text, 'ansible')
+
     def test_decrypt_non_default_1_2(self):
         b_expected_plaintext = to_bytes('foo bar\n')
         vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
