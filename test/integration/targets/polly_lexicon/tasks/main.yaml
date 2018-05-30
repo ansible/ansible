@@ -1,0 +1,61 @@
+---
+
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: create Polly lexicon
+  polly_lexicon:
+    <<: *aws_connection_info
+    name: 'ivona'
+    state: present
+    content: "{{ lookup('file', 'files/eu.pls') }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+
+- name: no changes to lexicon
+  polly_lexicon:
+    <<: *aws_connection_info
+    name: 'ivona'
+    state: present
+    content: "{{ lookup('file', 'files/eu.pls') }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - not result.changed
+
+- name: update lexicon
+  polly_lexicon:
+    <<: *aws_connection_info
+    name: 'ivona'
+    state: present
+    content: "{{ lookup('file', 'files/tomato.pls') }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
+
+- name: destroy lexicon
+  polly_lexicon:
+    <<: *aws_connection_info
+    name: 'ivona'
+    state: absent
+    content: "{{ lookup('file', 'files/tomato.pls') }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.changed
