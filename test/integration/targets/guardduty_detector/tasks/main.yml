@@ -5,6 +5,7 @@
     aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: true
 
@@ -21,20 +22,7 @@
       - result.changed
       - result.detector_id is not none
 
-- name: no changes to detector
-  guardduty_detector:
-    <<: *aws_connection_info
-    state: present
-    enabled: true
-  register: result
-
-- name: assert correct keys are returned
-  assert:
-    that:
-      - not result.changed
-      - result.detector_id is not none
-
-- name: disable detector
+- name: disable GuardDuty detector
   guardduty_detector:
     <<: *aws_connection_info
     state: present
@@ -47,7 +35,7 @@
       - result.changed
       - result.detector_id is not none
 
-- name: destroy detector
+- name: destroy GuardDuty detector
   guardduty_detector:
     <<: *aws_connection_info
     state: absent
