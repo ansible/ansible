@@ -309,8 +309,15 @@ def get_identity_notifications(connection, module, identity, retries=0, retryDel
     return notification_attributes[identity]
 
 
-def update_notification_topic(connection, module, identity, identity_notifications, notification_type):
+def desired_topic(module, notification_type):
     arg_dict = module.params.get(notification_type.lower() + '_notifications')
+    if arg_dict:
+        return arg_dict.get('topic', None)
+    else:
+        return None
+
+
+def update_notification_topic(connection, module, identity, identity_notifications, notification_type):
     topic_key = notification_type + 'Topic'
     if identity_notifications is None:
         # If there is no configuration for notifications cannot be being sent to topics
@@ -325,10 +332,7 @@ def update_notification_topic(connection, module, identity, identity_notificatio
         # included but best to be defensive
         current = None
 
-    if arg_dict is not None and 'topic' in arg_dict:
-        required = arg_dict['topic']
-    else:
-        required = None
+    required = desired_topic(module, notification_type)
 
     if current != required:
         call_and_handle_errors(
@@ -375,6 +379,11 @@ def update_notification_topic_headers(connection, module, identity, identity_not
 
 
 def update_feedback_forwarding(connection, module, identity, identity_notifications):
+    if module.params.get('feedback_forwarding') is False:
+        if not (desired_topic(module, 'Bounce') and desired_topic(module, 'Complaint')):
+            module.fail_json(msg="Invalid Parameter Value 'False' for 'feedback_forwarding'. AWS requires "
+                             "feedback forwarding to be enabled unless bounces and complaints are handled by SNS topics")
+
     if identity_notifications is None:
         # AWS requires feedback forwarding to be enabled unless bounces and complaints
         # are being handled by SNS topics. So in the absence of identity_notifications
