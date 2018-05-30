@@ -18,8 +18,8 @@ DOCUMENTATION = """
 module: netconf_set
 version_added: "2.6"
 author:
-    - "Sven Wisotzky (@wisotzky)"
     - "Ganesh Nalawade (@ganeshrn)"
+    - "Sven Wisotzky (@wisotzky)"
 short_description: NETCONF module to modify device configuration
 description:
     - NETCONF is a network management protocol developed and standardized by
@@ -81,24 +81,22 @@ requirements:
   - jsonpatch
 
 notes:
-  - This module requires the NETCONF system service be enabled on the remote device
-    being managed.
   - This module supports the use of connection=netconf.
-  - The module will do all actions required to apply the changes as expected
-  - lock target datastore (depends on option I(lock))
-  - discard changes, in case of target datastore is candidate
-  - get-config of target datastore (before the change)
-  - edit-config
-  - get-config of target datastore (after the change)
-  - validate the target datastore (when validate)
-  - commit changes, in case of target datastore is candidate (not when dryrun/validate)
-  - unlock target datastore (depends on option I(lock))
-  - To provide content in XML format is the more flexible variant for better control
-  - control the ordering of dict entries in the output
-  - provide multiple XML namespaces (per XML note/attribute)
-  - provide edit-config operations (e.g. to delete content)
+  - This module requires the NETCONF system service be enabled on the remote device.
+  - The module will execute the following actions
+      Lock target datastore (depended on option I(lock))
+      Discard changes, in case of target datastore is candidate
+      get-config of target datastore (before the change)
+      edit-config
+      get-config of target datastore (after the change)
+      Commit changes, in case of target datastore is candidate (not when dryrun)
+      Unlock target datastore (depends on option I(lock))
+  - To provide content in XML format is the more flexible variant increasing control
+      Control the ordering of dict entries in the output
+      Provide multiple XML namespaces (per XML note/attribute)
+      Provide edit-config operations (e.g. to delete content)
   - Support for content in JSON/YAML format is to improve the playbook's readability
-  - specific encoding rules apply for lists - check examples
+    (specific encoding rules apply for lists - check examples)
 """
 
 EXAMPLES = """
@@ -144,7 +142,7 @@ locked:
 changed:
   description:
     - Returns I(true) if the target datastore was changed by that operation. Returns
-      I(false) if the edit-config does not result in changes or dryrun/validate is exectued.
+      I(false) if the edit-config does not result in changes or dryrun is exectued.
   returned: always
   type: boolean
 datastore:
@@ -222,6 +220,7 @@ def get_xml_content(module, content, xmlns):
         return '<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">%s</config>' % payload
 
     module.fail_json(msg='unsupported content data-type `%s`' % type(content).__name__)
+    return ""
 
 
 def main():
@@ -348,7 +347,7 @@ def main():
         'changed': changed,
         'locked': locked,
         'datastore': datastore,
-        'diffs': (before!=after)
+        'diffs': (before != after)
     }
 
     if backup and changed:
