@@ -145,7 +145,7 @@ class IncludedFile:
 
                         include_file = templar.template(include_file)
                         # Update the task args to reflect the expanded/templated path
-                        original_task.args['_raw_params'] = include_file
+                        original_task.args['_raw_params'] = include_result['_partial_tmpl_include_file']
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
                         # template the included role's name here
