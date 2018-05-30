@@ -97,10 +97,7 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
-            state, task = iterator.get_next_task_for_host(host, peek=True)
-            if state:
-                state = iterator.get_active_state(state)
-            host_tasks[host.name] = (state, task)
+            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
         display.debug("done building task lists")
 
         num_setups = 0
@@ -116,7 +113,7 @@ class StrategyModule(StrategyBase):
         if host_tasks_to_run:
             try:
                 lowest_cur_block = min(
-                    (s.cur_block for h, (s, t) in host_tasks_to_run
+                    (iterator.get_active_state(s).cur_block for h, (s, t) in host_tasks_to_run
                      if s.run_state != PlayIterator.ITERATING_COMPLETE))
             except ValueError:
                 lowest_cur_block = None
@@ -128,6 +125,7 @@ class StrategyModule(StrategyBase):
         for (k, v) in host_tasks_to_run:
             (s, t) = v
 
+            s = iterator.get_active_state(s)
             if s.cur_block > lowest_cur_block:
                 # Not the current block, ignore it
                 continue
@@ -161,6 +159,7 @@ class StrategyModule(StrategyBase):
                 if host_state_task is None:
                     continue
                 (s, t) = host_state_task
+                s = iterator.get_active_state(s)
                 if t is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
