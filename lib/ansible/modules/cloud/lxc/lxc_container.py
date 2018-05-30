@@ -903,6 +903,9 @@ class LxcContainerManagement(object):
         else:
             self.state_change = True
 
+        # Perform initial configuration
+        self._config()
+
     def _container_data(self):
         """Returns a dict of container information.
 
