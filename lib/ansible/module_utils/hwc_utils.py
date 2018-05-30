@@ -65,40 +65,75 @@ def replace_resource_dict(item, value):
         return item.get(value)
 
 
+class _LegacyJsonAdapter(adapter.Adapter):
+    """Make something that looks like an old HTTPClient.
+
+    This class references adapter.LegacyJsonAdapter
+    """
+
+    def request(self, *args, **kwargs):
+        headers = kwargs.setdefault('headers', {})
+        headers.setdefault('Accept', 'application/json')
+
+        try:
+            kwargs['json'] = kwargs.pop('body')
+        except KeyError:
+            pass
+
+        return super(_LegacyJsonAdapter, self).request(*args, **kwargs)
+
+
 # Handles all authentation and HTTP sessions for HWC API calls.
 class HwcSession(object):
     def __init__(self, module, product):
         self.module = module
         self.product = product
+        self._endpoint = ""
         self._validate()
 
     def get(self, url, body=None):
         try:
-            return self.session().get(url, json=body, headers=self._headers())
+            return self._session().get(
+                self._endpoint + url, json=body,
+                headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
     def post(self, url, body=None):
         try:
-            return self.session().post(url, json=body, headers=self._headers())
+            return self._session().post(
+                self._endpoint + url, json=body,
+                headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
     def delete(self, url, body=None):
         try:
-            return self.session().delete(url, json=body,
-                                         headers=self._headers())
+            return self._session().delete(
+                self._endpoint + url, json=body,
+                headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
     def put(self, url, body=None):
         try:
-            return self.session().put(url, json=body, headers=self._headers())
+            return self._session().put(
+                self._endpoint + url, json=body,
+                headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def session(self):
-        return adapter.LegacyJsonAdapter(self._credentials())
+    def _session(self):
+        return _LegacyJsonAdapter(self._credentials())
+
+    def _get_service_endpoint(self):
+        try:
+            return self._credentials().get_endpoint_data(
+                service_type=self.product,
+                region_name=self.module.params['region']
+            )
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
 
     def _validate(self):
         if not HAS_REQUESTS:
@@ -107,6 +142,14 @@ class HwcSession(object):
         if not HAS_THIRD_LIBRARIES:
             self.module.fail_json(
                 msg="Please install the keystoneauth1 library")
+
+        e = self._get_service_endpoint()
+        if not e or e.url == "":
+            self.module.fail_json(
+                msg="Can not find the enpoint for %s" % self.product)
+        self._endpoint = e.url
+        if e.url[-1] != "/":
+            self._endpoint += "/"
 
     def _credentials(self):
         auth = v3.Password(
