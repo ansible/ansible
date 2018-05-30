@@ -107,7 +107,6 @@
     that:
       - 'result.changed == false'
 
-
 - name: remove logging as collection tearDown
   eos_logging:
     aggregate:

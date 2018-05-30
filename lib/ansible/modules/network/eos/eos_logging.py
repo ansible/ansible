@@ -113,7 +113,8 @@ commands:
 """
 
 import re
-import q
+
+
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
@@ -213,8 +214,6 @@ def map_obj_to_commands(updates, module):
 
                 commands.append(dest_cmd)
 
-    cmds = [item for item in commands]
-    q(cmds)
     return commands
 
 
