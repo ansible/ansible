@@ -389,9 +389,6 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
-    # TODO seems unused, remove?
-    MAX_IOPS_TO_SIZE_RATIO = 30
-
     # device_type has been used historically to represent volume_type,
     # however ec2_vol uses volume_type, as does the BlockDeviceType, so
     # we add handling for either/or but not both
