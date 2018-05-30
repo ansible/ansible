@@ -133,22 +133,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def search_obj_in_list(group, lst):
     for o in lst:
         if o['group'] == group:
@@ -337,7 +321,7 @@ def parse_channel_options(module, output, channel):
 
 def map_config_to_obj(module):
     objs = list()
-    output = execute_show_command('show port-channel summary', module)[0]
+    output = run_commands(module, ['show port-channel summary | json'])[0]
     if not output:
         return list()
 
