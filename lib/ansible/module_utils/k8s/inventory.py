@@ -68,7 +68,7 @@ class K8sInventoryHelper(object):
                 self.authenticate(connection)
                 name = connection.get('name', self.get_default_host_name(self.helper.api_client.host))
                 if connection.get('namespaces'):
-                    namespaces = connections['namespaces']
+                    namespaces = connection['namespaces']
                 else:
                     namespaces = self.get_available_namespaces()
                 for namespace in namespaces:
