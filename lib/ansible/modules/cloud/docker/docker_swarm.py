@@ -18,7 +18,7 @@ module: docker_swarm
 
 short_description: Manage Swarm cluster.
 
-version_added: "2.6"
+version_added: "2.7"
 
 description:
      - Init a new Swarm cluster.
@@ -361,7 +361,7 @@ def main():
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list'),
         join_token=dict(type='str'),
-        snapshot_interval=dict(type='int'),
+        snapshot_interval=dict(type='int',default=10000),
         task_history_retention_limit=dict(type='int'),
         keep_old_snapshots=dict(type='int'),
         log_entries_for_slow_followers=dict(type='int'),
