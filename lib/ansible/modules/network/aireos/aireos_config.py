@@ -88,6 +88,7 @@ options:
         no changes are made, the configuration is still saved to the
         startup config.  This option will always cause the module to
         return changed. This argument is mutually exclusive with I(save_when).
+      - This option is deprecated as of Ansible 2.6, use C(save_when)
     type: bool
     default: 'no'
   save_when:
@@ -223,7 +224,8 @@ def main():
 
         backup=dict(type='bool', default=False),
 
-        save=dict(type='bool', default=False),
+        # save is deprecated as of 2.6, use save_when instead
+        save=dict(type='bool', default=False, removed_in_version='2.10'),
         save_when=dict(choices=['always', 'never', 'changed'], default='never'),
 
         diff_against=dict(choices=['running', 'intended']),
@@ -232,7 +234,8 @@ def main():
 
     argument_spec.update(aireos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('save', 'save_when')]
 
     required_if = [('diff_against', 'intended', ['intended_config'])]
 
