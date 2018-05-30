@@ -74,7 +74,7 @@ options:
 EXAMPLES = '''
 - nxos_static_route:
     prefix: "192.168.20.64/24"
-    next_hop: "3.3.3.3"
+    next_hop: "192.0.2.3"
     route_name: testing
     pref: 100
 '''
@@ -84,7 +84,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip route 192.168.20.0/24 3.3.3.3 name testing 100"]
+    sample: ["ip route 192.168.20.0/24 192.0.2.3 name testing 100"]
 '''
 import re
 from copy import deepcopy
