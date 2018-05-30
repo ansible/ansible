@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netconf_rpc
-version_added: "2.7"
+version_added: "2.6"
 author:
     - "Ganesh Nalawade (@ganeshrn)"
     - "Sven Wisotzky (@wisotzky)"
