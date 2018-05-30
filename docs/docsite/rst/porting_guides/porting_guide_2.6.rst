@@ -42,6 +42,9 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
 
+* ``k8s_raw`` use :ref:`k8s <k8s_module>` instead.
+* ``openshift_raw`` use :ref:`k8s <k8s_module>` instead.
+* ``openshift_scale`` use :ref:`k8s_scale <k8s_scale_module>` instead.
 
 Noteworthy module changes
 -------------------------
@@ -62,12 +65,34 @@ Noteworthy module changes
   destination path like this::
 
     $ ansible localhost -m file -a 'path=/tmp/lib state=directory'
+* The ``k8s_raw`` and ``openshift_raw`` modules have been aliased to the new ``k8s`` module.
+* The ``k8s`` module supports all Kubernetes resources including those from Custom Resource Definitions and aggregated API servers. This includes all OpenShift resources.
+* The ``k8s`` module will not accept resources where subkeys have been snake_cased. This was a workaround that was suggested with the ``k8s_raw`` and ``openshift_raw`` modules.
+* The ``k8s`` module may not accept resources where the ``api_version`` has been changed to match the shortened version in the Kubernetes Python client. You should now specify the proper full Kubernetes ``api_version`` for a resource.
+* The ``k8s`` module can now process multi-document YAML files if they are passed with the ``src`` parameter. It will process each document as a separate resource. Resources provided inline with the ``resource_definition`` parameter must still be a single document.
+* The ``k8s`` module will not automatically change ``Project`` creation requests into ``ProjectRequest`` creation requests as the ``openshift_raw`` module did. You must now specify the ``ProjectRequest`` kind explicitly.
+* The ``k8s`` module will not automatically remove secrets from the Ansible return values (and by extension the log). In order to prevent secret values in a task from being logged, specify the ``no_log`` parameter on the task block.
+* The ``k8s_scale`` module now supports scalable OpenShift objects, such as ``DeploymentConfig``.
 
 
 Plugins
 =======
 
-No notable changes.
+Deprecation notices
+-------------------
+
+The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
+
+* ``openshift`` use ``k8s`` instead.
+
+
+Noteworthy plugin changes
+-------------------------
+
+* The ``k8s`` lookup plugin now supports all Kubernetes resources including those from Custom Resource Definitions and aggregated API servers. This includes all OpenShift resources.
+* The ``k8s`` lookup plugin may not accept resources where the ``api_version`` has been changed to match the shortened version in the Kubernetes Python client. You should now specify the proper full Kubernetes ``api_version`` for a resource.
+* The ``k8s`` lookup plugin will no longer remove secrets from the Ansible return values (and by extension the log). In order to prevent secret values in a task from being logged, specify the ``no_log`` parameter on the task block.
+
 
 Porting custom scripts
 ======================

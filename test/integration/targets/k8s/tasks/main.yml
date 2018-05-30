@@ -2,13 +2,11 @@
   pip:
     name: openshift
 
-- name: Create a project
-  openshift_raw:
+# Kubernetes resources
+- name: Create a namespace
+  k8s:
     name: testing
-    kind: project
-    description: My testing project
-    display_name: Testing Project
-    api_version: v1
+    kind: namespace
   register: output
 
 - name: show output
@@ -16,7 +14,7 @@
     var: output
 
 - name: Create a service
-  openshift_raw:
+  k8s:
     state: present
     resource_definition: &svc
       apiVersion: v1
@@ -43,17 +41,17 @@
     var: output
 
 - name: Create the service again
-  openshift_raw:
+  k8s:
     state: present
-    resource_definition: *svc 
+    resource_definition: *svc
   register: output
-  
+
 - name: Service creation should be idempotent
   assert:
     that: not output.changed
 
 - name: Create PVC
-  openshift_raw:
+  k8s:
     state: present
     inline: &pvc
       apiVersion: v1
@@ -73,7 +71,7 @@
     var: output
 
 - name: Create the PVC again
-  openshift_raw:
+  k8s:
     state: present
     inline: *pvc
 
@@ -81,8 +79,69 @@
   assert:
     that: not output.changed
 
+- name: Create deployment
+  k8s:
+    state: present
+    inline: &deployment
+      apiVersion: apps/v1beta1
+      kind: Deployment
+      metadata:
+        name: elastic
+        labels:
+          app: galaxy
+          service: elastic
+        namespace: testing
+      spec:
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ['elasticsearch']
+                image: 'ansible/galaxy-elasticsearch:2.4.6'
+            volumes:
+            - name: elastic-volume
+              persistentVolumeClaim:
+                claimName: elastic-volume
+        replicas: 1
+        strategy:
+          type: RollingUpdate
+  register: output
+
+- name: Show output
+  debug:
+    var: output
+
+- name: Create deployment again
+  k8s:
+    state: present
+    inline: *deployment
+  register: output
+
+- name: Deployment creation should be idempotent
+  assert:
+    that: not output.changed
+
+# OpenShift Resources
+- name: Create a project
+  k8s:
+    name: testing
+    kind: project
+    api_version: v1
+  register: output
+
+- name: show output
+  debug:
+    var: output
+
 - name: Create deployment config
-  openshift_raw:
+  k8s:
     state: present
     inline: &dc
       apiVersion: v1
@@ -121,9 +180,9 @@
     var: output
 
 - name: Create deployment config again
-  openshift_raw:
+  k8s:
     state: present
-    inline: *dc 
+    inline: *dc
   register: output
 
 - name: DC creation should be idempotent
