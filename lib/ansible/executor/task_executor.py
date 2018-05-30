@@ -377,9 +377,11 @@ class TaskExecutor:
                 if all(isinstance(o, string_types) for o in items):
                     final_items = []
 
+                    found = None
                     for allowed in ['name', 'pkg', 'package']:
                         name = self._task.args.pop(allowed, None)
                         if name is not None:
+                            found = allowed
                             break
 
                     # This gets the information to check whether the name field
@@ -397,6 +399,12 @@ class TaskExecutor:
                         # name/pkg or the name/pkg field doesn't have any variables
                         # and thus the items can't be squashed
                         if template_no_item != template_with_item:
+                            display.deprecated(
+                                'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
+                                'Instead of using a loop to supply multiple items and specifying `%s: %s`, '
+                                'please use `%s: %r` and remove the loop' % (self._task.action, found, name, found, self._task.loop),
+                                version='2.11'
+                            )
                             for item in items:
                                 variables[loop_var] = item
                                 if self._task.evaluate_conditional(templar, variables):
