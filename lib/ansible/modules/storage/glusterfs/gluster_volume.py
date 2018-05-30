@@ -22,6 +22,7 @@ options:
     description:
       - The volume name.
     required: true
+    aliases: ['volume']
   state:
     description:
       - Use present/absent ensure if a volume exists or not.
