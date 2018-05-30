@@ -599,6 +599,8 @@ def create_or_update_target_group(connection, module):
             ).wait(
                 Names=[params['Name']],
             )
+        except botocore.exceptions.WaiterError as e:
+            module.fail_json_aws(e, "Failed to wait for target group to be created")
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create target group")
 
