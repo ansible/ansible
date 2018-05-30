@@ -34,7 +34,7 @@ options:
     - The minimum size to extend the logical volume up to. The size must be in
       megabytes (mM) or gigabytes (gG); Float values must begin with a digit.
       If the actual lv size is greater than the minimum size it does nothing.
-    version_added: "2.6"
+    version_added: "2.7"
   size:
     description:
     - The size of the logical volume, according to lvcreate(8) --size, by
