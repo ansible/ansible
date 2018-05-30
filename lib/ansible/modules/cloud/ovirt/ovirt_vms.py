@@ -2075,12 +2075,14 @@ def main():
                         lun_mappings=_get_lun_mappings(module),
                         affinity_group_mappings=_get_affinity_group_mappings(module),
                         affinity_label_mappings=_get_affinity_label_mappings(module),
-                    ) if (module.params['cluster_mappings']
-                          or module.params['role_mappings']
-                          or module.params['domain_mappings']
-                          or module.params['lun_mappings']
-                          or module.params['affinity_group_mappings']
-                          or module.params['affinity_label_mappings']) else None
+                    ) if (
+                        module.params['cluster_mappings'] or
+                        module.params['role_mappings'] or
+                        module.params['domain_mappings'] or
+                        module.params['lun_mappings'] or
+                        module.params['affinity_group_mappings'] or
+                        module.params['affinity_label_mappings']
+                    ) else None
                 )
 
                 if module.params['wait']:

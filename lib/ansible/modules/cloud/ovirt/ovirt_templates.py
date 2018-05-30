@@ -268,7 +268,6 @@ template:
     type: dict
 '''
 
-import time
 import traceback
 
 try:
@@ -580,9 +579,11 @@ def main():
                         cluster_mappings=_get_cluster_mappings(module),
                         role_mappings=_get_role_mappings(module),
                         domain_mappings=_get_domain_mappings(module),
-                    ) if (module.params['cluster_mappings']
-                          or module.params['role_mappings']
-                          or module.params['domain_mappings']) else None
+                    ) if (
+                        module.params['cluster_mappings'] or
+                        module.params['role_mappings'] or
+                        module.params['domain_mappings']
+                    ) else None
                 )
 
                 if module.params['wait']:
