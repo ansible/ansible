@@ -296,7 +296,7 @@ class WapiModule(WapiBase):
     def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
         ''' this function gets and returns the current object based on name/old_name passed'''
         update = False
-        if (NIOS_IPV4_NETWORK not in obj_filter and NIOS_IPV6_NETWORK not in obj_filter):
+        if ('name' in obj_filter):
             if (isinstance(obj_filter['name'], dict)):
                 old_name = obj_filter['name'].get('old_name')
                 new_name = obj_filter['name'].get('new_name')
