@@ -1,4 +1,4 @@
-- name: Fix resource prefix -- trigger ci
+- name: Fix resource prefix
   set_fact:
     fixed_resource_prefix: "{{ (resource_prefix | replace('-','x'))[-22:] }}"
 
