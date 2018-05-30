@@ -389,7 +389,7 @@ def bucket_check(module, s3, bucket, validate=True):
 
 def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
-        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
+        module.exit_json(msg="CREATE operation skipped - running in check mode", changed=True)
     configuration = {}
     if location not in ('us-east-1', None):
         configuration['LocationConstraint'] = location
@@ -525,12 +525,9 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     try:
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == 'XNotImplemented':
-            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
-        else:
-            module.fail_json_aws(e, msg="Unable to set object ACL")
-    except botocore.exceptions.BotoCoreError as e:
+    except s3.exceptions.from_code('XNotImplemented'):
+        module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to set object ACL")
     try:
         url = s3.generate_presigned_url(ClientMethod='put_object',
@@ -554,8 +551,10 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
             raise Sigv4Required()
-        elif e.response['Error']['Code'] != "404":
-            module.fail_json(msg="Could not find the key %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        elif e.response['Error']['Code'] not in ("403", "404"):
+            # AccessDenied errors may be triggered if 1) file does not exist or 2) file exists but
+            # user does not have the s3:GetObject permission. 404 errors are handled by download_file().
+            module.fail_json_aws(e, msg="Could not find the key %s." % obj)
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Could not find the key %s." % obj)
 
@@ -588,8 +587,7 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
         if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
             raise Sigv4Required()
         else:
-            module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
 
