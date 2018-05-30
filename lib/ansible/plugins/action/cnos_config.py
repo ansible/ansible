@@ -10,7 +10,7 @@
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Contains Action Plugin methods for ENOS Config Module
+# Contains Action Plugin methods for CNOS Config Module
 # Lenovo Networking
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
