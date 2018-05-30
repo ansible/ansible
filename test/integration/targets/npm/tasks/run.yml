@@ -1,2 +1,13 @@
 - include_tasks: setup.yml
-- include_tasks: test.yml
+- include_tasks: test_single_package.yml
+- include_tasks: test_package_json.yml
+  vars:
+    npm_has_package_lock: '{{ npm_testcase.0 }}'
+    npm_no_save: '{{ npm_testcase.1 }}'
+    npm_state: '{{ npm_testcase.2 }}'
+  with_nested:
+    - [yes, no]
+    - [yes, no]
+    - ['present', 'latest']
+  loop_control:
+    loop_var: npm_testcase

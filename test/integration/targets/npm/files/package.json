@@ -1,0 +1,10 @@
+{
+  "name": "ansible-test",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ansible-dummy-package": ">=1.0.0"
+  }
+}

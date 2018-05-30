@@ -1,0 +1,107 @@
+- name: 'Remove any node modules or package.json file'
+  file:
+    path: '{{ remote_dir }}/{{ filename }}'
+    state: absent
+  with_items:
+    - 'node_modules'
+    - 'package.json'
+    - 'package-lock.json'
+  loop_control:
+    loop_var: filename
+
+- name: 'Create package.json file'
+  copy:
+    dest: '{{ remote_dir }}/package.json'
+    src: 'package.json'
+
+- name: 'Create package-lock.json file'
+  copy:
+    dest: '{{ remote_dir }}/package-lock.json'
+    src: 'package-lock.json'
+  when: npm_has_package_lock
+
+- vars:
+    # sample: node-v8.2.0-linux-x64.tar.xz
+    node_path: '{{ remote_dir }}/{{ nodejs_path }}/bin'
+  block:
+    - shell: npm --version
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_version
+
+    - debug:
+        var: npm_version.stdout
+
+    - name: 'Install package.json content (npm: {{ npm_version.stdout }}, package-lock.json: {{ npm_has_package_lock }}'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        state: '{{ npm_state }}'
+        no_save: '{{ npm_no_save }}'
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_install
+
+    - assert:
+        that:
+        - npm_install is success
+        - npm_install is changed
+
+    - name: 'Check package.json version'
+      command: grep ">=1.0.0" {{ remote_dir }}/package.json
+      ignore_errors: yes
+      register: package_json_version
+      changed_when: package_json_version is failed
+
+    - assert:
+        that:
+          - package_json_version is not changed
+      when: npm_no_save
+
+    - assert:
+        that:
+          - package_json_version is changed
+      when: not npm_no_save and npm_state == 'latest'
+
+    - name: 'Check package-lock.json has been created'
+      stat:
+        path: '{{ remote_dir }}/package-lock.json'
+      register: package_lock
+      when: nodejs_version is version('8.0.0', '>=') and not npm_has_package_lock
+
+    - assert:
+        that:
+          - package_lock.stat.exists != npm_no_save
+      when: nodejs_version is version('8.0.0', '>=') and not npm_has_package_lock
+
+    - name: 'Check package-lock.json version'
+      command: grep Xac5jneKotfj2GJ2e7bODRaofGIyBoQzjZOYcAMdyOiK1J47Tni819nEg {{ remote_dir }}/package-lock.json
+      ignore_errors: yes
+      register: package_lock_version
+      changed_when: package_lock_version is failed
+      when: nodejs_version is version('8.0.0', '>=') and (npm_has_package_lock or package_lock.stat.exists)
+
+    - assert:
+        that:
+          - package_lock_version is not changed
+      when: nodejs_version is version('8.0.0', '>=') and npm_has_package_lock and (npm_state == 'present' or npm_no_save)
+
+    - assert:
+        that:
+          - package_lock_version is changed
+      when: nodejs_version is version('8.0.0', '>=') and not npm_no_save and (npm_state == 'latest' or not npm_has_package_lock)
+
+    - name: 'Reinstall package.json content (npm: {{ npm_version.stdout }}, package-lock.json: {{ npm_has_package_lock }}'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        state: '{{ npm_state }}'
+        no_save: '{{ npm_no_save }}'
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_reinstall
+
+    - assert:
+        that:
+        - npm_reinstall is success
+        - npm_reinstall is not changed

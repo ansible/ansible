@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2017 Chris Hoffman <christopher.hoffman@gmail.com>
+# Copyright (c) 2018 modified by Jill Royer <perso@guilro.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
@@ -76,6 +78,13 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  no_save:
+    description:
+        - Prevent saving changes to package.json and package-lock.json with npm 5 and later.
+    required: false
+    default: yes
+    type: bool
+    version_added: "2.8"
 requirements:
     - npm installed in bin path (recommended /usr/local/bin)
 '''
@@ -126,6 +135,7 @@ EXAMPLES = '''
 
 import os
 import re
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -141,6 +151,7 @@ class Npm(object):
         self.path = kwargs['path']
         self.registry = kwargs['registry']
         self.production = kwargs['production']
+        self.no_save = kwargs['no_save']
         self.ignore_scripts = kwargs['ignore_scripts']
         self.unsafe_perm = kwargs['unsafe_perm']
         self.state = kwargs['state']
@@ -155,6 +166,10 @@ class Npm(object):
         else:
             self.name_version = self.name
 
+        # get npm version
+        rc, out, err = self.module.run_command(self.executable + ['--version'])
+        self.npm5 = LooseVersion(out) >= LooseVersion('5.0.0')
+
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
             cmd = self.executable + args
@@ -163,6 +178,10 @@ class Npm(object):
                 cmd.append('--global')
             if self.production and ('install' in cmd or 'update' in cmd):
                 cmd.append('--production')
+            if self.no_save and self.npm5 and ('install' in cmd or 'update' in cmd):
+                cmd.append('--no-save')
+            if not self.no_save and not self.npm5 and ('install' in cmd or 'update' in cmd):
+                cmd.append('--save')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
             if self.unsafe_perm:
@@ -219,13 +238,13 @@ class Npm(object):
 
     def list_outdated(self):
         outdated = list()
-        data = self._exec(['outdated'], True, False)
-        for dep in data.splitlines():
-            if dep:
-                # node.js v0.10.22 changed the `npm outdated` module separator
-                # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split(r'\s|@', dep, 1)
-                outdated.append(pkg)
+        output = self._exec(['outdated', '--json'], True, False)
+        if output == '':
+            return outdated
+        data = json.loads(output)
+        for dep in data:
+            if 'current' not in data[dep] or data[dep]['current'] != data[dep]['wanted']:
+                outdated.append(dep)
 
         return outdated
 
@@ -236,6 +255,7 @@ def main():
         path=dict(default=None, type='path'),
         version=dict(default=None),
         production=dict(default='no', type='bool'),
+        no_save=dict(default='yes', type='bool'),
         executable=dict(default=None, type='path'),
         registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
@@ -253,6 +273,7 @@ def main():
     version = module.params['version']
     glbl = module.params['global']
     production = module.params['production']
+    no_save = module.params['no_save']
     executable = module.params['executable']
     registry = module.params['registry']
     state = module.params['state']
@@ -264,7 +285,7 @@ def main():
     if state == 'absent' and not name:
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
-    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
+    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, no_save=no_save,
               executable=executable, registry=registry, ignore_scripts=ignore_scripts,
               unsafe_perm=unsafe_perm, state=state)
 
@@ -275,11 +296,7 @@ def main():
             changed = True
             npm.install()
     elif state == 'latest':
-        installed, missing = npm.list()
         outdated = npm.list_outdated()
-        if missing:
-            changed = True
-            npm.install()
         if outdated:
             changed = True
             npm.update()
