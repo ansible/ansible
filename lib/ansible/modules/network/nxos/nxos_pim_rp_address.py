@@ -74,7 +74,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+    sample: ["router bgp 65535", "vrf test", "router-id 192.0.2.1"]
 '''
 
 

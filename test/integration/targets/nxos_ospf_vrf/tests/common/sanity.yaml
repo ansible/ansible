@@ -13,7 +13,7 @@
   - name: Configure ospf vrf
     nxos_ospf_vrf: &config
       ospf: 1
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       timer_throttle_spf_start: 50
       timer_throttle_spf_hold: 1000
       timer_throttle_spf_max: 2000
