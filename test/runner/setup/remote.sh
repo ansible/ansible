@@ -16,6 +16,9 @@ if [ "${platform}" = "freebsd" ]; then
             curl \
             gtar \
             python \
+            py27-Jinja2 \
+            py27-virtualenv \
+            py27-cryptography \
             sudo \
          && break
          echo "Failed to install packages. Sleeping before trying again..."
