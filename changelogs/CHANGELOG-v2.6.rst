@@ -2,6 +2,54 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+.. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a2:
+
+v2.6.0a2
+========
+
+.. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a2_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-05-30
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a2_Minor Changes:
+
+Minor Changes
+-------------
+
+- The aws_ses_identity module supports check mode
+
+
+.. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a2_Removed Features (previously deprecated):
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- removed the deprecated always_run task option, please use `check_mode: no` instead
+
+
+.. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a2_Bugfixes:
+
+Bugfixes
+--------
+
+- powershell - use the tmpdir set by `remote_tmp` for become/async tasks instead of the generic $env:TEMP - https://github.com/ansible/ansible/pull/40210
+
+- selinux - correct check mode behavior to report same changes as normal mode (https://github.com/ansible/ansible/pull/40721)
+
+- synchronize - Ensure the local connection created by synchronize uses _remote_is_local=True, which causes ActionBase to build a local tmpdir (https://github.com/ansible/ansible/pull/40833)
+
+- win_updates - Added the ability to run on a scheduled task for older hosts so async starts working again - https://github.com/ansible/ansible/issues/38364
+
+- winrm - Add better error handling when the kinit process fails
+
+- xenserver_facts - ensure module works with newer versions of XenServer (https://github.com/ansible/ansible/pull/35821)
+
+
 .. _Ansible 2.6 "Heartbreaker" Release Notes_v2.6.0a1:
 
 v2.6.0a1
