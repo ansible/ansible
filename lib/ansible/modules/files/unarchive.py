@@ -658,14 +658,18 @@ class TgzArchive(object):
             # filename = filename.decode('string_escape')
             filename = to_native(codecs.escape_decode(filename)[0])
 
-            if filename and filename not in self.excludes:
-                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
-                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
-                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
-                if filename.startswith('/'):
-                    filename = filename[1:]
+            # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+            # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+            # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+            if filename.startswith('/'):
+                filename = filename[1:]
 
-                self._files_in_archive.append(filename)
+            if self.excludes:
+                for exclude in self.excludes:
+                    if not fnmatch.fnmatch(filename, exclude):
+                        self._files_in_archive.append(to_native(filename))
+            else:
+                self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
 
