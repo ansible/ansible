@@ -564,7 +564,7 @@ def searchable_attributes(module):
         'Storage.name': module.params.get('storage_domain'),
         'vm_names': module.params.get('vm_name'),
     }
-    return {k: v for k, v in attributes.items() if v is not None}
+    return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
 def main():

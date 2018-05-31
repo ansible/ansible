@@ -430,7 +430,7 @@ def searchable_attributes(module):
         'name': module.params.get('name'),
         'cluster': module.params.get('cluster'),
     }
-    return {k: v for k, v in attributes.items() if v is not None}
+    return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
 def main():
