@@ -1,25 +1,20 @@
 #!/usr/bin/python
-#
+
 # Copyright 2016 Red Hat | Ansible
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: docker_swarm
-
-short_description: Manage Swarm cluster.
-
+short_description: Manage Swarm cluster
 version_added: "2.7"
-
 description:
      - Init a new Swarm cluster.
      - Add/Remove nodes or managers to an existing cluster.
@@ -28,18 +23,19 @@ options:
         description:
             - Externally reachable address advertised to other nodes.
             - This can either be an address/port combination
-                in the form ``192.168.1.1:4567``, or an interface followed by a
-                port number, like ``eth0:4567``. If the port number is omitted,
-                the port number from the listen address is used. If
-                ``advertise_addr`` is not specified, it will be automatically
+                in the form C(192.168.1.1:4567), or an interface followed by a
+                port number, like C(eth0:4567).
+            - If the port number is omitted,
+                the port number from the listen address is used.
+            - If C(advertise_addr) is not specified, it will be automatically
                 detected when possible.
     listen_addr:
         description:
             - Listen address used for inter-manager communication.
             - This can either be an address/port combination in the form
-                ``192.168.1.1:4567``,
-                or an interface followed by a port number, like ``eth0:4567``.
-                If the port number is omitted, the default swarm listening port
+                C(192.168.1.1:4567), or an interface followed by a port number,
+                like C(eth0:4567).
+            - If the port number is omitted, the default swarm listening port
                 is used.
         default: 0.0.0.0:2377
     force:
@@ -47,7 +43,7 @@ options:
             - Use with state C(init) to force creating a new Swarm, even if already part of one.
             - Use with state C(leave) to Leave the swarm even if this node is a manager.
         type: bool
-        default: false
+        default: 'no'
     state:
         description:
             - Set to C(init), to create a new cluster.
@@ -63,54 +59,74 @@ options:
           - remove
     node_id:
         description:
-            - Used with I(state=remove). Swarm id of the node to remove.
+            - Swarm id of the node to remove.
+            - Used with I(state=remove).
     join_token:
         description:
-            - Used with I(state=join). Swarm token used to join a swarm cluster.
+            - Swarm token used to join a swarm cluster.
+            - Used with I(state=join).
     remote_addrs:
         description:
-            - Used with I(state=join). Remote address of a manager to connect to.
+            - Remote address of a manager to connect to.
+            - Used with I(state=join).
     task_history_retention_limit:
         description:
-            - Maximum number of tasks history stored. Docker default value is 5
+            - Maximum number of tasks history stored.
+            - Docker default value is C(5).
     snapshot_interval:
-        description: Number of logs entries between snapshot. Docker default value is 10000
+        description:
+            - Number of logs entries between snapshot.
+            - Docker default value is C(10000).
     keep_old_snapshots:
-        description: Number of snapshots to keep beyond the current snapshot. Docker default value is 0
+        description:
+            - Number of snapshots to keep beyond the current snapshot.
+            - Docker default value is C(0).
     log_entries_for_slow_followers:
-        description: Number of log entries to keep around to sync up slow followers after a snapshot is created.
+        description:
+            - Number of log entries to keep around to sync up slow followers after a snapshot is created.
     heartbeat_tick:
-        description: Amount of ticks (in seconds) between each heartbeat. Docker default value is 1s
+        description:
+            - Amount of ticks (in seconds) between each heartbeat.
+            - Docker default value is C(1s).
     election_tick:
-        description: Amount of ticks (in seconds) needed without a leader to trigger a new election. Docker default value is 10s
+        description:
+            - Amount of ticks (in seconds) needed without a leader to trigger a new election.
+            - Docker default value is C(10s).
     dispatcher_heartbeat_period:
-        description: The delay for an agent to send a heartbeat to the dispatcher. Docker default value is 5s
+        description:
+            - The delay for an agent to send a heartbeat to the dispatcher.
+            - Docker default value is C(5s).
     node_cert_expiry:
-        description: Automatic expiry for nodes certificates. Docker default value is 3months
+        description:
+            - Automatic expiry for nodes certificates.
+            - Docker default value is C(3months).
     name:
-        description: Swarm's name
+        description:
+            - The name of the swarm.
     labels:
-        description: User-defined key/value metadata.
+        description:
+            - User-defined key/value metadata.
     signing_ca_cert:
-        description: The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
+        description:
+            - The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
     signing_ca_key:
-        description: The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
+        description:
+            - The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
     ca_force_rotate:
-        description: An integer whose purpose is to force swarm
-                to generate a new signing CA certificate and key, if none have
-                been specified. Docker default value is 0
+        description:
+            - An integer whose purpose is to force swarm to generate a new signing CA certificate and key,
+                if none have been specified.
+            - Docker default value is C(0).
     autolock_managers:
-        description: If set, generate a key and use it to lock data stored on the managers. Docker default value is false.
+        description:
+            - If set, generate a key and use it to lock data stored on the managers.
+            - Docker default value is C(no).
         type: bool
-
-
 extends_documentation_fragment:
     - docker
-
 requirements:
-    - "python >= 2.7"
-    - "Docker API >= 1.35"
-
+    - python >= 2.7
+    - Docker API >= 1.35
 author:
   - Thierry Bouvet (@tbouvet)
 '''
@@ -127,7 +143,7 @@ EXAMPLES = '''
     state: join
     advertise_addr: 192.168.1.2
     join_token: SWMTKN-1--xxxxx
-    remote_addrs: ["192.168.1.1:2377"]
+    remote_addrs: [ 192.168.1.1:2377 ]
 
 - name: Leave swarm
   docker_swarm:
@@ -155,12 +171,12 @@ swarm_facts:
                   description: Token to create a new I(worker) node
                   returned: success
                   type: str
-                  example: "SWMTKN-1--xxxxx"
+                  example: SWMTKN-1--xxxxx
               Manager:
                   description: Token to create a new I(manager) node
                   returned: success
                   type: str
-                  example: "SWMTKN-1--xxxxx"
+                  example: SWMTKN-1--xxxxx
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
