@@ -64,7 +64,6 @@ class TestNiosHostRecordModule(TestNiosModule):
                               'comment': None, 'extattrs': None}
 
         test_object = None
-
         test_spec = {
             "name": {"ib_req": True},
             "comment": {},
@@ -76,7 +75,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'name': 'ansible'})
+        wapi.create_object.assert_called_once_with('testobject', {'name': self.module._check_type_dict().__getitem__()})
 
     def test_nios_host_record_remove(self):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible',
@@ -128,7 +127,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         wapi.update_object.called_once_with(test_object)
 
     def test_nios_host_record_update_record_name(self):
-        self.module.params = {'provider': None, 'state': 'present', 'name': 'default', 'old_name': 'old_default',
+        self.module.params = {'provider': None, 'state': 'present', 'name': {'new_name': 'default', 'old_name': 'old_default'},
                               'comment': 'comment', 'extattrs': None}
 
         test_object = [
