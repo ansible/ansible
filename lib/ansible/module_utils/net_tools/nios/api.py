@@ -25,7 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+#import q
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -191,6 +191,7 @@ class WapiModule(WapiBase):
         :returns: a results dict
         '''
 
+        update = new_name = None
         state = self.module.params['state']
         if state not in ('present', 'absent'):
             self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
@@ -199,7 +200,11 @@ class WapiModule(WapiBase):
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
 
-        ib_obj_ref, update = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
+        if('name' in obj_filter):
+            ib_obj_ref, update, new_name = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
+        else:
+            ib_obj_ref = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+
         if ib_obj_ref:
             current_object = ib_obj_ref[0]
             if 'extattrs' in current_object:
@@ -218,8 +223,8 @@ class WapiModule(WapiBase):
                     proposed_object[key] = self.module.params[key]
 
         # checks if the name's field has been updated
-        if update and 'name' in proposed_object:
-            proposed_object['name'] = proposed_object['name']['new_name']
+        if update and new_name:
+            proposed_object['name'] = new_name
 
         res = None
         modified = not self.compare_objects(current_object, proposed_object)
@@ -231,20 +236,14 @@ class WapiModule(WapiBase):
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
-                if (ib_obj_type == NIOS_HOST_RECORD):
-                    proposed_object = self.on_update(proposed_object, ib_spec)
-                    res = self.update_object(ref, proposed_object)
-                elif (ib_obj_type == NIOS_NETWORK_VIEW):
-                    proposed_object = self.on_update(proposed_object, ib_spec)
-                    res = self.update_object(ref, proposed_object)
-                elif (ib_obj_type == NIOS_DNS_VIEW):
+                if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
                 elif 'network_view' in proposed_object:
                     proposed_object.pop('network_view')
                 if not self.module.check_mode and res is None:
                     proposed_object = self.on_update(proposed_object, ib_spec)
-                    res = self.update_object(ref, proposed_object)
+                    self.update_object(ref, proposed_object)
                 result['changed'] = True
 
         elif state == 'absent':
@@ -296,24 +295,34 @@ class WapiModule(WapiBase):
     def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
         ''' this function gets and returns the current object based on name/old_name passed'''
         update = False
-        if ('name' in obj_filter):
-            if (isinstance(obj_filter['name'], dict)):
-                old_name = obj_filter['name'].get('old_name')
-                new_name = obj_filter['name'].get('new_name')
-                if (ib_obj_type == NIOS_HOST_RECORD):
-                    test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
-                else:
-                    test_obj_filter = dict([('name', old_name)])
+        old_name = new_name = None
+        try:
+            name_obj = self.module._check_type_dict(obj_filter['name'])
+            old_name = name_obj['old_name']
+            new_name = name_obj['new_name']
+        except TypeError:
+            name = obj_filter['name']
+
+        if old_name and new_name:
+            if (ib_obj_type == NIOS_HOST_RECORD):
+                test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
+            else:
+                test_obj_filter = dict([('name', old_name)])
+            # get the object reference
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+            if ib_obj:
+                obj_filter['name'] = new_name
+            else:
+                test_obj_filter['name'] = new_name
                 ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
-                if ib_obj:
-                    obj_filter['name'] = new_name
-                else:
-                    test_obj_filter['name'] = new_name
-                    ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
-                update = True
-                return ib_obj, update
-        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-        return ib_obj, update
+            update = True
+            return ib_obj, update, new_name
+        if (ib_obj_type == NIOS_HOST_RECORD):
+            test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+        else:
+            test_obj_filter = dict([('name', name)])
+        ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        return ib_obj, update, new_name
 
     def on_update(self, proposed_object, ib_spec):
         ''' Event called before the update is sent to the API endpoing
