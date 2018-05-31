@@ -121,9 +121,9 @@ In certain situations the ``lookup`` function may not return a list which ``loop
 
 The following invocations are equivalent, using ``wantlist=True`` with ``lookup`` to ensure a return type of a list::
 
-    loop: "{{ query('nested', ['alice', 'bob'], ['clientdb', 'employeedb', 'providerdb']) }}"
+    loop: "{{ query('inventory_hostnames', 'all') }}"
 
-    loop: "{{ lookup('nested', ['alice', 'bob'], ['clientdb', 'employeedb', 'providerdb'], wantlist=True) }}"
+    loop: "{{ lookup('inventory_hostnames', 'all', wantlist=True) }}"
 
 
 .. _do_until_loops:
