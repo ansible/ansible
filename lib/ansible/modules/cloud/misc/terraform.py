@@ -259,7 +259,7 @@ def main():
     needs_application, changed = True, True
 
     if state == 'planned':
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, targets, plan_file)
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
     if state == 'absent':
         # deleting cannot use a statefile
         needs_application = True
