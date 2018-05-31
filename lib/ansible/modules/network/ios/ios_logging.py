@@ -120,7 +120,6 @@ commands:
 
 import re
 
-
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
@@ -149,16 +148,20 @@ def map_obj_to_commands(updates, module, os_version):
         state = w['state']
         del w['state']
 
+        if facility:
+            w['dest'] = 'facility'
+
         if state == 'absent' and w in have:
-            if dest == 'host':
-                if '12.' in os_version:
-                    commands.append('no logging {0}'.format(name))
+            if dest:
+                if dest == 'host':
+                    if '12.' in os_version:
+                        commands.append('no logging {0}'.format(name))
+                    else:
+                        commands.append('no logging host {0}'.format(name))
+                elif dest:
+                    commands.append('no logging {0}'.format(dest))
                 else:
-                    commands.append('no logging host {0}'.format(name))
-            elif dest:
-                commands.append('no logging {0}'.format(dest))
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
