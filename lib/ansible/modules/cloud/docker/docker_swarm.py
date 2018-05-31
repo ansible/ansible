@@ -50,6 +50,8 @@ options:
             - Set to C(join), to join an existing cluster.
             - Set to C(leave), to leave an existing cluster.
             - Set to C(remove), to remove a node.
+            - Set to C(update) to update an existing cluster.
+            - Set to C(inspect) to display swarm informations.
         required: true
         default: join
         choices:
@@ -57,6 +59,8 @@ options:
           - join
           - leave
           - remove
+          - update
+          - inspect
     node_id:
         description:
             - Swarm id of the node to remove.
@@ -122,6 +126,18 @@ options:
             - If set, generate a key and use it to lock data stored on the managers.
             - Docker default value is C(no).
         type: bool
+    version :
+        description:
+            - Used with I(state=update). The version number of the swarm object being
+                updated. This is required to avoid conflicting writes.
+    rotate_worker_token: 
+        description: Rotate the worker join token. 
+        type: bool
+        default: 'no'
+    rotate_manager_token: 
+        description: Rotate the manager join token. 
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - docker
 requirements:
@@ -154,6 +170,10 @@ EXAMPLES = '''
     state: remove
     node_id: mynode
 
+- name: Inspect swarm
+  docker_swarm:
+    state: inspect
+  register: swarm_info
 '''
 
 RETURN = '''
@@ -223,10 +243,16 @@ class TaskParameters(DockerBaseClass):
         self.signing_ca_key = None
         self.ca_force_rotate = None
         self.autolock_managers = None
+        self.rotate_worker_token = None
+        self.rotate_manager_token = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
 
+        self.update_parameters(client)
+
+    def update_parameters(self,client):
+        
         self.spec = client.create_swarm_spec(
             snapshot_interval=self.snapshot_interval,
             task_history_retention_limit=self.task_history_retention_limit,
@@ -262,7 +288,9 @@ class SwarmManager(DockerBaseClass):
             "init": self.init_swarm,
             "join": self.join,
             "leave": self.leave,
-            "remove": self.remove
+            "remove": self.remove,
+            "update": self.update_swarm,
+            "inspect": self.inspect_swarm
         }
 
         choice_map.get(self.parameters.state)()
@@ -279,6 +307,17 @@ class SwarmManager(DockerBaseClass):
                 return True
         except APIError:
             return False
+
+    def inspect_swarm(self):
+        try:
+            data = self.client.inspect_swarm()
+            if data:
+                json_str = json.dumps(data, ensure_ascii=False)
+                self.swarm_info = json.loads(json_str)
+                self.results['changed'] = False
+                self.results['swarm_facts'] = self.swarm_info
+        except APIError:
+            return
 
     def init_swarm(self):
         if self.__isSwarmManager():
@@ -297,6 +336,54 @@ class SwarmManager(DockerBaseClass):
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info['ID']))
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
+
+    def __update_spec(self):
+        self.inspect_swarm()
+
+        spec=self.swarm_info['Spec']
+        if ( self.parameters.node_cert_expiry is None):
+            self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry'] ;
+
+        if ( self.parameters.dispatcher_heartbeat_period is None):
+            self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod'] ;
+
+        if ( self.parameters.snapshot_interval is None):
+            self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval'] ;
+        if ( self.parameters.keep_old_snapshots is None):
+            self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots'] ;
+        if ( self.parameters.heartbeat_tick is None):
+            self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick'] ;
+        if ( self.parameters.log_entries_for_slow_followers is None):
+            self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers'] ;
+        if ( self.parameters.election_tick is None):
+            self.parameters.election_tick = spec['Raft']['ElectionTick'] ;
+
+        if ( self.parameters.task_history_retention_limit is None):
+            self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit'] ;
+
+        if ( self.parameters.autolock_managers is None):
+            self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers'] ;
+
+        self.parameters.update_parameters(self.client)
+
+        return self.parameters.spec
+        
+    def update_swarm(self):
+        if not(self.__isSwarmManager()):
+            self.results['actions'].append("This node is not a swarm manager.")
+            return
+        try:
+            spec_to_update=self.__update_spec()
+            self.client.update_swarm(
+                version=self.parameters.version, swarm_spec=spec_to_update, rotate_worker_token=self.parameters.rotate_worker_token,
+                rotate_manager_token=self.parameters.rotate_manager_token)
+        except APIError as exc:
+            self.fail("Can not update a Swarm Cluster: %s" % exc)
+            return
+
+        self.inspect_swarm()
+        self.results['actions'].append("Swarm cluster updated")
+        self.results['changed'] = True
 
     def __isSwarmNode(self):
         info = self.client.info()
@@ -371,7 +458,7 @@ class SwarmManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['init', 'join', 'leave', 'remove'], default='join'),
+        state=dict(type='str', choices=['init', 'join', 'leave', 'remove', 'update', 'inspect'], default='join'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list'),
@@ -390,13 +477,17 @@ def main():
         signing_ca_key=dict(type='str'),
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
-        node_id=dict(type='str')
+        node_id=dict(type='str'),
+        version=dict(type='int'),
+        rotate_worker_token=dict(type='bool', default=False),
+        rotate_manager_token=dict(type='bool', default=False)
     )
 
     required_if = [
         ('state', 'init', ['advertise_addr']),
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
         ('state', 'remove', ['node_id']),
+        ('state', 'update', ['version'])
     ]
 
     client = AnsibleDockerClient(
