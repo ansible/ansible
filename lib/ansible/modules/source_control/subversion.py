@@ -171,11 +171,19 @@ class Subversion(object):
 
     def update(self):
         '''Update existing svn working directory.'''
-        self._exec(["update", "-r", self.revision, self.dest])
+        output = self._exec(["update", "-r", self.revision, self.dest])
+        for line in output:
+            if re.search(r'^(Updating|Updated)', line) == None:
+                return true
+        return false
 
     def revert(self):
         '''Revert svn working directory.'''
-        self._exec(["revert", "-R", self.dest])
+        output = self._exec(["revert", "-R", self.dest])
+        for line in output:
+            if re.search(r'^Reverted ', line) == None:
+                return true
+        return false
 
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
@@ -255,7 +263,6 @@ def main():
     if not export and not update and not checkout:
         module.exit_json(changed=False, after=svn.get_remote_revision())
     if export or not os.path.exists(dest):
-        before = None
         local_mods = False
         if module.check_mode:
             module.exit_json(changed=True)
@@ -263,8 +270,10 @@ def main():
             module.exit_json(changed=False)
         if not export and checkout:
             svn.checkout()
+            files_changed = True
         else:
             svn.export(force=force)
+            files_changed = True
     elif svn.is_svn_repo():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
@@ -276,19 +285,19 @@ def main():
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
-        before = svn.get_revision()
+        files_changed = False
         local_mods = svn.has_local_mods()
         if switch:
             svn.switch()
         if local_mods:
             if force:
-                svn.revert()
+                files_changed = svn.revert()
             else:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
-        svn.update()
+        files_changed = svn.update()
     elif in_place:
-        before = None
         svn.checkout(force=True)
+        files_changed = True
         local_mods = svn.has_local_mods()
         if local_mods and force:
             svn.revert()
@@ -298,8 +307,7 @@ def main():
     if export:
         module.exit_json(changed=True)
     else:
-        after = svn.get_revision()
-        changed = before != after or local_mods
+        changed = files_changed or local_mods
         module.exit_json(changed=changed, before=before, after=after)
 
 
