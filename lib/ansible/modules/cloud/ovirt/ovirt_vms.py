@@ -1186,12 +1186,12 @@ class VmsModule(BaseModule):
     def post_present(self, entity_id):
         # After creation of the VM, attach disks and NICs:
         entity = self._service.service(entity_id).get()
-        self.changed = self.__attach_disks(entity)
-        self.changed = self.__attach_nics(entity)
+        self.__attach_disks(entity)
+        self.__attach_nics(entity)
+        self._attach_cd(entity)
         self.changed = self.__attach_numa_nodes(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
-        self._attach_cd(entity)
 
     def pre_remove(self, entity):
         # Forcibly stop the VM, if it's not in DOWN state:
@@ -1340,7 +1340,7 @@ class VmsModule(BaseModule):
     def __attach_graphical_console(self, entity):
         graphical_console = self.param('graphical_console')
         if not graphical_console:
-            return
+            return False
 
         vm_service = self._service.service(entity.id)
         gcs_service = vm_service.graphics_consoles_service()
@@ -1451,6 +1451,7 @@ class VmsModule(BaseModule):
             )
 
     def __attach_numa_nodes(self, entity):
+        updated = False
         numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
 
         if len(self.param('numa_nodes')) > 0:
@@ -1459,10 +1460,11 @@ class VmsModule(BaseModule):
             existed_numa_nodes.sort(reverse=len(existed_numa_nodes) > 1 and existed_numa_nodes[1].index > existed_numa_nodes[0].index)
             for current_numa_node in existed_numa_nodes:
                 numa_nodes_service.node_service(current_numa_node.id).remove()
+                updated = True
 
         for numa_node in self.param('numa_nodes'):
             if numa_node is None or numa_node.get('index') is None or numa_node.get('cores') is None or numa_node.get('memory') is None:
-                return False
+                continue
 
             numa_nodes_service.add(
                 otypes.VirtualNumaNode(
@@ -1482,8 +1484,9 @@ class VmsModule(BaseModule):
                     ] if numa_node.get('numa_node_pins') is not None else None,
                 )
             )
+            updated = True
 
-        return True
+        return updated
 
     def __attach_watchdog(self, entity):
         watchdogs_service = self._service.service(entity.id).watchdogs_service()
