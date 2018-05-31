@@ -1,0 +1,18 @@
+---
+ec2_file_ami_image:
+  # amazon/aws-storage-gateway-file-2018-03-21
+  ap-northeast-1: ami-798cdc1f
+  ap-northeast-2: ami-d10ca0bf
+  ap-south-1: ami-e238638d
+  ap-southeast-1: ami-48114d34
+  ap-southeast-2: ami-47d41925
+  ca-central-1: ami-edd95f89
+  eu-central-1: ami-9aa9f971
+  eu-west-1: ami-10f1a569
+  eu-west-2: ami-4c34d22b
+  eu-west-3: ami-38388e45
+  sa-east-1: ami-0f481c63
+  us-east-1: ami-6e14c313
+  us-east-2: ami-7845741d
+  us-west-1: ami-ba9483da
+  us-west-2: ami-be21bdc6

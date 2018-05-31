@@ -1,0 +1,402 @@
+---
+- block:
+
+    # ============================================================
+    # Prerequisites
+    # ============================================================
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          region: "{{ aws_region }}"
+      no_log: true
+
+    - name: Create VPC for use in testing
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        tags:
+          Name: Ansible ec2_instance Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: testing_vpc
+
+    - name: Create internet gateway for use in testing
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: igw
+
+    - name: Create testing subnet
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.32.0/24
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: testing_subnet
+
+    - name: create routing rules
+      ec2_vpc_route_table:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
+
+    - name: create a security group with the vpc
+      ec2_group:
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
+      register: sg
+
+    - name: ensure S3 bucket exists
+      s3_bucket:
+        state: present
+        name: "{{ resource_prefix }}-test-nfs-bucket"
+        <<: *aws_connection_info
+
+    - name: ensure IAM role exists
+      iam_role:
+        name: "{{ resource_prefix }}-test-storage-iam-role"
+        assume_role_policy_document: "{{ lookup('file','storagegateway-trust-policy.json') }}"
+        state: present
+        create_instance_profile: no
+        <<: *aws_connection_info
+      register: storage_iam_role
+
+    - name: ensure S3 access for IAM role
+      iam_policy:
+        <<: *aws_connection_info
+        iam_type: role
+        iam_name: "{{ resource_prefix }}-test-storage-iam-role"
+        policy_name: "{{ resource_prefix }}-test-storage-iam-policy"
+        state: present
+        policy_json: "{{ lookup( 'template', 's3-bucket-policy.json.j2') }}"
+
+    - name: Create storage gateway instance
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-file-gateway"
+        image_id: "{{ ec2_file_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet.subnet.id }}"
+        network:
+          assign_public_ip: true
+        instance_type: m4.xlarge
+        volumes:
+          - device_name: /dev/sdb
+            ebs:
+              volume_size: 150
+              delete_on_termination: true
+              volume_type: standard
+        <<: *aws_connection_info
+      register: gateway_instance
+
+    - name: Send storage gateway activation code request
+      uri:
+        url: "http://{{ gateway_instance.instances[0].public_ip_address }}/?activationRegion={{ aws_region }}"
+      retries: 10
+      register: code_request
+
+    - name: Extract activation code from request
+      shell: echo "{{ code_request.url }}" | awk -F'[=&]' '{print $2}'
+      register: activation_code
+
+    - name: Activate file gateway for testing
+      storage_gateway:
+        name: "{{ resource_prefix }}-test-file-gateway"
+        state: present
+        activation_key: "{{ activation_code.stdout }}"
+        timezone: 'GMT-6:00'
+        gateway_region: "{{ aws_region }}"
+        gateway_type: 'FILE_S3'
+        <<: *aws_connection_info
+      register: file_gateway
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+    - name: test with no parameters
+      storage_gateway_file_share:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test for missing parameters
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test for missing parameters
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        nfs_token: '5734980946'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test for missing parameters
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        nfs_token: '5734980946'
+        iam_role: "{{ storage_iam_role.arn }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+
+    # ============================================================
+    # Resource Tests
+    # ===========================================================+
+
+    - name: Create NFS file share
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        state: present
+        nfs_token: '5734980946'
+        iam_role: "{{ storage_iam_role.arn }}"
+        location_arn: "arn:aws:s3:::{{ resource_prefix }}-test-nfs-bucket"
+        <<: *aws_connection_info
+      register: nfs_file_share
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - nfs_file_share.changed
+          - nfs_file_share.file_share_arn is not none
+
+    - name: No changes to NFS file share
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        state: present
+        nfs_token: '5734980946'
+        iam_role: "{{ storage_iam_role.arn }}"
+        location_arn: "arn:aws:s3:::{{ resource_prefix }}-test-nfs-bucket"
+        <<: *aws_connection_info
+      register: nfs_file_share
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - not nfs_file_share.changed
+          - nfs_file_share.file_share_arn is not none
+
+    - name: Update NFS file share
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        state: present
+        nfs_token: '5734980946'
+        iam_role: "{{ storage_iam_role.arn }}"
+        location_arn: "arn:aws:s3:::{{ resource_prefix }}-test-nfs-bucket"
+        default_storage_class: 'S3_STANDARD_IA'
+        <<: *aws_connection_info
+      register: nfs_file_share
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - nfs_file_share.changed
+          - nfs_file_share.file_share_arn is not none
+
+  always:
+
+    # ============================================================
+    # Teardown testing resources
+    # ============================================================
+
+    - name: Tear down NFS file share
+      storage_gateway_file_share:
+        gateway_arn: "{{ file_gateway.gateway_arn }}"
+        state: absent
+        nfs_token: '5734980946'
+        iam_role: "{{ storage_iam_role.arn }}"
+        location_arn: "arn:aws:s3:::{{ resource_prefix }}-test-nfs-bucket"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 5
+
+    - name: Deactivate NFS gateway
+      storage_gateway:
+        name: "{{ resource_prefix }}-test-file-gateway"
+        state: absent
+        activation_key: "{{ activation_code.stdout }}"
+        timezone: 'GMT-6:00'
+        gateway_region: "{{ aws_region }}"
+        gateway_type: 'FILE_S3'
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 5
+
+    - name: Tear down S3 access for IAM role
+      iam_policy:
+        <<: *aws_connection_info
+        iam_type: role
+        iam_name: "{{ resource_prefix }}-test-storage-iam-role"
+        policy_name: "{{ resource_prefix }}-test-storage-iam-policy"
+        state: absent
+        policy_json: "{{ lookup( 'template', 's3-bucket-policy.json.j2') }}"
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 5
+
+    - name: Tear down IAM role
+      iam_role:
+        name: "{{ resource_prefix }}-test-storage-iam-role"
+        assume_role_policy_document: "{{ lookup('file','storagegateway-trust-policy.json') }}"
+        state: absent
+        create_instance_profile: no
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 5
+
+    - name: Tear down S3 bucket
+      s3_bucket:
+        state: absent
+        name: "{{ resource_prefix }}-test-nfs-bucket"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 5
+
+    - name: remove any instances in the test VPC
+      ec2_instance:
+        filters:
+          vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove ENIs
+      ec2_eni_facts:
+        filters:
+          vpc-id: "{{ testing_vpc.vpc.id }}"
+        <<: *aws_connection_info
+      register: enis
+
+    - name: delete all ENIs
+      ec2_eni:
+        eni_id: "{{ item.id }}"
+        state: absent
+        <<: *aws_connection_info
+      until: removed is not failed
+      with_items: "{{ enis.network_interfaces }}"
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the security group
+      ec2_group:
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove routing rules
+      ec2_vpc_route_table:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove testing subnet
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.32.0/24
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        state: absent
+        tags:
+          Name: Ansible Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
