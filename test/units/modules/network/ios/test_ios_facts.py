@@ -64,3 +64,16 @@ class TestIosFactsModule(TestIosModule):
         self.assertEqual(
             result['ansible_facts']['ansible_net_stacked_serialnums'], ['CAT0726R0ZU', 'CAT0726R10A', 'CAT0732R0M4']
         )
+
+    def test_ios_facts_tunnel_address(self):
+        set_module_args(dict(gather_subset='interfaces'))
+        result = self.execute_module()
+        self.assertEqual(
+            result['ansible_facts']['ansible_net_interfaces']['GigabitEthernet0/0']['macaddress'], '5e00.0003.0000'
+        )
+        self.assertEqual(
+            result['ansible_facts']['ansible_net_interfaces']['GigabitEthernet1']['macaddress'], '5e00.0006.0000'
+        )
+        self.assertIsNone(
+            result['ansible_facts']['ansible_net_interfaces']['Tunnel1110']['macaddress']
+        )
