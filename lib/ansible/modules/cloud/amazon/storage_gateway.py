@@ -15,11 +15,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: storage_gateway
-short_description: Manage AWS Storage Gateway resources
+short_description: Manage AWS Storage Gateway instances
 description:
-    - Module manages AWS Config resources
-    - Supported resource types include gateway.
-version_added: "2.6"
+    - Activate or deactivate AWS Storage Gateway instances.
+version_added: "2.7"
 requirements: [ 'botocore', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
