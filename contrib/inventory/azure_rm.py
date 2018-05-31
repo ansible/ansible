@@ -697,7 +697,8 @@ class AzureInventory(object):
                 if vm_id["virtualMachineScaleSets"] == nic_id["virtualMachineScaleSets"] and \
                    vm_id["virtualMachines"] == nic_id["virtualMachines"] and \
                    vm_id["resourceGroups"].lower() == nic_id["resourceGroups"].lower():
-                    vm.private_ip_address = nic_config["private_ip_address"]
+                    vm.private_ip_address = nic_config.get("private_ip_address")
+                    vm.public_ip_address = nic_config.get("public_ip_address")
                     vm.hardware_profile = type('obj', (object,), {'vm_size': vmss.sku.name})
                     vm.vmss_vm = True
                     vms.append(vm)
@@ -705,7 +706,18 @@ class AzureInventory(object):
 
     def get_vm_nics_for_vmss(self, resource_group, name):
         vmss_nics = self._network_client.network_interfaces.list_virtual_machine_scale_set_network_interfaces(resource_group, name)
-        vm_ids = [{"id": vm.id, "private_ip_address": vm.ip_configurations[0].private_ip_address} for vm in vmss_nics]
+        vm_nics = []
+        for vm in vmss_nics:
+            vm_nic_info = {}
+            vm_nic_info["id"] = vm.id
+            for ip_configuration in vm.ip_configurations:
+                if ip_configuration.private_ip_address:
+                    vm_nic_info.update({"private_ip_address": vm.private_ip_address})
+
+                if ip_configuration.public_ip_address:
+                    vm_nic_info.update({"public_ip_address": vm.public_ip_address})
+
+            vm_nics.append(vm_nic_info)
         return vm_ids
 
     def _load_machines(self, machines):
@@ -780,6 +792,7 @@ class AzureInventory(object):
             # here we are assuming all vmss vms have private ip addresses
             if vmss_vm:
                 host_vars['ansible_host'] = machine.private_ip_address
+                host_vars['public_ip'] = machine.public_ip_address
             else:
                 for interface in machine.network_profile.network_interfaces:
                     interface_reference = self._parse_ref_id(interface.id)
