@@ -38,6 +38,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.ssh_functions import check_for_controlpersist
+from ansible.vars.manager import validate_remote_port
 
 
 try:
@@ -347,6 +348,7 @@ class PlayContext(Base):
                 if delegated_transport == 'winrm':
                     delegated_vars['ansible_port'] = 5986
                 else:
+                    validate_remote_port(C.DEFAULT_REMOTE_PORT)
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
 
             # and likewise for the remote user
@@ -404,6 +406,7 @@ class PlayContext(Base):
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
+            validate_remote_port(C.DEFAULT_REMOTE_PORT)
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
         # special overrides for the connection setting
