@@ -379,7 +379,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_macaddress(self, data):
-        match = re.search(r'address is (\S+)', data)
+        match = re.search(r'Hardware is (?:.*), address is (\S+)', data)
         if match:
             return match.group(1)
 
