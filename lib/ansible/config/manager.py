@@ -269,7 +269,7 @@ class ConfigManager(object):
         for entry in entry_list:
             name = entry.get('name')
             temp_value = container.get(name, None)
-            if temp_value is not None:  # only set if env var is defined
+            if temp_value:  # only set if env var is defined and is non-empty value
                 value = temp_value
                 origin = name
 
