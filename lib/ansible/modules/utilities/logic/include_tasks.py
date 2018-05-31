@@ -70,6 +70,15 @@ EXAMPLES = """
         - install
   tags:
     - always
+
+- name: Apply tags to tasks within included file when using free-form
+  include_tasks: install.yml
+  args:
+    apply:
+      tags:
+        - install
+  tags:
+    - always
 """
 
 RETURN = """
