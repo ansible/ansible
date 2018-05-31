@@ -170,6 +170,12 @@ EXAMPLES = '''
     state: remove
     node_id: mynode
 
+- name: Update swarm
+  docker_swarm:
+    state: update
+    version: 10
+    snapshot_interval: 20000
+
 - name: Inspect swarm
   docker_swarm:
     state: inspect
