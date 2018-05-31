@@ -67,7 +67,7 @@
     number_of_workers: 2
   register: output
 
-  - name: assert app service was updated
+- name: assert app service was updated
   assert:
     that:
       - output.changed
