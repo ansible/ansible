@@ -20,6 +20,8 @@ description:
   - Adds and/or removes instances of host record objects from
     Infoblox NIOS servers.  This module manages NIOS C(record:host) objects
     using the Infoblox WAPI interface over REST.
+  - Updates instances of host record object from Infoblox NIOS servers, where 
+    a user needs to specify the new and the old instances.
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
@@ -194,7 +196,7 @@ def main():
     )
 
     ib_spec = dict(
-        name=dict(required=True, type=check_name_type, ib_req=True),
+        name=dict(required=True, type=str, ib_req=True),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
