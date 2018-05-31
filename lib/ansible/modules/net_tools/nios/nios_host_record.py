@@ -20,7 +20,7 @@ description:
   - Adds and/or removes instances of host record objects from
     Infoblox NIOS servers.  This module manages NIOS C(record:host) objects
     using the Infoblox WAPI interface over REST.
-  - Updates instances of host record object from Infoblox NIOS servers, where 
+  - Updates instances of host record object from Infoblox NIOS servers, where
     a user needs to specify the new and the old instances.
 requirements:
   - infoblox_client
