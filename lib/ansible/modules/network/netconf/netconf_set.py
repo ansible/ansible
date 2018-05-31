@@ -58,8 +58,15 @@ options:
        datastore. The value of the candidate is compared before and after the
        edit-config. In conclusion dryrun can be used to see, if applying this change
        would result in changes or to audit, if the configuration is as expected.
-    choices: ['deploy', 'validate', 'dryrun']
+    choices: ['deploy', 'dryrun']
     default: 'deploy'
+  validate:
+    description:
+     - Instructs the module to validate the change after edit-config has been
+       exectued. If I(mode) is I(deploy), the validation is executed before
+       committing it.
+    type: bool
+    default: false
   backup:
     description:
      - If the configuration was changed and this option is set to I(True), this
@@ -72,10 +79,9 @@ options:
     description:
      - If this option is set, it will instruct this module to include the differences
        in the RETURN values. The option value I(xml) will include a complete copy
-       of the target datastore before and after the change.
-       The option value I(json) and I(json_string) will contain an RFC6902 compliant
-       jsonpatch either as native list/dict or in string format.
-    choices: ['json', 'json_string', 'xml']
+       of the target datastore before and after the change. The option value I(json)
+       will contain an RFC6902 compliant jsonpatch.
+    choices: ['json', 'xml']
 
 requirements:
   - ncclient (>=v0.5.2)
@@ -91,6 +97,7 @@ notes:
       get-config of target datastore (before the change)
       edit-config
       get-config of target datastore (after the change)
+      validate (depnends on option I(validate))
       Commit changes, in case of target datastore is candidate (not when dryrun)
       Unlock target datastore (depends on option I(lock))
   - To provide content in XML format is the more flexible variant increasing control
@@ -147,26 +154,49 @@ changed:
       I(false) if the edit-config does not result in changes or dryrun is exectued.
   returned: always
   type: boolean
+changes:
+  description:
+    - The standard Ansible return-value I(changed) should only be set to I(true), if the
+      operation resulted in a change of the target host. In conclusion, I(changed) would
+      always return I(false), if I(mode) is set to I(dryrun).
+    - In contrast to I(changed), this return value will be set to I(true) in dryrun mode
+      if the change contained would result in changes. So this could easily be used to
+      audit if a certain configuration is in place.
+  returned: always
+  type: boolean
 datastore:
   description:
-    - The target datastore is automatically determined by presence of the :candidate and
-      :writable-running capabilities. By default the module will use I(candidate) and fallback
+    - The target datastore is automatically determined by presence of the candidate and
+      writable-running capabilities. By default the module will use I(candidate) and fallback
       to I(running). The return value I(candidate) gives the caller an indication, which
       datastore has been automatically selected.
   returned: always
   type: string
-diffs:
+backup_path:
+  description:
+    - Dependend on option I(backup) a backup of the old configuration will be generated.
+      This value contains the name of the backup file, if a backup was generated.
+  returned: if backup was generated
+  sample: "/development/ansible/test/integration/targets/netconf_set/backup/127.0.0.1_config.2018-05-31@07:01:38"
+  type: string
+output:
   description:
     - Contains the differences of the target datastore before and after the change.
-    - If option I(display) is not set, it will return boolean value, I(true) or I(false).
-    - If option I(display) is set to I(xml), return value is of type I(complex),
-      providing two dictionary entries with keys I(before) and I(after).
-    - If option I(display) is set to I(json) and I(json_string), I(diffs) will
-      contain a rfc6902-complaint JSON PATCH reflecting the differences between
-      the target datastore before vs after the edit-config operation is executed.
-      In case of I(json) the JSON PATCH is returned as I(list) of tuples while in
-      case of I(json_string) it is returned as I(string).
-  returned: always
+  contains:
+    before:
+      description: content of target datastore, before edit-config
+      returned: if option I(display) is I(xml)
+      type: string
+    after:
+      description: content of target datastore, after edit-config
+      returned: if option I(display) is I(xml)
+      type: string
+    jsonpatch:
+      description: content of target datastore, before edit-config
+      returned: if option I(display) is I(json)
+      type: list
+  returned: if return value I(changes) is I(true)
+  type: complex
 """
 
 import ast
@@ -240,8 +270,9 @@ def main():
         operation=dict(choices=['merge', 'replace', 'none']),
         lock=dict(default='always', choices=['never', 'always', 'if-supported']),
         backup=dict(type="bool", default=False),
-        mode=dict(default='deploy', choices=['deploy', 'validate', 'dryrun']),
-        display=dict(choices=['json', 'json_string', 'xml'])
+        mode=dict(default='deploy', choices=['deploy', 'dryrun']),
+        validate=dict(type="bool", default=False),
+        display=dict(choices=['json', 'xml'])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -253,6 +284,7 @@ def main():
     lock = module.params['lock']
     backup = module.params['backup']
     mode = module.params['mode']
+    validate = module.params['validate']
     display = module.params['display']
 
     capabilities = netconf.get_capabilities(module)
@@ -262,7 +294,7 @@ def main():
     if backup and mode != 'deploy':
         module.warn('will only create backups in case of mode=deploy')
 
-    if display in ['json', 'json_string']:
+    if display == 'json':
         if not HAS_JXMLEASE:
             module.fail_json(msg='jxmlease is required to for display option `%s` '
                                  'but does not appear to be installed. '
@@ -294,6 +326,10 @@ def main():
         module.warn('lock operation on `%s` source is not supported on this device' % datastore)
         execute_lock = lock is 'always'
 
+    # check validation
+    if validate and not operations.get('supports_validate', False):
+        module.fail_json(msg='validation is requested but not supported')
+
     # content-builder
     if content is None:
         module.fail_json(msg='argument `content` must not be None')
@@ -323,8 +359,10 @@ def main():
         after = tostring(response)
 
         changed = False
-        if before != after:
-            if mode == 'validate':
+        changes = (before != after)
+
+        if changes:
+            if validate:
                 try:
                     netconf.validate(module, source=datastore)
                 except ConnectionError as e:
@@ -353,29 +391,23 @@ def main():
 
     result = {
         'changed': changed,
+        'changes': changes,
         'locked': locked,
-        'datastore': datastore,
-        'diffs': (before != after)
+        'datastore': datastore
     }
 
     if backup and changed:
         result['__backup__'] = before
 
-    if before != after:
+    if changes:
         if display == 'xml':
-            result['diffs'] = {'before': before, 'after': after}
+            result['output'] = {'before': before, 'after': after}
 
         elif display == 'json':
             tmp1 = jxmlease.parse(before).prettyprint(currdepth=1)
             tmp2 = jxmlease.parse(after).prettyprint(currdepth=1)
             patch = jsonpatch.make_patch(tmp1, tmp2)
-            result['diffs'] = patch.patch
-
-        elif display == 'json_string':
-            tmp1 = jxmlease.parse(before).prettyprint(currdepth=1)
-            tmp2 = jxmlease.parse(after).prettyprint(currdepth=1)
-            patch = jsonpatch.make_patch(tmp1, tmp2)
-            result['diffs'] = patch.to_string()
+            result['output'] = {'jsonpatch': patch.patch}
 
         # warning:
         #   diff result might become unnecessary complex using jsonpatch:

@@ -44,6 +44,10 @@
     display: json
   register: result
 
+- name: Display return values
+  debug:
+    var: result
+
 - name: merge one existing plus two new customers
   netconf_set:
     content:
@@ -180,11 +184,11 @@
 
 - assert:
     that:
-      - "{{ result['diffs'] is defined }}"
+      - "{{ result is defined }}"
 
 - name: Display differences
   debug:
-    var: result['diffs']
+    var: result
 
 - name: final clean-up
   netconf_set:
