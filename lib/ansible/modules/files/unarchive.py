@@ -647,7 +647,7 @@ class TgzArchive(object):
         if self.opts:
             cmd.extend(['--show-transformed-names'] + self.opts)
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
@@ -686,7 +686,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
@@ -733,7 +733,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
