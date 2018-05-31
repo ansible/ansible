@@ -6,3 +6,4 @@ bugfixes:
 - fixes bug with matching nxos prompts (https://github.com/ansible/ansible/pull/40655).
 - fix nxos_vrf and migrate get_interface_type to module_utils (https://github.com/ansible/ansible/pull/40825).
 - Fix nxos_vlan vlan creation failure (https://github.com/ansible/ansible/pull/40822).
+- Revert PR40655 fixes output getting truncated issue for nxos (https://github.com/ansible/ansible/pull/40940).
