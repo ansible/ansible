@@ -12,6 +12,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/37964)
 * Fix Windows setup.ps1 for slow performance in large domain environments
   (https://github.com/ansible/ansible/pull/38646)
+* Fix eos_logging idempotency issue when trying to set both logging destination & facility
+  (https://github.com/ansible/ansible/pull/40604)
+
 
 
 <a id="2.4.4"></a>
