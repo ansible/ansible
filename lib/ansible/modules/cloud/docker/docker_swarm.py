@@ -143,7 +143,7 @@ EXAMPLES = '''
     state: join
     advertise_addr: 192.168.1.2
     join_token: SWMTKN-1--xxxxx
-    remote_addrs: [ 192.168.1.1:2377 ]
+    remote_addrs: [ '192.168.1.1:2377' ]
 
 - name: Leave swarm
   docker_swarm:
