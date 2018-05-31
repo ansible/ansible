@@ -306,7 +306,7 @@ class VMWareInventory(object):
                     groupby_pattern += "}}"
                 self.groupby_patterns.append(groupby_pattern)
         self.debugl('groupby patterns are %s' % self.groupby_patterns)
-        
+
         temp_groupby_custom_field_excludes = config.get('vmware', 'groupby_custom_field_excludes')
         self.groupby_custom_field_excludes = [x.strip('"') for x in [y.strip("'") for y in temp_groupby_custom_field_excludes.split(',')]]
         self.debugl('groupby exclude strings are %s' % self.groupby_custom_field_excludes)
@@ -502,7 +502,8 @@ class VMWareInventory(object):
                     for tv in v['customvalue']:
                         newkey = None
                         field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
-                        if field_name in self.groupby_custom_field_excludes: continue
+                        if field_name in self.groupby_custom_field_excludes:
+                            continue
                         values = []
                         keylist = map(lambda x: x.strip(), tv['value'].split(','))
                         for kl in keylist:
