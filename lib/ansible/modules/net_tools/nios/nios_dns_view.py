@@ -20,17 +20,16 @@ description:
   - Adds and/or removes instances of DNS view objects from
     Infoblox NIOS servers.  This module manages NIOS C(view) objects
     using the Infoblox WAPI interface over REST.
-  - Updates instances of DNS view object from Infoblox NIOS servers, where
-    a user needs to specify the new and the old instances.
+  - Updates instances of DNS view object from Infoblox NIOS servers.
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the name of the DNS view to add and/or remove and/or update
-        from the system configuration based on the setting of the C(state)
-        argument.
+      - Specifies the fully qualified hostname to add or remove from
+        the system. User can also update the hostname as it is possible
+        to pass a dict containing I(new_name), I(old_name). See examples.
     required: true
     aliases:
       - view
@@ -117,7 +116,7 @@ def main():
     ''' Main entry point for module execution
     '''
     ib_spec = dict(
-        name=dict(required=True, aliases=['view'], type=str, ib_req=True),
+        name=dict(required=True, aliases=['view'], ib_req=True),
         network_view=dict(default='default', ib_req=True),
 
         extattrs=dict(type='dict'),
