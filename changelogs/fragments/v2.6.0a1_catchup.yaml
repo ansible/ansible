@@ -1,1 +1,7 @@
-{}
+deprecated_features:
+- nxos_igmp_interface module - The oif_prefix and oif_source properties are deprecated. Use the oif_ps parameter with a dictionary of prefix and source to values instead.
+
+minor_changes:
+- cloudflare_dns module - Removed restriction from protocol to allow other protocols than tcp and udp to be specified.
+- vmware_target_canonical_facts module - The target_id parameter is an optional parameter.
+- postgresql_user module - Changed encrypted=yes to be the default. This shouldn't break any current playbooks, the module will just store passwords hashed by default. This change was done because Postgres 10 dropped support for UNENCRYPTED passwords and because all versions since Postgres 7.2 support storing encrypted passwords.
