@@ -23,6 +23,7 @@ from os.path import basename
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.block import Block
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
@@ -45,7 +46,7 @@ class IncludeRole(TaskInclude):
 
     BASE = ('name', 'role')  # directly assigned
     FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
-    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
+    OTHER_ARGS = ('apply', 'private', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -133,6 +134,23 @@ class IncludeRole(TaskInclude):
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
             from_key = key.replace('_from', '')
             ir._from_files[from_key] = basename(ir.args.get(key))
+
+        apply_attrs = ir.args.pop('apply', {})
+        if apply_attrs and ir.action != 'include_role':
+            raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
+        elif apply_attrs:
+            apply_attrs['block'] = []
+            p_block = Block.load(
+                apply_attrs,
+                play=block._play,
+                parent_block=block,
+                role=role,
+                task_include=task_include,
+                use_handlers=block._use_handlers,
+                variable_manager=variable_manager,
+                loader=loader,
+            )
+            ir._parent = p_block
 
         # manual list as otherwise the options would set other task parameters we don't want.
         for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):
