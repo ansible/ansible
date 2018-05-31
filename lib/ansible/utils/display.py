@@ -57,15 +57,15 @@ class FilterBlackList(logging.Filter):
 
 logger = None
 # TODO: make this a logging callback instead
-if C.DEFAULT_LOG_PATH:
+if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+    if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
         for handler in logging.root.handlers:
-            handler.addFilter(FilterBlackList(C.DEFAULT_LOG_FILTER))
+            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
