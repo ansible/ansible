@@ -185,6 +185,7 @@ for setting in config.data.get_settings():
                 pass  # not a python data structure
         except:
             pass  # not templatable
-        value = ensure_type(value, setting.name)
+
+        value = ensure_type(value, setting.type)
 
     set_constant(setting.name, value)

@@ -180,9 +180,11 @@ class CLI(with_metaclass(ABCMeta, object)):
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
-        # warn about typing issues with configuration entries
-        for unable in C.config.UNABLE:
-            display.warning("Unable to set correct type for configuration entry: %s" % unable)
+        # Errors with configuration entries
+        if C.config.UNABLE:
+            for unable in C.config.UNABLE:
+                display.error("Unable to set correct type for configuration entry for %s: %s" % (unable, C.config.UNABLE[unable]))
+            raise AnsibleError("Invalid configuration settings")
 
     @staticmethod
     def split_vault_id(vault_id):
