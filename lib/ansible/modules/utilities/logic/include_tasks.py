@@ -32,6 +32,11 @@ options:
     description:
       - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
     version_added: '2.7'
+  free-form:
+    description:
+      - |
+        Supplying a file name via free-form C(- include_tasks: file.yml) of a file to be included is the equivalent
+        of specifying an argument of I(file).
 notes:
   - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
 '''
