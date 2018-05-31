@@ -127,7 +127,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         wapi.update_object.called_once_with(test_object)
 
     def test_nios_host_record_update_record_name(self):
-        self.module.params = {'provider': None, 'state': 'present', 'name': {'new_name':'default', 'old_name': 'old_default'},
+        self.module.params = {'provider': None, 'state': 'present', 'name': {'new_name': 'default', 'old_name': 'old_default'},
                               'comment': 'comment', 'extattrs': None}
 
         test_object = [
