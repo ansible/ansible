@@ -41,21 +41,7 @@ author:
     - Zhikang Zhang (@redhat.com)
 '''
 
-EXAMPLES = '''
-# Create a VDO volume
-- name: Create 2 TB VDO volume vdo1 on device /dev/md0
-  vdo:
-    name: vdo1
-    state: present
-    device: /dev/md0
-    logicalsize: 2T
-
-# Remove a VDO volume
-- name: Remove VDO volume vdo1
-  vdo:
-    name: vdo1
-    state: absent
-'''
+EXAMPLES = '''tbc'''
 
 from ansible.module_utils.basic import AnsibleModule
 import pdb
@@ -63,12 +49,15 @@ import pdb
 
 def main():
     module_args = dict(foo=dict(choices=["a", "b", "c"]))
+    result = dict(changed=False)
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False
     )
-    foo = module.params["foo"]
-    pdb.set_trace()
+    result["msg"] = "got your argument: " + str(module.params["foo"])
+    result["foo"] = "bar"
+    # pdb.set_trace()
+    module.exit_json(**result)
 
 
 if __name__ == "__main__":

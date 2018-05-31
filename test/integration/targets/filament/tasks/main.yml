@@ -1,0 +1,16 @@
+---
+- hosts: all
+  connection: local
+  tasks:
+  - name: test the filament module locally
+    filament:
+            foo: a
+            #become: true
+            #become_method: su
+    register: return_value
+  - debug:
+          var: return_value
+  - assert:
+          that:
+                  - "return_value.foo == \"bar\""
+          msg: "assert failed"
