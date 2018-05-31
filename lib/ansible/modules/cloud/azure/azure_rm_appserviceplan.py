@@ -38,7 +38,7 @@ options:
 
     sku:
         description:
-            - "The pricing tiers, e.g., F1(Free), D1(Shared), B1(Basic Small), B2(Basic Medium), B3(Basic Large), S1(Standard Small), P1(Premium Small), P1V2(Premium V2 Small) etc."
+            - The pricing tiers, e.g., F1, D1, B1, B2, B3, S1, P1, P1V2 etc.
             - Please see https://azure.microsoft.com/en-us/pricing/details/app-service/plans/ for more detail.
             - For linux app service plan, please see https://azure.microsoft.com/en-us/pricing/details/app-service/linux/ for more detail.
 
@@ -142,6 +142,7 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 def _normalize_sku(sku):
     if sku is None:
@@ -357,13 +358,14 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
         self.log("Deleting the App service plan {0}".format(self.name))
         try:
             response = self.web_client.app_service_plans.delete(resource_group_name=self.resource_group,
-                                                       name=self.name)
+                                                                name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete App service plan.')
             self.fail(
                 "Error deleting the App service plan : {0}".format(str(e)))
 
         return True
+
 
 def main():
     """Main execution"""
