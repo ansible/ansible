@@ -137,6 +137,7 @@ def validate_size(value, module):
 
 
 def map_obj_to_commands(updates, module, os_version):
+    dest_group = ('console', 'monitor', 'buffered', 'on')
     commands = list()
     want, have = updates
     for w in want:
@@ -158,8 +159,10 @@ def map_obj_to_commands(updates, module, os_version):
                         commands.append('no logging {0}'.format(name))
                     else:
                         commands.append('no logging host {0}'.format(name))
-                elif dest:
+
+                elif dest in dest_group:
                     commands.append('no logging {0}'.format(dest))
+
                 else:
                     module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
