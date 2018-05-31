@@ -20,6 +20,8 @@ description:
   - Adds and/or removes instances of DNS view objects from
     Infoblox NIOS servers.  This module manages NIOS C(view) objects
     using the Infoblox WAPI interface over REST.
+  - Updates instances of DNS view object from Infoblox NIOS servers, where 
+    a user needs to specify the new and the old instances.
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
@@ -111,21 +113,11 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.net_tools.nios.api import NIOS_DNS_VIEW
 
 
-def check_name_type(value):
-    if isinstance(value, str):
-        name = value
-        return name
-    elif isinstance(value, dict):
-        new_name = value.get('new_name')
-        old_name = value.get('old_name')
-        return {'new_name': new_name, 'old_name': old_name}
-
-
 def main():
     ''' Main entry point for module execution
     '''
     ib_spec = dict(
-        name=dict(required=True, aliases=['view'], type=check_name_type, ib_req=True),
+        name=dict(required=True, aliases=['view'], type=str, ib_req=True),
         network_view=dict(default='default', ib_req=True),
 
         extattrs=dict(type='dict'),
