@@ -72,6 +72,12 @@ def preprocess_vars(a):
 
     return data
 
+def validate_remote_port(remote_port):
+    try:
+        int(remote_port)
+    except ValueError:
+        raise AnsibleError("Invalid remote port defined, expected int but found: %r" % remote_port)
+
 
 class VariableManager:
 
@@ -522,6 +528,7 @@ class VariableManager:
             if C.DEFAULT_TRANSPORT == 'winrm':
                 new_port = 5986
 
+            validate_remote_port(new_port)
             new_delegated_host_vars = dict(
                 ansible_delegated_host=delegated_host_name,
                 ansible_host=delegated_host_name,  # not redundant as other sources can change ansible_host
