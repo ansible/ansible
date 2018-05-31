@@ -91,6 +91,11 @@ You will run into errors because Ansible reads name in this context as a keyword
 
 For a full list of keywords see ::ref::`Playbook Keywords`.
 
+Migrating from with_X to loop
+-----------------------------
+
+.. include:: ../user_guide/shared_snippets/with2loop.txt
+
 
 Deprecated
 ==========

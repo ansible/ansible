@@ -105,7 +105,7 @@ For example, using the 'nested' lookup, you can combine lists::
         priv: "{{ item[1] }}.*:ALL"
         append_privs: yes
         password: "foo"
-      loop: "{{ query('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
+      loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
 
 .. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
 
@@ -329,6 +329,11 @@ If you need to keep track of where you are in a loop, you can use the ``index_va
         - pear
       loop_control:
         index_var: my_idx
+
+Migrating from with_X to loop
+`````````````````````````````
+
+.. include:: shared_snippets/with2loop.txt
 
 
 .. seealso::
