@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix eos_logging issue (https://github.com/ansible/ansible/pull/40701)
