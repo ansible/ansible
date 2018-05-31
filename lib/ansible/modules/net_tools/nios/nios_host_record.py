@@ -68,6 +68,12 @@ options:
         required: true
         aliases:
           - address
+  aliases:
+    version_added: "2.6"
+    description:
+      - Configures an optional list of additional aliases to add to the host
+        record. These are equivalent to CNAMEs but held within a host
+        record. Must be in list format.
   ttl:
     description:
       - Configures the TTL to be associated with this host record
@@ -99,6 +105,8 @@ EXAMPLES = '''
     name: host.ansible.com
     ipv4:
       - address: 192.168.10.1
+    aliases:
+      - cname.ansible.com
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -191,6 +199,7 @@ def main():
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
         ipv6addrs=dict(type='list', aliases=['ipv6'], elements='dict', options=ipv6addr_spec, transform=ipv6addrs),
+        aliases=dict(type='list'),
 
         ttl=dict(type='int'),
 
