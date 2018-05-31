@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name']
 
@@ -68,6 +68,7 @@ class ActionModule(ActionBase):
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
+        self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
 
@@ -274,9 +275,15 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
-                if path.exists(filepath) and not self._ignore_file(filename):
-                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                    if not failed:
-                        results.update(loaded_data)
+                if self.ignore_unknown_extensions:
+                    if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
+                else:
+                    if path.exists(filepath) and not self._ignore_file(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
 
         return failed, err_msg, results
