@@ -139,7 +139,7 @@ def create_gateway(client, module, params, result):
                     GatewayARN=gw_response['GatewayARN'],
                     DiskIds=[disks_response['Disks'][0]['DiskId']]
                 )
-        result['GatewayARN'] = gw_response['GatewayARN']
+        result['gateway_arn'] = gw_response['GatewayARN']
         result['Disks'] = disks_response['Disks']
         result['changed'] = True
         return result
@@ -164,7 +164,7 @@ def update_gateway(client, module, params, result):
             disks_response = client.list_local_disks(
                 GatewayARN=result['GatewayARN']
             )
-            result['GatewayARN'] = response['GatewayARN']
+            result['gateway_arn'] = response['GatewayARN']
             result['Disks'] = disks_response['Disks']
             result['changed'] = True
             return result
@@ -203,7 +203,8 @@ def main():
     )
 
     result = {
-        'changed': False
+        'changed': False,
+        'gateway_arn': ''
     }
 
     desired_state = module.params.get('state')
@@ -233,7 +234,7 @@ def main():
         if gateway_status:
             delete_gateway(client, module, result)
 
-    module.exit_json(changed=result['changed'], output=result)
+    module.exit_json(changed=result['changed'], gateway_arn=result['gateway_arn'])
 
 
 if __name__ == '__main__':

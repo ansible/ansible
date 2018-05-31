@@ -4,7 +4,7 @@
     aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      #security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: true
 
@@ -141,27 +141,11 @@
          - 'result.failed'
          - 'result.msg.startswith("missing required arguments:")'
 
-  - name: test for wrong gateway type
-    storage_gateway:
-      name: "{{ resource_prefix }}-test-file-gateway"
-      state: present
-      activation_key: "{{ activation_code.stdout }}"
-      timezone: 'GMT-6:00'
-      gateway_region: "{{ aws_region }}"
-      gateway_type: 'WRONG_TYPE'
-      <<: *aws_connection_info
-
-  - name: assert failure when called with missing parameters
-    assert:
-      that:
-         - 'result.failed'
-         - 'result.msg.startswith("value of gateway_type must be one of:")'
-
   # ============================================================
   # Resource Tests
   # ============================================================
 
-  - name: Activate file gateway for testing
+  - name: Activate storage gateway for testing
     storage_gateway:
       name: "{{ resource_prefix }}-test-file-gateway"
       state: present
@@ -176,9 +160,9 @@
     assert:
       that:
           - result.changed
-          - result.endpoint_arn is not none
+          - result.gateway_arn is not none
 
-  - name: No changes to file gateway
+  - name: No changes to storage gateway
     storage_gateway:
       name: "{{ resource_prefix }}-test-file-gateway"
       state: present
@@ -193,9 +177,9 @@
     assert:
       that:
           - not result.changed
-          - result.endpoint_arn is not none
+          - result.gateway_arn is not none
 
-  - name: Update file gateway
+  - name: Update storage gateway
     storage_gateway:
       name: "{{ resource_prefix }}-test-file-gateway"
       state: present
@@ -210,9 +194,9 @@
     assert:
       that:
           - result.changed
-          - result.endpoint_arn is not none
+          - result.gateway_arn is not none
 
-  - name: Deactivate file gateway
+  - name: Deactivate storage gateway
     storage_gateway:
       name: "{{ resource_prefix }}-test-file-gateway"
       state: absent
