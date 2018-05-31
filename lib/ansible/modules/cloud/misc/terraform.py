@@ -270,7 +270,7 @@ def main():
     elif plan_file and not os.path.exists(plan_file):
         module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, plan_file)
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
         command.append(plan_file)
 
     if needs_application and not module.check_mode and not state == 'planned':
