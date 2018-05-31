@@ -136,14 +136,14 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server. Cannot be used with I(body).
-    version_added: '2.6'
+    version_added: '2.7'
   remote_src:
     description:
       - If C(no), the module will search for src on originating/master machine, if C(yes) the
         module will use the C(src) path on the remote/target machine.
     type: bool
     default: 'no'
-    version_added: '2.6'
+    version_added: '2.7'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
