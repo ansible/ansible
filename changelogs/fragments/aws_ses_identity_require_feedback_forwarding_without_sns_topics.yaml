@@ -1,3 +1,0 @@
----
-bugfixes:
-  - To disable feedback forwarding with aws_ses_identity require SNS topics to handle bounces and complaints.

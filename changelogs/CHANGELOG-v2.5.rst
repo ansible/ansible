@@ -2,6 +2,64 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4:
+
+v2.5.4
+======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-05-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4_Bugfixes:
+
+Bugfixes
+--------
+
+- jenkins_plugin - fix plugin always updated even if already uptodate (https://github.com/ansible/ansible/pull/40645)
+
+- ec2_asg - wait for lifecycle hooks to complete (https://github.com/ansible/ansible/issues/37281)
+
+- edgeos_config - check for a corresponding set command when issuing delete commands to ensure the desired state is met (https://github.com/ansible/ansible/issues/40437)
+
+- iptables - use suboptions to properly join tcp_flags options (https://github.com/ansible/ansible/issues/36490)
+
+- known_hosts - add better checking and error reporting to the host field (https://github.com/ansible/ansible/pull/38307)
+
+- Fix legacy Nexus 3k integration test and module issues (https://github.com/ansible/ansible/pull/40322).
+
+- Skip N35 and N3L platforms for nxos_evpn_global test (https://github.com/ansible/ansible/pull/40333).
+
+- Add normalize_interface in module_utils and fix nxos_l3_interface module (https://github.com/ansible/ansible/pull/40598).
+
+- Fix nxos_interface Disable switchport for loopback/svi (https://github.com/ansible/ansible/pull/40314).
+
+- fixes bug with matching nxos prompts (https://github.com/ansible/ansible/pull/40655).
+
+- fix nxos_vrf and migrate get_interface_type to module_utils (https://github.com/ansible/ansible/pull/40825).
+
+- Fix nxos_vlan vlan creation failure (https://github.com/ansible/ansible/pull/40822).
+
+- pause - ensure ctrl+c interrupt works in all cases (https://github.com/ansible/ansible/issues/35372)
+
+- user - With python 3.6 spwd.getspnam returns PermissionError instead of KeyError if user does not have privileges (https://github.com/ansible/ansible/issues/39472)
+
+- synchronize - Ensure the local connection created by synchronize uses _remote_is_local=True, which causes ActionBase to build a local tmpdir (https://github.com/ansible/ansible/pull/40833)
+
+- win_get_url - fixed issue when authenticating when force=yes https://github.com/ansible/ansible/pull/40641
+
+- winrm - allow `ansible_user` or `ansible_winrm_user` to override `ansible_ssh_user` when both are defined in an inventory - https://github.com/ansible/ansible/issues/39844
+
+- winrm - Add better error handling when the kinit process fails
+
+- xenserver_facts - ensure module works with newer versions of XenServer (https://github.com/ansible/ansible/pull/35821)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.3:
 
 v2.5.3
@@ -391,7 +449,7 @@ Bugfixes
 
 - win_copy - Preserve the local tmp folder instead of deleting it so future tasks can use it (https://github.com/ansible/ansible/pull/37964)
 
-- powershell - fixed issue with passing in a bool and int to the Windows environment block, also allow special chars in the env key name (https://github.com/ansible/ansible/pull/37215)
+- win_environment - Fix for issue where the environment value was deleted when a null value or empty string was set - https://github.com/ansible/ansible/issues/40450
 
 - Ansible.ModuleUtils.FileUtil - Catch DirectoryNotFoundException with Test-AnsiblePath (https://github.com/ansible/ansible/pull/37968)
 
