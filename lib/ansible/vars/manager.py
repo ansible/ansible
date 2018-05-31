@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict, MutableMapping, Sequence
 
 try:
     from hashlib import sha1
@@ -36,7 +36,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, text_type, string_types
+from ansible.module_utils.six import iteritems, text_type
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -340,7 +340,7 @@ class VariableManager:
                     try:
                         for vars_file in vars_file_list:
                             vars_file = templar.template(vars_file)
-                            if not (isinstance(vars_file, string_types) or isinstance(vars_file, list)):
+                            if not (isinstance(vars_file, Sequence)):
                                 raise AnsibleError(
                                     "Invalid vars_files entry found: %r\n"
                                     "vars_files entries should be either a string type or "
