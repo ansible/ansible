@@ -157,11 +157,9 @@ EXAMPLES = '''
   apt:
     name: foo
 
-- name: Install a list of packages
+- name: Install multiple packages
   apt:
-    name: "{{ packages }}"
-  vars:
-    packages:
+    name:
     - foo
     - foo-tools
 
@@ -206,18 +204,18 @@ EXAMPLES = '''
     update_cache: yes
     dpkg_options: 'force-confold,force-confdef'
 
-- name: Install a .deb package
+- name: Install a local .deb package
   apt:
     deb: /tmp/mypackage.deb
+
+- name: Install a .deb package from the internet
+  apt:
+    deb: https://example.com/python-ppq_0.1-1_all.deb
 
 - name: Install the build dependencies for package "foo"
   apt:
     pkg: foo
     state: build-dep
-
-- name: Install a .deb package from the internet.
-  apt:
-    deb: https://example.com/python-ppq_0.1-1_all.deb
 
 - name: Remove useless packages from the cache
   apt:
