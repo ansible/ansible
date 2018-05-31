@@ -718,7 +718,7 @@ class AzureInventory(object):
                     vm_nic_info.update({"public_ip_address": vm.public_ip_address})
 
             vm_nics.append(vm_nic_info)
-        return vm_ids
+        return vm_nics
 
     def _load_machines(self, machines):
         for machine in machines:
