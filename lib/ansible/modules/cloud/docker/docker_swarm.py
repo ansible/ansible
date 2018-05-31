@@ -72,21 +72,21 @@ options:
             - Used with I(state=join). Remote address of a manager to connect to.
     task_history_retention_limit:
         description:
-            - Maximum number of tasks history stored. Docker default value: 5
+            - Maximum number of tasks history stored. Docker default value is 5
     snapshot_interval:
-        description: Number of logs entries between snapshot. Docker default value: 10000
+        description: Number of logs entries between snapshot. Docker default value is 10000
     keep_old_snapshots:
-        description: Number of snapshots to keep beyond the current snapshot. Docker default value: 0
+        description: Number of snapshots to keep beyond the current snapshot. Docker default value is 0
     log_entries_for_slow_followers:
         description: Number of log entries to keep around to sync up slow followers after a snapshot is created.
     heartbeat_tick:
-        description: Amount of ticks (in seconds) between each heartbeat. Docker default value: 1s
+        description: Amount of ticks (in seconds) between each heartbeat. Docker default value is 1s
     election_tick:
-        description: Amount of ticks (in seconds) needed without a leader to trigger a new election. Docker default value: 10s
+        description: Amount of ticks (in seconds) needed without a leader to trigger a new election. Docker default value is 10s
     dispatcher_heartbeat_period:
-        description: The delay for an agent to send a heartbeat to the dispatcher. Docker default value: 5s
+        description: The delay for an agent to send a heartbeat to the dispatcher. Docker default value is 5s
     node_cert_expiry:
-        description: Automatic expiry for nodes certificates. Docker default value: 3months
+        description: Automatic expiry for nodes certificates. Docker default value is 3months
     name:
         description: Swarm's name
     labels:
@@ -98,9 +98,9 @@ options:
     ca_force_rotate:
         description: An integer whose purpose is to force swarm
                 to generate a new signing CA certificate and key, if none have
-                been specified. Docker default value: 0
+                been specified. Docker default value is 0
     autolock_managers:
-        description: If set, generate a key and use it to lock data stored on the managers. Docker default value: false.
+        description: If set, generate a key and use it to lock data stored on the managers. Docker default value is false.
         type: bool
 
 
