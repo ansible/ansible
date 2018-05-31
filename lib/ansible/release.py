@@ -21,3 +21,4 @@ __metaclass__ = type
 
 __version__ = '2.5.5.dev0'
 __author__ = 'Ansible, Inc.'
+__codename__ = 'Kashmir'
