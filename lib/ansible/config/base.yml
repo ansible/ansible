@@ -1015,6 +1015,18 @@ ENABLE_TASK_DEBUGGER:
   ini:
     - {key: enable_task_debugger, section: defaults}
   version_added: "2.5"
+TASK_DEBUGGER_IGNORE_ERRORS:
+  name: Whether a failed task with ignore_errors=True will still invoke the debugger
+  default: True
+  description:
+    - This option defines whether the task debugger will be invoked on a failed task when ignore_errors=True
+      is specified.
+    - True specifies that the debugger wil honor ignore_errors, False will not honor ignore_errors.
+  type: boolean
+  env: [{name: ANSIBLE_TASK_DEBUGGER_IGNORE_ERRORS}]
+  ini:
+    - {key: task_debugger_ignore_errors, section: defaults}
+  version_added: "2.7"
 DEFAULT_STRATEGY:
   name: Implied strategy
   default: 'linear'
