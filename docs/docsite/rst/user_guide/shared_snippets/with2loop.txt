@@ -61,22 +61,22 @@ with_indexed_items
       loop_control:
         index_var: index
 
-with_flatten
-------------
+with_flattened
+--------------
 
-``with_flatten`` is replaced by ``loop`` and the ``flatten`` filter.
+``with_flattened`` is replaced by ``loop`` and the ``flatten`` filter.
 
 .. code-block:: yaml+jinja
 
-    - name: with_flatten
+    - name: with_flattened
       debug:
         msg: "{{ item }}"
       with_flattened: "{{ items }}"
 
-    - name: with_flatten -> loop
+    - name: with_flattened -> loop
       debug:
         msg: "{{ item }}"
-      loop: "{{ items|flatten(levels=1) }}"
+      loop: "{{ items|flatten }}"
 
 with_together
 -------------
@@ -185,9 +185,9 @@ with_random_choice
     - name: with_random_choice
       debug:
         msg: "{{ item }}"
-      with_random_choice: "{{ list }}"
+      with_random_choice: "{{ my_list }}"
 
     - name: with_random_choice -> loop (No loop is needed here)
       debug:
-        msg: "{{ list|random }}"
+        msg: "{{ my_list|random }}"
       tags: random
