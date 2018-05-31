@@ -20,8 +20,8 @@ description:
   - Adds and/or removes instances of network view objects from
     Infoblox NIOS servers.  This module manages NIOS C(networkview) objects
     using the Infoblox WAPI interface over REST.
-  - Updates instances of network view object from Infoblox NIOS servers, where 
-    a user needs to specify the new and the old instances.    
+  - Updates instances of network view object from Infoblox NIOS servers, where
+    a user needs to specify the new and the old instances.
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
