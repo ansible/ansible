@@ -88,7 +88,7 @@ options:
     save_snapshot_locally:
         description:
             - Specify to locally store a new created snapshot,
-              to be used when C(action=create).
+              to be used when C(action=create). This works only for nxapi transport.
         type: bool
         default: 'no'
     path:
@@ -148,7 +148,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, get_capabilities
 
 
 def execute_show_command(command, module):
@@ -289,12 +289,6 @@ def invoke(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-def get_snapshot(module):
-    command = 'show snapshot dump {0}'.format(module.params['snapshot_name'])
-    body = execute_show_command(command, module)[0]
-    return body
-
-
 def write_on_file(content, filename, module):
     path = module.params['path']
     if path[-1] != '/':
@@ -345,6 +339,12 @@ def main():
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
 
+    local_save = module.params['save_snapshot_locally']
+    if local_save:
+        device_info = get_capabilities(module)
+        if device_info.get('network_api', 'nxapi') != 'nxapi':
+            module.fail_json(msg="save_snapshot_locally works only for nxapi transport")
+
     if not os.path.isdir(module.params['path']):
         module.fail_json(msg='{0} is not a valid directory name.'.format(
             module.params['path']))
@@ -372,8 +372,8 @@ def main():
                 result['commands'] = action_results
                 result['changed'] = True
 
-            if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
-                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+            if action == 'create' and module.params['path'] and local_save:
+                command = 'show snapshot dump {}'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
                     write_on_file(content, module.params['snapshot_name'], module)
