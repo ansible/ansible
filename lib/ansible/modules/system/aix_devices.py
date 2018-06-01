@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Kairo Araujo <kairo@kairo.eti.br>
+# Copyright: (c) 2017, 2018 Kairo Araujo <kairo@kairo.eti.br>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -27,9 +27,6 @@ options:
   attributes:
     description:
       - Specifies attributes to device separated by comma.
-      - If attribute has comma, explicit list using
-        [ "parameter=value,with,comma", "parameter=foobar" ]. See alias
-        example.
   device:
     description:
       - Device name.
@@ -63,19 +60,35 @@ EXAMPLES = '''
     device: all
     state: present
 
-- name: Scan new virtual devices.
+- name: Scan new virtual devices (vio0).
   aix_devices:
     device: vio0
     state: present
 
-- name: Removes ent0.
-  aix_devices:
-    device: ent0
-    state: absent
-
-- name: Put device en0 in Defined
+- name: Removing IP alias to en0
   aix_devices:
     device: en0
+    attributes:
+      delalias4: 10.0.0.100,255.255.255.0
+
+- name: Removes ent2.
+  aix_devices:
+    device: ent2
+    state: absent
+
+- name: Put device en2 in Defined
+  aix_devices:
+    device: en2
+    state: defined
+
+- name: Removes ent4 (inexistent).
+  aix_devices:
+    device: ent4
+    state: absent
+
+- name: Put device en4 in Defined (inexistent)
+  aix_devices:
+    device: en4
     state: defined
 
 - name: Put vscsi1 and children devices in Defined state.
@@ -93,21 +106,25 @@ EXAMPLES = '''
 - name: Changes en1 mtu to 9000 and disables arp.
   aix_devices:
     device: en1
-    attributes: mtu=900,arp=off
+    attributes:
+      mtu: 900
+      arp: off
     state: present
 
 - name: Configure IP, netmask and set en1 up.
   aix_devices:
     device: en1
-    attributes: netaddr=192.168.0.100,netmask=255.255.255.0,state=up
+    attributes:
+      netaddr: 192.168.0.100
+      netmask: 255.255.255.0
+      state: up
     state: present
 
 - name: Adding IP alias to en0
   aix_devices:
     device: en0
-    attributes: [
-        "alias4=10.0.0.100,255.255.255.0"
-        ]
+    attributes:
+      alias4: 10.0.0.100,255.255.255.0
     state: present
 '''
 
@@ -138,7 +155,7 @@ def _check_device(module, device):
 
     """
     lsdev_cmd = module.get_bin_path('lsdev', True)
-    rc, lsdev_out, err = module.run_command("%s -C -l %s" % (lsdev_cmd, device))
+    rc, lsdev_out, err = module.run_command(["%s" % lsdev_cmd, '-C', '-l', "%s" % device])
 
     if rc != 0:
         module.fail_json(msg="Failed to run lsdev", rc=rc, err=err)
@@ -163,14 +180,14 @@ def _check_device_attr(module, device, attr):
     Returns:
 
     """
-    lsattr_cmd = module.get_bin_path("lsattr", True)
-    rc, lsattr_out, err = module.run_command("%s -El %s -a %s" % (lsattr_cmd, device, attr))
+    lsattr_cmd = module.get_bin_path('lsattr', True)
+    rc, lsattr_out, err = module.run_command(["%s" % lsattr_cmd, '-El', "%s" % device, '-a', "%s" % attr])
 
-    hide_attrs = ['delalias4', 'delalias6']
+    hidden_attrs = ['delalias4', 'delalias6']
 
     if rc == 255:
 
-        if attr in hide_attrs:
+        if attr in hidden_attrs:
             current_param = ''
         else:
             current_param = None
@@ -178,7 +195,7 @@ def _check_device_attr(module, device, attr):
         return current_param
 
     elif rc != 0:
-        module.fail_json(msg="Failed to run lsattr.", rc=rc, err=err)
+        module.fail_json(msg="Failed to run lsattr: %s" % err, rc=rc, err=err)
 
     else:
         current_param = lsattr_out.split()[1]
@@ -199,7 +216,7 @@ def discover_device(module, device):
     changed = True
     msg = ''
     if not module.check_mode:
-        rc, cfgmgr_out, err = module.run_command("%s %s" % (cfgmgr_cmd, device))
+        rc, cfgmgr_out, err = module.run_command(["%s" % cfgmgr_cmd, "%s" % device])
         changed = True
         msg = cfgmgr_out
 
@@ -208,50 +225,56 @@ def discover_device(module, device):
 
 def change_device_attr(module, attributes, device, force):
     """ Change AIX device attribute. """
+
     chdev_cmd = module.get_bin_path('chdev', True)
     attr_changed = []
     attr_not_changed = []
     attr_invalid = []
 
-    for attr in attributes:
-        new_param = attr.split('=')[1]
-        current_param = _check_device_attr(module, device, attr.split('=')[0])
+    for attr in list(attributes.keys()):
+        new_param = attributes[attr]
+        current_param = _check_device_attr(module, device, attr)
 
         if current_param is None:
             attr_invalid.append(attr)
 
         elif current_param != new_param:
             if not module.check_mode:
-                rc, chdev_out, err = module.run_command("%s -l %s %s -a %s" % (chdev_cmd, device, force, attr))
+                if force:
+                    cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr]), "%s" % force]
+                else:
+                    cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
+
+                rc, chdev_out, err = module.run_command(cmd)
                 if rc != 0:
                     module.exit_json(msg="Failed to run chdev.", rc=rc, err=err)
                 else:
-                    attr_changed.append(attr)
+                    attr_changed.append(attributes[attr])
         else:
-            attr_not_changed.append(attr)
+            attr_not_changed.append(attributes[attr])
 
     changed = True
     msg = ''
     if not module.check_mode:
         if len(attr_changed) > 0:
             changed = True
-            attr_changed_msg = 'Attributes changed: %s. ' % ','.join(attr_changed)
+            attr_changed_msg = "Attributes changed: %s. " % ','.join(attr_changed)
         else:
             changed = False
             attr_changed_msg = ''
 
         if len(attr_not_changed) > 0:
-            attr_not_changed_msg = 'Attributes already set: %s. ' % ','.join(attr_not_changed)
+            attr_not_changed_msg = "Attributes already set: %s. " % ','.join(attr_not_changed)
 
         else:
             attr_not_changed_msg = ''
 
         if len(attr_invalid) > 0:
-            attr_invalid_msg = 'Invalid attributes: %s ' % ', '.join(attr_invalid)
+            attr_invalid_msg = "Invalid attributes: %s " % ', '.join(attr_invalid)
         else:
             attr_invalid_msg = ''
 
-        msg = '%s%s%s' % (attr_changed_msg, attr_not_changed_msg, attr_invalid_msg)
+        msg = "%s%s%s" % (attr_changed_msg, attr_not_changed_msg, attr_invalid_msg)
 
     return changed, msg
 
@@ -277,9 +300,15 @@ def remove_device(module, device, force, recursive, state):
     rmdev_cmd = module.get_bin_path('rmdev', True)
 
     if not module.check_mode:
-        rc, rmdev_out, err = module.run_command('%s -l %s %s %s' % (rmdev_cmd, device, state, recursive))
+        if state:
+            rc, rmdev_out, err = module.run_command(
+                ["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % state])
+        else:
+            rc, rmdev_out, err = module.run_command(
+                ["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive])
+
         if rc != 0:
-            module.fail_json(msg='Failed to run rmdev', rc=rc, err=err)
+            module.fail_json(msg="Failed to run rmdev", rc=rc, err=err)
         else:
             changed = True
             msg = rmdev_out
@@ -291,7 +320,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            attributes=dict(type='list'),
+            attributes=dict(type='dict'),
             device=dict(type='str'),
             force=dict(type='bool', default=False),
             recursive=dict(type='bool', default=False),
@@ -319,11 +348,6 @@ def main():
 
     if state == 'present':
         if attributes:
-            # validate attributes
-            for attr in attributes:
-                if len(attr.split('=')) < 2:
-                    module.fail_json(msg="attributes format is attribute_name=value.", err="Attribute in wrong format %s" % attr)
-
             # change attributes on device
             device_status, device_state = _check_device(module, device)
             if device_status:

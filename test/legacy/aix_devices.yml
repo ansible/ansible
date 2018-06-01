@@ -14,6 +14,12 @@
         device: vio0
         state: present
 
+    - name: Removing IP alias to en0
+      aix_devices:
+        device: en0
+        attributes:
+          delalias4: 10.0.0.100,255.255.255.0
+
     - name: Removes ent2.
       aix_devices:
         device: ent2
@@ -49,19 +55,23 @@
     - name: Changes en1 mtu to 9000 and disables arp.
       aix_devices:
         device: en1
-        attributes: mtu=900,arp=off
+        attributes:
+          mtu: 900
+          arp: off
         state: present
 
     - name: Configure IP, netmask and set en1 up.
       aix_devices:
         device: en1
-        attributes: netaddr=192.168.0.100,netmask=255.255.255.0,state=up
+        attributes:
+          netaddr: 192.168.0.100
+          netmask: 255.255.255.0
+          state: up
         state: present
 
     - name: Adding IP alias to en0
       aix_devices:
         device: en0
-        attributes: [
-            "alias4=10.0.0.100,255.255.255.0"
-            ]
+        attributes:
+          alias4: 10.0.0.100,255.255.255.0
         state: present
