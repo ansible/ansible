@@ -43,6 +43,8 @@ author:
 
 EXAMPLES = '''tbc'''
 
+RETURN = '''# '''
+
 from ansible.module_utils.basic import AnsibleModule
 import pdb
 
