@@ -188,7 +188,7 @@ class Subversion(object):
         '''Revert svn working directory.'''
         output = self._exec(["revert", "-R", self.dest])
         for line in output:
-            if re.search(r'^Reverted ', line) == None:
+            if re.search(r'^Reverted ', line) is None:
                 return True
         return False
 
