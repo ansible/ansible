@@ -438,7 +438,7 @@ files:
   $modules/net_tools/lldp.py:
     ignored: andyhky
   $modules/net_tools/nios/:
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
@@ -794,7 +794,7 @@ files:
     labels:
       - networking
       - infoblox
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
     labels: networking
@@ -1037,7 +1037,7 @@ files:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/lookup/nios.py:
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
