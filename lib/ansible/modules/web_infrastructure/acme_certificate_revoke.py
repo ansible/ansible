@@ -27,7 +27,7 @@ description:
    - "To determine whether the revocation has to be executed, an OCSP
       responder check is done. If this results in an error, use the C(force)
       option to skip that check."
-    - "Also note that OCSP responses do not always update immediately after
+   - "Also note that OCSP responses do not always update immediately after
       revocation, so if you run this module twice for the same certificate,
       it can happen that the second invocation does not notice the
       certificate is already revoked and will try to revoke it another time.
