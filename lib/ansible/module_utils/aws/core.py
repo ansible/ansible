@@ -204,7 +204,7 @@ class AnsibleAWSModule(object):
                 module.fail_json(msg="Boto3 can't deal with EC2 IPv6 addresses before version 1.4.4.")
         """
         existing = self._gather_versions()
-        return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
+        return LooseVersion(existing['boto3_version']) >= LooseVersion(desired)
 
     def botocore_at_least(self, desired):
         """Check if the available botocore version is greater than or equal to a desired version.
