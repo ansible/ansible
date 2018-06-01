@@ -272,7 +272,7 @@ options:
         version_added: "2.4"
     custom_compatibility_version:
         description:
-            - " Enables a virtual machine to be customized to its own compatibility version. If
+            - "Enables a virtual machine to be customized to its own compatibility version. If
             `C(custom_compatibility_version)` is set, it overrides the cluster's compatibility version
             for this particular virtual machine."
         version_added: "2.7"
@@ -1073,10 +1073,10 @@ class VmsModule(BaseModule):
                     self.param('instance_type'),
                 ),
             ) if self.param('instance_type') else None,
-            custom_compatibility_version=otypes.Version(major=int(self.param('custom_compatibility_version').split(".")[0]),
-                                                        minor=int(self.param('custom_compatibility_version').split(".")[1]))
-            if self.param('custom_compatibility_version') else None,
-
+            custom_compatibility_version=otypes.Version(
+                major=self._get_major(self.param('custom_compatibility_version')),
+                minor=self._get_minor(self.param('custom_compatibility_version')),
+            ) if self.param('custom_compatibility_version') else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
