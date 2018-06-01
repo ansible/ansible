@@ -35,8 +35,8 @@ description:
       occured in this case, but it is very dependent on the ACME endpoint
       implementation returning a specific human-readable error message.
       This might stop working in the future and might not work with other
-      ACME endpoints than L(Let's Encrypt, https://letsencrypt.org/)'s
-      L(Boulder, https://github.com/letsencrypt/boulder/) server."
+      ACME endpoints than L(Let's Encrypt,https://letsencrypt.org/)'s
+      L(Boulder,https://github.com/letsencrypt/boulder/) server."
 extends_documentation_fragment:
   - acme
 options:
