@@ -28,13 +28,13 @@ description:
     - "This is my longer description explaining my sample module"
 
 options:
-    foo:
-        choices:
-            - a
-            - b
-            - c
+    operator_a:
         description:
-            - The foobar argument
+            - The 1st operator
+        required: true
+    operator_b:
+        description:
+            - The 2nd operator
         required: true
 
 author:
@@ -43,14 +43,31 @@ author:
 
 EXAMPLES = '''tbc'''
 
-RETURN = '''# '''
+RETURN = '''
+foo:
+    description: return value for assert test
+    returned: success
+    type: string
+    sample: bar
+result:
+    description: the result of addition calculation of input
+    returned: success
+    type: int
+    sample: 2
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 import pdb
 
 
+def add(a, b):
+    return a + b
+
+
 def main():
-    module_args = dict(foo=dict(choices=["a", "b", "c"]))
+    module_args = dict(
+        operator_a=dict(required=True),
+        operator_b=dict(required=True))
     result = dict(changed=False)
     module = AnsibleModule(
         argument_spec=module_args,
@@ -58,6 +75,7 @@ def main():
     )
     result["msg"] = "got your argument: " + str(module.params["foo"])
     result["foo"] = "bar"
+    result["result"] = add(module.params["operator_a"], module.params["operator_b"])
     # pdb.set_trace()
     module.exit_json(**result)
 

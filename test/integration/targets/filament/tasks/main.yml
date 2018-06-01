@@ -1,7 +1,8 @@
 ---
 - name: test the filament module locally
   filament:
-    foo: a
+    operator_a: 1
+    operator_b: 2
     #become: true
     #become_method: su
   register: return_value
