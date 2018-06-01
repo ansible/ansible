@@ -214,6 +214,7 @@ if($gather_subset.Contains('distribution')) {
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
         ansible_os_product_type = $product_type
+        ansible_os_installation_type=[string](Get-ItemProperty "hklm:/software/microsoft/windows nt/currentversion" -ea SilentlyContinue ).InstallationType
     }
 }
 
