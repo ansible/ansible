@@ -17,3 +17,4 @@ ntlm-auth >= 1.0.6 # message encryption support
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
+botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, acm-pca, neptune
