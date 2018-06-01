@@ -190,7 +190,8 @@ class AnsibleAWSModule(object):
         """
         if not HAS_BOTO3:
             return {}
-        import boto3, botocore
+        import boto3
+        import botocore
         return dict(boto3_version=boto3.__version__,
                     botocore_version=botocore.__version__)
 
