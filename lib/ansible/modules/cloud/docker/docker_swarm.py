@@ -374,7 +374,7 @@ class SwarmManager(DockerBaseClass):
         self.parameters.update_parameters(self.client)
 
         return self.parameters.spec
-        
+
     def __update_swarm(self):
         try:
             self.inspect_swarm()
@@ -382,7 +382,7 @@ class SwarmManager(DockerBaseClass):
             spec = self.swarm_info['Spec']
             new_spec = self.__update_spec(spec)
             del spec['TaskDefaults']
-            if cmp(spec, new_spec) == 0:
+            if spec == new_spec:
                 self.results['actions'].append("No modification")
                 self.results['changed'] = False
                 return
