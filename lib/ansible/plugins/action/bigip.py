@@ -80,8 +80,6 @@ class ActionModule(_ActionModule):
                     }
 
                 task_vars['ansible_socket'] = socket_path
-        else:
-            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
