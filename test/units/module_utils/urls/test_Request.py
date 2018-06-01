@@ -8,10 +8,11 @@ __metaclass__ = type
 import datetime
 import os
 
-from ansible.module_utils.urls import open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod
+from ansible.module_utils.urls import Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
+from mock import call
 
 
 if HAS_SSLCONTEXT:
@@ -28,8 +29,62 @@ def install_opener_mock(mocker):
     return mocker.patch('ansible.module_utils.urls.urllib_request.install_opener')
 
 
-def test_open_url(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/')
+def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
+    cookies = cookiejar.CookieJar()
+    request = Request(
+        headers={'foo': 'bar'},
+        use_proxy=False,
+        force=True,
+        timeout=100,
+        validate_certs=False,
+        url_username='user',
+        url_password='passwd',
+        http_agent='ansible-tests',
+        force_basic_auth=True,
+        follow_redirects='all',
+        client_cert='/tmp/client.pem',
+        client_key='/tmp/client.key',
+        cookies=cookies,
+    )
+    fallback_mock = mocker.spy(request, '_fallback')
+
+    r = request.open('GET', 'https://ansible.com')
+
+    calls = [
+        call(None, False),  # use_proxy
+        call(None, True),  # force
+        call(None, 100),  # timeout
+        call(None, False),  # validate_certs
+        call(None, 'user'),  # url_username
+        call(None, 'passwd'),  # url_password
+        call(None, 'ansible-tests'),  # http_agent
+        call(None, True),  # force_basic_auth
+        call(None, 'all'),  # follow_redirects
+        call(None, '/tmp/client.pem'),  # client_cert
+        call(None, '/tmp/client.key'),  # client_key
+        call(None, cookies),  # cookies
+    ]
+    fallback_mock.assert_has_calls(calls)
+
+    assert fallback_mock.call_count == 12  # All but headers use fallback
+
+    args = urlopen_mock.call_args[0]
+    assert args[1] is None  # data, this is handled in the Request not urlopen
+    assert args[2] == 100  # timeout
+
+    req = args[0]
+    assert req.headers == {
+        'Authorization': b'Basic dXNlcjpwYXNzd2Q=',
+        'Cache-control': 'no-cache',
+        'Foo': 'bar',
+        'User-agent': 'ansible-tests'
+    }
+    assert req.data is None
+    assert req.get_method() == 'GET'
+
+
+def test_Request_open(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/')
     args = urlopen_mock.call_args[0]
     assert args[1] is None  # data, this is handled in the Request not urlopen
     assert args[2] == 10  # timeout
@@ -55,8 +110,8 @@ def test_open_url(urlopen_mock, install_opener_mock):
     assert len(found_handlers) == 2
 
 
-def test_open_url_http(urlopen_mock, install_opener_mock):
-    r = open_url('http://ansible.com/')
+def test_Request_open_http(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/')
     args = urlopen_mock.call_args[0]
 
     opener = install_opener_mock.call_args[0][0]
@@ -70,22 +125,22 @@ def test_open_url_http(urlopen_mock, install_opener_mock):
     assert len(found_handlers) == 0
 
 
-def test_open_url_ftp(urlopen_mock, install_opener_mock, mocker):
+def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
     mocker.patch('ansible.module_utils.urls.ParseResultDottedDict.as_list', side_effect=AssertionError)
 
     # Using ftp scheme should prevent the AssertionError side effect to fire
-    r = open_url('ftp://foo@ansible.com/')
+    r = Request().open('GET', 'ftp://foo@ansible.com/')
 
 
-def test_open_url_headers(urlopen_mock, install_opener_mock):
-    r = open_url('http://ansible.com/', headers={'Foo': 'bar'})
+def test_Request_open_headers(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/', headers={'Foo': 'bar'})
     args = urlopen_mock.call_args[0]
     req = args[0]
     assert req.headers == {'Foo': 'bar'}
 
 
-def test_open_url_username(urlopen_mock, install_opener_mock):
-    r = open_url('http://ansible.com/', url_username='user')
+def test_Request_open_username(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/', url_username='user')
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -103,8 +158,8 @@ def test_open_url_username(urlopen_mock, install_opener_mock):
     assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', None)}
 
 
-def test_open_url_username_in_url(urlopen_mock, install_opener_mock):
-    r = open_url('http://user2@ansible.com/')
+def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://user2@ansible.com/')
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -121,8 +176,8 @@ def test_open_url_username_in_url(urlopen_mock, install_opener_mock):
     assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user2', '')}
 
 
-def test_open_url_username_force_basic(urlopen_mock, install_opener_mock):
-    r = open_url('http://ansible.com/', url_username='user', url_password='passwd', force_basic_auth=True)
+def test_Request_open_username_force_basic(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/', url_username='user', url_password='passwd', force_basic_auth=True)
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -144,8 +199,8 @@ def test_open_url_username_force_basic(urlopen_mock, install_opener_mock):
     assert req.headers.get('Authorization') == b'Basic dXNlcjpwYXNzd2Q='
 
 
-def test_open_url_auth_in_netloc(urlopen_mock, install_opener_mock):
-    r = open_url('http://user:passwd@ansible.com/')
+def test_Request_open_auth_in_netloc(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://user:passwd@ansible.com/')
     args = urlopen_mock.call_args[0]
     req = args[0]
     assert req.get_full_url() == 'http://ansible.com/'
@@ -166,31 +221,31 @@ def test_open_url_auth_in_netloc(urlopen_mock, install_opener_mock):
     assert len(found_handlers) == 2
 
 
-def test_open_url_netrc(urlopen_mock, install_opener_mock, monkeypatch):
+def test_Request_open_netrc(urlopen_mock, install_opener_mock, monkeypatch):
     here = os.path.dirname(__file__)
 
     monkeypatch.setenv('NETRC', os.path.join(here, 'fixtures/netrc'))
-    r = open_url('http://ansible.com/')
+    r = Request().open('GET', 'http://ansible.com/')
     args = urlopen_mock.call_args[0]
     req = args[0]
     assert req.headers.get('Authorization') == b'Basic dXNlcjpwYXNzd2Q='
 
-    r = open_url('http://foo.ansible.com/')
+    r = Request().open('GET', 'http://foo.ansible.com/')
     args = urlopen_mock.call_args[0]
     req = args[0]
     assert 'Authorization' not in req.headers
 
     monkeypatch.setenv('NETRC', os.path.join(here, 'fixtures/netrc.nonexistant'))
-    r = open_url('http://ansible.com/')
+    r = Request().open('GET', 'http://ansible.com/')
     args = urlopen_mock.call_args[0]
     req = args[0]
     assert 'Authorization' not in req.headers
 
 
-def test_open_url_no_proxy(urlopen_mock, install_opener_mock, mocker):
+def test_Request_open_no_proxy(urlopen_mock, install_opener_mock, mocker):
     build_opener_mock = mocker.patch('ansible.module_utils.urls.urllib_request.build_opener')
 
-    r = open_url('http://ansible.com/', use_proxy=False)
+    r = Request().open('GET', 'http://ansible.com/', use_proxy=False)
 
     handlers = build_opener_mock.call_args[0]
     found_handlers = []
@@ -202,8 +257,8 @@ def test_open_url_no_proxy(urlopen_mock, install_opener_mock, mocker):
 
 
 @pytest.mark.skipif(not HAS_SSLCONTEXT, reason="requires SSLContext")
-def test_open_url_no_validate_certs(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/', validate_certs=False)
+def test_Request_open_no_validate_certs(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', validate_certs=False)
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -224,13 +279,13 @@ def test_open_url_no_validate_certs(urlopen_mock, install_opener_mock):
     assert context.check_hostname is False
 
 
-def test_open_url_client_cert(urlopen_mock, install_opener_mock):
+def test_Request_open_client_cert(urlopen_mock, install_opener_mock):
     here = os.path.dirname(__file__)
 
     client_cert = os.path.join(here, 'fixtures/client.pem')
     client_key = os.path.join(here, 'fixtures/client.key')
 
-    r = open_url('https://ansible.com/', client_cert=client_cert, client_key=client_key)
+    r = Request().open('GET', 'https://ansible.com/', client_cert=client_cert, client_key=client_key)
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -252,8 +307,8 @@ def test_open_url_client_cert(urlopen_mock, install_opener_mock):
     assert https_connection.cert_file == client_cert
 
 
-def test_open_url_cookies(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/', cookies=cookiejar.CookieJar())
+def test_Request_open_cookies(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', cookies=cookiejar.CookieJar())
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -267,13 +322,13 @@ def test_open_url_cookies(urlopen_mock, install_opener_mock):
     assert cookies_handler is not None
 
 
-def test_open_url_invalid_method(urlopen_mock, install_opener_mock):
+def test_Request_open_invalid_method(urlopen_mock, install_opener_mock):
     with pytest.raises(ConnectionError):
-        r = open_url('https://ansible.com/', method='BOGUS')
+        r = Request().open('BOGUS', 'https://ansible.com/')
 
 
-def test_open_url_custom_method(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/', method='DELETE')
+def test_Request_open_custom_method(urlopen_mock, install_opener_mock):
+    r = Request().open('DELETE', 'https://ansible.com/')
 
     args = urlopen_mock.call_args[0]
     req = args[0]
@@ -281,8 +336,8 @@ def test_open_url_custom_method(urlopen_mock, install_opener_mock):
     assert isinstance(req, RequestWithMethod)
 
 
-def test_open_url_user_agent(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/', http_agent='ansible-tests')
+def test_Request_open_user_agent(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', http_agent='ansible-tests')
 
     args = urlopen_mock.call_args[0]
     req = args[0]
@@ -290,8 +345,8 @@ def test_open_url_user_agent(urlopen_mock, install_opener_mock):
     assert req.headers.get('User-agent') == 'ansible-tests'
 
 
-def test_open_url_force(urlopen_mock, install_opener_mock):
-    r = open_url('https://ansible.com/', force=True, last_mod_time=datetime.datetime.now())
+def test_Request_open_force(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', force=True, last_mod_time=datetime.datetime.now())
 
     args = urlopen_mock.call_args[0]
     req = args[0]
@@ -300,9 +355,9 @@ def test_open_url_force(urlopen_mock, install_opener_mock):
     assert 'If-modified-since' not in req.headers
 
 
-def test_open_url_last_mod(urlopen_mock, install_opener_mock):
+def test_Request_open_last_mod(urlopen_mock, install_opener_mock):
     now = datetime.datetime.now()
-    r = open_url('https://ansible.com/', last_mod_time=now)
+    r = Request().open('GET', 'https://ansible.com/', last_mod_time=now)
 
     args = urlopen_mock.call_args[0]
     req = args[0]
@@ -310,6 +365,38 @@ def test_open_url_last_mod(urlopen_mock, install_opener_mock):
     assert req.headers.get('If-modified-since') == now.strftime('%a, %d %b %Y %H:%M:%S +0000')
 
 
-def test_open_url_headers_not_dict(urlopen_mock, install_opener_mock):
+def test_Request_open_headers_not_dict(urlopen_mock, install_opener_mock):
     with pytest.raises(ValueError):
-        r = open_url('https://ansible.com/', headers=['bob'])
+        Request().open('GET', 'https://ansible.com/', headers=['bob'])
+
+
+def test_Request_init_headers_not_dict(urlopen_mock, install_opener_mock):
+    with pytest.raises(ValueError):
+        Request(headers=['bob'])
+
+
+@pytest.mark.parametrize('method,kwargs', [
+    ('get', {}),
+    ('options', {}),
+    ('head', {}),
+    ('post', {'data': None}),
+    ('put', {'data': None}),
+    ('patch', {'data': None}),
+    ('delete', {}),
+])
+def test_methods(method, kwargs, mocker):
+    expected = method.upper()
+    open_mock = mocker.patch('ansible.module_utils.urls.Request.open')
+    request = Request()
+    getattr(request, method)('https://ansible.com')
+    open_mock.assert_called_once_with(expected, 'https://ansible.com', **kwargs)
+
+
+def test_open_url(urlopen_mock, install_opener_mock, mocker):
+    req_mock = mocker.patch('ansible.module_utils.urls.Request.open')
+    open_url('https://ansible.com/')
+    req_mock.assert_called_once_with('GET', 'https://ansible.com/', data=None, headers=None, use_proxy=True,
+                                     force=False, last_mod_time=None, timeout=10, validate_certs=True,
+                                     url_username=None, url_password=None, http_agent=None,
+                                     force_basic_auth=False, follow_redirects='urllib2',
+                                     client_cert=None, client_key=None, cookies=None)
