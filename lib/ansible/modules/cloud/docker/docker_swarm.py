@@ -160,10 +160,15 @@ EXAMPLES = '''
     join_token: SWMTKN-1--xxxxx
     remote_addrs: [ '192.168.1.1:2377' ]
 
-- name: Leave swarm
+- name: Leave swarm for a node
   docker_swarm:
     state: absent
 
+- name: Remove a swarm manager
+  docker_swarm:
+    state: absent
+    force: true
+    
 - name: Remove node from swarm
   docker_swarm:
     state: remove
