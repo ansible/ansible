@@ -248,6 +248,7 @@ def main():
             # Determine endpoint
             if module.params.get('acme_version') == 1:
                 endpoint = account.directory['revoke-cert']
+                payload['resource'] = 'revoke-cert'
             else:
                 endpoint = account.directory['revokeCert']
             # Get hold of private key (if available) and make sure it comes from disk
@@ -291,7 +292,11 @@ def main():
                 # Step 2: sign revokation request with account key
                 result, info = account.send_signed_request(endpoint, payload)
             if info['status'] != 200:
-                if result['type'] == 'urn:ietf:params:acme:error:malformed' and result['detail'] == 'Certificate already revoked':
+                if module.params.get('acme_version') == 1:
+                    error_type = 'urn:acme:error:malformed'
+                else:
+                    error_type = 'urn:ietf:params:acme:error:malformed'
+                if result['type'] == error_type and result['detail'] == 'Certificate already revoked':
                     # Fallback: boulder returns this in case the certificate was already revoked.
                     if not module.params['force']:
                         module.exit_json(changed=False)
