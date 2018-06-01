@@ -272,6 +272,17 @@ EXAMPLES = """
       - shutdown
     # parents: int gig1/0/11
     parents: interface GigabitEthernet1/0/11
+    
+# Set boot image based on comparison to a group_var (version) and the version 
+# that is returned from the `ios_facts` module
+- name: SETTING BOOT IMAGE
+    ios_config:
+       lines:
+         - no boot system
+         - boot system flash bootflash:{{new_image}}
+       provider: "{{cli}}"
+       host: "{{ inventory_hostname }}"
+    when: ansible_net_version != version
 """
 
 RETURN = """
