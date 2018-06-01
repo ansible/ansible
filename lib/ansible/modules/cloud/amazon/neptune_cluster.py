@@ -176,7 +176,7 @@ def cluster_ready(client, module, params):
                 status = False
             else:
                 status = True
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't retrieve status of graph database cluster")
 
 
