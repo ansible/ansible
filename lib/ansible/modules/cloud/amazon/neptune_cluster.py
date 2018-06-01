@@ -14,12 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: neptune_cluster
+module: aws_neptune_cluster
 short_description: Manage graph database clusters on AWS Neptune.
 description:
     - Create, modify, and destroy graph database clusters on AWS Neptune
 version_added: "2.7"
-requirements: [ 'botocore>=1.10.0', 'boto3' ]
+requirements: [ 'botocore>=1.10.30', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
 options:
@@ -120,7 +120,7 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
   - name: Create a new graph database custer
-    neptune_cluster:
+    aws_neptune_cluster:
       name: "example-cluster"
       state: present
       encrypted: true
@@ -148,19 +148,26 @@ from ansible.module_utils.aws.waiters import get_waiter
 
 
 def cluster_exists(client, module, params):
+    if module.check_mode and module.params.get('state') == 'absent':
+        return {'exists': False}
     try:
         response = client.describe_db_clusters(
             DBClusterIdentifier=params['DBClusterIdentifier']
         )
-    except client.exceptions.from_code('DBClusterNotFound'):
-        return {'exists': False}
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBClusterNotFoundFault':
+            return {'exists': False}
+        else:
+            module.fail_json_aws(e, msg="Couldn't verify existence of graph database cluster")
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Couldn't verify existence of graph database cluster")
 
     return {'current_config': response['DBClusters'][0], 'exists': True}
 
 
 def create_cluster(client, module, params):
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.create_db_cluster(**params)
         get_waiter(
@@ -175,6 +182,8 @@ def create_cluster(client, module, params):
 
 
 def update_cluster(client, module, params, cluster_status):
+    if module.check_mode:
+        module.exit_json(changed=True)
     param_changed = []
     param_keys = list(params.keys())
     current_keys = list(cluster_status['current_config'].keys())
@@ -222,6 +231,8 @@ def update_cluster(client, module, params, cluster_status):
 
 
 def delete_cluster(client, module):
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         params = {}
         params['DBClusterIdentifier'] = module.params.get('name')
@@ -269,8 +280,11 @@ def main():
             'skip_final_snapshot': dict(type='bool', default=False),
             'final_snapshot_id': dict(type='str'),
         },
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
+
+    if not module.botocore_at_least('1.10.30'):
+        module.fail_json(msg="This module requires botocore >= 1.10.30")
 
     result = {
         'changed': False,
