@@ -22,4 +22,5 @@ echo "ensure playbook output shows assert/fail works (True)"
 echo "$PB_OUT" | grep -F "fail works (True)" || exit 1
 echo "$PB_OUT" | grep -F "assert works (True)" || exit 1
 
+pwd
 ../../../../hacking/test-module -m ../../../../lib/ansible/modules/system/ping.py
