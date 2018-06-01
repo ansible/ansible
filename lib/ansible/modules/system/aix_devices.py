@@ -22,7 +22,7 @@ short_description: Manages AIX devices.
 description:
   - This module discovers, defines, removes and modifies attributes of AIX
     devices.
-version_added: "2.5"
+version_added: "2.7"
 options:
   attributes:
     description:
@@ -133,12 +133,12 @@ changed:
   description: Return changed for aix_device actions as true or false.
   returned: always
   type: boolean
-  version_added: "2.5"
+  version_added: "2.7"
 msg:
   description: Return message regarding the action.
   returned: always
   type: string
-  version_added: "2.5"
+  version_added: "2.7"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
