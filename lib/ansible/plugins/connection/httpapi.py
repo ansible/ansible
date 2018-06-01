@@ -33,7 +33,6 @@ options:
     env:
       - name: ANSIBLE_REMOTE_PORT
     vars:
-      - name: ansible_port
       - name: ansible_httpapi_port
   network_os:
     description:
