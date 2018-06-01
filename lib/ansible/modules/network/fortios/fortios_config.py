@@ -68,8 +68,7 @@ EXAMPLES = """
     password: "{{ password }}"
     backup: yes
     backup_path: "backup/fortios/"
-    backup_filename: "{{inventory_hostname}}-{{date}}.cfg" 
-    
+    backup_filename: "{{inventory_hostname}}-{{date}}.cfg"
 """
 
 RETURN = """
