@@ -124,12 +124,12 @@ options:
             - If set, generate a key and use it to lock data stored on the managers.
             - Docker default value is C(no).
         type: bool
-    rotate_worker_token: 
-        description: Rotate the worker join token. 
+    rotate_worker_token:
+        description: Rotate the worker join token.
         type: bool
         default: 'no'
-    rotate_manager_token: 
-        description: Rotate the manager join token. 
+    rotate_manager_token:
+        description: Rotate the manager join token.
         type: bool
         default: 'no'
 extends_documentation_fragment:
@@ -251,8 +251,7 @@ class TaskParameters(DockerBaseClass):
 
         self.update_parameters(client)
 
-    def update_parameters(self,client):
-        
+    def update_parameters(self, client):
         self.spec = client.create_swarm_spec(
             snapshot_interval=self.snapshot_interval,
             task_history_retention_limit=self.task_history_retention_limit,
@@ -339,34 +338,34 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
 
-    def __update_spec(self,spec):
-        if ( self.parameters.node_cert_expiry is None):
+    def __update_spec(self, spec):
+        if (self.parameters.node_cert_expiry is None):
             self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry']
 
-        if ( self.parameters.dispatcher_heartbeat_period is None):
+        if (self.parameters.dispatcher_heartbeat_period is None):
             self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod']
 
-        if ( self.parameters.snapshot_interval is None):
+        if (self.parameters.snapshot_interval is None):
             self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval']
-        if ( self.parameters.keep_old_snapshots is None):
+        if (self.parameters.keep_old_snapshots is None):
             self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots']
-        if ( self.parameters.heartbeat_tick is None):
-            self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick'] ;
-        if ( self.parameters.log_entries_for_slow_followers is None):
+        if (self.parameters.heartbeat_tick is None):
+            self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick']
+        if (self.parameters.log_entries_for_slow_followers is None):
             self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers']
-        if ( self.parameters.election_tick is None):
+        if (self.parameters.election_tick is None):
             self.parameters.election_tick = spec['Raft']['ElectionTick']
 
-        if ( self.parameters.task_history_retention_limit is None):
+        if (self.parameters.task_history_retention_limit is None):
             self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit']
 
-        if ( self.parameters.autolock_managers is None):
+        if (self.parameters.autolock_managers is None):
             self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers']
 
-        if ( self.parameters.name is None):
+        if (self.parameters.name is None):
             self.parameters.name = spec['Name']
 
-        if ( self.parameters.labels is None):
+        if (self.parameters.labels is None):
             self.parameters.labels = spec['Labels']
 
         if 'LogDriver' in spec['TaskDefaults']:
@@ -380,13 +379,13 @@ class SwarmManager(DockerBaseClass):
         try:
             self.inspect_swarm()
             version = self.swarm_info['Version']['Index']
-            spec=self.swarm_info['Spec']
-            new_spec=self.__update_spec(spec)
+            spec = self.swarm_info['Spec']
+            new_spec = self.__update_spec(spec)
             del spec['TaskDefaults']
-            if cmp (spec, new_spec) == 0:
-                 self.results['actions'].append("No modification")
-                 self.results['changed'] = False
-                 return
+            if cmp(spec, new_spec) == 0:
+                self.results['actions'].append("No modification")
+                self.results['changed'] = False
+                return
             self.client.update_swarm(
                 version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
                 rotate_manager_token=self.parameters.rotate_manager_token)

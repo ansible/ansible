@@ -5,9 +5,9 @@
   with_items:
     - docker==2.7.0
 
-- name: Test parameters with state=init
+- name: Test parameters with state=present
   docker_swarm:
-    state: "init"
+    state: present
   ignore_errors: yes
   register: output
 
@@ -15,11 +15,11 @@
   assert:
     that:
        - 'output.failed'
-       - 'output.msg == "state is init but all of the following are missing: advertise_addr"'
+       - 'output.msg == "advertise_addr is required to initialize a swarm cluster."'
 
 - name: Test parameters with state=join
   docker_swarm:
-    state: "join"
+    state: join
   ignore_errors: yes
   register: output
 
@@ -31,7 +31,7 @@
 
 - name: Test parameters with state=remove
   docker_swarm:
-    state: "remove"
+    state: remove
   ignore_errors: yes
   register: output
 
@@ -43,7 +43,7 @@
 
 - name: Create a Swarm cluster
   docker_swarm:
-    state: "init"
+    state: present
     advertise_addr: "{{ansible_default_ipv4.address}}"
   register: output
 
@@ -57,8 +57,7 @@
 
 - name: Remove a Swarm cluster
   docker_swarm:
-    state: "leave"
-    node_id: "{{inventory_hostname}}"
+    state: absent
     force: true
   register: output
 
