@@ -59,6 +59,17 @@ EXAMPLES = """
     password: password
     src: new_configuration.conf.j2
 
+# The date var is declared in the vars section of the playbook
+# date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M') }}"`
+- name: Backup current config with custom filename
+  fortios_config:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    backup: yes
+    backup_path: "backup/fortios/"
+    backup_filename: "{{inventory_hostname}}-{{date}}.cfg" 
+    
 """
 
 RETURN = """
