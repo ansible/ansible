@@ -19,7 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
 try:
@@ -38,6 +40,10 @@ class TaskInclude(Task):
     circumstances related to the `- include: ...` task.
     """
 
+    BASE = frozenset(('file', '_raw_params'))  # directly assigned
+    OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
+    VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
+
     # =================================================================================
     # ATTRIBUTES
 
@@ -49,8 +55,38 @@ class TaskInclude(Task):
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
-        t = TaskInclude(block=block, role=role, task_include=task_include)
-        return t.load_data(data, variable_manager=variable_manager, loader=loader)
+        ti = TaskInclude(block=block, role=role, task_include=task_include)
+        task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
+
+        # Validate options
+        my_arg_names = frozenset(task.args.keys())
+
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
+        if bad_opts and task.action in ('include_tasks', 'import_tasks'):
+            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
+
+        if not task.args.get('_raw_params'):
+            task.args['_raw_params'] = task.args.pop('file')
+
+        apply_attrs = task.args.pop('apply', {})
+        if apply_attrs and task.action != 'include_tasks':
+            raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
+        elif apply_attrs:
+            apply_attrs['block'] = []
+            p_block = Block.load(
+                apply_attrs,
+                play=block._play,
+                parent_block=block,
+                role=role,
+                task_include=task_include,
+                use_handlers=block._use_handlers,
+                variable_manager=variable_manager,
+                loader=loader,
+            )
+            task._parent = p_block
+
+        return task
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)

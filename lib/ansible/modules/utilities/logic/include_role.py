@@ -26,6 +26,10 @@ description:
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
+  apply:
+    description:
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    version_added: '2.7'
   name:
     description:
       - The name of the role to be executed.
@@ -89,6 +93,15 @@ EXAMPLES = """
   include_role:
     name: myrole
   when: not idontwanttorun
+
+- name: Apply tags to tasks within included file
+  include_role:
+    name: install
+    apply:
+      tags:
+        - install
+  tags:
+    - always
 """
 
 RETURN = """
