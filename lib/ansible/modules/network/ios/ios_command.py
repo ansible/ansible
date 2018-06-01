@@ -109,6 +109,16 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+
+  - name: run multiple commands and evaluate to show 28xx or 29xx series routers and Loopback 0 or 1
+    ios_command:
+      commands:
+        - show version
+        - show interfaces
+      wait_for:
+        - result[0] matches "2[8-9][0-9][0-9]\s"
+        - result[1] matches "Loopback[0-1]\s"
+
   - name: run command that requires answering a prompt
     ios_command:
       commands:
