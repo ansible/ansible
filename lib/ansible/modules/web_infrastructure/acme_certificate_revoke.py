@@ -128,7 +128,9 @@ def _get_host_from_uri(uri):
     return netloc[:i] if i >= 0 else netloc
 
 
-def _run_openssl(module, args, acceptable_rcs=[0]):
+def _run_openssl(module, args, acceptable_rcs=None):
+    if acceptable_rcs is None:
+        acceptable_rcs = [0]
     openssl_bin = module.get_bin_path('openssl', True)
     openssl_cmd = [openssl_bin] + args
     rc, out, error = module.run_command(openssl_cmd, check_rc=True, encoding=None)
