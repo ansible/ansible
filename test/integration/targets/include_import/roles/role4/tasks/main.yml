@@ -1,0 +1,2 @@
+- import_tasks: "{{ tasks_file_name_default }}.yml"
+- import_tasks: "{{ tasks_file_name_vars_main }}.yml"

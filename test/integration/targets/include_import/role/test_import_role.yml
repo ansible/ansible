@@ -44,6 +44,10 @@
         that:
           - role1_canary2 is not defined
 
+    - name: Test role defaults and vars used with import_tasks in tasks/main.yml
+      import_role:
+        name: role4
+
     # FIXME We expect this to fail, but I'm not sure how best to test for
     # syntax level failures.
     #

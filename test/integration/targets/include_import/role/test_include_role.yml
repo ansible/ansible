@@ -44,6 +44,10 @@
         that:
           - role1_canary2 is not defined
 
+    - name: Test role defaults and vars used with import_tasks in tasks/main.yml
+      include_role:
+        name: role4
+
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
