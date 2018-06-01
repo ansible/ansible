@@ -77,7 +77,7 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     size_gb:
         description:
             - Size of the persistent disk, specified in GB. You can specify this field when creating
@@ -394,7 +394,7 @@ def main():
             description=dict(type='str'),
             labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             size_gb=dict(type='int'),
             source_image=dict(type='str'),
             type=dict(type='str'),
@@ -543,7 +543,7 @@ def response_to_hash(module, response):
         u'lastDetachTimestamp': response.get(u'lastDetachTimestamp'),
         u'labels': response.get(u'labels'),
         u'licenses': response.get(u'licenses'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
         u'sourceImage': module.params.get('source_image'),
         u'type': response.get(u'type'),
