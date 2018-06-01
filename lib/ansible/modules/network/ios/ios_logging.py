@@ -227,16 +227,10 @@ def parse_size(line, dest):
     if dest == 'buffered':
         match = re.search(r'logging buffered (?:(\d+) )?\S+', line, re.M)
         if match:
-            try:
-                int_size = int(match.group(1))
-            except ValueError:
-                int_size = None
-
-            if int_size:
-                if isinstance(int_size, int):
-                    size = str(match.group(1))
-                else:
-                    size = str(4096)
+            if match.group(1) is not None:
+                size = match.group(1)
+            else:
+                size = "4096"
 
     return size
 
