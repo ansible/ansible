@@ -129,6 +129,7 @@ def _get_host_from_uri(uri):
 
 
 def _run_openssl(module, args, acceptable_rcs=None):
+    """Run OpenSSL command with given arguments."""
     if acceptable_rcs is None:
         acceptable_rcs = [0]
     openssl_bin = module.get_bin_path('openssl', True)
