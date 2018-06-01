@@ -168,7 +168,7 @@ EXAMPLES = '''
   docker_swarm:
     state: absent
     force: true
-    
+
 - name: Remove node from swarm
   docker_swarm:
     state: remove
