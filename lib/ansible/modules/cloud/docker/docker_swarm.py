@@ -16,7 +16,7 @@ module: docker_swarm
 short_description: Manage Swarm cluster
 version_added: "2.7"
 description:
-     - Init a new Swarm cluster.
+     - Create a new Swarm cluster.
      - Add/Remove nodes or managers to an existing cluster.
 options:
     advertise_addr:
@@ -40,26 +40,24 @@ options:
         default: 0.0.0.0:2377
     force:
         description:
-            - Use with state C(init) to force creating a new Swarm, even if already part of one.
-            - Use with state C(leave) to Leave the swarm even if this node is a manager.
+            - Use with state C(present) to force creating a new Swarm, even if already part of one.
+            - Use with state C(absent) to Leave the swarm even if this node is a manager.
         type: bool
         default: 'no'
     state:
         description:
-            - Set to C(init), to create a new cluster.
+            - Set to C(present), to create/update a new cluster.
             - Set to C(join), to join an existing cluster.
-            - Set to C(leave), to leave an existing cluster.
-            - Set to C(remove), to remove a node.
-            - Set to C(update) to update an existing cluster.
+            - Set to C(absent), to leave an existing cluster.
+            - Set to C(remove), to remove an absent node from the cluster.
             - Set to C(inspect) to display swarm informations.
         required: true
-        default: join
+        default: present
         choices:
-          - init
+          - present
           - join
-          - leave
+          - absent
           - remove
-          - update
           - inspect
     node_id:
         description:
@@ -126,10 +124,6 @@ options:
             - If set, generate a key and use it to lock data stored on the managers.
             - Docker default value is C(no).
         type: bool
-    version :
-        description:
-            - Used with I(state=update). The version number of the swarm object being
-                updated. This is required to avoid conflicting writes.
     rotate_worker_token: 
         description: Rotate the worker join token. 
         type: bool
@@ -149,10 +143,15 @@ author:
 
 EXAMPLES = '''
 
-- name: Init a new swarm
+- name: Init a new swarm with default parameters
   docker_swarm:
-    state: init
+    state: present
     advertise_addr: 192.168.1.1
+
+- name: Update swarm configuration
+  docker_swarm:
+    state: present
+    election_tick: 5
 
 - name: Add nodes
   docker_swarm:
@@ -163,18 +162,12 @@ EXAMPLES = '''
 
 - name: Leave swarm
   docker_swarm:
-    state: leave
+    state: absent
 
 - name: Remove node from swarm
   docker_swarm:
     state: remove
     node_id: mynode
-
-- name: Update swarm
-  docker_swarm:
-    state: update
-    version: 10
-    snapshot_interval: 20000
 
 - name: Inspect swarm
   docker_swarm:
@@ -245,6 +238,7 @@ class TaskParameters(DockerBaseClass):
         self.external_cas = None
         self.name = None
         self.labels = None
+        self.log_driver = None
         self.signing_ca_cert = None
         self.signing_ca_key = None
         self.ca_force_rotate = None
@@ -273,7 +267,8 @@ class TaskParameters(DockerBaseClass):
             signing_ca_cert=self.signing_ca_cert,
             signing_ca_key=self.signing_ca_key,
             ca_force_rotate=self.ca_force_rotate,
-            autolock_managers=self.autolock_managers
+            autolock_managers=self.autolock_managers,
+            log_driver=self.log_driver
         )
 
 
@@ -291,11 +286,10 @@ class SwarmManager(DockerBaseClass):
 
     def __call__(self):
         choice_map = {
-            "init": self.init_swarm,
+            "present": self.init_swarm,
             "join": self.join,
-            "leave": self.leave,
+            "absent": self.leave,
             "remove": self.remove,
-            "update": self.update_swarm,
             "inspect": self.inspect_swarm
         }
 
@@ -327,11 +321,13 @@ class SwarmManager(DockerBaseClass):
 
     def init_swarm(self):
         if self.__isSwarmManager():
-            self.results['actions'].append("This cluster is already a swarm cluster: %s" % (self.swarm_info['ID']))
-            self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
+            self.__update_swarm()
             return
 
         try:
+            if self.parameters.advertise_addr is None:
+                self.fail(msg="advertise_addr is required to initialize a swarm cluster.")
+
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
@@ -343,45 +339,56 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
 
-    def __update_spec(self):
-        self.inspect_swarm()
-
-        spec=self.swarm_info['Spec']
+    def __update_spec(self,spec):
         if ( self.parameters.node_cert_expiry is None):
-            self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry'] ;
+            self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry']
 
         if ( self.parameters.dispatcher_heartbeat_period is None):
-            self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod'] ;
+            self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod']
 
         if ( self.parameters.snapshot_interval is None):
-            self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval'] ;
+            self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval']
         if ( self.parameters.keep_old_snapshots is None):
-            self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots'] ;
+            self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots']
         if ( self.parameters.heartbeat_tick is None):
             self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick'] ;
         if ( self.parameters.log_entries_for_slow_followers is None):
-            self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers'] ;
+            self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers']
         if ( self.parameters.election_tick is None):
-            self.parameters.election_tick = spec['Raft']['ElectionTick'] ;
+            self.parameters.election_tick = spec['Raft']['ElectionTick']
 
         if ( self.parameters.task_history_retention_limit is None):
-            self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit'] ;
+            self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit']
 
         if ( self.parameters.autolock_managers is None):
-            self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers'] ;
+            self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers']
+
+        if ( self.parameters.name is None):
+            self.parameters.name = spec['Name']
+
+        if ( self.parameters.labels is None):
+            self.parameters.labels = spec['Labels']
+
+        if 'LogDriver' in spec['TaskDefaults']:
+            self.parameters.log_driver = spec['TaskDefaults']['LogDriver']
 
         self.parameters.update_parameters(self.client)
 
         return self.parameters.spec
         
-    def update_swarm(self):
-        if not(self.__isSwarmManager()):
-            self.results['actions'].append("This node is not a swarm manager.")
-            return
+    def __update_swarm(self):
         try:
-            spec_to_update=self.__update_spec()
+            self.inspect_swarm()
+            version = self.swarm_info['Version']['Index']
+            spec=self.swarm_info['Spec']
+            new_spec=self.__update_spec(spec)
+            del spec['TaskDefaults']
+            if cmp (spec, new_spec) == 0:
+                 self.results['actions'].append("No modification")
+                 self.results['changed'] = False
+                 return
             self.client.update_swarm(
-                version=self.parameters.version, swarm_spec=spec_to_update, rotate_worker_token=self.parameters.rotate_worker_token,
+                version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
                 rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
             self.fail("Can not update a Swarm Cluster: %s" % exc)
@@ -464,7 +471,7 @@ class SwarmManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['init', 'join', 'leave', 'remove', 'update', 'inspect'], default='join'),
+        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list'),
@@ -484,16 +491,13 @@ def main():
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
-        version=dict(type='int'),
         rotate_worker_token=dict(type='bool', default=False),
         rotate_manager_token=dict(type='bool', default=False)
     )
 
     required_if = [
-        ('state', 'init', ['advertise_addr']),
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
-        ('state', 'remove', ['node_id']),
-        ('state', 'update', ['version'])
+        ('state', 'remove', ['node_id'])
     ]
 
     client = AnsibleDockerClient(
