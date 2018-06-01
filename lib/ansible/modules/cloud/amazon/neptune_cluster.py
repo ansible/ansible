@@ -146,22 +146,19 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
-def cluster_exists(client, module, params, result):
+def cluster_exists(client, module, params):
     try:
         response = client.describe_db_clusters(
             DBClusterIdentifier=params['DBClusterIdentifier']
         )
-        result['current_config'] = response['DBClusters'][0]
-        result['db_cluster_arn'] = response['DBClusters'][0]['DBClusterArn']
-        return True
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
-        return False
+    except client.exceptions.from_code('DBClusterNotFound'):
+        return {'exists': False}
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't verify existence of graph database cluster")
 
-    return False
+    return {'current_config': response['DBClusters'][0], 'exists': True}
 
 
 def cluster_ready(client, module, params):
@@ -180,26 +177,23 @@ def cluster_ready(client, module, params):
         module.fail_json_aws(e, msg="Couldn't retrieve status of graph database cluster")
 
 
-def create_cluster(client, module, params, result):
+def create_cluster(client, module, params):
     try:
         response = client.create_db_cluster(**params)
         cluster_ready(client, module, params)
-        result['db_cluster_arn'] = response['DBCluster']['DBClusterArn']
-        result['changed'] = True
-        return result
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create graph database cluster")
 
-    return result
+    return {'db_cluster_arn': response['DBCluster']['DBClusterArn'], 'changed': True}
 
 
-def update_cluster(client, module, params, result):
+def update_cluster(client, module, params, cluster_status):
     param_changed = []
     param_keys = list(params.keys())
-    current_keys = list(result['current_config'].keys())
+    current_keys = list(cluster_status['current_config'].keys())
     common_keys = set(param_keys) - (set(param_keys) - set(current_keys))
     for key in common_keys:
-        if (params[key] != result['current_config'][key]):
+        if (params[key] != cluster_status['current_config'][key]):
             param_changed.append(True)
         else:
             param_changed.append(False)
@@ -229,16 +223,14 @@ def update_cluster(client, module, params, result):
         try:
             response = client.modify_db_cluster(**params)
             cluster_ready(client, module, params)
-            result['db_cluster_arn'] = response['DBCluster']['DBClusterArn']
-            result['changed'] = True
-            return result
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't update graph database cluster")
+        return {'db_cluster_arn': response['DBCluster']['DBClusterArn'], 'changed': True}
+    else:
+        return {'db_cluster_arn': cluster_status['current_config']['DBClusterArn'], 'changed': False}
 
-    return result
 
-
-def delete_cluster(client, module, result):
+def delete_cluster(client, module):
     try:
         params = {}
         params['DBClusterIdentifier'] = module.params.get('name')
@@ -247,12 +239,10 @@ def delete_cluster(client, module, result):
         if module.params.get('final_snapshot_id'):
             params['FinalDBSnapshotIdentifier'] = module.params.get('final_snapshot_id')
         response = client.delete_db_cluster(**params)
-        result['changed'] = True
-        return result
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't delete graph database cluster")
 
-    return result
+    return {'db_cluster_arn': '', 'changed': True}
 
 
 def main():
@@ -285,11 +275,6 @@ def main():
         },
         supports_check_mode=False,
     )
-
-    result = {
-        'changed': False,
-        'db_cluster_arn': ''
-    }
 
     desired_state = module.params.get('state')
 
@@ -337,17 +322,17 @@ def main():
 
     client = module.client('neptune')
 
-    cluster_status = cluster_exists(client, module, params, result)
+    cluster_status = cluster_exists(client, module, params)
 
     if desired_state == 'present':
-        if not cluster_status:
-            create_cluster(client, module, params, result)
-        if cluster_status:
-            update_cluster(client, module, params, result)
+        if not cluster_status['exists']:
+            result = create_cluster(client, module, params)
+        if cluster_status['exists']:
+            result = update_cluster(client, module, params, cluster_status)
 
     if desired_state == 'absent':
-        if cluster_status:
-            delete_cluster(client, module, result)
+        if cluster_status['exists']:
+            result = delete_cluster(client, module)
 
     module.exit_json(changed=result['changed'], db_cluster_arn=result['db_cluster_arn'])
 
