@@ -120,7 +120,10 @@ class ActionModule(ActionBase):
             # template the source data locally & get ready to transfer
             try:
                 with open(b_tmp_source, 'rb') as f:
-                    template_data = to_text(f.read(), errors='surrogate_or_strict')
+                    try:
+                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                    except UnicodeError:
+                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
 
                 # set jinja2 internal search path for includes
                 searchpath = task_vars.get('ansible_search_path', [])
