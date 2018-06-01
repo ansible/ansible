@@ -205,9 +205,9 @@ desired.
   * In Ansible-2.5.3, the :ref:`template module <template_module>` became more strict about its
     ``src`` file being proper utf-8.  Previously, non-utf8 contents in a template module src file
     would result in a mangled output file (the non-utf8 characters would be replaced with a unicode
-    replacement character).  Now, on Python2, the module will throw an error instead.  On Python3,
-    the module will first attempt to pass the non-utf8 characters through verbatim and fail if that
-    does not succeed.
+    replacement character).  Now, on Python2, the module will error out with the message, "Template
+    source files must be utf-8 encoded".  On Python3, the module will first attempt to pass the
+    non-utf8 characters through verbatim and fail if that does not succeed.
 
 Plugins
 =======
