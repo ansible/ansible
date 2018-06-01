@@ -29,9 +29,11 @@ import os
 import re
 import sys
 import warnings
-from collections import defaultdict, Sequence
+from collections import defaultdict
 from distutils.version import LooseVersion
 from pprint import PrettyPrinter
+from functools import partial
+from ansible.module_utils.common.collections import is_sequence
 
 try:
     from html import escape as html_escape
@@ -132,10 +134,7 @@ def rst_xline(width, char="="):
     return char * width
 
 
-def test_list(value):
-    ''' Return true if the object is a list or tuple '''
-
-    return isinstance(value, Sequence) and not isinstance(value, string_types)
+test_list = partial(is_sequence, include_strings=False)
 
 
 def write_data(text, output_dir, outputname, module=None):
