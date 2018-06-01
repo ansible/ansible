@@ -131,6 +131,69 @@ options:
                     - The list of HTTP headers other than the simple response headers to give permission
                       for the user-agent to share across domains.
                 required: false
+    default_object_acl:
+        description:
+            - Default access controls to apply to new objects when no ACL is provided.
+        required: false
+        suboptions:
+            bucket:
+                description:
+                    - The name of the bucket.
+                required: true
+            domain:
+                description:
+                    - The domain associated with the entity.
+                required: false
+            email:
+                description:
+                    - The email address associated with the entity.
+                required: false
+            entity:
+                description:
+                    - 'The entity holding the permission, in one of the following
+                      forms: user-userId user-email group-groupId group-email
+                      domain-domain project-team-projectId allUsers
+                      allAuthenticatedUsers Examples: The user liz@example.com would
+                      be user-liz@example.com.'
+                    - The group example@googlegroups.com would be   group-example@googlegroups.com.
+                    - To refer to all members of the Google Apps for Business domain   example.com, the
+                      entity would be domain-example.com.
+                required: true
+            entity_id:
+                description:
+                    - The ID for the entity.
+                required: false
+            generation:
+                description:
+                    - The content generation of the object, if applied to an object.
+                required: false
+            id:
+                description:
+                    - The ID of the access-control entry.
+                required: false
+            object:
+                description:
+                    - The name of the object, if applied to an object.
+                required: false
+            project_team:
+                description:
+                    - The project team associated with the entity.
+                required: false
+                suboptions:
+                    project_number:
+                        description:
+                            - The project team associated with the entity.
+                        required: false
+                    team:
+                        description:
+                            - The team.
+                        required: false
+                        choices: ['editors', 'owners', 'viewers']
+            role:
+                description:
+                    - The access permission for the entity.
+                required: false
+                choices: ['OWNER', 'READER']
     lifecycle:
         description:
             - The bucket's lifecycle configuration.
@@ -398,6 +461,80 @@ RETURN = '''
                       for the user-agent to share across domains.
                 returned: success
                 type: list
+    default_object_acl:
+        description:
+            - Default access controls to apply to new objects when no ACL is provided.
+        returned: success
+        type: complex
+        contains:
+            bucket:
+                description:
+                    - The name of the bucket.
+                returned: success
+                type: dict
+            domain:
+                description:
+                    - The domain associated with the entity.
+                returned: success
+                type: str
+            email:
+                description:
+                    - The email address associated with the entity.
+                returned: success
+                type: str
+            entity:
+                description:
+                    - 'The entity holding the permission, in one of the following
+                      forms: user-userId user-email group-groupId group-email
+                      domain-domain project-team-projectId allUsers
+                      allAuthenticatedUsers Examples: The user liz@example.com would
+                      be user-liz@example.com.'
+                    - The group example@googlegroups.com would be   group-example@googlegroups.com.
+                    - To refer to all members of the Google Apps for Business domain   example.com, the
+                      entity would be domain-example.com.
+                returned: success
+                type: str
+            entity_id:
+                description:
+                    - The ID for the entity.
+                returned: success
+                type: str
+            generation:
+                description:
+                    - The content generation of the object, if applied to an object.
+                returned: success
+                type: int
+            id:
+                description:
+                    - The ID of the access-control entry.
+                returned: success
+                type: str
+            object:
+                description:
+                    - The name of the object, if applied to an object.
+                returned: success
+                type: str
+            project_team:
+                description:
+                    - The project team associated with the entity.
+                returned: success
+                type: complex
+                contains:
+                    project_number:
+                        description:
+                            - The project team associated with the entity.
+                        returned: success
+                        type: str
+                    team:
+                        description:
+                            - The team.
+                        returned: success
+                        type: str
+            role:
+                description:
+                    - The access permission for the entity.
+                returned: success
+                type: str
     id:
         description:
             - The ID of the bucket. For buckets, the id and name properities are the same.
@@ -637,6 +774,21 @@ def main():
                 origin=dict(type='list', elements='str'),
                 response_header=dict(type='list', elements='str')
             )),
+            default_object_acl=dict(type='list', elements='dict', options=dict(
+                bucket=dict(required=True, type='dict'),
+                domain=dict(type='str'),
+                email=dict(type='str'),
+                entity=dict(required=True, type='str'),
+                entity_id=dict(type='str'),
+                generation=dict(type='int'),
+                id=dict(type='str'),
+                object=dict(type='str'),
+                project_team=dict(type='dict', options=dict(
+                    project_number=dict(type='str'),
+                    team=dict(type='str', choices=['editors', 'owners', 'viewers'])
+                )),
+                role=dict(type='str', choices=['OWNER', 'READER'])
+            )),
             lifecycle=dict(type='dict', options=dict(
                 rule=dict(type='list', elements='dict', options=dict(
                     action=dict(type='dict', options=dict(
@@ -730,6 +882,7 @@ def resource_to_request(module):
         u'predefinedDefaultObjectAcl': module.params.get('predefined_default_object_acl'),
         u'acl': BucketAclArray(module.params.get('acl', []), module).to_request(),
         u'cors': BucketCorsArray(module.params.get('cors', []), module).to_request(),
+        u'defaultObjectAcl': BuckeDefauObjecAclArray(module.params.get('default_object_acl', []), module).to_request(),
         u'lifecycle': BucketLifecycle(module.params.get('lifecycle', {}), module).to_request(),
         u'location': module.params.get('location'),
         u'logging': BucketLogging(module.params.get('logging', {}), module).to_request(),
@@ -808,6 +961,7 @@ def response_to_hash(module, response):
     return {
         u'acl': BucketAclArray(response.get(u'acl', []), module).from_response(),
         u'cors': BucketCorsArray(response.get(u'cors', []), module).from_response(),
+        u'defaultObjectAcl': BuckeDefauObjecAclArray(module.params.get('default_object_acl', []), module).to_request(),
         u'id': response.get(u'id'),
         u'lifecycle': BucketLifecycle(response.get(u'lifecycle', {}), module).from_response(),
         u'location': response.get(u'location'),
@@ -924,6 +1078,76 @@ class BucketCorsArray(object):
             u'method': item.get(u'method'),
             u'origin': item.get(u'origin'),
             u'responseHeader': item.get(u'responseHeader')
+        })
+
+
+class BuckeDefauObjecAclArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({
+            u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
+            u'domain': item.get('domain'),
+            u'email': item.get('email'),
+            u'entity': item.get('entity'),
+            u'entityId': item.get('entity_id'),
+            u'generation': item.get('generation'),
+            u'id': item.get('id'),
+            u'object': item.get('object'),
+            u'projectTeam': BucketProjectTeam(item.get('project_team', {}), self.module).to_request(),
+            u'role': item.get('role')
+        })
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({
+            u'bucket': item.get(u'bucket'),
+            u'domain': item.get(u'domain'),
+            u'email': item.get(u'email'),
+            u'entity': item.get(u'entity'),
+            u'entityId': item.get(u'entityId'),
+            u'generation': item.get(u'generation'),
+            u'id': item.get(u'id'),
+            u'object': item.get(u'object'),
+            u'projectTeam': BucketProjectTeam(item.get(u'projectTeam', {}), self.module).from_response(),
+            u'role': item.get(u'role')
+        })
+
+
+class BucketProjectTeam(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({
+            u'projectNumber': self.request.get('project_number'),
+            u'team': self.request.get('team')
+        })
+
+    def from_response(self):
+        return remove_nones_from_dict({
+            u'projectNumber': self.request.get(u'projectNumber'),
+            u'team': self.request.get(u'team')
         })
 
 
