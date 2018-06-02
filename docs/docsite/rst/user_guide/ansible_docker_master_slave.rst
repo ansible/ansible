@@ -1,4 +1,4 @@
-Getting Started
+Ansible and Docker :: A Master/Slave Relationship
 ===============
 
 What is this guide?
