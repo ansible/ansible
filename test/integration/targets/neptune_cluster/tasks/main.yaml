@@ -91,7 +91,4 @@
         encrypted: true
         retention_period: 12
         skip_final_snapshot: true
-      register: removed
-      until: removed is not failed
       ignore_errors: yes
-      retries: 5

@@ -137,8 +137,6 @@ db_cluster_arn:
     type: string
 '''
 
-import time
-
 try:
     import botocore
     from botocore.exceptions import BotoCoreError, ClientError
@@ -146,6 +144,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 
 
 def cluster_exists(client, module, params):
@@ -161,26 +160,14 @@ def cluster_exists(client, module, params):
     return {'current_config': response['DBClusters'][0], 'exists': True}
 
 
-def cluster_ready(client, module, params):
-    try:
-        status = False
-        while status is False:
-            time.sleep(5)
-            response = client.describe_db_clusters(
-                DBClusterIdentifier=params['DBClusterIdentifier']
-            )
-            if response['DBClusters'][0]['Status'] != 'available':
-                status = False
-            else:
-                status = True
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Couldn't retrieve status of graph database cluster")
-
-
 def create_cluster(client, module, params):
     try:
         response = client.create_db_cluster(**params)
-        cluster_ready(client, module, params)
+        get_waiter(
+            client, 'cluster_available'
+        ).wait(
+            DBClusterIdentifier=params['DBClusterIdentifier']
+        )
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create graph database cluster")
 
@@ -222,7 +209,11 @@ def update_cluster(client, module, params, cluster_status):
     if any(param_changed):
         try:
             response = client.modify_db_cluster(**params)
-            cluster_ready(client, module, params)
+            get_waiter(
+                client, 'cluster_available'
+            ).wait(
+                DBClusterIdentifier=params['DBClusterIdentifier']
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't update graph database cluster")
         return {'db_cluster_arn': response['DBCluster']['DBClusterArn'], 'changed': True}
@@ -239,6 +230,11 @@ def delete_cluster(client, module):
         if module.params.get('final_snapshot_id'):
             params['FinalDBSnapshotIdentifier'] = module.params.get('final_snapshot_id')
         response = client.delete_db_cluster(**params)
+        get_waiter(
+            client, 'cluster_deleted'
+        ).wait(
+            DBClusterIdentifier=params['DBClusterIdentifier']
+        )
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't delete graph database cluster")
 
@@ -275,6 +271,11 @@ def main():
         },
         supports_check_mode=False,
     )
+
+    result = {
+        'changed': False,
+        'db_cluster_arn': ''
+    }
 
     desired_state = module.params.get('state')
 

@@ -179,6 +179,7 @@ waf_data = {
     }
 }
 
+
 eks_data = {
     "version": 2,
     "waiters": {
@@ -204,6 +205,49 @@ eks_data = {
 }
 
 
+neptune_data = {
+    "version": 2,
+    "waiters": {
+        "DBClusterAvailable": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBClusters",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBClusters[0].Status == 'available'",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBClusterNotFoundFault",
+                    "state": "retry"
+                },
+            ]
+        },
+        "DBClusterDeleted": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBClusters",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBClusters[0]",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBClusterNotFoundFault",
+                    "state": "success"
+                },
+            ]
+        }
+    }
+}
+
+
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
@@ -217,6 +261,11 @@ def waf_model(name):
 def eks_model(name):
     eks_models = core_waiter.WaiterModel(waiter_config=eks_data)
     return eks_models.get_waiter(name)
+
+
+def neptune_model(name):
+    neptune_models = core_waiter.WaiterModel(waiter_config=neptune_data)
+    return neptune_models.get_waiter(name)
 
 
 waiters_by_name = {
@@ -285,6 +334,18 @@ waiters_by_name = {
         eks_model('ClusterActive'),
         core_waiter.NormalizedOperationMethod(
             eks.describe_cluster
+        )),
+    ('Neptune', 'cluster_available'): lambda neptune: core_waiter.Waiter(
+        'cluster_available',
+        neptune_model('DBClusterAvailable'),
+        core_waiter.NormalizedOperationMethod(
+            neptune.describe_db_clusters
+        )),
+    ('Neptune', 'cluster_deleted'): lambda neptune: core_waiter.Waiter(
+        'cluster_deleted',
+        neptune_model('DBClusterDeleted'),
+        core_waiter.NormalizedOperationMethod(
+            neptune.describe_db_clusters
         )),
 }
 
