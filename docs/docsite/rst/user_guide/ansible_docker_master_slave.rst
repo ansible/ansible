@@ -262,7 +262,7 @@ If you find yourself not understanding why when you SSH to your Slaves they look
 
 Troubleshooting: Provisioning Each Container
 ````````
-This is the more 
+This is the more complicated issue of the three I've got listed here. If the ansible variable ``template_run_date`` is not updated with a timestamp then that means that the ``template`` function with ``src`` and ``dest`` did not get run correctly. I would check the spacing on the ansible playbook and make sure that everything lines up correctly. If that is not the issue, make sure that ``template_run_date`` is properly spaced within the HTML file that you created inside this guide. Refer to the ansible documentation beyond that.
 
 Troubleshooting: Installing packages
 ````````
