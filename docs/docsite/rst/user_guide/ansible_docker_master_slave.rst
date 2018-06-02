@@ -107,12 +107,39 @@ Let's make sure that everything is cleaned up on the Slave with the following
   
 That will take down any processes you might have and delete any built images on your system. Do that every once in a while to make sure your space isn't being taken up needlessly. You should see about 90 - 110 MB freed. 
 
+On a quick side note, if you find yourself tired of typing those commands out and you want to make things quicker. Whip up the following ``takeDown.S`` script:
+
+.. code-block:: txt
+
+  sudo ip addr del 192.168.1.101/32 dev enp0s3
+  sudo ip addr del 192.168.1.102/32 dev enp0s3
+  docker kill $(docker ps -q)
+  docker system prune -a
+  
+Save that file then make sure its executable with ``chmod +x takeDown.S``. Then you can execute it with ``./takeDown.S`` and that will take care of everything on your current system so you can connect and start again with ansible without much of an issue. We'll get to the details of why you need those first two later on but you can keep them in the script for now.
+
 Master: Ansible
 ````````
 
-
-Setting Up: Ansible-Playbook
+Master: Creating the files you'll need
 ````````
+
+Master: Hosts.ini
+````````
+
+Master: Startup.yaml Playbook
+````````
+
+Master: Ansible-index.html
+````````
+
+Master: Id_rsa.pub
+````````
+
+Master: Startup Script
+````````
+
+
 
 Setting Up: Connecting Over SSH to each container
 ````````
