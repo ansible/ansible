@@ -38,8 +38,11 @@ class ActionModule(ActionBase):
             raise AnsibleError('conditional required in "that" string')
 
         msg = None
+        success_msg = None
         if 'msg' in self._task.args:
             msg = self._task.args['msg']
+        if 'success_msg' in self._task.args:
+            success_msg = self._task.args['success_msg']
 
         # make sure the 'that' items are a list
         thats = self._task.args['that']
@@ -67,5 +70,8 @@ class ActionModule(ActionBase):
                 return result
 
         result['changed'] = False
-        result['msg'] = 'All assertions passed'
+        if success_msg is not None:
+            result['msg'] = success_msg
+        else:
+            result['msg'] = 'All assertions passed'
         return result
