@@ -219,7 +219,7 @@ def _get_cmd_options(module, cmd):
 
 
 def _get_full_name(name, version=None):
-    if version is None:
+    if version is None or version == "":
         resp = name
     else:
         resp = name + '==' + version
