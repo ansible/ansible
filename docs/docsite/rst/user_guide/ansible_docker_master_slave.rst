@@ -30,14 +30,33 @@ On the slave, you'll need to install a few things in order to get started. Let's
   $ sudo systemctl enable docker
   $ sudo usermod -aG docker user
 
-Setting Up: Dockerfile and Image
+Master: Generate RSA Key
 ````````
+Next, hop on over to the Master and generate that RSA key! We'll need to use this so that Ansible can SSH without the need for a password onto each of the containers for provisioning and the slave for the initial setup. This must be done correctly, so make sure that everything is configured properly.
+
+.. code-block:: bash
+
+  $ ssh-keygen -t rsa
+  
+Hit enter three times to set no password and to accept the storage location that is set by default. Then check the location ``~/.ssh/id_rsa.pub`` and make sure that the file exists and contains an RSA key. If it does not, head back to the previous code block and make sure that you followed the command correctly. This is very important.
+
+Next, copy that key from the Master over to the Slave. We'll need to bake it in directly to the dockerfile so that Ansible doesn't have any SSH authentication issues.
+
+.. code-block:: bash
+
+  $ scp ~/.ssh/id_rsa.pub root@192.168.1.11:/root/.ssh/authorized_keys
+  enter password
+  $ scp ~/.ssh/id_rsa.pub root@192.168.1.11:/home/user/id_rsa.pub
+  enter password
+  
+Slave: Dockerfile and Image
+````````
+Head back on over to the slave and lets check that everything copied correctly and worked out just right. Check that your public key is present in ``/root/.ssh/authorized_keys`` and that a copy of the public key also exists at ``/home/user/id_rsa.pub``. If not, go back to the previous step and attempt to copy it again.
 
 
 Master: Ansible
 ````````
 
-Setting Up: New RSA Key
 
 Setting Up: Ansible-Playbook
 ````````
