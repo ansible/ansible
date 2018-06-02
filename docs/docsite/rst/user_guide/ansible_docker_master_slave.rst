@@ -15,6 +15,8 @@ Per Docker, docker is a computer program that performs operating-system-level vi
 
 Virtual Machines and VirtualBox
 ````````
+For this guide, you'll need two virtual machines for one to represent the master and the other to represent the slave. I used a CentOS based VM running on VirtualBox. I won't be going into the details of how to setup a command line based CentOS distro because thats a separate guide in and of itself but suffice to say you'll need a linux based CLI for this guide. The key here is that you'll need two different boxes (virtualized or not) and the addresses I'll use to indicate that are 192.168.1.10 (Master) and 192.168.1.11 (Slave).
+
 
 Master: Ansible
 ````````
