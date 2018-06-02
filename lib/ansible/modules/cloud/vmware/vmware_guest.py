@@ -148,10 +148,6 @@ options:
           Please check VMware documentation for correct virtual machine hardware version.
           Incorrect hardware version may lead to failure in deployment. If hardware version is already equal to the given
           version then no action is taken. version_added: 2.6'
-    - ' - C(video_card) (dictionary):'
-    - '   -  C(video_memory_kb) (integer): amount of video memory in KB.'
-    - '   -  C(enable_3d) (boolean): whether the 3d support shall be enabled or not.'
-    - '   -  C(num_displays) (integer): number of displays to use.'
   guest_id:
     description:
     - Set the guest ID.
