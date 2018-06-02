@@ -21,6 +21,7 @@ Slave: Docker
 ````````
 On the slave, you'll need to install a few things in order to get started. Let's start with installing Docker
 .. code-block:: bash
+
   $ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
   $ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   $ sudo yum install -y docker-ce
