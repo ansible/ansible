@@ -19,7 +19,8 @@ For this guide, you'll need two virtual machines for one to represent the master
 
 Slave: Docker
 ````````
-On the slave, you'll need to install a few things in order to get started. Let's start with installing Docker
+On the slave, you'll need to install a few things in order to get started. Let's start with installing Docker:
+
 .. code-block:: bash
 
   $ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
