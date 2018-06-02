@@ -3,7 +3,7 @@ Getting Started
 
 What is this guide?
 ````````
-This guide is about the pairing between Ansible, which is incredibily powerful, and Docker. Docker, which I will talk about later in great detail, is a great way to build and deploy your own custom image. Pairing these two together means that you can bring up and take down entire server infrastructures just with a few command line commands. We'll be using an Ansible-Playbook to setup and configure each of the servers exactly as we want them before getting the data. I recommend this practice to anyone interested in large scale web development and load testing.
+This guide is about the pairing between Ansible, which is incredibily powerful, and Docker. Docker, which I will talk about later in great detail, is a great way to build and deploy your own custom image. Pairing these two together means that you can bring up and take down entire server infrastructures just with a few command line commands. We'll be using an Ansible-Playbook to setup and configure each of the servers exactly as we want them before getting the data. I recommend this practice to anyone interested in large scale web development and load testing. For more information and details I can be contacted at bakermat@oregonstate.edu.
 
 Ansible
 ````````
@@ -11,7 +11,7 @@ Per Ansible, Ansible is a piece of software that automates software provisioning
 
 Docker
 ````````
-Per Docker, docker is a computer program that performs operating-system-level virtualization known as containerization. That's really just a fancy way to saying container software.
+Per Docker, docker is a computer program that performs operating-system-level virtualization known as containerization. That's really just a fancy way to saying container software. The great thing about docker is its extensibility, with a relatively basic Dockerfile you can configure a static image based on just about anything. If you want Linux, you got it. If you want RedHat, you got it. If you want a basic linux image of about 5MB but you want SSH and only SSH, they've already got you covered. The DockerHub feature (which is also free) allows anyone to upload an image of their software for anyone else to download. For the purposes of this guide, I'll assume you've already got a DockerHub account.
 
 Virtual Machines and VirtualBox
 ````````
