@@ -75,7 +75,7 @@ Let's move on to building the Dockerfile next. In a previous guide I went over s
   EXPOSE 8080
   EXPOSE 22
   
-Next up, lets write a similar node server to what I did previously. No sense in remaking the wheel.
+Next up, lets write a similar node server to what I did previously. No sense in remaking the wheel. Call this file ``server.js`` for simplicity's sake.
 
 .. code-block:: txt
 
@@ -90,6 +90,22 @@ Next up, lets write a similar node server to what I did previously. No sense in 
   }).listen(8080);
 
 Write and quit both of those and make sure they are saved in the same directory, ``/home/user/``. Let's build the image and push it to the DockerHub server so that other people (and us later on) can use our image. Replace the instance of ``user`` with your DockerHub username.
+
+.. code-block:: bash
+
+  $ docker build -t user/server_node:1.0 .
+  $ docker push user/server_node:1.0
+  
+If you are not logged in on the command line there are lots of tutorials for logging in on the CLI so hop over to google and use the first one you find. I mentioned the guide previously in my last guide.
+
+Let's make sure that everything is cleaned up on the Slave with the following
+
+.. code-block:: bash
+
+  $ docker kill $(docker ps -q)
+  $ docker system prune -a
+  
+That will take down any processes you might have and delete any built images on your system. Do that every once in a while to make sure your space isn't being taken up needlessly. You should see about 90 - 110 MB freed. 
 
 Master: Ansible
 ````````
