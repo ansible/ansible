@@ -202,7 +202,8 @@ Let's get more complicated! The ansible playbook is a file thats built in the Ye
     - name: Run the slave server
       forever start /srv/server.js
 
-I know that was quite a lot to add to your ansible playbook but lets take a moment and briefly walk through it. 
+I know that was quite a lot to add to your ansible playbook but lets take a moment and briefly walk through it. In the ``hosts`` section that specifies which hosts we are talking about (again from the hosts.ini file from earlier). So we start with the Slave node (which has nothing running on it) and we choose not to ``gather_facts``. Gather_facts gathers data about the host but the issue with it is that it might fail due to a lack of python. So we skip it for now. Next up is ``become``, which we need because ``become`` indicates to ansible that it should ``become`` root. The ``tasks`` block concerns everything that ansible will have to take care of for that set of hosts (in this case just the Slave). There are two listed tasks and ansible will run both of them directly on the Slave. The first adds an IP address interface and then runs the first docker server and then second does the same but with a different IP address. 
+On the next set of hosts the commands are quite a bit different. The hosts, indicated by ``slaves`` are the hosts of the nodes running on the Slaves each at ``192.168.1.101`` and ``192.168.1.102`` respectively. Just like the main Slave, we choose to not gather facts about the hosts and we choose to become root. Next we ``template`` our index into place (which I'll detail what to put in there later) and then we install the ``npm`` tool known as ``forever``. The ``forever`` tool allows things like nodejs to run in the background forever, which is exactly what we need. And finally, we run the server.js file we made earlier using the ``forever`` tool.
 
 Master: Ansible-index.html
 ````````
