@@ -247,7 +247,14 @@ Let's run it!! ``./startup.S``. You'll see a bunch of text as ansible works thro
 
 Master: Curl Each Server
 ````````
+On the master this is the last task that we'll use as a way to see if everything worked correctly. Run the following on the command line on the master and if we're lucky you'll get back a basic html page (the one we made earlier) with a provisioned time that is different for each IP address ``192.168.1.101`` and ``192.168.1.102``.
 
+.. code-block:: bash
+
+  $ curl 192.168.1.101:8080
+  $ curl 192.168.1.102:8080
+  
+If not, that means something went wrong and you should check over to make sure that all of the steps previously were followed and if you think that they were please refer to the following sections for more troubleshooting and debugging help. Otherwise, good job!
 
 Troubleshooting: Connecting Over SSH to each container
 ````````
