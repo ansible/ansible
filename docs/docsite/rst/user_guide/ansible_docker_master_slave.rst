@@ -258,13 +258,13 @@ If not, that means something went wrong and you should check over to make sure t
 
 Troubleshooting: Connecting Over SSH to each container
 ````````
+If you find yourself not understanding why when you SSH to your Slaves they look like full distros of CentOS, this is because you don't have your routing set up properly. I ran into the issue where I would attempt to ssh to one of my slaves like so ``ssh root@192.168.1.101`` and I would end up at the CentOS Slave and not one of the Docker containers. This is very common, and not to worry. If you are sure that your containers are running on the slave and you want to connect, check their forwarding using ``docker ps -a`` on the Slave and then jump back over to the Master. Then type ``ssh root@192.168.1.101 -p 50222`` and that will put you inside of the container. If not, then head back to the documentation here and make sure that you exposed the right ports in the Dockerfile and the inside of the ansible playbook.
 
 Troubleshooting: Provisioning Each Container
 ````````
-
-Troubleshooting: Serving the Correct page
-````````
+This is the more 
 
 Troubleshooting: Installing packages
 ````````
+If you find any any of your containers are not installing the extra packages like ``nodejs`` or ``python3`` when building from the Dockerfile simply restart the Slave that you're building them on. I ran into the issue that my Slave was not picking up an IP address and the best way for you to solve that is to refresh the IP address and ping ``8.8.8.8`` and check. If the ``ping`` fails the restart and try again or simply try and renew your lease from the command line. No worries, it happens all the time.
 
