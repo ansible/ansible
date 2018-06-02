@@ -50,11 +50,46 @@ Next, copy that key from the Master over to the Slave. We'll need to bake it in 
   enter password
   
   $ ssh root@192.168.1.11
+  no password should be needed
   
-Slave: Dockerfile and Image
+Slave: Baking The Dockerfile and Server.js into the Image
 ````````
 Head back on over to the slave and lets check that everything copied correctly and worked out just right. Check that your public key is present in ``/root/.ssh/authorized_keys`` and that a copy of the public key also exists at ``/home/user/id_rsa.pub``. If not, go back to the previous step and attempt to copy it again.
 
+Let's move on to building the Dockerfile next. In a previous guide I went over some of the basics of this so we'll move through it pretty quickly. Create a file called ``Dockerfile`` at the directory level of ``/home/user/``. 
+
+.. code-block:: txt
+
+  # Dockerfile for servers of the Slave
+  FROM gotechnies/alpine-ssh:latest
+  MAINTAINER YourName <yourEmail@email.com>
+  
+  RUN apk -U add nodejs
+  RUN apk -U add python3
+  
+  # Copy the right files over to the image
+  COPY server.js /srv/server.js
+  COPY id_rsa.pub /root/.ssh/authorized_keys
+  
+  # Expose 8080 and 22 for HTTP and SSH, respectively
+  EXPOSE 8080
+  EXPOSE 22
+  
+Next up, lets write a similar node server to what I did previously. No sense in remaking the wheel.
+
+.. code-block:: txt
+
+  var fs = require('fs');
+  var ansi = fs.readFileSync("/srv/ansible-index.html");
+  var http = require('http');
+  
+  http.createServer(function (request, response)
+  {
+    response.writeHead(200, {'Content-Type': 'text/plain'});
+    response.end(ansi);
+  }).listen(8080);
+
+Write and quit both of those and make sure they are saved in the same directory, ``/home/user/``. Let's build the image and push it to the DockerHub server so that other people (and us later on) can use our image. Replace the instance of ``user`` with your DockerHub username.
 
 Master: Ansible
 ````````
