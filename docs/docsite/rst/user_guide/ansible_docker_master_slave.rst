@@ -147,8 +147,35 @@ That should cover all of the scripts we need to create. From the copy action we 
 Master: Hosts.ini
 ````````
 
+Let's setup the ``hosts.ini`` which contains hosts (IP addresses) and their associated variables. Open the ``hosts.ini`` file with ``vi hosts.ini`` and add the following:
+
+.. code-block:: txt
+
+  [slave]
+  192.168.1.11
+  
+  [slave:vars]
+  ansible_connection=ssh
+  ansible_port=22
+  ansible_user=root
+  ansible_python_interpreter=/usr/bin/python3
+  
+  [slaves]
+  192.168.1.101
+  192.168.1.102
+  
+  [slaves:vars]
+  ansible_connection=ssh
+  ansible_port=50222
+  ansible_user=root
+  ansible_python_interpreter=/usr/bin/python3
+  
+To briefly explain; the ``[slave]`` block is the IP of the Slave box we setup earlier and the ``[vars]`` block concerns how ansible will connect and make changes. As usual, we have't changed much from the basic ansible setup: connect over SSH to root and use the python3 interpreter is all this says.
+  
+
 Master: Startup.yaml Playbook
 ````````
+Let's get more complicated! 
 
 Master: Ansible-index.html
 ````````
