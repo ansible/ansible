@@ -120,9 +120,29 @@ Save that file then make sure its executable with ``chmod +x takeDown.S``. Then 
 
 Master: Ansible
 ````````
+Swap on over to the Master, located at the previously explained 192.168.1.10 (or whatever your Master's IP is). First we need to install ansible, which we'll use to monitor and provision the Slave. Install it with the following:
+
+.. code-block:: bash
+
+  $ sudo yum install -y ansible
+  
+Next, let's move on to the files we'll need.
 
 Master: Creating the files you'll need
 ````````
+Touch each of the following to create them. ``hosts.ini`` will contain the hosts both for the Slave and the nodes of the Slave. ``startup.yaml`` is the ansible playbook which we'll use to provision the nodes. ``ansible-index.html`` is the provisioned file, which we'll use to update the timestamp. ``id_rsa.pub`` is the public rsa key of the Master. ``startup.S`` is the script we'll use to run the ansible playbook and set the keyscan parameters. And at the end we'll ``curl`` each of the servers to get the provisioned page.
+
+.. code-block:: bash
+
+  $ touch hosts.ini
+  $ touch startup.yaml
+  $ touch ansible-index.html
+  $ touch startup.S
+  $ chmod +x startup.S
+  $ touch curl.S
+  $ chmod +x curl.S
+  
+That should cover all of the scripts we need to create. From the copy action we did earlier, we should already have the public rsa key we need for password-less SSH'ing.
 
 Master: Hosts.ini
 ````````
