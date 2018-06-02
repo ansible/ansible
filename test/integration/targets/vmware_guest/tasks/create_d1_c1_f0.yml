@@ -56,6 +56,10 @@
         # mem_reservation: 4096
         # cpu_limit: 8096
         # cpu_reservation: 4096
+        video_card:
+            video_memory_kb: 16384
+            enable_3d: true
+            num_display: 2
         max_connections: 10
     disk:
         - size: 1gb
@@ -122,6 +126,11 @@
     hardware:
         num_cpus: 2
         memory_mb: 1024
+        ## Commenting out video_card as I know the code can't update it
+        #video_card:
+        #    video_memory_kb: 8192
+        #    enable_3d: false 
+        #    num_display: 3
     state: present
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
