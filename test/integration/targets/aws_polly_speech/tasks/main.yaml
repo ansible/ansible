@@ -15,7 +15,7 @@
     # ============================================================
 
     - name: test with no parameters
-      polly_speech:
+      aws_polly_speech:
       register: result
       ignore_errors: true
 
@@ -26,7 +26,7 @@
            - 'result.msg.startswith("missing required arguments:")'
 
     - name: test with missing parameters
-      polly_speech:
+      aws_polly_speech:
         output_format: 'mp3'
       register: result
       ignore_errors: true
@@ -38,7 +38,7 @@
            - 'result.msg.startswith("missing required arguments:")'
 
     - name: test with missing parameters
-      polly_speech:
+      aws_polly_speech:
         output_format: 'mp3'
         voice_id: 'Brian'
       register: result
@@ -51,7 +51,7 @@
            - 'result.msg.startswith("missing required arguments:")'
 
     - name: test with missing parameters
-      polly_speech:
+      aws_polly_speech:
         output_format: 'mp3'
         voice_id: 'Brian'
         source: 'local'
@@ -65,7 +65,7 @@
            - 'result.msg.startswith("missing required arguments:")'
 
     - name: test with missing parameters
-      polly_speech:
+      aws_polly_speech:
         output_format: 'mp3'
         voice_id: 'Brian'
         source: 'local'
@@ -80,7 +80,7 @@
            - 'result.msg.startswith("source is local but all of the following are missing:")'
 
     - name: test with missing parameters
-      polly_speech:
+      aws_polly_speech:
         output_format: 'mp3'
         voice_id: 'Brian'
         source: 'local'
@@ -117,7 +117,7 @@
     # ============================================================
 
     - name: synthesize local text into an audio stream and save to local file
-      polly_speech:
+      aws_polly_speech:
         <<: *aws_connection_info
         output_format: 'mp3'
         voice_id: 'Brian'
@@ -143,7 +143,7 @@
             - result.stat.exists
 
     - name: synthesize local text into an audio stream and save to S3
-      polly_speech:
+      aws_polly_speech:
         <<: *aws_connection_info
         output_format: 'mp3'
         voice_id: 'Brian'
@@ -160,7 +160,7 @@
             - result.changed
 
     - name: synthesize s3 text file into an audio stream and save to local file
-      polly_speech:
+      aws_polly_speech:
         <<: *aws_connection_info
         output_format: 'mp3'
         voice_id: 'Brian'
@@ -187,7 +187,7 @@
             - result.stat.exists
 
     - name: synthesize s3 text file into an audio stream and save to file on s3
-      polly_speech:
+      aws_polly_speech:
         <<: *aws_connection_info
         output_format: 'mp3'
         voice_id: 'Brian'

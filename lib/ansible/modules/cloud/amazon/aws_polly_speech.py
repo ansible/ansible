@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: polly_speech
+module: aws_polly_speech
 short_description: Synthesize speech using AWS Polly.
 description:
     - Synthesizes UTF-8 input, plain text or SSML, to a stream of bytes. SSML input must be valid, well-formed SSML.
@@ -82,12 +82,13 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
 - name: synthesize provided text into an audio stream
-  polly_speech:
+  aws_polly_speech:
     output_format: 'mp3'
-    text: "{{ lookup('file', 'tmp/migration_instructions.txt') }}"
     voice_id: 'Brian'
+    source: 'local'
+    src_path: "{{ lookup('file', 'tmp/migration_instructions.txt') }}"
     destination: 'local'
-    path: 'migration_instructions.mp3'
+    dst_path: 'migration_instructions.mp3'
 '''
 
 
@@ -96,8 +97,6 @@ RETURN = r'''#'''
 from contextlib import closing
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -105,7 +104,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def create_synthesis(client, s3_client, module, params, result):
+def create_synthesis(client, s3_client, module, params):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
@@ -126,12 +125,8 @@ def create_synthesis(client, s3_client, module, params, result):
                 module.params.get('dst_bucket'),
                 module.params.get('dst_path')
             )
-            result['changed'] = True
-        return result
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to synthesize text into audio file")
-
-    return result
 
 
 def main():
@@ -171,10 +166,6 @@ def main():
         required_if=requirements,
     )
 
-    result = {
-        'changed': False,
-    }
-
     client = module.client('polly')
     s3_client = module.client('s3')
 
@@ -198,13 +189,13 @@ def main():
                 Bucket=module.params.get('src_bucket'),
                 Key=module.params.get('src_path')
             )
-            params['Text'] = response['Body'].read().decode("utf-8") 
+            params['Text'] = response['Body'].read().decode("utf-8")
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to get text file from S3")
 
-    create_synthesis(client, s3_client, module, params, result)
+    create_synthesis(client, s3_client, module, params)
 
-    module.exit_json(changed=result['changed'])
+    module.exit_json(changed=True)
 
 
 if __name__ == '__main__':
