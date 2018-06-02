@@ -111,7 +111,7 @@ EXAMPLES = '''
     peer_gw: true
     pkl_src: 1.1.1.2
     pkl_dest: 1.1.1.1
-    auto_recovery: true  
+    auto_recovery: true
 '''
 
 RETURN = '''
