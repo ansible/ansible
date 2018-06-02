@@ -209,6 +209,19 @@ On the next set of hosts the commands are quite a bit different. The hosts, indi
 
 Master: Ansible-index.html
 ````````
+Let's next create the ``ansible-index.html`` file which as we just saw in the ansible playbook we will ``template`` using the ``template`` source and destination function. Let's open it up using ``vi ansible-index.html`` and add the following:
+
+.. code-block:: html
+
+  <html>
+  <head><title>Slave Docker Server</title></head>
+  <body>
+  <p>Templated page from Ansible</p>
+  <p>Last provisioned on {{ template_run_date }}</p>
+  </body>
+  </html>
+  
+This is a very basic html page that will be served up by our nodejs server after being templated by ansible. You can add whatever you might like to make it a little more exciting but the only thing we're going to do is just ``template`` it later on and ``curl`` it.
 
 Master: Id_rsa.pub
 ````````
