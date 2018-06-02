@@ -223,11 +223,19 @@ Let's next create the ``ansible-index.html`` file which as we just saw in the an
   
 This is a very basic html page that will be served up by our nodejs server after being templated by ansible. You can add whatever you might like to make it a little more exciting but the only thing we're going to do is just ``template`` it later on and ``curl`` it.
 
-Master: Id_rsa.pub
-````````
-
 Master: Startup Script
 ````````
+Next, lets open up that startup bash script and add a few important things to make it easier on ourselves later on. Open it with ``vi startup.S`` and add the following:
+
+.. code-block:: txt
+
+  #!/bin/bash
+  clear
+  export ANSIBLE_HOST_KEY_CHECKING=false
+  ssh-keyscan 192.168.1.11 >> ~/.ssh/known_hosts
+  ansible-playbook startup.yaml -i hosts.ini
+  
+Let's walk through exactly what this script is doing. 
 
 Master: Curl Each Server
 ````````
