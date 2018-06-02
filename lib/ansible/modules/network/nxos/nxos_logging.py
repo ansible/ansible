@@ -89,11 +89,11 @@ EXAMPLES = """
     state: absent
 
 - name: Configure logging using aggregate
-      nxos_logging:
-        aggregate:
-          - { dest: console, dest_level: 2 }
-          - { dest: logfile, dest_level: 2, name: testfile }
-          - { facility: daemon, facility_level: 0 }
+  nxos_logging:
+    aggregate:
+      - { dest: console, dest_level: 2 }
+      - { dest: logfile, dest_level: 2, name: testfile }
+      - { facility: daemon, facility_level: 0 }
 """
 
 RETURN = """
