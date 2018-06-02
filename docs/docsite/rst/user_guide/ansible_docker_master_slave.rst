@@ -139,21 +139,17 @@ Master: Id_rsa.pub
 Master: Startup Script
 ````````
 
-
-
-Setting Up: Connecting Over SSH to each container
+Master: Curl Each Server
 ````````
 
-Setting Up: Provisioning Each Container
+
+Troubleshooting: Connecting Over SSH to each container
 ````````
 
-Testing: SSH
+Troubleshooting: Provisioning Each Container
 ````````
 
-Testing: Serving the Correct page
-````````
-
-Troubleshooting: Connecting to the right image
+Troubleshooting: Serving the Correct page
 ````````
 
 Troubleshooting: Installing packages
