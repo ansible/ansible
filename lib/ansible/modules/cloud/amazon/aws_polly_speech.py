@@ -118,7 +118,6 @@ def create_synthesis(client, s3_client, module, params):
                     if not data:
                         break
                 f.flush()
-            result['changed'] = True
         if module.params.get('destination') == 's3':
             s3_client.upload_fileobj(
                 response['AudioStream'],
