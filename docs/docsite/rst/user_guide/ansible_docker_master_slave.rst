@@ -175,7 +175,34 @@ To briefly explain; the ``[slave]`` block is the IP of the Slave box we setup ea
 
 Master: Startup.yaml Playbook
 ````````
-Let's get more complicated! 
+Let's get more complicated! The ansible playbook is a file thats built in the Yet Another Markup Language (YAML) format. Its a bit wierd but it works and that's all we care about. Remember that ``.yaml`` file we used ``touch`` on earlier? Let's open that up with ``vi startup.yaml``. Recall: ansible uses spacing as a way to delinate meaning, so don't mess up the spacing.
+
+.. code-block:: txt
+
+  ---
+  - hosts: slave
+    gather_facts: no
+    become: true
+    tasks:
+    - name: Start server 1
+      raw: ip addr add 192.168.1.101 dev enp0s3 && docker run -d --rm --name server1 -p 192.168.1.101:8080:8080 -p 192.168.1.101:50222:22 user/server_node:1.0
+    - name: Start server 2
+      raw: ip addr add 192.168.1.102 dev enp0s3 && docker run -d --rm --name server2 -p 192.168.1.102:8080:8080 -p 192.168.1.102:50222:22 user/server_node:1.0
+      
+  - hosts: slaves
+    gather_facts: no
+    become: true
+    tasks:
+    - name: Add index into place on the slave
+      template:
+        src: ansible-index.html
+        dest: /srv/ansible-index.html
+    - name: Install the forever tool
+      raw: npm install -g forever
+    - name: Run the slave server
+      forever start /srv/server.js
+
+I know that was quite a lot to add to your ansible playbook but lets take a moment and briefly walk through it. 
 
 Master: Ansible-index.html
 ````````
