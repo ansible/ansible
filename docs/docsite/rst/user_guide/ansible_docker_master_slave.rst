@@ -235,7 +235,15 @@ Next, lets open up that startup bash script and add a few important things to ma
   ssh-keyscan 192.168.1.11 >> ~/.ssh/known_hosts
   ansible-playbook startup.yaml -i hosts.ini
   
-Let's walk through exactly what this script is doing. 
+Let's walk through exactly what this script is doing. The first thing this script does is clear the terminal, for ease and cleanliness (always a nice thing). Next up it exports a certain variable, and this is what the ansible documentation says about it:
+
+.. code-block:: txt
+
+  If a host is reinstalled and has a different key in ‘known_hosts’, this will result in an error message until corrected. If a host is not initially in ‘known_hosts’ this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron. You might not want this.
+  
+The keyscan is just for the main Slave which is not always checked by the first export we just added. Just for being double-sure. That last command runs the ansible playbook we just made using the ``hosts.ini`` file specifying the Slave and Slaves. The last thing you need to do is chmod it; ``chmod +x startup.S``.
+
+Let's run it!! ``./startup.S``. You'll see a bunch of text as ansible works through each of the Slaves and their associated tasks. Installing forever on each of the containers can take a little while so sit back, relax and just wait. Total processing time should be about 2 - 3 minutes. Not too shabby.
 
 Master: Curl Each Server
 ````````
