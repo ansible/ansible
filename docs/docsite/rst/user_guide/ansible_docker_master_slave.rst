@@ -49,6 +49,8 @@ Next, copy that key from the Master over to the Slave. We'll need to bake it in 
   $ scp ~/.ssh/id_rsa.pub root@192.168.1.11:/home/user/id_rsa.pub
   enter password
   
+  $ ssh root@192.168.1.11
+  
 Slave: Dockerfile and Image
 ````````
 Head back on over to the slave and lets check that everything copied correctly and worked out just right. Check that your public key is present in ``/root/.ssh/authorized_keys`` and that a copy of the public key also exists at ``/home/user/id_rsa.pub``. If not, go back to the previous step and attempt to copy it again.
