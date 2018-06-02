@@ -17,15 +17,25 @@ Virtual Machines and VirtualBox
 ````````
 For this guide, you'll need two virtual machines for one to represent the master and the other to represent the slave. I used a CentOS based VM running on VirtualBox. I won't be going into the details of how to setup a command line based CentOS distro because thats a separate guide in and of itself but suffice to say you'll need a linux based CLI for this guide. The key here is that you'll need two different boxes (virtualized or not) and the addresses I'll use to indicate that are 192.168.1.10 (Master) and 192.168.1.11 (Slave).
 
+Slave: Docker
+````````
+On the slave, you'll need to install a few things in order to get started. Let's start with installing Docker
+.. code-block:: bash
+  $ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+  $ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  $ sudo yum install -y docker-ce
+  $ sudo systemctl start docker
+  $ sudo systemctl enable docker
+  $ sudo usermod -aG docker user
+
+Setting Up: Dockerfile and Image
+````````
+
 
 Master: Ansible
 ````````
 
-Slave: Docker
-````````
-
-Setting Up: Dockerfile and Image
-````````
+Setting Up: New RSA Key
 
 Setting Up: Ansible-Playbook
 ````````
