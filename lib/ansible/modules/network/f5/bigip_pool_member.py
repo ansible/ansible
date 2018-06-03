@@ -465,6 +465,8 @@ class ApiParameters(Parameters):
     def state(self):
         if self._values['state'] in ['user-up', 'unchecked', 'fqdn-up-no-addr'] and self._values['session'] in ['user-enabled']:
             return 'present'
+        elif self._values['state'] in ['down', 'up'] and self._values['session'] == 'monitor-enabled':
+            return 'present'
         elif self._values['state'] in ['user-down'] and self._values['session'] in ['user-disabled']:
             return 'forced_offline'
         else:
@@ -519,6 +521,8 @@ class ReportableChanges(Changes):
     @property
     def state(self):
         if self._values['state'] in ['user-up', 'unchecked', 'fqdn-up-no-addr'] and self._values['session'] in ['user-enabled']:
+            return 'present'
+        elif self._values['state'] in ['down', 'up'] and self._values['session'] == 'monitor-enabled':
             return 'present'
         elif self._values['state'] in ['user-down'] and self._values['session'] in ['user-disabled']:
             return 'forced_offline'
