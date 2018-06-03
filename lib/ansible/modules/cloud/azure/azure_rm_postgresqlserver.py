@@ -322,7 +322,7 @@ class AzureRMServers(AzureRMModuleBase):
                 response = self.mgmt_client.servers.update(resource_group_name=self.resource_group,
                                                            server_name=self.name,
                                                            parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
