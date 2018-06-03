@@ -134,14 +134,14 @@ fully_qualified_domain_name:
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
-#try:
-from azure.mgmt.rdbms.mysql import MySQLManagementClient
-from msrestazure.azure_exceptions import CloudError
-from msrest.polling import LROPoller
-from msrest.serialization import Model
-#except ImportError:
+try:
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
+    from msrest.serialization import Model
+except ImportError:
     # This is handled in azure_rm_common
-#    pass
+    pass
 
 
 class Actions:
