@@ -223,6 +223,14 @@ The preferred way to install ansible on a Mac is via pip.
 
 The instructions can be found in `Latest Releases Via Pip`_ section.
 
+Latest Releases on Mac High Sierra
+++++++++++++++++++++++++++++++++++++++
+
+The best way to install ansible on a Mac High Sierra is via brew:
+
+.. code-block:: bash
+    $ brew install ansible
+
 .. _from_pkgutil:
 
 Latest Releases Via OpenCSW (Solaris)
