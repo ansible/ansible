@@ -248,6 +248,7 @@ neptune_data = {
 }
 
 
+<<<<<<< HEAD
 rds_data = {
     "version": 2,
     "waiters": {
@@ -268,6 +269,8 @@ rds_data = {
 }
 
 
+=======
+>>>>>>> Adding module to manage database subnet groups on AWS Neptune
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
