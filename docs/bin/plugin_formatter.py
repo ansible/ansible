@@ -31,9 +31,8 @@ import sys
 import warnings
 from collections import defaultdict
 from distutils.version import LooseVersion
-from pprint import PrettyPrinter
 from functools import partial
-from ansible.module_utils.common.collections import is_sequence
+from pprint import PrettyPrinter
 
 try:
     from html import escape as html_escape
@@ -51,6 +50,7 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
