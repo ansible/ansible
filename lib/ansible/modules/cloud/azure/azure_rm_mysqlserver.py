@@ -314,9 +314,15 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Creating / Updating the MySQL Server instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.servers.create_or_update(resource_group_name=self.resource_group,
-                                                                 server_name=self.name,
-                                                                 parameters=self.parameters)
+            if (self.to_do == Actions.Create):
+                response = self.mgmt_client.servers.create(resource_group_name=self.resource_group,
+                                                           server_name=self.name,
+                                                           parameters=self.parameters)
+            else:
+                response = self.mgmt_client.servers.update(resource_group_name=self.resource_group,
+                                                           server_name=self.name,
+                                                           parameters=self.parameters)
+                
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
