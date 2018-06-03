@@ -95,9 +95,9 @@ import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from msrestazure.azure_exceptions import CloudError
     from msrest.polling import LROPoller
-    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
