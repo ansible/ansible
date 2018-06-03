@@ -148,6 +148,26 @@ class TestRole(unittest.TestCase):
         assert isinstance(r._task_blocks[0], Block)
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_tasks_dir_vs_file(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main/foo.yml": """
+            - command: bar
+            """,
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main.yml": """
+            - command: baz
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play, from_files=dict(tasks='custom_main'))
+
+        self.assertEqual(r._task_blocks[0]._ds[0]['command'], 'baz')
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_handlers(self):
 
         fake_loader = DictDataLoader({
