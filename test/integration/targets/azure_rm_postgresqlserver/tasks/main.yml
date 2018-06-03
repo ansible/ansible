@@ -1,4 +1,4 @@
-- name: Prepare random number -- trigger ci
+- name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
