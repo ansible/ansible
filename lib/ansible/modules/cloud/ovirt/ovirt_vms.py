@@ -53,6 +53,7 @@ options:
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
             - "C(source_profile_name): The prfile name related to the source network."
+            - "C(target_network_dc): The data center name which contains the vnic profile."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -622,6 +623,20 @@ EXAMPLES = '''
       source_profile_name: mynetwork2
       target_profile_id: 4444-4444-4444-4444
     reassign_bad_macs: "True"
+
+- name: Register VM with vnic profile mappings and reassign bad macs with dc name
+  ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    vnic_profile_mappings:
+    - source_network_name: mynetwork
+      target_network_dc: target_dc
+      source_profile_name: mynetwork
+      target_profile_id: 3333-3333-3333-3333
+    reassign_bad_macs: "True"
+
 
 - name: Register VM with mappings
   ovirt_vms:
@@ -1712,20 +1727,21 @@ def _get_cluster_mappings(module):
     return clusterMappings
 
 
-def _get_vnic_profile_mappings(module):
+def _get_vnic_profile_mappings(module, dc_name):
     vnicProfileMappings = list()
 
     for vnicProfileMapping in module.params['vnic_profile_mappings']:
-        vnicProfileMappings.append(
-            otypes.VnicProfileMapping(
-                source_network_name=vnicProfileMapping['source_network_name'],
-                source_network_profile_name=vnicProfileMapping['source_profile_name'],
-                target_vnic_profile=otypes.VnicProfile(
-                    id=vnicProfileMapping['target_profile_id'],
-                ) if vnicProfileMapping['target_profile_id'] else None,
+        target_dc = vnicProfileMapping.get('target_network_dc')
+        if target_dc is None or target_dc == dc_name:
+            vnicProfileMappings.append(
+                otypes.VnicProfileMapping(
+                    source_network_name=vnicProfileMapping['source_network_name'],
+                    source_network_profile_name=vnicProfileMapping['source_profile_name'],
+                    target_vnic_profile=otypes.VnicProfile(
+                        id=vnicProfileMapping['target_profile_id'],
+                    ) if vnicProfileMapping['target_profile_id'] else None,
+                )
             )
-        )
-
     return vnicProfileMappings
 
 
@@ -2061,12 +2077,16 @@ def main():
                 # Register the vm into the system:
                 changed = True
                 vm_service = vms_service.vm_service(vm.id)
+                sd = storage_domain_service.get()
+                dc_name = connection.follow_link(sd.data_centers)[0].name
                 vm_service.register(
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None,
-                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    # TODO: use vnic_profile_mapping inside the RegistrationConfiguration mapping
+                    # TODO#2: Fix empty list of vnic profile mappings
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module, dc_name)
                     if module.params['vnic_profile_mappings'] else None,
                     reassign_bad_macs=module.params['reassign_bad_macs']
                     if module.params['reassign_bad_macs'] is not None else None,
