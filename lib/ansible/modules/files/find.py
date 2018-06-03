@@ -46,7 +46,17 @@ options:
         version_added: "2.5"
     contains:
         description:
-            - One or more regex patterns which should be matched against the file content.
+            - match a regex pattern from the beginning of a line, in a file.
+            - if contains_anywhere is set to yes, match a regex pattern against line in a file.
+    contains_anywhere:
+        description:
+            - If no, match the contains regex pattern from the start of a line.
+            - If yes, match the contains regex pattern against a line.
+                - Please use '^' in 'contains' to search for match from the start of a line
+                - This option will  default to yes, in future.
+        version_added: "2.7"
+        type: bool
+        default: 'no'
     paths:
         required: true
         aliases: [ name, path ]
@@ -127,11 +137,13 @@ EXAMPLES = r'''
     age_stamp: atime
     recurse: yes
 
-- name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
+- name: Find /var/log files containing 'ERROR', equal or greater than 10 megabytes ending with .old or .log
   find:
     paths: /var/log
-    patterns: '*.old,*.log.gz'
+    patterns: '*.old,*.log'
     size: 10m
+    contains: 'ERROR'
+    contains_anywhere: yes
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
@@ -249,11 +261,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern):
+def contentfilter(fsname, pattern, anywhere):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
-    :arg pattern: Pattern to look for inside of line
+    :arg pattern: Pattern to match only at the beginning of a line
+    :arg anywhere: Search for regex pattern inside of a line
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
     """
@@ -263,11 +276,17 @@ def contentfilter(fsname, pattern):
     prog = re.compile(pattern)
 
     try:
-        with open(fsname) as f:
-            for line in f:
-                if prog.match(line):
-                    return True
+        with open(fsname, 'r') as f:
+            prog = re.compile(pattern)
+            # https://docs.python.org/3/library/re.html#search-vs-match
+            if anywhere:
+                searchfn = prog.search
+            else:
+                searchfn = prog.match
 
+            for line in f:
+                if searchfn(line):
+                    return True
     except:
         pass
 
@@ -329,6 +348,7 @@ def main():
             patterns=dict(type='list', default=['*'], aliases=['pattern']),
             excludes=dict(type='list', aliases=['exclude']),
             contains=dict(type='str'),
+            contains_anywhere=dict(type='bool', default='no'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'mtime', 'ctime']),
@@ -344,6 +364,9 @@ def main():
     )
 
     params = module.params
+
+    if params['contains'] and not params['contains_anywhere']:
+        module.deprecate("contains will default to using contains_anywhere as yes in future.", version='3.0')
 
     filelist = []
 
@@ -413,7 +436,7 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['contains_anywhere']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
