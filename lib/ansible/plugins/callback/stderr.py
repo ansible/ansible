@@ -13,6 +13,10 @@ DOCUMENTATION = '''
       - set as main display callback
     short_description: Splits output, sending failed tasks to stderr
     version_added: "2.4"
+    deprecated:
+        why: The 'default' callback plugin now supports this functionality
+        removed_in: '2.11'
+        alternative: "'default' callback plugin with 'display_failed_stderr = yes' option"
     extends_documentation_fragment:
       - default_callback
     description:
@@ -48,7 +52,7 @@ class CallbackModule(CallbackModule_default):
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._handle_exception(result._result, errors_to_stderr=True)
+        self._handle_exception(result._result, use_stderr=True)
         self._handle_warnings(result._result)
 
         if result._task.loop and 'results' in result._result:
@@ -65,17 +69,3 @@ class CallbackModule(CallbackModule_default):
 
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
-
-    def _handle_exception(self, result, errors_to_stderr=False):
-
-        if 'exception' in result:
-            msg = "An exception occurred during task execution. "
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = result['exception'].strip().split('\n')[-1]
-                msg += "To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "The full traceback is:\n" + result['exception']
-                del result['exception']
-
-            self._display.display(msg, color=C.COLOR_ERROR, stderr=errors_to_stderr)
