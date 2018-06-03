@@ -1,0 +1,284 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+    # ============================================================
+    # Prerequisites
+    # ============================================================
+
+    - name: Create VPC for use in testing
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.23.0.0/16
+        tags:
+          Name: Ansible ec2_instance Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: testing_vpc
+
+    - name: Create internet gateway for use in testing
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: igw
+
+    - name: Create testing subnet A
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.32.0/24
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-a"
+        <<: *aws_connection_info
+      register: testing_subnet_a
+
+    - name: Create testing subnet B
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.33.0/24
+        az: "{{ aws_region }}b"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-b"
+        <<: *aws_connection_info
+      register: testing_subnet_b
+
+    - name: Create testing subnet C
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.34.0/24
+        az: "{{ aws_region }}c"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-c"
+        <<: *aws_connection_info
+      register: testing_subnet_c
+
+    - name: create routing rules
+      ec2_vpc_route_table:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+          - "{{ testing_subnet_c.subnet.id }}"
+        <<: *aws_connection_info
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+
+    - name: test with no parameters
+      aws_neptune_subnet_group:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      aws_neptune_subnet_group:
+        name: 'example-subnet-group'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      aws_neptune_subnet_group:
+        name: 'example-subnet-group'
+        description: 'this is a test'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      aws_neptune_subnet_group:
+        name: 'example-subnet-group'
+        subnet_ids:
+          - 'subnet-1q2w3e4r'
+          - 'subnet-4r3e2w1q'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments:")'
+
+    # ============================================================
+    # Resource Tests
+    # ============================================================
+
+    - name: Create database subnet group
+      aws_neptune_subnet_group:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-group"
+        state: present
+        description: 'this is a test'
+        subnet_ids:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.db_subnet_group_arn is not none
+
+    - name: No changes to database subnet group
+      aws_neptune_subnet_group:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-group"
+        state: present
+        description: 'this is a test'
+        subnet_ids:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - not result.changed
+          - result.db_subnet_group_arn is not none
+
+    - name: Update database subnet group
+      aws_neptune_subnet_group:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-group"
+        state: present
+        description: 'this is an updated test'
+        subnet_ids:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+          - "{{ testing_subnet_c.subnet.id }}"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+          - result.changed
+          - result.db_subnet_group_arn is not none
+
+  always:
+
+    # ============================================================
+    # Teardown testing resources
+    # ============================================================
+
+    - name: Destroy database subnet group
+      aws_neptune_subnet_group:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-group"
+        state: absent
+        description: 'this is a test'
+        subnet_ids:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+          - "{{ testing_subnet_c.subnet.id }}"
+      ignore_errors: yes
+
+    - name: remove routing rules
+      ec2_vpc_route_table:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet_a.subnet.id }}"
+          - "{{ testing_subnet_b.subnet.id }}"
+          - "{{ testing_subnet_c.subnet.id }}"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove testing subnet A
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.32.0/24
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove testing subnet B
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.33.0/24
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove testing subnet C
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.23.34.0/24
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.23.0.0/16
+        state: absent
+        tags:
+          Name: Ansible Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

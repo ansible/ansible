@@ -179,6 +179,7 @@ waf_data = {
     }
 }
 
+
 eks_data = {
     "version": 2,
     "waiters": {
@@ -198,6 +199,49 @@ eks_data = {
                     "matcher": "error",
                     "expected": "ResourceNotFoundException"
                 }
+            ]
+        }
+    }
+}
+
+
+neptune_data = {
+    "version": 2,
+    "waiters": {
+        "DBSubnetGroupAvailable": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBSubnetGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBSubnetGroups[0].SubnetGroupStatus == 'Complete'",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBSubnetGroupNotFoundFault",
+                    "state": "retry"
+                },
+            ]
+        },
+        "DBSubnetGroupDeleted": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBSubnetGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBSubnetGroups[0]",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBSubnetGroupNotFoundFault",
+                    "state": "success"
+                },
             ]
         }
     }
@@ -237,6 +281,11 @@ def waf_model(name):
 def eks_model(name):
     eks_models = core_waiter.WaiterModel(waiter_config=eks_data)
     return eks_models.get_waiter(name)
+
+
+def neptune_model(name):
+    neptune_models = core_waiter.WaiterModel(waiter_config=neptune_data)
+    return neptune_models.get_waiter(name)
 
 
 def rds_model(name):
@@ -310,6 +359,18 @@ waiters_by_name = {
         eks_model('ClusterActive'),
         core_waiter.NormalizedOperationMethod(
             eks.describe_cluster
+        )),
+    ('Neptune', 'subnet_group_available'): lambda neptune: core_waiter.Waiter(
+        'subnet_group_available',
+        neptune_model('DBSubnetGroupAvailable'),
+        core_waiter.NormalizedOperationMethod(
+            neptune.describe_db_subnet_groups
+        )),
+    ('Neptune', 'subnet_group_deleted'): lambda neptune: core_waiter.Waiter(
+        'subnet_group_deleted',
+        neptune_model('DBSubnetGroupDeleted'),
+        core_waiter.NormalizedOperationMethod(
+            neptune.describe_db_subnet_groups
         )),
     ('RDS', 'db_instance_stopped'): lambda rds: core_waiter.Waiter(
         'db_instance_stopped',
