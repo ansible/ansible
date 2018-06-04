@@ -1,3 +1,7 @@
+# Dynamic inventory script for the web-based network management tool
+# Netdisco. Created by Maksim Nikiforov.
+# All information is extracted from Netdisco's  PostgreSQL database
+
 #!/usr/bin/python
 import json
 import psycopg2
@@ -7,12 +11,13 @@ from psycopg2.extras import RealDictCursor
 
 
 def main():
-        conn_string = "host='localhost' dbname='netdisco' user='netdisco' password='redhat'")
+        conn_string =
+        "host='localhost' dbname='netdisco' user='netdisco' password='redhat'"
 
         # Make the connection
         conn = psycopg2.connect(conn_string)
 
-        # conn.cursor will return a cursor object, you can use this cursor to perform queries
+        # Return a cursor object to perform queries
         cursor = conn.cursor()
 
         # execute the query
