@@ -182,7 +182,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
@@ -251,7 +251,7 @@ def check_args(module, warnings):
 # to be included with their parent. sanitize_config will add indentation to
 # end-* commands so they are included with their parents
 def sanitize_config(config, force_diff_prefix=None):
-    conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
+    conf_lines = config.split('\n')
     for regex in CONFIG_MISPLACED_CHILDREN:
         for index, line in enumerate(conf_lines):
             m = regex.search(line)
@@ -265,8 +265,8 @@ def sanitize_config(config, force_diff_prefix=None):
 
 
 def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
-    conf_lines = to_native(config, errors='surrogate_or_strict').split('\n')
-    candidate_lines = to_native(candidate, errors='surrogate_or_strict').split('\n')
+    conf_lines = config.split('\n')
+    candidate_lines = candidate.split('\n')
 
     for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
         block_index_start_end = []
