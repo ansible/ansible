@@ -88,7 +88,7 @@ options:
     save_snapshot_locally:
         description:
             - Specify to locally store a new created snapshot,
-              to be used when C(action=create). This works only for nxapi transport.
+              to be used when C(action=create).
         type: bool
         default: 'no'
     path:
@@ -148,7 +148,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, get_capabilities
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 
 
 def execute_show_command(command, module):
