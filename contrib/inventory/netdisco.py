@@ -44,7 +44,7 @@ def main():
             # Add the role variable for this host to hostvars
 
         inventory['_meta']['hostvars'][host]['ip'] = ip
-    print json.dumps(inventory, indent=4)
+    print(json.dumps(inventory, indent=4))
 
 
 if __name__ == '__main__':
