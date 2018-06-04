@@ -326,10 +326,10 @@ class AzureRM(object):
         # get authentication authority
         # for adfs, user could pass in authority or not.
         # for others, use default authority from cloud environment
-        if self.credentials.get('adfs_authority_url') is None:
-            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
-        else:
+        if self.credentials.get('adfs_authority_url'):
             self._adfs_authority_url = self.credentials.get('adfs_authority_url')
+        else:
+            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
 
         # get resource from cloud environment
         self._resource = self._cloud_environment.endpoints.active_directory_resource_id
@@ -627,6 +627,8 @@ class AzureInventory(object):
                             help='Active Directory User')
         parser.add_argument('--password', action='store',
                             help='password')
+        parser.add_argument('--adfs_authority_url', action='store',
+                            help='Azure ADFS authority url')
         parser.add_argument('--cloud_environment', action='store',
                             help='Azure Cloud Environment name or metadata discovery URL')
         parser.add_argument('--resource-groups', action='store',
