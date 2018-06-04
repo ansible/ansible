@@ -38,7 +38,8 @@
     password: "{{ vcsim_instance['json']['password'] }}"
   register: vm_facts_0001
 
-- debug: var="{{ vm_facts_0001['virtual_machines'].keys() }}"
+- debug:
+    msg: "{{ vm_facts_0001['virtual_machines'].keys() }}"
 
 - name: get all VMs
   uri:
