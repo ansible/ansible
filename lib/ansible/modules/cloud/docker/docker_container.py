@@ -243,7 +243,7 @@ options:
       - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
     type: bool
     default: 'no'
-    version_added: "2.6"
+    version_added: "2.7"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
