@@ -275,7 +275,10 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = dict_merge(value, other[key])
+                    if isinstance(other[key], dict):
+                        combined[key] = dict_merge(value, other[key])
+                    else:
+                        combined[key] = other[key]
                 else:
                     combined[key] = item
             else:
