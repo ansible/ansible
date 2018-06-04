@@ -286,7 +286,6 @@
         mode: get
         dest: "{{ tmp2.path }}"
         object: delete_encrypt_kms.txt
-        use_v4_signature: yes
         <<: *aws_connection_info
       retries: 3
       delay: 3
