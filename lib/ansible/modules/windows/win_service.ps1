@@ -178,7 +178,7 @@ Function Set-ServiceAccount($wmi_svc, $username_sid, $username, $password) {
         $actual_sid = Convert-ToSID -account_name $result.username
     }
 
-    if ($actual_sid -ne $username_sid) {
+    if ($actual_sid -eq $username_sid) {
         $change_arguments = @{
             StartName = $username
             StartPassword = $password
