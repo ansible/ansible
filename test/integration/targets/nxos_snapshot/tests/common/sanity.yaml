@@ -11,10 +11,6 @@
 - set_fact: snapshot_run="false"
   when: platform is match('N35')
 
-- set_fact: save_snapshot_locally="False"
-- set_fact: save_snapshot_locally="True"
-  when: ansible_connection is match('nxapi')
-
 - set_fact: add_sec="true"
 - set_fact: add_sec="false"
   when: imagetag is search("D1")
@@ -25,7 +21,7 @@
       action: create
       snapshot_name: test_snapshot1
       description: Ansible
-      save_snapshot_locally: "{{save_snapshot_locally|default(omit)}}"
+      save_snapshot_locally: True
     register: result
 
   - assert: &true

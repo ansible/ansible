@@ -339,12 +339,6 @@ def main():
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
 
-    local_save = module.params['save_snapshot_locally']
-    if local_save:
-        device_info = get_capabilities(module)
-        if device_info.get('network_api', 'nxapi') != 'nxapi':
-            module.fail_json(msg="save_snapshot_locally works only for nxapi transport")
-
     if not os.path.isdir(module.params['path']):
         module.fail_json(msg='{0} is not a valid directory name.'.format(
             module.params['path']))
@@ -372,11 +366,11 @@ def main():
                 result['commands'] = action_results
                 result['changed'] = True
 
-            if action == 'create' and module.params['path'] and local_save:
-                command = 'show snapshot dump {}'.format(module.params['snapshot_name'])
+            if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
+                command = 'show snapshot dump {} | json'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
-                    write_on_file(content, module.params['snapshot_name'], module)
+                    write_on_file(str(content), module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 
