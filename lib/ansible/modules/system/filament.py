@@ -66,15 +66,15 @@ def add(a, b):
 
 def main():
     module_args = dict(
-        operator_a=dict(required=True),
-        operator_b=dict(required=True))
+        operator_a=dict(required=True, type='int'),
+        operator_b=dict(required=True, type='int'))
     result = dict(changed=False)
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False
     )
-    result["msg"] = "got your argument: " + str(module.params["foo"])
     result["foo"] = "bar"
+    result["msg"] = "type of the argument:{0}".format(type(module.params["operator_a"]))
     result["result"] = add(module.params["operator_a"], module.params["operator_b"])
     # pdb.set_trace()
     module.exit_json(**result)

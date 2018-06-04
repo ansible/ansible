@@ -11,4 +11,8 @@
 - assert:
     that:
     - "return_value.foo == \"bar\""
-    msg: "assert failed"
+    msg: "assert failed: no key foo found in return"
+- assert:
+    that:
+    - "return_value.result == 3"
+    msg: "assert failed: calculation result is wrong"
