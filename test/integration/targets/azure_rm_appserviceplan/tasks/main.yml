@@ -71,4 +71,4 @@
   assert:
     that:
       - output.changed
-      - output.ansible_facts.azure_appserviceplan.sku.capacity == "2"
+      - output.ansible_facts.azure_appserviceplan.sku.capacity == 2
