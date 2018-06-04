@@ -11,8 +11,7 @@ from psycopg2.extras import RealDictCursor
 
 
 def main():
-        conn_string =
-        "host='localhost' dbname='netdisco' user='netdisco' password='redhat'"
+        conn_string = "host='localhost' dbname='netdisco' user='netdisco' password='redhat'"
 
         # Make the connection
         conn = psycopg2.connect(conn_string)
