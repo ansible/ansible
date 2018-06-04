@@ -14,6 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
+Depreciated.  Use na_ontap_license instead
+
 module: na_cdot_license
 
 short_description: Manage NetApp cDOT protocol and feature licenses

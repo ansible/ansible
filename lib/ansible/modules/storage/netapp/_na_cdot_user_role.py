@@ -14,6 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
+Depreciated.  Use na_ontap_user_role instead
+
 module: na_cdot_user_role
 
 short_description: useradmin configuration and management

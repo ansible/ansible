@@ -14,6 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
+Depreciated.  Use na_ontap_lun instead
+
 module: na_cdot_lun
 
 short_description: Manage  NetApp cDOT luns

@@ -14,6 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
+Depreciated.  Use na_ontap_aggregate instead
+
+
 module: na_cdot_aggregate
 
 short_description: Manage NetApp cDOT aggregates.

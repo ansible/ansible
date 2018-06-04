@@ -14,6 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
+Depreciated.  Use na_ontap_svm instead.
+
 module: na_cdot_svm
 
 short_description: Manage NetApp cDOT svm
