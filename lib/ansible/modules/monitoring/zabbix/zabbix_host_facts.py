@@ -98,14 +98,6 @@ class Host(object):
         self._module = module
         self._zapi = zbx
 
-    def is_host_exist(self, host_name, exact_match):
-        """ Check host exists """
-        search_key = 'search'
-        if exact_match:
-            search_key = 'filter'
-        result = self._zapi.host.get({search_key: {'host': host_name}})
-        return result
-
     def get_hosts_by_host_name(self, host_name, exact_match):
         """ Get host by host name """
         search_key = 'search'
@@ -196,21 +188,17 @@ def main():
     host = Host(module, zbx)
 
     if host_name:
-        is_host_exist = host.is_host_exist(host_name, exact_match)
+        hosts = host.get_hosts_by_host_name(host_name, exact_match)
+        if is_remove_duplicate:
+            hosts = host.delete_duplicate_hosts(hosts)
+        extended_hosts = []
+        for zabbix_host in hosts:
+            zabbix_host['hostinterfaces'] = host._zapi.hostinterface.get({
+                'output': 'extend', 'hostids': zabbix_host['hostid']
+            })
+            extended_hosts.append(zabbix_host)
+        module.exit_json(ok=True, hosts=extended_hosts)
 
-        if is_host_exist:
-            hosts = host.get_hosts_by_host_name(host_name, exact_match)
-            if is_remove_duplicate:
-                hosts = host.delete_duplicate_hosts(hosts)
-            extended_hosts = []
-            for zabbix_host in hosts:
-                zabbix_host['hostinterfaces'] = host._zapi.hostinterface.get({
-                    'output': 'extend', 'hostids': zabbix_host['hostid']
-                })
-                extended_hosts.append(zabbix_host)
-            module.exit_json(ok=True, hosts=extended_hosts)
-        else:
-            module.exit_json(ok=False, hosts=[], result="No Host present")
     elif host_ips:
         extended_hosts = host.get_hosts_by_ip(host_ips)
         if is_remove_duplicate:
