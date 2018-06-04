@@ -148,7 +148,7 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
-  kms_key_id:
+  encryption_kms_key_id:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
     version_added: "2.7"
@@ -460,8 +460,8 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
         params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
         if encrypt:
             params['ServerSideEncryption'] = module.params['encryption_mode']
-        if module.params['kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
-            params['SSEKMSKeyId'] = module.params['kms_key_id']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            params['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
 
         s3.put_object(**params)
         for acl in module.params.get('permission'):
@@ -500,8 +500,8 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         extra = {}
         if encrypt:
             extra['ServerSideEncryption'] = module.params['encryption_mode']
-        if module.params['kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
-            extra['SSEKMSKeyId'] = module.params['kms_key_id']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            extra['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
         if metadata:
             extra['Metadata'] = {}
 
@@ -663,7 +663,7 @@ def main():
             rgw=dict(default='no', type='bool'),
             src=dict(),
             ignore_nonexistent_bucket=dict(default=False, type='bool'),
-            kms_key_id=dict()
+            encryption_kms_key_id=dict()
         ),
     )
     module = AnsibleModule(
