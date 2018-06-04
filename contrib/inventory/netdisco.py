@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Dynamic inventory script for the web-based network management tool
-# Netdisco. Created by Maksim Nikiforov.
-# All information is extracted from Netdisco's  PostgreSQL database
+# Netdisco. Script created by Maksim Nikiforov.
+# All information is extracted from Netdisco's PostgreSQL database
 import json
 import psycopg2
 
@@ -11,6 +11,7 @@ Netdisco. Netdisco is a web-based network management tool suitable for
 small to very large networks. IP and MAC address data is
 collected into a PostgreSQL database using SNMP, CLI, or device APIs.
 """
+
 
 def main():
     '''Import inventory in JSON format for Ansible'''
