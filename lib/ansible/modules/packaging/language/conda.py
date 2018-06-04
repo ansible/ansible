@@ -29,7 +29,7 @@ options:
   name:
     description: >
       A list of package to install like C(foo). A package specification may be used
-      for C(state: present) or C(state: latest) such C(foo=1.0|1.2*).
+      for C(state: present) or C(state: latest) such as C(foo=1.0|1.2*).
     required: false
 
   state:
@@ -64,11 +64,14 @@ options:
     type: bool
 
   prefix:
-    description: The prefix of conda installation to manage. Mutually exclusive to I(env).
+    description: >
+      The full path to the conda environment to manage. Mutually exclusive to
+      I(env_name).
     required: false
 
-  env:
-    description: The conda environment to manage. Mutually exclusive to I(prefix).
+  env_name:
+    description: >
+      The conda environment name to manage. Mutually exclusive to I(prefix).
     required: false
 
   force:
@@ -154,9 +157,9 @@ def run_conda_command(module, command):
 
     rc, stdout, stderr = module.run_command(command)
 
-    # Bug in 4.4.10 where they don't respect the --quiet with --json flag and
-    # they emit lots of progress json blobs delimited by '\0'. E.g
-    # {"fetch":"openssl 1.0.2n","finished":false,"maxval":1,"progress":0.995565}
+    # Bug in 4.4.10 at least where --quiet is ignored when --json is present
+    # and conda emits progress json blobs delimited by '\0'. E.g
+    # {"fetch":"openssl 1.0.2n","finished":false,"maxval":1,"progress":0.9955}
     # Simply grab the last blob (if any), which is what we want
     stdout = stdout.split("\0")[-1]
 
@@ -177,8 +180,9 @@ def run_conda_command(module, command):
 
 
 def get_lookup_func(module, conda, conda_args):
-    """Returns a function that accepts a single package name argument are returns a dictionary
-    of 'installed' boolean status and 'version'/'channel' details if installed
+    """Returns a function that accepts a single package name argument are
+    returns a dictionary of 'installed' boolean status and 'version',
+    'channel' details if installed.
     """
 
     list_command_prefix = [conda, 'list', '--full-name'] + conda_args
@@ -242,7 +246,7 @@ def add_mutable_command_args(module, conda_args):
 
 def did_change(result):
     """Determines if the conda command was state changing, or would
-    have cause change if running not running in dry run mode.
+    have cause change if for not running in check mode.
 
     :param result:
         the json dictionary returned from the conda command
@@ -347,9 +351,9 @@ def main():
                 'required': False,
                 'type': 'list'
             },
-            'env': {
+            'env_name': {
                 'required': False,
-                'type': 'path'
+                'type': 'str'
             },
             'executable': {
                 'default': None,
@@ -383,7 +387,7 @@ def main():
             }
         },
         mutually_exclusive=[
-            ['prefix', 'env']
+            ['prefix', 'env_name']
         ],
         supports_check_mode=True
     )
@@ -397,8 +401,8 @@ def main():
 
     if module.params.get('prefix'):
         conda_args.extend(['--prefix', module.params['prefix']])
-    elif module.params.get('env'):
-        conda_args.extend(['--name', module.params['env']])
+    elif module.params.get('env_name'):
+        conda_args.extend(['--name', module.params['env_name']])
 
     get_package_status = get_lookup_func(module, conda, conda_args)
 
