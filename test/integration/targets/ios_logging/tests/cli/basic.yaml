@@ -97,7 +97,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging buffered 8000 debugging" in result.commands'
+      - '"logging buffered 8000" in result.commands'
 
 - name: Change logging parameters using aggregate
   ios_logging:
@@ -110,7 +110,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging buffered 9000 debugging" in result.commands'
+      - '"logging buffered 9000" in result.commands'
       - '"logging console notifications" in result.commands'
 
 - name: Set both logging destination and facility

@@ -190,7 +190,10 @@ def map_obj_to_commands(updates, module):
                         present = True
 
                 if not present:
-                    commands.append('logging buffered {0} {1}'.format(size, level))
+                    if level and level != 'debugging':
+                        commands.append('logging buffered {0} {1}'.format(size, level))
+                    else:
+                        commands.append('logging buffered {0}'.format(size))
 
             else:
                 dest_cmd = 'logging {0}'.format(dest)
