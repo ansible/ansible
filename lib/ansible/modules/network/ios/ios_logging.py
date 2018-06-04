@@ -225,18 +225,12 @@ def parse_size(line, dest):
     size = None
 
     if dest == 'buffered':
-        match = re.search(r'logging buffered (\S+)', line, re.M)
+        match = re.search(r'logging buffered(?: (\d+))?(?: [a-z]+)?', line, re.M)
         if match:
-            try:
-                int_size = int(match.group(1))
-            except ValueError:
-                int_size = None
-
-            if int_size:
-                if isinstance(int_size, int):
-                    size = str(match.group(1))
-                else:
-                    size = str(4096)
+            if match.group(1) is not None:
+                size = match.group(1)
+            else:
+                size = "4096"
 
     return size
 
@@ -261,15 +255,12 @@ def parse_level(line, dest):
 
     else:
         if dest == 'buffered':
-            match = re.search(r'logging buffered (?:\d+ )([a-z]+)', line, re.M)
+            match = re.search(r'logging buffered(?: \d+)?(?: ([a-z]+))?', line, re.M)
         else:
             match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
 
-        if match:
-            if match.group(1) in level_group:
-                level = match.group(1)
-            else:
-                level = 'debugging'
+        if match and match.group(1) in level_group:
+            level = match.group(1)
         else:
             level = 'debugging'
 

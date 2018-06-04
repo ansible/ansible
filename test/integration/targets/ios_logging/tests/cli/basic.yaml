@@ -1,7 +1,7 @@
 ---
 # ensure logging configs are empty
 - name: Remove host logging
-  ios_logging:
+  ios_logging: &remove_host
     dest: host
     name: 172.16.0.1
     state: absent
@@ -45,16 +45,12 @@
     provider: "{{ cli }}"
   register: result
 
-- assert:
+- assert: &unchanged
     that:
       - 'result.changed == false'
 
 - name: Delete/disable host logging
-  ios_logging:
-    dest: host
-    name: 172.16.0.1
-    state: absent
-    provider: "{{ cli }}"
+  ios_logging: *remove_host
   register: result
 
 - assert:
@@ -63,16 +59,10 @@
       - '"no logging host 172.16.0.1" in result.commands'
 
 - name: Delete/disable host logging (idempotent)
-  ios_logging:
-    dest: host
-    name: 172.16.0.1
-    state: absent
-    provider: "{{ cli }}"
+  ios_logging: *remove_host
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *unchanged
 
 - name: Console logging with level warnings
   ios_logging:
@@ -115,7 +105,7 @@
       - '"logging console notifications" in result.commands'
 
 - name: Set both logging destination and facility
-  ios_logging:
+  ios_logging: &set_both
     dest: buffered
     facility: uucp
     level: alerts
@@ -131,18 +121,10 @@
       - '"logging facility uucp" in result.commands'
 
 - name: Set both logging destination and facility (idempotent)
-  ios_logging:
-    dest: buffered
-    facility: uucp
-    level: alerts
-    size: 4096
-    state: present
-    provider: "{{ cli }}"
+  ios_logging: *set_both
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *unchanged
 
 - name: remove logging as collection tearDown
   ios_logging:
