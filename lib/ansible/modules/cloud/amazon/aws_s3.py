@@ -301,6 +301,8 @@ try:
 except ImportError:
     pass  # will be detected by imported AnsibleAWSModule
 
+IGNORE_S3_DROP_IN_EXCEPTIONS = ['XNotImplemented', 'NotImplemented']
+
 
 class Sigv4Required(Exception):
     pass
@@ -400,7 +402,12 @@ def create_bucket(module, s3, bucket, location=None):
             s3.create_bucket(Bucket=bucket)
         for acl in module.params.get('permission'):
             s3.put_bucket_acl(ACL=acl, Bucket=bucket)
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutBucketAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
 
     if bucket:
@@ -465,9 +472,14 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
         s3.put_object(**params)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
 
 
 def path_check(path):
@@ -525,9 +537,12 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     try:
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-    except s3.exceptions.from_code('XNotImplemented'):
-        module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Unable to set object ACL")
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Unable to set object ACL")
     try:
         url = s3.generate_presigned_url(ClientMethod='put_object',
