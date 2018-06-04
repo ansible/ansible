@@ -499,7 +499,6 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
 
     if not repoq:
 
-        retpkgs = []
         pkgs = []
         updates = []
 
@@ -518,11 +517,9 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
-        for pkg in pkgs:
-            if pkg in updates:
-                retpkgs.append(pkg)
+        retpkgs = (pkg for pkg in pkgs if pkg in updates)
 
-        return set([po_to_envra(p) for p in retpkgs])
+        return set(po_to_envra(p) for p in retpkgs)
 
     else:
         myrepoq = list(repoq)
@@ -536,7 +533,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         rc, out, err = module.run_command(cmd)
 
         if rc == 0:
-            return set([p for p in out.split('\n') if p.strip()])
+            return set(p for p in out.split('\n') if p.strip())
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
 
@@ -584,7 +581,7 @@ def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf,
         except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
-        return set([po_to_envra(p) for p in pkgs])
+        return set(po_to_envra(p) for p in pkgs)
 
     else:
         myrepoq = list(repoq)
@@ -600,7 +597,7 @@ def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf,
         rc2, out2, err2 = module.run_command(cmd)
         if rc == 0 and rc2 == 0:
             out += out2
-            pkgs = set([p for p in out.split('\n') if p.strip()])
+            pkgs = set(p for p in out.split('\n') if p.strip())
             if not pkgs:
                 pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf, installroot=installroot)
             return pkgs
@@ -622,9 +619,7 @@ def transaction_exists(pkglist):
 
     # first, we create a list of the package 'nvreas'
     # so we can compare the pieces later more easily
-    pkglist_nvreas = []
-    for pkg in pkglist:
-        pkglist_nvreas.append(splitFilename(pkg))
+    pkglist_nvreas = (splitFilename(pkg) for pkg in pkglist)
 
     # next, we build the list of packages that are
     # contained within an unfinished transaction
@@ -728,10 +723,10 @@ def pkg_to_dict(pkgstr):
 def repolist(module, repoq, qf="%{repoid}"):
     cmd = repoq + ["--qf", qf, "-a"]
     rc, out, _ = module.run_command(cmd)
-    ret = []
     if rc == 0:
-        ret = set([p for p in out.split('\n') if p.strip()])
-    return ret
+        return set(p for p in out.split('\n') if p.strip())
+    else:
+        return []
 
 
 def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disablerepo='', enablerepo=''):
@@ -1328,7 +1323,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         e_cmd = ['--installroot=%s' % installroot]
         yum_basecmd.extend(e_cmd)
 
-    if state in ['installed', 'present', 'latest']:
+    if state in ('installed', 'present', 'latest'):
         """ The need of this entire if conditional has to be chalanged
             this function is the ensure function that is called
             in the main section.
