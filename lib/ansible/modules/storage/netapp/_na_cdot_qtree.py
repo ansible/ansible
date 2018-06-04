@@ -14,8 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-Depreciated.  Use na_ontap_qtree instead
-
 module: na_cdot_qtree
 
 short_description: Manage qtrees
@@ -23,6 +21,11 @@ extends_documentation_fragment:
     - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
+
+depreciated:
+  removed_in: 2.7
+  why: Updated modules released with increased functionality
+  alternative: Use M(na_ontap_qtree) instead.
 
 description:
 - Create or destroy Qtrees.
