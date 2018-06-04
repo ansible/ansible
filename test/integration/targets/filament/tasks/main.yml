@@ -10,7 +10,7 @@
     var: return_value
 - assert:
     that:
-    - "return_value.foo == \"bar\""
+    - "return_value.foo == \"!bar\""
     msg: "assert failed: no key foo found in return"
 - assert:
     that:
