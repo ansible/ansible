@@ -255,8 +255,11 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   yum:
-    name: "nginx,postgresql,postgresql-server"
-    state: latest
+    name: 
+      - nginx
+      - postgresql
+      - postgresql-server
+    state: present
 '''
 
 import os
