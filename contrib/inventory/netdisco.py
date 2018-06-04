@@ -1,7 +1,15 @@
 #!/usr/bin/env python
 # Dynamic inventory script for the web-based network management tool
 # Netdisco. Script created by Maksim Nikiforov.
-# All information is extracted from Netdisco's PostgreSQL database
+# All information is extracted from Netdisco's PostgreSQL database.
+# Ensure that the postgresql.conf file is configured to accept
+# connections from your server. Look for the "listen_addresses" property
+# in postgresql.conf and replace localhost with the choice of your IPs
+# separated by comma (for testing, use * to accept connections from any IP).
+# Furthermore, ensure that the pg_hba.conf file is configured to allow
+# remote access.For testing purposes only, you may add the following line
+# underneath "TYPE DATABASE USER CIDR-ADDRESS  METHOD" in pg_hba.conf:
+#   host  all  all 0.0.0.0/0 md5
 import json
 import psycopg2
 
