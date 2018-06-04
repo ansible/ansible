@@ -26,19 +26,21 @@ DOCUMENTATION = '''
 module: nxos_rpm
 extends_documentation_fragment: nxos
 version_added: "2.7"
-short_description: Install rpms on Cisco NX-OS devices.
+short_description: Install patch or feature rpms on Cisco NX-OS devices.
 description:
     - Install software maintenance upgrade (smu) RPMS and
       3rd party RPMS on Cisco NX-OS devices.
 author: Sai Chintalapudi (@saichint)
 notes:
-    - Tested against NXOSv 7.0(3)I7(3) on VIRL
-    - The module can add, activate and commit a package,
-      and also decactivate and remove it.
+    - Tested against NXOSv 7.0(3)I2(5), 7.0(3)I4(6), 7.0(3)I5(3),
+      7.0(3)I6(1), 7.0(3)I7(3)
+    - For patches, the minimum platform version needed is 7.0(3)I2(5)
+    - For feature rpms, the minimum platform version needed is 7.0(3)I6(1)
+    - The module manages the entire RPM lifecycle (Add, activate, commit, deactivate, remove)
 options:
     pkg:
         description:
-            - Name of the remote package.
+            - Name of the RPM package.
         required: true
     file_system:
         description:
@@ -49,7 +51,7 @@ options:
     state:
         description:
             - If the state is present, the rpm will be installed,
-              if the state is absent, it will be removed.
+              If the state is absent, it will be removed.
         default: present
         choices: ['present', 'absent']
 '''
@@ -106,7 +108,7 @@ def config_cmd_operation(module, cmd):
     while iteration < 10:
         msg = load_config(module, [cmd], True)
         if msg:
-            if 'Another install operation is in progress' in msg[0]:
+            if 'another install operation is in progress' in msg[0].lower():
                 time.sleep(2)
                 iteration += 1
             else:
@@ -132,46 +134,46 @@ def validate_operation(module, show_cmd, cfg_cmd, pkg, pkg_not_present):
     module.fail_json(msg=err)
 
 
-def add_operation(module, show_cmd, file_system, pkg, fixed_pkg):
-    cmd = 'install add {0}:{1}'.format(file_system, pkg)
+def add_operation(module, show_cmd, file_system, full_pkg, pkg):
+    cmd = 'install add {0}:{1}'.format(file_system, full_pkg)
     config_cmd_operation(module, cmd)
-    validate_operation(module, show_cmd, cmd, fixed_pkg, False)
+    validate_operation(module, show_cmd, cmd, pkg, False)
     return cmd
 
 
-def activate_operation(module, show_cmd, fixed_pkg):
-    cmd = 'install activate {0} forced'.format(fixed_pkg)
+def activate_operation(module, show_cmd, pkg):
+    cmd = 'install activate {0} forced'.format(pkg)
     config_cmd_operation(module, cmd)
-    validate_operation(module, show_cmd, cmd, fixed_pkg, False)
+    validate_operation(module, show_cmd, cmd, pkg, False)
     return cmd
 
 
-def commit_operation(module, show_cmd, fixed_pkg):
-    cmd = 'install commit {0}'.format(fixed_pkg)
+def commit_operation(module, show_cmd, pkg):
+    cmd = 'install commit {0}'.format(pkg)
     config_cmd_operation(module, cmd)
-    validate_operation(module, show_cmd, cmd, fixed_pkg, False)
+    validate_operation(module, show_cmd, cmd, pkg, False)
     return cmd
 
 
-def deactivate_operation(module, show_cmd, fixed_pkg, flag):
-    cmd = 'install deactivate {0} forced'.format(fixed_pkg)
+def deactivate_operation(module, show_cmd, pkg, flag):
+    cmd = 'install deactivate {0} forced'.format(pkg)
     config_cmd_operation(module, cmd)
-    validate_operation(module, show_cmd, cmd, fixed_pkg, flag)
+    validate_operation(module, show_cmd, cmd, pkg, flag)
     return cmd
 
 
-def remove_operation(module, show_cmd, fixed_pkg):
-    cmd = 'install remove {0} forced'.format(fixed_pkg)
+def remove_operation(module, show_cmd, pkg):
+    cmd = 'install remove {0} forced'.format(pkg)
     config_cmd_operation(module, cmd)
-    validate_operation(module, show_cmd, cmd, fixed_pkg, True)
+    validate_operation(module, show_cmd, cmd, pkg, True)
     return cmd
 
 
-def install_remove_rpm(module, pkg, file_system, state):
+def install_remove_rpm(module, full_pkg, file_system, state):
     commands = []
 
-    splitted_pkg = pkg.split('.')
-    fixed_pkg = '.'.join(splitted_pkg[0:-1])
+    splitted_pkg = full_pkg.split('.')
+    pkg = '.'.join(splitted_pkg[0:-1])
 
     show_inactive = 'show install inactive'
     show_active = 'show install active'
@@ -182,48 +184,48 @@ def install_remove_rpm(module, pkg, file_system, state):
         inactive_body = execute_show_command(show_inactive, module)
         active_body = execute_show_command(show_active, module)
 
-        if fixed_pkg not in inactive_body and fixed_pkg not in active_body:
-            commands.append(add_operation(module, show_inactive, file_system, pkg, fixed_pkg))
+        if pkg not in inactive_body and pkg not in active_body:
+            commands.append(add_operation(module, show_inactive, file_system, full_pkg, pkg))
 
-        if fixed_pkg not in active_body:
-            commands.append(activate_operation(module, show_active, fixed_pkg))
+        if pkg not in active_body:
+            commands.append(activate_operation(module, show_active, pkg))
 
         commit_body = execute_show_command(show_commit, module)
-        if fixed_pkg not in commit_body:
+        if pkg not in commit_body:
             patch_body = execute_show_command(show_patches, module)
-            if fixed_pkg in patch_body:
+            if pkg in patch_body:
                 # this is an smu
-                commands.append(commit_operation(module, show_active, fixed_pkg))
+                commands.append(commit_operation(module, show_active, pkg))
             else:
-                err = 'Operation "install activate {0} forced" Failed'.format(fixed_pkg)
+                err = 'Operation "install activate {0} forced" Failed'.format(pkg)
                 module.fail_json(msg=err)
 
     else:
         commit_body = execute_show_command(show_commit, module)
         active_body = execute_show_command(show_active, module)
 
-        if fixed_pkg in commit_body and fixed_pkg in active_body:
-            commands.append(deactivate_operation(module, show_active, fixed_pkg, True))
+        if pkg in commit_body and pkg in active_body:
+            commands.append(deactivate_operation(module, show_active, pkg, True))
             commit_body = execute_show_command(show_commit, module)
-            if fixed_pkg in commit_body:
-                # this is smu
-                commands.append(commit_operation(module, show_inactive, fixed_pkg))
-            commands.append(remove_operation(module, show_inactive, fixed_pkg))
+            if pkg in commit_body:
+                # This is smu/patch rpm
+                commands.append(commit_operation(module, show_inactive, pkg))
+            commands.append(remove_operation(module, show_inactive, pkg))
 
-        elif fixed_pkg in commit_body:
-            # this is smu
-            commands.append(commit_operation(module, show_inactive, fixed_pkg))
-            commands.append(remove_operation(module, show_inactive, fixed_pkg))
+        elif pkg in commit_body:
+            # This is smu/patch rpm
+            commands.append(commit_operation(module, show_inactive, pkg))
+            commands.append(remove_operation(module, show_inactive, pkg))
 
-        elif fixed_pkg in active_body:
-            # this is smu
-            commands.append(deactivate_operation(module, show_inactive, fixed_pkg, False))
-            commands.append(remove_operation(module, show_inactive, fixed_pkg))
+        elif pkg in active_body:
+            # This is smu/patch rpm
+            commands.append(deactivate_operation(module, show_inactive, pkg, False))
+            commands.append(remove_operation(module, show_inactive, pkg))
 
         else:
             inactive_body = execute_show_command(show_inactive, module)
-            if fixed_pkg in inactive_body:
-                commands.append(remove_operation(module, show_inactive, fixed_pkg))
+            if pkg in inactive_body:
+                commands.append(remove_operation(module, show_inactive, pkg))
 
     return commands
 

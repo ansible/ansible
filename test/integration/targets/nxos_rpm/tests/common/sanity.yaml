@@ -58,7 +58,6 @@
   - name: Install nxsdk RPM
     nxos_rpm: &tsdkrpm
       pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm"
-      timeout: 300
     register: result
 
   - assert: &true2
@@ -76,7 +75,6 @@
   - name: Remove nxsdk RPM
     nxos_rpm: &rsdkrpm
       pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm"
-      timeout: 300
       state: absent
     register: result
 
