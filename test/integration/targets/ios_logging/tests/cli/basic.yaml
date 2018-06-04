@@ -97,7 +97,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging buffered 8000" in result.commands'
+      - '"logging buffered 8000 debugging" in result.commands'
 
 - name: Change logging parameters using aggregate
   ios_logging:
@@ -110,14 +110,45 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging buffered 9000" in result.commands'
+      - '"logging buffered 9000 debugging" in result.commands'
       - '"logging console notifications" in result.commands'
+
+- name: Set both logging destination and facility
+  ios_logging:
+    dest: buffered
+    facility: uucp
+    level: alerts
+    size: 4096
+    state: present
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging buffered 4096 alerts" in result.commands'
+      - '"logging facility uucp" in result.commands'
+
+- name: Set both logging destination and facility (idempotent)
+  ios_logging:
+    dest: buffered
+    facility: uucp
+    level: alerts
+    size: 4096
+    state: present
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
 
 - name: remove logging as collection tearDown
   ios_logging:
     aggregate:
       - { dest: console, level: notifications }
-      - { dest: buffered, size: 9000 }
+      - { dest: buffered, size: 4096, level: alerts }
+      - { facility: uucp }
     state: absent
     authorize: yes
   register: result
@@ -127,3 +158,4 @@
       - 'result.changed == true'
       - '"no logging console" in result.commands'
       - '"no logging buffered" in result.commands'
+      - '"no logging facility uucp" in result.commands'

@@ -136,6 +136,7 @@ def validate_size(value, module):
 
 
 def map_obj_to_commands(updates, module):
+    dest_group = ('console', 'monitor', 'buffered', 'on')
     commands = list()
     want, have = updates
     for w in want:
@@ -147,20 +148,33 @@ def map_obj_to_commands(updates, module):
         state = w['state']
         del w['state']
 
+        if facility:
+            w['dest'] = 'facility'
+
         if state == 'absent' and w in have:
-            if dest == 'host':
-                commands.append('no logging host {0}'.format(name))
-            elif dest:
-                commands.append('no logging {0}'.format(dest))
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+            if dest:
+                if dest == 'host':
+                    commands.append('no logging host {0}'.format(name))
+
+                elif dest in dest_group:
+                    commands.append('no logging {0}'.format(dest))
+
+                else:
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {0}'.format(facility))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'facility' and entry['facility'] == facility:
+                        present = True
+
+                if not present:
+                    commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
                 commands.append('logging host {0}'.format(name))
@@ -169,7 +183,14 @@ def map_obj_to_commands(updates, module):
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {0}'.format(size))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'buffered' and entry['size'] == size and entry['level'] == level:
+                        present = True
+
+                if not present:
+                    commands.append('logging buffered {0} {1}'.format(size, level))
 
             else:
                 dest_cmd = 'logging {0}'.format(dest)
@@ -229,12 +250,19 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
+        if dest == 'buffered':
+            match = re.search(r'logging buffered (?:\d+ )([a-z]+)', line, re.M)
+
+        else:
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
             else:
                 level = 'debugging'
+
         else:
             level = 'debugging'
 
@@ -321,7 +349,6 @@ def map_params_to_obj(module, required_if=None):
                 'level': module.params['level'],
                 'state': module.params['state']
             })
-
     return obj
 
 
@@ -374,6 +401,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
