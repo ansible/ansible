@@ -68,7 +68,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.six import string_types
-import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
@@ -76,6 +75,7 @@ __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
 try:
     from botocore.utils import ArgumentGenerator
     from botocore.stub import Stubber
+    from botocore.compat import OrderedDict
     HAS_MOCK_REQ = True
 except ImportError:
     HAS_MOCK_REQ = False
@@ -126,6 +126,8 @@ class AnsibleAWSModule(object):
                 msg='Python modules "botocore" or "boto3" are missing, please install both')
 
         self.check_mode = self._module.check_mode
+        self._diff = self._module._diff
+        self.difflist = []
         self._name = self._module._name
 
     @property
@@ -133,6 +135,8 @@ class AnsibleAWSModule(object):
         return self._module.params
 
     def exit_json(self, *args, **kwargs):
+        if self._diff:
+            kwargs.update(diff=self.difflist)
         return self._module.exit_json(*args, **kwargs)
 
     def fail_json(self, *args, **kwargs):
@@ -228,17 +232,15 @@ class AnsibleAWSModule(object):
         existing = self._gather_versions()
         return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
 
-    def create_response_dict(self, item):
+    def convert_response(self, item):
         if isinstance(item, string_types):
             return item
         elif isinstance(item, list):
-            return [self.create_response_dict(i) for i in item]
-        # from collections import OrderedDict fails on Python 2.6
-        # botocore uses its own OrderedDict class that is compatible with Python 2.6
-        elif item.__class__.__name__ == 'OrderedDict':
+            return [self.convert_response(i) for i in item]
+        elif isinstance(item, OrderedDict):
             item = dict(item)
             for k, v in item.items():
-                item[k] = self.create_response_dict(v)
+                item[k] = self.convert_response(v)
         return item
 
     def populate_response(self, response, extra_output):
@@ -247,12 +249,12 @@ class AnsibleAWSModule(object):
         elif isinstance(response, list):
             return [self.populate_response(i, extra_output) for i in response]
         elif isinstance(response, dict):
-            for output_key, v in dict(response).items():
+            for output_key, v in response.items():
                 if output_key in extra_output:
                     response[output_key] = extra_output[output_key]
                 else:
-                    # Careful. If doing diffs with deeply nested structures with repeat keys this will
-                    # do weird things. Safer to pass extra_output as a complex structure in cases like that.
+                    # If doing diffs with deeply nested structures with repeat keys this will do weird
+                    # things. Safer to pass extra_output as a complex structure in cases like that.
                     # TODO: make extra_output smarter
                     response[output_key] = self.populate_response(v, extra_output)
         return response
@@ -268,9 +270,9 @@ class AnsibleAWSModule(object):
         output_args = arg_gen.generate_skeleton(output_shape)
 
         # Generate response dict
-        resp = self.create_response_dict(output_args)
+        resp = self.convert_response(output_args)
         if extra_output:
-            resp = self.populate_response(dict(resp), extra_output)
+            resp = self.populate_response(resp, extra_output)
 
         # Validate input parameters
         resp_stub.add_response(method, resp)
