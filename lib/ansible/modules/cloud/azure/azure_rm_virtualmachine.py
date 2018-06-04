@@ -614,7 +614,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -741,6 +741,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
+
+        self.location = normalize_location_name(self.location)
 
         if self.state == 'present':
             # Verify parameters and resolve any defaults
