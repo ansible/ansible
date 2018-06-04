@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Dynamic inventory script for the web-based network management tool
 # Netdisco. Script created by Maksim Nikiforov.
 # All information is extracted from Netdisco's PostgreSQL database
