@@ -97,6 +97,11 @@ vars:
       - show version
     provider: "{{ cli }}"
     context: system
+
+-  asa_command:
+    commands:
+      - ping 8.8.8.8
+    wait_for: result[0] contains rate
 """
 
 RETURN = """
