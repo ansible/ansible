@@ -197,7 +197,17 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            msgs = load_config(module, commands, True)
+            if msgs:
+                for item in msgs:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'more than 40 lines' in err_str or 'buffer overflowed' in err_str:
+                            load_config(module, commands)
+
         result['changed'] = True
 
     module.exit_json(**result)
