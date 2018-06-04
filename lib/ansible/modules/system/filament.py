@@ -57,7 +57,7 @@ result:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import pdb
+from ansible.module_utils.filament_utils import str_to_int
 
 
 def add(a, b):
@@ -75,7 +75,9 @@ def main():
     )
     result["foo"] = "bar"
     result["msg"] = "type of the argument:{0}".format(type(module.params["operator_a"]))
-    result["result"] = add(module.params["operator_a"], module.params["operator_b"])
+    a = str_to_int(module.params["operator_a"])
+    b = str_to_int(module.params["operator_b"])
+    result["result"] = add(a, b)
     # pdb.set_trace()
     module.exit_json(**result)
 
