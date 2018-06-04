@@ -7,7 +7,7 @@
 - name: create a windows plan
   azure_rm_appserviceplan:
     name: "{{ win_plan_name }}1"
-    resource_group: "{{ plan_resource_group }}"
+    resource_group: "{{ resource_group }}"
     sku: B1
   register: output
 
@@ -47,8 +47,8 @@
 
 - name: update a windows plan sku
   azure_rm_appserviceplan:
-    name: "{{ win_plan_name }}2"
-    resource_group: "{{ plan_resource_group }}"
+    name: "{{ win_plan_name }}1"
+    resource_group: "{{ resource_group }}"
     sku: B2
   register: output
 
