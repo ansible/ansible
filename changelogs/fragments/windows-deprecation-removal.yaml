@@ -1,6 +1,0 @@
-removed_features:
-- win_chocolatey - removed deprecated upgrade option and choco_* output return values
-- win_feature - removed deprecated reboot option
-- win_iis_webapppool - removed the ability to supply attributes as a string in favour of a dictionary
-- win_package - removed deprecated name option
-- win_regedit - removed deprecated support for specifying HKCC as HCCC

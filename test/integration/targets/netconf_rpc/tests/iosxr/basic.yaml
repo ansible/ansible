@@ -1,0 +1,8 @@
+---
+- debug: msg="START netconf_rpc iosxr/basic.yaml on connection={{ ansible_connection }}"
+
+- name: discard changes
+  netconf_rpc:
+    rpc: discard-changes
+
+- debug: msg="END netconf_rpc iosxr/basic.yaml on connection={{ ansible_connection }}"

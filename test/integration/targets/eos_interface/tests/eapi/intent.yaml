@@ -9,8 +9,6 @@
 - name: Make sure LLDP is running
   eos_config:
     lines: lldp run
-    authorize: yes
-    provider: "{{ eapi }}"
   become: yes
 
 - name: Check intent arguments
@@ -20,7 +18,7 @@
     tx_rate: ge(0)
     rx_rate: ge(0)
     authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -33,9 +31,8 @@
     state: down
     tx_rate: gt(0)
     rx_rate: lt(0)
-    authorize: yes
-    provider: "{{ eapi }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -50,8 +47,7 @@
     name: "{{ test_interface_1 }}"
     enabled: False
     state: down
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -62,10 +58,9 @@
   eos_interface:
     name: "{{ test_interface_1 }}"
     enabled: False
-    authorize: yes
     state: up
-    provider: "{{ eapi }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -77,8 +72,7 @@
   eos_command:
     commands:
       - show lldp neighbors management1
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: show_lldp_neighbors_result
 
 - block:
@@ -88,8 +82,7 @@
         neighbors:
           - port: eth0
             host: an-vyos-02
-        authorize: yes
-        provider: "{{ eapi }}"
+      become: yes
       register: result
 
     - assert:
@@ -102,9 +95,8 @@
         neighbors:
           - port: dummy_port
             host: dummy_host
-        authorize: yes
-        provider: "{{ eapi }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
@@ -120,9 +112,8 @@
       - name: "{{ test_interface_1 }}"
         enabled: True
         state: up
-    authorize: yes
-    provider: "{{ eapi }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -137,9 +128,8 @@
             neighbors:
               - port: eth0
                 host: an-vyos-02
-        authorize: yes
-        provider: "{{ eapi }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
@@ -155,9 +145,8 @@
             host: an-vyos-02
           - port: dummy_port
             host: dummy_host
-        authorize: yes
-        provider: "{{ eapi }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
@@ -166,9 +155,3 @@
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
   when: "'an-vyos-02' in show_lldp_neighbors_result.stdout[0]"
-
-- name: Make sure LLDP is running (teardown)
-  eos_config:
-    lines: no lldp run
-    authorize: yes
-    provider: "{{ eapi }}"

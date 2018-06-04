@@ -1,0 +1,23 @@
+---
+- include: targets/nxos_install_os/tasks/upgrade/delete_files.yaml
+  when: delete_image_list is defined
+
+- include: targets/nxos_install_os/tasks/upgrade/copy_kick_system_images.yaml
+
+- include: targets/nxos_install_os/tasks/upgrade/install_with_kick.yaml
+  when: ki is defined and combined is undefined
+
+- include: targets/nxos_install_os/tasks/upgrade/install_system.yaml
+  when: combined is defined
+
+# Only needed when - meta: reset_connection does not work. Fixed in 2.6
+#- include: targets/nxos_install_os/tasks/upgrade/clear_persistent_sockets.yaml
+
+- meta: reset_connection
+
+- name: "Check installed OS for newly installed version {{ tv }}"
+  nxos_command:
+    commands: ['show version | json']
+  register: output
+
+- debug: msg="Version detected {{ output['stdout_lines'][0]['kickstart_ver_str'] }}"

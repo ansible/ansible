@@ -317,9 +317,9 @@ files:
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
   $modules/clustering/etcd3.py: evrardjp
-  $modules/clustering/k8s: chouseknecht samdoran maxamillion fabianvf flaper87
+  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
-  $modules/clustering/openshift: chouseknecht samdoran maxamillion fabianvf flaper87
+  $modules/clustering/openshift: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
   $modules/clustering/znode.py: treyperry
   $modules/commands/command.py: $team_ansible
@@ -357,7 +357,7 @@ files:
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
-  $modules/files/lineinfile.py: ahtik $team_ansible dhozac
+  $modules/files/lineinfile.py: ahtik $team_ansible dhozac samdoran
   $modules/files/replace.py: EvanK
   $modules/files/stat.py: bpennypacker
   $modules/files/synchronize.py: $team_ansible tima
@@ -438,7 +438,7 @@ files:
   $modules/net_tools/lldp.py:
     ignored: andyhky
   $modules/net_tools/nios/:
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
@@ -481,6 +481,7 @@ files:
   $modules/network/meraki/: $team_meraki
   $modules/network/netconf/netconf_config.py: lpenz userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: wisotzky $team_networking
+  $modules/network/netconf/netconf_rpc.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
@@ -607,6 +608,8 @@ files:
   $modules/source_control/gitlab_user.py: dj-wasabi
   $modules/source_control/hg.py: yeukhon
   $modules/source_control/subversion.py: dsummersl
+  $modules/storage/glusterfs/gluster_volume.py: rosmo
+  $modules/storage/glusterfs/gluster_peer.py: sac
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/: sdodsley
@@ -631,7 +634,6 @@ files:
   $modules/system/firewalld.py: maxamillion
   $modules/system/gconftool2.py: Akasurde kevensen
   $modules/system/getent.py: bcoca
-  $modules/system/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
   $modules/system/interfaces_file.py: hryamzik obourdon
   $modules/system/iptables.py: LinusU
@@ -660,7 +662,7 @@ files:
   $modules/system/puppet.py: emonty nibalizer
   $modules/system/runit.py: jsumners
   $modules/system/seboolean.py: $team_ansible sfromm
-  $modules/system/selinux.py: goozbach
+  $modules/system/selinux.py: goozbach samdoran
   $modules/system/selinux_permissive.py: mscherer
   $modules/system/seport.py: dankeder
   $modules/system/service.py: $team_ansible
@@ -673,7 +675,7 @@ files:
   $modules/system/systemd.py: $team_ansible
   $modules/system/timezone.py: jasperla tmshn
   $modules/system/ufw.py: ahtik ovcharenko pyykkis
-  $modules/system/user.py: $team_ansible sfromm
+  $modules/system/user.py: $team_ansible sfromm samdoran
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
   $modules/utilities/logic/async_status.py: $team_ansible
@@ -685,6 +687,7 @@ files:
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
   $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
   $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
@@ -791,13 +794,15 @@ files:
     labels:
       - networking
       - infoblox
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
     labels: networking
   $module_utils/network/aci:
     maintainers: $team_aci
     labels: networking
+  $module_utils/acme.py:
+    maintainers: mgruener resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -859,7 +864,7 @@ files:
     maintainers: paulquack
     labels: networking
   $module_utils/k8s_common.py:
-    maintainers: chouseknecht samdoran maxamillion fabianvf flaper87
+    maintainers: chouseknecht maxamillion fabianvf flaper87
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
@@ -1032,7 +1037,7 @@ files:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/lookup/nios.py:
-    maintainers: $team_networking brampling
+    maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
@@ -1056,6 +1061,9 @@ files:
   lib/ansible/plugins/lookup/onepassword_raw.py:
     maintainers: samdoran
     ignored: azenk
+  lib/ansible/plugins/netconf/sros.py:
+    maintainers: wisotzky $team_networking
+    labels: networking
   lib/ansible/plugins/shell/powershell.py:
     maintainers: $team_windows_core
     labels:
@@ -1187,7 +1195,7 @@ macros:
   team_ipa: Nosmoht Akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_netapp: hulquest lmprice broncofan amit0701 schmots1 carchi8py
+  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha gdpak

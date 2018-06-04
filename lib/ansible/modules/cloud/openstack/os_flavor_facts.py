@@ -29,8 +29,8 @@ notes:
     - This module creates a new top-level C(openstack_flavors) fact, which
       contains a list of unsorted flavors.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -201,13 +201,7 @@ def main():
     if ephemeral:
         filters['ephemeral'] = ephemeral
 
-    if filters:
-        # Range search added in 1.5.0
-        min_version = '1.5.0'
-    else:
-        min_version = None
-
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if name:
             flavors = cloud.search_flavors(filters={'name': name})
@@ -223,7 +217,7 @@ def main():
         module.exit_json(changed=False,
                          ansible_facts=dict(openstack_flavors=flavors))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

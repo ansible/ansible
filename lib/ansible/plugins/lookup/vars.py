@@ -11,7 +11,7 @@ DOCUMENTATION = """
     description:
       - Retrieves the value of an Ansible variable.
     options:
-      _term:
+      _terms:
         description: The variable names to look up.
         required: True
       default:
@@ -40,7 +40,7 @@ EXAMPLES = """
     variablename: hello
     myvar: notename
 
-- name: find several related variables:
+- name: find several related variables
   debug: msg="{{ lookup('vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
 
 - name: alternate way to find some 'prefixed vars' in loop
@@ -69,6 +69,7 @@ class LookupModule(LookupBase):
             self._templar.set_available_variables(variables)
         myvars = getattr(self._templar, '_available_variables', {})
 
+        self.set_option('_terms', terms)
         self.set_options(direct=kwargs)
         default = self.get_option('default')
 

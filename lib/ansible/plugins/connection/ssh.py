@@ -12,6 +12,9 @@ DOCUMENTATION = '''
     short_description: connect via ssh client binary
     description:
         - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
+        - Ansible does not expose a channel to allow communication between the user and the ssh process to accept
+          a password manually to decrypt an ssh key when using this connection plugin (which is the default). The
+          use of ``ssh-agent`` is highly recommended.
     author: ansible (@core)
     version_added: historical
     options:
@@ -59,7 +62,7 @@ DOCUMENTATION = '''
       ssh_executable:
           default: ssh
           description:
-            - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+            - This defines the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in $PATH.
             - This option is usually not required, it might be useful when access to system ssh is restricted,
               or when using ssh wrappers to connect to remote hosts.
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
@@ -70,7 +73,7 @@ DOCUMENTATION = '''
       sftp_executable:
           default: sftp
           description:
-            - This defines the location of the sftp binary. It defaults to `sftp` which will use the first binary available in $PATH.
+            - This defines the location of the sftp binary. It defaults to ``sftp`` which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
@@ -84,11 +87,11 @@ DOCUMENTATION = '''
           - {key: scp_executable, section: ssh_connection}
           version_added: "2.6"
       scp_extra_args:
-          description: Extra exclusive to the 'scp' CLI
+          description: Extra exclusive to the ``scp`` CLI
           vars:
               - name: ansible_scp_extra_args
       sftp_extra_args:
-          description: Extra exclusive to the 'sftp' CLI
+          description: Extra exclusive to the ``sftp`` CLI
           vars:
               - name: ansible_sftp_extra_args
       ssh_extra_args:
@@ -276,6 +279,11 @@ def _ssh_retry(func):
                     # 255 = failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError) as e:
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
+                    cmd = args[0]
+                    if self._play_context.password and isinstance(cmd, list):
+                        # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
+                        self.sshpass_pipe = os.pipe()
+                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 

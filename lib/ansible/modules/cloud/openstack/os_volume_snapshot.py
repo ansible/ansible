@@ -67,7 +67,7 @@ options:
      required: false
 requirements:
      - "python >= 2.7"
-     - "shade"
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -105,15 +105,10 @@ snapshot:
       display_name: test_snapshot
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import (openstack_full_argument_spec,
-                                            openstack_module_kwargs)
+                                            openstack_module_kwargs,
+                                            openstack_cloud_from_module)
 
 
 def _present_volume_snapshot(module, cloud):
@@ -175,13 +170,11 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    sdk, cloud = openstack_cloud_from_module(module)
 
     state = module.params['state']
 
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if cloud.volume_exists(module.params['volume']):
             if module.check_mode:
                 module.exit_json(changed=_system_state_change(module, cloud))
@@ -193,7 +186,7 @@ def main():
             module.fail_json(
                 msg="No volume with name or id '{0}' was found.".format(
                     module.params['volume']))
-    except (shade.OpenStackCloudException, shade.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
         module.fail_json(msg=e.message)
 
 

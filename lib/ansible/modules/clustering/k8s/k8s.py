@@ -47,14 +47,14 @@ requirements:
 
 EXAMPLES = '''
 - name: Create a k8s namespace
-  k8s_raw:
+  k8s:
     name: testing
     api_version: v1
     kind: Namespace
     state: present
 
 - name: Create a Service object from an inline definition
-  k8s_raw:
+  k8s:
     state: present
     definition:
       apiVersion: v1
@@ -76,12 +76,12 @@ EXAMPLES = '''
           port: 8000
 
 - name: Create a Service object by reading the definition from a file
-  k8s_raw:
+  k8s:
     state: present
     src: /testing/service.yml
 
 - name: Get an existing Service object
-  k8s_raw:
+  k8s:
     api_version: v1
     kind: Service
     name: web
@@ -89,14 +89,14 @@ EXAMPLES = '''
   register: web_service
 
 - name: Get a list of all service objects
-  k8s_raw:
+  k8s:
     api_version: v1
     kind: ServiceList
     namespace: testing
   register: service_list
 
 - name: Remove an existing Service object
-  k8s_raw:
+  k8s:
     state: absent
     api_version: v1
     kind: Service
@@ -106,17 +106,17 @@ EXAMPLES = '''
 # Passing the object definition from a file
 
 - name: Create a Deployment by reading the definition from a local file
-  k8s_raw:
+  k8s:
     state: present
     src: /testing/deployment.yml
 
 - name: Read definition file from the Ansible controller file system
-  k8s_raw:
+  k8s:
     state: present
     definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
-  k8s_raw:
+  k8s:
     state: present
     definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
 '''

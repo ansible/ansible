@@ -10,6 +10,7 @@ DOCUMENTATION = """
     version_added: "2.0"
     short_description: read keys from Python shelve file
     description:
+      - Read keys from Python shelve file.
     optoins:
       _terms:
         description: sets of key value pairs of parameters

@@ -23,6 +23,7 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -94,8 +95,11 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = {}
         result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
+        if isinstance(self._connection, NetworkCli):
+            result['network_api'] = 'cliconf'
+        else:
+            result['network_api'] = 'nxapi'
         return json.dumps(result)
 
     # Migrated from module_utils
@@ -114,10 +118,10 @@ class Cliconf(CliconfBase):
 
             try:
                 out = self.get(cmd)
-            except ConnectionError as e:
+            except AnsibleConnectionFailure as e:
                 if check_rc:
                     raise
-                out = e
+                out = getattr(e, 'err', e)
 
             try:
                 out = to_text(out, errors='surrogate_or_strict').strip()

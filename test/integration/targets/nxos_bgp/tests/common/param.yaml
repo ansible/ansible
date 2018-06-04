@@ -20,7 +20,7 @@
     nxos_bgp: &set_multi_vrf
       asn: 65535
       vrf: "{{ item }}"
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       bestpath_always_compare_med: true
       bestpath_aspath_multipath_relax: true
       bestpath_compare_routerid: true

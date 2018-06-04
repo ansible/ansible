@@ -145,7 +145,6 @@ lib/ansible/modules/cloud/atomic/atomic_container.py E317
 lib/ansible/modules/cloud/atomic/atomic_container.py E326
 lib/ansible/modules/cloud/azure/_azure.py E324
 lib/ansible/modules/cloud/azure/_azure.py E326
-lib/ansible/modules/cloud/azure/azure_rm_containerinstance.py E324
 lib/ansible/modules/cloud/centurylink/clc_alert_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E324
@@ -154,7 +153,6 @@ lib/ansible/modules/cloud/cloudscale/cloudscale_server.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_domain.py E325
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_instance.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
@@ -1038,9 +1036,6 @@ lib/ansible/modules/packaging/os/apt_repository.py E325
 lib/ansible/modules/packaging/os/apt_rpm.py E322
 lib/ansible/modules/packaging/os/apt_rpm.py E324
 lib/ansible/modules/packaging/os/apt_rpm.py E326
-lib/ansible/modules/packaging/os/dnf.py E322
-lib/ansible/modules/packaging/os/dnf.py E324
-lib/ansible/modules/packaging/os/dnf.py E326
 lib/ansible/modules/packaging/os/homebrew.py E326
 lib/ansible/modules/packaging/os/homebrew_cask.py E326
 lib/ansible/modules/packaging/os/layman.py E322
@@ -1201,8 +1196,6 @@ lib/ansible/modules/system/firewalld.py E322
 lib/ansible/modules/system/firewalld.py E324
 lib/ansible/modules/system/firewalld.py E325
 lib/ansible/modules/system/firewalld.py E326
-lib/ansible/modules/system/gluster_volume.py E322
-lib/ansible/modules/system/gluster_volume.py E326
 lib/ansible/modules/system/group.py E325
 lib/ansible/modules/system/iptables.py E325
 lib/ansible/modules/system/iptables.py E326
@@ -1230,7 +1223,6 @@ lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/solaris_zone.py E324
 lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/svc.py E324
-lib/ansible/modules/system/timezone.py E326
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/system/ufw.py E326
 lib/ansible/modules/system/user.py E324
@@ -1252,7 +1244,6 @@ lib/ansible/modules/web_infrastructure/django_manage.py E325
 lib/ansible/modules/web_infrastructure/django_manage.py E326
 lib/ansible/modules/web_infrastructure/gunicorn.py E322
 lib/ansible/modules/web_infrastructure/htpasswd.py E326
-lib/ansible/modules/web_infrastructure/jenkins_job.py E325
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E322
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E324
 lib/ansible/modules/web_infrastructure/jira.py E322
