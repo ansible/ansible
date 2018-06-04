@@ -161,11 +161,13 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'certKeyChain': 'cert_key_chain'
+        'certKeyChain': 'cert_key_chain',
+        'defaultsFrom': 'parent'
     }
 
     api_attributes = [
-        'ciphers', 'certKeyChain'
+        'ciphers', 'certKeyChain',
+        'defaultsFrom'
     ]
 
     returnables = [
