@@ -30,10 +30,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gcp_sql_database
+module: gcp_sql_user
 description:
-    - Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
-short_description: Creates a GCP Database
+    - The Users resource represents a database user in a Cloud SQL instance.
+short_description: Creates a GCP User
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,30 +46,31 @@ options:
             - Whether the given object should exist in GCP
         choices: ['present', 'absent']
         default: 'present'
-    charset:
+    host:
         description:
-            - The MySQL charset value.
-        required: false
-    collation:
-        description:
-            - The MySQL collation value.
-        required: false
+            - The host name from which the user can connect. For insert operations, host defaults
+              to an empty string. For update operations, host is specified as part of the request
+              URL. The host name cannot be updated after insertion.
+        required: true
     name:
         description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        required: false
+            - The name of the user in the Cloud SQL instance.
+        required: true
     instance:
         description:
             - The name of the Cloud SQL instance. This does not include the project ID.
         required: true
+    password:
+        description:
+            - The password for the user.
+        required: false
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: 'instance-database'
+      name: 'instance-user'
       settings:
         ip_configuration:
           authorized_networks:
@@ -84,10 +85,12 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/sqlservice.admin
       state: present
   register: instance
-- name: create a database
-  gcp_sql_database:
-      name: testObject
-      charset: 'utf8'
+- name: create a user
+  gcp_sql_user:
+      # Can't use Ansible random name because it's too long
+      name: 'test-user'
+      host: '10.1.2.3'
+      password: 'secret-password'
       instance: "{{ instance }}"
       project: testProject
       auth_kind: service_account
@@ -98,20 +101,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    charset:
+    host:
         description:
-            - The MySQL charset value.
-        returned: success
-        type: str
-    collation:
-        description:
-            - The MySQL collation value.
+            - The host name from which the user can connect. For insert operations, host defaults
+              to an empty string. For update operations, host is specified as part of the request
+              URL. The host name cannot be updated after insertion.
         returned: success
         type: str
     name:
         description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
+            - The name of the user in the Cloud SQL instance.
         returned: success
         type: str
     instance:
@@ -119,6 +118,11 @@ RETURN = '''
             - The name of the Cloud SQL instance. This does not include the project ID.
         returned: success
         type: dict
+    password:
+        description:
+            - The password for the user.
+        returned: success
+        type: str
 '''
 
 ################################################################################
@@ -140,17 +144,19 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            charset=dict(type='str'),
-            collation=dict(type='str'),
-            name=dict(type='str'),
-            instance=dict(required=True, type='dict')
+            host=dict(required=True, type='str'),
+            name=dict(required=True, type='str'),
+            instance=dict(required=True, type='dict'),
+            password=dict(type='str')
         )
     )
 
     state = module.params['state']
-    kind = 'sql#database'
+    kind = 'sql#user'
 
-    fetch = fetch_resource(module, self_link(module), kind)
+    fetch = fetch_wrapped_resource(module, 'sql#user',
+                                   'sql#usersList',
+                                   'items')
     changed = False
 
     if fetch:
@@ -191,9 +197,9 @@ def delete(module, link, kind):
 
 def resource_to_request(module):
     request = {
-        u'kind': 'sql#database',
-        u'charset': module.params.get('charset'),
-        u'collation': module.params.get('collation'),
+        u'kind': 'sql#user',
+        u'password': module.params.get('password'),
+        u'host': module.params.get('host'),
         u'name': module.params.get('name')
     }
     return_vals = {}
@@ -204,18 +210,57 @@ def resource_to_request(module):
     return return_vals
 
 
+def unwrap_resource_filter(module):
+    return {
+        'host': module.params['host'],
+        'name': module.params['name']
+    }
+
+
+def unwrap_resource(result, module):
+    query_predicate = unwrap_resource_filter(module)
+    matched_items = []
+    for item in result:
+        if all(item[k] == query_predicate[k] for k in query_predicate.keys()):
+            matched_items.append(item)
+    if len(matched_items) > 1:
+        module.fail_json(msg="More than 1 result found: %s" % matched_items)
+
+    if matched_items:
+        return matched_items[0]
+    else:
+        return None
+
+
 def fetch_resource(module, link, kind):
     auth = GcpSession(module, 'sql')
     return return_if_object(module, auth.get(link), kind)
+
+
+def fetch_wrapped_resource(module, kind, wrap_kind, wrap_path):
+    result = fetch_resource(module, self_link(module), wrap_kind)
+    if result is None or wrap_path not in result:
+        return None
+
+    result = unwrap_resource(result[wrap_path], module)
+
+    if result is None:
+        return None
+
+    if result['kind'] != kind:
+        module.fail_json(msg="Incorrect result: {kind}".format(**result))
+
+    return result
 
 
 def self_link(module):
     res = {
         'project': module.params['project'],
         'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
+        'name': module.params['name'],
+        'host': module.params['host']
     }
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users?name={name}&host={host}".format(**res)
 
 
 def collection(module):
@@ -223,7 +268,7 @@ def collection(module):
         'project': module.params['project'],
         'instance': replace_resource_dict(module.params['instance'], 'name')
     }
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
 def return_if_object(module, response, kind):
@@ -274,8 +319,7 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'charset': response.get(u'charset'),
-        u'collation': response.get(u'collation'),
+        u'host': response.get(u'host'),
         u'name': response.get(u'name')
     }
 
@@ -294,8 +338,8 @@ def wait_for_operation(module, response):
     if op_result is None:
         return None
     status = navigate_hash(op_result, ['status'])
-    wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'sql#database')
+    wait_for_completion(status, op_result, module)
+    return fetch_wrapped_resource(module, 'sql#user', 'sql#usersList', 'items')
 
 
 def wait_for_completion(status, op_result, module):
