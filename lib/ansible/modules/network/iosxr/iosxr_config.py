@@ -182,7 +182,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils._text import to_bytes
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
