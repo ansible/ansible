@@ -239,9 +239,9 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-.PHONY: changelog_reno
-changelog_reno:
-	reno -d changelogs/ report --title 'Ansible $(MAJOR_VERSION) "$(CODENAME)" Release Notes' --collapse-pre-release --no-show-source --earliest-version v$(MAJOR_VERSION).0a1 --output changelogs/CHANGELOG-v$(MAJOR_VERSION).rst
+.PHONY: changelog
+changelog:
+	packaging/release/changelogs/changelog.py release -vv && packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist
