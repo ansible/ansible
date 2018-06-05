@@ -79,6 +79,15 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Configure BGP AS and add 2 EBGP neighbors using BGP Unnumbered
+  nclu:
+    commands:
+        - add bgp autonomous-system 65000
+        - add bgp neighbor swp51 interface remote-as external
+        - add bgp neighbor swp52 interface remote-as external
+    commit: true
+
 '''
 
 RETURN = '''
