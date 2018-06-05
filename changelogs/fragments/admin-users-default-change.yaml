@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Changed the admin_users config option to not include "admin" by default as
+    admin is frequently used for a non-privileged account  (https://github.com/ansible/ansible/pull/41164)
