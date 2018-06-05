@@ -198,6 +198,7 @@ if($gather_subset.Contains('distribution')) {
         ansible_distribution_major_version = $osversion.Version.Major.ToString()
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
+        ansible_os_producttype = $win32_os.ProductType.ToString()
     }
 }
 
