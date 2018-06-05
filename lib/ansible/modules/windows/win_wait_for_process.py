@@ -21,11 +21,12 @@ description:
   behave poorly and do not enumerate external dependencies in thier
   manifset.
 options:
-  process_name:
+  process_name_exact:
     description:
-      - The name of the process for which to wait.
-      - Supports RegEx input. Be sure to escape RegEx reserved
-        characters if attempting plaintext match.
+      - The name of the process(es) for which to wait.
+  process_name_pattern:
+     description:
+      - RegEx pattern matching desired process(es)
   sleep:
     description:
     - Number of seconds to sleep between checks.

@@ -11,7 +11,8 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
-$process_name = Get-AnsibleParam -obj $params -name "process_name" -type "str" 
+$process_name_exact = Get-AnsibleParam -obj $params -name "process_name_exact" -type "list" 
+$process_name_pattern = Get-AnsibleParam -obj $params -name "process_name_pattern" -type "str" 
 $process_id = Get-AnsibleParam -obj $params -name "process_id" -type "int" -default 0 #pid is a reserved variable in PowerShell.  use process_id instead.
 $owner = Get-AnsibleParam -obj $params -name "owner" -type "str"
 $sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
@@ -31,13 +32,18 @@ if ($state -eq "absent" -and $sleep -ne 1)
     Fail-json $result "sleep parameter is of no effect when waiting for a proces to stop."
 }
 
-if ($process_name -and $process_id)
+if (($process_name_exact -or $process_name_pattern) -and $process_id)
 {
-    Fail-json $result "process_id and process_name may not be used at the same time."
+    Fail-json $result "process_id may not be used with process_name_exact or process_name_pattern"
 }
-if (-not ($process_name -or $process_id -or $user))
+if ($process_name_exact -and $process_name_pattern)
 {
-    Fail-json $result "at least one of: process_name, process_id, or user must be supplied"
+    Fail-json $result "process_name_exact and process_name_pattern may not be used at the same time."
+}
+
+if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $owner))
+{
+    Fail-json $result "at least one of: process_name_exact, process_name_pattern, process_id, or user must be supplied"
 }
 
 $module_start = Get-Date
@@ -50,8 +56,8 @@ Function Test-ProcessMatchesFilter {
         $WindowsProcess,
         [String]
         $Owner,
-        [String]
-        $ProcessName,
+        $ProcessNameExact,
+        $ProcessNamePattern,
         [int]
         $ProcessId
     )
@@ -64,19 +70,33 @@ Function Test-ProcessMatchesFilter {
 
         if ([String]::IsNullOrEmpty($WindowsProcess.Owner))
         {
-            #always add the owner to proces info so that it's reported back
+            #always add the owner to proces info so that it's reported back.
             $WindowsProcess = $WindowsProcess | Select-Object -Property *,@{Name="Owner";Expression={$owners[$_.id.tostring()]}} 
         }
-        if (-not [String]::IsNullOrEmpty($user) )
+        if (-not [String]::IsNullOrEmpty($Owner) )
         {
-            $include = $include -and ($WindowsProcess.Owner -eq $user)
+            # if an owner was specified in the filter, validate that here.
+            $include = $include -and ($WindowsProcess.Owner -eq $Owner)
         }
-        if(-not [String]::IsNullOrEmpty($process_name))
+        if(-not [String]::IsNullOrEmpty($ProcessNamePattern))
         {
-            $include = $include -and ($WindowsProcess.ProcessName -match $ProcessName)
+            #if a process name was specified in the filter, validate that here.
+            $include = $include -and ($WindowsProcess.ProcessName -match $ProcessNamePattern)
         }
-        if ($process_id -and $process_id -ne 0)
+        if($ProcessNameExact -is [Array] -or (-not [String]::IsNullOrEmpty($ProcessNameExact)))
         {
+            #if a process name was specified in the filter, validate that here.
+            if ($ProcessNameExact -is [Array] )
+            {
+                $include = $include -and ($ProcessNameExact -contains $WindowsProcess.ProcessName)
+            }
+            else {
+                $include = $include -and ($ProcessNameExact -eq $WindowsProcess.ProcessName)
+            }
+        }
+        if ($ProcessId -and $ProcessId -ne 0)
+        {
+            # if a PID was specified in the filger, validate that here.
             $include = $include -and ($WindowsProcess.Id -eq $ProcessId)
         }
        
@@ -87,8 +107,8 @@ Function Test-ProcessMatchesFilter {
     }
 }
 
-if ($state -eq "present" )
-{
+Start-Sleep -Seconds $pre_wait_delay
+if ($state -eq "present" ) {
     #wait for a process to start
     $Processes = @()
     $attempts = -1
@@ -98,7 +118,7 @@ if ($state -eq "present" )
             Fail-Json $result "timeout while waiting for $process_name to start.  waited $timeout seconds"
         }
        
-        $Processes = Get-Process | Test-ProcessMatchesFilter -Owner $owner -ProcessName $process_name -ProcessId $process_id | Select-Object -Property Id, ProcessName, Owner
+        $Processes = Get-Process | Test-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id | Select-Object -Property Id, ProcessName, Owner
         Start-Sleep -Seconds $sleep
         $attempts ++
         $ProcessCount = $(if ($Processes -is [array]) { $Processess.count } else{ 1 })
@@ -110,19 +130,16 @@ if ($state -eq "present" )
     }
     $result.matched_processess = $Processes
 }
-elseif ($state -eq "absent")
-{
+elseif ($state -eq "absent") {
     #wait for a process to stop
-    $Processes = Get-Process | Test-ProcessMatchesFilter -Owner $owner -ProcessName $process_name -ProcessId $process_id | Select-Object -Property ID, ProcessName, Owner
-    $result.matched_processess = $Processes
-    Fail-Json $result "faildebug"
-    $ProcessCount = $(if ($Processes -is [array]) { $Processess.count } else{ 1 })
+    $Processes = Get-Process |  Test-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id | Select-Object -Property ID, ProcessName, Owner
+    $result.matched_processes = $Processes
+    #Fail-Json $result "faildebug"
+    $ProcessCount = $(if ($Processes -is [array]) { $Processes.count } elseif ($Processes){ 1 } else {0})
     if ($ProcessCount -gt 0 )
     {
         try { 
-            Wait-Process -Id $($Processes | Select-Object -ExpandProperty ID) -Timeout $timeout -ErrorAction Stop
-           
-            $result.matched_processess = $Processes
+            Wait-Process -Id $($Processes | Select-Object -ExpandProperty Id) -Timeout $timeout -ErrorAction Stop
             $result.changed = $true
         }
         catch {
@@ -134,5 +151,6 @@ elseif ($state -eq "absent")
 
     }
 }
+Start-Sleep -Seconds $post_wait_delay
 $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 Exit-Json $result
