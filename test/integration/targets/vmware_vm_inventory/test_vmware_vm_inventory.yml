@@ -1,9 +1,9 @@
-# Test code for the vmware dynamic plugin module
+# Test code for the vmware guest dynamic plugin module
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ---
-- name: Test VMware Dynamic Inventroy Plugin
+- name: Test VMware Guest Dynamic Inventroy Plugin
   hosts: localhost
   tasks:
     - name: store the vcenter container ip

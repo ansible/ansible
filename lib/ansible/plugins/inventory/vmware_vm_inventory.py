@@ -8,13 +8,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: vmware_inventory
+    name: vmware_vm_inventory
     plugin_type: inventory
-    short_description: VMware inventory source
+    short_description: VMware Guest inventory source
+    version_added: "2.6"
     description:
-        - Get inventory hosts from VMware environment.
+        - Get virtual machines as inventory hosts from VMware environment.
         - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
-        - 'Please make sure you mention "enable_plugins = vmware_inventory" in inventory section of ansible.cfg.'
         - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
       - inventory_cache
@@ -27,14 +27,17 @@ DOCUMENTATION = '''
     options:
         hostname:
             description: Name of vCenter or ESXi server.
+            required: True
             env:
               - name: VMWARE_SERVER
         username:
             description: Name of vSphere admin user.
+            required: True
             env:
               - name: VMWARE_USERNAME
         password:
             description: Password of vSphere admin user.
+            required: True
             env:
               - name: VMWARE_PASSWORD
         port:
@@ -59,8 +62,8 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-    #Sample configuration file for VMware dynamic inventory
-    plugin: vmware_inventory
+    # Sample configuration file for VMware Guest dynamic inventory
+    plugin: vmware_vm_inventory
     strict: False
     hostname: 10.65.223.31
     username: administrator@vsphere.local
@@ -79,15 +82,13 @@ try:
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
-    raise AnsibleError('"requests" Python module is required for VMware dynamic inventory plugin.'
-                       ' Install using "pip install requests"')
 
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
+    HAS_PYVMOMI = True
 except ImportError:
-    raise AnsibleError('"PyVmomi" Python module is required for VMware dynamic inventory plugin.'
-                       ' Install using "pip install pyvmomi"')
+    HAS_PYVMOMI = False
 
 try:
     from vmware.vapi.lib.connect import get_requests_connector
@@ -111,7 +112,7 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
 
-    NAME = 'vmware_inventory'
+    NAME = 'vmware_vm_inventory'
 
     def _set_credentials(self):
         """
@@ -227,6 +228,13 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if super(InventoryModule, self).verify_file(path):
             if path.endswith(('vmware.yaml', 'vmware.yml')):
                 valid = True
+
+        if not HAS_REQUESTS:
+            raise AnsibleParserError('Please install "requests" Python module as this is required'
+                                     ' for VMware Guest dynamic inventory plugin.')
+        elif not HAS_PYVMOMI:
+            raise AnsibleParserError('Please install "PyVmomi" Python module as this is required'
+                                     ' for VMware Guest dynamic inventory plugin.')
 
         if HAS_REQUESTS:
             # Pyvmomi 5.5 and onwards requires requests 2.3

@@ -11,7 +11,7 @@ export vcenter_pass="${vcenter_pass:-pass}"
 VMWARE_CONFIG=test-config.vmware.yaml
 
 cat > "$VMWARE_CONFIG" <<VMWARE_YAML
-plugin: vmware_inventory
+plugin: vmware_vm_inventory
 strict: False
 hostname: ${vcenter_host}
 username: ${vcenter_user}
@@ -34,4 +34,4 @@ curl "http://${vcenter_host}:5000/govc_find"
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list
 # Test playbook with given inventory
-ansible-playbook -i ${VMWARE_CONFIG} test_vmware_inventory.yml --connection=local "$@"
+ansible-playbook -i ${VMWARE_CONFIG} test_vmware_vm_inventory.yml --connection=local "$@"
