@@ -38,7 +38,7 @@ class TerminalModule(TerminalBase):
     terminal_stdout_re = [
         re.compile(br"\[\w+\@[\w\-\.]+\] ?> ?$"),
         re.compile(br"Please press \"Enter\" to continue!"),
-        re.compile(br"Do you want to see the software license\? \[Y/n\]: ?"),
+        re.compile(br"Do you want to see the software license\? \[Y\/n\]: ?"),
     ]
 
     terminal_stderr_re = [
@@ -49,9 +49,10 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         prompt = self._get_prompt()
-        display.debug("on_open_shell: '%s'" % prompt)
         try:
-            if not prompt.strip().endswith(b'>'):
+            if prompt.strip().endswith(b':'):
+                self._exec_cli_command(b' ')
+            if prompt.strip().endswith(b'!'):
                 self._exec_cli_command(b'\n')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to bypass license prompt')
