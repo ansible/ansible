@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: tower_inventory_source
 author: "Adrien Fleury (@fleu42)"
-version_added: "2.6"
+version_added: "2.7"
 short_description: create, update, or destroy Ansible Tower inventory source.
 description:
     - Create, update, or destroy Ansible Tower inventories source. See
