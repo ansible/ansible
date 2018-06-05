@@ -51,6 +51,7 @@ from six import iteritems, string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -157,6 +158,18 @@ def rst_xline(width, char="="):
 
 
 test_list = partial(is_sequence, include_strings=False)
+
+
+def to_boolean(value):
+    ''' convert default value to boolean if it intends to be boolean '''
+
+    if value.get('type') == 'bool' and 'default' in value:
+        temp = boolean(value['default'])
+        new_value = value.copy()
+        new_value['default'] = temp
+        return new_value
+    else:
+        return value
 
 
 def write_data(text, output_dir, outputname, module=None):
@@ -273,6 +286,12 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+
+        for key in (doc.get('options') or {}):
+            try:
+                doc['options'][key] = to_boolean(doc['options'][key])
+            except TypeError:
+                pass
 
         # save all the information
         module_info[module] = {'path': module_path,
