@@ -60,7 +60,7 @@ options:
 
     frameworks:
         description:
-            - Set of run time framework settings.
+            - Set of run time framework settings. Each setting is a dictionary.
             - Mutually exlusive with java_settings.
             - See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
         suboptions:
@@ -519,7 +519,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             is_linux = old_plan['reserved']
         else:
             is_linux = self.plan['is_linux'] if self.plan['is_linux'] else False
-        
+
         if self.frameworks:
             if is_linux:
                 if len(self.frameworks) != 1:
@@ -659,13 +659,13 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.app_settings_strDic = self.list_app_settings()
 
                 # purge existing app_settings:
-                if self.purge_app_settings: 
+                if self.purge_app_settings:
                     if self.app_settings_strDic.properties == self.app_settings:
                         for key in self.app_settings.keys():
                             if self.app_settings[key] != self.app_settings_strDic.properties.get(key, None):
                                 to_be_updated = True
                                 self.app_settings_strDic.properties = dict()
-                                self.app_settings_strDic.properties[key]  = self.app_settings[key]
+                                self.app_settings_strDic.properties[key] = self.app_settings[key]
                                 break
 
                 # check if app settings changed

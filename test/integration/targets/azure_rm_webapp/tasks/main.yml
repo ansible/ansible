@@ -202,7 +202,7 @@
   assert:
     that: output.changed
 
-- name: assert error in java_version is mutually exclusive with frameworks
+- name: assert error that java_version is mutually exclusive with frameworks
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}11"
@@ -210,8 +210,12 @@
     frameworks:
       - name: "python"
         version: "2.7"
+    java_settings:
+      version: "1.9"
+      java_container_name: "Tomcat"
+      java_container_version: "8.0"
   register: fail_win_java_version_mutual_exclusive
-  failed_when: fail_win_java_version_mutual_exclusive.msg != "parameters are mutually exclusive: frameworks, java_settings"
+  failed_when: 'fail_win_java_version_mutual_exclusive.msg != "parameters are mutually exclusive: frameworks, java_settings"'
 
   - name: assert error when linux web app, only can specify one framework
   azure_rm_webapp:
