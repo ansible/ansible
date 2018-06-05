@@ -290,6 +290,7 @@ owner_id:
 
 import json
 import re
+import copy
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -768,7 +769,21 @@ def update_rule_descriptions(module, group_id, present_ingress, named_tuple_ingr
 
 
 def create_security_group(client, module, name, description, vpc_id):
-    if not module.check_mode:
+    if module.check_mode:
+        group = {
+            'GroupId': 'sg-xxxxxxxx',
+            'GroupName': name,
+            'Description': description,
+            'IpPermissions': [],
+            'IpPermissionsEgress': [{
+                'IpProtocol': '-1',
+                'PrefixListIds': [],
+                'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
+                'UserIdGroupPairs': [],
+                'Ipv6Ranges': []
+            }]
+        }
+    else:
         params = dict(GroupName=name, Description=description)
         if vpc_id:
             params['VpcId'] = vpc_id
@@ -776,6 +791,7 @@ def create_security_group(client, module, name, description, vpc_id):
             group = client.create_security_group(**params)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to create security group")
+
         # When a group is created, an egress_rule ALLOW ALL
         # to 0.0.0.0/0 is added automatically but it's not
         # reflected in the object returned by the AWS API
@@ -788,8 +804,8 @@ def create_security_group(client, module, name, description, vpc_id):
                 pass
             else:
                 break
-        return group
-    return None
+
+    return group
 
 
 def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_ingress, purge_egress):
@@ -847,6 +863,16 @@ def verify_rules_with_descriptions_permitted(client, module, rules, rules_egress
             module.fail_json(msg="Using rule descriptions requires botocore version >= 1.7.2.")
 
 
+def format_diff_rules_after(rules):
+    formatted = []
+    for rule in rules:
+        for k in ('Ipv6Ranges', 'PrefixListIds', 'UserIdGroupPairs'):
+            if k not in rule:
+                rule[k] = []
+        formatted.append(rule)
+    return formatted
+
+
 def main():
     argument_spec = dict(
         name=dict(),
@@ -898,8 +924,10 @@ def main():
         if group:
             # found a match, delete it
             try:
-                if not module.check_mode:
-                    client.delete_security_group(GroupId=group['GroupId'])
+                module.call_method(client, method='delete_security_group',
+                                   comp_method='describe_security_groups',
+                                   params={'GroupId': group['GroupId']},
+                                   comp_method_params={'GroupIds': [group['GroupId']]})
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Unable to delete security group '%s'" % group)
             else:
@@ -908,6 +936,7 @@ def main():
         else:
             # no match found, no changes required
             pass
+        module.exit_json(changed=changed, group_id=None)
 
     # Ensure requested group is present
     elif state == 'present':
@@ -1001,7 +1030,9 @@ def main():
         # Authorize new rules
         changed |= add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'])
 
-        if group_created_new and module.params.get('rules') is None and module.params.get('rules_egress') is None:
+        if module.check_mode and group['GroupId'] == 'sg-xxxxxxxx':
+            security_group = group
+        elif group_created_new and module.params.get('rules') is None and module.params.get('rules_egress') is None:
             # A new group with no rules provided is already being awaited.
             # When it is created we wait for the default egress rule to be added by AWS
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
@@ -1009,6 +1040,35 @@ def main():
             security_group = wait_for_rule_propagation(module, group, named_tuple_ingress_list, named_tuple_egress_list, purge_rules, purge_rules_egress)
         else:
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
+
+        if changed and module._diff:
+            sg_after = copy.deepcopy(security_group)
+
+            if module.check_mode and security_group['GroupId'] == 'sg-xxxxxxxx':
+                before = {}
+            else:
+                before = camel_dict_to_snake_dict(group)
+                before['tags'] = boto3_tag_list_to_ansible_dict(before.get('tags', []))
+
+            if module.check_mode:
+                after_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
+                if tags is not None:
+                    added_tags, deleted_tags = compare_aws_tags(after_tags, tags, purge_tags)
+                    after_tags = dict((k, v) for k, v in after_tags.items() if k not in deleted_tags)
+                    after_tags.update(added_tags)
+
+                sg_after['IpPermissions'] = format_diff_rules_after(
+                    new_ingress_permissions + [to_permission(r) for r in current_ingress if to_permission(r) not in revoke_ingress]
+                )
+                sg_after['IpPermissionsEgress'] = format_diff_rules_after(
+                    new_egress_permissions + [to_permission(r) for r in current_egress if to_permission(r) not in revoke_egress]
+                )
+                sg_after['Tags'] = after_tags
+            else:
+                sg_after['Tags'] = boto3_tag_list_to_ansible_dict(sg_after.get('Tags', []))
+
+            module.difflist.append({'before': before, 'after': camel_dict_to_snake_dict(sg_after)})
+
         security_group = camel_dict_to_snake_dict(security_group)
         security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
                                                                 tag_name_key_name='key', tag_value_key_name='value')
