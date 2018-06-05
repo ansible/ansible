@@ -31,6 +31,7 @@ options:
     description:
       - "The customized message used for a failing assertion"
   success_msg:
+    version_added: "2.7"
     description:
       - "The customized message used for a successful assertion"
 notes:

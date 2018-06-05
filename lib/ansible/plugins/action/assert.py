@@ -20,6 +20,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.playbook.conditional import Conditional
 from ansible.plugins.action import ActionBase
+from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
@@ -39,9 +40,9 @@ class ActionModule(ActionBase):
 
         msg = None
         success_msg = None
-        if 'msg' in self._task.args:
+        if 'msg' in self._task.args and isinstance(self._task.args['msg'], string_types):
             msg = self._task.args['msg']
-        if 'success_msg' in self._task.args:
+        if 'success_msg' in self._task.args and isinstance(self._task.args['success_msg'], string_types):
             success_msg = self._task.args['success_msg']
 
         # make sure the 'that' items are a list
