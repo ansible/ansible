@@ -217,7 +217,7 @@
   register: fail_win_java_version_mutual_exclusive
   failed_when: 'fail_win_java_version_mutual_exclusive.msg != "parameters are mutually exclusive: frameworks, java_settings"'
 
-  - name: assert error when linux web app, only can specify one framework
+- name: assert error when linux web app, only can specify one framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}11"
