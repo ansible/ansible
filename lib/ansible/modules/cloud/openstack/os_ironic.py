@@ -93,6 +93,12 @@ options:
           description:
             - size of first storage device in this machine (typically /dev/sda), in GB
           default: 1
+        root_device:
+          description:
+            - specifying the disk for deployment (root device hints). Allow to
+              set root device hints as a dict with following keys:
+              'model', 'vendor', 'serial', 'size', 'wwn', 'wwn_with_extension',
+              'wwn_vendor_extension', 'rotational', 'hctl', 'name'.
     skip_update_of_driver_password:
       description:
         - Allows the code that would assert changes to nodes to skip the
@@ -150,6 +156,12 @@ def _parse_properties(module):
         memory_mb=p.get('ram') if p.get('ram') else 1,
         local_gb=p.get('disk_size') if p.get('disk_size') else 1,
     )
+    if isinstance(p.get('root_device'), dict):
+        if set(p.get('root_device').keys()).issubset(set(
+                ['model', 'vendor', 'serial', 'size', 'wwn',
+                 'wwn_with_extension', 'wwn_vendor_extension', 'rotational',
+                 'hctl', 'name'])):
+            props['root_device']=p.get('root_device')
     return props
 
 
