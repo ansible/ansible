@@ -241,6 +241,9 @@ def update_resources(module, p):
                 key = 'credential' if '_credential' in k else k
                 result = tower_cli.get_resource(key).get(**{v: params[k]})
                 params[k] = result['id']
+            elif k in params:
+                # unset empty parameters to avoid ValueError: invalid literal for int() with base 10: ''
+                del(params[k])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
     return params
