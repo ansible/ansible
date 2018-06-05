@@ -5,7 +5,7 @@
   eos_config:
     lines:
       - snmp-server contact ansible
-      - hostname veos01
+      - "hostname {{ inventory_hostname_short }}"
     match: none
   become: yes
 
@@ -37,7 +37,7 @@
   eos_config:
     lines:
       - no snmp-server contact
-      - hostname veos01
+      - hostname {{ inventory_hostname_short }}
     match: none
   become: yes
 

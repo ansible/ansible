@@ -28,6 +28,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     import kubernetes
     from openshift.dynamic import DynamicClient
+    from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
 except ImportError:
     HAS_K8S_MODULE_HELPER = False
@@ -121,13 +122,14 @@ class K8sAnsibleMixin(object):
         self._argspec_cache = argument_spec
         return self._argspec_cache
 
-    def get_api_client(self, **auth):
+    def get_api_client(self, **auth_params):
         auth_args = AUTH_ARG_SPEC.keys()
 
-        auth = auth or getattr(self, 'params', {})
+        auth_params = auth_params or getattr(self, 'params', {})
+        auth = copy.deepcopy(auth_params)
 
         configuration = kubernetes.client.Configuration()
-        for key, value in iteritems(auth):
+        for key, value in iteritems(auth_params):
             if key in auth_args and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
@@ -137,6 +139,7 @@ class K8sAnsibleMixin(object):
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
                     setattr(configuration, key, env_value)
+                    auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
 
@@ -174,6 +177,18 @@ class K8sAnsibleMixin(object):
                 return kubernetes.client.ApiClient()
             raise
 
+    def find_resource(self, kind, api_version, fail=False):
+        for attribute in ['kind', 'name', 'singular_name']:
+            try:
+                return self.client.resources.get(**{'api_version': api_version, attribute: kind})
+            except (ResourceNotFoundError, ResourceNotUniqueError):
+                pass
+        try:
+            return self.client.resources.get(api_version=api_version, short_names=[kind])
+        except (ResourceNotFoundError, ResourceNotUniqueError):
+            if fail:
+                self.fail(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
+
     def remove_aliases(self):
         """
         The helper doesn't know what to do with aliased keys
@@ -189,12 +204,12 @@ class K8sAnsibleMixin(object):
         result = None
         path = os.path.normpath(src)
         if not os.path.exists(path):
-            self.fail_json(msg="Error accessing {0}. Does the file exist?".format(path))
+            self.fail(msg="Error accessing {0}. Does the file exist?".format(path))
         try:
             with open(path, 'r') as f:
                 result = list(yaml.safe_load_all(f))
         except (IOError, yaml.YAMLError) as exc:
-            self.fail_json(msg="Error loading resource_definition: {0}".format(exc))
+            self.fail(msg="Error loading resource_definition: {0}".format(exc))
         return result
 
     @staticmethod
@@ -202,16 +217,7 @@ class K8sAnsibleMixin(object):
         if not HAS_DICTDIFFER:
             return False, []
 
-        def get_shared_attrs(o1, o2):
-            shared_attrs = {}
-            for k, v in o2.items():
-                if isinstance(v, dict):
-                    shared_attrs[k] = get_shared_attrs(o1.get(k, {}), v)
-                else:
-                    shared_attrs[k] = o1.get(k)
-            return shared_attrs
-
-        diffs = list(dictdiffer.diff(new, get_shared_attrs(existing, new)))
+        diffs = list(dictdiffer.diff(new, existing))
         match = len(diffs) == 0
         return match, diffs
 
@@ -234,3 +240,6 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
 
     def execute_module(self):
         raise NotImplementedError()
+
+    def fail(self, msg=None):
+        self.fail_json(msg=msg)

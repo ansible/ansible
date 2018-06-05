@@ -98,7 +98,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: configure a network ipv6
   nios_network:
     network: fe80::/64
@@ -109,7 +108,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: set dhcp options for a network ipv4
   nios_network:
     network: 192.168.10.0/24
@@ -123,7 +121,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove a network ipv4
   nios_network:
     network: 192.168.10.0/24
@@ -141,14 +138,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV6_NETWORK
 
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
-
     This function will transform the options argument into a structure that
     is a valid WAPI structure in the format of:
-
         {
             name: <value>,
             num: <value>,
@@ -156,11 +153,9 @@ def options(module):
             use_option: <value>,
             vendor_class: <value>
         }
-
     It will remove any options that are set to None since WAPI will error on
     that condition.  It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
-
     The remainder of the value validation is performed by WAPI
     '''
     options = list()
@@ -178,9 +173,9 @@ def check_ip_addr_type(ip):
     check_ip = ip.split('/')
 
     if validate_ip_address(check_ip[0]):
-        return 'network'
+        return NIOS_IPV4_NETWORK
     elif validate_ip_v6_address(check_ip[0]):
-        return 'ipv6network'
+        return NIOS_IPV6_NETWORK
 
 
 def main():

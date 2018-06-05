@@ -29,6 +29,8 @@ options:
         When using state=latest, this can be '*' which means run: dnf -y update.
         You can also pass a url or a local path to a rpm file."
     required: true
+    aliases:
+        - pkg
 
   list:
     description:
@@ -37,7 +39,7 @@ options:
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-    choices: [ "present", "latest", "absent" ]
+    choices: ['absent', 'present', 'installed', 'removed', 'latest']
     default: "present"
 
   enablerepo:
@@ -84,6 +86,7 @@ options:
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
     type: bool
+    default: false
     version_added: "2.4"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -326,7 +329,7 @@ def ensure(module, base, state, names, autoremove):
 
     # Autoremove is called alone
     # Jump to remove path where base.autoremove() is run
-    if not names and autoremove is not None:
+    if not names and autoremove:
         names = []
         state = 'absent'
 
@@ -412,7 +415,7 @@ def ensure(module, base, state, names, autoremove):
 
         else:
             # state == absent
-            if autoremove is not None:
+            if autoremove:
                 base.conf.clean_requirements_on_remove = autoremove
 
             if filenames:
@@ -480,15 +483,16 @@ def main():
         argument_spec=dict(
             name=dict(aliases=['pkg'], type='list'),
             state=dict(
-                choices=[
-                    'absent', 'present', 'installed', 'removed', 'latest']),
+                choices=['absent', 'present', 'installed', 'removed', 'latest'],
+                default='present',
+            ),
             enablerepo=dict(type='list', default=[]),
             disablerepo=dict(type='list', default=[]),
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
-            autoremove=dict(type='bool'),
+            autoremove=dict(type='bool', default=False),
             releasever=dict(default=None),
         ),
         required_one_of=[['name', 'list', 'autoremove']],
@@ -499,7 +503,7 @@ def main():
     _ensure_dnf(module)
 
     # Check if autoremove is called correctly
-    if params['autoremove'] is not None:
+    if params['autoremove']:
         if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
             module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
         if params['state'] not in ["absent", None]:

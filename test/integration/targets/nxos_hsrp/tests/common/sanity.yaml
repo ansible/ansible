@@ -57,7 +57,7 @@
     nxos_hsrp: &conf100
       group: 100
       version: 2
-      vip: 2.2.2.2
+      vip: 192.0.2.2
       priority: 25
       interface: "{{ intname1 }}"
       preempt: enabled
@@ -96,7 +96,7 @@
   - name: "configure group 200"
     nxos_hsrp: &conf200
       group: 200
-      vip: 3.3.3.3
+      vip: 192.0.2.3
       version: 1
       interface: "{{ intname2 }}"
       auth_type: text
@@ -114,7 +114,7 @@
   - name: "change group 200"
     nxos_hsrp: &chg200
       group: 200
-      vip: 3.3.3.3
+      vip: 192.0.2.3
       version: 2
       interface: "{{ intname2 }}"
       auth_type: text

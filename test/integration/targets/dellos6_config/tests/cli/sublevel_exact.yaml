@@ -4,11 +4,11 @@
 - name: setup
   dellos6_config:
     lines:
-      - permit ip 1.1.1.1 0.0.0.0 any log
-      - permit ip 2.2.2.2 0.0.0.0 any log
-      - permit ip 3.3.3.3 0.0.0.0 any log
-      - permit ip 4.4.4.4 0.0.0.0 any log
-      - permit ip 5.5.5.5 0.0.0.0 any log
+      - permit ip 192.0.2.1 0.0.0.0 any log
+      - permit ip 192.0.2.2 0.0.0.0 any log
+      - permit ip 192.0.2.3 0.0.0.0 any log
+      - permit ip 192.0.2.4 0.0.0.0 any log
+      - permit ip 192.0.2.5 0.0.0.0 any log
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     after: ['exit']
@@ -18,10 +18,10 @@
 - name: configure sub level command using exact match
   dellos6_config:
     lines:
-      - 1000 permit ip 1.1.1.1 0.0.0.0 any log
-      - 1010 permit ip 2.2.2.2 0.0.0.0 any log
-      - 1020 permit ip 3.3.3.3 0.0.0.0 any log
-      - 1030 permit ip 4.4.4.4 0.0.0.0 any log
+      - 1000 permit ip 192.0.2.1 0.0.0.0 any log
+      - 1010 permit ip 192.0.2.2 0.0.0.0 any log
+      - 1020 permit ip 192.0.2.3 0.0.0.0 any log
+      - 1030 permit ip 192.0.2.4 0.0.0.0 any log
     parents: ['ip access-list test']
     after: ['exit']
     match: exact
@@ -32,20 +32,20 @@
     that:
       - "result.changed == true"
       - "'ip access-list test' in result.updates"
-      - "'1000 permit ip 1.1.1.1 0.0.0.0 any log' in result.updates"
-      - "'1010 permit ip 2.2.2.2 0.0.0.0 any log' in result.updates"
-      - "'1020 permit ip 3.3.3.3 0.0.0.0 any log' in result.updates"
-      - "'1030 permit ip 4.4.4.4 0.0.0.0 any log' in result.updates"
-      - "'1040 permit ip 5.5.5.5 0.0.0.0 any log' not in result.updates"
+      - "'1000 permit ip 192.0.2.1 0.0.0.0 any log' in result.updates"
+      - "'1010 permit ip 192.0.2.2 0.0.0.0 any log' in result.updates"
+      - "'1020 permit ip 192.0.2.3 0.0.0.0 any log' in result.updates"
+      - "'1030 permit ip 192.0.2.4 0.0.0.0 any log' in result.updates"
+      - "'1040 permit ip 192.0.2.5 0.0.0.0 any log' not in result.updates"
 
 - name: check sub level command using exact match
   dellos6_config:
     lines:
-      - 1000 permit ip 1.1.1.1 0.0.0.0 any log
-      - 1010 permit ip 2.2.2.2 0.0.0.0 any log
-      - 1020 permit ip 3.3.3.3 0.0.0.0 any log
-      - 1030 permit ip 4.4.4.4 0.0.0.0 any log
-      - 1040 permit ip 5.5.5.5 0.0.0.0 any log
+      - 1000 permit ip 192.0.2.1 0.0.0.0 any log
+      - 1010 permit ip 192.0.2.2 0.0.0.0 any log
+      - 1020 permit ip 192.0.2.3 0.0.0.0 any log
+      - 1030 permit ip 192.0.2.4 0.0.0.0 any log
+      - 1040 permit ip 192.0.2.5 0.0.0.0 any log
     parents: ['ip access-list test']
     after: ['exit']
     match: exact

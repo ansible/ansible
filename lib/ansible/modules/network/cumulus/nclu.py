@@ -88,6 +88,14 @@ EXAMPLES = '''
 - name: Print Status Of Interface
   debug:
     var: output
+
+- name: Configure BGP AS and add 2 EBGP neighbors using BGP Unnumbered
+  nclu:
+    commands:
+        - add bgp autonomous-system 65000
+        - add bgp neighbor swp51 interface remote-as external
+        - add bgp neighbor swp52 interface remote-as external
+    commit: true
 '''
 
 RETURN = '''

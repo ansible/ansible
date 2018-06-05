@@ -80,7 +80,6 @@ options:
         description:
             - Attempt deletion if resource already exists and cannot be updated
         type: bool
-        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure

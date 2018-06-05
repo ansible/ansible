@@ -52,8 +52,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -157,7 +157,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.8.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         zone = cloud.get_zone(name)
 
@@ -206,7 +206,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

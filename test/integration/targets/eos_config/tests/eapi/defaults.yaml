@@ -9,11 +9,13 @@
     parents:
       - interface Ethernet2
     match: none
+  become: yes
 
 - name: configure device with defaults included
   eos_config:
     src: defaults/config.j2
     defaults: yes
+  become: yes
   register: result
 
 - debug: var=result
@@ -27,6 +29,7 @@
   eos_config:
     src: defaults/config.j2
     defaults: yes
+  become: yes
   register: result
 
 - debug: var=result

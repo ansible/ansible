@@ -37,11 +37,9 @@ try:
 except ImportError:
     from sha import sha as sha1
 
-from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
-from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -69,6 +67,19 @@ __all__ = ['Templar', 'generate_ansible_template_vars']
 NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
+
+USE_JINJA2_NATIVE = False
+if C.DEFAULT_JINJA2_NATIVE:
+    try:
+        from jinja2.nativetypes import NativeEnvironment as Environment
+        from ansible.template.native_helpers import ansible_native_concat as j2_concat
+        USE_JINJA2_NATIVE = True
+    except ImportError:
+        from jinja2 import Environment
+        from jinja2.utils import concat as j2_concat
+else:
+    from jinja2 import Environment
+    from jinja2.utils import concat as j2_concat
 
 
 def generate_ansible_template_vars(path):
@@ -479,19 +490,20 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        unsafe = hasattr(result, '__UNSAFE__')
-                        if convert_data and not self._no_type_regex.match(variable):
-                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                    result.startswith("[") or result in ("True", "False"):
-                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                                if eval_results[1] is None:
-                                    result = eval_results[0]
-                                    if unsafe:
-                                        result = wrap_var(result)
-                                else:
-                                    # FIXME: if the safe_eval raised an error, should we do something with it?
-                                    pass
+                        if not USE_JINJA2_NATIVE:
+                            unsafe = hasattr(result, '__UNSAFE__')
+                            if convert_data and not self._no_type_regex.match(variable):
+                                # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                                if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                                        result.startswith("[") or result in ("True", "False"):
+                                    eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                    if eval_results[1] is None:
+                                        result = eval_results[0]
+                                        if unsafe:
+                                            result = wrap_var(result)
+                                    else:
+                                        # FIXME: if the safe_eval raised an error, should we do something with it?
+                                        pass
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
@@ -663,9 +675,15 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
+        if USE_JINJA2_NATIVE and not isinstance(data, string_types):
+            return data
+
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        data_newlines = _count_newlines_from_end(data)
+        if not USE_JINJA2_NATIVE:
+            data_newlines = _count_newlines_from_end(data)
+        else:
+            data_newlines = None
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -678,7 +696,7 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if data.startswith(JINJA2_OVERRIDE):
+            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
@@ -720,7 +738,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-                if new_context.unsafe:
+                if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
@@ -730,6 +748,9 @@ class Templar:
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+
+            if USE_JINJA2_NATIVE:
+                return res
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline

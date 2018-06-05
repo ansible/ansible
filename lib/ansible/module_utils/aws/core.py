@@ -60,11 +60,13 @@ don't need to be wrapped in the backoff decorator.
 
 """
 
+import traceback
 from functools import wraps
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
-import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
@@ -192,6 +194,30 @@ class AnsibleAWSModule(object):
         import botocore
         return dict(boto3_version=boto3.__version__,
                     botocore_version=botocore.__version__)
+
+    def boto3_at_least(self, desired):
+        """Check if the available boto3 version is greater than or equal to a desired version.
+
+        Usage:
+            if module.params.get('assign_ipv6_address') and not module.boto3_at_least('1.4.4'):
+                # conditionally fail on old boto3 versions if a specific feature is not supported
+                module.fail_json(msg="Boto3 can't deal with EC2 IPv6 addresses before version 1.4.4.")
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['boto3_version']) >= LooseVersion(desired)
+
+    def botocore_at_least(self, desired):
+        """Check if the available botocore version is greater than or equal to a desired version.
+
+        Usage:
+            if not module.botocore_at_least('1.2.3'):
+                module.fail_json(msg='The Serverless Elastic Load Compute Service is not in botocore before v1.2.3')
+            if not module.botocore_at_least('1.5.3'):
+                module.warn('Botocore did not include waiters for Service X before 1.5.3. '
+                            'To wait until Service X resources are fully available, update botocore.')
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
 
 
 class _RetryingBotoClientWrapper(object):

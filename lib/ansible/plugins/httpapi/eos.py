@@ -34,7 +34,11 @@ class HttpApi:
         headers = {'Content-Type': 'application/json-rpc'}
 
         response = self.connection.send('/command-api', request, headers=headers, method='POST')
-        response = json.loads(to_text(response.read()))
+        response_text = to_text(response.read())
+        try:
+            response = json.loads(response_text)
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
         results = handle_response(response)
 
         if self._become:
@@ -45,8 +49,11 @@ class HttpApi:
         return results
 
     def get_prompt(self):
-        # Hack to keep @enable_mode working
-        return '#'
+        # Fake a prompt for @enable_mode
+        if self._become:
+            return '#'
+        else:
+            return '>'
 
     def set_become(self, play_context):
         self._become = play_context.become

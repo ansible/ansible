@@ -22,8 +22,8 @@ description:
 notes:
     - Facts are placed in the C(openstack_ports) variable.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
     port:
         description:
@@ -199,13 +199,13 @@ def main():
     port = module.params.get('port')
     filters = module.params.get('filters')
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         ports = cloud.search_ports(port, filters)
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_ports=ports))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

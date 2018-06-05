@@ -2,6 +2,8 @@
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import absolute_import, division, print_function
+
 SIZE_RANGES = {
     'Y': 1 << 80,
     'Z': 1 << 70,
@@ -79,8 +81,6 @@ import pwd
 import platform
 import errno
 import datetime
-from collections import deque
-from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import chain, repeat
 
 try:
@@ -104,14 +104,6 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
-
-# Note: When getting Sequence from collections, it matches with strings.  If
-# this matters, make sure to check for strings before checking for sequencetype
-try:
-    from collections.abc import KeysView
-    SEQUENCETYPE = (Sequence, frozenset, KeysView)
-except ImportError:
-    SEQUENCETYPE = (Sequence, frozenset)
 
 try:
     import json
@@ -160,6 +152,13 @@ except ImportError:
     except ImportError:
         pass
 
+from ansible.module_utils.common._collections_compat import (
+    deque,
+    KeysView,
+    Mapping, MutableMapping,
+    Sequence, MutableSequence,
+    Set, MutableSet,
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -175,6 +174,10 @@ from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
+
+# Note: When getting Sequence from collections, it matches with strings.  If
+# this matters, make sure to check for strings before checking for sequencetype
+SEQUENCETYPE = frozenset, KeysView, Sequence
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -193,13 +196,6 @@ try:
 except NameError:
     # Python 3
     unicode = text_type
-
-try:
-    # Python 2.6+
-    bytes
-except NameError:
-    # Python 2.4
-    bytes = binary_type
 
 try:
     # Python 2
@@ -621,7 +617,7 @@ def bytes_to_human(size, isbits=False, unit=None):
     else:
         suffix = base
 
-    return '%.2f %s' % (float(size) / limit, suffix)
+    return '%.2f %s' % (size / limit, suffix)
 
 
 def human_to_bytes(number, default_unit=None, isbits=False):

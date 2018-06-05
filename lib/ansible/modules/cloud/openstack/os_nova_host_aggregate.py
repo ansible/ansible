@@ -37,8 +37,8 @@ options:
     choices: [present, absent]
     default: present
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -118,7 +118,7 @@ def main():
     if metadata is not None:
         metadata.pop('availability_zone', None)
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.9.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         aggregates = cloud.search_aggregates(name_or_id=name)
 
@@ -171,7 +171,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

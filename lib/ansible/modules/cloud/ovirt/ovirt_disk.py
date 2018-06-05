@@ -555,6 +555,18 @@ class DiskAttachmentsModule(DisksModule):
         )
 
 
+def searchable_attributes(module):
+    """
+    Return all searchable disk attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'Storage.name': module.params.get('storage_domain'),
+        'vm_names': module.params.get('vm_name'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -616,6 +628,7 @@ def main():
         if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
+                search_params=searchable_attributes(module),
                 result_state=otypes.DiskStatus.OK if lun is None else None,
                 fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
             )
