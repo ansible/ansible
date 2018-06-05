@@ -91,7 +91,8 @@ options:
             - Dictionary which configures the different teaming values for portgroup.
             - 'Valid attributes are:'
             - '- C(load_balance_policy) (string): Network adapter teaming policy. (default: loadbalance_srcid)'
-            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit]'
+            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, loadbalance_loadbased, failover_explicit]'
+            - '   - "loadbalance_loadbased" is available from version 2.6 and onwards'
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
@@ -389,6 +390,7 @@ def main():
                                                  'loadbalance_ip',
                                                  'loadbalance_srcmac',
                                                  'loadbalance_srcid',
+                                                 'loadbalance_loadbased',
                                                  'failover_explicit',
                                              ],
                                              )
