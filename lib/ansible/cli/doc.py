@@ -428,26 +428,18 @@ class DocCLI(CLI):
                              'community': 'The Ansible Community',
                              'curated': 'A Third Party',
                              }
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
-
-        return []
+        return ["  * This module is maintained by %s\n" % support_level_msg[doc['metadata']['supported_by']]]
 
     @staticmethod
     def get_metadata_block(doc):
-        text = []
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            text.append("METADATA:")
-            text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
+        text = ["\nMETADATA:", '\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by']]
 
-            for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
-                if isinstance(k, list):
-                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-                else:
-                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
-            return text
-
-        return []
+        for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
+            if isinstance(k, list):
+                text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+            else:
+                text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+        return text
 
     def get_man_text(self, doc):
 
@@ -508,6 +500,11 @@ class DocCLI(CLI):
                 text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
+            elif k == 'metadata':
+                metadata_block = self.get_metadata_block(doc)
+                if metadata_block:
+                    text.extend(metadata_block)
+                    text.append('')
             else:
                 text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
             del doc[k]
@@ -528,13 +525,5 @@ class DocCLI(CLI):
             else:
                 text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
         text.append('')
-
-        try:
-            metadata_block = self.get_metadata_block(doc)
-            if metadata_block:
-                text.extend(metadata_block)
-                text.append('')
-        except Exception:
-            pass  # metadata is optional
 
         return "\n".join(text)
