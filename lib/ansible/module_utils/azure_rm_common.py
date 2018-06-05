@@ -938,12 +938,9 @@ class AzureRMModuleBase(object):
         if api_profile_dict and 'profile' in client_argspec.args:
             client_kwargs['profile'] = api_profile_dict
 
-        # If the client doesn't accept api_version, it's unversioned.
-        # If it does, favor explicitly-specified api_version, fall back to api_profile
         if 'api_version' in client_argspec.args:
-            profile_default_version = api_profile_dict.get('default_api_version', None) if api_profile_dict else None
-            if api_version or profile_default_version:
-                client_kwargs['api_version'] = api_version or profile_default_version
+            if api_version:
+                client_kwargs['api_version'] = api_version
 
         client = client_type(**client_kwargs)
 
