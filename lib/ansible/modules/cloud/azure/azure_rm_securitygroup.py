@@ -546,7 +546,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         super(AzureRMSecurityGroup, self).__init__(self.module_arg_spec,
                                                    supports_check_mode=True)
 
-    def exec_module(self, **kwargs):        
+    def exec_module(self, **kwargs):
         # tighten up poll interval for security groups; default 30s is an eternity
         # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
         self.network_client.config.long_running_operation_timeout = 3
@@ -667,8 +667,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
         try:
             poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                          network_security_group_name=self.name,
-                                                                          parameters=parameters)
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
