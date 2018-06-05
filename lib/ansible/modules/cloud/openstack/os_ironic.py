@@ -96,8 +96,8 @@ options:
         root_device:
           description:
             - specifying the disk for deployment (root device hints). Allow to
-              set root device hints as a dict with following keys:
-              'model', 'vendor', 'serial', 'size', 'wwn', 'wwn_with_extension',
+              set root device hints as a dict with following keys 'model',
+              'vendor', 'serial', 'size', 'wwn', 'wwn_with_extension',
               'wwn_vendor_extension', 'rotational', 'hctl', 'name'.
     skip_update_of_driver_password:
       description:
