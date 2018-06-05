@@ -548,7 +548,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
+        self.client = self.network_client
         # tighten up poll interval for security groups; default 30s is an eternity
         # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
         self.client.config.long_running_operation_timeout = 3
