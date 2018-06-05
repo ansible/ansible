@@ -190,10 +190,10 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 changed = True  # create new route table
                 # create all route for the new table
                 for i in self.routes:
-                    route = self.network_models.route(name=i.name,
-                                                      address_prefix=i.address_prefix,
-                                                      next_hop_type=i.next_hop_type,
-                                                      next_hop_ip_address=i.next_hop_ip_address)
+                    route = self.network_models.route(name=i.get('name'),
+                                                      address_prefix=i.get('address_prefix'),
+                                                      next_hop_type=i.get('next_hop_type'),
+                                                      next_hop_ip_address=i.get('next_hop_ip_address'))
                     route = self.create_or_update_route(route)
                     routes.append(route)
             else:  # check update
@@ -203,22 +203,26 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 if self.disable_bgp_route_propagation != result.disable_bgp_route_propagation:
                     changed = True
                 # compare route list, create the new or updated ones
-                for route in self.routes:
+                for i in self.routes:
                     route_matched = False
                     route_change = False
+                    route = self.network_models.route(name=i.get('name'),
+                                                      address_prefix=i.get('address_prefix'),
+                                                      next_hop_type=i.get('next_hop_type'),
+                                                      next_hop_ip_address=i.get('next_hop_ip_address'))
                     for origin in (result.routes or []):
                         if origin.name == route.name:
                             route_matched = True
                             route_change = not is_same_route(route, origin)
                     if not route_matched or route_change:
                         route = self.create_or_update_route(route)
-                        routes.append(route)
+                    routes.append(route)
 
                 # delete the removing one
                 for origin in (result.routes or []):
                     route_matched = False
                     for route in self.routes:
-                        if origin.name == route.name:
+                        if origin.name == route.get('name'):
                             route_matched = True
                     if not route_matched:
                         self.delete_route(origin.name)
