@@ -195,23 +195,23 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '2.0.0'
+        'expected_version': '2.1.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
-        'expected_version': '0.3.1'
+        'expected_version': '0.4.0'
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '1.3.0'
+        'expected_version': '1.7.1'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
-        'expected_version': '1.1.0'
+        'expected_version': '1.2.2'
     },
     'DnsManagementClient': {
         'package_name': 'dns',
-        'expected_version': '1.0.1'
+        'expected_version': '1.2.0'
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
@@ -408,8 +408,11 @@ class AzureRMModuleBase(object):
                 return
             expected_version = package_version.get('expected_version')
             if Version(client_version) < Version(expected_version):
-                self.fail("Installed azure-mgmt-{0} client version is {1}. The supported version is {2}. Try "
+                self.fail("Installed azure-mgmt-{0} client version is {1}. The minimum supported version is {2}. Try "
                           "`pip install ansible[azure]`".format(client_name, client_version, expected_version))
+            if Version(client_version) != Version(expected_version):
+                self.module.warn("Installed azure-mgmt-{0} client version is {1}. The expected version is {2}. Try "
+                                 "`pip install ansible[azure]`".format(client_name, client_version, expected_version))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
@@ -945,6 +948,9 @@ class AzureRMModuleBase(object):
             profile_default_version = api_profile_dict.get('default_api_version', None)
             if api_version or profile_default_version:
                 client_kwargs['api_version'] = api_version or profile_default_version
+                if 'profile' in client_kwargs:
+                    # remove profile; only pass API version if specified
+                    client_kwargs.pop('profile')
 
         client = client_type(**client_kwargs)
 
