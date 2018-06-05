@@ -42,7 +42,13 @@ Function Chocolatey-Install-Upgrade
 {
     [CmdletBinding()]
 
-    param()
+    param([string] $source)
+    $ext_source = 'https://chocolatey.org'
+    if ($source)
+    {
+      if ($source -match "^https?:\/\/([^\/]+)/") {$source =$ Matches[0]} else {$source = $ext_source}
+    } 
+      else {$source = $ext_source}
 
     $ChocoAlreadyInstalled = Get-Command -Name "choco.exe" -ErrorAction SilentlyContinue
     if ($ChocoAlreadyInstalled -eq $null)
@@ -63,7 +69,7 @@ Function Chocolatey-Install-Upgrade
                 $wp.Credentials = New-Object System.Management.Automation.PSCredential($proxy_username, $passwd)
             }
         }
-        $install_output = $wc.DownloadString("https://chocolatey.org/install.ps1") | powershell -
+        $install_output = $wc.DownloadString($source + '/install.ps1') | powershell -
         $result.rc = $LastExitCode
         $result.stdout = $install_output | Out-String
         if ($result.rc -ne 0) {
@@ -502,7 +508,7 @@ Function Choco-Uninstall
     $result.failed = $false
 }
 
-Chocolatey-Install-Upgrade
+Chocolatey-Install-Upgrade -source $source
 
 if ($state -in ("absent", "reinstalled")) {
 
