@@ -289,12 +289,6 @@ def invoke(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-def get_snapshot(module):
-    command = 'show snapshot dump {0}'.format(module.params['snapshot_name'])
-    body = execute_show_command(command, module)[0]
-    return body
-
-
 def write_on_file(content, filename, module):
     path = module.params['path']
     if path[-1] != '/':
@@ -373,10 +367,10 @@ def main():
                 result['changed'] = True
 
             if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
-                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+                command = 'show snapshot dump {} | json'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
-                    write_on_file(content, module.params['snapshot_name'], module)
+                    write_on_file(str(content), module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 
