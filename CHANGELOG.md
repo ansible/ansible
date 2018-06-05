@@ -14,6 +14,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/38646)
 * Fix eos_logging idempotency issue when trying to set both logging destination & facility
   (https://github.com/ansible/ansible/pull/40604)
+* Fix ios_logging idempotency issue when trying to set both logging destination & facility
+  (https://github.com/ansible/ansible/pull/41076)
 
 
 
