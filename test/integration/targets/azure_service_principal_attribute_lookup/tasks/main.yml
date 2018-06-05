@@ -1,0 +1,22 @@
+- name: Prepare
+  set_fact:
+    tenant_id: "{{ lookup('env','AZURE_TENANT') }}"
+    azure_client_id: "{{ lookup('env','AZURE_CLIENT_ID') }}"
+    azure_secret: "{{ lookup('env','AZURE_SECRET') }}"
+  no_log: yes
+
+- name: lookup service principal object id
+  set_fact:
+    object_id: "{{ lookup('azure_service_principal_attribute',
+                   azure_client_id=azure_client_id,
+                   azure_secret=azure_secret,
+                   azure_tenant=tenant_id) }}"
+  register: object_id
+  no_log: yes
+
+- assert:
+    that: object_id
+
+- name: dump object_id
+  debug:
+    var: object_id
