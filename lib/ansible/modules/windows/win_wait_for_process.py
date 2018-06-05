@@ -7,14 +7,14 @@
 # this is a windows documentation stub, actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: win_wait_for_process
-version_added: '2.6'
+version_added: '2.7'
 short_description: Waits for a process to exist or not exist before continuing.
 description:
 - Waiting for a process to start or stop is useful when Windows services
@@ -24,6 +24,7 @@ options:
   process_name_exact:
     description:
       - The name of the process(es) for which to wait.
+      - Must inclue the file extension of the process binary (.exe)
   process_name_pattern:
      description:
       - RegEx pattern matching desired process(es)
