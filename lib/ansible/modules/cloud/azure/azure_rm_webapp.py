@@ -49,7 +49,7 @@ options:
               number_of_workers. Number of workers.
 
     java_settings:
-        description: Java framework and container settings. Mutually exclusive with C(frameworks).
+        description: Java framework and container settings. Mutually exclusive with frameworks.
         suboptions:
             version:
                 description: Java version. e.g., 1.8, 1.9.
@@ -61,15 +61,15 @@ options:
     frameworks:
         description:
             - Set of run time framework settings.
-            - Mutually exlusive with C(java_settings).
+            - Mutually exlusive with java_settings.
             - See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
         suboptions:
             name:
                 description:
                     - Name of the framework.
                     - Supported framework list for Windows web app and Linux web app is different.
-                    - For Windows web app, supported names(June 2018): net_framework, php, python, node. Multiple framework can be set at same time.
-                    - For Linux web app, supported names(June 2018): ruby, php, dotnetcore, node. Only one framework can be set.
+                    - For Windows web app, supported names(June 2018) net_framework, php, python, node. Multiple framework can be set at same time.
+                    - For Linux web app, supported names(June 2018) ruby, php, dotnetcore, node. Only one framework can be set.
                 choices:
                     - net_framework
                     - php
@@ -80,18 +80,18 @@ options:
             version:
                 description:
                     - Version of the framework. For linux web app supported value, see https://aka.ms/linux-stacks for more info.
-                    - net_framework: 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
-                    - php: e.g., 5.5, 5.6, 7.0.
-                    - python: e.g., 5.5, 5.6, 7.0.
-                    - node: e.g., 6.6, 6.9.
-                    - dotnetcore: e.g., 1.0, 1,1, 1.2.
-                    - ruby: 2.3.
+                    - net_framework supported value sample, 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5.
+                    - php supported value sample, 5.5, 5.6, 7.0.
+                    - python supported value sample, e.g., 5.5, 5.6, 7.0.
+                    - node supported value sample, 6.6, 6.9.
+                    - dotnetcore supported value sample, 1.0, 1,1, 1.2.
+                    - ruby supported value sample, 2.3.
 
     container_settings:
         description: Web app container settings.
         suboptions:
             name:
-                description: Name of container. eg. imagename:tag
+                description: Name of container. eg. "imagename:tag"
             registry_server_url:
                 description: Container registry server url. eg. mydockerregistry.io
             registry_server_user:
