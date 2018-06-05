@@ -48,6 +48,8 @@ options:
               devices that support a file_system parameter will use
               their default values.
         default: bootflash
+    aggregate:
+      description: List of RPM/patch definitions.
     state:
         description:
             - If the state is present, the rpm will be installed,
@@ -74,9 +76,12 @@ commands:
 
 import time
 
+from copy import deepcopy
+
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 
 def execute_show_command(command, module):
@@ -231,38 +236,67 @@ def install_remove_rpm(module, full_pkg, file_system, state):
 
 
 def main():
-    argument_spec = dict(
-        pkg=dict(required=True),
-        file_system=dict(required=False, default='bootflash'),
-        state=dict(choices=['absent', 'present'], required=False, default='present')
+    element_spec = dict(
+        pkg=dict(type='str'),
+        file_system=dict(type='str', default='bootflash'),
+        state=dict(choices=['absent', 'present'], default='present')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['pkg'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
+    required_one_of = [['pkg', 'aggregate']]
+    mutually_exclusive = [['pkg', 'aggregate']]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=False)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
-    pkg = module.params['pkg']
-    file_system = module.params['file_system']
-    state = module.params['state']
+    aggregate = module.params.get('aggregate')
+    objects = []
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    if state == 'present':
-        remote_exists = remote_file_exists(module, pkg, file_system=file_system)
+            d = item.copy()
+            objects.append(d)
+    else:
+        objects.append({
+            'pkg': module.params['pkg'],
+            'file_system': module.params['file_system'],
+            'state': module.params['state']
+        })
 
-        if not remote_exists:
-            module.fail_json(
-                msg="The requested package doesn't exist on the device"
-            )
+    for obj in objects:
+        if obj['state'] == 'present':
+            remote_exists = remote_file_exists(module, obj['pkg'], file_system=obj['file_system'])
 
-    cmds = install_remove_rpm(module, pkg, file_system, state)
+            if not remote_exists:
+                module.fail_json(
+                    msg="The requested package doesn't exist on the device"
+                )
 
-    if cmds:
-        results['changed'] = True
-        results['commands'] = cmds
+        cmds = install_remove_rpm(module, obj['pkg'], obj['file_system'], obj['state'])
+
+        if cmds:
+            results['changed'] = True
+            results['commands'].extend(cmds)
 
     module.exit_json(**results)
 

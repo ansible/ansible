@@ -55,9 +55,11 @@
 
 # healthMonitor-1.0-1.5.0.x86_64.rpm is avaibale at https://github.com/CiscoDevNet/NX-SDK/tree/master/rpm/RPMS
 - block:
-  - name: Install nxsdk RPM
+  - name: Install nxsdk RPM(aggregate)
     nxos_rpm: &tsdkrpm
-      pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm"
+      aggregate:
+          - { pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm", file_system: "bootflash" }
+          - { pkg: "customCliApp-1.0-1.0.0.x86_64.rpm" }
     register: result
 
   - assert: &true2
@@ -72,9 +74,11 @@
       that:
         - "result.changed == false"
 
-  - name: Remove nxsdk RPM
+  - name: Remove nxsdk RPM(aggregate)
     nxos_rpm: &rsdkrpm
-      pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm"
+      aggregate:
+          - { pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm" }
+          - { pkg: "customCliApp-1.0-1.0.0.x86_64.rpm" }
       state: absent
     register: result
 
