@@ -79,6 +79,23 @@
           - result.changed == True
           - result.msg == "PUT operation complete"
 
+    - name: test using aws_s3 with async
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        object: delete.txt
+        <<: *aws_connection_info
+      register: test_async
+      async: 30
+      poll: 0
+    - name: ensure it completed
+      async_status:
+        jid: "{{ test_async.ansible_job_id }}"
+      register: status
+      until: status.finished
+      retries: 10
+
     - name: check that roles file lookups work as expected
       aws_s3:
         bucket: "{{ bucket_name }}"
