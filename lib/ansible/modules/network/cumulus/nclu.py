@@ -79,6 +79,14 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Add two EBGP neighbors using BGP Unnumbered via Template
+  nclu:
+    template: |
+      {% for neighbor in range(51,53) %}
+      add bgp neighbor swp{{neighbor}} interface remote-as external
+      {% endfor %}
+    atomic: true
 '''
 
 RETURN = '''
