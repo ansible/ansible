@@ -48,70 +48,44 @@ options:
               is_linux. Indicate is linux app service plan. type bool. default False.
               number_of_workers. Number of workers.
 
-    windows_framework:
-        description:
-            - Describe windows web app framework. See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
-            - Can set mulitple framework at same time.
-            - Suboption java_version is mutually exclusive with other suboptions
+    java_settings:
+        description: Java framework and container settings. Mutually exclusive with C(frameworks).
         suboptions:
-            net_framework_version:
-                description:
-                    - The version used to run your web app if using .NET Framework, e.g., 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
-                    - Only applies for windows web app.
-                    - Mutually exclusive with java_version
+            version:
+                description: Java version. e.g., 1.8, 1.9.
+            java_container_name:
+                description: The java container, e.g., Tomcat, Jetty. For Linux web app, only supports Tomcat currently.
+            java_container_version:
+                description: The version of the java container. e.g., '8.0.23' for Tomcat.
 
-            java_version:
-                description:
-                    - The version used to run your web app if using Java, e.g., '1.7' for Java 7, '1.8' for Java 8.
-                    - Only applies for windows web app.
-                    - Mutually exclusive with other suboptions
-
-            php_version:
-                description:
-                    - The version used to run your web app if using PHP, e.g., 5.5, 5.6, 7.0.
-                    - Only applies for windows web app.
-                    - Mutually exclusive with java_version
-
-            python_version:
-                description:
-                    - The version used to run your web app if using Python, e.g., 2.7, 3.4.
-                    - Only applies for windows web app.
-                    - Mutually exclusive with java_version
-
-            node_version:
-                description:
-                    - The version used to run your web app if using nodejs, e.g., 6.6, 6.9.
-                    - Only applies for windows web app.
-                    - Mutually exclusive with java_version
-
-
-    linux_framework:
+    frameworks:
         description:
-            - The runtime stack used for your linux-based webapp.
-            - Only applies for linux web app. See https://aka.ms/linux-stacks for more info.
-            - Mutually exclusive with windows_framework
+            - Set of run time framework settings.
+            - Mutually exlusive with C(java_settings).
+            - See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
         suboptions:
             name:
                 description:
-                    - Name of linux runtime framework.
+                    - Name of the framework.
+                    - Supported framework list for Windows web app and Linux web app is different.
+                    - For Windows web app, supported names(June 2018): net_framework, php, python, node. Multiple framework can be set at same time.
+                    - For Linux web app, supported names(June 2018): ruby, php, dotnetcore, node. Only one framework can be set.
                 choices:
-                    - ruby
-                    - node
+                    - net_framework
                     - php
+                    - python
+                    - ruby
                     - dotnetcore
-                    - java
+                    - node
             version:
                 description:
-                    - Version of linux runtime framework.
-                    - Please see https://aka.ms/linux-stacks for supported value.
-
-    java_container_settings:
-        description: Java container settings.
-        suboptions:
-            name:
-                description: The java container, e.g., Tomcat, Jetty.
-            value:
-                description: The version of the java container, e.g., '8.0.23' for Tomcat.
+                    - Version of the framework. For linux web app supported value, see https://aka.ms/linux-stacks for more info.
+                    - net_framework: 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5
+                    - php: e.g., 5.5, 5.6, 7.0.
+                    - python: e.g., 5.5, 5.6, 7.0.
+                    - node: e.g., 6.6, 6.9.
+                    - dotnetcore: e.g., 1.0, 1,1, 1.2.
+                    - ruby: 2.3.
 
     container_settings:
         description: Web app container settings.
@@ -248,9 +222,24 @@ EXAMPLES = '''
           name: myappplan
         app_settings:
           testkey: testvalue
-        linux_framework:
-          name: node
-          version: 6.6
+        frameworks:
+          - name: "node"
+            version: "6.6"
+
+    - name: Create a windows web app with node, php
+      azure_rm_webapp:
+        resource_group: myresourcegroup
+        name: mywinwebapp
+        plan:
+          resource_group: appserviceplan_test
+          name: myappplan
+        app_settings:
+          testkey: testvalue
+        frameworks:
+          - name: "node"
+            version: 6.6
+          - name: "php"
+            version: "7.0"
 '''
 
 RETURN = '''
@@ -326,27 +315,15 @@ container_settings_spec = dict(
     registry_server_password=dict(type='str')
 )
 
-java_container_settings_spec = dict(
-    name=dict(type='str', required=True),
-    version=dict(type='str', required=True)
+java_settings_spec = dict(
+    version=dict(type='str', required=True),
+    java_container_name=dict(type='str', required=True),
+    java_container_version=dict(type='str', required=True)
 )
 
 deployment_source_spec = dict(
     url=dict(type='str'),
     branch=dict(type='str')
-)
-
-linux_framework_spec = dict(
-    name=dict(type='str', required=True),
-    version=dict(type='str', required=True)
-)
-
-windows_framework_spec = dict(
-    net_framework_version=dict(type='str'),
-    php_version=dict(type='str'),
-    python_version=dict(type='str'),
-    node_version=dict(type='str'),
-    java_version=dict(type='str')
 )
 
 
@@ -403,16 +380,12 @@ class AzureRMWebApps(AzureRMModuleBase):
             plan=dict(
                 type='raw'
             ),
-            windows_framework=dict(
-                type='dict'
+            frameworks=dict(
+                type='list'
             ),
-            linux_framework=dict(
+            java_settings=dict(
                 type='dict',
-                options=linux_framework_spec
-            ),
-            java_container_settings=dict(
-                type='dict',
-                options=java_container_settings_spec
+                options=java_settings_spec
             ),
             container_settings=dict(
                 type='dict',
@@ -458,9 +431,8 @@ class AzureRMWebApps(AzureRMModuleBase):
             )
         )
 
-        mutually_exclusive = [['windows_framework', 'linux_framework'],
-                              ['container_settings', 'linux_framework'],
-                              ['container_settings', 'windows_framework']]
+        mutually_exclusive = [['frameworks', 'java_settings'],
+                              ['container_settings', 'frameworks']]
 
         self.resource_group = None
         self.name = None
@@ -501,7 +473,9 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        self.windows_framework = None
+        self.frameworks = None
+        self.java_settings = None
+
         # set site_config value from kwargs
         self.site_config_updatable_properties = ["net_framework_version",
                                                  "java_version",
@@ -515,6 +489,9 @@ class AzureRMWebApps(AzureRMModuleBase):
                                      "https_only",
                                      "skip_custom_domain_verification",
                                      "ttl_in_seconds"]
+
+        self.supported_linux_frameworks = ['ruby', 'php', 'dotnetcore', 'node']
+        self.supported_windows_frameworks = ['net_framework', 'php', 'python', 'node']
 
         super(AzureRMWebApps, self).__init__(derived_arg_spec=self.module_arg_spec,
                                              mutually_exclusive=mutually_exclusive,
@@ -531,27 +508,42 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if key == "scm_type":
                     self.site_config[key] = kwargs[key]
 
-                # azure sdk linux_fx_version:
-                # for docker web app, value is like DOCKER|imagename:tag
-                # for linux web app, value is like NODE|6.6
-                if key == "linux_framework":
-                    self.site_config['linux_fx_version'] = (kwargs[key]['name'] + '|' + kwargs[key]['version']).upper()
-
-                if key == "java_container_settings":
-                    if 'name' in kwargs['java_container_settings']:
-                        self.site_config['java_container'] = kwargs['java_container_settings']['name']
-                    if 'version' in kwargs['java_container_settings']:
-                        self.site_config['java_container_version'] = kwargs['java_container_settings']['version']
-
         old_response = None
         response = None
         to_be_updated = False
 
-        if self.windows_framework:
-            if self.windows_framework.get('java_version') and len(self.windows_framework) > 1:
-                self.fail('java_version is mutually exclusive with other framework version in windows_framework.')
-            for key in list(self.windows_framework.keys()):
-                self.site_config[key] = self.windows_framework[key]
+        # get app service plan
+        is_linux = False
+        old_plan = self.get_app_service_plan()
+        if old_plan:
+            is_linux = old_plan['reserved']
+        else:
+            is_linux = self.plan['is_linux'] if self.plan['is_linux'] else False
+        
+        if self.frameworks:
+            if is_linux:
+                if len(self.frameworks) != 1:
+                    self.fail('Can specify one framework only for Linux web app.')
+
+                if self.frameworks[0]['name'] not in self.supported_linux_frameworks:
+                    self.fail('Unsupported framework {0} for Linux web app.'.format(self.frameworks[0]['name']))
+
+                self.site_config['linux_fx_version'] = (self.frameworks[0]['name'] + '|' + self.frameworks[0]['version']).upper()
+            else:
+                for fx in self.frameworks:
+                    if fx.get('name') not in self.supported_windows_frameworks:
+                        self.fail('Unsupported framework {0} for Windows web app.'.format(fx.get('name')))
+                    else:
+                        self.site_config[fx.get('name') + '_version'] = fx.get('version')
+
+        if self.java_settings:
+            if is_linux:
+                self.site_config['linux_fx_version'] = ("java|" + self.java_settings['version']).upper()
+            else:
+                self.site_config['java_version'] = self.java_settings['version']
+
+            self.site_config['java_container'] = self.java_settings['java_container_name']
+            self.site_config['java_container_version'] = self.java_settings['java_container_version']
 
         if not self.app_settings:
             self.app_settings = dict()
@@ -667,11 +659,17 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.app_settings_strDic = self.list_app_settings()
 
                 # purge existing app_settings:
-                if self.purge_app_settings:
-                    self.app_settings_strDic.properties = dict()
+                if self.purge_app_settings: 
+                    if self.app_settings_strDic.properties == self.app_settings:
+                        for key in self.app_settings.keys():
+                            if self.app_settings[key] != self.app_settings_strDic.properties.get(key, None):
+                                to_be_updated = True
+                                self.app_settings_strDic.properties = dict()
+                                self.app_settings_strDic.properties[key]  = self.app_settings[key]
+                                break
 
                 # check if app settings changed
-                if self.purge_app_settings or self.is_app_settings_changed():
+                if self.is_app_settings_changed():
                     to_be_updated = True
                     self.to_do = Actions.UpdateAppSettings
 
