@@ -144,30 +144,6 @@ def to_lines(stdout):
         yield item
 
 
-def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
-    for item in list(commands):
-        configure_type = re.match(r'conf(?:\w*)(?:\s+(\w+))?', item['command'])
-        if module.check_mode:
-            if configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
-                module.fail_json(
-                    msg='routeros_command does not support running config mode '
-                        'commands.  Please use routeros_config instead'
-                )
-            if not item['command'].startswith('show'):
-                warnings.append(
-                    'only show commands are supported when using check mode, not '
-                    'executing `%s`' % item['command']
-                )
-                commands.remove(item)
-    return commands
-
-
 def main():
     """main entry point for module execution
     """
@@ -190,7 +166,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
@@ -201,7 +176,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses = run_commands(module, module.params['commands'])
 
         for item in list(conditionals):
             if item(responses):
