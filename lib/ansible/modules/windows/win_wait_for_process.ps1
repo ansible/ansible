@@ -49,11 +49,9 @@ if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $own
 $module_start = Get-Date
 
 #Get-Process doesn't actually return a UserName value, so get it from WMI.
-Function Test-ProcessMatchesFilter {
+Function Get-ProcessMatchesFilter {
     [cmdletbinding()]
     Param(
-        [parameter(ValueFromPipeline)]
-        $WindowsProcess,
         [String]
         $Owner,
         $ProcessNameExact,
@@ -61,48 +59,41 @@ Function Test-ProcessMatchesFilter {
         [int]
         $ProcessId
     )
-    Begin {
-        $owners = @{}
-        Get-WmiObject win32_process | ForEach-Object {$owners[$_.handle] = $_.getowner().user}
-    }
-    Process {
+    
+    $CIMProcesses = Get-CimInstance Win32_Process
+    foreach ($CIMProcess in $CIMProcesses)
+    {
         $include = $true
-
-        if ([String]::IsNullOrEmpty($WindowsProcess.Owner))
-        {
-            #always add the owner to proces info so that it's reported back.
-            $WindowsProcess = $WindowsProcess | Select-Object -Property *,@{Name="Owner";Expression={$owners[$_.id.tostring()]}} 
-        }
-        if (-not [String]::IsNullOrEmpty($Owner) )
-        {
-            # if an owner was specified in the filter, validate that here.
-            $include = $include -and ($WindowsProcess.Owner -eq $Owner)
-        }
         if(-not [String]::IsNullOrEmpty($ProcessNamePattern))
         {
             #if a process name was specified in the filter, validate that here.
-            $include = $include -and ($WindowsProcess.ProcessName -match $ProcessNamePattern)
+            $include = $include -and ($CIMProcess.ProcessName -match $ProcessNamePattern)
         }
         if($ProcessNameExact -is [Array] -or (-not [String]::IsNullOrEmpty($ProcessNameExact)))
         {
             #if a process name was specified in the filter, validate that here.
             if ($ProcessNameExact -is [Array] )
             {
-                $include = $include -and ($ProcessNameExact -contains $WindowsProcess.ProcessName)
-            }
+                $include = $include -and ($ProcessNameExact -contains $CIMProcess.ProcessName)
+            }   
             else {
-                $include = $include -and ($ProcessNameExact -eq $WindowsProcess.ProcessName)
+                $include = $include -and ($ProcessNameExact -eq $CIMProcess.ProcessName)
             }
         }
         if ($ProcessId -and $ProcessId -ne 0)
         {
             # if a PID was specified in the filger, validate that here.
-            $include = $include -and ($WindowsProcess.Id -eq $ProcessId)
+            $include = $include -and ($CIMProcess.ProcessId -eq $ProcessId)
         }
-       
+        if (-not [String]::IsNullOrEmpty($Owner) )
+        {
+            # if an owner was specified in the filter, validate that here.
+            $include = $include -and ($($(Invoke-CimMethod -InputObject $CIMProcess -MethodName GetOwner).User) -eq $Owner)
+        }
+        
         if ($include)
         {
-           $WindowsProcess
+            $CIMProcess | Select-Object -Property ProcessId, ProcessName, @{name="Owner";Expression={$($(Invoke-CimMethod -InputObject $CIMProcess -MethodName GetOwner).User)}}
         }
     }
 }
@@ -118,7 +109,7 @@ if ($state -eq "present" ) {
             Fail-Json $result "timeout while waiting for $process_name to start.  waited $timeout seconds"
         }
        
-        $Processes = Get-Process | Test-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id | Select-Object -Property Id, ProcessName, Owner
+        $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
         Start-Sleep -Seconds $sleep
         $attempts ++
         $ProcessCount = $(if ($Processes -is [array]) { $Processess.count } else{ 1 })
@@ -132,14 +123,14 @@ if ($state -eq "present" ) {
 }
 elseif ($state -eq "absent") {
     #wait for a process to stop
-    $Processes = Get-Process |  Test-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id | Select-Object -Property ID, ProcessName, Owner
+    $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id 
     $result.matched_processes = $Processes
     #Fail-Json $result "faildebug"
     $ProcessCount = $(if ($Processes -is [array]) { $Processes.count } elseif ($Processes){ 1 } else {0})
     if ($ProcessCount -gt 0 )
     {
         try { 
-            Wait-Process -Id $($Processes | Select-Object -ExpandProperty Id) -Timeout $timeout -ErrorAction Stop
+            Wait-Process -Id $($Processes | Select-Object -ExpandProperty ProcessId) -Timeout $timeout -ErrorAction Stop
             $result.changed = $true
         }
         catch {
