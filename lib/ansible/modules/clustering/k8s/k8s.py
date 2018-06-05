@@ -95,6 +95,11 @@ EXAMPLES = '''
     namespace: testing
   register: service_list
 
+- name: Get a list of all pods from any namespace
+  k8s:
+    kind: PodList
+  register: pod_list
+
 - name: Remove an existing Service object
   k8s:
     state: absent
