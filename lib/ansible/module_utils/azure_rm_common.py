@@ -537,7 +537,7 @@ class AzureRMModuleBase(object):
         if credentials.get('subscription_id'):
             return credentials
 
-        return None
+        return dict(default_api_version=profile_raw) if profile_raw else None
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
