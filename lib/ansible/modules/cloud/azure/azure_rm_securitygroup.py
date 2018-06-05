@@ -536,7 +536,6 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
-        self.client = None  # type: azure.mgmt.network.NetworkManagementClient
         self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
@@ -548,11 +547,10 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
         # tighten up poll interval for security groups; default 30s is an eternity
         # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
-        self.client.config.long_running_operation_timeout = 3
-        self.nsg_models = self.client.network_security_groups.models
+        self.network_client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.network_client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -580,7 +578,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -668,9 +666,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         parameters.location = results.get('location')
 
         try:
-            poller = self.client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                          network_security_group_name=self.name,
-                                                                          parameters=parameters)
+            poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -678,7 +676,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
+            poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
