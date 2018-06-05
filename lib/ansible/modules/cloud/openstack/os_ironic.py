@@ -161,9 +161,8 @@ def _parse_properties(module):
                 ['model', 'vendor', 'serial', 'size', 'wwn',
                  'wwn_with_extension', 'wwn_vendor_extension', 'rotational',
                  'hctl', 'name'])):
-            props['root_device']=p.get('root_device')
+            props['root_device'] = p.get('root_device')
     return props
-
 
 def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
