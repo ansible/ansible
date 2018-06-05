@@ -55,8 +55,18 @@ DOCUMENTATION = '''
                 key: 'ssh_args'
           env:
               - name: ANSIBLE_SSH_ARGS
+          vars:
+              - name: ansible_ssh_args
+                version_added: '2.7'
       ssh_common_args:
           description: Common extra args for all ssh CLI tools
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_common_args'
+                version_added: '2.7'
+          env:
+              - name: ANSIBLE_SSH_COMMON_ARGS
+                version_added: '2.7'
           vars:
               - name: ansible_ssh_common_args
       ssh_executable:
@@ -70,6 +80,9 @@ DOCUMENTATION = '''
           - {key: ssh_executable, section: ssh_connection}
           #const: ANSIBLE_SSH_EXECUTABLE
           version_added: "2.2"
+          vars:
+              - name: ansible_ssh_executable
+                version_added: '2.7'
       sftp_executable:
           default: sftp
           description:
@@ -78,6 +91,9 @@ DOCUMENTATION = '''
           ini:
           - {key: sftp_executable, section: ssh_connection}
           version_added: "2.6"
+          vars:
+              - name: ansible_sftp_executable
+                version_added: '2.7'
       scp_executable:
           default: scp
           description:
@@ -86,18 +102,42 @@ DOCUMENTATION = '''
           ini:
           - {key: scp_executable, section: ssh_connection}
           version_added: "2.6"
+          vars:
+              - name: ansible_scp_executable
+                version_added: '2.7'
       scp_extra_args:
           description: Extra exclusive to the ``scp`` CLI
           vars:
               - name: ansible_scp_extra_args
+          env:
+            - name: ANSIBLE_SCP_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: scp_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       sftp_extra_args:
           description: Extra exclusive to the ``sftp`` CLI
           vars:
               - name: ansible_sftp_extra_args
+          env:
+            - name: ANSIBLE_SFTP_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: sftp_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       ssh_extra_args:
           description: Extra exclusive to the 'ssh' CLI
           vars:
               - name: ansible_ssh_extra_args
+          env:
+            - name: ANSIBLE_SSH_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: ssh_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       retries:
           # constant: ANSIBLE_SSH_RETRIES
           description: Number of attempts to connect.
@@ -110,6 +150,9 @@ DOCUMENTATION = '''
               key: retries
             - section: ssh_connection
               key: retries
+          vars:
+              - name: ansible_ssh_retries
+                version_added: '2.7'
       port:
           description: Remote port to connect to.
           type: int
@@ -176,6 +219,9 @@ DOCUMENTATION = '''
         ini:
           - key: control_path
             section: ssh_connection
+        vars:
+          - name: ansible_control_path
+            version_added: '2.7'
       control_path_dir:
         default: ~/.ansible/cp
         description:
@@ -186,6 +232,9 @@ DOCUMENTATION = '''
         ini:
           - section: ssh_connection
             key: control_path_dir
+        vars:
+          - name: ansible_control_path_dir
+            version_added: '2.7'
       sftp_batch_mode:
         default: 'yes'
         description: 'TODO: write it'
@@ -193,6 +242,9 @@ DOCUMENTATION = '''
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
         type: bool
+        vars:
+          - name: ansible_sftp_batch_mode
+            version_added: '2.7'
       scp_if_ssh:
         default: smart
         description:
@@ -202,6 +254,9 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+        vars:
+          - name: ansible_scp_if_ssh
+            version_added: '2.7'
       use_tty:
         version_added: '2.5'
         default: 'yes'
@@ -210,7 +265,9 @@ DOCUMENTATION = '''
         ini:
         - {key: usetty, section: ssh_connection}
         type: bool
-        yaml: {key: connection.usetty}
+        vars:
+          - name: ansible_ssh_use_tty
+            version_added: '2.7'
 '''
 
 import errno
