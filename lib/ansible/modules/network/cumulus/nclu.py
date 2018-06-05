@@ -79,6 +79,15 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Check BGP Status
+  nclu:
+    commands:
+        - show bgp summary json
+  register: output
+- name: Print BGP Status In JSON
+  debug:
+    var: output["msg"]
 '''
 
 RETURN = '''
