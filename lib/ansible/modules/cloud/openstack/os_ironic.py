@@ -164,6 +164,7 @@ def _parse_properties(module):
             props['root_device'] = p.get('root_device')
     return props
 
+
 def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
     info = p.get('power')
