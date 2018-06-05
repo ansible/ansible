@@ -4,6 +4,13 @@
     organization: Default
     kind: scm
 
+- name: Create an Vault Credential
+  tower_credential:
+    name: Vault Credential for JT
+    organization: Default
+    kind: vault
+    vault_password: test_password123456
+
 - name: Create a Demo Project
   tower_project:
     name: Job Template Test Project
@@ -45,6 +52,21 @@
     inventory: Demo Inventory
     playbook: hello_world.yml
     machine_credential: Demo Credential
+    job_type: run
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a Job Template with Vault Credential
+  tower_job_template:
+    name: hello-world
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    vault_credential: Vault Credential for JT
     job_type: run
     state: present
   register: result
