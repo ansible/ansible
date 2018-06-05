@@ -18,7 +18,7 @@ module: manageiq_dynamic_resource_definition
 
 short_description: Management of dynamic resource definitions in ManageIQ.
 extends_documentation_fragment: manageiq
-version_added: '2.6'
+version_added: '2.7'
 author: Ahmed Bashir (@ahmbas)
 description:
   - The manageiq_dynamic_resource_definition module supports adding, updating and deleting dynamic resource definitions in ManageIQ.
