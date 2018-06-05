@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -24,25 +24,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: routeros_command
-version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
-short_description: Run commands on remote devices running Cisco routeros
+version_added: "2.6"
+author: "Egor Zaitsev (@heuels)"
+short_description: Run commands on remote devices running MikroTik RouterOS
 description:
-  - Sends arbitrary commands to an routeros node and returns the results
+  - Sends arbitrary commands to an RouterOS node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(routeros_config) to configure routeros devices.
-extends_documentation_fragment: routeros
-notes:
-  - Tested against routeros 15.6
-  - If a command sent to the device requires answering a prompt, it is possible
-    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
-      - List of commands to send to the remote routeros device over the
+      - List of commands to send to the remote RouterOS device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -91,35 +84,29 @@ options:
 
 EXAMPLES = """
 tasks:
-  - name: run show version on remote devices
+  - name: run command on remote devices
     routeros_command:
-      commands: show version
+      commands: /system routerboard print
 
-  - name: run show version and check to see if output contains routeros
+  - name: run command and check to see if output contains routeros
     routeros_command:
-      commands: show version
-      wait_for: result[0] contains routeros
+      commands: /system resource print
+      wait_for: result[0] contains MikroTik
 
   - name: run multiple commands on remote nodes
     routeros_command:
       commands:
-        - show version
-        - show interfaces
+        - /system routerboard print
+        - /system identity print
 
   - name: run multiple commands and evaluate the output
     routeros_command:
       commands:
-        - show version
-        - show interfaces
+        - /system routerboard print
+        - /interface ethernet print
       wait_for:
-        - result[0] contains routeros
-        - result[1] contains Loopback0
-  - name: run command that requires answering a prompt
-    routeros_command:
-      commands:
-        - command: 'clear counters GigabitEthernet0/2'
-          prompt: 'Clear "show interface" counters on this interface [confirm]'
-          answer: c
+        - result[0] contains x86
+        - result[1] contains ether1
 """
 
 RETURN = """
