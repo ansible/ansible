@@ -194,6 +194,10 @@ if ($will_change -eq $true) {
             if ($new_value -cne $value) {
                 Fail-Json $result "Failed to change the value for key '$key' in section '$section', the value is still $new_value"
             }
+        } elseif ($value -eq "") {
+            # Value was empty, so OK if no longer in the result
+            # Just print a warning
+            Add-Warning -obj $result -message "The key '$key' in section '$section' was reset to empty value."
         } else {
             Fail-Json $result "The key '$key' in section '$section' is not a valid key, cannot set this value"
         }
