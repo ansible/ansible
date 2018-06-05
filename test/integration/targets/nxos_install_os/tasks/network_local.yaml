@@ -9,8 +9,8 @@
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- name: run test case (ansible_connection=local transport=ssh)
+- name: run test cases (ansible_connection=local transport=ssh)
   include: "{{ test_case_to_run }} ansible_connection=local connection={{ cli }}"
-  with_first_found: "{{ test_items }}"
+  with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
