@@ -102,7 +102,7 @@ Start-Sleep -Seconds $pre_wait_delay
 if ($state -eq "present" ) {
     #wait for a process to start
     $Processes = @()
-    $attempts = -1
+    $attempts = 0
     Do {
         if (((Get-Date) - $module_start).TotalSeconds -gt $timeout)
         {
@@ -112,7 +112,7 @@ if ($state -eq "present" ) {
         $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
         Start-Sleep -Seconds $sleep
         $attempts ++
-        $ProcessCount = $(if ($Processes -is [array]) { $Processess.count } else{ 1 })
+        $ProcessCount = $(if ($Processes -is [array]) { $Processes.count } else{ 1 })
     } While ($ProcessCount -lt $process_min_count)
 
     if ($attempts -gt 0)
