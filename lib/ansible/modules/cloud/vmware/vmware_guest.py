@@ -1075,10 +1075,11 @@ class PyVmomiHelper(PyVmomi):
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
                     if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
-                            dvp.config.defaultPortConfig.vlan.vlanId == int(network['vlan']):
+                            isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
+                            str(dvp.config.defaultPortConfig.vlan.vlanId) == network['vlan']:
                         network['name'] = dvp.config.name
                         break
-                    if dvp.config.name == str(network['vlan']):
+                    if dvp.config.name == network['vlan']:
                         network['name'] = dvp.config.name
                         break
                 else:
