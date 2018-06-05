@@ -238,7 +238,7 @@ def main():
         'prefer_dist': 'prefer-dist',
         'no_dev': 'no-dev',
         'no_scripts': 'no-scripts',
-        'no_plugins': 'no_plugins',
+        'no_plugins': 'no-plugins',
         'apcu_autoloader': 'acpu-autoloader',
         'optimize_autoloader': 'optimize-autoloader',
         'classmap_authoritative': 'classmap-authoritative',
