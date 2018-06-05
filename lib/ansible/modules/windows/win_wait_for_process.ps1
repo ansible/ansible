@@ -29,7 +29,12 @@ $result = @{
 # validate the input
 if ($state -eq "absent" -and $sleep -ne 1)
 {
-    Fail-json $result "sleep parameter is of no effect when waiting for a proces to stop."
+    Fail-json $result "sleep parameter is of no effect when waiting for a process to stop."
+}
+
+if ($state -eq "absent" -and $process_min_count -ne 1)
+{
+    Fail-json $result "process_min_count parameter is of no effect when waiting for a process to stop."
 }
 
 if (($process_name_exact -or $process_name_pattern) -and $process_id)
