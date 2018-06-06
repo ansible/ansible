@@ -92,4 +92,4 @@
 
   when: sdk_run
 
-- debug: msg="END connection={{ ansible_connection }} nxos_vtp_version sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_rpm sanity test"
