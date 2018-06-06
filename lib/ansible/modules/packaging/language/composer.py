@@ -92,6 +92,22 @@ options:
         default: true
         type: bool
         aliases: [ optimize-autoloader ]
+    classmap_authoritative:
+        version_added: "2.7"
+        description:
+            - Autoload classes from classmap only.
+            - Implicitely enable optimize_autoloader.
+            - Recommended especially for production, but can take a bit of time to run.
+        default: false
+        type: bool
+        aliases: [ classmap-authoritative ]
+    apcu_autoloader:
+        version_added: "2.7"
+        description:
+            - Uses APCu to cache found/not-found classes
+        default: false
+        type: bool
+        aliases: [ apcu-autoloader ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
@@ -182,7 +198,9 @@ def main():
             no_dev=dict(default=True, type="bool", aliases=["no-dev"]),
             no_scripts=dict(default=False, type="bool", aliases=["no-scripts"]),
             no_plugins=dict(default=False, type="bool", aliases=["no-plugins"]),
+            apcu_autoloader=dict(default=False, type="bool", aliases=["apcu-autoloader"]),
             optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
+            classmap_authoritative=dict(default=False, type="bool", aliases=["classmap-authoritative"]),
             ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
         required_if=[('global_command', False, ['working_dir'])],
@@ -220,8 +238,10 @@ def main():
         'prefer_dist': 'prefer-dist',
         'no_dev': 'no-dev',
         'no_scripts': 'no-scripts',
-        'no_plugins': 'no_plugins',
+        'no_plugins': 'no-plugins',
+        'apcu_autoloader': 'acpu-autoloader',
         'optimize_autoloader': 'optimize-autoloader',
+        'classmap_authoritative': 'classmap-authoritative',
         'ignore_platform_reqs': 'ignore-platform-reqs',
     }
 
