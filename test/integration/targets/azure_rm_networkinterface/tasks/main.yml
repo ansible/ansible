@@ -75,12 +75,12 @@
 - name: Create NIC using virtual_network resource_group parameter
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: "tn{{ rpfx }}"rg
+      name: "tn{{ rpfx }}rg"
       virtual_network:
         name: "tn{{ rpfx }}"
         resource_group: "{{ resource_group_secondary }}"
       subnet: "tn{{ rpfx }}"
-      public_ip_name: "tn{{ rpfx }}"rg
+      public_ip_name: "tn{{ rpfx }}rg"
       public_ip_allocation_method: Static
       security_group: "tn{{ rpfx }}"
   register: output
@@ -88,12 +88,12 @@
 - name: Create NIC using virtual_network resource_group parameter (idempotent)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: "tn{{ rpfx }}"rg
+      name: "tn{{ rpfx }}rg"
       virtual_network:
         name: "tn{{ rpfx }}"
         resource_group: "{{ resource_group_secondary }}"
       subnet: "tn{{ rpfx }}"
-      public_ip_name: "tn{{ rpfx }}"rg
+      public_ip_name: "tn{{ rpfx }}rg"
       public_ip_allocation_method: Static
       security_group: "tn{{ rpfx }}"
   register: output
@@ -105,7 +105,7 @@
 - name: Delete NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: "tn{{ rpfx }}"rg
+      name: "tn{{ rpfx }}rg"
       state: absent
 
 - name: Create NIC
@@ -117,27 +117,27 @@
       public_ip_name: "tn{{ rpfx }}"
       public_ip_allocation_method: Static
       security_group:
-        name: testnic002
+        name: "tn{{ rpfx }}2"
         resource_group: "{{ resource_group_secondary }}"
   register: output
 
 - assert:
     that:
       - output.changed
-      - output.state.ip_configuration.subnet.name == '"tn{{ rpfx }}"'
+      - output.state.ip_configuration.subnet.name == 'tn{{ rpfx }}'
 
 - name: Update the NIC with mutilple ip configurations (check mode)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: "tn{{ rpfx }}"
       security_group:
-        name: testnic002
+        name: "tn{{ rpfx }}2"
         resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
       ip_configurations:
         - name: ipconfig-add
-          public_ip_name: testnic002
+          public_ip_name: "tn{{ rpfx }}2"
         - name: default
           public_ip_name: "tn{{ rpfx }}"
           primary: True
@@ -156,13 +156,13 @@
       resource_group: "{{ resource_group }}"
       name: "tn{{ rpfx }}"
       security_group: 
-        name: testnic002
+        name: "tn{{ rpfx }}2"
         resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
       ip_configurations:
         - name: ipconfig-add
-          public_ip_name: testnic002
+          public_ip_name: "tn{{ rpfx }}2"
         - name: default
           public_ip_name: "tn{{ rpfx }}"
           primary: True
@@ -180,7 +180,7 @@
       - output.changed
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 3
-      - output.state.network_security_group.name == 'testnic002'
+      - output.state.network_security_group.name == 'tn{{ rpfx }}2'
 
 - name: Update the NIC with mutilple ip configurations (idempotent)
   azure_rm_networkinterface:
@@ -191,7 +191,7 @@
       subnet: "tn{{ rpfx }}"
       ip_configurations:
         - name: ipconfig-add
-          public_ip_name: testnic002
+          public_ip_name: "tn{{ rpfx }}2"
         - name: default
           public_ip_name: "tn{{ rpfx }}"
           primary: True
@@ -213,7 +213,7 @@
       resource_group: "{{ resource_group }}"
       name: "tn{{ rpfx }}"
       security_group:
-        name: testnic002
+        name: "tn{{ rpfx }}2"
         resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
