@@ -220,7 +220,7 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         if self.security_group:
             nsg = self.parse_nsg()
-        
+
         if self.route_table:
             route_table = parse_resource_to_dict(self.route_table)
             self.route_table = format_resource_id(val=route_table['name'],
