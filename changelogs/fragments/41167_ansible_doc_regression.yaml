@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-doc - fixed traceback on missing plugins (https://github.com/ansible/ansible/pull/41167)
