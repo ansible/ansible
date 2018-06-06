@@ -938,15 +938,14 @@ class StrategyBase:
 
         return ret
 
+    def _cond_not_supported_warn(self, task_name):
+        display.warning("%s task does not support when conditional" % task_name)
+
     def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
         meta_action = task.args.get('_raw_params')
-
-        # FIXME(s):
-        # * raise an error or show a warning when a conditional is used
-        #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
@@ -957,11 +956,17 @@ class StrategyBase:
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             msg = "noop"
         elif meta_action == 'flush_handlers':
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory' or self.flush_cache:
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
@@ -988,6 +993,8 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             if target_host in self._active_connections:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]
