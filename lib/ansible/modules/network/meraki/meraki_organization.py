@@ -177,22 +177,17 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['clone']:  # Cloning
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = json.loads(
-                meraki.request(
-                    meraki.construct_path(
-                        'clone',
-                        org_name=meraki.params['clone']
-                    ),
-                    payload=json.dumps(payload),
-                    method='POST'))
+            meraki.result['data'] = meraki.request(meraki.construct_path('clone',
+                                                                         org_name=meraki.params['clone']
+                                                                         ),
+                                                   payload=json.dumps(payload),
+                                                   method='POST')
             meraki.result['changed'] = True
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = json.loads(
-                meraki.request(
-                    meraki.construct_path('create'),
-                    method='POST',
-                    payload=json.dumps(payload)))
+            meraki.result['data'] = meraki.request(meraki.construct_path('create'),
+                                                   method='POST',
+                                                   payload=json.dumps(payload))
             meraki.result['changed'] = True
         elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
             payload = {'name': meraki.params['org_name'],
@@ -204,14 +199,11 @@ def main():
                     meraki.params['org_id'],
                     orgs),
                     payload):
-                meraki.result['data'] = json.loads(
-                    meraki.request(
-                        meraki.construct_path(
-                            'update',
-                            org_id=meraki.params['org_id']
-                        ),
-                        method='PUT',
-                        payload=json.dumps(payload)))
+                meraki.result['data'] = meraki.request(meraki.construct_path('update',
+                                                                             org_id=meraki.params['org_id']
+                                                                             ),
+                                                       method='PUT',
+                                                       payload=json.dumps(payload))
                 meraki.result['changed'] = True
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

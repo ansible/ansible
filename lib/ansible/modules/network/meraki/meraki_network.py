@@ -227,7 +227,7 @@ def main():
                                    method='POST',
                                    payload=json.dumps(payload)
                                    )
-                meraki.result['data'] = json.loads(r)
+                meraki.result['data'] = r
                 meraki.result['changed'] = True
             else:
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
@@ -238,7 +238,7 @@ def main():
                     r = meraki.request(path,
                                        method='PUT',
                                        payload=json.dumps(payload))
-                    meraki.result['data'] = json.loads(r)
+                    meraki.result['data'] = r
                     meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
