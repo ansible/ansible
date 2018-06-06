@@ -190,7 +190,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 changed = True  # create new route table
                 # create all route for the new table
                 for i in self.routes:
-                    route = self.network_models.route(name=i.get('name'),
+                    route = self.network_models.Route(name=i.get('name'),
                                                       address_prefix=i.get('address_prefix'),
                                                       next_hop_type=i.get('next_hop_type'),
                                                       next_hop_ip_address=i.get('next_hop_ip_address'))
@@ -206,7 +206,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 for i in self.routes:
                     route_matched = False
                     route_change = False
-                    route = self.network_models.route(name=i.get('name'),
+                    route = self.network_models.Route(name=i.get('name'),
                                                       address_prefix=i.get('address_prefix'),
                                                       next_hop_type=i.get('next_hop_type'),
                                                       next_hop_ip_address=i.get('next_hop_ip_address'))
@@ -228,11 +228,11 @@ class AzureRMRouteTable(AzureRMModuleBase):
                         self.delete_route(origin.name)
 
             if changed:
-                result = self.network_models.route_table(name=self.name,
-                                                         location=self.location,
-                                                         tags=self.tags,
-                                                         disable_bgp_route_propagation=self.disable_bgp_route_propagation,
-                                                         routes=routes)
+                result = self.network_models.RouteTable(name=self.name,
+                                                        location=self.location,
+                                                        tags=self.tags,
+                                                        disable_bgp_route_propagation=self.disable_bgp_route_propagation,
+                                                        routes=routes)
                 result = self.create_or_update_table(result)
 
         self.results = route_to_dict(result)
