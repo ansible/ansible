@@ -337,6 +337,7 @@ Possible values::
     ClearLinux
     Coreos
     Debian
+    Fedora
     Gentoo
     Mandriva
     NA
