@@ -279,24 +279,21 @@ class LookupModule(LookupBase):
                 if flat:
                     ret.append(s)
                 else:
-                    try:
-                        rd = make_rdata_dict(rdata)
-                        rd['owner'] = answers.canonical_name.to_text()
-                        rd['type'] = dns.rdatatype.to_text(rdata.rdtype)
-                        rd['ttl'] = answers.rrset.ttl
-                        rd['class'] = dns.rdataclass.to_text(rdata.rdclass)
+                    rd = make_rdata_dict(rdata)
+                    rd['owner'] = answers.canonical_name.to_text()
+                    rd['type'] = dns.rdatatype.to_text(rdata.rdtype)
+                    rd['ttl'] = answers.rrset.ttl
+                    rd['class'] = dns.rdataclass.to_text(rdata.rdclass)
 
-                        ret.append(rd)
-                    except Exception as e:
-                        ret.append(str(e))
+                    ret.append(rd)
 
         except dns.resolver.NXDOMAIN:
-            ret.append('NXDOMAIN')
+            raise AnsibleError("dns.resolver returned NXDOMAIN for %s" % domain)
         except dns.resolver.NoAnswer:
-            ret.append("")
+            raise AnsibleError("dns.resolver returned no answer for %s" % domain)
         except dns.resolver.Timeout:
-            ret.append('')
-        except dns.exception.DNSException as e:
+            raise AnsibleError("dns.resolver timed out trying to resolve %s" % domain)
+        except Exception as e:
             raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
         return ret
