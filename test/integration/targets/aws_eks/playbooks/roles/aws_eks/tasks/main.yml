@@ -180,5 +180,3 @@
         name: '{{ resource_prefix }}_aws_eks'
         <<: *aws_connection_info
       ignore_errors: yes
-
-

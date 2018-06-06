@@ -28,10 +28,8 @@ options:
     description: ARN of IAM role used by the EKS cluster
   subnets:
     description: list of subnet IDs for the Kubernetes cluster
-    type: list
   security_groups:
     description: list of security group names or IDs
-    type: list
   state:
     description: desired state of the EKS cluster
     choices:
