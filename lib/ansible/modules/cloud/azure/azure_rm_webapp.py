@@ -512,6 +512,14 @@ class AzureRMWebApps(AzureRMModuleBase):
         response = None
         to_be_updated = False
 
+        # set location
+        resource_group = self.get_resource_group(self.resource_group)
+        if not self.location:
+            self.location = resource_group.location
+
+        if self.plan:
+            self.plan = self.parse_resource_to_dict(self.plan)
+
         # get app service plan
         is_linux = False
         old_plan = self.get_app_service_plan()
@@ -548,9 +556,6 @@ class AzureRMWebApps(AzureRMModuleBase):
         if not self.app_settings:
             self.app_settings = dict()
 
-        if self.plan:
-            self.plan = self.parse_resource_to_dict(self.plan)
-
         if self.container_settings:
             linux_fx_version = 'DOCKER|'
 
@@ -568,11 +573,6 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if self.container_settings.get('registry_server_password'):
                 self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings['registry_server_password']
-
-        # set location
-        resource_group = self.get_resource_group(self.resource_group)
-        if not self.location:
-            self.location = resource_group.location
 
         # init site
         self.site = Site(location=self.location, site_config=self.site_config)
