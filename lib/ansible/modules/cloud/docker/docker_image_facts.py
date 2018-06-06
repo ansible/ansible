@@ -218,7 +218,8 @@ def main():
     )
 
     client = AnsibleDockerClient(
-        argument_spec=argument_spec
+        argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     results = dict(
