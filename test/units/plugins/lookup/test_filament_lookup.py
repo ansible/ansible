@@ -20,34 +20,60 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.mock.loader import DictDataLoader
-
+from ansible.errors import AnsibleError
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
-from ansible.plugins.lookup.filament_lookup import run_command
+from ansible.compat.tests.mock import MagicMock, patch
+import ansible.plugins.lookup.filament_lookup as filament_lookup
 import subprocess
 
+class FakeBuffer:
+    def __init__(self, string):
+        self.content = string
+    
+    def read(self):
+        return self.content
+
+
+class FakeProcess:
+    def __init__(self, string):
+        self.stdout = FakeBuffer(string)
 
 def popen_side_effect(command, **kwargs):
     if command.startswith("ps aux|grep"):
         index = command.find("grep")
-        return command[index+5:]  + " Process"
+        result = command[index+5:]  + " Process"
+        return FakeProcess(result)
     else:
-        return "Many processes"
+        return FakeProcess("Many processes")
 
 
 class TestFilamentLookup(unittest.TestCase):
-    
-    def test_run_command_one_arg(self):
-        subprocess.Popen = MagicMock(side_effect=popen_side_effect)
-        result = run_command(['python'])
-        self.assertEqual('python Process',result)
+   
+    @patch('subprocess.Popen')
+    def test_run_command_one_arg(self, test_patch):
+        test_patch.side_effect = popen_side_effect
+        #filament_lookup.Popen = MagicMock(side_effect=popen_side_effect)
+        result = filament_lookup.run_command(['python'])
+        self.assertEqual('python Process', result)
 
-    def test_run_command_no_arg(self):
-        pass
+    @patch('subprocess.Popen')
+    def test_run_command_no_arg(self, test_patch):
+        test_patch.side_effect = popen_side_effect
+        #subprocess.Popen = MagicMock(side_effect=popen_side_effect)
+        result = filament_lookup.run_command([])
+        self.assertEqual('Many processes', result)
 
-    def test_run_command_three_arg(self):
-        pass
+    @patch('subprocess.Popen')
+    def test_run_command_three_arg(self, test_patch):
+        try:
+            test_patch.side_effect = popen_side_effect
+            #subprocess.Popen = MagicMock(side_effect=popen_side_effect)
+            result = filament_lookup.run_command(['bad', 'arguments'])
+            self.assertTrue(False)
+        except AnsibleError:
+            pass
+
+
 	
 
 
