@@ -147,6 +147,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
+    route_table: "{{ name }}"
     state: absent
   check_mode: yes
 
@@ -155,6 +156,7 @@
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
     state: absent
+    route_table: "{{ name }}"
   register: output
 
 - assert:
@@ -166,6 +168,7 @@
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
     state: absent
+    route_table: "{{ name }}"
   register: output
 
 - assert:

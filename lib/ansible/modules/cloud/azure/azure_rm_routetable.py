@@ -72,14 +72,19 @@ state:
     returned: always
     type: dict
     sample: {
-        "changed": false,
-        "disable_bgp_route_propagation": false,
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar",
-        "name": "foobar",
-        "routes": [],
-        "tags": {
-            "purpose": "testing"
+      "changed": false,
+      "disable_bgp_route_propagation": false,
+      "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar",
+      "name": "foobar",
+      "routes": [
+        {
+          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
+          "name": "route"
         }
+      ],
+      "tags": {
+        "purpose": "testing"
+      }
     }
 '''
 
