@@ -61,6 +61,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
@@ -188,7 +189,7 @@ class AzureRMRoute(AzureRMModuleBase):
                     result = self.create_or_update_route(result)
 
         self.results = route_to_dict(result) if result else dict()
-        self.results['changed'] = changed                
+        self.results['changed'] = changed
         return self.results
 
     def create_or_update_route(self, param):
@@ -202,7 +203,7 @@ class AzureRMRoute(AzureRMModuleBase):
         try:
             poller = self.network_client.routes.delete(self.resource_group, self.route_table, self.name)
             result = self.get_poller_result(poller)
-            return result            
+            return result
         except Exception as exc:
             self.fail("Error deleting virtual network {0} - {1}".format(self.name, str(exc)))
 
@@ -212,6 +213,7 @@ class AzureRMRoute(AzureRMModuleBase):
         except Exception as exc:
             self.log('Error getting route {0} - {1}'.format(self.name, str(exc)))
             return None
+
 
 def main():
     AzureRMRoute()

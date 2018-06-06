@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_route
+module: azure_rm_routetable
 version_added: "2.7"
 short_description: Manage Azure route resource.
 description:
@@ -41,6 +41,11 @@ options:
         description:
             - Gets or sets whether to disable the routes learned by BGP on that route table.
             - True means disable.
+        type: bool
+        default: False
+    location:
+        description:
+            - Region of the resource.
 
 extends_documentation_fragment:
     - azure
@@ -52,7 +57,7 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create a route
+    - name: Create a route table
       azure_rm_routetable:
         name: foobar
         resource_group: Testing
@@ -60,7 +65,7 @@ EXAMPLES = '''
         tags:
           purpose: testing
 
-    - name: Delete a route
+    - name: Delete a route table
       azure_rm_routetable:
         name: foobar
         resource_group: Testing
@@ -171,7 +176,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                     result = self.create_or_update_table(result)
 
         self.results = route_table_to_dict(result) if result else dict()
-        self.results['changed'] = changed                
+        self.results['changed'] = changed
         return self.results
 
     def create_or_update_table(self, param):
@@ -185,7 +190,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
         try:
             poller = self.network_client.route_tables.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
-            return result            
+            return result
         except Exception as exc:
             self.fail("Error deleting virtual network {0} - {1}".format(self.name, str(exc)))
 
