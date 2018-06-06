@@ -100,7 +100,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            disable_bgp_route_propagation=dict(type='bool')
+            disable_bgp_route_propagation=dict(type='bool', default=False)
         )
 
         self.resource_group = None
