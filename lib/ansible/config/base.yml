@@ -1375,6 +1375,18 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVENTORY_ANY_UNPARSED_IS_FAILED:
+  name: Controls whether any unparseable inventory source is a fatal error
+  default: False
+  description: >
+    If 'true', it is a fatal error when any given inventory source
+    cannot be successfully parsed by any available inventory plugin;
+    otherwise, this situation only attracts a warning.
+  type: boolean
+  env: [{name: ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED}]
+  ini:
+    - {key: any_unparsed_is_failed, section: inventory}
+  version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
   default: ['host_list', 'script', 'yaml', 'ini', 'auto']
@@ -1412,7 +1424,10 @@ INVENTORY_IGNORE_PATTERNS:
 INVENTORY_UNPARSED_IS_FAILED:
   name: Unparsed Inventory failure
   default: False
-  description: If 'true' unparsed inventory sources become fatal errors, they are warnings otherwise.
+  description: >
+    If 'true' it is a fatal error if every single potential inventory
+    source fails to parse, otherwise this situation will only attract a
+    warning.
   env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
   ini:
   - {key: unparsed_is_failed, section: inventory}
