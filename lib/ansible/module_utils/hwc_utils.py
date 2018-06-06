@@ -88,13 +88,12 @@ class HwcSession(object):
     def __init__(self, module, product):
         self.module = module
         self.product = product
-        self._endpoint = ""
         self._validate()
 
     def get(self, url, body=None):
         try:
             return self._session().get(
-                self._endpoint + url, json=body,
+                url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
@@ -102,7 +101,7 @@ class HwcSession(object):
     def post(self, url, body=None):
         try:
             return self._session().post(
-                self._endpoint + url, json=body,
+                url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
@@ -110,7 +109,7 @@ class HwcSession(object):
     def delete(self, url, body=None):
         try:
             return self._session().delete(
-                self._endpoint + url, json=body,
+                url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
@@ -118,22 +117,32 @@ class HwcSession(object):
     def put(self, url, body=None):
         try:
             return self._session().put(
-                self._endpoint + url, json=body,
+                url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def _session(self):
-        return _LegacyJsonAdapter(self._credentials())
-
-    def _get_service_endpoint(self):
+    def get_service_endpoint(self, service_type):
+        e = None
         try:
-            return self._credentials().get_endpoint_data(
-                service_type=self.product,
+            e = self._credentials().get_endpoint_data(
+                service_type=service_type,
                 region_name=self.module.params['region']
             )
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
+
+        if not e or e.url == "":
+            self.module.fail_json(
+                msg="Can not find the enpoint for %s" % service_type)
+
+        url = e.url
+        if url[-1] != "/":
+            url += "/"
+        return url
+
+    def _session(self):
+        return _LegacyJsonAdapter(self._credentials())
 
     def _validate(self):
         if not HAS_REQUESTS:
@@ -142,14 +151,6 @@ class HwcSession(object):
         if not HAS_THIRD_LIBRARIES:
             self.module.fail_json(
                 msg="Please install the keystoneauth1 library")
-
-        e = self._get_service_endpoint()
-        if not e or e.url == "":
-            self.module.fail_json(
-                msg="Can not find the enpoint for %s" % self.product)
-        self._endpoint = e.url
-        if e.url[-1] != "/":
-            self._endpoint += "/"
 
     def _credentials(self):
         auth = v3.Password(
