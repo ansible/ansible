@@ -238,7 +238,7 @@
 - name: IP configuration without public IP and NSG
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: "tn{{ rpfx }}"noip
+      name: "tn{{ rpfx }}noip"
       create_with_security_group: False
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
@@ -271,7 +271,7 @@
       state: absent
   with_items:
     - "tn{{ rpfx }}"
-    - "tn{{ rpfx }}"noip
+    - "tn{{ rpfx }}noip"
   register: output
 
 - assert:
