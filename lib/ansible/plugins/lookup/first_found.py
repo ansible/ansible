@@ -44,15 +44,16 @@ EXAMPLES = """
       - bar
 
 - name: same copy but specific paths
-  copy: src={{lookup('first_found', findme, mypaths)}} dest=/some/file
+  copy: src={{lookup('first_found', params)}} dest=/some/file
   vars:
-    findme:
-      - foo
-      - "{{inventory_hostname}}"
-      - bar
-    mypaths:
-      - /tmp/production
-      - /tmp/staging
+    params:
+      files:
+        - foo
+        - "{{inventory_hostname}}"
+        - bar
+      paths:
+        - /tmp/production
+        - /tmp/staging
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
   template:
@@ -64,12 +65,15 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  include_vars: "{{lookup('first_found', findme, paths=['vars'])}}"
+  include_vars: "{{lookup('first_found', params)}}"
   vars:
-    findme:
-     - '{{ansible_os_distribution}}.yml'
-     - '{{ansible_os_family}}.yml'
-     - default.yml
+    params:
+      files:
+        - '{{ansible_os_distribution}}.yml'
+        - '{{ansible_os_family}}.yml'
+        - default.yml
+      paths:
+        - 'vars'
 """
 
 RETURN = """
