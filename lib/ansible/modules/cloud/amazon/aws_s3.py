@@ -52,6 +52,14 @@ options:
       - When set for PUT mode, asks for server-side encryption.
     default: True
     version_added: "2.0"
+  encryption_mode:
+    description:
+      - What encryption mode to use if C(encrypt) is set
+    default: AES256
+    choices:
+      - AES256
+      - aws:kms
+    version_added: "2.7"
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
@@ -140,6 +148,10 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
+  encryption_kms_key_id:
+    description:
+      - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
+    version_added: "2.7"
 
 requirements: [ "boto3", "botocore" ]
 author:
@@ -288,6 +300,10 @@ try:
     import botocore
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
+
+
+class Sigv4Required(Exception):
+    pass
 
 
 def key_check(module, s3, bucket, obj, version=None, validate=True):
@@ -443,7 +459,9 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
     try:
         params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
         if encrypt:
-            params['ServerSideEncryption'] = 'AES256'
+            params['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            params['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
 
         s3.put_object(**params)
         for acl in module.params.get('permission'):
@@ -481,7 +499,9 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     try:
         extra = {}
         if encrypt:
-            extra['ServerSideEncryption'] = 'AES256'
+            extra['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            extra['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
         if metadata:
             extra['Metadata'] = {}
 
@@ -522,7 +542,9 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
         else:
             key = s3.get_object(Bucket=bucket, Key=obj)
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != "404":
+        if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
+            raise Sigv4Required()
+        elif e.response['Error']['Code'] != "404":
             module.fail_json(msg="Could not find the key %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     for x in range(0, retries + 1):
@@ -551,8 +573,11 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
             contents = to_native(s3.get_object(Bucket=bucket, Key=obj)["Body"].read())
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
+            raise Sigv4Required()
+        else:
+            module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def get_download_url(module, s3, bucket, obj, expiry, changed=True):
@@ -584,7 +609,7 @@ def is_walrus(s3_url):
         return False
 
 
-def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
+def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=False):
     if s3_url and rgw:  # TODO - test this
         rgw = urlparse(s3_url)
         params = dict(module=module, conn_type='client', resource='s3', use_ssl=rgw.scheme == 'https', region=location, endpoint=s3_url, **aws_connect_kwargs)
@@ -607,6 +632,10 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
+        if module.params['mode'] == 'put' and module.params['encryption_mode'] == 'aws:kms':
+            params['config'] = botocore.client.Config(signature_version='s3v4')
+        elif module.params['mode'] in ('get', 'getstr') and sig_4:
+            params['config'] = botocore.client.Config(signature_version='s3v4')
     return boto3_conn(**params)
 
 
@@ -617,6 +646,7 @@ def main():
             bucket=dict(required=True),
             dest=dict(default=None, type='path'),
             encrypt=dict(default=True, type='bool'),
+            encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
             expiry=dict(default=600, type='int', aliases=['expiration']),
             headers=dict(type='dict'),
             marker=dict(default=""),
@@ -632,7 +662,8 @@ def main():
             s3_url=dict(aliases=['S3_URL']),
             rgw=dict(default='no', type='bool'),
             src=dict(),
-            ignore_nonexistent_bucket=dict(default=False, type='bool')
+            ignore_nonexistent_bucket=dict(default=False, type='bool'),
+            encryption_kms_key_id=dict()
         ),
     )
     module = AnsibleModule(
@@ -746,18 +777,30 @@ def main():
             if keysum_compare(module, dest, s3, bucket, obj, version=version):
                 sum_matches = True
                 if overwrite == 'always':
-                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    try:
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    except Sigv4Required:
+                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
             else:
                 sum_matches = False
 
                 if overwrite in ('always', 'different'):
-                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    try:
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    except Sigv4Required:
+                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
         else:
-            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+            try:
+                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+            except Sigv4Required:
+                s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
@@ -887,7 +930,11 @@ def main():
         if bucket and obj:
             keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
             if keyrtn:
-                download_s3str(module, s3, bucket, obj, version=version)
+                try:
+                    download_s3str(module, s3, bucket, obj, version=version)
+                except Sigv4Required:
+                    s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                    download_s3str(module, s3, bucket, obj, version=version)
             elif version is not None:
                 module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version))
             else:
