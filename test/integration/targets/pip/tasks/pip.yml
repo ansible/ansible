@@ -256,3 +256,17 @@
   assert:
     that:
       - not pip_install_empty.changed
+
+# https://github.com/ansible/ansible/issues/41043
+- name: do not consider an empty string as a version
+  pip:
+    name: q
+    state: present
+    version: ""
+    virtualenv: "{{ output_dir }}/pipenv"
+  register: pip_install_empty_version_string
+
+- name: ensure that task installation did not fail
+  assert:
+    that:
+      - pip_install_empty_version_string is successful
