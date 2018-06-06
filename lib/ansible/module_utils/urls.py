@@ -403,7 +403,10 @@ def generic_urlparse(parts):
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
         generic_parts['hostname'] = parts.hostname
-        generic_parts['port'] = parts.port
+        try:
+            generic_parts['port'] = parts.port
+        except ValueError:
+            generic_parts['port'] = None
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
