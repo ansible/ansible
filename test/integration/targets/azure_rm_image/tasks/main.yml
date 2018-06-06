@@ -48,7 +48,7 @@
       vm_size: Standard_A0
       storage_account: "{{ storage_account }}"
       storage_container: "vn{{ storage_account }}"
-      storage_blob: "vn{{ storage_account }}".vhd
+      storage_blob: "vn{{ storage_account }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       os_type: Linux
@@ -76,7 +76,7 @@
 - name: Create an image from VM (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/"vn{{ storage_account }}"/"vn{{ storage_account }}".vhd"
+      source: "https://{{ storage_account }}.blob.core.windows.net/vn{{ storage_account }}/vn{{ storage_account }}.vhd"
       name: testimage001
       os_type: Linux
   check_mode: yes
@@ -88,7 +88,7 @@
 - name: Create an image from VM
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/"vn{{ storage_account }}"/"vn{{ storage_account }}".vhd"
+      source: "https://{{ storage_account }}.blob.core.windows.net/vn{{ storage_account }}/vn{{ storage_account }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
@@ -101,7 +101,7 @@
 - name: Create an image from VM (idempotent)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/"vn{{ storage_account }}"/"vn{{ storage_account }}".vhd"
+      source: "https://{{ storage_account }}.blob.core.windows.net/vn{{ storage_account }}/vn{{ storage_account }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
