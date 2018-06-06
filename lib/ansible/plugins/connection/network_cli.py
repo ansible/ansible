@@ -282,6 +282,10 @@ class Connection(ConnectionBase):
             messages.append('deauthorizing connection')
 
         self._play_context = play_context
+
+        self.reset_history()
+        self.disable_response_logging()
+
         return messages
 
     def _connect(self):

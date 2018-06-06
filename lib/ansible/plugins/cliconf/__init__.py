@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import signal
-
 from abc import ABCMeta, abstractmethod
 from functools import wraps
 
@@ -83,8 +81,12 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
             conn.edit_config(['hostname test', 'netconf ssh'])
     """
 
+    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
+
     def __init__(self, connection):
         self._connection = connection
+        self.history = list()
+        self.response_logging = False
 
     def _alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
@@ -92,94 +94,208 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self.close()
 
     def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
-        """Executes a cli command and returns the results
-        This method will execute the CLI command on the connection and return
-        the results to the caller.  The command output will be returned as a
-        string
+        """Executes a command over the device connection
+
+        This method will execute a command over the device connection and
+        return the results to the caller.  This method will also perform
+        logging of any commands based on the `nolog` argument.
+
+        :param command: The command to send over the connection to the device
+        :param prompt: A regex pattern to evalue the expected prompt from the command
+        :param answer: The answer to respond with if the prompt is matched.
+        :param sendonly: Bool value that will send the command but not wait for a result.
+        :param newline: Bool value that will append the newline character to the command
+        :param prompt_retry_check: Bool value for trying to detect more prompts
+
+        :returns: The output from the device after executing the command
         """
-        kwargs = {'command': to_bytes(command), 'sendonly': sendonly,
-                  'newline': newline, 'prompt_retry_check': prompt_retry_check}
+        kwargs = {
+            'command': to_bytes(command),
+            'sendonly': sendonly,
+            'newline': newline,
+            'prompt_retry_check': prompt_retry_check
+        }
+
         if prompt is not None:
             kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
             kwargs['answer'] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
+
+        if not self.response_logging:
+            self.history.append(('*****', '*****'))
+        else:
+            self.history.append((kwargs['command'], resp))
+
         return resp
 
     def get_base_rpc(self):
         """Returns list of base rpc method supported by remote device"""
-        return ['get_config', 'edit_config', 'get_capabilities', 'get']
+        return self.__rpc__
+
+    def get_history(self):
+        """ Returns the history file for all commands
+
+        This will return a log of all the commands that have been sent to
+        the device and all of the output received.  By default, all commands
+        and output will be redacted unless explicitly configured otherwise.
+
+        :return: An ordered list of command, output pairs
+        """
+        return self.history
+
+    def reset_history(self):
+        """ Resets the history of run commands
+        :return: None
+        """
+        self.history = list()
+
+    def enable_response_logging(self):
+        """Enable logging command response"""
+        self.response_logging = True
+
+    def disable_response_logging(self):
+        """Disable logging command response"""
+        self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', filter=None, format='text'):
         """Retrieves the specified configuration from the device
+
         This method will retrieve the configuration specified by source and
         return it to the caller as a string.  Subsequent calls to this method
         will retrieve a new configuration from the device
-        :args:
-            arg[0] source: Datastore from which configuration should be retrieved eg: running/candidate/startup. (optional)
-                           default is running.
-            arg[1] format: Output format in which configuration is retrieved
-                           Note: Specified datastore should be supported by remote device.
-        :kwargs:
-          Keywords supported
-            :command: the command string to execute
-            :source: Datastore from which configuration should be retrieved
-            :format: Output format in which configuration is retrieved
-        :returns: Returns output received from remote device as byte string
+
+        :param source: The configuration source to return from the device.
+            This argument accepts either `running` or `startup` as valid values.
+
+        :param filter: For devices that support configuration filtering, this
+            keyword argument is used to filter the returned configuration.
+            The use of this keyword argument is device dependent adn will be
+            silently ignored on devices that do not support it.
+
+        :param format: For devices that support fetching different configuration
+            format, this keyword argument is used to specify the format in which
+            configuration is to be retrieved.
+
+        :return: The device configuration as specified by the source argument.
         """
         pass
 
     @abstractmethod
-    def edit_config(self, commands=None):
-        """Loads the specified commands into the remote device
-        This method will load the commands into the remote device.  This
-        method will make sure the device is in the proper context before
-        send the commands (eg config mode)
-        :args:
-            arg[0] command: List of configuration commands
-        :kwargs:
-          Keywords supported
-            :command: the command string to execute
-        :returns: Returns output received from remote device as byte string
+    def edit_config(self, candidate, check_mode=False, replace=None):
+        """Loads the candidate configuration into the network device
+
+        This method will load the specified candidate config into the device
+        and merge with the current configuration unless replace is set to
+        True.  If the device does not support config replace an errors
+        is returned.
+
+        :param candidate: The configuration to load into the device and merge
+            with the current running configuration
+
+        :param check_mode: Boolean value that indicates if the device candidate
+            configuration should be  pushed in the running configuration or discarded.
+
+        :param replace: Specifies the way in which provided config value should replace
+            the configuration running on the remote device. If the device
+            doesn't support config replace, an error is return.
+
+        :return: Returns response of executing the configuration command received
+             from remote host
         """
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
-        :args:
-             command: command in string format to be executed on remote device
-             prompt: the expected prompt generated by executing command.
-                            This can be a string or a list of strings (optional)
-             answer: the string to respond to the prompt with (optional)
-             sendonly: bool to disable waiting for response, default is false (optional)
-        :returns: Returns output received from remote device as byte string
+        :param command: command in string format to be executed on remote device
+        :param prompt: the expected prompt generated by executing command, this can
+                       be a string or a list of strings
+        :param answer: the string to respond to the prompt with
+        :param sendonly: bool to disable waiting for response, default is false
+        :param newline: bool to indicate if newline should be added at end of answer or not
+        :return:
         """
         pass
 
     @abstractmethod
     def get_capabilities(self):
-        """Retrieves device information and supported
-        rpc methods by device platform and return result
-        as a string
-        :returns: Returns output received from remote device as byte string
+        """Returns the basic capabilities of the network device
+        This method will provide some basic facts about the device and
+        what capabilities it has to modify the configuration.  The minimum
+        return from this method takes the following format.
+        eg:
+            {
+
+                'rpc': [list of supported rpcs],
+                'network_api': <str>,            # the name of the transport
+                'device_info': {
+                    'network_os': <str>,
+                    'network_os_version': <str>,
+                    'network_os_model': <str>,
+                    'network_os_hostname': <str>,
+                    'network_os_image': <str>,
+                    'network_os_platform': <str>,
+                },
+                'device_operations': {
+                    'supports_replace': <bool>,            # identify if config should be merged or replaced is supported
+                    'supports_commit': <bool>,             # identify if commit is supported by device or not
+                    'supports_rollback': <bool>,           # identify if rollback is supported or not
+                    'supports_defaults': <bool>,           # identify if fetching running config with default is supported
+                    'supports_commit_comment': <bool>,     # identify if adding comment to commit is supported of not
+                    'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
+                    'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
+                    'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
+                    'support_match: <bool>,                # identify if match is supported
+                    'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
+                }
+                'format': [list of supported configuration format],
+                'match': ['line', 'strict', 'exact', 'none'],
+                'replace': ['line', 'block', 'config'],
+            }
+        :return: capability as json string
         """
         pass
 
     def commit(self, comment=None):
-        """Commit configuration changes"""
+        """Commit configuration changes
+
+        This method will perform the commit operation on a previously loaded
+        candidate configuration that was loaded using `edit_config()`.  If
+        there is a candidate configuration, it will be committed to the
+        active configuration.  If there is not a candidate configuration, this
+        method should just silently return.
+
+        :return: None
+        """
         return self._connection.method_not_found("commit is not supported by network_os %s" % self._play_context.network_os)
 
     def discard_changes(self):
-        "Discard changes in candidate datastore"
+        """Discard candidate configuration
+
+        This method will discard the current candidate configuration if one
+        is present.  If there is no candidate configuration currently loaded,
+        then this method should just silently return
+
+        :returns: None
+        """
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
 
     def copy_file(self, source=None, destination=None, proto='scp', timeout=30):
-        """Copies file over scp/sftp to remote device"""
+        """Copies file over scp/sftp to remote device
+
+        :param source: Source file path
+        :param destination: Destination file path on remote device
+        :param proto: Protocol to be used for file transfer,
+                      supported protocol: scp and sftp
+        :param timeout: Specifies the wait time to receive response from
+                        remote host before triggering timeout exception
+        :return: None
+        """
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
@@ -191,6 +307,15 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                 sftp.put(source, destination)
 
     def get_file(self, source=None, destination=None, proto='scp', timeout=30):
+        """Fetch file over scp/sftp from remote device
+        :param source: Source file path
+        :param destination: Destination file path
+        :param proto: Protocol to be used for file transfer,
+                      supported protocol: scp and sftp
+        :param timeout: Specifies the wait time to receive response from
+                        remote host before triggering timeout exception
+        :return: None
+        """
         """Fetch file over scp/sftp from remote device"""
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':

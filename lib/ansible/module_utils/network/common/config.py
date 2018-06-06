@@ -135,10 +135,12 @@ def dumps(objects, output='block', comments=False):
         items = _obj_to_block(objects)
     elif output == 'commands':
         items = _obj_to_text(objects)
+    elif output == 'raw':
+        items = _obj_to_raw(objects)
     else:
         raise TypeError('unknown value supplied for keyword output')
 
-    if output != 'commands':
+    if output == 'block':
         if comments:
             for index, item in enumerate(items):
                 nextitem = index + 1
