@@ -417,9 +417,9 @@ files:
   $modules/monitoring/stackdriver.py: bwhaley
   $modules/monitoring/statusio_maintenance.py: bhcopeland
   $modules/monitoring/uptimerobot.py: nate-kingsley
-  $modules/monitoring/zabbix: eikef
+  $modules/monitoring/zabbix: eikef D3DeFi
   $modules/monitoring/zabbix/zabbix_group.py: cove harrisongu
-  $modules/monitoring/zabbix/zabbix_host.py: cove harrisongu D3DeFi
+  $modules/monitoring/zabbix/zabbix_host.py: cove harrisongu
   $modules/monitoring/zabbix/zabbix_hostmacro.py: cave
   $modules/monitoring/zabbix/zabbix_maintenance.py: abulimov
   $modules/monitoring/zabbix/zabbix_screen.py: cove harrisongu
