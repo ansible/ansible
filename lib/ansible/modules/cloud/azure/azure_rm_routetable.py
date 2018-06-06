@@ -147,8 +147,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                     changed = True
 
             if changed:
-                result = self.network_models.RouteTable(name=self.name,
-                                                        location=self.location,
+                result = self.network_models.RouteTable(location=self.location,
                                                         tags=self.tags,
                                                         disable_bgp_route_propagation=self.disable_bgp_route_propagation)
                 if not self.check_mode:
