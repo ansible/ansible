@@ -523,7 +523,7 @@ def main():
                                                               network_configuration,
                                                               module.params['launch_type'])
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg=e.message)
+                        module.fail_json_aws(e, msg="Couldn't create service")
 
                 results['service'] = response
 
@@ -548,7 +548,7 @@ def main():
                             module.params['cluster']
                         )
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg=e.message)
+                        module.fail_json_aws(e, msg="Couldn't delete service")
                 results['changed'] = True
 
     elif module.params['state'] == 'deleting':
