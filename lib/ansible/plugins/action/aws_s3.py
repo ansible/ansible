@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
                 # For backward compatibility check if the file exists on the remote; it should take precedence
                 if not self._remote_file_exists(source):
                     try:
-                        source = self._loader.get_real_file(self._find_needle('files', source))
+                        source = self._loader.get_real_file(self._find_needle('files', source), decrypt=False)
                         new_module_args['src'] = source
                     except AnsibleFileNotFound as e:
                         # module handles error message for nonexistent files
