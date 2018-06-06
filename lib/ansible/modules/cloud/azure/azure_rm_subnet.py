@@ -141,7 +141,7 @@ state:
           example: "Succeeded"
 '''  # NOQA
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict, format_resource_id, parse_resource_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict, format_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -222,7 +222,7 @@ class AzureRMSubnet(AzureRMModuleBase):
             nsg = self.parse_nsg()
 
         if self.route_table:
-            route_table = parse_resource_to_dict(self.route_table)
+            route_table = self.parse_resource_to_dict(self.route_table)
             self.route_table = format_resource_id(val=route_table['name'],
                                                   subscription_id=route_table['subscription_id'],
                                                   namespace='Microsoft.Network',
