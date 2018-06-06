@@ -27,7 +27,7 @@
     port: 443
     state: started
 
-- name: get a list of VMS from vcsim   
+- name: get a list of VMS from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vmlist
@@ -36,7 +36,7 @@
 - debug: var=vmlist
 
 # https://github.com/ansible/ansible/issues/25011
-# Sending "-folders 1" to vcsim nests the datacenter under 
+# Sending "-folders 1" to vcsim nests the datacenter under
 # the folder so that the path prefix is no longer /vm
 #
 # /F0/DC0/vm/F0/DC0_H0_VM0
@@ -56,7 +56,8 @@
 
 - debug: var=poweroff_d1_c1_f1
 
-- name: make sure no changes were made
+# vcsim (v0.18.0) VMs are spawned PoweredOn
+- name: make sure changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [True]"

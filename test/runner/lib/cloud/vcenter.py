@@ -43,7 +43,7 @@ class VcenterProvider(CloudProvider):
         if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_VCSIM_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/vcenter-test-container:1.2.0'
+            self.image = 'quay.io/ansible/vcenter-test-container:1.3.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
