@@ -37,30 +37,14 @@ options:
         choices:
             - absent
             - present
-    address_prefix:
+    disable_bgp_route_propagation:
         description:
-            - The destination CIDR to which the route applies.
-    next_hop_type:
-        description:
-            - The type of Azure hop the packet should be sent to.
-        choices:
-            - VirtualNetworkGateway
-            - VnetLocal
-            - Internet
-            - VirtualAppliance
-            - None
-    next_hop_ip_address:
-        description:
-            - The IP address packets should be forwarded to.
-            - Next hop values are only allowed in routes where the next hop type is VirtualAppliance.
-    route_table:
-        description:
-            - The name of the route table.
-        required: true
-
+            - Gets or sets whether to disable the routes learned by BGP on that route table.
+            - True means disable.
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
@@ -69,21 +53,20 @@ author:
 
 EXAMPLES = '''
     - name: Create a route
-      azure_rm_virtualnetwork:
+      azure_rm_routetable:
         name: foobar
         resource_group: Testing
-        address_prefix: "10.1.0.0/16"
-        next_hop_type: "VirtualNetworkGateway"
+        disable_bgp_route_propagation: False
 
     - name: Delete a route
-      azure_rm_route:
+      azure_rm_routetable:
         name: foobar
         resource_group: Testing
         state: absent
 '''
 RETURN = '''
 state:
-    description: Current state of the route.
+    description: Current state of the route table.
     returned: always
     type: dict
     sample: {}
@@ -98,39 +81,11 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 
-route_spec=dict(
-    name=dict(type='str', required=True),
-    address_prefix=dict(type='str'),
-    next_hop_type=dict(type='str', choices=['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance', 'None'], required=True),
-    next_hop_ip_address=dict(type='str')
-)
-
-
-def is_same_route(x, y):
-    if x.next_hop_type != y.next_hop_type:
-        return False
-    if x.next_hop_ip_address != y.next_hop_ip_address:
-        return False
-    if x.address_prefix != y.next_hop_type:
-        return False
-    return True
-
-
-def route_to_dict(route):
-    return dict(
-        id=route.id,
-        name=route.name,
-        address_prefix=route.address_prefix,
-        next_hop_type=route.next_hop_type,
-        next_hop_ip_address=route.next_hop_ip_address
-    )
-
-
 def route_table_to_dict(table):
     return dict(
         id=table.id,
         name=table.name,
-        routes=[route_to_dict(i) for i in table.routes] if table.routes else [],
+        routes=[dict(id=i.id, name=i.name) for i in table.routes] if table.routes else [],
         disable_bgp_route_propagation=table.disable_bgp_route_propagation,
         tags=table.tags
     )
@@ -145,7 +100,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            routes=dict(type='list', elements='dict', options=route_spec),
             disable_bgp_route_propagation=dict(type='bool')
         )
 
@@ -153,7 +107,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
         self.name = None
         self.state = None
         self.location = None
-        self.routes = None
         self.tags = None
         self.disable_bgp_route_propagation = None
 
@@ -180,68 +133,32 @@ class AzureRMRouteTable(AzureRMModuleBase):
         changed = False
 
         result = self.get_table()
-        self.routes = self.routes or []
-        routes = []
         if self.state == 'absent' and result:
             changed = True
             self.delete_table()
         elif self.state == 'present':
             if not result:
                 changed = True  # create new route table
-                # create all route for the new table
-                for i in self.routes:
-                    route = self.network_models.Route(name=i.get('name'),
-                                                      address_prefix=i.get('address_prefix'),
-                                                      next_hop_type=i.get('next_hop_type'),
-                                                      next_hop_ip_address=i.get('next_hop_ip_address'))
-                    route = self.create_or_update_route(route)
-                    routes.append(route)
             else:  # check update
                 update_tags, self.tags = self.update_tags(result.tags)
                 if update_tags:
                     changed = True
                 if self.disable_bgp_route_propagation != result.disable_bgp_route_propagation:
                     changed = True
-                # compare route list, create the new or updated ones
-                for i in self.routes:
-                    route_matched = False
-                    route_change = False
-                    route = self.network_models.Route(name=i.get('name'),
-                                                      address_prefix=i.get('address_prefix'),
-                                                      next_hop_type=i.get('next_hop_type'),
-                                                      next_hop_ip_address=i.get('next_hop_ip_address'))
-                    for origin in (result.routes or []):
-                        if origin.name == route.name:
-                            route_matched = True
-                            route_change = not is_same_route(route, origin)
-                    if not route_matched or route_change:
-                        route = self.create_or_update_route(route)
-                    routes.append(route)
-
-                # delete the removing one
-                for origin in (result.routes or []):
-                    route_matched = False
-                    for route in self.routes:
-                        if origin.name == route.get('name'):
-                            route_matched = True
-                    if not route_matched:
-                        self.delete_route(origin.name)
 
             if changed:
                 result = self.network_models.RouteTable(name=self.name,
                                                         location=self.location,
                                                         tags=self.tags,
-                                                        disable_bgp_route_propagation=self.disable_bgp_route_propagation,
-                                                        routes=routes)
-                result = self.create_or_update_table(result)
+                                                        disable_bgp_route_propagation=self.disable_bgp_route_propagation)
+                if not self.check_mode:
+                    result = self.create_or_update_table(result)
 
-        self.results = route_to_dict(result)
+        self.results = route_table_to_dict(result)
         self.results['changed'] = changed                
         return self.results
 
     def create_or_update_table(self, param):
-        if self.check_mode:
-            return param
         try:
             poller = self.network_client.route_tables.create_or_update(self.resource_group, self.name, param)
             return self.get_poller_result(poller)
@@ -249,8 +166,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
             self.fail("Error creating or updating route table {0} - {1}".format(self.name, str(exc)))
 
     def delete_table(self):
-        if self.check_mode:
-            return True
         try:
             poller = self.network_client.route_tables.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
@@ -265,31 +180,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
             self.log('Error getting route {0} - {1}'.format(self.name, str(exc)))
             return None
 
-    def create_or_update_route(self, param):
-        if self.check_mode:
-            return param
-        try:
-            poller = self.network_client.routes.create_or_update(self.resource_group, self.name, param.name, param)
-            return self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail("Error creating or updating route {0} under {1} - {2}".format(param.name, self.name, str(exc)))
-
-    def delete_route(self, route_name):
-        if self.check_mode:
-            return True
-        try:
-            poller = self.network_client.routes.delete(self.resource_group, self.name, route_name)
-            result = self.get_poller_result(poller)
-            return result            
-        except Exception as exc:
-            self.fail("Error deleting virtual network {0} under {1} - {2}".format(route_name, self.name, str(exc)))
-
-    def get_route(self, route_name):
-        try:
-            return self.network_client.routes.get(self.resource_group, self.name, route_name)
-        except Exception as exc:
-            self.log('Error getting route {0} under {1} - {2}'.format(route_name, self.name, str(exc)))
-            return None
 
 def main():
     AzureRMRouteTable()
