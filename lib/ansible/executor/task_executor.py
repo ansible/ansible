@@ -503,7 +503,7 @@ class TaskExecutor:
             return dict(
                 include=include_file,
                 include_variables=include_variables,
-                _partial_tmpl_include_file=host_include_file if host_include_file != orig_include_file else orig_include_file
+                _partial_tmpl_include_file=host_include_file
             )
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
