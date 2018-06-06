@@ -67,7 +67,7 @@ options:
             - It can accept both a str or a dict.
             - The str can be the name or resource id of the route table.
             - The dict can contains C(name) and C(resource_group) of the route_table.
-        varsion_added: "2.7"
+        version_added: "2.7"
 
 extends_documentation_fragment:
     - azure
