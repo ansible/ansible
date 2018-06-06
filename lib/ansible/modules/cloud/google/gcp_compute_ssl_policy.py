@@ -83,6 +83,22 @@ options:
 extends_documentation_fragment: gcp
 '''
 
+EXAMPLES = '''
+- name: create a ssl policy
+  gcp_compute_ssl_policy:
+      name: testObject
+      profile: "CUSTOM"
+      min_tls_version: "TLS_1_2"
+      custom_features:
+        - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      project: testProject
+      auth_kind: service_account
+      service_account_file: /tmp/auth.pem
+      scopes:
+        - https://www.googleapis.com/auth/compute
+      state: present
+'''
 
 RETURN = '''
     creation_timestamp:
@@ -222,7 +238,7 @@ def create(module, link, kind):
 
 def update(module, link, kind, fetch):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
 
 
 def delete(module, link, kind, fetch):

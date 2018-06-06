@@ -95,6 +95,13 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
+    def patch(self, url, body=None, **kwargs):
+        kwargs.update({'json': body, 'headers': self._headers()})
+        try:
+            return self.session().patch(url, **kwargs)
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
     def session(self):
         return AuthorizedSession(
             self._credentials().with_scopes(self.module.params['scopes']))
