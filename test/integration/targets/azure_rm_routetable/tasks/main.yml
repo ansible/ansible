@@ -114,35 +114,6 @@
       - not output.changed
       - "output.routes | length == 1"
 
-- name: Delete route table (check mode)
-  azure_rm_routetable:
-    name: "{{ name }}"
-    resource_group: "{{ resource_group }}"
-    state: absent
-  check_mode: yes
-
-- name: Delete route table
-  azure_rm_routetable:
-    name: "{{ name }}"
-    resource_group: "{{ resource_group }}"
-    state: absent
-  register: output
-
-- assert:
-    that:
-      - output.changed
-
-- name: Delete route table (idemponent)
-  azure_rm_routetable:
-    name: "{{ name }}"
-    resource_group: "{{ resource_group }}"
-    state: absent
-  register: output
-
-- assert:
-    that:
-      - not output.changed
-
 - name: Delete route (check mode)
   azure_rm_route:
     name: "{{ route_name }}"
@@ -169,6 +140,35 @@
     resource_group: "{{ resource_group }}"
     state: absent
     route_table: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete route table (check mode)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  check_mode: yes
+
+- name: Delete route table
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete route table (idemponent)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
   register: output
 
 - assert:
