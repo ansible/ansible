@@ -84,15 +84,9 @@ options:
     default: postgres
     version_added: "2.5"
   conn_limit:
-<<<<<<< HEAD
-=======
-    version_added: '2.7'
-    default: "-1"
->>>>>>> Change version conn_limit will be / was added to 2.7
     description:
       - Specifies the database connection limit.
     type: str
-    default: "-1"
     version_added: '2.8'
 notes:
 - State C(dump) and C(restore) don't require I(psycopg2) since version 2.8.
@@ -252,20 +246,15 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
                 'Current LC_CTYPE: %s' % db_info['lc_ctype']
             )
         else:
+            changed = False
+
             if owner and owner != db_info['owner']:
-                owner_change = set_owner(cursor, db, owner)
-            else:
-                owner_change = False
+                changed = set_owner(cursor, db, owner)
 
             if conn_limit and conn_limit != str(db_info['conn_limit']):
-                conn_limit_change = set_conn_limit(cursor, db, conn_limit)
-            else:
-                conn_limit_change = False
+                changed = set_conn_limit(cursor, db, conn_limit)
 
-            if owner_change or conn_limit_change:
-                return True
-            else:
-                return False
+            return changed
 
 
 def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit):
@@ -419,6 +408,7 @@ def do_with_password(module, cmd, password):
 
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
+<<<<<<< HEAD
     argument_spec.update(
         db=dict(type='str', required=True, aliases=['name']),
         owner=dict(type='str', default=''),
@@ -433,6 +423,21 @@ def main():
         session_role=dict(type='str'),
         conn_limit=dict(type='str', default="-1")
     )
+=======
+    argument_spec.update(dict(
+        db=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        template=dict(default=""),
+        encoding=dict(default=""),
+        lc_collate=dict(default=""),
+        lc_ctype=dict(default=""),
+        state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
+        target=dict(default="", type="path"),
+        target_opts=dict(default=""),
+        maintenance_db=dict(default="postgres"),
+        conn_limit=dict(default=""),
+    ))
+>>>>>>> From review done by amenonsen and bcoca - Set default at None, make the change detection less confusing
 
     module = AnsibleModule(
         argument_spec=argument_spec,
