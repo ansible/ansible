@@ -156,7 +156,10 @@ class DocCLI(CLI):
         # process command line list
         text = ''
         for plugin in self.args:
-            text += self.format_plugin_doc(plugin, loader, plugin_type, search_paths)
+            textret = self.format_plugin_doc(plugin, loader, plugin_type, search_paths)
+
+            if textret:
+                text += textret
 
         if text:
             self.pager(text)
