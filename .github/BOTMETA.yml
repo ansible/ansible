@@ -1156,6 +1156,16 @@ files:
     notify: mattclay
   test/integration/roles/:
     notify: mattclay
+  test/integration/targets/aci:
+    maintainers: $team_aci
+    labels:
+    - aci
+    - networking
+  test/integration/targets/meraki:
+    maintainers: $team_meraki
+    labels:
+    - meraki
+    - networking
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
