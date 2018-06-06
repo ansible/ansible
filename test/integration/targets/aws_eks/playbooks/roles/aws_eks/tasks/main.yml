@@ -149,19 +149,10 @@
     - debug:
         msg: "{{ eks_security_groups|reverse|list }}"
 
-      # FIXME: bug in ec2_group means that co-dependent security groups appear to delete but don't!
-    - name: purge security group rules (co-dependency means they don't delete)
-      ec2_group:
-        name: '{{ item.name }}'
-        description: "{{ item.description }}"
-        vpc_id: '{{ setup_vpc.vpc.id }}'
-        rules: []
-        rules_egress: []
-        purge_rules: yes
-        purge_rules_egress: yes
-        <<: *aws_connection_info
-      with_items: "{{ eks_security_groups|reverse|list }}"
-      ignore_errors: yes
+    - name: create list of all additional EKS security groups
+      set_fact:
+        additional_eks_sg:
+          - name: "{{ eks_cluster_name }}-workers-sg"
 
     - name: remove security groups
       ec2_group:
@@ -169,7 +160,7 @@
         state: absent
         vpc_id: '{{ setup_vpc.vpc.id }}'
         <<: *aws_connection_info
-      with_items: "{{ eks_security_groups|reverse|list }}"
+      with_items: "{{ eks_security_groups|reverse|list + additional_eks_sg }}"
       ignore_errors: yes
 
     - name: remove setup subnet
