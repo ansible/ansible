@@ -266,7 +266,7 @@
 
  - assert:
      that:
-       - "'"{{ test_resource_name }}"' in mounted.state.managed_by"
+       - "'{{ test_resource_name }}' in mounted.state.managed_by"
 
  - name: Mount the disk to virtual machine (idempotent)
    azure_rm_managed_disk:
@@ -282,7 +282,7 @@
  - assert:
      that:
        - not mounted.changed
-       - "'"{{ test_resource_name }}"' in mounted.state.managed_by"
+       - "'{{ test_resource_name }}' in mounted.state.managed_by"
  
  - name: Unmount the disk to virtual machine (check mode)
    azure_rm_managed_disk:
@@ -357,7 +357,7 @@
  - assert:
      that:
        - mounted.changed
-       - "'"{{ test_resource_name }}"' in mounted.state.managed_by"
+       - "'{{ test_resource_name }}' in mounted.state.managed_by"
 
  - name: Change disk size to incompatible size
    azure_rm_managed_disk:
