@@ -801,6 +801,7 @@ files:
   $module_utils/network/aci:
     maintainers: $team_aci
     labels: networking
+    support: community
   $module_utils/acme.py:
     maintainers: mgruener resmo felixfontein
   $module_utils/network/aireos:
@@ -873,6 +874,7 @@ files:
   $module_utils/network/meraki:
     maintainers: $team_meraki
     labels: networking
+    support: community
   $module_utils/network/netconf:
     maintainers: $team_networking
     labels: networking
