@@ -22,7 +22,7 @@
     port: 443
     state: started
 
-- name: get a list of VMS from vcsim   
+- name: get a list of VMS from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vmlist
@@ -45,7 +45,8 @@
 
 - debug: var=poweroff_d1_c1_f0
 
-- name: make sure no changes were made
+# vcsim (v0.18.0) VMs are spawned PoweredOn
+- name: make sure changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [True]"
