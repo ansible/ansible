@@ -1,11 +1,3 @@
-# http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-# amzn-ami-2017.09.b-amazon-ecs-optimized
-ecs_agent_images:
-  us-east-1: ami-71ef560b
-  us-east-2: ami-1b8ca37e
-  us-west-2: ami-d2f489aa
-  us-west-1: ami-6b81980b
-
 ecs_cluster_name: "{{ resource_prefix }}"
 user_data: |
   #!/bin/bash

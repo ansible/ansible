@@ -123,12 +123,24 @@
         <<: *aws_connection_info
       register: setup_sg
 
+    - name: find a suitable AMI
+      ec2_ami_facts:
+        owner: amazon
+        filters:
+          description: "Amazon Linux AMI* ECS *"
+        <<: *aws_connection_info
+      register: ec2_ami_facts
+
+    - name: set image id fact
+      set_fact:
+        ecs_image_id: "{{ (ec2_ami_facts.images|first).image_id }}"
+
     - name: provision ec2 instance to create an image
       ec2:
         key_name: '{{ ec2_keypair|default(setup_key.key.name) }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ecs_agent_images[aws_region] }}'
+        image: '{{ ecs_image_id }}'
         wait: yes
         user_data: "{{ user_data }}"
         instance_profile_name: ecsInstanceRole
