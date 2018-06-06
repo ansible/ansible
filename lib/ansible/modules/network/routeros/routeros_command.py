@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = """
 ---
 module: routeros_command
-version_added: "2.6"
+version_added: "2.7"
 author: "Egor Zaitsev (@heuels)"
 short_description: Run commands on remote devices running MikroTik RouterOS
 description:
@@ -126,6 +126,9 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 import time
 

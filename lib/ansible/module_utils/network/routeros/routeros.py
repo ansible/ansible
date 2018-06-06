@@ -43,9 +43,7 @@ routeros_provider_spec = {
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int')
 }
-routeros_argument_spec = {
-    'provider': dict(type='dict', options=routeros_provider_spec),
-}
+routeros_argument_spec = {}
 
 routeros_top_spec = {
     'host': dict(removed_in_version=2.9),
