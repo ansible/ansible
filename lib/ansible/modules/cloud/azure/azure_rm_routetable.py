@@ -57,6 +57,8 @@ EXAMPLES = '''
         name: foobar
         resource_group: Testing
         disable_bgp_route_propagation: False
+        tags:
+          purpose: testing
 
     - name: Delete a route
       azure_rm_routetable:
@@ -69,7 +71,16 @@ state:
     description: Current state of the route table.
     returned: always
     type: dict
-    sample: {}
+    sample: {
+        "changed": false,
+        "disable_bgp_route_propagation": false,
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar",
+        "name": "foobar",
+        "routes": [],
+        "tags": {
+            "purpose": "testing"
+        }
+    }
 '''
 
 try:
@@ -135,7 +146,8 @@ class AzureRMRouteTable(AzureRMModuleBase):
         result = self.get_table()
         if self.state == 'absent' and result:
             changed = True
-            self.delete_table()
+            if not self.check_mode:
+                self.delete_table()
         elif self.state == 'present':
             if not result:
                 changed = True  # create new route table
@@ -153,7 +165,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 if not self.check_mode:
                     result = self.create_or_update_table(result)
 
-        self.results = route_table_to_dict(result)
+        self.results = route_table_to_dict(result) if result else dict()
         self.results['changed'] = changed                
         return self.results
 

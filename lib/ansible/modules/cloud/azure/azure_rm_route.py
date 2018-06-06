@@ -74,11 +74,13 @@ EXAMPLES = '''
         resource_group: Testing
         address_prefix: "10.1.0.0/16"
         next_hop_type: "VirtualNetworkGateway"
+        route_table: table
 
     - name: Delete a route
       azure_rm_route:
         name: foobar
         resource_group: Testing
+        route_table: table
         state: absent
 '''
 RETURN = '''
@@ -86,7 +88,13 @@ state:
     description: Current state of the route.
     returned: always
     type: dict
-    sample: {}
+    sample:  {
+        "address_prefix": "10.1.0.0/16",
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/table/routes/foobar",
+        "name": "foobar",
+        "next_hop_ip_address": null,
+        "next_hop_type": "VirtualNetworkGateway"
+    }
 '''
 
 try:
@@ -168,7 +176,7 @@ class AzureRMRoute(AzureRMModuleBase):
                 if result.next_hop_ip_address != self.next_hop_ip_address:
                     self.log('Update: {0} next_hop_ip_address from {1} to {2}'.format(self.name, result.next_hop_ip_address, self.next_hop_ip_address))
                     changed = True
-                if result.address_prefix != self.next_hop_type:
+                if result.address_prefix != self.address_prefix:
                     self.log('Update: {0} address_prefix from {1} to {2}'.format(self.name, result.address_prefix, self.address_prefix))
                     changed = True
             if changed:
@@ -179,7 +187,7 @@ class AzureRMRoute(AzureRMModuleBase):
                 if not self.check_mode:
                     result = self.create_or_update_route(result)
 
-        self.results = route_to_dict(result)
+        self.results = route_to_dict(result) if result else dict()
         self.results['changed'] = changed                
         return self.results
 
