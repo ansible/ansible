@@ -162,6 +162,19 @@ vars:
     passwords: yes
     provider: "{{ cli }}"
 
+  - name: configure ASA interface
+    asa_config:
+      lines:
+        - description my cloud interface
+        - nameif cloud13
+        - security-level 50
+        - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
+      provider: "{{ cli }}"
+      parents: ["interface vlan 13"]
+    register: interface
+
+  - name: Show interface update
+    debug: msg="{{ interface }}"
 """
 
 RETURN = """
