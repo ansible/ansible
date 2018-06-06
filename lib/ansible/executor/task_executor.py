@@ -67,7 +67,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -78,6 +78,7 @@ class TaskExecutor:
         self._connection = None
         self._rslt_q = rslt_q
         self._loop_eval_error = None
+        self._variable_manager = variable_manager
 
         self._task.squash()
 
@@ -443,6 +444,7 @@ class TaskExecutor:
             variables = self._job_vars
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+        host_templar = Templar(loader=self._loader, variables=self._variable_manager.get_vars(host=self._host))
 
         context_validation_error = None
         try:
@@ -496,12 +498,21 @@ class TaskExecutor:
         # main thread can expand the task list for the given host
         if self._task.action in ('include', 'include_tasks'):
             include_variables = self._task.args.copy()
-            include_file = include_variables.pop('_raw_params', None)
-            if not include_file:
+            orig_include_file = include_variables.pop('_raw_params', None)
+            if not orig_include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
-            include_file = templar.template(include_file)
-            return dict(include=include_file, include_variables=include_variables)
+            # Template out just the vars that come from host vars, used later in places where we no longer
+            # carry host context
+            host_include_file = host_templar.template(orig_include_file, fail_on_undefined=False)
+
+            # Fully templated path
+            include_file = templar.template(orig_include_file)
+            return dict(
+                include=include_file,
+                include_variables=include_variables,
+                _partial_tmpl_include_file=host_include_file
+            )
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':

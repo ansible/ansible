@@ -69,7 +69,7 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
     task_ds = {'include': 'include_test.yml'}
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
 
-    return_data = {'include': 'include_test.yml'}
+    return_data = {'include': 'include_test.yml', '_partial_tmpl_include_file': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
     result1 = task_result.TaskResult(host=hostname, task=loaded_task, return_data=return_data)
     result2 = task_result.TaskResult(host=hostname2, task=loaded_task, return_data=return_data)
@@ -98,11 +98,11 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
     child_task_ds = {'include': 'other_include_test.yml'}
     loaded_child_task = TaskInclude.load(child_task_ds, task_include=loaded_task)
 
-    return_data = {'include': 'include_test.yml'}
+    return_data = {'include': 'include_test.yml', '_partial_tmpl_include_file': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
     result1 = task_result.TaskResult(host=hostname, task=loaded_task, return_data=return_data)
 
-    return_data = {'include': 'other_include_test.yml'}
+    return_data = {'include': 'other_include_test.yml', '_partial_tmpl_include_file': 'other_include_test.yml'}
     result2 = task_result.TaskResult(host=hostname2, task=loaded_child_task, return_data=return_data)
     results = [result1, result2]
 
@@ -133,7 +133,7 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
     loaded_task1 = TaskInclude.load(task_ds, task_include=parent_task1)
     loaded_task2 = TaskInclude.load(task_ds, task_include=parent_task2)
 
-    return_data = {'include': 'include_test.yml'}
+    return_data = {'include': 'include_test.yml', '_partial_tmpl_include_file': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
     result1 = task_result.TaskResult(host=hostname, task=loaded_task1, return_data=return_data)
     result2 = task_result.TaskResult(host=hostname2, task=loaded_task2, return_data=return_data)

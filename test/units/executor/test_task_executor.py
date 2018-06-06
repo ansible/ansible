@@ -44,6 +44,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_play_context = MagicMock()
         mock_shared_loader = MagicMock()
+        mock_var_mgr = MagicMock()
         new_stdin = None
         job_vars = dict()
         mock_queue = MagicMock()
@@ -56,6 +57,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
     def test_task_executor_run(self):
@@ -70,6 +72,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_shared_loader = MagicMock()
         mock_queue = MagicMock()
+        mock_var_mgr = MagicMock()
 
         new_stdin = None
         job_vars = dict()
@@ -83,6 +86,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -110,6 +114,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.loop = ['a', 'b', 'c']
 
         mock_play_context = MagicMock()
+        mock_var_mgr = MagicMock()
 
         mock_shared_loader = MagicMock()
         mock_shared_loader.lookup_loader = lookup_loader
@@ -127,6 +132,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         items = te._get_loop_items()
@@ -147,6 +153,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.copy.side_effect = _copy
 
         mock_play_context = MagicMock()
+        mock_var_mgr = MagicMock()
 
         mock_shared_loader = MagicMock()
         mock_queue = MagicMock()
@@ -163,6 +170,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         def _execute(variables):
@@ -193,6 +201,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.evaluate_conditional.side_effect = _evaluate_conditional
 
         mock_play_context = MagicMock()
+        mock_var_mgr = MagicMock()
 
         mock_shared_loader = None
         mock_queue = MagicMock()
@@ -209,6 +218,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         # No replacement
@@ -377,6 +387,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.async_val = 1
         mock_task.poll = 0
 
+        mock_var_mgr = MagicMock()
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
         mock_play_context.update_vars.return_value = None
@@ -385,6 +396,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection.set_host_overrides.return_value = None
         mock_connection._connect.return_value = None
 
+        mock_var_mgr = MagicMock()
         mock_action = MagicMock()
         mock_queue = MagicMock()
 
@@ -401,6 +413,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -435,6 +448,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.poll = 0.05
 
         mock_play_context = MagicMock()
+        mock_var_mgr = MagicMock()
 
         mock_connection = MagicMock()
 
@@ -456,6 +470,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             rslt_q=mock_queue,
+            variable_manager=mock_var_mgr,
         )
 
         te._connection = MagicMock()
