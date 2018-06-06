@@ -1,0 +1,153 @@
+interactions:
+- request:
+    body: !!python/unicode username=admin&password=avi123%24%25
+    headers:
+      Content-Length: ['36']
+      Content-Type: [application/x-www-form-urlencoded]
+    method: POST
+    uri: https://10.10.26.133/login
+  response:
+    body: {string: !!python/unicode '{"user_initialized": true, "system_config": {"url":
+        "/api/systemconfiguration", "uuid": "default", "_last_modified": "1518604491166335",
+        "email_configuration": {"from_email": "admin@avicontroller.net", "mail_server_port":
+        25, "smtp_type": "SMTP_LOCAL_HOST", "mail_server_name": "localhost"}, "global_tenant_config":
+        {"se_in_provider_context": true, "tenant_access_to_provider_se": true, "tenant_vrf":
+        false}, "docker_mode": false, "dns_configuration": {"search_domain": ""},
+        "portal_configuration": {"use_uuid_from_input": false, "redirect_to_https":
+        true, "sslprofile_ref": "/api/sslprofile/sslprofile-03faa151-7ef6-434c-b006-f9d368c2bb3e",
+        "sslkeyandcertificate_refs": ["/api/sslkeyandcertificate/sslkeyandcertificate-851768b8-0158-4bd2-a957-125c5049b4ed",
+        "/api/sslkeyandcertificate/sslkeyandcertificate-9f07bdd5-cae3-4c24-9a52-f5cf975d31c8"],
+        "enable_clickjacking_protection": true, "enable_https": true, "disable_remote_cli_shell":
+        false, "password_strength_check": true, "enable_http": true, "allow_basic_authentication":
+        false}, "ntp_configuration": {"ntp_servers": [{"server": {"type": "DNS", "addr":
+        "0.us.pool.ntp.org"}}, {"server": {"type": "DNS", "addr": "1.us.pool.ntp.org"}},
+        {"server": {"type": "DNS", "addr": "2.us.pool.ntp.org"}}, {"server": {"type":
+        "DNS", "addr": "3.us.pool.ntp.org"}}]}}, "controller": {"api_idle_timeout":
+        15}, "version": {"Product": "controller", "Version": "17.2.1", "build": 5088,
+        "Tag": "17.2.1-5088-20170731.150550", "Date": "2017-07-31T15:05:50+00:00",
+        "min_version": 15.2, "ProductName": "Avi Cloud Controller"}, "user": {"username":
+        "admin", "name": "admin", "is_superuser": true, "full_name": "System Administrator",
+        "ui_property": "{\"defaultTimeframe\":\"6h\",\"valuesToDisplay\":\"avg\",\"logs\":{\"savedSearch\":[],\"sidebarActiveTab\":\"1\"},\"appDashboard\":{\"viewType\":\"list\"},\"grid\":{}}",
+        "local": true, "email": "", "default_tenant_ref": "https://10.10.26.133/api/tenant/admin"},
+        "tenants": [{"url": "https://10.10.26.133/api/tenant/admin", "uuid": "admin",
+        "name": "admin", "local": true}]}'}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['POST, OPTIONS']
+      avi_api_version: ['16_4_2']
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:38 GMT']
+      set-cookie: ['csrftoken=VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ; expires=Wed, 06-Mar-2019
+          14:53:38 GMT; Max-Age=31449600; Path=/; secure', 'sessionid=8896oohz97a737kojg7bls6k0rppys4s;
+          expires=Thu, 08-Mar-2018 14:53:38 GMT; httponly; Max-Age=86400; Path=/;
+          secure']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Content-Type: [application/json]
+      Cookie: ['[<Cookie csrftoken=VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ for 10.10.26.133/>,
+          <Cookie sessionid=8896oohz97a737kojg7bls6k0rppys4s for 10.10.26.133/>]']
+      Referer: ['https://10.10.26.133']
+      X-Avi-Tenant: [admin]
+      X-Avi-Version: [17.2.1]
+      X-CSRFToken: [VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ]
+      timeout: ['300']
+    method: GET
+    uri: https://10.10.26.133/api/healthmonitor?include_refs=&include_name=&name=MyWebsite-HTTPS
+  response:
+    body: {string: !!python/unicode '{"count": 1, "results": [{"https_monitor": {"http_request":
+        "HEAD / HTTP/1.0", "http_response_code": ["HTTP_2XX", "HTTP_3XX"]}, "uuid":
+        "healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed", "receive_timeout": 5,
+        "_last_modified": "1520434416376894", "url": "https://10.10.26.133/api/healthmonitor/healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed#MyWebsite-HTTPS",
+        "tenant_ref": "https://10.10.26.133/api/tenant/admin#admin", "is_federated":
+        false, "failed_checks": 3, "send_interval": 10, "successful_checks": 3, "type":
+        "HEALTH_MONITOR_HTTPS", "name": "MyWebsite-HTTPS"}]}'}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['HEAD, GET, POST, OPTIONS']
+      avi_api_version: [17.2.1]
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:38 GMT']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Content-Type: [application/json]
+      Cookie: ['[<Cookie csrftoken=VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ for 10.10.26.133/>,
+          <Cookie sessionid=8896oohz97a737kojg7bls6k0rppys4s for 10.10.26.133/>]']
+      Referer: ['https://10.10.26.133']
+      X-Avi-Tenant: [admin]
+      X-Avi-Version: [17.2.1]
+      X-CSRFToken: [VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ]
+      timeout: ['300']
+    method: GET
+    uri: https://10.10.26.133/api/healthmonitor?name=MyWebsite-HTTPS
+  response:
+    body: {string: !!python/unicode '{"count": 1, "results": [{"https_monitor": {"http_request":
+        "HEAD / HTTP/1.0", "http_response_code": ["HTTP_2XX", "HTTP_3XX"]}, "uuid":
+        "healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed", "receive_timeout": 5,
+        "_last_modified": "1520434416376894", "url": "https://10.10.26.133/api/healthmonitor/healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed",
+        "tenant_ref": "https://10.10.26.133/api/tenant/admin", "is_federated": false,
+        "failed_checks": 3, "send_interval": 10, "successful_checks": 3, "type": "HEALTH_MONITOR_HTTPS",
+        "name": "MyWebsite-HTTPS"}]}'}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['HEAD, GET, POST, OPTIONS']
+      avi_api_version: [17.2.1]
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:38 GMT']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Content-Length: ['0']
+      Content-Type: [application/json]
+      Cookie: ['[<Cookie csrftoken=VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ for 10.10.26.133/>,
+          <Cookie sessionid=8896oohz97a737kojg7bls6k0rppys4s for 10.10.26.133/>]']
+      Referer: ['https://10.10.26.133']
+      X-Avi-Tenant: [admin]
+      X-Avi-Version: [17.2.1]
+      X-CSRFToken: [VXxL6yNlLe3iocyXjSBbamCw7ZvS6oXJ]
+      timeout: ['300']
+    method: DELETE
+    uri: https://10.10.26.133/api/healthmonitor/healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed
+  response:
+    body: {string: !!python/unicode ''}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['HEAD, GET, PATCH, PUT, OPTIONS, DELETE']
+      avi_api_version: [17.2.1]
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-length: ['0']
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:38 GMT']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 204, message: NO CONTENT}
+version: 1

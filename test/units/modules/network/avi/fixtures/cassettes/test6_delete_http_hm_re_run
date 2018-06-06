@@ -1,0 +1,81 @@
+interactions:
+- request:
+    body: !!python/unicode username=admin&password=avi123%24%25
+    headers:
+      Content-Length: ['36']
+      Content-Type: [application/x-www-form-urlencoded]
+    method: POST
+    uri: https://10.10.26.133/login
+  response:
+    body: {string: !!python/unicode '{"user_initialized": true, "system_config": {"url":
+        "/api/systemconfiguration", "uuid": "default", "_last_modified": "1518604491166335",
+        "email_configuration": {"from_email": "admin@avicontroller.net", "mail_server_port":
+        25, "smtp_type": "SMTP_LOCAL_HOST", "mail_server_name": "localhost"}, "global_tenant_config":
+        {"se_in_provider_context": true, "tenant_access_to_provider_se": true, "tenant_vrf":
+        false}, "docker_mode": false, "dns_configuration": {"search_domain": ""},
+        "portal_configuration": {"use_uuid_from_input": false, "redirect_to_https":
+        true, "sslprofile_ref": "/api/sslprofile/sslprofile-03faa151-7ef6-434c-b006-f9d368c2bb3e",
+        "sslkeyandcertificate_refs": ["/api/sslkeyandcertificate/sslkeyandcertificate-851768b8-0158-4bd2-a957-125c5049b4ed",
+        "/api/sslkeyandcertificate/sslkeyandcertificate-9f07bdd5-cae3-4c24-9a52-f5cf975d31c8"],
+        "enable_clickjacking_protection": true, "enable_https": true, "disable_remote_cli_shell":
+        false, "password_strength_check": true, "enable_http": true, "allow_basic_authentication":
+        false}, "ntp_configuration": {"ntp_servers": [{"server": {"type": "DNS", "addr":
+        "0.us.pool.ntp.org"}}, {"server": {"type": "DNS", "addr": "1.us.pool.ntp.org"}},
+        {"server": {"type": "DNS", "addr": "2.us.pool.ntp.org"}}, {"server": {"type":
+        "DNS", "addr": "3.us.pool.ntp.org"}}]}}, "controller": {"api_idle_timeout":
+        15}, "version": {"Product": "controller", "Version": "17.2.1", "build": 5088,
+        "Tag": "17.2.1-5088-20170731.150550", "Date": "2017-07-31T15:05:50+00:00",
+        "min_version": 15.2, "ProductName": "Avi Cloud Controller"}, "user": {"username":
+        "admin", "name": "admin", "is_superuser": true, "full_name": "System Administrator",
+        "ui_property": "{\"defaultTimeframe\":\"6h\",\"valuesToDisplay\":\"avg\",\"logs\":{\"savedSearch\":[],\"sidebarActiveTab\":\"1\"},\"appDashboard\":{\"viewType\":\"list\"},\"grid\":{}}",
+        "local": true, "email": "", "default_tenant_ref": "https://10.10.26.133/api/tenant/admin"},
+        "tenants": [{"url": "https://10.10.26.133/api/tenant/admin", "uuid": "admin",
+        "name": "admin", "local": true}]}'}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['POST, OPTIONS']
+      avi_api_version: ['16_4_2']
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:39 GMT']
+      set-cookie: ['csrftoken=zXxT2IHOoLcS3Ro4G0kBIvgddmTtexXa; expires=Wed, 06-Mar-2019
+          14:53:39 GMT; Max-Age=31449600; Path=/; secure', 'sessionid=o5m9hpyumydbswdzjcvisihfr0zof0ke;
+          expires=Thu, 08-Mar-2018 14:53:39 GMT; httponly; Max-Age=86400; Path=/;
+          secure']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Content-Type: [application/json]
+      Cookie: ['[<Cookie csrftoken=zXxT2IHOoLcS3Ro4G0kBIvgddmTtexXa for 10.10.26.133/>,
+          <Cookie sessionid=o5m9hpyumydbswdzjcvisihfr0zof0ke for 10.10.26.133/>]']
+      Referer: ['https://10.10.26.133']
+      X-Avi-Tenant: [admin]
+      X-Avi-Version: [17.2.1]
+      X-CSRFToken: [zXxT2IHOoLcS3Ro4G0kBIvgddmTtexXa]
+      timeout: ['300']
+    method: GET
+    uri: https://10.10.26.133/api/healthmonitor?include_refs=&include_name=&name=MyWebsite-HTTPS
+  response:
+    body: {string: !!python/unicode '{"count": 0, "results": []}'}
+    headers:
+      access-control-allow-credentials: ['true']
+      access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
+      access-control-allow-methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      allow: ['HEAD, GET, POST, OPTIONS']
+      avi_api_version: [17.2.1]
+      cache-control: ['no-store, no-cache']
+      connection: [keep-alive]
+      content-type: [application/json]
+      date: ['Wed, 07 Mar 2018 14:53:39 GMT']
+      strict-transport-security: [max-age=31536000; includeSubdomains]
+      vary: ['Accept, Cookie']
+      x-frame-options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+version: 1
