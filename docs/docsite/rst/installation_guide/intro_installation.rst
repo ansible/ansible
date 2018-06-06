@@ -90,7 +90,7 @@ later).
 
      .. code-block:: shell
 
-        ansible myhost --sudo -m raw -a "yum install -y python2"
+        $ ansible myhost --sudo -m raw -a "yum install -y python2"
 
 .. _installing_the_control_machine:
 
@@ -217,11 +217,11 @@ You may also wish to install from ports, run:
 .. _on_macos:
 
 Latest Releases on Mac OSX
-++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++
 
-The preferred way to install ansible on a Mac is via pip.
+The preferred way to install Ansible on a Mac is via pip.
 
-The instructions can be found in `Latest Releases Via Pip`_ section.
+The instructions can be found in `Latest Releases Via Pip`_ section. If you are running macOS/OS X version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
@@ -264,13 +264,19 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+https://github.com/ansible/ansible.git@devel
+   $ pip install git+https://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
-Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
+Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally. Do not use easy_install to install Ansible directly.
+
+.. note::
+
+    Older versions of pip defaults to http://pypi.python.org/simple, which no longer works.
+    Please make sure you have an updated pip (version 10 or greater) installed before installing Ansible.
+    Refer `here <https://pip.pypa.io/en/stable/installing/#installation>`_ about installing latest pip.
 
 .. _tagged_releases:
 
@@ -341,7 +347,7 @@ To update ansible checkouts, use pull-with-rebase so any local changes are repla
 
     $ git pull --rebase
 
-Note: when updating ansible checkouts that are v2.2 and older, be sure to not
+Note: when updating Ansible checkouts that are v2.2 and older, be sure to not
 only update the source tree, but also the "submodules" in git which point at
 Ansible's own modules.
 
