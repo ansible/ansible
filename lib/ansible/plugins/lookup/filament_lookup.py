@@ -38,14 +38,14 @@ except ImportError:
 def run_command(terms):
     command = None
     # if no argument passed, show whole process table
-    if len(terms)is 0:
+    if len(terms) is 0:
         command = "ps aux"
     # if get an argument, search it in the process table
     elif len(terms) is 1:
         command = "ps aux|grep " + str(terms[0])
     # other condition, raise exception
     else:
-        raise AnsibleError("Argument Fault: 1 string argument expect, {0} got.".format(len(terms))) 
+        raise AnsibleError("Argument Fault: 1 string argument expect, {0} got.".format(len(terms)))
     display.vvv(command)
 
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -55,7 +55,7 @@ def run_command(terms):
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
-        display.vvv("got your argument "+str(terms))
+        display.vvv("got your argument " + str(terms))
         # run command and get result
         result = run_command(terms)
         display.vvv(result)

@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
- 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -26,10 +25,11 @@ from ansible.compat.tests.mock import MagicMock, patch
 import ansible.plugins.lookup.filament_lookup as filament_lookup
 import subprocess
 
+
 class FakeBuffer:
     def __init__(self, string):
         self.content = string
-    
+
     def read(self):
         return self.content
 
@@ -38,28 +38,27 @@ class FakeProcess:
     def __init__(self, string):
         self.stdout = FakeBuffer(string)
 
+
 def popen_side_effect(command, **kwargs):
     if command.startswith("ps aux|grep"):
         index = command.find("grep")
-        result = command[index+5:]  + " Process"
+        result = command[index + 5:] + " Process"
         return FakeProcess(result)
     else:
         return FakeProcess("Many processes")
 
 
 class TestFilamentLookup(unittest.TestCase):
-   
+
     @patch('subprocess.Popen')
     def test_run_command_one_arg(self, test_patch):
         test_patch.side_effect = popen_side_effect
-        #filament_lookup.Popen = MagicMock(side_effect=popen_side_effect)
         result = filament_lookup.run_command(['python'])
         self.assertEqual('python Process', result)
 
     @patch('subprocess.Popen')
     def test_run_command_no_arg(self, test_patch):
         test_patch.side_effect = popen_side_effect
-        #subprocess.Popen = MagicMock(side_effect=popen_side_effect)
         result = filament_lookup.run_command([])
         self.assertEqual('Many processes', result)
 
@@ -67,13 +66,7 @@ class TestFilamentLookup(unittest.TestCase):
     def test_run_command_three_arg(self, test_patch):
         try:
             test_patch.side_effect = popen_side_effect
-            #subprocess.Popen = MagicMock(side_effect=popen_side_effect)
             result = filament_lookup.run_command(['bad', 'arguments'])
-            self.assertTrue(False)
+            self.fail()
         except AnsibleError:
             pass
-
-
-	
-
-
