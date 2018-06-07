@@ -42,6 +42,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
+        re.compile(br"Maximum number of pending sessions has been reached"),
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"[^\r\n]\/bin\/(?:ba)?sh"),
