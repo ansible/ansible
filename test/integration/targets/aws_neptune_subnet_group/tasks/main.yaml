@@ -4,7 +4,7 @@
     aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      #security_token: "{{ security_token }}"
+      security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: true
 

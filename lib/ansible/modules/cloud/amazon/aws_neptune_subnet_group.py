@@ -19,7 +19,7 @@ short_description: Manage database subnet groups on AWS Neptune.
 description:
     - Create, modify, and destroy database subnet groups on AWS Neptune
 version_added: "2.7"
-requirements: [ 'botocore>=1.10.0', 'boto3' ]
+requirements: [ 'botocore>=1.10.30', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
 options:
@@ -79,9 +79,12 @@ def group_exists(client, module, params):
         response = client.describe_db_subnet_groups(
             DBSubnetGroupName=params['DBSubnetGroupName']
         )
-    except client.exceptions.from_code('DBSubnetGroupNotFound'):
-        return {'exists': False}
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBSubnetGroupNotFoundFault':
+            return {'exists': False}
+        else:
+            module.fail_json_aws(e, msg="Couldn't verify existence of database subnet group")
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Couldn't verify existence of database subnet group")
 
     return {'current_config': response['DBSubnetGroups'][0], 'exists': True}
@@ -153,6 +156,9 @@ def main():
         },
         supports_check_mode=True,
     )
+
+    if not module.botocore_at_least('1.10.30'):
+        module.fail_json(msg="This module requires botocore >= 1.10.30")
 
     result = {
         'changed': False,
