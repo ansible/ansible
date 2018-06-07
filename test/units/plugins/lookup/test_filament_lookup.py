@@ -60,7 +60,7 @@ class TestFilamentLookup(unittest.TestCase):
     @patch('subprocess.Popen')
     def test_run_command_no_arg(self, test_patch):
         test_patch.side_effect = popen_side_effect
-        result = filament_lookup.run_command([])
+        result = filament_lookup.run_command(None)
         self.assertEqual('Many processes', result)
 
     @patch('subprocess.Popen')
