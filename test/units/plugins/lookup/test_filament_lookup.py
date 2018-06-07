@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2018, Zhikang Zhang <zhikzhan@redhat.com>
 #
 # This file is part of Ansible
 #
