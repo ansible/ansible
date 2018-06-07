@@ -22,6 +22,6 @@
 
 - assert:
     that:
-      - "result.changed == true"
+      - "result.changed == false"
 
 - debug: msg="END cli/misplaced_sublevel.yaml on connection={{ ansible_connection }}"
