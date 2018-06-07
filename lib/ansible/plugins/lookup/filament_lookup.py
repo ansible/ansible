@@ -2,12 +2,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: filament_lookup
-    author: Ansible core team
-    version_added: "2.7"
-    short_description: reuturn output of process table.
+   lookup: filament
+    author: zhikang zhang <zhikzhan@redhat.com>
+    version_added: "2.6"
+    short_description: show process table
     description:
-      - If recieved no arguments, return the whole process table. If recieved arguments, search the process tale with the argument as a process name.
+        - This lookup returns process table on the Ansible controller's operation system.
+    options:
+      _terms:
+        description: the process you want to find
+        required: None
 """
 
 EXAMPLES = """
