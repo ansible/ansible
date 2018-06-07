@@ -292,7 +292,7 @@ import json
 import re
 from time import sleep
 from collections import namedtuple
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
@@ -430,7 +430,7 @@ def get_security_groups_with_backoff(connection, **kwargs):
 def sg_exists_with_backoff(connection, **kwargs):
     try:
         return connection.describe_security_groups(**kwargs)
-    except connection.exceptions.from_code('InvalidGroup.NotFound') as e:
+    except is_boto3_error_code('InvalidGroup.NotFound'):
         return {'SecurityGroups': []}
 
 
@@ -519,7 +519,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                 # retry describing the group once
                 try:
                     auto_group = get_security_groups_with_backoff(client, Filters=ansible_dict_to_boto3_filter_list(filters)).get('SecurityGroups', [])[0]
-                except (client.exceptions.from_code('InvalidGroup.NotFound'), IndexError) as e:
+                except (is_boto3_error_code('InvalidGroup.NotFound'), IndexError):
                     module.fail_json(msg="group %s will be automatically created by rule %s but "
                                          "no description was provided" % (group_name, rule))
                 except ClientError as e:
@@ -535,7 +535,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                     ).wait(
                         GroupIds=[auto_group['GroupId']],
                     )
-                except client.exceptions.from_code('InvalidGroup.Duplicate') as e:
+                except is_boto3_error_code('InvalidGroup.Duplicate'):
                     # The group exists, but didn't show up in any of our describe-security-groups calls
                     # Try searching on a filter for the name, and allow a retry window for AWS to update
                     # the model on their end.

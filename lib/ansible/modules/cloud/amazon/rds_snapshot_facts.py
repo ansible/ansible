@@ -284,7 +284,7 @@ cluster_snapshots:
       sample: vpc-abcd1234
 '''
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 try:
@@ -297,7 +297,7 @@ def common_snapshot_facts(module, conn, method, prefix, params):
     paginator = conn.get_paginator(method)
     try:
         results = paginator.paginate(**params).build_full_result()['%ss' % prefix]
-    except conn.exceptions.from_code('%sNotFound' % prefix):
+    except is_boto3_error_code('%sNotFound' % prefix):
         results = []
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "trying to get snapshot information")
