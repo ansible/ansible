@@ -26,7 +26,6 @@ content of process table
 """
 
 import subprocess
-import epdb
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
