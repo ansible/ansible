@@ -926,16 +926,16 @@ class AzureRMModuleBase(object):
 
         client_argspec = inspect.getargspec(client_type.__init__)
 
+        if not base_url:
+            # most things are resource_manager, don't make everyone specify
+            base_url = self._cloud_environment.endpoints.resource_manager
+
         client_kwargs = dict(credentials=self.azure_credentials, subscription_id=self.subscription_id, base_url=base_url)
 
         api_profile_dict = {}
 
         if self.api_profile:
             api_profile_dict = self.get_api_profile(client_type.__name__, self.api_profile)
-
-        if not base_url:
-            # most things are resource_manager, don't make everyone specify
-            base_url = self._cloud_environment.endpoints.resource_manager
 
         # unversioned clients won't accept profile; only send it if necessary
         # clients without a version specified in the profile will use the default
