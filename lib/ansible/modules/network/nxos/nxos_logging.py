@@ -40,6 +40,7 @@ options:
   remote_server:
     description:
       - Hostname or IP Address for remote logging (when dest is 'server').
+    version_added: '2.7'
   name:
     description:
       - If value of C(dest) is I(logfile) it indicates file-name.
