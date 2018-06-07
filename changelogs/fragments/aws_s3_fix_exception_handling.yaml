@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - fix permission handling to try to download a file even if the user does not have permission to list all objects in the bucket
+  - fix BotoCoreError exception handling
+  - fix errors with S3-compatible APIs if they cannot use ACLs for buckets or objects
