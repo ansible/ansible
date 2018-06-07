@@ -118,7 +118,7 @@ class DocCLI(CLI):
         if self.options.list_files:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list = self.find_plugins(path, plugin_type)
+                self.plugin_list.update(self.find_plugins(path, plugin_type))
 
             list_text = self.get_plugin_list_filenames(loader)
             self.pager(list_text)
@@ -128,7 +128,7 @@ class DocCLI(CLI):
         if self.options.list_dir:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list = self.find_plugins(path, plugin_type)
+                self.plugin_list.update(self.find_plugins(path, plugin_type))
 
             self.pager(self.get_plugin_list_text(loader))
             return 0
