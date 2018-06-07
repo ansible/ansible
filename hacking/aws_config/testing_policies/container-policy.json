@@ -56,6 +56,20 @@
           "Resource": [
             "*"
           ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "eks:CreateCluster",
+            "eks:DeleteCluster",
+            "eks:DescribeCluster",
+            "eks:ListClusters"
+          ],
+          "Resource": [
+            "*"
+          ]
         }
+
+
     ]
 }

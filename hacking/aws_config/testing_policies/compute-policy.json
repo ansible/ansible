@@ -212,7 +212,8 @@
             "Resource": [
                 "arn:aws:iam::{{aws_account}}:role/ansible_lambda_role",
                 "arn:aws:iam::{{aws_account}}:role/ecsInstanceRole",
-                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole"
+                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole",
+                "arn:aws:iam::{{aws_account}}:role/aws_eks_cluster_role"
             ]
         },
         {
