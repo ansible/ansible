@@ -941,9 +941,9 @@ DEFAULT_SCP_IF_SSH:
   # TODO: move to ssh plugin
   default: smart
   description:
-    - "Prefered method to use when transfering files over ssh"
-    - When set to smart, Ansible will try them until one succeeds or they all fail
-    - If set to True, it will force 'scp', if False it will use 'sftp'
+    - "Prefered method to use when transfering files over ssh."
+    - When set to smart, Ansible will try them until one succeeds or they all fail.
+    - If set to True, it will force 'scp', if False it will use 'sftp'.
   env: [{name: ANSIBLE_SCP_IF_SSH}]
   ini:
   - {key: scp_if_ssh, section: ssh_connection}
@@ -973,7 +973,7 @@ DEFAULT_SQUASH_ACTIONS:
   description:
     - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
       Instead of calling the module once for each item, the module is called once with the full list.
-    - The default value for this setting is only for certain package managers, but it can be used for any module
+    - The default value for this setting is only for certain package managers, but it can be used for any module.
     - Currently, this is only supported for modules that have a name or pkg parameter, and only when the item is the only thing being passed to the parameter.
   env: [{name: ANSIBLE_SQUASH_ACTIONS}]
   ini:
