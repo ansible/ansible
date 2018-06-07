@@ -23,6 +23,7 @@ import os
 from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.vars import merge_hash
 
 
 class ActionModule(ActionBase):
@@ -31,6 +32,8 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for aws_s3 operations '''
+        self._supports_async = True
+
         if task_vars is None:
             task_vars = dict()
 
@@ -55,8 +58,14 @@ class ActionModule(ActionBase):
                     except AnsibleError as e:
                         raise AnsibleActionFail(to_text(e))
 
-            # execute the aws_s3 module now, with the updated args
-            result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+            wrap_async = self._task.async_val and not self._connection.has_native_async
+            # execute the aws_s3 module with the updated args
+            result = merge_hash(result, self._execute_module(module_args=new_module_args, task_vars=task_vars, wrap_async=wrap_async))
+
+            if not wrap_async:
+                # remove a temporary path we created
+                self._remove_tmp_path(self._connection._shell.tmpdir)
+
         except AnsibleAction as e:
             result.update(e.result)
         return result
