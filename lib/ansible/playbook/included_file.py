@@ -144,8 +144,6 @@ class IncludedFile:
                                 include_file = loader.path_dwim(include_result['include'])
 
                         include_file = templar.template(include_file)
-                        # Update the task args to reflect the expanded/templated path
-                        original_task.args['_raw_params'] = include_file
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
                         # template the included role's name here
