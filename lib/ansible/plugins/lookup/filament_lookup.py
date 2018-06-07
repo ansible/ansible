@@ -27,6 +27,7 @@ import epdb
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
+from ansible.module_utils import six
 
 try:
     from __main__ import display
@@ -37,25 +38,28 @@ except ImportError:
 
 def run_command(terms):
     command = "ps aux"
-    # if no argument passed, show whole process table
-    if len(terms) == 0:
-        pass
-    # if get an argument, search it in the process table
-    elif len(terms) == 1:
+    if terms is not None:
         command = "%s|grep %s" % (command, str(terms[0]))
-    # other condition, raise exception
-    else:
-        raise AnsibleError("Argument Fault: 1 string argument expect, {0} got.".format(len(terms)))
     display.vvv(command)
 
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    result = p.stdout.read()
+    try:
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        result = p.stdout.read()
+    except OSError as os_err:
+        six.raise_from(AnsibleError("Failed to fetch processes."), os_err)
+    except ISError as io_err:
+        six.raise_from(AnsibleError("Failed to read subprocess output."), io_err)
     return to_text(result)
 
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         display.vvv("got your argument " + str(terms))
+        # validate and process arguments
+        if len(terms) >= 2:
+            raise AnsibleError("Argument Fault: 1 argument expected, %d got." % (len(terms)))
+        if len(terms) == 0:
+            terms = None
         # run command and get result
         result = run_command(terms)
         display.vvv(result)
