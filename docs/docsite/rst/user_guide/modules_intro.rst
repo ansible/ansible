@@ -3,7 +3,7 @@
 Introduction
 ============
 
-Modules (also referred to as "task plugins" or "library plugins") are discrete unites of code that can be used from the command line or in a playbook task.
+Modules (also referred to as "task plugins" or "library plugins") are discrete units of code that can be used from the command line or in a playbook task.
 
 Let's review how we execute three different modules from the command line::
 
