@@ -36,7 +36,10 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['console', 'logfile', 'module', 'monitor']
+    choices: ['console', 'logfile', 'module', 'monitor', 'server']
+  remote_server:
+    description:
+      - Hostname or IP Address for remote logging (when dest is 'server').
   name:
     description:
       - If value of C(dest) is I(logfile) it indicates file-name.
@@ -102,6 +105,7 @@ commands:
 
 import re
 
+
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -115,11 +119,6 @@ def map_obj_to_commands(updates, module):
     want, have = updates
 
     for w in want:
-        dest = w['dest']
-        name = w['name']
-        facility = w['facility']
-        dest_level = w['dest_level']
-        facility_level = w['facility_level']
         state = w['state']
         del w['state']
 
@@ -148,7 +147,8 @@ def map_obj_to_commands(updates, module):
 
                     elif w['dest'] == 'server':
                         if w['dest_level']:
-                            commands.append('logging server {0} {1}'.format(w['remote_server'], w['dest_level']))
+                            commands.append('logging server {0} {1}'.format(
+                                w['remote_server'], w['dest_level']))
                         else:
                             commands.append('logging server {0}'.format(w['remote_server']))
                     else:
@@ -157,12 +157,14 @@ def map_obj_to_commands(updates, module):
             if w['facility']:
                 if w['dest'] == 'server':
                     if w['dest_level']:
-                        commands.append('logging server {0} {1} facility {2}'.format(w['remote_server'],
-                                                                                     w['dest_level'], w['facility']))
+                        commands.append('logging server {0} {1} facility {2}'.format(
+                            w['remote_server'], w['dest_level'], w['facility']))
                     else:
-                        commands.append('logging server {0} facility {1}'.format(w['remote_server'], w['facility']))
+                        commands.append('logging server {0} facility {1}'.format(w['remote_server'],
+                                                                                 w['facility']))
                 else:
-                    commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+                    commands.append('logging level {} {}'.format(w['facility'],
+                                                                 w['facility_level']))
 
     return commands
 
@@ -287,8 +289,7 @@ def map_params_to_obj(module):
                 'name': '',
                 'facility': '',
                 'dest_level': '',
-                'facility_level': ''
-                }
+                'facility_level': ''}
 
         for c in module.params['aggregate']:
             d = c.copy()
