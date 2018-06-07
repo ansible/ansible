@@ -117,7 +117,16 @@ if ($state -eq "present" ) {
         $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
         Start-Sleep -Seconds $sleep
         $attempts ++
-        $ProcessCount = $(if ($Processes -is [array]) { $Processes.count } else{ 1 })
+        $ProcessCount = $null
+        if ($Processes -is [array]) { 
+            $ProcessCount = $Processes.count 
+        } 
+        elseif ($null -ne $Processes) { 
+            $ProcessCount = 1 
+        }
+        else {
+            $ProcessCount = 0
+        }
     } While ($ProcessCount -lt $process_min_count)
 
     if ($attempts -gt 0)
