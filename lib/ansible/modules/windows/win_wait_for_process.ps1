@@ -13,7 +13,7 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 
 $process_name_exact = Get-AnsibleParam -obj $params -name "process_name_exact" -type "list" 
 $process_name_pattern = Get-AnsibleParam -obj $params -name "process_name_pattern" -type "str" 
-$process_id = Get-AnsibleParam -obj $params -name "process_id" -type "int" -default 0 #pid is a reserved variable in PowerShell.  use process_id instead.
+$process_id = Get-AnsibleParam -obj $params -name "pid" -type "int" -default 0 #pid is a reserved variable in PowerShell.  use process_id instead.
 $owner = Get-AnsibleParam -obj $params -name "owner" -type "str"
 $sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
 $pre_wait_delay = Get-AnsibleParam -obj $params -name "pre_wait_delay" -type "int" -default 0
@@ -29,17 +29,17 @@ $result = @{
 # validate the input
 if ($state -eq "absent" -and $sleep -ne 1)
 {
-    Fail-json $result "sleep parameter is of no effect when waiting for a process to stop."
+    Add-Warning $result "sleep parameter has no effect when waiting for a process to stop."
 }
 
 if ($state -eq "absent" -and $process_min_count -ne 1)
 {
-    Fail-json $result "process_min_count parameter is of no effect when waiting for a process to stop."
+    Add-Warning $result "process_min_count parameter has no effect when waiting for a process to stop."
 }
 
 if (($process_name_exact -or $process_name_pattern) -and $process_id)
 {
-    Fail-json $result "process_id may not be used with process_name_exact or process_name_pattern"
+    Fail-json $result "process_id may not be used with process_name_exact or process_name_pattern."
 }
 if ($process_name_exact -and $process_name_pattern)
 {
@@ -48,7 +48,7 @@ if ($process_name_exact -and $process_name_pattern)
 
 if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $owner))
 {
-    Fail-json $result "at least one of: process_name_exact, process_name_pattern, process_id, or user must be supplied"
+    Fail-json $result "at least one of: process_name_exact, process_name_pattern, process_id, or owner must be supplied."
 }
 
 $module_start = Get-Date
@@ -111,6 +111,7 @@ if ($state -eq "present" ) {
     Do {
         if (((Get-Date) - $module_start).TotalSeconds -gt $timeout)
         {
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json $result "timeout while waiting for $process_name to start.  waited $timeout seconds"
         }
        
@@ -139,7 +140,6 @@ elseif ($state -eq "absent") {
     #wait for a process to stop
     $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id 
     $result.matched_processes = $Processes
-    #Fail-Json $result "faildebug"
     $ProcessCount = $(if ($Processes -is [array]) { $Processes.count } elseif ($Processes){ 1 } else {0})
     if ($ProcessCount -gt 0 )
     {
@@ -148,6 +148,7 @@ elseif ($state -eq "absent") {
             $result.changed = $true
         }
         catch {
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json $result "$($_.Exception.Message). timeout while waiting for $process_name to stop.  waited $timeout seconds"
         }
     }

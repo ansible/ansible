@@ -18,8 +18,8 @@ version_added: '2.7'
 short_description: Waits for a process to exist or not exist before continuing.
 description:
 - Waiting for a process to start or stop is useful when Windows services
-  behave poorly and do not enumerate external dependencies in thier
-  manifset.
+  behave poorly and do not enumerate external dependencies in their
+  manifest.
 options:
   process_name_exact:
     description:
