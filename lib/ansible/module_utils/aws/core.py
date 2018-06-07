@@ -256,7 +256,7 @@ class _RetryingBotoClientWrapper(object):
             return unwrapped
 
 
-def is_boto3_error_code(e, code):
+def is_boto3_error_code(code, e=None):
     """Check if the botocore exception is raised by a specific error code.
 
     Returns a boolean, False if the exception does not have an error code or does not match
@@ -264,11 +264,16 @@ def is_boto3_error_code(e, code):
     Example:
     try:
         ec2.describe_instances(InstanceIds=['potato'])
-    except ClientError as e:
-        if is_boto3_error_code(e, 'InvalidInstanceID.Malformed'):
+    except ClientError:
+        # sys hook will find the current exception
+        # so you don't need to capture it at all
+        if is_boto3_error_code('InvalidInstanceID.Malformed'):
             ... this codepath will execute ...
     """
     from botocore.exceptions import ClientError
+    if e is None:
+        import sys
+        _, e, _ = sys.exc_info()
     if not isinstance(e, ClientError):
         return False
     return e.response['Error']['Code'] == code
