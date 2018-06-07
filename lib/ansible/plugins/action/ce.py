@@ -36,7 +36,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-CLI_SUPPORTED_MODULES = ['ce_netconf', 'ce_command']
+CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
 
 class ActionModule(_ActionModule):
 
@@ -66,6 +66,8 @@ class ActionModule(_ActionModule):
                     username=pc.remote_user,
                     password=pc.password
                 )
+                if self._task.action in ['ce_netconf'] or not self._task.action in CLI_SUPPORTED_MODULES:
+                    pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
@@ -77,6 +79,9 @@ class ActionModule(_ActionModule):
                                    'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
                 task_vars['ansible_socket'] = socket_path
+                # make sure a transport value is set in args
+                self._task.args['transport'] = transport
+                self._task.args['provider'] = provider
         elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
@@ -88,7 +93,8 @@ class ActionModule(_ActionModule):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module." \
                         % (self._play_context.connection, self._task.action)}
 
-        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
+        if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
+                or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context whitch should be
             # enable mode and not config module
             if socket_path is None:
