@@ -78,8 +78,10 @@ ce_top_spec = {
 }
 ce_argument_spec.update(ce_top_spec)
 
+
 def to_string(data):
     return re.sub(r'<data.+?(/>|>)', r'<data\1', data)
+
 
 def check_args(module, warnings):
     pass

@@ -41,7 +41,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-    
+
 
 class Netconf(NetconfBase):
 
@@ -149,8 +149,6 @@ class Netconf(NetconfBase):
             con_obj = self.m.action(action=xml_str)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
-        except TimeoutExpiredError:
-            raise
 
         return con_obj.xml
 
@@ -196,7 +194,7 @@ class Netconf(NetconfBase):
             return self.m.cli(*args, **kwargs).xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
-    
+
     @ensure_connected
     def commit(self, *args, **kwargs):
         try:

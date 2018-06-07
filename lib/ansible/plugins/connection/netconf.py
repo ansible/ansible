@@ -161,7 +161,7 @@ NETWORK_OS_DEVICE_PARAM_MAP = {
     "nxos": "nexus",
     "ios": "default",
     "sros": "alu",
-    "ce" : "huawei"
+    "ce": "huawei"
 }
 
 

@@ -38,6 +38,7 @@ except ImportError:
 
 CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
 
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
@@ -66,7 +67,7 @@ class ActionModule(_ActionModule):
                     username=pc.remote_user,
                     password=pc.password
                 )
-                if self._task.action in ['ce_netconf'] or not self._task.action in CLI_SUPPORTED_MODULES:
+                if self._task.action in ['ce_netconf'] or self._task.action not in CLI_SUPPORTED_MODULES:
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
@@ -90,7 +91,7 @@ class ActionModule(_ActionModule):
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
                     (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
-                return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module." \
+                return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
                         % (self._play_context.connection, self._task.action)}
 
         if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
