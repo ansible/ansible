@@ -2,16 +2,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-   lookup: filament
-    author: zhikang zhang <zhikzhan@redhat.com>
-    version_added: "2.6"
-    short_description: show process table
-    description:
-        - This lookup returns process table on the Ansible controller's operation system.
-    options:
-      _terms:
-        description: the process you want to find
-        required: None
+lookup: filament
+author: zhikang zhang
+version_added: "2.6"
+short_description: return contents from process table
+description:
+    - Returns the content of the process table.
+options:
+  _terms:
+    description: the process you want to find
 """
 
 EXAMPLES = """
