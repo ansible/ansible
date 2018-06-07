@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 
+import io
 from collections import namedtuple
 
 from yaml import load as yaml_load
@@ -19,7 +20,7 @@ except ImportError:
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -215,8 +216,17 @@ class ConfigManager(object):
         if cfile is not None:
             if ftype == 'ini':
                 self._parsers[cfile] = configparser.ConfigParser()
+                with open(cfile, 'rb') as f:
+                    try:
+                        cfg_text = to_text(f.read(), errors='surrogate_or_strict')
+                    except UnicodeError:
+                        raise AnsibleOptionsError("Error reading config file(%s) because the config file was not utf8 encoded: %s" % (cfile, to_native(e)))
                 try:
-                    self._parsers[cfile].read(cfile)
+                    if PY3:
+                        self._parsers[cfile].read_string(cfg_text)
+                    else:
+                        cfg_file = io.StringIO(cfg_text)
+                        self._parsers[cfile].readfp(cfg_file)
                 except configparser.Error as e:
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files
