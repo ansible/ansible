@@ -359,12 +359,17 @@ Remote environment variables are available via facts in the 'ansible_env' variab
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option:
+Ansible ad-hoc command is the easiest option:
+
+.. code-block:: shell-session
+
+    ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
+
+The mkpasswd utility that is available on most Linux systems is also a great option:
 
 .. code-block:: shell-session
 
     mkpasswd --method=sha-512
-    
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
