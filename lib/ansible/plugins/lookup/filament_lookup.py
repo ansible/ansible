@@ -21,11 +21,11 @@ RETURN = """
 content of process table
 """
 
+import subprocess
+import epdb
 
 from ansible.plugins.lookup import LookupBase
-import subprocess
 from ansible.errors import AnsibleError
-import epdb
 from ansible.module_utils._text import to_text
 
 try:
@@ -36,13 +36,13 @@ except ImportError:
 
 
 def run_command(terms):
-    command = None
+    command = "ps aux"
     # if no argument passed, show whole process table
-    if len(terms) is 0:
-        command = "ps aux"
+    if len(terms) == 0:
+        pass
     # if get an argument, search it in the process table
-    elif len(terms) is 1:
-        command = "ps aux|grep " + str(terms[0])
+    elif len(terms) == 1:
+        command = "%s|grep %s" % (command, str(terms[0]))
     # other condition, raise exception
     else:
         raise AnsibleError("Argument Fault: 1 string argument expect, {0} got.".format(len(terms)))
