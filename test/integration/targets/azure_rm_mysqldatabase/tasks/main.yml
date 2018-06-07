@@ -8,8 +8,8 @@
     resource_group: "{{ resource_group }}"
     name: mysqlsrv{{ rpfx }}
     sku:
-      name: MYSQLB50
-      tier: basic
+      name: GP_Gen4_2
+      tier: GeneralPurpose
     location: westus
     storage_mb: 51200
     version: 5.6
