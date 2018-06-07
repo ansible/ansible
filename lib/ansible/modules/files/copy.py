@@ -99,6 +99,7 @@ options:
     description:
       - SHA1 checksum of the file being transferred. Used to validate that the copy of the file was successful.
       - If this is not provided, ansible will use the local calculated checksum of the src file.
+      - if you set 'checksum' to 'MD5' the SHA1 calculation will be skipped (for performance) and only MD5 will be used
     version_added: '2.5'
 extends_documentation_fragment:
     - files
@@ -183,8 +184,8 @@ md5sum:
     type: string
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
-    description: sha1 checksum of the file after running copy
-    returned: success
+    description: sha1 checksum of the file after running copy (see checksum option)
+    returned: success and if checksum != 'MD5'
     type: string
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 backup_file:
@@ -329,17 +330,21 @@ def main():
         module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
     mode = module.params['mode']
 
-    checksum_src = module.sha1(src)
-    checksum_dest = None
     # Backwards compat only.  This will be None in FIPS mode
     try:
         md5sum_src = module.md5(src)
     except ValueError:
         md5sum_src = None
 
+    if checksum and checksum.upper() == "MD5":
+        checksum_src = md5sum_src
+    else:
+        checksum_src = module.sha1(src)
+        checksum_dest = None
+
     changed = False
 
-    if checksum and checksum_src != checksum:
+    if checksum and checksum.upper() != "MD5" and checksum_src != checksum:
         module.fail_json(
             msg='Copied file does not match the expected checksum. Transfer failed.',
             checksum=checksum_src,
@@ -382,7 +387,10 @@ def main():
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if os.access(b_dest, os.R_OK):
-            checksum_dest = module.sha1(dest)
+            if checksum and checksum.upper() == "MD5":
+                checksum_dest = module.md5(dest)
+            else:
+                checksum_dest = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
             try:
@@ -444,10 +452,15 @@ def main():
         changed = False
 
     res_args = dict(
-        dest=dest, src=src, md5sum=md5sum_src, checksum=checksum_src, changed=changed
+        dest=dest, src=src, md5sum=md5sum_src, changed=changed
     )
     if backup_file:
         res_args['backup_file'] = backup_file
+
+    if checksum and checksum.upper() == "MD5":
+        res_args['checksum'] = None
+    else:
+        res_args['checksum'] = checksum_src
 
     module.params['dest'] = dest
     if not module.check_mode:
