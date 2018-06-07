@@ -625,17 +625,6 @@ def is_fakes3(s3_url):
         return False
 
 
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse(s3_url)
-        return not o.netloc.endswith('amazonaws.com')
-    else:
-        return False
-
-
 def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=False):
     if s3_url and rgw:  # TODO - test this
         rgw = urlparse(s3_url)
@@ -654,9 +643,6 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
         params = dict(module=module, conn_type='client', resource='s3', region=location,
                       endpoint="%s://%s:%s" % (protocol, fakes3.hostname, to_text(port)),
                       use_ssl=fakes3.scheme == 'fakes3s', **aws_connect_kwargs)
-    elif is_walrus(s3_url):
-        walrus = urlparse(s3_url).hostname
-        params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
         if module.params['mode'] == 'put' and module.params['encryption_mode'] == 'aws:kms':

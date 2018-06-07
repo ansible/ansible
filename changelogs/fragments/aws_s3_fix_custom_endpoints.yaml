@@ -1,0 +1,3 @@
+---
+bugfixes:
+- allow custom endpoints to be used in the aws_s3 module (https://github.com/ansible/ansible/pull/36832)
