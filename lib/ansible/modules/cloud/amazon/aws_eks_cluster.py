@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: aws_eks
+module: aws_eks_cluster
 short_description: Manage Elastic Kubernetes Service Clusters
 description:
     - Manage Elastic Kubernetes Service Clusters
@@ -48,7 +48,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 - name: Create an EKS cluster
-  aws_eks:
+  aws_eks_cluster:
     name: my_cluster
     version: v1.10.0
     role_arn: my_eks_role
@@ -60,7 +60,7 @@ EXAMPLES = '''
   register: caller_facts
 
 - name: Remove an EKS cluster
-  aws_eks:
+  aws_eks_cluster:
     name: my_cluster
     state: absent
 '''
@@ -222,7 +222,7 @@ def main():
     )
 
     if not module.botocore_at_least("1.10.32"):
-        module.fail_json(msg="aws_eks module requires botocore >= 1.10.32")
+        module.fail_json(msg="aws_eks_cluster module requires botocore >= 1.10.32")
 
     client = module.client('eks')
 

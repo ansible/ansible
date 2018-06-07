@@ -1,5 +1,5 @@
 ---
-# tasks file for aws_eks
+# tasks file for aws_eks modules
 
 - block:
     # FIXME: ap-south-1 only has two AZs, ap-south-1a and ap-south-1b
@@ -7,7 +7,7 @@
     # If it does become supported, change this test to use an unsupported region
     # or if all regions are supported, delete this test
     - name: attempt to use eks in unsupported region
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         aws_access_key: "{{ aws_access_key }}"
@@ -17,7 +17,7 @@
       register: aws_eks_unsupported_region
       ignore_errors: yes
 
-    - name: check that aws_eks did nothing
+    - name: check that aws_eks_cluster did nothing
       assert:
         that:
           - aws_eks_unsupported_region is failed
@@ -33,13 +33,13 @@
       no_log: yes
 
     - name: delete an as yet non-existent EKS cluster
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         <<: *aws_connection_info
       register: aws_eks_delete_non_existent
 
-    - name: check that aws_eks did nothing
+    - name: check that aws_eks_cluster did nothing
       assert:
         that:
           - aws_eks_delete_non_existent is not changed
@@ -92,7 +92,7 @@
       register: setup_security_groups
 
     - name: create EKS cluster
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         security_groups: "{{ eks_security_groups | json_query('[].name') }}"
         subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
@@ -107,7 +107,7 @@
           - eks_create.name == eks_cluster_name
 
     - name: create EKS cluster with same details but using SG ids
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         security_groups: "{{ setup_security_groups.results | json_query('[].group_id') }}"
         subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
@@ -122,7 +122,7 @@
           - eks_create.name == eks_cluster_name
 
     - name: remove EKS cluster
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         <<: *aws_connection_info
@@ -139,7 +139,7 @@
         msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
 
     - name: remove EKS cluster
-      aws_eks:
+      aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         <<: *aws_connection_info
