@@ -103,7 +103,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: configure a zone on the system using a name server group
   nios_zone:
     name: ansible.com
