@@ -10,6 +10,19 @@
       region: "{{ aws_region }}"
   no_log: yes
 # ============================================================
+- name: test create bucket without permissions
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: create
+  register: result
+  ignore_errors: yes
+
+- name: assert nice message returned
+  assert:
+    that:
+      - result is failed
+      - "result.msg != 'MODULE FAILURE'"
+# ============================================================
 - name: test create bucket
   aws_s3:
     bucket: "{{ bucket_name }}"
