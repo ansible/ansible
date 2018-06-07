@@ -78,7 +78,7 @@ options:
     description:
       - If C(no), it will search for I(src) at originating/master machine.
       - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
-      - Currently I(remote_src) does not support recursive copying.
+      - I(remote_src) support recursive copying, but dose NOT support check mode currently.
       - I(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: 'no'
@@ -320,8 +320,6 @@ def main():
         module.fail_json(msg="Source %s not found" % (src))
     if not os.access(b_src, os.R_OK):
         module.fail_json(msg="Source %s not readable" % (src))
-    if os.path.isdir(b_src):
-        module.fail_json(msg="Remote copy does not support recursive copy of directory: %s" % (src))
 
     # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
     # remote host
@@ -329,11 +327,16 @@ def main():
         module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
     mode = module.params['mode']
 
-    checksum_src = module.sha1(src)
+    checksum_src = None
     checksum_dest = None
+    md5sum_src = None
+
+    if os.path.isfile(src):
+        checksum_src = module.sha1(src)
     # Backwards compat only.  This will be None in FIPS mode
     try:
-        md5sum_src = module.md5(src)
+        if os.path.isfile(src):
+            md5sum_src = module.md5(src)
     except ValueError:
         md5sum_src = None
 
@@ -381,7 +384,7 @@ def main():
             dest = to_native(b_dest, errors='surrogate_or_strict')
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if os.access(b_dest, os.R_OK):
+        if os.access(b_dest, os.R_OK) and os.path.isfile(dest):
             checksum_dest = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
@@ -425,7 +428,7 @@ def main():
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
                 b_mysrc = b_src
-                if remote_src:
+                if remote_src and os.path.isfile(b_src):
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
                     shutil.copyfile(b_src, b_mysrc)
@@ -440,6 +443,13 @@ def main():
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
+    else:
+        changed = False
+
+    if checksum_src == None and checksum_dest == None:
+        if remote_src and os.path.isdir(b_src):
+            shutil.copytree(b_src, dest)
+            changed = True
     else:
         changed = False
 
