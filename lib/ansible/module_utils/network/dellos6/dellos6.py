@@ -1,5 +1,6 @@
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2017 Red Hat, Inc
 #
 # Copyright (c) 2016 Dell Inc.
 #
@@ -122,6 +123,7 @@ def load_config(module, commands):
     for command in to_list(commands):
         if command == 'end':
             continue
+#        cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
         rc, out, err = exec_command(module, command)
         if rc != 0:
             module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
@@ -168,7 +170,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'template.*$'),
         re.compile(r'address-family.*$'),
         re.compile(r'spanning-tree mst configuration.*$'),
-        re.compile(r'logging.*$'),
+        re.compile(r'logging (?!.*(cli-command|buffered|console|email|facility|file|monitor|protocol|snmp|source-interface|traps|web-session)).*$'),
         re.compile(r'(radius-server|tacacs-server) host.*$')]
 
     childline = re.compile(r'^exit$')
