@@ -89,7 +89,7 @@ class ActionModule(_ActionModule):
                 del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action == 'ce_netconf'):
+                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module." \
                         % (self._play_context.connection, self._task.action)}
 

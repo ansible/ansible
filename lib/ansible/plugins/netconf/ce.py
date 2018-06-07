@@ -111,8 +111,7 @@ class Netconf(NetconfBase):
                 password=obj._play_context.password,
                 key_filename=obj._play_context.private_key_file,
                 hostkey_verify=C.HOST_KEY_CHECKING,
-                host_key_auto_add=True,
-                look_for_keys=False,
+                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 allow_agent=obj._play_context.allow_agent,
                 timeout=obj._play_context.timeout
             )
@@ -123,6 +122,7 @@ class Netconf(NetconfBase):
         for c in m.server_capabilities:
             if re.search('huawei', c):
                 guessed_os = 'ce'
+                break
 
         m.close_session()
         return guessed_os
