@@ -55,12 +55,14 @@ Modules
 Major changes in popular modules are detailed here
 
 * The :ref:`DEFAULT_SYSLOG_FACILITY` configuration option tells Ansible modules to use a specific
-  `syslog facility <https://en.wikipedia.org/wiki/Syslog#Facility>`_ when logging information on the
-  managed machine.  This was broken for machines which used journald and had the python bindings for
-  journald installed.  The bug meant that machines without journald could be logging to a different
-  location than machines which did use journald.  Ansible-2.7 fixes this bug which means that the
-  location of remote logs on systems which use journald could change if
-  :ref:`DEFAULT_SYSLOG_FACILITY` is configured.
+  `syslog facility <https://en.wikipedia.org/wiki/Syslog#Facility>`_ when logging information on all
+  managed machines. Due to a bug with older Ansible versions, this setting did not affect machines
+  using journald with the systemd Python bindings installed. On those machines, Ansible log
+  messages were sent to ``/var/log/messages``, even if you set :ref:`DEFAULT_SYSLOG_FACILITY`.
+  Ansible 2.7 fixes this bug, routing all Ansible log messages according to the value set for
+  :ref:`DEFAULT_SYSLOG_FACILITY`. If you have :ref:`DEFAULT_SYSLOG_FACILITY` configured, the
+  location of remote logs on systems which use journald may change.
+
 
 Modules removed
 ---------------
