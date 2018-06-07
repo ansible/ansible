@@ -75,6 +75,8 @@ from ansible.module_utils.aws.waiters import get_waiter
 
 
 def group_exists(client, module, params):
+    if module.check_mode and module.params.get('state') == 'absent':
+        return {'exists': False}
     try:
         response = client.describe_db_subnet_groups(
             DBSubnetGroupName=params['DBSubnetGroupName']
@@ -91,6 +93,8 @@ def group_exists(client, module, params):
 
 
 def create_group(client, module, params):
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.create_db_subnet_group(**params)
         get_waiter(
@@ -105,6 +109,8 @@ def create_group(client, module, params):
 
 
 def update_group(client, module, params, group_status):
+    if module.check_mode:
+        module.exit_json(changed=True)
     param_changed = []
     param_keys = list(params.keys())
     current_keys = list(group_status['current_config'].keys())
@@ -131,6 +137,8 @@ def update_group(client, module, params, group_status):
 
 
 def delete_group(client, module, params):
+    if module.check_mode:
+        module.exit_json(changed=True)
     try:
         response = client.delete_db_subnet_group(
             DBSubnetGroupName=params['DBSubnetGroupName']
