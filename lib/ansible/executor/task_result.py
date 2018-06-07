@@ -112,7 +112,7 @@ class TaskResult:
         else:
             ignore = _IGNORE
 
-        if self._result.get('_ansible_no_log', False):
+        if self._task.no_log or self._result.get('_ansible_no_log', False):
             x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
             for preserve in _PRESERVE:
                 if preserve in self._result:
