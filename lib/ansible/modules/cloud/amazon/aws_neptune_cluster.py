@@ -148,8 +148,6 @@ from ansible.module_utils.aws.waiters import get_waiter
 
 
 def cluster_exists(client, module, params):
-    if module.check_mode and module.params.get('state') == 'absent':
-        return {'exists': False}
     try:
         response = client.describe_db_clusters(
             DBClusterIdentifier=params['DBClusterIdentifier']
