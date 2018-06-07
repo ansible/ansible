@@ -183,6 +183,8 @@ options:
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped.
+        This is only valid if the rule also specifies one of the following
+        protocols: tcp, udp, dccp or sctp.
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
