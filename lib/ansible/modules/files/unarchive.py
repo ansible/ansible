@@ -132,6 +132,7 @@ EXAMPLES = r'''
 import binascii
 import codecs
 import datetime
+import fnmatch
 import grp
 import os
 import platform
@@ -263,7 +264,11 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    if member not in self.excludes:
+                    if self.excludes:
+                        for exclude in self.excludes:
+                            if not fnmatch.fnmatch(member, exclude):
+                                self._files_in_archive.append(to_native(member))
+                    else:
                         self._files_in_archive.append(to_native(member))
             except:
                 archive.close()

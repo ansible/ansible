@@ -66,8 +66,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -199,10 +199,7 @@ def main():
     update_password = module.params['update_password']
     description = module.params['description']
 
-    if description and StrictVersion(shade.__version__) < StrictVersion('1.13.0'):
-        module.fail_json(msg="To utilize description, the installed version of the shade library MUST be >=1.13.0")
-
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         user = cloud.get_user(name)
 
@@ -278,7 +275,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

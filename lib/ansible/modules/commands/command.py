@@ -77,7 +77,9 @@ EXAMPLES = '''
   register: mymotd
 
 - name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+  command: /usr/bin/make_database.sh arg1 arg2
+  args:
+    creates: /path/to/database
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
@@ -140,7 +142,7 @@ def check_command(module, commandline):
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
+    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
     if isinstance(commandline, list):
         command = commandline[0]
     else:

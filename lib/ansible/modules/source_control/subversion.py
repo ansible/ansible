@@ -44,6 +44,13 @@ options:
         Prior to 1.9 the default was C(yes).
     type: bool
     default: "no"
+  in_place:
+    description:
+      - If the directory exists, then the working copy will be checked-out over-the-top using
+        svn checkout --force; if force is specified then existing files with different content are reverted
+    type: bool
+    default: "no"
+    version_added: "2.6"
   username:
     description:
       - C(--username) parameter passed to svn.
@@ -140,9 +147,13 @@ class Subversion(object):
         rc = self._exec(["info", self.dest], check_rc=False)
         return rc == 0
 
-    def checkout(self):
+    def checkout(self, force=False):
         '''Creates new svn working directory if it does not already exist.'''
-        self._exec(["checkout", "-r", self.revision, self.repo, self.dest])
+        cmd = ["checkout"]
+        if force:
+            cmd.append("--force")
+        cmd.extend(["-r", self.revision, self.repo, self.dest])
+        self._exec(cmd)
 
     def export(self, force=False):
         '''Export svn repo to directory'''
@@ -214,6 +225,7 @@ def main():
             checkout=dict(type='bool', default=True),
             update=dict(type='bool', default=True),
             switch=dict(type='bool', default=True),
+            in_place=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -229,6 +241,7 @@ def main():
     switch = module.params['switch']
     checkout = module.params['checkout']
     update = module.params['update']
+    in_place = module.params['in_place']
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
@@ -256,7 +269,9 @@ def main():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
-        if module.check_mode or not update:
+        if not update:
+            module.exit_json(changed=False)
+        if module.check_mode:
             if svn.has_local_mods() and not force:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
@@ -271,6 +286,12 @@ def main():
             else:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
         svn.update()
+    elif in_place:
+        before = None
+        svn.checkout(force=True)
+        local_mods = svn.has_local_mods()
+        if local_mods and force:
+            svn.revert()
     else:
         module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
 

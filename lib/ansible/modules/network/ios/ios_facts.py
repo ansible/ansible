@@ -204,11 +204,11 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_stacks(self, data):
-        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        match = re.findall(r'^Model [Nn]umber\s+: (\S+)', data, re.M)
         if match:
             self.facts['stacked_models'] = match
 
-        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
+        match = re.findall(r'^System [Ss]erial [Nn]umber\s+: (\S+)', data, re.M)
         if match:
             self.facts['stacked_serialnums'] = match
 
@@ -228,12 +228,15 @@ class Hardware(FactsBase):
 
         data = self.responses[1]
         if data:
-            processor_line = [l for l in data.splitlines()
-                              if 'Processor' in l].pop()
-            match = re.findall(r'\s(\d+)\s', processor_line)
-            if match:
-                self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[3]) / 1024
+            if 'Invalid input detected' in data:
+                warnings.append('Unable to gather memory statistics')
+            else:
+                processor_line = [l for l in data.splitlines()
+                                  if 'Processor' in l].pop()
+                match = re.findall(r'\s(\d+)\s', processor_line)
+                if match:
+                    self.facts['memtotal_mb'] = int(match[0]) / 1024
+                    self.facts['memfree_mb'] = int(match[3]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
@@ -376,7 +379,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_macaddress(self, data):
-        match = re.search(r'address is (\S+)', data)
+        match = re.search(r'Hardware is (?:.*), address is (\S+)', data)
         if match:
             return match.group(1)
 
@@ -446,6 +449,9 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+global warnings
+warnings = list()
+
 
 def main():
     """main entry point for module execution
@@ -508,7 +514,6 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    warnings = list()
     check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)

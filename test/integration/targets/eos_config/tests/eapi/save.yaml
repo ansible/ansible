@@ -9,24 +9,24 @@
     parents:
       - interface Ethernet2
     match: none
+  become: yes
 
 
-- name: save config
-  eos_config:
+- name: save config always
+  eos_config: &always
     save_when: always
+  become: yes
   register: result
 
-- assert:
+- assert: &changed
     that:
       - "result.changed == true"
 
 - name: save should always run
-  eos_config:
-    save_when: always
+  eos_config: *always
+  become: yes
   register: result
 
-- assert:
-    that:
-      - "result.changed == true"
+- assert: *changed
 
 - debug: msg="END eapi/save.yaml"

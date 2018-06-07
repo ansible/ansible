@@ -184,6 +184,65 @@ into::
     - key: Environment
       value: dev
 
+subelements Filter
+``````````````````
+
+.. versionadded:: 2.7
+
+Produces a product of an object, and subelement values of that object, similar to the ``subelements`` lookup::
+
+    {{ users|subelements('groups', skip_missing=True) }}
+
+Which turns::
+
+    users:
+      - name: alice
+        authorized:
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+        groups:
+          - wheel
+          - docker
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+
+Into::
+
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - wheel
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - docker
+    -
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+      - docker
+
+An example of using this filter with ``loop``::
+
+    - name: Set authorized ssh key, extracting just that data from 'users'
+      authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
+      loop: "{{ users|subelements('authorized') }}"
+
 .. _random_filter:
 
 Random Number Filter
@@ -827,6 +886,9 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
+    
+    # case insensitive search in multiline mode
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::

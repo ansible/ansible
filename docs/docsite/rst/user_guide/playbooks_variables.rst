@@ -601,7 +601,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
-When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbooks_loops` section on using register with a loop.
+When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
@@ -868,7 +868,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
 .. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
-          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to 0 for all groups.
+          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::

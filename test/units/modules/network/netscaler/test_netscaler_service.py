@@ -61,7 +61,7 @@ class TestNetscalerServiceModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state=state,
         ))
 

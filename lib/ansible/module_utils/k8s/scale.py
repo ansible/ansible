@@ -52,6 +52,8 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
 
         name = definition['metadata']['name']
         namespace = definition['metadata'].get('namespace')
+        api_version = definition['apiVersion']
+        kind = definition['kind']
         current_replicas = self.params.get('current_replicas')
         replicas = self.params.get('replicas')
         resource_version = self.params.get('resource_version')
@@ -62,7 +64,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
         existing_count = None
         return_attributes = dict(changed=False, result=dict())
 
-        resource = self.client.resources.get(api_version=definition['apiVersion'], kind=definition['kind'])
+        resource = self.find_resource(kind, api_version, fail=True)
 
         try:
             existing = resource.get(name=name, namespace=namespace)

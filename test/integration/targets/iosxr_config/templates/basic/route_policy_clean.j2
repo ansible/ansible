@@ -1,0 +1,32 @@
+no router ospf 1
+!
+no prefix-set EBGP-PEER-BOGONS
+!
+no prefix-set cust-ddos-DDOS
+!
+no prefix-set cust-no-export
+!          
+no prefix-set acme_DC_Internal
+!
+no as-path-set EBGP-PEER-AS16509-403-PERMIT-PATHS
+!
+no community-set cust-announce
+!
+no community-set cust-no-export
+!
+no rd-set ebpg-1
+!
+no rd-set EBGP_INCOMING_RD_SET
+!
+no extcommunity-set rt EBGP_INCOMIG_RT_SET
+!
+no extcommunity-set rt ebpg-1
+!
+no route-policy POLICY2
+!
+no route-policy cust2bgp
+!
+no route-policy static-to-bgp
+!
+no class-map match-any data
+!

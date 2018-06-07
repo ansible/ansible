@@ -60,7 +60,7 @@ def ensure_type(value, value_type, origin=None):
     if value_type in ('boolean', 'bool'):
         value = boolean(value, strict=False)
 
-    elif value:
+    elif value is not None:
         if value_type in ('integer', 'int'):
             value = int(value)
 
@@ -166,7 +166,7 @@ def find_ini_config_file():
 
 class ConfigManager(object):
 
-    UNABLE = []
+    UNABLE = {}
     DEPRECATED = []
 
     def __init__(self, conf_file=None, defs_file=None):
@@ -281,7 +281,12 @@ class ConfigManager(object):
 
     def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
         ''' wrapper '''
-        value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name, keys=keys, variables=variables)
+
+        try:
+            value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
+                                                            keys=keys, variables=variables)
+        except Exception as e:
+            raise AnsibleError("Invalid settings supplied for %s: %s" % (config, to_native(e)))
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
@@ -343,17 +348,23 @@ class ConfigManager(object):
 
             # set default if we got here w/o a value
             if value is None:
-                value = defs[config].get('default')
-                origin = 'default'
-                # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
-                if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
-                    return value, origin
+                if defs[config].get('required', False):
+                    entry = ''
+                    if plugin_type:
+                        entry += 'plugin_type: %s ' % plugin_type
+                        if plugin_name:
+                            entry += 'plugin: %s ' % plugin_name
+                    entry += 'setting: %s ' % config
+                    raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                else:
+                    value = defs[config].get('default')
+                    origin = 'default'
+                    # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                    if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
+                        return value, origin
 
-            # ensure correct type
-            try:
-                value = ensure_type(value, defs[config].get('type'), origin=origin)
-            except Exception as e:
-                self.UNABLE.append(config)
+            # ensure correct type, can raise exceptoins on mismatched types
+            value = ensure_type(value, defs[config].get('type'), origin=origin)
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
@@ -392,7 +403,13 @@ class ConfigManager(object):
                 raise AnsibleOptionsError("Invalid configuration definition '%s': type is %s" % (to_native(config), type(defs[config])))
 
             # get value and origin
-            value, origin = self.get_config_value_and_origin(config, configfile)
+            try:
+                value, origin = self.get_config_value_and_origin(config, configfile)
+            except Exception as e:
+                # when building constants.py we ignore invalid configs
+                # CLI takes care of warnings once 'display' is loaded
+                self.UNABLE[config] = to_text(e)
+                continue
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))

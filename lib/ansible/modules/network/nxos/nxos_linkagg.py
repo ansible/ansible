@@ -128,64 +128,9 @@ from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-
-
-def normalize_interface(name):
-    """Return the normalized interface name
-    """
-    if not name:
-        return
-
-    def _get_number(name):
-        digits = ''
-        for char in name:
-            if char.isdigit() or char in '/.':
-                digits += char
-        return digits
-
-    if name.lower().startswith('et'):
-        if_type = 'Ethernet'
-    elif name.lower().startswith('vl'):
-        if_type = 'Vlan'
-    elif name.lower().startswith('lo'):
-        if_type = 'loopback'
-    elif name.lower().startswith('po'):
-        if_type = 'port-channel'
-    elif name.lower().startswith('nv'):
-        if_type = 'nve'
-    else:
-        if_type = None
-
-    number_list = name.split(' ')
-    if len(number_list) == 2:
-        number = number_list[-1].strip()
-    else:
-        number = _get_number(name)
-
-    if if_type:
-        proper_interface = if_type + number
-    else:
-        proper_interface = name
-
-    return proper_interface
-
-
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def search_obj_in_list(group, lst):
@@ -376,7 +321,7 @@ def parse_channel_options(module, output, channel):
 
 def map_config_to_obj(module):
     objs = list()
-    output = execute_show_command('show port-channel summary', module)[0]
+    output = run_commands(module, ['show port-channel summary | json'])[0]
     if not output:
         return list()
 

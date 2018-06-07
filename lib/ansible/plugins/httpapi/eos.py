@@ -21,23 +21,43 @@ except ImportError:
 class HttpApi:
     def __init__(self, connection):
         self.connection = connection
+        self._become = False
 
     def send_request(self, data, **message_kwargs):
-        if 'become' in message_kwargs:
+        data = to_list(data)
+        if self._become:
             display.vvvv('firing event: on_become')
-            # TODO ??? self._terminal.on_become(passwd=auth_pass)
+            data.insert(0, {"cmd": "enable", "input": self._become_pass})
 
         output = message_kwargs.get('output', 'text')
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
         response = self.connection.send('/command-api', request, headers=headers, method='POST')
-        response = json.loads(to_text(response.read()))
-        return handle_response(response)
+        response_text = to_text(response.read())
+        try:
+            response = json.loads(response_text)
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
+        results = handle_response(response)
+
+        if self._become:
+            results = results[1:]
+        if len(results) == 1:
+            results = results[0]
+
+        return results
 
     def get_prompt(self):
-        # Hack to keep @enable_mode working
-        return '#'
+        # Fake a prompt for @enable_mode
+        if self._become:
+            return '#'
+        else:
+            return '>'
+
+    def set_become(self, play_context):
+        self._become = play_context.become
+        self._become_pass = getattr(play_context, 'become_pass') or ''
 
     # Imported from module_utils
     def edit_config(self, config, commit=False, replace=False):
@@ -148,11 +168,9 @@ def handle_response(response):
         else:
             results.append(json.dumps(result))
 
-    if len(results) == 1:
-        return results[0]
     return results
 
 
 def request_builder(commands, output, reqid=None):
-    params = dict(version=1, cmds=to_list(commands), format=output)
+    params = dict(version=1, cmds=commands, format=output)
     return json.dumps(dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params))

@@ -4,7 +4,7 @@
 NXOS Platform Options
 ***************************************
 
-Cisco NXOS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it.
+Cisco NXOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it.
 
 .. contents:: Topics
 
@@ -22,6 +22,10 @@ Connections Available
 | **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``       |
+| |                         | |                                             | | OR                                    |
+| |                         | |                                             | | ``ansible_connection: local``         |
+| |                         | |                                             | | with ``transport: nxapi``             |
+| |                         | |                                             | | in the ``provider`` dictionary        |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
@@ -32,7 +36,7 @@ Connections Available
 
 For legacy playbooks, NXOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI ``group_vars/nxos.yml``
@@ -67,7 +71,7 @@ Example CLI Task
 
 
 
-Using NX-API in Ansible 2.5
+Using NX-API in Ansible 2.6
 ================================================================================
 
 Enabling NX-API

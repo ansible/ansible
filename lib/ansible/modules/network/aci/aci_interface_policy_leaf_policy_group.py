@@ -42,6 +42,7 @@ options:
    - C(node) for Virtual Port Channel (VPC)
    aliases: [ lag_type_name ]
    choices: [ leaf, link, node ]
+   required: yes
  link_level_policy:
    description:
    - Choice of link_level_policy to be used as part of the leaf policy group to be created.
@@ -122,9 +123,9 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
+    lag_type: link
     policy_group: policygroupname
     description: policygroupname description
-    lag_type: link
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
@@ -134,8 +135,8 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    policy_group: policygroupname
     lag_type: node
+    policy_group: policygroupname
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
@@ -145,19 +146,36 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    policy_group: policygroupname
     lag_type: leaf
+    policy_group: policygroupname
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
+
+- name: Query all Leaf Access Port Policy Groups of type link
+  aci_interface_policy_leaf_policy_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    lag_type: link
+    state: query
+
+- name: Query a specific Lead Access Port Policy Group
+  aci_interface_policy_leaf_policy_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    lag_type: leaf
+    policy_group: policygroupname
+    state: query
 
 - name: Delete an Interface policy Leaf Policy Group
   aci_interface_policy_leaf_policy_group:
     host: apic
     username: admin
     password: SomeSecretPassword
-    policy_group: policygroupname
     lag_type: type_name
+    policy_group: policygroupname
     state: absent
 '''
 
@@ -277,7 +295,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC and VPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
-        lag_type=dict(type='str', aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),  # Not required for querying all objects
+        lag_type=dict(type='str', required=True, aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),
         link_level_policy=dict(type='str', aliases=['link_level_policy_name']),
         cdp_policy=dict(type='str', aliases=['cdp_policy_name']),
         mcp_policy=dict(type='str', aliases=['mcp_policy_name']),
@@ -301,8 +319,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['lag_type', 'policy_group']],
-            ['state', 'present', ['lag_type', 'policy_group']],
+            ['state', 'absent', ['policy_group']],
+            ['state', 'present', ['policy_group']],
         ],
     )
 
@@ -334,7 +352,7 @@ def main():
             name=policy_group,
             descr=description,
         )
-    elif lag_type == 'link' or lag_type == 'node':
+    elif lag_type in ('link', 'node'):
         aci_class_name = 'infraAccBndlGrp'
         dn_name = 'accbundle'
         class_config_dict = dict(

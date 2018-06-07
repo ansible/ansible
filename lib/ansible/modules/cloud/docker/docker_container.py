@@ -139,6 +139,13 @@ options:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
+  init:
+    description:
+      - Run an init inside the container that forwards signals and reaps processes.
+        This option requires Docker API 1.25+.
+    type: bool
+    default: 'no'
+    version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
@@ -238,6 +245,12 @@ options:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
     version_added: "2.2"
+  output_logs:
+    description:
+      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+    type: bool
+    default: 'no'
+    version_added: "2.7"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -653,6 +666,7 @@ class TaskParameters(DockerBaseClass):
         self.hostname = None
         self.ignore_image = None
         self.image = None
+        self.init = None
         self.interactive = None
         self.ipc_mode = None
         self.keep_volumes = None
@@ -661,6 +675,7 @@ class TaskParameters(DockerBaseClass):
         self.labels = None
         self.links = None
         self.log_driver = None
+        self.output_logs = None
         self.log_options = None
         self.mac_address = None
         self.memory = None
@@ -898,7 +913,8 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs'
+            tmpfs='tmpfs',
+            init='init'
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
@@ -1758,6 +1774,9 @@ class ContainerManager(DockerBaseClass):
     def fail(self, msg, **kwargs):
         self.client.module.fail_json(msg=msg, **kwargs)
 
+    def _output_logs(self, msg):
+        self.client.module.log(msg=msg)
+
     def _get_container(self, container):
         '''
         Expects container ID or Name. Returns a container object
@@ -1898,6 +1917,8 @@ class ContainerManager(DockerBaseClass):
 
                 if logging_driver == 'json-file' or logging_driver == 'journald':
                     output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    if self.parameters.output_logs:
+                        self._output_logs(msg=output)
                 else:
                     output = "Result logged using `%s` driver" % logging_driver
 
@@ -1999,6 +2020,7 @@ def main():
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
+        init=dict(type='bool', default=False),
         interactive=dict(type='bool', default=False),
         ipc_mode=dict(type='str'),
         keep_volumes=dict(type='bool', default=True),
@@ -2021,6 +2043,7 @@ def main():
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
+        output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),

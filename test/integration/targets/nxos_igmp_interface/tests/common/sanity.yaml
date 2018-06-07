@@ -50,7 +50,7 @@
       group_timeout: 300
       # deprecated
       oif_prefix: 239.255.255.2
-      oif_source: 1.1.1.1
+      oif_source: 192.0.2.1
       state: present
     register: result
 
@@ -82,7 +82,7 @@
       oif_ps:
         - {'prefix': '238.2.2.6'}
         - {'prefix': '238.2.2.5'}
-        - {'source': '1.1.1.1', 'prefix': '238.2.2.5'}
+        - {'source': '192.0.2.1', 'prefix': '238.2.2.5'}
       state: present
     register: result
 

@@ -1,3 +1,0 @@
-minor_changes:
-- azure_rm_loadbalancer - add support for sku
-- azure_rm_publicipaddress - add support for sku

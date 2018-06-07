@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-# (c) 2017, 2018 Genome Research Ltd.
+# (c) 2018 Genome Research Ltd.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: consul_kv
 short_description: Manipulate entries in the key/value store of a consul cluster
 description:
-  - Allows the addition, modification and deletion of key/value entries in a
+  - Allows the retrieval, addition, modification and deletion of key/value entries in a
     consul cluster via the agent. The entire contents of the record, including
     the indices, flags and session are returned as 'value'.
   - If the key represents a prefix then Note that when a value is removed, the existing
@@ -34,10 +34,10 @@ author:
 options:
     state:
         description:
-          - The action to take with the supplied key and value. If the state is
-            'present', the key contents will be set to the value supplied,
-            'changed' will be set to true only if the value was different to the
-            current contents. The state 'absent' will remove the key/value pair,
+          - The action to take with the supplied key and value. If the state is 'present' and `value` is set, the key
+            contents will be set to the value supplied and `changed` will be set to `true` only if the value was
+            different to the current contents. If the state is 'present' and `value` is not set, the existing value
+            associated to the key will be returned. The state 'absent' will remove the key/value pair,
             again 'changed' will be set to true only if the key actually existed
             prior to the removal. An attempt can be made to obtain or free the
             lock associated with a key/value pair with the states 'acquire' or
@@ -101,6 +101,13 @@ options:
 
 
 EXAMPLES = '''
+# If the key does not exist, the value associated to the "data" property in `retrieved_key` will be `None`
+# If the key value is empty string, `retrieved_key["data"]["Value"]` will be `None`
+- name: retrieve a value from the key/value store
+  consul_kv:
+    key: somekey
+  register: retrieved_key
+
 - name: Add or update the value associated with a key in the key/value store
   consul_kv:
     key: somekey
@@ -135,6 +142,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
+# Note: although the python-consul documentation implies that using a key with a value of `None` with `put` has a
+# special meaning (https://python-consul.readthedocs.io/en/latest/#consul-kv), if not set in the subsequently API call,
+# the value just defaults to an empty string (https://www.consul.io/api/kv.html#create-update-key)
+NOT_SET = None
+
 
 def _has_value_changed(consul_client, key, target_value):
     """
@@ -158,15 +170,19 @@ def _has_value_changed(consul_client, key, target_value):
 
 
 def execute(module):
-
     state = module.params.get('state')
 
     if state == 'acquire' or state == 'release':
         lock(module, state)
-    if state == 'present':
-        add_value(module)
-    else:
+    elif state == 'present':
+        if module.params.get('value') is NOT_SET:
+            get_value(module)
+        else:
+            set_value(module)
+    elif state == 'absent':
         remove_value(module)
+    else:
+        module.exit_json(msg="Unsupported state: %s" % (state, ))
 
 
 def lock(module, state):
@@ -201,12 +217,23 @@ def lock(module, state):
                      key=key)
 
 
-def add_value(module):
+def get_value(module):
+    consul_api = get_consul_api(module)
+    key = module.params.get('key')
 
+    index, existing_value = consul_api.kv.get(key, recurse=module.params.get('recurse'))
+
+    module.exit_json(changed=False, index=index, data=existing_value)
+
+
+def set_value(module):
     consul_api = get_consul_api(module)
 
     key = module.params.get('key')
     value = module.params.get('value')
+
+    if value is NOT_SET:
+        raise AssertionError('Cannot set value of "%s" to `NOT_SET`', (key, ))
 
     index, changed = _has_value_changed(consul_api, key, value)
 
@@ -274,13 +301,10 @@ def main():
             retrieve=dict(type='bool', default=True),
             state=dict(type='str', default='present', choices=['absent', 'acquire', 'present', 'release']),
             token=dict(type='str', no_log=True),
-            value=dict(type='str'),
+            value=dict(type='str', default=NOT_SET),
             session=dict(type='str'),
         ),
-        supports_check_mode=False,
-        required_if=[
-            ['state', 'present', ['value']],
-        ],
+        supports_check_mode=False
     )
 
     test_dependencies(module)

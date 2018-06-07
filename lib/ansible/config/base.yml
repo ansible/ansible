@@ -327,7 +327,7 @@ LOCALHOST_WARNING:
   description:
     - By default Ansible will issue a warning when there are no hosts in the
       inventory.
-    - These warnings can be silenced by adjusting this setting to False. 
+    - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_LOCALHOST_WARNING}]
   ini:
   - {key: localhost_warning, section: defaults}
@@ -508,7 +508,7 @@ DEFAULT_DEBUG:
   description:
     - "Toggles debug output in Ansible. This is *very* verbose and can hinder
       multiprocessing.  Debug output can also include secret information
-      despite no_log settings being enabled, which means debug mode should not be used in 
+      despite no_log settings being enabled, which means debug mode should not be used in
       production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
@@ -694,6 +694,16 @@ DEFAULT_JINJA2_EXTENSIONS:
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
+DEFAULT_JINJA2_NATIVE:
+  name: Use Jinja2's NativeEnvironment for templating
+  default: False
+  description: This option preserves variable types during template operations. This requires Jinja2 >= 2.10.
+  env: [{name: ANSIBLE_JINJA2_NATIVE}]
+  ini:
+  - {key: jinja2_native, section: defaults}
+  type: boolean
+  yaml: {key: jinja2_native}
+  version_added: 2.7
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
@@ -736,7 +746,7 @@ DEFAULT_LOCAL_TMP:
   type: tmppath
 DEFAULT_LOG_PATH:
   name: Ansible log file path
-  default: ''
+  default: ~
   description: File to which Ansible will log on the controller. When empty logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
@@ -931,9 +941,9 @@ DEFAULT_SCP_IF_SSH:
   # TODO: move to ssh plugin
   default: smart
   description:
-    - "Prefered method to use when transfering files over ssh"
-    - When set to smart, Ansible will try them until one succeeds or they all fail
-    - If set to True, it will force 'scp', if False it will use 'sftp'
+    - "Prefered method to use when transfering files over ssh."
+    - When set to smart, Ansible will try them until one succeeds or they all fail.
+    - If set to True, it will force 'scp', if False it will use 'sftp'.
   env: [{name: ANSIBLE_SCP_IF_SSH}]
   ini:
   - {key: scp_if_ssh, section: ssh_connection}
@@ -963,13 +973,17 @@ DEFAULT_SQUASH_ACTIONS:
   description:
     - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
       Instead of calling the module once for each item, the module is called once with the full list.
-    - The default value for this setting is only for certain package managers, but it can be used for any module
+    - The default value for this setting is only for certain package managers, but it can be used for any module.
     - Currently, this is only supported for modules that have a name or pkg parameter, and only when the item is the only thing being passed to the parameter.
   env: [{name: ANSIBLE_SQUASH_ACTIONS}]
   ini:
   - {key: squash_actions, section: defaults}
   type: list
   version_added: "2.0"
+  deprecated:
+    why: Loop squashing is deprecated and this configuration will no longer be used
+    version: "2.11"
+    alternatives: a list directly with the module argument
 DEFAULT_SSH_TRANSFER_METHOD:
   # TODO: move to ssh plugin
   default:
@@ -1001,6 +1015,18 @@ ENABLE_TASK_DEBUGGER:
   ini:
     - {key: enable_task_debugger, section: defaults}
   version_added: "2.5"
+TASK_DEBUGGER_IGNORE_ERRORS:
+  name: Whether a failed task with ignore_errors=True will still invoke the debugger
+  default: True
+  description:
+    - This option defines whether the task debugger will be invoked on a failed task when ignore_errors=True
+      is specified.
+    - True specifies that the debugger wil honor ignore_errors, False will not honor ignore_errors.
+  type: boolean
+  env: [{name: ANSIBLE_TASK_DEBUGGER_IGNORE_ERRORS}]
+  ini:
+    - {key: task_debugger_ignore_errors, section: defaults}
+  version_added: "2.7"
 DEFAULT_STRATEGY:
   name: Implied strategy
   default: 'linear'
@@ -1349,6 +1375,18 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVENTORY_ANY_UNPARSED_IS_FAILED:
+  name: Controls whether any unparseable inventory source is a fatal error
+  default: False
+  description: >
+    If 'true', it is a fatal error when any given inventory source
+    cannot be successfully parsed by any available inventory plugin;
+    otherwise, this situation only attracts a warning.
+  type: boolean
+  env: [{name: ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED}]
+  ini:
+    - {key: any_unparsed_is_failed, section: inventory}
+  version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
   default: ['host_list', 'script', 'yaml', 'ini', 'auto']
@@ -1386,7 +1424,10 @@ INVENTORY_IGNORE_PATTERNS:
 INVENTORY_UNPARSED_IS_FAILED:
   name: Unparsed Inventory failure
   default: False
-  description: If 'true' unparsed inventory sources become fatal errors, they are warnings otherwise.
+  description: >
+    If 'true' it is a fatal error if every single potential inventory
+    source fails to parse, otherwise this situation will only attract a
+    warning.
   env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
   ini:
   - {key: unparsed_is_failed, section: inventory}

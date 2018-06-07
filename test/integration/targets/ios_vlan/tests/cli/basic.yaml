@@ -91,6 +91,7 @@
       associated_interfaces:
         - test
       provider: "{{ cli }}"
+    ignore_errors: yes
     register: result
 
   - assert:

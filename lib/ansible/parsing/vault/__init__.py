@@ -496,7 +496,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                                       encoding=encoding,
                                                       loader=loader)
         self._vault_id = vault_id
-        display.vvvv('Executing vault password client script: %s --vault-id=%s' % (filename, vault_id))
+        display.vvvv('Executing vault password client script: %s --vault-id %s' % (filename, vault_id))
 
     def _run(self, command):
         try:

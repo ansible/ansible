@@ -239,9 +239,9 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-.PHONY: changelog_reno
-changelog_reno:
-	reno -d changelogs/ report --title 'Ansible $(MAJOR_VERSION) "$(CODENAME)" Release Notes' --collapse-pre-release --no-show-source --earliest-version v$(MAJOR_VERSION).0a1 --output changelogs/CHANGELOG-v$(MAJOR_VERSION).rst
+.PHONY: changelog
+changelog:
+	packaging/release/changelogs/changelog.py release -vv && packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist
@@ -377,12 +377,12 @@ deb-src-upload: deb-src
 
 .PHONY: epub
 epub:
-	(cd docs/docsite/; CPUS=$(CPUS) make epub)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) epub)
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 .PHONY: webdocs
 webdocs:
-	(cd docs/docsite/; CPUS=$(CPUS) make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
@@ -391,7 +391,7 @@ generate_rst: lib/ansible/cli/*.py
 
 
 docs: generate_rst
-	make $(MANPAGES)
+	$(MAKE) $(MANPAGES)
 
 .PHONY: alldocs
 alldocs: docs webdocs

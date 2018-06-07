@@ -74,12 +74,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
             api_version = definition.get('apiVersion')
-            try:
-                resource = self.client.resources.get(kind=search_kind, api_version=api_version)
-            except Exception as e:
-                self.fail_json(msg='Failed to find resource {0}.{1}: {2}'.format(
-                    api_version, search_kind, e
-                ))
+            resource = self.find_resource(search_kind, api_version, fail=True)
+            definition['kind'] = resource.kind
+            definition['apiVersion'] = resource.group_version
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
             results.append(result)
@@ -151,32 +148,33 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 result['method'] = 'create'
                 return result
 
+            match = False
+            diffs = []
+
             if existing and force:
                 if not self.check_mode:
                     try:
-                        k8s_obj = resource.replace(definition, name=name, namespace=namespace)
-                        result['result'] = k8s_obj.to_dict()
+                        k8s_obj = resource.replace(definition, name=name, namespace=namespace).to_dict()
+                        match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
+                        result['result'] = k8s_obj
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
                                        error=exc.status, status=exc.status, reason=exc.reason)
-                result['changed'] = True
+                result['changed'] = not match
                 result['method'] = 'replace'
+                result['diff'] = diffs
                 return result
 
-            match, diffs = self.diff_objects(existing.to_dict(), definition)
-
-            if match:
-                result['result'] = existing.to_dict()
-                return result
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
-                    k8s_obj = resource.patch(definition, name=name, namespace=namespace)
-                    result['result'] = k8s_obj.to_dict()
+                    k8s_obj = resource.patch(definition, name=name, namespace=namespace).to_dict()
+                    match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
+                    result['result'] = k8s_obj
                 except DynamicApiError as exc:
                     self.fail_json(msg="Failed to patch object: {0}".format(exc.body),
                                    error=exc.status, status=exc.status, reason=exc.reason)
-            result['changed'] = True
+            result['changed'] = not match
             result['method'] = 'patch'
             result['diff'] = diffs
             return result

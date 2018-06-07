@@ -51,13 +51,13 @@ options:
     description:
       - The availability zone of the resource.
 requirements:
-    - "shade"
+    - "openstacksdk"
 
 '''
 
 EXAMPLES = '''
 - name: "Enable access to tiny flavor to your tenant."
-  os_project_Access:
+  os_project_access:
     cloud: mycloud
     state: present
     target_project_id: f0f1f2f3f4f5f67f8f9e0e1
@@ -66,7 +66,7 @@ EXAMPLES = '''
 
 
 - name: "Disable access to the given flavor to project"
-  os_project_Access:
+  os_project_access:
     cloud: mycloud
     state: absent
     target_project_id: f0f1f2f3f4f5f67f8f9e0e1
@@ -93,22 +93,8 @@ flavor:
 
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
-
-
-def _get_allowed_projects(cloud, flavor_id):
-    return [x.tenant_id
-            for x
-            in cloud.nova_client.flavor_access.list(flavor=flavor_id)
-            ]
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -130,8 +116,7 @@ def main():
         ],
         **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    sdk, cloud = openstack_cloud_from_module(module)
 
     changed = False
     state = module.params['state']
@@ -140,8 +125,6 @@ def main():
     target_project_id = module.params['target_project_id']
 
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         if resource_type == 'nova_flavor':
             # returns Munch({'NAME_ATTR': 'name',
             # 'tenant_id': u'37e55da59ec842649d84230f3a24eed5',
@@ -208,7 +191,7 @@ def main():
                          resource=resource,
                          id=resource_id)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), **module.params)
 
 
