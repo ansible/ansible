@@ -58,6 +58,7 @@ options:
      required: false
 requirements:
     - "python >= 2.6"
+    - "python-novaclient"
     - "shade"
 '''
 
