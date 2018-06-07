@@ -446,7 +446,7 @@ def main():
     else:
         changed = False
 
-    if checksum_src == None and checksum_dest == None:
+    if checksum_src is None and checksum_dest is None:
         if remote_src and os.path.isdir(b_src):
             shutil.copytree(b_src, dest)
             changed = True
