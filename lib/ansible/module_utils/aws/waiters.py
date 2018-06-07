@@ -155,6 +155,49 @@ ec2_data = {
 }
 
 
+rds_data = {
+    "version": 2,
+    "waiters": {
+        "ClusterAvailable": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeDBClusters",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": "available",
+                    "argument": "DBClusters[].Status",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBClusterNotFoundFault",
+                    "state": "retry"
+                },
+            ]
+        },
+        "ClusterDeleted": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeDBClusters",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(DBClusters[]) > `0`",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBClusterNotFoundFault",
+                    "state": "success"
+                },
+            ]
+        },
+    }
+}
+
+
 waf_data = {
     "version": 2,
     "waiters": {
@@ -183,6 +226,11 @@ waf_data = {
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
+
+
+def rds_model(name):
+    rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
+    return rds_models.get_waiter(name)
 
 
 def waf_model(name):
@@ -250,6 +298,18 @@ waiters_by_name = {
         waf_model('ChangeTokenInSync'),
         core_waiter.NormalizedOperationMethod(
             waf.get_change_token_status
+        )),
+    ('RDS', 'cluster_available'): lambda rds: core_waiter.Waiter(
+        'cluster_available',
+        rds_model('ClusterAvailable'),
+        core_waiter.NormalizedOperationMethod(
+            rds.describe_db_clusters
+        )),
+    ('RDS', 'cluster_deleted'): lambda rds: core_waiter.Waiter(
+        'cluster_deleted',
+        rds_model('ClusterDeleted'),
+        core_waiter.NormalizedOperationMethod(
+            rds.describe_db_clusters
         )),
 }
 

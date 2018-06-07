@@ -1,0 +1,264 @@
+- block:
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create minimal aurora cluster in default VPC and default subnet group (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: create minimal aurora cluster in default VPC and default subnet group
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+          - result.status == 'available'
+          - result.port == 3306
+
+    - name: test idempotence (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - not result.changed
+
+    - name: test idempotence
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - not result.changed
+
+    - name: purge a tag from the cluster (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: purge a tag from the cluster
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: add a tag to the cluster (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: add a tag to the cluster
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: rename the cluster (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        new_cluster_id: "cluster-{{ resource_prefix }}-updated"
+        apply_immediately: true
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: rename the cluster
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        cluster_id: "cluster-{{ resource_prefix }}"
+        new_cluster_id: "cluster-{{ resource_prefix }}-updated"
+        apply_immediately: true
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+          - 'result.db_cluster_identifier == "cluster-{{ resource_prefix }}-updated"'
+
+    - name: delete aurora cluster without creating a final snapshot (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}-updated"
+        skip_final_snapshot: True
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: delete aurora cluster without creating a final snapshot
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}-updated"
+        skip_final_snapshot: True
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: delete a cluster that doesn't exist (CHECK MODE)
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}-updated"
+        skip_final_snapshot: True
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: true
+
+    - assert:
+        that:
+          - not result.changed
+
+    - name: delete a cluster that doesn't exist
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "cluster-{{ resource_prefix }}-updated"
+        skip_final_snapshot: True
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - not result.changed
+
+  always:
+
+    - name: tear down cluster if tests failed
+      rds_cluster:
+        engine: aurora
+        username: "testrdsusername"
+        password: "test-rds_password"
+        cluster_id: "{{ item }}"
+        skip_final_snapshot: True
+        tags:
+          Name: "cluster-{{ resource_prefix }}"
+          Created_By: "Ansible_rds_cluster_integration_test"
+        state: absent
+        <<: *aws_connection_info
+      loop:
+        - "cluster-{{ resource_prefix }}"
+        - "cluster-{{ resource_prefix }}-updated"
