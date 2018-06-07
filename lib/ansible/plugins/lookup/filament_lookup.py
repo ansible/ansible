@@ -49,7 +49,7 @@ def run_command(terms):
         result = p.stdout.read()
     except OSError as os_err:
         six.raise_from(AnsibleError("Failed to fetch processes."), os_err)
-    except ISError as io_err:
+    except IOError as io_err:
         six.raise_from(AnsibleError("Failed to read subprocess output."), io_err)
     return to_text(result)
 
