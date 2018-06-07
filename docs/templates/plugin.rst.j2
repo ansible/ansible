@@ -221,7 +221,7 @@ Notes
 Examples
 --------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
 {%   for example in examples %}
 {%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
