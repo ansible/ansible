@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
+import subprocess
 
 from ansible.errors import AnsibleError
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock, patch
 import ansible.plugins.lookup.filament_lookup as filament_lookup
-import subprocess
 
 
 class FakeBuffer:
