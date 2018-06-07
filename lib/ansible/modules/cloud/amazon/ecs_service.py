@@ -103,6 +103,12 @@ options:
           - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
             a list of group names or group IDs for the task
         version_added: 2.6
+    launch_type:
+        description:
+          - The launch type on which to run your service
+        required: false
+        version_added: 2.7
+        choices: ["EC2", "FARGATE"]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -357,7 +363,8 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy, network_configuration):
+                       placement_constraints, placement_strategy, network_configuration,
+                       launch_type):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -368,9 +375,12 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy
+        )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
+        if launch_type:
+            params['launchType'] = launch_type
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
@@ -431,12 +441,14 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        network_configuration=dict(required=False, type='dict')
+        network_configuration=dict(required=False, type='dict'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
-                              required_if=[('state', 'present', ['task_definition', 'desired_count'])],
+                              required_if=[('state', 'present', ['task_definition', 'desired_count']),
+                                           ('launch_type', 'FARGATE', ['network_configuration'])],
                               required_together=[['load_balancers', 'role']])
 
     service_mgr = EcsServiceManager(module)
@@ -458,10 +470,16 @@ def main():
         module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + module.params['cluster'] + "': " + str(e))
 
     results = dict(changed=False)
+
+    if module.params['launch_type']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
     if module.params['state'] == 'present':
 
         matching = False
         update = False
+
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
@@ -491,17 +509,21 @@ def main():
                         if 'containerPort' in loadBalancer:
                             loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
                     # doesn't exist. create it.
-                    response = service_mgr.create_service(module.params['name'],
-                                                          module.params['cluster'],
-                                                          module.params['task_definition'],
-                                                          loadBalancers,
-                                                          module.params['desired_count'],
-                                                          clientToken,
-                                                          role,
-                                                          deploymentConfiguration,
-                                                          module.params['placement_constraints'],
-                                                          module.params['placement_strategy'],
-                                                          network_configuration)
+                    try:
+                        response = service_mgr.create_service(module.params['name'],
+                                                              module.params['cluster'],
+                                                              module.params['task_definition'],
+                                                              loadBalancers,
+                                                              module.params['desired_count'],
+                                                              clientToken,
+                                                              role,
+                                                              deploymentConfiguration,
+                                                              module.params['placement_constraints'],
+                                                              module.params['placement_strategy'],
+                                                              network_configuration,
+                                                              module.params['launch_type'])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json_aws(e, msg="Couldn't create service")
 
                 results['service'] = response
 
@@ -526,7 +548,7 @@ def main():
                             module.params['cluster']
                         )
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg=e.message)
+                        module.fail_json_aws(e, msg="Couldn't delete service")
                 results['changed'] = True
 
     elif module.params['state'] == 'deleting':

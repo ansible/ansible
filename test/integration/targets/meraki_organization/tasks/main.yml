@@ -107,9 +107,6 @@
   delegate_to: localhost
   register: query_org
 
-- debug:
-    msg: '{{query_org}}'
-
 - name: Query information about IntTestOrg by organization ID
   meraki_organization:
     auth_key: '{{ auth_key }}'

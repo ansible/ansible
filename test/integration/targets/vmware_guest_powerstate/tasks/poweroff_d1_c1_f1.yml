@@ -56,7 +56,8 @@
 
 - debug: var=poweroff_d1_c1_f1
 
-- name: make sure no changes were made
+# vcsim (v0.18.0) VMs are spawned PoweredOn
+- name: make sure changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [True]"

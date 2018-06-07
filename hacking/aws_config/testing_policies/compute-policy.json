@@ -109,29 +109,6 @@
                 "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
             ]
         },
-        {
-            "Sid": "UnspecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:DescribeRepositories",
-                "ecr:CreateRepository"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "SpecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:GetRepositoryPolicy",
-                "ecr:SetRepositoryPolicy",
-                "ecr:DeleteRepository",
-                "ecr:DeleteRepositoryPolicy",
-                "ecr:DeleteRepositoryPolicy"
-            ],
-            "Resource": [
-                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
-            ]
-        },
 {# According to http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-authentication-access-control.html #}
 {# Resource level access control is not possible for the new ELB API (providing Application Load Balancer functionality #}
 {# While it remains possible for the old API, there is no distinction of the Actions between old API and new API #}
@@ -237,29 +214,6 @@
                 "arn:aws:iam::{{aws_account}}:role/ecsInstanceRole",
                 "arn:aws:iam::{{aws_account}}:role/ecsServiceRole"
             ]
-        },
-        {
-          "Sid": "AllowECSManagement",
-          "Effect": "Allow",
-          "Action": [
-            "application-autoscaling:Describe*",
-            "application-autoscaling:PutScalingPolicy",
-            "application-autoscaling:RegisterScalableTarget",
-            "cloudwatch:DescribeAlarms",
-            "cloudwatch:PutMetricAlarm",
-            "ecs:CreateCluster",
-            "ecs:CreateService",
-            "ecs:DeleteCluster",
-            "ecs:DeleteService",
-            "ecs:Describe*",
-            "ecs:DeregisterTaskDefinition",
-            "ecs:List*",
-            "ecs:RegisterTaskDefinition",
-            "ecs:UpdateService"
-          ],
-          "Resource": [
-            "*"
-          ]
         },
         {
           "Sid": "AllowSESManagement",
