@@ -167,6 +167,8 @@ class IncludedFile:
                     while 1:
                         try:
                             pos = included_files[idx:].index(orig_inc_file)
+                            # pos is relative to idx since we are slicing
+                            # use idx + pos due to relative indexing
                             inc_file = included_files[idx + pos]
                         except ValueError:
                             included_files.append(orig_inc_file)
