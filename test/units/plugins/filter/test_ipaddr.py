@@ -504,30 +504,33 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(exc.exception.message, expected)
 
     def test_ipsubnet(self):
-        address = '1.1.1.1/24'
-        self.assertEqual(ipsubnet(address, '30'), '64')
-        address = '1.1.1.1/25'
-        self.assertEqual(ipsubnet(address, '24'), '0')
-        address = '1.12.1.34/32'
-        subnet = '1.12.1.34/24'
-        self.assertEqual(ipsubnet(address, subnet), '35')
-        address = '192.168.50.0/24'
-        subnet = '192.168.0.0/16'
-        self.assertEqual(ipsubnet(address, subnet), '51')
-        address = '1.12.1.34/24'
-        subnet = '1.12.1.34/32'
-        self.assertEqual(ipsubnet(address, subnet), False)
-        address = '192.168.144.5'
-        subnet = '192.168.0.0/16'
-        self.assertEqual(ipsubnet(address), '192.168.144.5/32')
-        self.assertEqual(ipsubnet(subnet), '192.168.0.0/16')
-        self.assertEqual(ipsubnet(subnet, '20'), '16')
-        self.assertEqual(ipsubnet(subnet, '20', '0'), '192.168.0.0/20')
-        self.assertEqual(ipsubnet(subnet, '20', '-1'), '192.168.240.0/20')
-        self.assertEqual(ipsubnet(subnet, '20', '5'), '192.168.80.0/20')
-        self.assertEqual(ipsubnet(subnet, '20', '-5'), '192.168.176.0/20')
-        self.assertEqual(ipsubnet(address, '20'), '192.168.144.0/20')
-        self.assertEqual(ipsubnet(address, '18', '0'), '192.168.128.0/18')
-        self.assertEqual(ipsubnet(address, '18', '-1'), '192.168.144.4/31')
-        self.assertEqual(ipsubnet(address, '18', '5'), '192.168.144.0/23')
-        self.assertEqual(ipsubnet(address, '18', '-5'), '192.168.144.0/27')
+        test_cases = (
+            (('1.1.1.1/24', '30'), '64'),
+            (('1.1.1.1/25', '24'), '0'),
+            (('1.12.1.34/32', '1.12.1.34/24'), '35'),
+            (('192.168.50.0/24', '192.168.0.0/16'), '51'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', ), '192.168.0.0/16'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', '20'), '16'),
+            (('192.168.0.0/16', '20', '0'), '192.168.0.0/20'),
+            (('192.168.0.0/16', '20', '-1'), '192.168.240.0/20'),
+            (('192.168.0.0/16', '20', '5'), '192.168.80.0/20'),
+            (('192.168.0.0/16', '20', '-5'), '192.168.176.0/20'),
+            (('192.168.144.5', '20'), '192.168.144.0/20'),
+            (('192.168.144.5', '18', '0'), '192.168.128.0/18'),
+            (('192.168.144.5', '18', '-1'), '192.168.144.4/31'),
+            (('192.168.144.5', '18', '5'), '192.168.144.0/23'),
+            (('192.168.144.5', '18', '-5'), '192.168.144.0/27'),
+            (('1.12.1.34/24', '1.12.1.34/32'), False),
+            (('span', 'test', 'error'), False),
+            (('test', ), False),
+            (('192.168.144.5', '500000', '-5'), False),
+            (('192.168.144.5', '18', '500000'), False),
+            (('200000', '18', '-5'), '0.3.13.64/27'),
+        )
+        for args, res in test_cases:
+            self._test_ipsubnet(args, res)
+
+    def _test_ipsubnet(self, ipsubnet_args, expected_result):
+        self.assertEqual(ipsubnet(*ipsubnet_args), expected_result)
