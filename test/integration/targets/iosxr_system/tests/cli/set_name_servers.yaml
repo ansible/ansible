@@ -22,7 +22,6 @@
 - assert:
     that:
       - result.changed == true
-      - result.commands|length == 3
       - "'domain name-server 192.0.2.1' in result.commands"
       - "'domain name-server 192.0.2.2' in result.commands"
       - "'domain name-server 192.0.2.3' in result.commands"
