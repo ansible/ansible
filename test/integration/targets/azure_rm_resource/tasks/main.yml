@@ -1,23 +1,17 @@
 - name: Prepare random number
   set_fact:
-    namespacename: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    nsgname: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
-- name: Call REST API - Namespaces_CreateOrUpdate
+- name: Call REST API
   azure_rm_resource:
-    api_version: '2017-04-01'
+    api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
-    provider: eventhub
-    resource_type: namespaces
-    resource_name: "{{ namespacename }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: "{{ nsgname }}"
     body:
       location: eastus
-      sku:
-        name: Basic
-        tier: Basic
-        capacity: 10
-      properties:
-        isAutoInflateEnabled: False
     idempotency: yes
   register: output
 
@@ -25,21 +19,15 @@
   assert:
     that: output.changed
 
-- name: Call REST API - Namespaces_CreateOrUpdate
+- name: Call REST API
   azure_rm_resource:
-    api_version: '2017-04-01'
+    api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
-    provider: eventhub
-    resource_type: namespaces
-    resource_name: "{{ namespacename }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: "{{ nsgname }}"
     body:
       location: eastus
-      sku:
-        name: Basic
-        tier: Basic
-        capacity: 10
-      properties:
-        isAutoInflateEnabled: False
     idempotency: yes
   register: output
 
@@ -47,21 +35,18 @@
   assert:
     that: not output.changed
 
-- name: Call REST API - Namespaces_CreateOrUpdate
+- name: Call REST API
   azure_rm_resource:
-    api_version: '2017-04-01'
+    api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
-    provider: eventhub
-    resource_type: namespaces
-    resource_name: "{{ namespacename }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: "{{ nsgname }}"
     body:
       location: eastus
-      sku:
-        name: Basic
-        tier: Basic
-        capacity: 15
-      properties:
-        isAutoInflateEnabled: False
+      tags:
+        a: "abc"
+        b: "cde"
     idempotency: yes
   register: output
 
@@ -72,9 +57,9 @@
 
 - name: Try to get information about account
   azure_rm_resource_facts:
-    api_version: '2017-04-01'
+    api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
-    provider: eventhub
-    resource_type: namespaces
-    resource_name: "{{ namespacename }}"
+    provider: network
+    resource_type: networksecuritygroups
+    resource_name: "{{ nsgname }}"
   register: output
