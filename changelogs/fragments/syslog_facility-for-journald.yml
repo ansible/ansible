@@ -1,0 +1,5 @@
+---
+bugfixes:
+- Fixed runtime module to be able to handle syslog_facility properly
+  when python systemd module installed in a target system.
+  (https://github.com/ansible/ansible/pull/41078)

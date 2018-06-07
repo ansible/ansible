@@ -2185,7 +2185,19 @@ class AnsibleModule(object):
                 for arg in log_args:
                     journal_args.append((arg.upper(), str(log_args[arg])))
                 try:
-                    journal.send(u"%s %s" % (module, journal_msg), **dict(journal_args))
+                    if HAS_SYSLOG:
+                        # If syslog_facility specified, it needs to convert
+                        #  from the facility name to the facility code, and
+                        #  set it as SYSLOG_FACILITY argument of journal.send()
+                        facility = getattr(syslog,
+                                           self._syslog_facility,
+                                           syslog.LOG_USER) >> 3
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     SYSLOG_FACILITY=facility,
+                                     **dict(journal_args))
+                    else:
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(syslog_msg)
