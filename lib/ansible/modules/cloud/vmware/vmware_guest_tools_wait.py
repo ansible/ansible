@@ -61,23 +61,35 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Wait for VMware tools to become available by UUID
-  vmware_guest_tools_wait:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+  vmware_guest_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
     validate_certs: no
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    datacenter: "{{ datacenter }}"
+    folder: "/{{datacenter}}/vm"
+    name: "{{ vm_name }}"
+  register: vm_facts
+
+- name: Get UUID from previous task and pass it to this task
+  vmware_guest_tools_wait:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    validate_certs: no
+    uuid: "{{ vm_facts.instance.hw_product_uuid }}"
   delegate_to: localhost
   register: facts
 
+
 - name: Wait for VMware tools to become available by name
   vmware_guest_tools_wait:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
     validate_certs: no
     name: test-vm
-    folder: /datacenter1/vm
+    folder: "/{{datacenter}}/vm"
   delegate_to: localhost
   register: facts
 '''
