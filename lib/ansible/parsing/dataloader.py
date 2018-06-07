@@ -422,7 +422,7 @@ class DataLoader:
                     if allow_dir:
                         found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
                     else:
-                        next
+                        continue
                 else:
                     found.append(full_path)
                 break
