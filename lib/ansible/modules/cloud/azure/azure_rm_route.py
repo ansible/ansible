@@ -44,11 +44,12 @@ options:
         description:
             - The type of Azure hop the packet should be sent to.
         choices:
-            - VirtualNetworkGateway
-            - VnetLocal
-            - Internet
-            - VirtualAppliance
-            - None
+            - 'VirtualNetworkGateway'
+            - 'VnetLocal'
+            - 'Internet'
+            - 'VirtualAppliance'
+            - 'None'
+        default: 'None'
     next_hop_ip_address:
         description:
             - The IP address packets should be forwarded to.
@@ -126,7 +127,7 @@ class AzureRMRoute(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             address_prefix=dict(type='str'),
-            next_hop_type=dict(type='str', choices=['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance', 'None']),
+            next_hop_type=dict(type='str', choices=['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance', 'None'], default='None'),
             next_hop_ip_address=dict(type='str'),
             route_table=dict(type='str', required=True)
         )
