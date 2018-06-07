@@ -1082,7 +1082,10 @@ def metadata_encoder(metadata):
     metadata_new = []
     for key in metadata:
         value = metadata[key]
-        metadata_new.append({key: value})
+        metadata_new.append({
+            "key": key,
+            "value": value
+        })
     return {
         'items': metadata_new
     }
@@ -1094,7 +1097,7 @@ def metadata_decoder(metadata):
     if 'items' in metadata:
         metadata_items = metadata['items']
         for item in metadata_items:
-            items[item.keys()[0]] = item[item.keys()[0]]
+            items[item['key']] = item['value']
     return items
 
 
