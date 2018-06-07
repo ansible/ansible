@@ -290,16 +290,18 @@ s3_keys:
 import hashlib
 import mimetypes
 import os
-import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
-from ansible.module_utils.basic import AnsibleModule, to_text, to_native
-from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.basic import to_text, to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # will be detected by imported AnsibleAWSModule
+
+IGNORE_S3_DROP_IN_EXCEPTIONS = ['XNotImplemented', 'NotImplemented']
 
 
 class Sigv4Required(Exception):
@@ -322,8 +324,9 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
         elif error_code == 403 and validate is False:
             pass
         else:
-            module.fail_json(msg="Failed while looking up object (during key check) %s." % obj,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while looking up object (during key check) %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while looking up object (during key check) %s." % obj)
     return exists
 
 
@@ -378,16 +381,17 @@ def bucket_check(module, s3, bucket, validate=True):
         elif error_code == 403 and validate is False:
             pass
         else:
-            module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s." % bucket,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while looking up bucket (during bucket_check) %s." % bucket)
     except botocore.exceptions.EndpointConnectionError as e:
-        module.fail_json(msg="Invalid endpoint provided: %s" % to_text(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, msg="Invalid endpoint provided")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while looking up bucket (during bucket_check) %s." % bucket)
     return exists
 
 
 def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
-        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
+        module.exit_json(msg="CREATE operation skipped - running in check mode", changed=True)
     configuration = {}
     if location not in ('us-east-1', None):
         configuration['LocationConstraint'] = location
@@ -399,8 +403,12 @@ def create_bucket(module, s3, bucket, location=None):
         for acl in module.params.get('permission'):
             s3.put_bucket_acl(ACL=acl, Bucket=bucket)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).",
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutBucketAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
 
     if bucket:
         return True
@@ -419,10 +427,8 @@ def list_keys(module, s3, bucket, prefix, marker, max_keys):
     try:
         keys = sum(paginated_list(s3, **pagination_params), [])
         module.exit_json(msg="LIST operation complete", s3_keys=keys)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while listing the keys in the bucket {0}".format(bucket),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while listing the keys in the bucket {0}".format(bucket))
 
 
 def delete_bucket(module, s3, bucket):
@@ -439,8 +445,8 @@ def delete_bucket(module, s3, bucket):
                 s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while deleting bucket %s.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while deleting bucket %s." % bucket)
 
 
 def delete_key(module, s3, bucket, obj):
@@ -449,8 +455,8 @@ def delete_key(module, s3, bucket, obj):
     try:
         s3.delete_object(Bucket=bucket, Key=obj)
         module.exit_json(msg="Object deleted from bucket %s." % (bucket), changed=True)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while trying to delete %s." % obj)
 
 
 def create_dirkey(module, s3, bucket, obj, encrypt):
@@ -466,9 +472,14 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
         s3.put_object(**params)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while creating object %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
 
 
 def path_check(path):
@@ -521,14 +532,25 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             extra['ContentType'] = content_type
 
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to complete PUT operation.")
+    try:
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Unable to set object ACL")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Unable to set object ACL")
+    try:
         url = s3.generate_presigned_url(ClientMethod='put_object',
                                         Params={'Bucket': bucket, 'Key': obj},
                                         ExpiresIn=expiry)
-        module.exit_json(msg="PUT operation complete", url=url, changed=True)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable to complete PUT operation.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to generate presigned URL")
+    module.exit_json(msg="PUT operation complete", url=url, changed=True)
 
 
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
@@ -544,22 +566,26 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
             raise Sigv4Required()
-        elif e.response['Error']['Code'] != "404":
-            module.fail_json(msg="Could not find the key %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        elif e.response['Error']['Code'] not in ("403", "404"):
+            # AccessDenied errors may be triggered if 1) file does not exist or 2) file exists but
+            # user does not have the s3:GetObject permission. 404 errors are handled by download_file().
+            module.fail_json_aws(e, msg="Could not find the key %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Could not find the key %s." % obj)
 
     for x in range(0, retries + 1):
         try:
             s3.download_file(bucket, obj, dest)
             module.exit_json(msg="GET operation complete", changed=True)
-        except botocore.exceptions.ClientError as e:
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # actually fail on last pass through the loop.
             if x >= retries:
-                module.fail_json(msg="Failed while downloading %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                module.fail_json_aws(e, msg="Failed while downloading %s." % obj)
             # otherwise, try again, this may be a transient timeout.
         except SSLError as e:  # will ClientError catch SSLError?
             # actually fail on last pass through the loop.
             if x >= retries:
-                module.fail_json(msg="s3 download failed: %s." % e, exception=traceback.format_exc())
+                module.fail_json_aws(e, msg="s3 download failed")
             # otherwise, try again, this may be a transient timeout.
 
 
@@ -576,8 +602,9 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
         if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
             raise Sigv4Required()
         else:
-            module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
 
 
 def get_download_url(module, s3, bucket, obj, expiry, changed=True):
@@ -586,8 +613,8 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
                                         Params={'Bucket': bucket, 'Key': obj},
                                         ExpiresIn=expiry)
         module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while getting download url.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while getting download url.")
 
 
 def is_fakes3(s3_url):
@@ -666,7 +693,7 @@ def main():
             encryption_kms_key_id=dict()
         ),
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[['mode', 'put', ['src', 'object']],
@@ -677,9 +704,6 @@ def main():
 
     if module._name == 's3':
         module.deprecate("The 's3' module is being renamed 'aws_s3'", version=2.7)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore required for this module')
 
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')

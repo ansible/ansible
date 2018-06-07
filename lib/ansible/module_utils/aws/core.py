@@ -135,6 +135,9 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
+    def md5(self, *args, **kwargs):
+        return self._module.md5(*args, **kwargs)
+
     def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
         conn = boto3_conn(self, conn_type='client', resource=service,
