@@ -6,7 +6,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         region: "{{ aws_region }}"
-        security_token: "{{ security_token }}"
+        #security_token: "{{ security_token }}"
     no_log: true
 
   - name: retrieve caller facts
@@ -130,7 +130,7 @@
 
   - name: pausing for secret creation
     pause:
-      seconds: 10
+      seconds: 30
 
   - name: no changes to secret
     aws_secret:

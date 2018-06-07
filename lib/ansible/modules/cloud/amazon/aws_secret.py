@@ -106,124 +106,143 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def secret_exists(client, module, result):
+def secret_exists(client, module):
     if module.check_mode and module.params.get('state') == 'absent':
-        return True
+        return {'exists': True}
 
     try:
         response = client.list_secrets()
+
         while 'NextToken' in response:
             response = client.list_secrets(
                 NextToken=response['NextToken']
             )
         for i in response['SecretList']:
             if i['Name'] == module.params.get('name'):
-                result['secret_arn'] = i['ARN']
-                return True
+                secret_arn = i['ARN']
+                secret_details = client.describe_secret(
+                    SecretId=module.params.get('name')
+                )
+
+                secret_value = client.get_secret_value(
+                    SecretId=module.params.get('name')
+                )
+                return {
+                    'secret_arn': secret_arn,
+                    'secret_details': secret_details,
+                    'secret_value': secret_value,
+                    'exists': True
+                }
     except (ClientError, IndexError):
-        return False
+        return {'exists': False}
 
-    return False
+    return {'exists': False}
 
 
-def create_secret(client, module, params, result):
+def create_secret(client, module, params):
     if module.check_mode:
         module.exit_json(changed=True)
 
     try:
-        cs_response = client.create_secret(**params)
-        result['secret_arn'] = cs_response['ARN']
-        result['version_id'] = cs_response['VersionId']
-        result['changed'] = True
+        response = client.create_secret(**params)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create secret")
 
     if module.params.get('rotation_lambda'):
         try:
             rs_params = {}
-            rs_params['SecretId'] = cs_response['ARN']
+            rs_params['SecretId'] = response['ARN']
             rs_params['RotationLambdaARN'] = module.params.get('rotation_lambda')
             rs_params['RotationRules'] = {
                 'AutomaticallyAfterDays': module.params.get('rotation_interval')
             }
             if module.params.get('client_request_token'):
                 rs_params['ClientRequestToken'] = module.params.get('client_request_token')
-            rs_response = client.rotate_secret(**rs_params)
-            result['secret_arn'] = rs_response['ARN']
-            result['version_id'] = rs_response['VersionId']
+            response = client.rotate_secret(**rs_params)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to add rotation policy to secret")
 
-    return result
+    return {
+        'secret_arn': response['ARN'],
+        'version_id': response['VersionId'],
+        'changed': True
+    }
 
 
-def update_secret(client, module, params, result):
+def update_secret(client, module, params, secret_status):
     if module.check_mode:
         module.exit_json(changed=True)
 
-    secret_details = client.describe_secret(
-        SecretId=result['secret_arn']
-    )
+    updates_overall = []
+    changes_detected = []
+    updated_version_id = ''
 
-    secret_value = client.get_secret_value(
-        SecretId=result['secret_arn']
-    )
-
-    params['SecretId'] = result['secret_arn']
+    params['SecretId'] = secret_status['secret_arn']
     del params['Name']
     if 'Tags' in params:
         del params['Tags']
 
-    changes_detected = []
     if 'ClientRequestToken' in params:
-        if secret_details.get('ClientRequestToken') != params['ClientRequestToken']:
+        if secret_status['secret_details'].get('ClientRequestToken') != params['ClientRequestToken']:
             changes_detected.append(True)
     if 'Description' in params:
-        if secret_details.get('Description') != params['Description']:
+        if secret_status['secret_details'].get('Description') != params['Description']:
             changes_detected.append(True)
     if 'KmsKeyId' in params:
-        if secret_details.get('KmsKeyId') != params['KmsKeyId']:
+        if secret_status['secret_details'].get('KmsKeyId') != params['KmsKeyId']:
             changes_detected.append(True)
     if 'SecretBinary' in params:
-        if secret_value.get('SecretBinary') != params['SecretBinary']:
+        if secret_status['secret_value'].get('SecretBinary') != params['SecretBinary']:
             changes_detected.append(True)
     if 'SecretString' in params:
-        if secret_value.get('SecretString') != params['SecretString']:
+        if secret_status['secret_value'].get('SecretString') != params['SecretString']:
             changes_detected.append(True)
 
     if any(changes_detected):
         try:
             response = client.update_secret(**params)
-            result['VersionId'] = response['VersionId']
-            result['changed'] = True
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to update secret")
+        updated_version_id = response['VersionId']
+        updates_overall.append(True)
 
-    rotation_updater(client, module, result, secret_details)
-    tag_updater(client, module, result, secret_details)
+    rotation_updated = rotation_updater(client, module, secret_status)
+    tags_updated = tag_updater(client, module, secret_status)
 
-    return result
+    if rotation_updated['changed']:
+        updated_version_id = rotation_updated['version_id']
+        updates_overall.append(True)
+    if tags_updated['changed']:
+        updates_overall.append(True)
+
+    return {
+        'secret_arn': secret_status['secret_arn'],
+        'version_id': updated_version_id,
+        'changed': any(updates_overall)
+    }
 
 
-def delete_secret(client, module, result):
+def delete_secret(client, module, secret_status):
     if module.check_mode:
         module.exit_json(changed=True)
-
     try:
         response = client.delete_secret(
-            SecretId=result['secret_arn']
+            SecretId=secret_status['secret_arn']
         )
-        result['changed'] = True
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to delete secret")
 
-    return result
+    return {
+        'secret_arn': '',
+        'version_id': '',
+        'changed': True
+    }
 
 
-def rotation_updater(client, module, result, secret_details):
-    if module.params.get('rotation_lambda') and 'RotationLambdaARN' not in secret_details:
+def rotation_updater(client, module, secret_status):
+    if module.params.get('rotation_lambda') and 'RotationLambdaARN' not in secret_status['secret_details']:
         rs_params = {}
-        rs_params['SecretId'] = result['secret_arn']
+        rs_params['SecretId'] = secret_status['secret_arn']
         rs_params['RotationLambdaARN'] = module.params.get('rotation_lambda')
         rs_params['RotationRules'] = {
             'AutomaticallyAfterDays': module.params.get('rotation_interval')
@@ -232,23 +251,21 @@ def rotation_updater(client, module, result, secret_details):
             rs_params['ClientRequestToken'] = module.params.get('client_request_token')
 
         try:
-            rs_response = client.rotate_secret(**rs_params)
-            result['secret_arn'] = rs_response['ARN']
-            result['version_id'] = rs_response['VersionId']
-            result['changed'] = True
+            response = client.rotate_secret(**rs_params)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to add rotation policy to secret")
+        return {'changed': True, 'version_id': response['VersionId']}
 
-    if module.params.get('rotation_lambda') and 'RotationLambdaARN' in secret_details:
+    if module.params.get('rotation_lambda') and 'RotationLambdaARN' in secret_status['secret_details']:
         changes_detected = []
-        if secret_details.get('RotationLambdaARN') != module.params.get('rotation_lambda'):
+        if secret_status['secret_details'].get('RotationLambdaARN') != module.params.get('rotation_lambda'):
             changes_detected.append(True)
-        if secret_details.get('RotationRules').get('AutomaticallyAfterDays') != module.params.get('rotation_interval'):
+        if secret_status['secret_details'].get('RotationRules').get('AutomaticallyAfterDays') != module.params.get('rotation_interval'):
             changes_detected.append(True)
 
         if any(changes_detected):
             rs_params = {}
-            rs_params['SecretId'] = result['secret_arn']
+            rs_params['SecretId'] = secret_status['secret_arn']
             rs_params['RotationLambdaARN'] = module.params.get('rotation_lambda')
             rs_params['RotationRules'] = {
                 'AutomaticallyAfterDays': module.params.get('rotation_interval')
@@ -257,52 +274,53 @@ def rotation_updater(client, module, result, secret_details):
                 rs_params['ClientRequestToken'] = module.params.get('client_request_token')
 
             try:
-                rs_response = client.rotate_secret(**rs_params)
-                result['secret_arn'] = rs_response['ARN']
-                result['version_id'] = rs_response['VersionId']
-                result['changed'] = True
+                response = client.rotate_secret(**rs_params)
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Failed to add rotation policy to secret")
+            return {'changed': True, 'version_id': response['VersionId']}
 
-    if not module.params.get('rotation_lambda') and 'RotationLambdaARN' in secret_details:
+        return {'changed': False}
+
+    if not module.params.get('rotation_lambda') and 'RotationLambdaARN' in secret_status['secret_details']:
         try:
-            rs_response = client.cancel_rotate_secret(
-                SecretId=result['secret_arn']
+            response = client.cancel_rotate_secret(
+                SecretId=secret_status['secret_arn']
             )
-            result['changed'] = True
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to remove rotation policy from secret")
+        return {'changed': True, 'version_id': ''}
+
+    return {'changed': False}
 
 
-def tag_updater(client, module, result, secret_details):
-    if module.params.get('tags') and 'Tags' not in secret_details:
+def tag_updater(client, module, secret_status):
+    if module.params.get('tags') and 'Tags' not in secret_status['secret_details']:
         tag_params = {}
-        tag_params['SecretId'] = result['secret_arn']
+        tag_params['SecretId'] = secret_status['secret_arn']
         tag_params['Tags'] = module.params.get('tags')
 
         try:
             rs_response = client.tag_resource(**tag_params)
-            result['changed'] = True
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to add tag(s) to secret")
+        return {'changed': True}
 
-    if module.params.get('tags') and 'Tags' in secret_details:
+    if module.params.get('tags') and 'Tags' in secret_status['secret_details']:
         changes_detected = []
-        if secret_details.get('Tags') != module.params.get('tags'):
+        if secret_status['secret_details'].get('Tags') != module.params.get('tags'):
             changes_detected.append(True)
 
         if any(changes_detected):
             tag_params = {}
-            tag_params['SecretId'] = result['secret_arn']
+            tag_params['SecretId'] = secret_status['secret_arn']
 
-            tags_to_add = list(set(module.params.get('tags').items()).difference(set(secret_details.get('Tags').items())))
-            tags_to_remove = list(set(secret_details.get('Tags').items()).difference(set(module.params.get('tags').items())))
+            tags_to_add = list(set(module.params.get('tags').items()).difference(set(secret_status['secret_details'].get('Tags').items())))
+            tags_to_remove = list(set(secret_status['secret_details'].get('Tags').items()).difference(set(module.params.get('tags').items())))
 
             if len(tags_to_add) > 0:
                 tag_params['Tags'] = dict(tags_to_add)
                 try:
                     tag_response = client.tag_resource(**tag_params)
-                    result['changed'] = True
                 except (BotoCoreError, ClientError) as e:
                     module.fail_json_aws(e, msg="Failed to add tag(s) to secret")
 
@@ -310,19 +328,23 @@ def tag_updater(client, module, result, secret_details):
                 tag_params['Tags'] = dict(tags_to_remove)
                 try:
                     tag_response = client.untag_resource(**tag_params)
-                    result['changed'] = True
                 except (BotoCoreError, ClientError) as e:
                     module.fail_json_aws(e, msg="Failed to remove tag(s) from secret")
+            return {'changed': True}
 
-    if not module.params.get('tags') and 'Tags' in secret_details:
+        return {'changed': False}
+
+    if not module.params.get('tags') and 'Tags' in secret_status['secret_details']:
         try:
             tag_response = client.untag_resource(
-                SecretId=result['secret_arn'],
-                TagKeys=list(set().union(*(d.keys() for d in list(secret_details['Tags']))))
+                SecretId=secret_status['secret_arn'],
+                TagKeys=list(set().union(*(d.keys() for d in list(secret_status['secret_details']['Tags']))))
             )
-            result['changed'] = True
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to remove tag(s) from secret")
+        return {'changed': True}
+
+    return {'changed': False}
 
 
 def main():
@@ -343,7 +365,9 @@ def main():
     )
 
     result = {
-        'changed': False
+        'changed': False,
+        'secret_arn': '',
+        'version_id': ''
     }
 
     desired_state = module.params.get('state')
@@ -365,19 +389,19 @@ def main():
 
     client = module.client('secretsmanager')
 
-    secret_status = secret_exists(client, module, result)
+    secret_status = secret_exists(client, module)
 
     if desired_state == 'present':
-        if not secret_status:
-            create_secret(client, module, params, result)
-        if secret_status:
-            update_secret(client, module, params, result)
+        if not secret_status['exists']:
+            result = create_secret(client, module, params)
+        if secret_status['exists']:
+            result = update_secret(client, module, params, secret_status)
 
     if desired_state == 'absent':
-        if secret_status:
-            delete_secret(client, module, result)
+        if secret_status['exists']:
+            result = delete_secret(client, module, secret_status)
 
-    module.exit_json(changed=result['changed'], output=result)
+    module.exit_json(changed=result['changed'], secret_arn=result['secret_arn'], version_id=result['version_id'])
 
 
 if __name__ == '__main__':
