@@ -272,6 +272,25 @@ EXAMPLES = """
       - shutdown
     # parents: int gig1/0/11
     parents: interface GigabitEthernet1/0/11
+
+- name: Add BGP VRF/address-family ipv4
+  ios_config:
+    lines:
+      - "address-family ipv4 vrf {{ vrf_name }}"
+    parents:
+      - router bgp 65001
+  when: bgp_vrf_config is defined
+
+- name: add BGP neighbor in VRF
+  ios_config:
+    lines:
+      - "neighbor {{ bgp_neighbor_ip }} remote-as {{ bgp_neighbor_as }}"
+      - "neighbor {{ bgp_neighbor_ip }} description {{ bgp_neighbor_name }}"
+    parents:
+      - router bgp 65001
+      - "address-family ipv4 vrf {{ vrf_name }}"
+  when: bgp_neighbor_as is defined
+
 """
 
 RETURN = """
