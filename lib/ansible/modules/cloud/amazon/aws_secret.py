@@ -107,9 +107,6 @@ except ImportError:
 
 
 def secret_exists(client, module):
-    if module.check_mode and module.params.get('state') == 'absent':
-        return {'exists': True}
-
     try:
         response = client.list_secrets()
 
@@ -142,7 +139,6 @@ def secret_exists(client, module):
 def create_secret(client, module, params):
     if module.check_mode:
         module.exit_json(changed=True)
-
     try:
         response = client.create_secret(**params)
     except (BotoCoreError, ClientError) as e:
