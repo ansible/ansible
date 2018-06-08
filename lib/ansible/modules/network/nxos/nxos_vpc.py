@@ -101,6 +101,18 @@ EXAMPLES = '''
     pkl_src: 10.1.100.2
     pkl_dest: 192.168.100.4
     auto_recovery: true
+
+- name: Configure VPC with delay restore and existing keepalive VRF
+  nxos_vpc:
+    domain: 10
+    role_priority: 28672
+    system_priority: 2000
+    delay_restore: 180
+    peer_gw: true
+    pkl_src: 1.1.1.2
+    pkl_dest: 1.1.1.1
+    pkl_vrf: vpckeepalive
+    auto_recovery: true
 '''
 
 RETURN = '''
