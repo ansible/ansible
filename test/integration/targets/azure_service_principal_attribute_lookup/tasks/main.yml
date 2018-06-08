@@ -11,12 +11,13 @@
                    azure_client_id=azure_client_id,
                    azure_secret=azure_secret,
                    azure_tenant=tenant_id) }}"
-  register: object_id
+  register: output
   no_log: yes
 
 - name: Assert object_id
   assert:
-    that: object_id
+    that: 
+      - object_id is not undefined
 
 - name: dump object_id
   debug:
