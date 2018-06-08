@@ -1,0 +1,3 @@
+---
+bugfixes:
+- ec2_ami - cast the device_mapping volume size to an int (https://github.com/ansible/ansible/pull/40938)
