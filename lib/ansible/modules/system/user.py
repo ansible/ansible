@@ -60,13 +60,16 @@ options:
             - Optionally sets the user's primary group (takes a group name).
     groups:
         description:
-            - Puts the user in  list of groups. When set to the empty string ('groups='),
-              the user is removed from all groups except the primary group.
-            - Before version 2.3, the only input format allowed was a 'comma separated string',
-              now it should be able to accept YAML lists also.
+            - List of groups user will be added to. When set to an empty string C(''),
+              C(null), or C(~), the user is removed from all groups except the
+              primary group. (C(~) means C(null) in YAML)
+            - Before version 2.3, the only input format allowed was a comma separated string.
+              Now this parameter accepts a list as well as a comma separated string.
     append:
         description:
-            - If C(yes), will only add groups, not set them to just the list in I(groups).
+            - If C(yes), add the user to the groups specified in C(groups).
+            - If C(no), user will only be added to the groups specified in C(groups),
+              removing them from all other groups.
         type: bool
         default: "no"
     shell:
