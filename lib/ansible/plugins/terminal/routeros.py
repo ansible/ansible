@@ -64,7 +64,7 @@ class TerminalModule(TerminalBase):
     def on_open_shell(self):
         prompt = self._get_prompt()
         try:
-            if prompt.strip().endswith(br"\x1b<") or prompt.strip().endswith(b':'):
+            if prompt.strip().endswith(b':'):
                 self._exec_cli_command(b' ')
             if prompt.strip().endswith(b'!'):
                 self._exec_cli_command(b'\n')

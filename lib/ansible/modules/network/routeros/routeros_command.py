@@ -53,7 +53,6 @@ options:
     required: false
     default: null
     aliases: ['waitfor']
-    version_added: "2.2"
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -65,7 +64,6 @@ options:
     required: false
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
   retries:
     description:
       - Specifies the number of retries a command should by tried
