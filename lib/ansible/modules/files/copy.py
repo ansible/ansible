@@ -338,6 +338,7 @@ def main():
 
     if checksum and checksum.upper() == "MD5":
         checksum_src = md5sum_src
+        checksum_dest = None
     else:
         checksum_src = module.sha1(src)
         checksum_dest = None
