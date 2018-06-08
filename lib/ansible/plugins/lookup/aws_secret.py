@@ -128,6 +128,8 @@ class LookupModule(LookupBase):
                 raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
 
         if kwargs.get('join'):
-            return ''.join(secrets)
+            joined_secret = []
+            joined_secret.append(''.join(secrets))
+            return joined_secret
         else:
             return secrets
