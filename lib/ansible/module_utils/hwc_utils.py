@@ -182,6 +182,11 @@ class HwcModule(AnsibleModule):
                 domain_name=dict(required=True, type='str'),
                 project_name=dict(required=True, type='str'),
                 region=dict(required=True, type='str'),
+                timeouts=dict(type='dict', options=dict(
+                    create=dict(default='10m', type='str'),
+                    update=dict(default='10m', type='str'),
+                    delete=dict(default='10m', type='str'),
+                ), default={})
             )
         )
 
