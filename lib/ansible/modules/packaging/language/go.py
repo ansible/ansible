@@ -39,7 +39,7 @@ options:
         type: bool
 requirements: []
 short_description: Manage Go packages
-version_added: 2.6.0
+version_added: 2.7
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
