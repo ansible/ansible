@@ -134,32 +134,45 @@ def main():
         r = cloud.get_role(role)
         if r is None:
             module.fail_json(msg="Role %s is not valid" % role)
-        filters['role'] = r['id']
+        filters['role_id'] = r['id']
 
+        if domain:
+            try:
+                # We assume admin is passing domain id
+                d = cloud.get_domain(domain)
+            except:
+                # If we fail, maybe admin is passing a domain name.
+                # Note that fomains have unique names, just like id.
+                try:
+                    d = cloud.search_domains(filters={'name': domain})[0]
+                except:
+                    # Ok, let's hope the user is non-admin and passing a sane id
+                    pass
+            if d is None:
+                module.fail_json(msg="Domain %s is not valid" % domain)
+            filters['domain_id'] = d['id']
         if user:
-            u = cloud.get_user(user)
+            if domain:
+                u = cloud.get_user(user, domain_id=filters['domain_id'])
+            else:
+                u = cloud.get_user(user)
             if u is None:
                 module.fail_json(msg="User %s is not valid" % user)
-            filters['user'] = u['id']
+            filters['user_id'] = u['id']
         if group:
             g = cloud.get_group(group)
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
-            filters['group'] = g['id']
-        if domain:
-            d = cloud.get_domain(domain)
-            if d is None:
-                module.fail_json(msg="Domain %s is not valid" % domain)
-            filters['domain'] = d['id']
+            filters['group_ids'] = g['id']
         if project:
             if domain:
-                p = cloud.get_project(project, domain_id=filters['domain'])
+                p = cloud.get_project(project, domain_id=filters['domain_id'])
             else:
                 p = cloud.get_project(project)
 
             if p is None:
                 module.fail_json(msg="Project %s is not valid" % project)
-            filters['project'] = p['id']
+            filters['project_ids'] = p['id']
 
         assignment = cloud.list_role_assignments(filters=filters)
 
