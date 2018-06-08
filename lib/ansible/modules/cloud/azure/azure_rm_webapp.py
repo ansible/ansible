@@ -598,9 +598,6 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if not self.plan:
                     self.fail("Please specify app service plan in plan parameter.")
 
-                # get app service plan
-                old_plan = self.get_app_service_plan()
-
                 if not old_plan:
                     # no existing service plan, create one
                     if (not self.plan.get('name') or not self.plan.get('sku')):
@@ -660,16 +657,11 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 # purge existing app_settings:
                 if self.purge_app_settings:
-                    if self.app_settings_strDic.properties == self.app_settings:
-                        for key in self.app_settings.keys():
-                            if self.app_settings[key] != self.app_settings_strDic.properties.get(key, None):
-                                to_be_updated = True
-                                self.app_settings_strDic.properties = dict()
-                                self.app_settings_strDic.properties[key] = self.app_settings[key]
-                                break
+                    to_be_updated = True
+                    self.app_settings_strDic.properties = dict()
 
                 # check if app settings changed
-                if self.is_app_settings_changed():
+                if self.purge_app_settings and self.is_app_settings_changed():
                     to_be_updated = True
                     self.to_do = Actions.UpdateAppSettings
 
