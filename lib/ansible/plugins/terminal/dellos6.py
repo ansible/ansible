@@ -49,6 +49,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"Invalid|invalid.*$", re.I),
         re.compile(br"out of range.*", re.I),
         re.compile(br"not found.*", re.I),
+        re.compile(br"((\balready exists\b)|(\bdoes not exist\b)|(\bHost not found\b)|(\bnot active\b)).*", re.I),
 
     ]
 
