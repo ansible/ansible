@@ -18,7 +18,7 @@ short_description: Manage secrets stored in AWS Secrets Manager.
 description:
     - Create, update, and delete secrets stored in AWS Secrets Manager.
 author: "Aaron Smith (@slapula)"
-version_added: "2.6"
+version_added: "2.7"
 requirements: [ 'botocore>=1.10.0', 'boto3' ]
 options:
   name:
