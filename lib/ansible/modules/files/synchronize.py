@@ -472,7 +472,7 @@ def main():
 
         # if the user has not supplied an --rsh option go ahead and add ours
         if not has_rsh:
-            ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
+            ssh_cmd = [module.get_bin_path('ssh', required=True)]
             if private_key is not None:
                 ssh_cmd.extend(['-i', private_key])
             # If the user specified a port value
