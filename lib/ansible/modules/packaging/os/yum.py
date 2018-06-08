@@ -28,7 +28,7 @@ options:
       - A package name or package specifier with version, like C(name-1.0).
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
-      - When using state=latest, this can be '*' which means run C(yum -y update).
+      - When using state=latest, this can be C('*') which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
         To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
@@ -52,13 +52,13 @@ options:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
+        When specifying multiple repos, separate them with a C(",").
     version_added: "0.9"
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
+        When specifying multiple repos, separate them with a C(",").
     version_added: "0.9"
   conf_file:
     description:
@@ -73,8 +73,7 @@ options:
     version_added: "1.2"
   skip_broken:
     description:
-      - Resolve depsolve problems by removing packages that are causing problems from the trans‐
-        action.
+      - Skip packages with broken dependencies(devsolve) and are causing problems.
     type: bool
     default: "no"
     version_added: "2.3"
@@ -253,6 +252,14 @@ EXAMPLES = '''
   yum:
     name: sos
     disablerepo: "epel,ol7_latest"
+
+- name: Install a list of packages
+  yum:
+    name:
+      - nginx
+      - postgresql
+      - postgresql-server
+    state: present
 '''
 
 import os
