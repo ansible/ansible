@@ -98,7 +98,7 @@ def resource_exists(client, module, resource_type, params):
         return aggregator['ConfigurationAggregators'][0]
     except is_boto3_error_code('NoSuchConfigurationAggregatorException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 

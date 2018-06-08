@@ -522,7 +522,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                 except (is_boto3_error_code('InvalidGroup.NotFound'), IndexError):
                     module.fail_json(msg="group %s will be automatically created by rule %s but "
                                          "no description was provided" % (group_name, rule))
-                except ClientError as e:
+                except ClientError as e:  # pylint: disable=duplicate-except
                     module.fail_json_aws(e)
             elif not module.check_mode:
                 params = dict(GroupName=group_name, Description=rule['group_desc'])
@@ -829,7 +829,7 @@ def group_exists(client, module, vpc_id, group_id, name):
     try:
         security_groups = sg_exists_with_backoff(client, **params).get('SecurityGroups', [])
         all_groups = get_security_groups_with_backoff(client).get('SecurityGroups', [])
-    except (BotoCoreError, ClientError) as e:
+    except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Error in describe_security_groups")
 
     if security_groups:

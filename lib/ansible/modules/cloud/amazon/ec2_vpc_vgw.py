@@ -223,7 +223,7 @@ def create_vgw(client, module):
                          exception=traceback.format_exc())
     except is_boto3_error_code('VpnGatewayLimitExceeded'):
         module.fail_json(msg="Too many VPN gateways exist in this account.", exception=traceback.format_exc())
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = response

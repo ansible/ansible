@@ -299,7 +299,7 @@ def common_snapshot_facts(module, conn, method, prefix, params):
         results = paginator.paginate(**params).build_full_result()['%ss' % prefix]
     except is_boto3_error_code('%sNotFound' % prefix):
         results = []
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, "trying to get snapshot information")
 
     for snapshot in results:

@@ -99,7 +99,7 @@ def resource_exists(client, module, params):
         return recorder['ConfigurationRecorders'][0]
     except is_boto3_error_code('NoSuchConfigurationRecorderException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 
