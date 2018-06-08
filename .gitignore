@@ -13,6 +13,7 @@ rpm-build
 # Eclipse/PyDev stuff...
 .project
 .pydevproject
+.settings
 # PyCharm stuff...
 .idea
 #IntelliJ IDEA stuff..
