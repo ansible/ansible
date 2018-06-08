@@ -41,6 +41,7 @@ Bugfixes
 - win_updates - Added the ability to run on a scheduled task for older hosts so async starts working again - https://github.com/ansible/ansible/issues/38364
 - winrm - Add better error handling when the kinit process fails
 - xenserver_facts - ensure module works with newer versions of XenServer (https://github.com/ansible/ansible/pull/35821)
+- vyos - Fixing typo to create easier json failure conditionals using proper spelling. (https://github.com/ansible/ansible/pull/41284)
 
 New Plugins
 -----------
