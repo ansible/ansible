@@ -35,7 +35,21 @@ except ImportError:
 
 class TerminalModule(TerminalBase):
 
+    ansi_re = [
+        # check ECMA-48 Section 5.4 (Control Sequences)
+        re.compile(br'(\x1b\[\?1h\x1b=)'),
+        re.compile(br'((?:\x9b|\x1b\x5b)[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e])'),
+        re.compile(br'\x08.')
+    ]
+
+    terminal_initial_prompt = [
+        br'\x1bZ',
+    ]
+
+    terminal_initial_answer = b'\x1b/Z'
+
     terminal_stdout_re = [
+        re.compile(br"\x1b<"),
         re.compile(br"\[\w+\@[\w\-\.]+\] ?> ?$"),
         re.compile(br"Please press \"Enter\" to continue!"),
         re.compile(br"Do you want to see the software license\? \[Y\/n\]: ?"),
@@ -50,7 +64,7 @@ class TerminalModule(TerminalBase):
     def on_open_shell(self):
         prompt = self._get_prompt()
         try:
-            if prompt.strip().endswith(b':'):
+            if prompt.strip().endswith(br"\x1b<") or prompt.strip().endswith(b':'):
                 self._exec_cli_command(b' ')
             if prompt.strip().endswith(b'!'):
                 self._exec_cli_command(b'\n')
