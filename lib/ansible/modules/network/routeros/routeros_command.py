@@ -143,7 +143,7 @@ from ansible.module_utils.six import string_types
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = map(lambda x: x.strip(), str(item).split('\n'))
+            item = str(item).split('\n')
         yield item
 
 
