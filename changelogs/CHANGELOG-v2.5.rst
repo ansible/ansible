@@ -1247,3 +1247,4 @@ Bugfixes
 
 - win_wait_for - fixed issue when trying to check a localport when the port is not available externally
 
+- vyos - fixed spelling of failed_conditionals json entry (https://github.com/ansible/ansible/pull/41284)
