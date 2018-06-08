@@ -1,4 +1,4 @@
-# Copyright © 2017-2018 Dell EMC Inc.
+# Copyright 2017-2018 Dell EMC Inc.
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -33,9 +33,10 @@ class RedfishUtils(object):
             headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, method="GET",
-                url_username=self.creds['user'], url_password=self.creds['pswd'],
-                force_basic_auth=True, validate_certs=False,
-                timeout=10, use_proxy=False)
+                            url_username=self.creds['user'],
+                            url_password=self.creds['pswd'],
+                            force_basic_auth=True, validate_certs=False,
+                            timeout=10, use_proxy=False)
             data = json.loads(resp.read())
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
@@ -50,9 +51,11 @@ class RedfishUtils(object):
             headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                headers=hdrs, method="POST",
-                url_username=self.creds['user'], url_password=self.creds['pswd'],
-                force_basic_auth=True, validate_certs=False, use_proxy=False)
+                            headers=hdrs, method="POST",
+                            url_username=self.creds['user'],
+                            url_password=self.creds['pswd'],
+                            force_basic_auth=True, validate_certs=False,
+                            use_proxy=False)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -66,9 +69,11 @@ class RedfishUtils(object):
             headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                headers=hdrs, method="PATCH",
-                url_username=self.creds['user'], url_password=self.creds['pswd'],
-                force_basic_auth=True, validate_certs=False, use_proxy=False)
+                            headers=hdrs, method="PATCH",
+                            url_username=self.creds['user'],
+                            url_password=self.creds['pswd'],
+                            force_basic_auth=True, validate_certs=False,
+                            use_proxy=False)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -82,9 +87,11 @@ class RedfishUtils(object):
             headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                headers=hdrs, method="DELETE",
-                url_username=self.creds['user'], url_password=self.creds['pswd'],
-                force_basic_auth=True, validate_certs=False, use_proxy=False)
+                            headers=hdrs, method="DELETE",
+                            url_username=self.creds['user'],
+                            url_password=self.creds['pswd'],
+                            force_basic_auth=True, validate_certs=False,
+                            use_proxy=False)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -829,7 +836,7 @@ class RedfishUtils(object):
             nic['FQDN'] = data[u'FQDN']
             for d in data[u'IPv4Addresses']:
                 nic['IPv4'] = d[u'Address']
-                if 'GateWay' in d:	# not always available
+                if 'GateWay' in d:   # not always available
                     nic['Gateway'] = d[u'GateWay']
                 nic['SubnetMask'] = d[u'SubnetMask']
             for d in data[u'IPv6Addresses']:

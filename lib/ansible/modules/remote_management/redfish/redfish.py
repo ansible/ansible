@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright © 2017-2018 Dell EMC Inc.
+# Copyright 2017-2018 Dell EMC Inc.
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: redfish
-version_added: "2.6"
+version_added: "2.7"
 short_description: Out-Of-Band management using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
@@ -263,7 +263,8 @@ def main():
             module.fail_json(msg=result['msg'])
 
         if command == "PowerOn" or command == "PowerForceOff" \
-            or command == "PowerGracefulRestart" or command == "PowerGracefulShutdown":
+                or command == "PowerGracefulRestart" \
+                or command == "PowerGracefulShutdown":
             result = rf_utils.manage_system_power(command)
         elif command == "GetBiosAttributes":
             result = rf_utils.get_bios_attributes()
