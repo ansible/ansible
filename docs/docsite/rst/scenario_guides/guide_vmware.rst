@@ -22,8 +22,7 @@ and vCenter infrastcture. You can install pyVmomi using pip:
 vmware_guest module
 ```````````````````
 
-The :ref:vmware_guest <vmware_guest>module is used to manage various operations related to virtual machines in
-the given ESXi or vCenter server.
+The :ref:`vmware_guest<vmware_guest_module>` module manages various operations related to virtual machines in the given ESXi or vCenter server.
 
 Prior to Ansible version 2.5, ``folder`` was an optional parameter with a default value of ``/vm``. The folder parameter
  was used to discover information about virtual machines in the given infrastructure.
