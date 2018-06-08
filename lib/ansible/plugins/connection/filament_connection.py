@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.parsing.convert_bool import boolean
-import ipdb
+import epdb
 
 try:
     from __main__ import display
@@ -28,9 +28,16 @@ except ImportError:
 class Connection(ConnectionBase):
 
     transport = 'filament_connection'
+    has_pipeline = True
+    
+    def _connect(self):
+        epdb.set_trace()
+
+    def close(self):
+        epdb.set_trace()
 
     def __init__(self, *args, **kwargs):
-        super(Connecttion, self).__init__(*arg, **kwargs)
+        super(Connection, self).__init__(*args, **kwargs)
 
         self.remote_addr = self._play_context.remote_addr
         self.port = self._play_context.port
@@ -41,26 +48,25 @@ class Connection(ConnectionBase):
         
         display.vvv("PUT FILE FROM %s to %s" % (in_path, out_path))
         # TODO check if the file exist
-        ipdb.set_trace()
+        epdb.set_trace()
         return self._file_transport_command(in_path, out_path, 'put')
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH FILE FROM %s to %s" % (in_path, out_path))
         # TODO check if the file exist
-        ipdb.set_trace()
+        epdb.set_trace()
         return self._file_transport_command(in_path, out_path, 'get')
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         # run command in the remote machine
-        ipdb.set_trace()
-        pass
+        epdb.set_trace()
 
     def _build_command(self, binary, **kwargs):
         pass
 
     def _file_transport_command(in_path, out_path, action):
-        ipdb.set_trace()
+        epdb.set_trace()
         ssh_transfer_method = self._play_context.ssh_transfer_method
         # validate the ssh method
         if ssh_transfer_method is not None:
