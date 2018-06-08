@@ -54,7 +54,7 @@ class IncludeRole(TaskInclude):
 
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
-    _private = FieldAttribute(isa='bool', default=None, private=True)
+    _private = FieldAttribute(isa='bool', default=True, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -83,6 +83,9 @@ class IncludeRole(TaskInclude):
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
+
+        if self.statically_loaded or not self.private:
+            myplay.roles.append(actual_role)
 
         # save this for later use
         self._role_path = actual_role._role_path
