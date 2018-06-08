@@ -255,7 +255,7 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   yum:
-    name: 
+    name:
       - nginx
       - postgresql
       - postgresql-server
