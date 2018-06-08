@@ -37,7 +37,7 @@ DOCUMENTATION = """
       port:
         description:
             - port for winrm to connect on remote target
-            - The default is the https (5896) port, if using http it should be 5895
+            - The default is the https (5986) port, if using http it should be 5985
         vars:
           - name: ansible_port
           - name: ansible_winrm_port
