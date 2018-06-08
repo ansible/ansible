@@ -892,7 +892,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 .. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
-          This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
+          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
