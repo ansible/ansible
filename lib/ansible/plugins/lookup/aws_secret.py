@@ -30,6 +30,12 @@ options:
   version_stage:
     description: Stage of the secret version.
     required: False
+  join:
+    description:
+        - Join two or more entries to form an extended secret.
+        - This is useful for overcoming the 4096 character limit imposed by AWS.
+    type: boolean
+    default: false
 """
 
 EXAMPLES = r"""
@@ -121,4 +127,7 @@ class LookupModule(LookupBase):
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
 
-        return secrets
+        if kwargs.get('join'):
+            return ''.join(secrets)
+        else:
+            return secrets
