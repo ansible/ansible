@@ -5,16 +5,29 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-<= to be continued
+    connection: filament_connection
+    short_description: execute on controller
+    description:
+        - This connection plugin connect to remote and run commands.
+    author: ansible (@core)
+    version_added: historical
 '''
 
-from __main__ import display
 from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.parsing.convert_bool import boolean
+import ipdb
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class Connection(ConnectionBase):
+
+    transport = 'filament_connection'
 
     def __init__(self, *args, **kwargs):
         super(Connecttion, self).__init__(*arg, **kwargs)
@@ -28,19 +41,26 @@ class Connection(ConnectionBase):
         
         display.vvv("PUT FILE FROM %s to %s" % (in_path, out_path))
         # TODO check if the file exist
+        ipdb.set_trace()
         return self._file_transport_command(in_path, out_path, 'put')
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH FILE FROM %s to %s" % (in_path, out_path))
         # TODO check if the file exist
+        ipdb.set_trace()
         return self._file_transport_command(in_path, out_path, 'get')
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         # run command in the remote machine
+        ipdb.set_trace()
+        pass
+
+    def _build_command(self, binary, **kwargs):
         pass
 
     def _file_transport_command(in_path, out_path, action):
+        ipdb.set_trace()
         ssh_transfer_method = self._play_context.ssh_transfer_method
         # validate the ssh method
         if ssh_transfer_method is not None:
@@ -57,11 +77,4 @@ class Connection(ConnectionBase):
         for method in methods:
             # construct command here
             # run command here
-
-
-        
-
-            
-
-
-        
+            pass
