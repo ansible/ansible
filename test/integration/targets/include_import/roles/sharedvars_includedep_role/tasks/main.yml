@@ -1,0 +1,4 @@
+---
+- name: noop task
+  shell: echo from deprole
+  register: testdep1
