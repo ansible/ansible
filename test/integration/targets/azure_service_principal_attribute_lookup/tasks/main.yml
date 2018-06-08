@@ -14,7 +14,8 @@
   register: object_id
   no_log: yes
 
-- assert:
+- name: Assert object_id
+  assert:
     that: object_id
 
 - name: dump object_id
