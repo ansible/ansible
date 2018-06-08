@@ -107,6 +107,8 @@ def install(module):
 
     rc, stdout, stderr = module.run_command(cmd)
 
+    # When ``got get`` is run in verbose mode, if the package was installed/updated
+    # stderr should end with ``(download)\n``
     changed = stderr and not stderr.endswith('(download)\n')
 
     exit_args = {
