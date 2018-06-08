@@ -96,7 +96,7 @@ class Role(Base, Become, Conditional, Taggable):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, from_files=None):
+    def __init__(self, play=None, from_files=None, from_include=False):
         self._role_name = None
         self._role_path = None
         self._role_params = dict()
@@ -117,6 +117,9 @@ class Role(Base, Become, Conditional, Taggable):
             from_files = {}
         self._from_files = from_files
 
+        # Indicates whether this role was included via include/import_role
+        self.from_include = from_include
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -126,7 +129,7 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False):
 
         if from_files is None:
             from_files = {}
@@ -153,7 +156,7 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role(play=play, from_files=from_files)
+            r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
