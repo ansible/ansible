@@ -144,16 +144,18 @@ class VmwareConfigManager(PyVmomi):
                         elif isinstance(option_value, six.string_types) and isinstance(option_type, (vim.option.StringOption, vim.option.ChoiceOption)):
                             pass
                         else:
-                            self.module.fail_json(msg="Provided value is of type %s.  Option %s expects:\n %s" %
+                            self.module.fail_json(
+                                msg="Provided value is of type %s.  Option %s expects:\n %s" %
                                 (type(option_value), option_key, str(option_type)))
                     else:
-                        self.module.fail_json(msg="Cannot change read only option %s to %s." %
+                        self.module.fail_json(
+                            msg="Cannot change read only option %s to %s." %
                             (option_key, option_value))
 
                     if option_value != host_facts[option_key]['value']:
                         change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
                         changed = True
-                else: # Don't silently drop unknown options. This prevents typos from falling through the cracks.
+                else:  # Don't silently drop unknown options. This prevents typos from falling through the cracks.
                     self.module.fail_json(msg="Unknown option %s" % option_key)
             if changed:
                 try:
