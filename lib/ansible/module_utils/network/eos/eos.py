@@ -205,7 +205,7 @@ class Cli:
             return conn.load_config(commands, commit, replace)
         except ConnectionError as exc:
             message = getattr(exc, 'err', exc)
-            self._module.fail_json(msg="Error on executing commands %s" % commands, data=to_text(message, errors='surrogate_then_replace'))
+            self._module.fail_json(msg="%s" % message, data=to_text(message, errors='surrogate_then_replace'))
 
 
 class Eapi:
