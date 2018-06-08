@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
         original_path = path
-        
+
         #
         # Check if we have a local relative path and do not process
         # * remote paths (some.server.domain:/some/remote/path/...)
