@@ -47,6 +47,18 @@
   meraki_device:
     auth_key: '{{auth_key}}'
     org_name: '{{test_org_name}}'
+    serial: '{{serial}}'
+    state: query
+  delegate_to: localhost
+  register: query_serial_no_net
+
+- debug:
+    msg: '{{query_serial_no_net}}'
+
+- name: Query device by serial
+  meraki_device:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
     net_name: '{{test_net_name}}'
     serial: '{{serial}}'
     state: query

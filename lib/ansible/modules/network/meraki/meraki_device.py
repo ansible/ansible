@@ -83,7 +83,93 @@ EXAMPLES = r'''
   meraki_device:
     auth_key: abc12345
     org_name: YourOrg
+    state: query
+  delegate_to: localhost
+
+- name: Query all devices in a network.
+  meraki_device:
+    auth_key: abc12345
+    org_name: YourOrg
+    net_name: YourNet
+    state: query
+  delegate_to: localhost
+
+- name: Query a device by serial number.
+  meraki_device:
+    auth_key: abc12345
+    org_name: YourOrg
+    net_name: YourNet
+    serial: ABC-123
+    state: query
+  delegate_to: localhost
+
+- name: Lookup uplink information about a device.
+  meraki_device:
+    auth_key: abc12345
+    org_name: YourOrg
+    net_name: YourNet
+    serial_uplink: ABC-123
+    state: query
+  delegate_to: localhost
+
+- name: Lookup LLDP and CDP information about devices connected to specified device.
+  meraki_device:
+    auth_key: abc12345
+    org_name: YourOrg
+    net_name: YourNet
+    serial_lldp_cdp: ABC-123
+    state: query
+  delegate_to: localhost
+
+- name: Lookup a device by hostname.
+  meraki_device:
+    auth_key: abc12345
+    org_name: YourOrg
+    net_name: YourNet
+    hostname: main-switch
+    state: query
+  delegate_to: localhost
+
+- name: Query all devices of a specific model.
+  meraki_device:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    model: MR26
+    state: query
+  delegate_to: localhost
+
+- name: Update information about a device.
+  meraki_device:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
     state: present
+    serial: '{{serial}}'
+    name: mr26
+    address: 1060 W. Addison St., Chicago, IL
+    lat: 41.948038
+    lng: -87.65568
+    tags: recently-added
+    state: present
+  delegate_to: localhost
+
+- name: Claim a deivce into a network.
+  meraki_device:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    serial: ABC-123
+    state: present
+  delegate_to: localhost
+
+- name: Remove a device from a network.
+  meraki_device:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    serial: ABC-123
+    state: absent
   delegate_to: localhost
 '''
 
@@ -122,6 +208,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present', 'query'], default='query'),
                          net_name=dict(type='str', aliases=['network']),
+                         net_id=dict(type='str'),
                          serial=dict(type='str'),
                          serial_uplink=dict(type='str'),
                          serial_lldp_cdp=dict(type='str'),
@@ -154,6 +241,8 @@ def main():
 
     if meraki.params['serial_lldp_cdp'] and not meraki.params['lldp_cdp_timespan']:
         meraki.fail_json(msg='lldp_cdp_timespan is required when querying LLDP and CDP information')
+    if meraki.params['net_name'] and meraki.params['net_id']:
+        meraki.fail_json(msg='net_name and net_id are mutually exclusive')
 
     meraki.params['follow_redirects'] = 'all'
 
@@ -194,7 +283,7 @@ def main():
     nets = temp_get_nets(meraki, meraki.params['org_name'], meraki.params['net_name'])
 
     if meraki.params['state'] == 'query':
-        if meraki.params['net_name']:
+        if meraki.params['net_name'] or meraki.params['net_id']:
             device = []
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
             if meraki.params['serial']:
@@ -233,11 +322,17 @@ def main():
                 meraki.result['data'] = request
         else:
             devices = []
-            for net in nets:
+            for net in nets:  # Gather all devices in all networks
                 path = meraki.construct_path('get_all', net_id=net['id'])
                 request = meraki.request(path, method='GET')
                 devices.append(request)
-            meraki.result['data'] = devices
+            if meraki.params['serial']:
+                for network in devices:
+                    for dev in network:
+                        if dev['serial'] == meraki.params['serial']:
+                            meraki.result['data'] = [dev]
+            else:
+                meraki.result['data'] = devices
     elif meraki.params['state'] == 'present':
         device = []
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
