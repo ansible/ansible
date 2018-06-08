@@ -73,6 +73,15 @@ EXAMPLES = '''
     commit: true
     description: "Ansible - add swps1-48"
 
+- name: Fetch Details From All Interfaces In JSON Format
+  nclu:
+    commands:
+        - show interface json
+  register: output
+- name: Print Interface Details
+  debug:
+    var: output["msg"]
+
 - name: Atomically add an interface
   nclu:
     commands:
