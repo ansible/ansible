@@ -32,8 +32,14 @@ class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
         original_path = path
-
-        if path.startswith('rsync://'):
+        
+        #
+        # Check if we have a local relative path and do not process
+        # * remote paths (some.server.domain:/some/remote/path/...)
+        # * URLs (rsync://...)
+        # * local absolute paths (/some/local/path/...)
+        #
+        if ':' in path or path.startswith('/'):
             return path
 
         if self._task._role is not None:
@@ -73,8 +79,7 @@ class ActionModule(ActionBase):
         if host not in C.LOCALHOST:
             return self._format_rsync_rsh_target(host, path, user)
 
-        if ':' not in path and not path.startswith('/'):
-            path = self._get_absolute_path(path=path)
+        path = self._get_absolute_path(path=path)
         return path
 
     def _process_remote(self, task_args, host, path, user, port_matches_localhost_port):
@@ -103,8 +108,7 @@ class ActionModule(ActionBase):
                 task_args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
 
-        if ':' not in path and not path.startswith('/'):
-            path = self._get_absolute_path(path=path)
+        path = self._get_absolute_path(path=path)
         return path
 
     def _override_module_replaced_vars(self, task_vars):
@@ -349,10 +353,8 @@ class ActionModule(ActionBase):
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
-            if ':' not in src and not src.startswith('/'):
-                src = self._get_absolute_path(path=src)
-            if ':' not in dest and not dest.startswith('/'):
-                dest = self._get_absolute_path(path=dest)
+            src = self._get_absolute_path(path=src)
+            dest = self._get_absolute_path(path=dest)
 
         _tmp_args['src'] = src
         _tmp_args['dest'] = dest
