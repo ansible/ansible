@@ -25,6 +25,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -49,6 +50,13 @@ class Cliconf(CliconfBase):
             resp = self._connection.send(**kwargs)
         else:
             resp = self._connection.send_request(command, **kwargs)
+        return resp
+
+    def send_config(self, config):
+        if isinstance(self._connection, NetworkCli):
+            resp = self._connection.edit_config(config)
+        else:
+            resp = self._connection.edit_config(config)
         return resp
 
     def get_device_info(self):
@@ -135,3 +143,42 @@ class Cliconf(CliconfBase):
 
             responses.append(out)
         return responses
+
+    # Migrated from module_utils
+    def load_config(self, config, return_error=False, opts=None):
+        """Sends configuration commands to the remote device
+        """
+        if opts is None:
+            opts = {}
+
+        msgs = list()
+
+        try:
+            responses = self.send_config(config)
+            out = json.loads(responses)
+            if isinstance(self._connection, NetworkCli):
+                msg = out[1:-1]
+            else:
+                if isinstance(out, list):
+                    msg = out[1]
+                else:
+                    msg = out
+        except (ConnectionError, AnsibleConnectionFailure) as e:
+            code = getattr(e, 'code', 1)
+            message = getattr(e, 'err', e)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code:
+                msgs.append(code)
+                return msgs
+            elif code and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    msg = ['']
+                    msgs.extend(msg)
+                    return msgs
+                else:
+                    raise ConnectionError(err)
+            elif code:
+                raise ConnectionError(err)
+
+        msgs.extend(msg)
+        return msgs
