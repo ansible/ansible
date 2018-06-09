@@ -278,3 +278,15 @@ releases:
     - v2.6.0rc1_catchup.yaml
     - v2.6.0rc1_summary.yaml
     release_date: '2018-06-05'
+  2.6.0rc2:
+    codename: Heartbreaker
+    fragments:
+    - 41167_ansible_doc_regression.yaml
+    - admin-users-default-change.yaml
+    - aws_s3_async_fix.yaml
+    - aws_s3_decryption_fix.yaml
+    - aws_s3_fix_custom_endpoints.yaml
+    - aws_s3_fix_exception_handling.yaml
+    - ec2_ami_fix_block_device_mapping_volume_size_type.yaml
+    - v2.6.0rc2_summary.yaml
+    release_date: '2018-06-08'

@@ -2,6 +2,29 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.0rc2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-06-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- Changed the admin_users config option to not include "admin" by default as admin is frequently used for a non-privileged account  (https://github.com/ansible/ansible/pull/41164)
+- allow custom endpoints to be used in the aws_s3 module (https://github.com/ansible/ansible/pull/36832)
+- ansible-doc - fixed traceback on missing plugins (https://github.com/ansible/ansible/pull/41167)
+- cast the device_mapping volume size to an int in the ec2_ami module (https://github.com/ansible/ansible/pull/40938)
+- fix BotoCoreError exception handling
+- fix async for the aws_s3 module by adding async support to the action plugin (https://github.com/ansible/ansible/pull/40826)
+- fix decrypting vault files for the aws_s3 module (https://github.com/ansible/ansible/pull/39634)
+- fix errors with S3-compatible APIs if they cannot use ACLs for buckets or objects
+- fix permission handling to try to download a file even if the user does not have permission to list all objects in the bucket
+
 v2.6.0rc1
 =========
 
@@ -259,7 +282,6 @@ Bugfixes
 - file module - Fix error when running a task which assures a symlink to a nonexistent file exists for the second and subsequent times (https://github.com/ansible/ansible/issues/39558)
 - file module - The file module allowed the user to specify src as a parameter when state was not link or hard.  This is documented as only applying to state=link or state=hard but in previous Ansible, this could have an effect in rare cornercases.  For instance, "ansible -m file -a 'state=directory path=/tmp src=/var/lib'" would create /tmp/lib.  This has been disabled and a warning emitted (will change to an error in Ansible-2.10).
 - import/include - Ensure role handlers have the proper parent, allowing for correct attribute inheritance (https://github.com/ansible/ansible/pull/39426)
-- import/include - Update TaskInclude _raw_params with the expanded/templated path to file allowing nested includes using host vars in file (https://github.com/ansible/ansible/pull/39365)
 - import_playbook - Pass vars applied to import_playbook into parsing of the playbook as they may be needed to parse the imported plays (https://github.com/ansible/ansible/pull/39521)
 - include_role/import_role - Don't overwrite included role handlers with play handlers on parse (https://github.com/ansible/ansible/pull/39563)
 - include_role/import_role - Fix parameter templating (https://github.com/ansible/ansible/pull/36372)
