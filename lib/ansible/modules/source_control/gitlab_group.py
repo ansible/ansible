@@ -186,7 +186,7 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing requried gitlab module (check docs or install with: pip install python-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     server_url = module.params['server_url']
     validate_certs = module.params['validate_certs']
