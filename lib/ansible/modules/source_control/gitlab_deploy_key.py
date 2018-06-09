@@ -60,6 +60,8 @@ options:
     default: present
     choices: [ "present", "absent" ]
 author: "Marcus Watkins (@marwatk)"
+requirements:
+    - python-gitlab python module
 '''
 
 EXAMPLES = '''
