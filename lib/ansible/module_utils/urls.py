@@ -625,7 +625,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         to_add_fd, to_add_path = tempfile.mkstemp()
         to_add = False
 
-        # Write the dummy ca cert if we are running on Mac OS X
+        # Write the dummy ca cert if we are running on Mac macOS
         if system == u'Darwin':
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs

@@ -43,11 +43,11 @@ Control Machine Requirements
 
 Currently Ansible can be run from any machine with Python 2 (versions 2.6 or 2.7) or Python 3 (versions 3.5 and higher) installed (Windows isn't supported for the control machine).
 
-This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
+This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
 .. note::
 
-    Mac OS X by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
+    macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
@@ -221,7 +221,7 @@ Latest Releases on Mac OSX
 
 The preferred way to install Ansible on a Mac is via pip.
 
-The instructions can be found in `Latest Releases Via Pip`_ section. If you are running macOS/OS X version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
+The instructions can be found in `Latest Releases Via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
@@ -266,7 +266,7 @@ Or if you are looking for the latest development version::
 
    $ pip install git+https://github.com/ansible/ansible.git@devel
 
-If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+If you are installing on macOS Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
