@@ -151,7 +151,7 @@ ANY_ERRORS_FATAL:
   yaml: {key: errors.any_task_errors_fatal}
   version_added: "2.4"
 BECOME_ALLOW_SAME_USER:
-  name: Allow becomming the same user
+  name: Allow becoming the same user
   default: False
   description: This setting controls if become is skipped when remote user and become user are the same. I.E root sudo to root.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
@@ -303,7 +303,7 @@ ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
   description:
-    - By default Ansible will issue a warning when recieved from a task action (module or action plugin)
+    - By default Ansible will issue a warning when received from a task action (module or action plugin)
     - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_ACTION_WARNINGS}]
   ini:
@@ -412,7 +412,7 @@ DEFAULT_BECOME:
   - {key: become, section: privilege_escalation}
   type: boolean
 DEFAULT_BECOME_ASK_PASS:
-  name: Ask for the privelege escalation (become) password
+  name: Ask for the privilege escalation (become) password
   default: False
   description: Toggle to prompt for privilege escalation password.
   env: [{name: ANSIBLE_BECOME_ASK_PASS}]
@@ -788,7 +788,7 @@ DEFAULT_MODULE_ARGS:
 DEFAULT_MODULE_COMPRESSION:
   name: Python module compression
   default: ZIP_DEFLATED
-  description: Compression scheme to use when transfering Python modules to the target.
+  description: Compression scheme to use when transferring Python modules to the target.
   env: []
   ini:
   - {key: module_compression, section: defaults}
@@ -941,7 +941,7 @@ DEFAULT_SCP_IF_SSH:
   # TODO: move to ssh plugin
   default: smart
   description:
-    - "Prefered method to use when transfering files over ssh."
+    - "Preferred method to use when transferring files over ssh."
     - When set to smart, Ansible will try them until one succeeds or they all fail.
     - If set to True, it will force 'scp', if False it will use 'sftp'.
   env: [{name: ANSIBLE_SCP_IF_SSH}]
@@ -988,7 +988,7 @@ DEFAULT_SSH_TRANSFER_METHOD:
   # TODO: move to ssh plugin
   default:
   description: 'unused?'
-  #  - "Prefered method to use when transfering files over ssh"
+  #  - "Preferred method to use when transferring files over ssh"
   #  - Setting to smart will try them until one succeeds or they all fail
   #choices: ['sftp', 'scp', 'dd', 'smart']
   env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
@@ -1021,7 +1021,7 @@ TASK_DEBUGGER_IGNORE_ERRORS:
   description:
     - This option defines whether the task debugger will be invoked on a failed task when ignore_errors=True
       is specified.
-    - True specifies that the debugger wil honor ignore_errors, False will not honor ignore_errors.
+    - True specifies that the debugger will honor ignore_errors, False will not honor ignore_errors.
   type: boolean
   env: [{name: ANSIBLE_TASK_DEBUGGER_IGNORE_ERRORS}]
   ini:
@@ -1295,7 +1295,7 @@ DISPLAY_ARGS_TO_STDOUT:
       you do not want those to be printed."
     - "If you set this to True you should be sure that you have secured your environment's stdout
       (no one can shoulder surf your screen and you aren't saving stdout to an insecure file) or
-      made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks which have sensistive values
+      made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks which have sensitive values
       See How do I keep secret data in my playbook? for more information."
   env: [{name: ANSIBLE_DISPLAY_ARGS_TO_STDOUT}]
   ini:
@@ -1433,7 +1433,7 @@ INVENTORY_UNPARSED_IS_FAILED:
   - {key: unparsed_is_failed, section: inventory}
   type: bool
 MAX_FILE_SIZE_FOR_DIFF:
-  name: Diff maxiumum file size
+  name: Diff maximum file size
   default: 104448
   description: Maximum size of files to be considered for diff display
   env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
@@ -1506,7 +1506,7 @@ PERSISTENT_CONNECT_TIMEOUT:
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   name: Persistence connection retry timeout
   default: 15
-  description: This contorls the retry timeout for presistent connection to connect to the local domain socket.
+  description: This controls the retry timeout for presistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
