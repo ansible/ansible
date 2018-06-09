@@ -26,7 +26,7 @@ DOCUMENTATION = '''
       - This callback plugin will send task results as JSON formatted events to a Splunk HTTP collector.
       - The companion Splunk Monitoring & Diagnostics App is available here: "https://splunkbase.splunk.com/app/4023/"
       - Credit to "Ryan Currah (@ryancurrah)" for original source upon which this is based.
-    version_added: "1.1"
+    version_added: "2.7"
     requirements:
       - Whitelisting this callback plugin
       - 'Create a HTTP Event Collector in Splunk'
