@@ -30,7 +30,7 @@ DOCUMENTATION = '''
     requirements:
       - Whitelisting this callback plugin
       - 'Create a HTTP Event Collector in Splunk'
-      - Define the url and token in ansible.cfg
+      - 'Define the url and token in ansible.cfg'
     options:
       url:
         description: URL to the Splunk HTTP collector source
