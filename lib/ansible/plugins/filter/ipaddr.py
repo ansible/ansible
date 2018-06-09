@@ -652,11 +652,11 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     deprecate_map = {
         'address/prefix': network_msg,
         'host/prefix': network_msg,
+        'network': network_msg,
         'gateway': redundant_msg,
         'gw': redundant_msg,
         'hostnet': redundant_msg,
-        'router': redundant_msg,
-        'network': network_msg
+        'router': redundant_msg
     }
 
     if deprecate_map.get(query):
