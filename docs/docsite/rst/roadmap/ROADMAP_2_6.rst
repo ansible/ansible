@@ -15,12 +15,12 @@ Actual
 - 2018-05-25 Community Freeze (Non-Core Modules/Plugins)
 - 2018-05-25 Branch stable-2.6
 - 2018-05-30 Alpha Release 2
+- 2018-06-05 Release Candidate 1
+- 2018-06-08 Release Candidate 2
 
 Expected
 ========
 
-- 2018-05-31 Release Candidate 1
-- 2018-06-07 Release Candidate 2
 - 2018-06-14 Release Candidate 3
 - 2018-06-28 Final Release
 
