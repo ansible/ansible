@@ -223,7 +223,7 @@ class MerakiModule(object):
         self.fail_json(msg='No network found with the name {0}'.format(net_name))
 
     def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
-        ''' Build a path from the URL catalog 
+        ''' Build a path from the URL catalog
             Intelligently inserts org_id and net_id
         '''
         built_path = None
@@ -263,7 +263,7 @@ class MerakiModule(object):
             pass
 
     def exit_json(self, **kwargs):
-        ''' Custom written method to exit from module 
+        ''' Custom written method to exit from module
             Provides different information if output_level is debug
         '''
         self.result['response'] = self.response
