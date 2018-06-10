@@ -299,7 +299,7 @@ def main():
                     error_type = 'urn:acme:error:malformed'
                 else:
                     error_type = 'urn:ietf:params:acme:error:malformed'
-                if result['type'] == error_type and result['detail'] == 'Certificate already revoked':
+                if result.get('type') == error_type and result.get('detail') == 'Certificate already revoked':
                     # Fallback: boulder returns this in case the certificate was already revoked.
                     if not module.params['force']:
                         module.exit_json(changed=False)
