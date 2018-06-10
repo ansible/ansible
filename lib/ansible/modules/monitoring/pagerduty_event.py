@@ -22,7 +22,7 @@ description:
     - This module will let you trigger, acknowledge or resolve a PagerDuty incident by sending events to PagerDuty Events API v2.
     - See U(https://v2.developer.pagerduty.com/docs/send-an-event-events-api-v2) for PagerDuty Events API v2 overview.
 
-version_added: "2.6"
+version_added: "2.7"
 
 author:
     - "Stephen Barry (@TheMonolithX64)"
@@ -186,7 +186,7 @@ from ansible.module_utils.urls import fetch_url
 def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args=dict(
+    module_args = dict(
         routing_key=dict(type='str', required=True),
         state=dict(type='str', required=True,
                    choices=['triggered', 'acknowledged', 'resolved']),
@@ -299,8 +299,8 @@ def run_module():
                              url=url, headers=headers, data=json.dumps(data))
         else:
             module.fail_json(msg="failed to {0}. Reason: {1} Body: {2}"
-                         .format(event_action, info['msg'], info['body']),
-                         url=url, headers=headers, data=json.dumps(data))
+                             .format(event_action, info['msg'], info['body']),
+                             url=url, headers=headers, data=json.dumps(data))
 
     result['payload'] = dict(data)
     result['status'] = info['status']
