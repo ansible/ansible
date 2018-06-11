@@ -676,7 +676,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                         for key in self.app_settings.keys():
                             self.app_settings_strDic.properties[key] = self.app_settings[key]
 
-        else if state == 'absent':
+        elif state == 'absent':
             if old_response:
                 self.log("Delete Web App instance")
                 self.results['changed'] = True
