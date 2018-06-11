@@ -45,7 +45,7 @@
 - name: removing an unremoved package should return unchanged
   assert:
     that:
-       - "not uninstall_result.changed"
+       - "not (uninstall_result is changed)"
 
 - shell: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
   register: absent_result
@@ -68,8 +68,8 @@
 - name: verify we recorded a change
   assert:
     that:
-      - "install_result.changed == True"
- 
+      - "install_result is changed"
+
 - shell: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
   register: installed_result
 
@@ -84,7 +84,7 @@
 - name: assert a change occurred on uninstallation
   assert:
     that:
-      - "absent2.changed"
+      - "absent2 is changed"
 
 # put the test package back
 
@@ -122,7 +122,7 @@
 - name: check that a change occurred
   assert:
     that:
-      - "req_installed.changed"
+      - "req_installed is changed"
 
 - name: "repeat installation to check status didn't change"
   pip:
@@ -133,7 +133,7 @@
 - name: "check that a change didn't occurr this time (bug ansible#1705)"
   assert:
     that:
-      - "not req_installed.changed"
+      - "not (req_installed is changed)"
 
 - name: install the same module from url
   pip: 
@@ -145,7 +145,7 @@
 - name: "check that a change didn't occurr (bug ansible-modules-core#1645)"
   assert:
     that:
-      - "not url_installed.changed"
+      - "not (url_installed is changed)"
 
 # Test pip package in check mode doesn't always report changed.
 
@@ -167,7 +167,7 @@
 - name: make sure pip in check_mode doesn't report changed
   assert:
     that:
-      - "not pip_check_mode.changed"
+      - "not (pip_check_mode is changed)"
 
 # Special case for setuptools
 - name: check for setuptools package
@@ -187,7 +187,7 @@
 - name: make sure setuptools in check_mode doesn't report changed
   assert:
     that:
-      - "not setuptools_check_mode.changed"
+      - "not (setuptools_check_mode is changed)"
 
 
 # Normal case
@@ -208,7 +208,7 @@
 - name: make sure q in check_mode doesn't report changed
   assert:
     that:
-      - "not q_check_mode.changed"
+      - "not (q_check_mode is changed)"
 
 # ansible#23204
 - name: ensure is a fresh virtualenv
@@ -225,7 +225,7 @@
 - name: make sure pip in fresh virtualenv report changed
   assert:
     that:
-      - "pip_install_venv.changed"
+      - "pip_install_venv is changed"
 
 # https://github.com/ansible/ansible/issues/25122
 - name: ensure is a fresh virtualenv
@@ -244,7 +244,7 @@
 - name: make sure fresh virtualenv + chdir report changed
   assert:
     that:
-      - "venv_chdir.changed"
+      - "venv_chdir is changed"
 
 # ansible#38785
 - name: allow empty list of packages
@@ -255,7 +255,7 @@
 - name: ensure empty install is successful
   assert:
     that:
-      - not pip_install_empty.changed
+      - "not (pip_install_empty is changed)"
 
 # https://github.com/ansible/ansible/issues/41043
 - name: do not consider an empty string as a version
