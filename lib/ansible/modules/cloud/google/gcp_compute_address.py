@@ -58,7 +58,16 @@ options:
     address:
         description:
             - The static external IP address represented by this resource. Only IPv4 is supported.
+              An address may only be specified for INTERNAL address types. The IP address must
+              be inside the specified subnetwork, if any.
         required: false
+    address_type:
+        description:
+            - The type of address to reserve, either INTERNAL or EXTERNAL.
+            - If unspecified, defaults to EXTERNAL.
+        required: false
+        default: EXTERNAL
+        choices: ['INTERNAL', 'EXTERNAL']
     description:
         description:
             - An optional description of this resource.
@@ -67,9 +76,15 @@ options:
         description:
             - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
               Specifically, the name must be 1-63 characters long and match the regular expression
-              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be a lowercase letter,
-              and all following characters must be a dash, lowercase letter, or digit, except
-              the last character, which cannot be a dash.
+              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+              letter, and all following characters must be a dash, lowercase letter, or digit,
+              except the last character, which cannot be a dash.
+        required: true
+    subnetwork:
+        description:
+            - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
+              it must be within the subnetwork's IP range.
+            - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
         required: false
     region:
         description:
@@ -96,6 +111,14 @@ RETURN = '''
     address:
         description:
             - The static external IP address represented by this resource. Only IPv4 is supported.
+              An address may only be specified for INTERNAL address types. The IP address must
+              be inside the specified subnetwork, if any.
+        returned: success
+        type: str
+    address_type:
+        description:
+            - The type of address to reserve, either INTERNAL or EXTERNAL.
+            - If unspecified, defaults to EXTERNAL.
         returned: success
         type: str
     creation_timestamp:
@@ -117,11 +140,18 @@ RETURN = '''
         description:
             - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
               Specifically, the name must be 1-63 characters long and match the regular expression
-              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be a lowercase letter,
-              and all following characters must be a dash, lowercase letter, or digit, except
-              the last character, which cannot be a dash.
+              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+              letter, and all following characters must be a dash, lowercase letter, or digit,
+              except the last character, which cannot be a dash.
         returned: success
         type: str
+    subnetwork:
+        description:
+            - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
+              it must be within the subnetwork's IP range.
+            - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+        returned: success
+        type: dict
     users:
         description:
             - The URLs of the resources that are using this address.
@@ -155,8 +185,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             address=dict(type='str'),
+            address_type=dict(default=EXTERNAL, type='str', choices=['INTERNAL', 'EXTERNAL']),
             description=dict(type='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
+            subnetwork=dict(type='dict'),
             region=dict(required=True, type='str')
         )
     )
@@ -207,8 +239,10 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#address',
         u'address': module.params.get('address'),
+        u'addressType': module.params.get('address_type'),
         u'description': module.params.get('description'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
     }
     return_vals = {}
     for k, v in request.items():
@@ -277,10 +311,12 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'address': response.get(u'address'),
+        u'addressType': response.get(u'addressType'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'subnetwork': response.get(u'subnetwork'),
         u'users': response.get(u'users')
     }
 
