@@ -208,6 +208,13 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
+    def _ensure_invocation(self, result):
+        if result.get('failed', False) and self._play_context.no_log:
+            result['invocation'] = "CENSORED: no_log is set"
+        elif not result.has_key("invocation"):
+            result["invocation"] = self._task.args
+        return result
+
     def _copy_file(self, source_full, source_rel, content, content_tempfile,
                    dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
@@ -406,7 +413,7 @@ class ActionModule(ActionBase):
             del result['failed']
 
         if result.get('failed'):
-            return result
+            return self._ensure_invocation(result)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -424,13 +431,13 @@ class ActionModule(ActionBase):
             except Exception as err:
                 result['failed'] = True
                 result['msg'] = "could not write content temp file: %s" % to_native(err)
-                return result
+                return self._ensure_invocation(result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
             result.update(self._execute_module(module_name='copy', task_vars=task_vars))
-            return result
+            return self._ensure_invocation(result)
         else:
             # find_needle returns a path that may not have a trailing slash on
             # a directory so we need to determine that now (we use it just
@@ -444,7 +451,7 @@ class ActionModule(ActionBase):
                 result['failed'] = True
                 result['msg'] = to_text(e)
                 result['exception'] = traceback.format_exc()
-                return result
+                return self._ensure_invocation(result)
 
             if trailing_slash != source.endswith(os.path.sep):
                 if source[-1] == os.path.sep:
@@ -498,7 +505,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return result
+                return self._ensure_invocation(result)
 
             paths = os.path.split(source_rel)
             dir_path = ''
@@ -528,7 +535,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return result
+                return self._ensure_invocation(result)
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
@@ -550,7 +557,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return result
+                return self._ensure_invocation(result)
 
             changed = changed or module_return.get('changed', False)
 
@@ -567,4 +574,4 @@ class ActionModule(ActionBase):
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
 
-        return result
+        return self._ensure_invocation(result)
