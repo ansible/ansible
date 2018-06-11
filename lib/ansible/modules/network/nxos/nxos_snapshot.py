@@ -356,7 +356,9 @@ def main():
                 snapshot1 = module.params['snapshot1']
                 snapshot2 = module.params['snapshot2']
                 compare_option = module.params['compare_option']
-                command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
+                command = 'show snapshot compare {0} {1}'.format(snapshot1, snapshot2)
+                if compare_option:
+                    command += ' {0}'.format(compare_option)
                 content = execute_show_command(command, module)[0]
                 if content:
                     write_on_file(content, comparison_results_file, module)
