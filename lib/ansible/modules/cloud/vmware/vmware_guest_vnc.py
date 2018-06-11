@@ -6,11 +6,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -18,7 +16,7 @@ module: vmware_guest_vnc
 short_description: Manages VNC remote display on virtual machines in vCenter
 description:
   - Enables and disables VNC remote display on virtual machine.
-version_added: '2.6'
+version_added: '2.7'
 author:
   - Armin Ranjbar Daemi (@rmin) <armin@webair.com>
 requirements:
