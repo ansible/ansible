@@ -43,7 +43,7 @@
   register: uninstall_result
 
 - name: removing an unremoved package should return unchanged
-  assert: 
+  assert:
     that:
        - "not uninstall_result.changed"
 
@@ -79,7 +79,7 @@
   pip:
     name: "{{ pip_test_package }}"
     state: absent
-  register: absent2  
+  register: absent2
 
 - name: assert a change occurred on uninstallation
   assert:
