@@ -6,24 +6,13 @@
   azure_rm_deployment:
     resource_group: "{{ resource_group }}"
     location: "eastus"
-    template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
+    template: "{{ lookup('url', 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-storage-account-create/azuredeploy.parameters.json', split_lines=False) }}"
     deployment_name: "{{ dns_label }}"
     parameters:
-      adminUsername:
-        value: chouseknecht
-      adminPassword:
-        value: password123!
-      dnsLabelPrefix:
-        value: "{{ dns_label }}"
-      ubuntuOSVersion:
-        value: "16.04.0-LTS"
+      storageAccountType:
+        value: Standard_LRS
   register: output
 
-- name: Add new instance to host group
-  add_host:
-    hostname: "{{ item.vm_name }}"
-    ansible_host: "{{ item['ips'][0].public_ip }}"
-    ansible_user: chouseknecht
-    ansible_ssh_pass: password123!
-    groupname: azure_vms
-  with_items: "{{ output.deployment.instances }}"
+- name: Dump debug information
+  debug:
+    var: output
