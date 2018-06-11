@@ -82,6 +82,48 @@ pull request to backport the change to a previous stable branch.
     but it can be helpful, especially when making multiple backport PRs for
     multiple stable branches.
 
+.. note::
+
+    Since recently, the repo has cherry-picker tool supported. You may use it
+    instead of the manual process described above. See more info about it in
+    `docs <https://pypi.org/p/cherry-picker#cherry-picking>`_.
+
+    The instructions below assume that your ``upstream`` points to ansible's
+    main repo and ``fork`` is a remote for your GitHub fork repo. It also
+    assumes that you are going to backport a commit to ``stable-2.5`` and
+    ``stable-2.6``.
+
+#. Pre-requisite is to have a `cherry-picker tool
+   <https://pypi.org/p/cherry-picker#cherry-picking>`_ installed:
+
+   ::
+
+       pip install 'cherry-picker>=1.2.0'
+
+#. Run cherry-picker `with a commit SHA from the upstream's devel branch
+   <https://pypi.org/project/cherry-picker/#commit-sha1>`_ (find it via
+   ``<coredeveloper> merged commit <commit_sha1> into ansible:devel <sometime>
+   ago.`` in the PR), passing your name of fork remote if it's not ``origin``.
+   List the target branches for backporting the commit to in the end of the
+   command:
+
+   ::
+
+       cherry_picker \
+           --pr-remote fork \     # explicit remote for pushing backport branch to
+           [SHA_FROM_DEVEL] \     # the commit in devel you wish to backport
+           stable-2.5 stable-2.6  # one or more target branch names where you want to apply this patch to
+
+#. [optional] If any conflicts appear, resolve this and `continue
+   <https://pypi.org/project/cherry-picker/#continue-option>`_:
+
+   ::
+
+       cherry_picker --pr-remote fork --continue
+
+#. Finally, cherry-picker will create 
+   :: https://pypi.org/project/cherry-picker/#creating-pull-requests
+
 
 Ansibullbot
 ===========
