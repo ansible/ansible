@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright 2018 1&1 Internet Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -33,7 +21,6 @@ options:
   state:
     description:
       - Define a user's state to create, remove, or update.
-    required: false
     default: 'present'
     choices: [ "present", "absent", "update" ]
   auth_token:
@@ -161,6 +148,13 @@ except ImportError:
 USER_STATES = ['ACTIVE', 'DISABLE']
 
 
+def _check_mode(module, result):
+    if module.check_mode:
+        module.exit_json(
+            changed=result
+        )
+
+
 def _modify_user_api(module, oneandone_conn, user_id, active):
     """
     """
@@ -236,9 +230,12 @@ def update_user(module, oneandone_conn):
     changed = False
 
     user = get_user(oneandone_conn, _user_id, True)
+    if user is None:
+        _check_mode(module, False)
 
     try:
         if _description or _email or _password or _state:
+            _check_mode(module, True)
             user = oneandone_conn.modify_user(
                 user_id=user['id'],
                 description=_description,
@@ -248,6 +245,7 @@ def update_user(module, oneandone_conn):
             changed = True
 
         if _user_ips:
+            _check_mode(module, True)
             user = _add_user_ip(module=module,
                                 oneandone_conn=oneandone_conn,
                                 user_id=user['id'],
@@ -255,6 +253,7 @@ def update_user(module, oneandone_conn):
             changed = True
 
         if _ip:
+            _check_mode(module, True)
             user = _remove_user_ip(module=module,
                                    oneandone_conn=oneandone_conn,
                                    user_id=user['id'],
@@ -262,6 +261,7 @@ def update_user(module, oneandone_conn):
             changed = True
 
         if _active:
+            _check_mode(module, True)
             user = _modify_user_api(module=module,
                                     oneandone_conn=oneandone_conn,
                                     user_id=user['id'],
@@ -269,6 +269,7 @@ def update_user(module, oneandone_conn):
             changed = True
 
         if _key and _key is True:
+            _check_mode(module, True)
             user = _change_api_key(module=module,
                                    oneandone_conn=oneandone_conn,
                                    user_id=user['id'])
@@ -303,6 +304,7 @@ def create_user(module, oneandone_conn):
     wait_interval = module.params.get('wait_interval')
 
     try:
+        _check_mode(module, True)
         user = oneandone_conn.create_user(
             name=name,
             password=password,
@@ -335,6 +337,7 @@ def remove_user(module, oneandone_conn):
     _user = get_user(oneandone_conn, user_id)
 
     try:
+        _check_mode(module, True)
         user = oneandone_conn.delete_user(_user)
 
         changed = True if user else False
@@ -371,7 +374,8 @@ def main():
             wait_timeout=dict(type='int', default=600),
             wait_interval=dict(type='int', default=5),
             state=dict(type='str', default='present', choices=['present', 'absent', 'update']),
-        )
+        ),
+        supports_check_mode=True
     )
 
     if not HAS_ONEANDONE_SDK:
