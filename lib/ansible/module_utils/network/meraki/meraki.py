@@ -209,19 +209,16 @@ class MerakiModule(object):
         return self.nets
 
     def get_net(self, org_name, net_name, data=None):
-        """Return network information about a particular network."""
-        # TODO: Allow method to download data on its own
-        # if not data:
-        #     org_id = self.get_org_id(org_name)
-        #     path = '/organizations/{org_id}/networks/{net_id}'.format(
-        #         org_id=org_id,
-        #         net_id=self.get_net_id(
-        #             org_name=org_name,
-        #             net_name=net_name,
-        #             data=data)
-        #     )
-        #     return json.loads(self.request('GET', path))
-        # else:
+        path = self.construct_path('get_all', function='network', org_id=org_id)
+        r = self.request(path, method='GET')
+        return r
+
+    def get_net(self, org_name, net_name, org_id=None, data=None):
+        ''' Return network information '''
+        if not data:
+            if not org_id:
+                org_id = self.get_org_id(org_name)
+            data = self.get_nets(org_id=org_id)
         for n in data:
             if n['name'] == net_name:
                 return n
