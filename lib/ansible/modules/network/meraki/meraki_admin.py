@@ -123,33 +123,6 @@ data:
                 "tags": []
             }
         ]
-changed:
-    description: Whether object changed as a result of the request.
-    returned: info
-    type: string
-    sample:
-        "changed": false
-
-status:
-    description: HTTP response code
-    returned: info
-    type: int
-    sample:
-        "status": 200
-
-response:
-    description: HTTP response description and bytes
-    returned: info
-    type: string
-    sample:
-        "response": "OK (unknown bytes)"
-
-failed:
-    description: Boolean value whether the task failed
-    returned: info
-    type: bool
-    sample:
-        "failed": false
 '''
 
 import os
