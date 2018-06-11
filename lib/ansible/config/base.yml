@@ -969,7 +969,7 @@ DEFAULT_SFTP_BATCH_MODE:
   yaml: {key: ssh_connection.sftp_batch_mode}
 DEFAULT_SQUASH_ACTIONS:
   name: Squashable actions
-  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pkgng, yum, zypper
+  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pip, pkgng, yum, zypper
   description:
     - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
       Instead of calling the module once for each item, the module is called once with the full list.
