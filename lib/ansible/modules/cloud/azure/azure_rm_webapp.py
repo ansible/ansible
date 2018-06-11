@@ -529,7 +529,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if not self.plan:
                 self.plan = old_response['server_farm_id']
-            
+
             self.plan = self.parse_resource_to_dict(self.plan)
 
             # get app service plan
@@ -637,8 +637,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 self.log('Result: {0}'.format(old_response))
 
-                update_tags, old_response['tags'] = self.update_tags(
-                        old_response.get('tags', dict()))
+                update_tags, old_response['tags'] = self.update_tags(old_response.get('tags', dict()))
 
                 if update_tags:
                     to_be_updated = True
@@ -676,7 +675,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                         for key in self.app_settings.keys():
                             self.app_settings_strDic.properties[key] = self.app_settings[key]
 
-        elif state == 'absent':
+        elif self.state == 'absent':
             if old_response:
                 self.log("Delete Web App instance")
                 self.results['changed'] = True
