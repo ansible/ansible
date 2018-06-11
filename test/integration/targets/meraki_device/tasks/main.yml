@@ -31,6 +31,18 @@
     that:
       - query_all.changed == False
 
+- name: Query all devices in one network by network ID
+  meraki_device:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    net_id: '{{test_net_id}}'
+    state: query
+  delegate_to: localhost
+  register: query_one_net_id
+
+- debug:
+    msg: '{{query_one_net_id}}'
+
 - name: Query all devices in one network
   meraki_device:
     auth_key: '{{auth_key}}'

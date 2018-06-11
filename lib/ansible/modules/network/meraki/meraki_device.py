@@ -42,6 +42,9 @@ options:
         description:
         - Name of a network.
         aliases: [network]
+    net_id:
+        description:
+        - ID of a network.
     serial:
         description:
         - Serial number of a device to query.
@@ -285,7 +288,10 @@ def main():
     if meraki.params['state'] == 'query':
         if meraki.params['net_name'] or meraki.params['net_id']:
             device = []
-            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+            if meraki.params['net_name']:
+                net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+            elif meraki.params['net_id']:
+                net_id = meraki.params['net_id']
             if meraki.params['serial']:
                 path = meraki.construct_path('get_device', net_id=net_id) + meraki.params['serial']
                 request = meraki.request(path, method='GET')
@@ -335,7 +341,10 @@ def main():
                 meraki.result['data'] = devices
     elif meraki.params['state'] == 'present':
         device = []
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        if meraki.params['net_name']:
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        elif meraki.params['net_id']:
+            net_id = meraki.params['net_id']
         if meraki.params['hostname']:
             query_path = meraki.construct_path('get_all', net_id=net_id)
             device_list = meraki.request(query_path, method='GET')
@@ -368,7 +377,10 @@ def main():
                 meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         device = []
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        if meraki.params['net_name']:
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        elif meraki.params['net_id']:
+            net_id = meraki.params['net_id']
         query_path = meraki.construct_path('get_all', net_id=net_id)
         device_list = meraki.request(query_path, method='GET')
         if is_device_valid(meraki, meraki.params['serial'], device_list) == True:
