@@ -71,7 +71,6 @@
       - "install_result is changed"
 
 - command: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
-  register: installed_result
 
 # now remove it to test uninstallation of a package we are sure is installed
 
