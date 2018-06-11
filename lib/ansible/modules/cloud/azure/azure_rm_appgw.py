@@ -481,6 +481,11 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                         item = ev[i]
                         if 'private_ip_allocation_method' in item:
                             item['private_ip_allocation_method'] = _snake_to_camel(item['private_ip_allocation_method'], True)
+                        if 'public_ip_address' in item:
+                            id = public_ip_id(self.subscription_id,
+                                              kwargs['resource_group'],
+                                              item['public_ip_address'])
+                            item['public_ip_address'] = {'id': id}
                     self.parameters["frontend_ip_configurations"] = ev
                 elif key == "frontend_ports":
                     self.parameters["frontend_ports"] = kwargs[key]
@@ -686,6 +691,15 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+
+def public_ip_id(subscription_id, resource_group_name, name):
+    """Generate the id for a frontend ip configuration"""
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/publicIPAddresses/{2}'.format(
+        subscription_id,
+        resource_group_name,
+        name
+    )
 
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_name, name):
