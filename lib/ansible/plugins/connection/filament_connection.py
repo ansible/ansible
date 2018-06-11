@@ -245,7 +245,6 @@ class Connection(ConnectionBase):
         self._connected = False
 
     def __init__(self, *args, **kwargs):
-        epdb.st()
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
@@ -315,7 +314,7 @@ class Connection(ConnectionBase):
         selector.register(p.stderr, selectors.EVENT_READ)
 
         # if in_data is not None, send or fetch file directly
-        if state[state] == 'ready_to_send' and in_data:
+        if states[state] == 'ready_to_send' and in_data:
             self._send_initial_data(stdin, in_data)
             # state become exit
             state += 1
@@ -345,6 +344,14 @@ class Connection(ConnectionBase):
                         if b_chunk == b'':
                             selector.unregister(p.stderr)
                         b_tmp_stderr += b_chunk
+
+                # refresh output
+                if b_tmp_stdout:
+                    b_stdout += b_tmp_stdout
+                    b_tmp_stdout = b''
+                if b_tmp_stderr:
+                    b_stderr += b_tmp_stderr
+                    b_tmp_stderr = b''
 
                 # some code handle the output and prompt
                 # balabalabala
@@ -410,11 +417,11 @@ class Connection(ConnectionBase):
         # run command in the remote machine
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         ssh_executable = self._play_context.ssh_executable
-        #use_tty = self.get_option('use_tty')
-        #if not in_data and sudoable and use_tty:
-            #args = (ssh_executable, '-tt', self.host, cmd)
-        #else:
-        args = (ssh_executable, self.host, cmd)
+        use_tty = self.get_option('use_tty')
+        if not in_data and sudoable and use_tty:
+            args = (ssh_executable, '-tt', self.host, cmd)
+        else:
+            args = (ssh_executable, self.host, cmd)
 
         # build the command
         cmd = self._build_command(*args)
@@ -480,8 +487,9 @@ class Connection(ConnectionBase):
 
 
 
-    def _file_transport_command(in_path, out_path, action):
+    def _file_transport_command(self, in_path, out_path, sftp_action):
         epdb.set_trace()
+        host = '[%s]' % self.host
         ssh_transfer_method = self._play_context.ssh_transfer_method
         # validate the ssh method
         if ssh_transfer_method is not None:
