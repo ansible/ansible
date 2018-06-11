@@ -586,14 +586,14 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.container_settings.get('registry_server_password'):
                     self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings['registry_server_password']
 
-                # init site
-                self.site = Site(location=self.location, site_config=self.site_config)
+            # init site
+            self.site = Site(location=self.location, site_config=self.site_config)
 
-                if self.https_only is not None:
-                    self.site.https_only = self.https_only
+            if self.https_only is not None:
+                self.site.https_only = self.https_only
 
-                if self.client_affinity_enabled:
-                    self.site.client_affinity_enabled = self.client_affinity_enabled
+            if self.client_affinity_enabled:
+                self.site.client_affinity_enabled = self.client_affinity_enabled
 
             # check if the web app already present in the resource group
             if not old_response:
