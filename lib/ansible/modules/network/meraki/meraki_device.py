@@ -74,7 +74,19 @@ options:
     move_map_marker:
         description:
         - Whether or not to set the latitude and longitude of a device based on the new address.
-        - Only applies when C(lat) and C(lng) are not specified. 
+        - Only applies when C(lat) and C(lng) are not specified.
+        type: bool
+    serial_lldp_cdp:
+        description:
+        - Serial number of device to query LLDP/CDP information from.
+    lldp_cdp_timespan:
+        description:
+        - Timespan, in seconds, used to query LLDP and CDP information.
+        - Must be less than 1 month.
+    serial_uplink:
+        description:
+        - Serial number of device to query uplink information from.
+
 
 author:
 - Kevin Breit (@kbreit)
@@ -188,14 +200,17 @@ from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
+
 def format_tags(tags):
     return " {tags} ".format(tags=tags)
+
 
 def is_device_valid(meraki, serial, data):
     for device in data:
         if device['serial'] == serial:
             return True
     return False
+
 
 def temp_get_nets(meraki, org_name, net_name):
     org_id = meraki.get_org_id(org_name)
@@ -368,7 +383,7 @@ def main():
         else:
             query_path = meraki.construct_path('get_all', net_id=net_id)
             device_list = meraki.request(query_path, method='GET')
-            if is_device_valid(meraki, meraki.params['serial'], device_list) == False:
+            if is_device_valid(meraki, meraki.params['serial'], device_list) is False:
                 payload = {'serial': meraki.params['serial']}
                 path = meraki.construct_path('create', net_id=net_id)
                 created_device = []
@@ -383,7 +398,7 @@ def main():
             net_id = meraki.params['net_id']
         query_path = meraki.construct_path('get_all', net_id=net_id)
         device_list = meraki.request(query_path, method='GET')
-        if is_device_valid(meraki, meraki.params['serial'], device_list) == True:
+        if is_device_valid(meraki, meraki.params['serial'], device_list) is True:
             path = meraki.construct_path('delete', net_id=net_id)
             path = path + meraki.params['serial'] + '/remove'
             request = meraki.request(path, method='POST')
