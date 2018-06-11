@@ -54,8 +54,10 @@ class Cliconf(CliconfBase):
 
     def send_config(self, config):
         if isinstance(self._connection, NetworkCli):
+            # call cliconf edit_config
             resp = self._connection.edit_config(config)
         else:
+            # call edit_config httpapi/nxos.py
             resp = self._connection.edit_config(config)
         return resp
 
