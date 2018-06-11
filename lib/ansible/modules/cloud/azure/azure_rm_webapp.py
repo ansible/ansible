@@ -661,7 +661,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                     self.app_settings_strDic.properties = dict()
 
                 # check if app settings changed
-                if self.purge_app_settings and self.is_app_settings_changed():
+                if self.purge_app_settings or self.is_app_settings_changed():
                     to_be_updated = True
                     self.to_do = Actions.UpdateAppSettings
 
