@@ -33,6 +33,22 @@ from ansible.utils.display import Display
 display = Display()
 
 
+def sanitize_key(funky):
+
+    def wrapper(*args, **kwargs):
+        itself = args[0]
+        if '\\' in args[1]:
+            key = args[1].replace('\\', '_')
+            itself._unsanitary[key] = args[1]
+            args[1] = key
+        funky(*args, **kwargs)
+
+    return wrapper
+
+
+sanatize_key = sanitize_key()
+
+
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
 
     # Backwards compat only.  Just import the global display instead
@@ -76,6 +92,7 @@ class BaseFileCacheModule(BaseCacheModule):
         self.plugin_name = self.__module__.split('.')[-1]
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
+        self._unsanitary = {}
         self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
         self._set_inventory_cache_override(**kwargs)
         self.validate_cache_connection()
@@ -109,6 +126,7 @@ class BaseFileCacheModule(BaseCacheModule):
                     raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
                         self.plugin_name, self._cache_dir))
 
+    @sanitize_key
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
         and it would be problematic if the key did expire after some long running tasks and
@@ -137,6 +155,7 @@ class BaseFileCacheModule(BaseCacheModule):
 
         return self._cache.get(key)
 
+    @sanitize_key
     def set(self, key, value):
 
         self._cache[key] = value
@@ -147,6 +166,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except (OSError, IOError) as e:
             display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
 
+    @sanitize_key
     def has_expired(self, key):
 
         if self._timeout == 0:
@@ -173,9 +193,11 @@ class BaseFileCacheModule(BaseCacheModule):
         keys = []
         for k in os.listdir(self._cache_dir):
             if not (k.startswith('.') or self.has_expired(k)):
-                keys.append(k)
+                # if key was 'sanitized' return orig, if not, key itself
+                keys.append(self._unsanitary.get(k, k))
         return keys
 
+    @sanatize_key
     def contains(self, key):
         cachefile = "%s/%s" % (self._cache_dir, key)
 
@@ -193,6 +215,7 @@ class BaseFileCacheModule(BaseCacheModule):
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
 
+    @sanatize_key
     def delete(self, key):
         try:
             del self._cache[key]
