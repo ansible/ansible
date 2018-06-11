@@ -81,6 +81,54 @@
     that:
       - not timezone_again_checkmode.changed
 
+##
+## tests for same timezones with different names
+##
+
+- name: check dpkg-reconfigure
+  shell: type dpkg-reconfigure
+  register: check_dpkg_reconfigure
+  ignore_errors: yes
+  changed_when: no
+
+- name: check timedatectl
+  shell: type timedatectl && timedatectl
+  register: check_timedatectl
+  ignore_errors: yes
+  changed_when: no
+
+- block:
+    - name: set timezone to Etc/UTC
+      timezone:
+        name: Etc/UTC
+
+    - name: change timezone from Etc/UTC to UTC
+      timezone:
+        name: UTC
+      register: timezone_etcutc_to_utc
+
+    - name: check timezone changed from Etc/UTC to UTC
+      assert:
+        that:
+          - timezone_etcutc_to_utc.changed
+          - timezone_etcutc_to_utc.diff.before.name == 'Etc/UTC'
+          - timezone_etcutc_to_utc.diff.after.name == 'UTC'
+
+    - name: change timezone from UTC to Etc/UTC
+      timezone:
+        name: Etc/UTC
+      register: timezone_utc_to_etcutc
+
+    - name: check timezone changed from UTC to Etc/UTC
+      assert:
+        that:
+          - timezone_utc_to_etcutc.changed
+          - timezone_utc_to_etcutc.diff.before.name == 'UTC'
+          - timezone_utc_to_etcutc.diff.after.name == 'Etc/UTC'
+
+  when:
+    # FIXME: Due to the bug of the dpkg-reconfigure, those tests failed on non-systemd debian
+    - check_dpkg_reconfigure.rc != 0 or check_timedatectl.rc == 0
 
 ##
 ## no systemd tests for timezone
