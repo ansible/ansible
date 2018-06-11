@@ -27,12 +27,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: avi_useraccount
 author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
-
 short_description: Avi UserAccount Module
 description:
     - This module can be used for updating the password of a user.
@@ -49,7 +47,6 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-
   - name: Update user password
     avi_useraccount:
       controller: ""
@@ -77,58 +74,75 @@ from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
 try:
+    { % if ansible_version == "2.3" %}
     from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
     from avi.sdk.avi_api import ApiSession
     from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 
-except ImportError:
+    { % else %}
+    from avi.sdk.avi_api import ApiSession, AviCredentials
+    from avi.sdk.utils.ansible_utils import (
+        avi_obj_cmp, cleanup_absent_fields, avi_common_argument_spec,
+        ansible_return)
+    from pkg_resources import parse_version
+    import avi.sdk
+
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.2.2b3')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    HAS_AVI = True
+    { % endif %}
+    except ImportError:
     HAS_AVI = False
 
 
-def main():
-    argument_specs = dict(
-        old_password=dict(type='str', required=True, no_log=True)
-    )
-    argument_specs.update(avi_common_argument_spec())
-    module = AnsibleModule(argument_spec=argument_specs)
+    def main():
+        argument_specs = dict(
+            old_password=dict(type='str', required=True, no_log=True)
+        )
+        argument_specs.update(avi_common_argument_spec())
+        module = AnsibleModule(argument_spec=argument_specs)
 
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
+        if not HAS_AVI:
+            return module.fail_json(msg=(
+                'Avi python API SDK (avisdk) is not installed. '
+                'For more details visit https://github.com/avinetworks/sdk.'))
 
-    api_creds = AviCredentials()
-    api_creds.update_from_ansible_module(module)
-    password_updated = False
-    old_password = module.params.get('old_password')
-    data = {
-        'old_password': old_password,
-        'password': api_creds.password
-    }
-    password_changed = False
-    try:
-        api = ApiSession.get_session(
-            api_creds.controller, api_creds.username,
-            password=api_creds.password, timeout=api_creds.timeout,
-            tenant=api_creds.tenant, tenant_uuid=api_creds.tenant_uuid,
-            token=api_creds.token, port=api_creds.port)
-        password_changed = True
-        return ansible_return(module, None, False, req=data)
-    except:
-        pass
+        api_creds = AviCredentials()
+        api_creds.update_from_ansible_module(module)
+        password_updated = False
+        old_password = module.params.get('old_password')
+        data = {
+            'old_password': old_password,
+            'password': api_creds.password
+        }
+        password_changed = False
+        try:
+            api = ApiSession.get_session(
+                api_creds.controller, api_creds.username,
+                password=api_creds.password, timeout=api_creds.timeout,
+                tenant=api_creds.tenant, tenant_uuid=api_creds.tenant_uuid,
+                token=api_creds.token, port=api_creds.port)
+            password_changed = True
+            return ansible_return(module, None, False, req=data)
+        except:
+            pass
 
-    if not password_changed:
-        api = ApiSession.get_session(
-            api_creds.controller, api_creds.username, password=old_password,
-            timeout=api_creds.timeout, tenant=api_creds.tenant,
-            tenant_uuid=api_creds.tenant_uuid, token=api_creds.token,
-            port=api_creds.port)
-        rsp = api.put('useraccount', data=data)
-        if rsp:
-            return ansible_return(module, rsp, True, req=data)
-        return module.exit_json(changed=False, obj=data)
+        if not password_changed:
+            api = ApiSession.get_session(
+                api_creds.controller, api_creds.username, password=old_password,
+                timeout=api_creds.timeout, tenant=api_creds.tenant,
+                tenant_uuid=api_creds.tenant_uuid, token=api_creds.token,
+                port=api_creds.port)
+            rsp = api.put('useraccount', data=data)
+            if rsp:
+                return ansible_return(module, rsp, True, req=data)
+            return module.exit_json(changed=False, obj=data)
 
 
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+        main()

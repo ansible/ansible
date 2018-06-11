@@ -17,7 +17,6 @@ DOCUMENTATION = '''
 ---
 module: avi_healthmonitor
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of HealthMonitor Avi RESTful Object
 description:
     - This module is used to configure HealthMonitor object
@@ -88,13 +87,15 @@ options:
             - If server status is regularly flapping up and down, consider increasing this value.
             - Allowed values are 1-2400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
-            - Units(SEC).
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-            - Units(SEC).
+    sip_monitor:
+        description:
+            - Health monitor for sip.
+            - Field introduced in 17.2.8.
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
@@ -110,7 +111,7 @@ options:
         description:
             - Type of the health monitor.
             - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
-            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB.
+            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP.
         required: true
     udp_monitor:
         description:
@@ -153,8 +154,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
@@ -177,6 +187,7 @@ def main():
         name=dict(type='str', required=True),
         receive_timeout=dict(type='int',),
         send_interval=dict(type='int',),
+        sip_monitor=dict(type='dict',),
         successful_checks=dict(type='int',),
         tcp_monitor=dict(type='dict',),
         tenant_ref=dict(type='str',),

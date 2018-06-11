@@ -112,12 +112,19 @@ from copy import deepcopy
 
 HAS_AVI = True
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession
+    from avi.sdk.avi_api import ApiSession, AviCredentials
     from avi.sdk.utils.ansible_utils import (
-        avi_obj_cmp, cleanup_absent_fields, ansible_return,
-        AviCheckModeResponse, AviCredentials)
+        avi_obj_cmp, cleanup_absent_fields, avi_common_argument_spec,
+        ansible_return, AviCheckModeResponse)
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.2.2b3')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 

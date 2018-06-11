@@ -114,11 +114,19 @@ from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession
-    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
-
+    from avi.sdk.avi_api import ApiSession, AviCredentials
+    from avi.sdk.utils.ansible_utils import (
+        avi_obj_cmp, cleanup_absent_fields, avi_common_argument_spec,
+        ansible_return)
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.2.2b3')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
@@ -167,7 +175,8 @@ def main():
     gparams = deepcopy(params) if params else {}
     gparams.update({'include_refs': '', 'include_name': ''})
 
-    if method == 'post':
+    if method == 'post' and not path.startswith('fileservice'):
+        # TODO: Above condition should be updated after AV-38981 is fixed
         # need to check if object already exists. In that case
         # change the method to be put
         try:

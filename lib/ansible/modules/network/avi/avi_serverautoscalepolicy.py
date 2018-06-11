@@ -16,7 +16,6 @@ DOCUMENTATION = '''
 ---
 module: avi_serverautoscalepolicy
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of ServerAutoScalePolicy Avi RESTful Object
 description:
     - This module is used to configure ServerAutoScalePolicy object
@@ -91,7 +90,6 @@ options:
         description:
             - Cooldown period during which no new scalein is triggered to allow previous scalein to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
-            - Units(SEC).
     scaleout_alertconfig_refs:
         description:
             - Trigger scaleout when alerts due to any of these alert configurations are raised.
@@ -100,7 +98,6 @@ options:
         description:
             - Cooldown period during which no new scaleout is triggered to allow previous scaleout to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
-            - Units(SEC).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -138,8 +135,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 

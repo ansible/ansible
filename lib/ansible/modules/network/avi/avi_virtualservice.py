@@ -17,7 +17,6 @@ DOCUMENTATION = '''
 ---
 module: avi_virtualservice
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of VirtualService Avi RESTful Object
 description:
     - This module is used to configure VirtualService object
@@ -59,6 +58,12 @@ options:
         description:
             - Specifies settings related to analytics.
             - It is a reference to an object of type analyticsprofile.
+    apic_contract_graph:
+        description:
+            - The name of the contract/graph associated with the virtual service.
+            - Should be in the <contract name> <graph name> format.
+            - This is applicable only for service integration mode with cisco apic controller.
+            - Field introduced in 17.2.12,18.1.2.
     application_profile_ref:
         description:
             - Enable application layer specific features for the virtual service.
@@ -67,13 +72,11 @@ options:
         description:
             - Auto-allocate floating/elastic ip from the cloud infrastructure.
             - Field deprecated in 17.1.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     auto_allocate_ip:
         description:
             - Auto-allocate vip from the provided subnet.
             - Field deprecated in 17.1.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     availability_zone:
         description:
@@ -83,21 +86,25 @@ options:
         description:
             - (internal-use) fip allocated by avi in the cloud infrastructure.
             - Field deprecated in 17.1.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     avi_allocated_vip:
         description:
             - (internal-use) vip allocated by avi in the cloud infrastructure.
             - Field deprecated in 17.1.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    azure_availability_set:
+        description:
+            - (internal-use)applicable for azure only.
+            - Azure availability set to which this vs is associated.
+            - Internally set by the cloud connector.
+            - Field introduced in 17.2.12, 18.1.2.
     bulk_sync_kvcache:
         description:
             - (this is a beta feature).
             - Sync key-value cache to the new ses when vs is scaled out.
             - For ex  ssl sessions are stored using vs's key-value cache.
             - When the vs is scaled out, the ssl session information is synced to the new se, allowing existing ssl sessions to be reused on the new se.
-            - Field introduced in 17.2.7, 18.1.1.
+            - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.6"
         type: bool
@@ -436,6 +443,11 @@ options:
     vs_datascripts:
         description:
             - Datascripts applied on the data traffic of the virtual service.
+    vsvip_cloud_config_cksum:
+        description:
+            - Checksum of cloud configuration for vsvip.
+            - Internally set by cloud connector.
+            - Field introduced in 17.2.9, 18.1.2.
     vsvip_ref:
         description:
             - Mostly used during the creation of shared vs, this field refers to entities that can be shared across virtual services.
@@ -491,8 +503,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
@@ -507,12 +528,14 @@ def main():
         active_standby_se_tag=dict(type='str',),
         analytics_policy=dict(type='dict',),
         analytics_profile_ref=dict(type='str',),
+        apic_contract_graph=dict(type='str',),
         application_profile_ref=dict(type='str',),
         auto_allocate_floating_ip=dict(type='bool',),
         auto_allocate_ip=dict(type='bool',),
         availability_zone=dict(type='str',),
         avi_allocated_fip=dict(type='bool',),
         avi_allocated_vip=dict(type='bool',),
+        azure_availability_set=dict(type='str',),
         bulk_sync_kvcache=dict(type='bool',),
         client_auth=dict(type='dict',),
         close_client_conn_on_config_update=dict(type='bool',),
@@ -588,6 +611,7 @@ def main():
         vip=dict(type='list',),
         vrf_context_ref=dict(type='str',),
         vs_datascripts=dict(type='list',),
+        vsvip_cloud_config_cksum=dict(type='str',),
         vsvip_ref=dict(type='str',),
         waf_policy_ref=dict(type='str',),
         weight=dict(type='int',),

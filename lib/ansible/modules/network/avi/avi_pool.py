@@ -17,7 +17,6 @@ DOCUMENTATION = '''
 ---
 module: avi_pool
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of Pool Avi RESTful Object
 description:
     - This module is used to configure Pool object
@@ -45,13 +44,16 @@ options:
     a_pool:
         description:
             - Name of container cloud application that constitutes a pool in a a-b pool configuration, if different from vs app.
+            - Field deprecated in 18.1.2.
     ab_pool:
         description:
             - A/b pool configuration.
+            - Field deprecated in 18.1.2.
     ab_priority:
         description:
             - Priority of this pool in a a-b pool pair.
             - Internally used.
+            - Field deprecated in 18.1.2.
     apic_epg_name:
         description:
             - Synchronize cisco apic epg members with pool servers.
@@ -82,7 +84,6 @@ options:
             - Allowed values are 1-5000.
             - Special values are 0 - 'automatic'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-            - Units(MILLISECONDS).
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -97,7 +98,6 @@ options:
             - Allowed values are 1-300.
             - Special values are 0 - 'immediate'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-            - Units(MIN).
     created_by:
         description:
             - Creator name.
@@ -138,7 +138,6 @@ options:
             - Periodicity of feedback for fewest tasks server selection algorithm.
             - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-            - Units(SEC).
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
@@ -146,7 +145,6 @@ options:
             - Allowed values are 1-7200.
             - Special values are 0 - 'immediate', -1 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
-            - Units(MIN).
     gslb_sp_enabled:
         description:
             - Indicates if the pool is a site-persistence pool.
@@ -197,7 +195,8 @@ options:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
             - Enum options - LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS, LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT,
-            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING.
+            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING,
+            - LB_ALGORITHM_CONSISTENT_HASH_CALLID.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
     lookup_server_by_name:
         description:
@@ -240,6 +239,7 @@ options:
     prst_hdr_name:
         description:
             - Header name for custom header persistence.
+            - Field deprecated in 18.1.2.
     request_queue_depth:
         description:
             - Minimum number of requests to be queued when pool is full.
@@ -264,12 +264,11 @@ options:
         description:
             - Server autoscale.
             - Not used anymore.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Field deprecated in 18.1.2.
         type: bool
     server_count:
         description:
-            - Number of server_count.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Field deprecated in 18.1.2.
     server_name:
         description:
             - Fully qualified dns hostname which will be used in the tls sni extension in server connections if sni is enabled.
@@ -364,8 +363,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
