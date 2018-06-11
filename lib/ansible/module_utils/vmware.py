@@ -478,7 +478,12 @@ def set_vnc_extraconfig(content, vm, enabled, ip, port, password):
     reconfig_vm = False
     for key, val in new_values.items():
         key = key.replace(key_prefix, "")
-        if current_values.get(key, "") != val:
+        current_value = current_values.get(key, "")
+        # enabled is not case-sensitive
+        if key == "enabled":
+            current_value = current_value.lower()
+            val = val.lower()
+        if current_value != val:
             reconfig_vm = True
     if not reconfig_vm:
         return result
