@@ -95,10 +95,9 @@ options:
       - C2S
       - C2M
       - C2L
-      - START1-XS
-      - START1-S
-      - START1-M
-      - START1-L
+      - VC1S
+      - VC1M
+      - VC1L
       - X64-15GB
       - X64-30GB
       - X64-60GB
@@ -181,10 +180,9 @@ SCALEWAY_COMMERCIAL_TYPES = [
     'C2L',  # x86-64 (8 cores) - 32 GB
 
     # Virtual X86-64 compute instance
-    'START1-XS',  # Starter X86-64 (1 core) - 1GB - 25 GB NVMe
-    'START1-S',  # Starter X86-64 (2 cores) - 2GB - 50 GB NVMe
-    'START1-M',  # Starter X86-64 (4 cores) - 4GB - 100 GB NVMe
-    'START1-L',  # Starter X86-64 (8 cores) - 8GB - 200 GB NVMe
+    'VC1S',  # Starter X86-64 (2 cores) - 2GB
+    'VC1M',  # Starter X86-64 (4 cores) - 4GB
+    'VC1L',  # Starter X86-64 (6 cores) - 8GB
     'X64-15GB',
     'X64-30GB',
     'X64-60GB',
