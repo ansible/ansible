@@ -8,7 +8,7 @@ DOCUMENTATION = '''
     connection: filament_connection
     short_description: connect remote via ssh
     description:
-        - Practice plugin, use ssh to connect remote.
+        - Practice plugin, use ssh to connect remote. Use scp to transfer file.
     author: ansible (@core)
     version_added: historical
     options:
@@ -206,6 +206,14 @@ DOCUMENTATION = '''
         yaml: {key: connection.usetty}
 '''
 
+import errno
+import fcntl
+import hashlib
+import os
+import pty
+import subprocess
+import time
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.compat import selectors
@@ -214,14 +222,6 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS
-import epdb
-import errno
-import fcntl
-import hashlib
-import os
-import pty
-import subprocess
-import time
 
 try:
     from __main__ import display
@@ -247,15 +247,23 @@ class Connection(ConnectionBase):
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
 
+        display.vvv('FILAMENT CONNECTION INIT\n')
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
+
+    def _send_initial_data(self, fh, in_data):
+        try:
+            display.vvv("SEND INIT DATA %s" % to_bytes(in_data))
+            fh.write(to_bytes(in_data))
+            fh.close()
+        except (OSError, IOError):
+            raise AnsibleConnectionFailure('Can not send initial data')
 
     def _add_args(self, b_command, b_args, explanation):
         b_command += b_args
 
     def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True):
-        epdb.st()
         # if cmd is already string, convert it to binary string
         if isinstance(cmd, (text_type, binary_type)):
             cmd = to_bytes(cmd)
@@ -269,8 +277,10 @@ class Connection(ConnectionBase):
                 #master, slave = pty.openpty()
                 # use the pipe defined in _file_transport to pass the password
                 if PY3 and self._play_context.password:
+                    display.vvv("RUN CMD %s" % str(cmd))
                     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
+                    display.vvv("RUN CMD %s" % str(cmd))
                     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = p.stdin
             except (OSError, IOError):
@@ -398,7 +408,6 @@ class Connection(ConnectionBase):
         return SSHPASS_AVAILABLE
 
     def put_file(self, in_path, out_path):
-        epdb.st()
         super(Connection, self).put_file(in_path, out_path)
         
         display.vvv("PUT FILE FROM %s to %s" % (in_path, out_path))
@@ -407,13 +416,11 @@ class Connection(ConnectionBase):
         return self._file_transport_command(in_path, out_path, 'put')
 
     def fetch_file(self, in_path, out_path):
-        epdb.st()
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH FILE FROM %s to %s" % (in_path, out_path))
         return self._file_transport_command(in_path, out_path, 'get')
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        epdb.st()
         # run command in the remote machine
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         ssh_executable = self._play_context.ssh_executable
@@ -431,7 +438,7 @@ class Connection(ConnectionBase):
         return (returncode, stdout, stderr)
 
     def _build_command(self, binary, *other_args):
-        epdb.st()
+        display.vvv("BUILD THE COMMAND")
         # the whole command
         b_command = []
         # if need password but does not support sshpass, raise error
@@ -488,7 +495,6 @@ class Connection(ConnectionBase):
 
 
     def _file_transport_command(self, in_path, out_path, sftp_action):
-        epdb.set_trace()
         host = '[%s]' % self.host
         ssh_transfer_method = self._play_context.ssh_transfer_method
         # validate the ssh method
