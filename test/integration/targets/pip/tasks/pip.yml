@@ -52,7 +52,7 @@
   ignore_errors: True
 
 - name: verify {{ pip_test_package }} is not present
-  assert: 
+  assert:
     that:
        - "absent_result.rc != 0"
 
