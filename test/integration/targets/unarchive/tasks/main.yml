@@ -224,9 +224,9 @@
 
 - name: Unpack zip file excluding one file.
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.zip"
+    src: "{{ output_dir }}/unarchive-00.zip"
     dest: "{{ output_dir }}/exclude"
-    exclude: "foo-unarchive-*.txt"
+    exclude: "exclude/exclude-*.txt"
 
 - name: verify that the file was unarchived
   shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
@@ -235,7 +235,7 @@
 - name: verify that zip extraction excluded file
   assert:
     that:
-      - "'foo-unarchive-777.txt' not in unarchive_dir01.stdout"
+      - "'exclude/exclude-1.txt' not in unarchive_dir01.stdout"
 
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
