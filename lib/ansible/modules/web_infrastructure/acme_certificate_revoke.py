@@ -208,7 +208,12 @@ def main():
             # Make sure that if force is set to False, intermediate_certificate is specified
             ['force', False, ['intermediate_certificate'], True],
         ),
-        supports_check_mode=True,
+        # Currently, check mode is disabled, since there is no reliable way to determine
+        # whether a certificate has been revoked or not. The ACME protocol does not define
+        # a specific error for this; and OCSP responders are unreliable, might return the
+        # wrong result (because a new response hasn't been signed yet) or are simply
+        # not available (i.e. no responder URI embedded in certificate).
+        # supports_check_mode=True,
     )
 
     if not module.params.get('validate_certs'):
