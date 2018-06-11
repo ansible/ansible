@@ -5,14 +5,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: toghether
+    lookup: together
     author:  Bradley Young <young.bradley@gmail.com>
     version_added: '1.3'
-    short_description: merges lists into syncronized list
+    short_description: merges lists into synchronized list
     description:
       - Creates a list with the iterated elements of the supplied lists
       - "To clarify with an example, [ 'a', 'b' ] and [ 1, 2 ] turn into [ ('a',1), ('b', 2) ]"
-      - This is basicaly the same as the 'zip_longest' filter and Python function
+      - This is basically the same as the 'zip_longest' filter and Python function
       - Any 'unbalanced' elements will be substituted with 'None'
     options:
       _terms:
@@ -31,7 +31,7 @@ EXAMPLES = """
 
 RETURN = """
   _list:
-    description: syncronized list
+    description: synchronized list
 """
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import zip_longest

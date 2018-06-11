@@ -54,7 +54,7 @@ EXAMPLES = """
 RETURN = """
 _value:
   description:
-    - valueof the variables requested.
+    - value of the variables requested.
 """
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
