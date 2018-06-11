@@ -27,41 +27,37 @@
 # first some tests installed system-wide
 # verify things were not installed to start with
 
-- name: ensure a package is not installed (precondition setup)
+- name: ensure packages are not installed (precondition setup)
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: absent
 
 # verify that a package that is uninstalled being set to absent
 # results in an unchanged state and that the test package is not
 # installed
 
-- name: ensure a package is not installed
+- name: ensure packages are not installed
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: absent
   register: uninstall_result
 
-- name: removing an unremoved package should return unchanged
+- name: removing unremoved packages should return unchanged
   assert:
     that:
        - "not (uninstall_result is changed)"
 
-- command: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
+- command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
   register: absent_result
-  ignore_errors: True
-
-- name: verify {{ pip_test_package }} is not present
-  assert:
-    that:
-       - "absent_result.rc != 0"
+  failed_when: "absent_result.rc == 0"
+  loop: '{{ pip_test_modules }}'
 
 # now we're going to install the test package knowing it is uninstalled
 # and check that installation was ok
 
-- name: ensure a package is installed
+- name: ensure packages are installed
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: present
   register: install_result
 
@@ -70,13 +66,14 @@
     that:
       - "install_result is changed"
 
-- command: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
+- command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
+  loop: '{{ pip_test_modules }}'
 
 # now remove it to test uninstallation of a package we are sure is installed
 
 - name: now uninstall so we can see that a change occurred
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: absent
   register: absent2
 
@@ -85,11 +82,11 @@
     that:
       - "absent2 is changed"
 
-# put the test package back
+# put the test packages back
 
 - name: now put it back in case someone wanted it (like us!)
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: present
 
 
