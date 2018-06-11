@@ -251,7 +251,7 @@ def _is_present(name, version, installed_pkgs, pkg_command):
         else:
             continue
 
-        if pkg_name == name and (version is None or version == pkg_version):
+        if pkg_name == name and (version is None or version == "" or version == pkg_version):
             return True
 
     return False
@@ -443,7 +443,7 @@ def main():
     if umask is not None:
         old_umask = os.umask(umask)
     try:
-        if state == 'latest' and version is not None:
+        if state == 'latest' and (version is not None and version != ""):
             module.fail_json(msg='version is incompatible with state=latest')
 
         if chdir is None:
