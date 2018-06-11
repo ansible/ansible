@@ -462,22 +462,33 @@ def set_vnc_extraconfig(content, vm, enabled, ip, port, password):
         changed=False,
         failed=False,
     )
+    # set new values
+    key_prefix = "remotedisplay.vnc."
+    new_values = dict()
+    for key in ['enabled', 'ip', 'port', 'password']:
+        new_values[key_prefix + key] = ""
+    if enabled:
+        new_values[key_prefix + "enabled"] = "true"
+        new_values[key_prefix + "password"] = str(password).strip()
+        new_values[key_prefix + "ip"] = str(ip).strip()
+        new_values[key_prefix + "port"] = str(port).strip()
+    # get current vnc config
+    current_values = get_vnc_extraconfig(vm)
+    # check if any value is changed
+    reconfig_vm = False
+    for key, val in new_values.items():
+        key = key.replace(key_prefix, "")
+        if current_values.get(key, "") != val:
+            reconfig_vm = True
+    if not reconfig_vm:
+        return result
+    # reconfigure vm
     spec = vim.vm.ConfigSpec()
     spec.extraConfig = []
-    options_values = {
-        "remotedisplay.vnc.enabled": "",
-        "remotedisplay.vnc.ip": "",
-        "remotedisplay.vnc.port": "",
-        "remotedisplay.vnc.password": ""}
-    if enabled:
-        options_values["remotedisplay.vnc.enabled"] = "true"
-        options_values["remotedisplay.vnc.password"] = str(password).strip()
-        options_values["remotedisplay.vnc.ip"] = str(ip).strip()
-        options_values["remotedisplay.vnc.port"] = str(port).strip()
-    for k, v in options_values.items():
+    for key, val in new_values.items():
         opt = vim.option.OptionValue()
-        opt.key = k
-        opt.value = v
+        opt.key = key
+        opt.value = val
         spec.extraConfig.append(opt)
     task = vm.ReconfigVM_Task(spec)
     wait_for_task(task)
