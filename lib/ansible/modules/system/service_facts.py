@@ -180,13 +180,12 @@ class SystemctlScanService(BaseService):
             return None
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
         for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+            service_name = line.split()[0]
             if "running" in line:
                 state_val = "running"
             else:
                 if 'failed' in line:
                     service_name = line.split()[1]
-                else:
-                    service_name = line.split()[0]
                 state_val = "stopped"
             services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
         return services
