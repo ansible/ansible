@@ -60,6 +60,39 @@
 - name: prep a zip file
   shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
+- name: Prepare - Create test dirs
+  file:
+    path: "{{output_dir}}/{{item}}"
+    state: directory
+  with_items:
+    - created/include
+    - created/exclude
+    - created/other
+
+- name: Prepare - Create test files
+  file:
+    path: "{{output_dir}}/created/{{item}}"
+    state: touch
+  with_items:
+    - include/include-1.txt
+    - include/include-2.txt
+    - include/include-3.txt
+    - exclude/exclude-1.txt
+    - exclude/exclude-2.txt
+    - exclude/exclude-3.txt
+    - other/include-1.ext
+    - other/include-2.ext
+    - other/exclude-1.ext
+    - other/exclude-2.ext
+    - other/other-1.ext
+    - other/other-2.ext
+
+- name: Prepare - zip file
+  shell: zip -r {{output_dir}}/unarchive-00.zip * chdir={{output_dir}}/created/
+
+- name: Prepare - tar file
+  shell: tar czvf unarchive-00.tar {{output_dir}}/created/ chdir={{output_dir}}
+
 - name: add a file with Windows permissions to zip file
   shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
 
