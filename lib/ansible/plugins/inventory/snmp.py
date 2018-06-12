@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -9,16 +9,23 @@ DOCUMENTATION = '''
     name: snmp
     plugin_type: inventory
     version_added: "2.7"
+    authors:
+      - Victor da Costa <@victorock>
+
     short_description: Uses snmpv2 query to find devices.
+
     description:
-        - Use sysDescr to find hosts and group them by platform.
-        - Platforms: asa, ios, iosxr, nxos, dellos, junos, aruba and eos.
+      - Use sysDescr to find hosts and group them by platform.
+      - Platforms: asa, ios, iosxr, nxos, dellos, junos, aruba and eos.
+
     extends_documentation_fragment:
       - constructed
       - inventory_cache
+
     requirements:
       - pysnmp library
       - netaddr library
+
     options:
         network:
             description: CIDRs to scan, separated by comma.
@@ -35,13 +42,17 @@ DOCUMENTATION = '''
             description: The SNMP communities to query, separated by comma.
             type: string
             default: public
+
     notes:
-        - TODO:
-            - async
-            - snmpv3
-            - cache
-            - Additional platforms
+      - The purpose of this inventory plugin is to provide a convenient way to
+        generate the ansible inventory from existing networks
+      - TODO:
+        - async
+        - snmpv3
+        - cache?
+        - platforms++
 '''
+
 EXAMPLES = '''
     # snmp.config file in YAML format
     plugin: snmp
@@ -52,9 +63,10 @@ EXAMPLES = '''
     port: 161
 '''
 
-import re, time
+import re
+import time
 from ansible import constants as C
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
@@ -68,14 +80,17 @@ try:
 except:
     raise AnsibleError('snmp inventory plugin requires the pysnmp library. Try: pip install pysnmp')
 
+
 class Factory(object):
+
     InventoryModule = None
     BatchBank = None
     SysDescrParser = None
     SnmpClient = None
     NetAddr = None
 
-#TODO: Async with control of batch Size
+
+# TODO: Async with control of batch Size
 class BatchBank(object):
 
     BALANCE = 0
@@ -121,6 +136,7 @@ class BatchBank(object):
 
         return BatchBank.BALANCE
 
+
 # TODO: Add additional platforms
 class SysDescrParser(object):
     @staticmethod
@@ -128,15 +144,15 @@ class SysDescrParser(object):
         ''' New devices/platform must be populated HERE
         '''
         return {
-                    'asa'    : re.compile('^Cisco\sAdaptive\sSecurity\sAppliance'),
-                    'ios'    : re.compile('^Cisco\sIOS\sSoftware'),
-                    'iosxr'  : re.compile('^Cisco\sIOS\sXR\sSoftware'),
-                    'nxos'   : re.compile('^Cisco\sNexus\sOperating\sSystem'),
-                    'dellos' : re.compile('^Dell\sApplication\sSoftware'),
-                    'junos'  : re.compile('^JUNOS'),
-                    'aruba'  : re.compile('^Aruba\sOperating\sSystem\sSoftware'),
-                    'eos'    : re.compile('^Arista')
-                }
+            'asa': re.compile(r'^Cisco\sAdaptive\sSecurity\sAppliance'),
+            'ios': re.compile(r'^Cisco\sIOS\sSoftware'),
+            'iosxr': re.compile(r'^Cisco\sIOS\sXR\sSoftware'),
+            'nxos': re.compile(r'^Cisco\sNexus\sOperating\sSystem'),
+            'dellos': re.compile(r'^Dell\sApplication\sSoftware'),
+            'junos': re.compile(r'^JUNOS'),
+            'aruba': re.compile(r'^Aruba\sOperating\sSystem\sSoftware'),
+            'eos': re.compile(r'^Arista')
+        }
 
     @staticmethod
     def get_platform(text):
@@ -174,10 +190,13 @@ class SysDescrParser(object):
 
         return platform
 
-#TODO: snmpv3
+
+# TODO: snmpv3
 class SnmpClient(object):
-    def __init__(   self, target='localhost', port=161,
-                    community='public', mib='SNMPv2-MIB', oid='sysDescr' ):
+    def __init__(
+        self, target='localhost', port=161,
+        community='public', mib='SNMPv2-MIB', oid='sysDescr'
+    ):
         self._target = target
         self._port = port
         self._community = community
@@ -192,26 +211,30 @@ class SnmpClient(object):
         return pysnmpClient.CommunityData(self._community)
 
     def _udpTransportTarget(self):
-        return pysnmpClient.UdpTransportTarget( (self._target, self._port),
-                                                timeout=2.0,
-                                                retries=2 )
+        return pysnmpClient.UdpTransportTarget(
+            (self._target, self._port),
+            timeout=2.0,
+            retries=2
+        )
 
     def _contextData(self):
         return pysnmpClient.ContextData()
 
     def _objectType(self):
-        return pysnmpClient.ObjectType( self._objectIdentity() )
+        return pysnmpClient.ObjectType(self._objectIdentity())
 
     # TODO: Make it async
     def run(self):
-        return next(    pysnmpClient.getCmd(
-                                self._snmpEngine,
-                                self._communityData(),
-                                self._udpTransportTarget(),
-                                self._contextData(),
-                                self._objectType()
-                        )
-                    )
+        return next(
+            pysnmpClient.getCmd(
+                self._snmpEngine,
+                self._communityData(),
+                self._udpTransportTarget(),
+                self._contextData(),
+                self._objectType()
+            )
+        )
+
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
@@ -266,9 +289,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         )
                     )
 
-                    (   errorIndication,
+                    (
+                        errorIndication,
                         errorStatus,
-                        errorIndex, varBinds ) = Factory.SnmpClient.run()
+                        errorIndex,
+                        varBinds
+                    ) = Factory.SnmpClient.run()
 
                 except Exception as e:
                     Factory.InventoryModule.display.vvvv(
@@ -338,7 +364,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                             )
                         )
 
-
                         Factory.InventoryModule.inventory.add_host(
                             Factory.SnmpClient._target,
                             group=group_name
@@ -353,7 +378,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                                 group=group_name
                             )
                         )
-
 
     # TODO: CACHE
     def parse(self, inventory, loader, path, cache=False):
