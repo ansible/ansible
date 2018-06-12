@@ -86,7 +86,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
@@ -97,9 +97,9 @@ def resource_exists(client, module, params):
             ConfigurationRecorderNames=[params['name']]
         )
         return recorder['ConfigurationRecorders'][0]
-    except client.exceptions.from_code('NoSuchConfigurationRecorderException'):
+    except is_boto3_error_code('NoSuchConfigurationRecorderException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 

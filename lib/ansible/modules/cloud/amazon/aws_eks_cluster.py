@@ -129,7 +129,7 @@ version:
 '''
 
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names
 
 try:
@@ -197,11 +197,11 @@ def get_cluster(client, module):
     name = module.params.get('name')
     try:
         return client.describe_cluster(name=name)['cluster']
-    except client.exceptions.from_code('ResourceNotFoundException'):
+    except is_boto3_error_code('ResourceNotFoundException'):
         return None
-    except botocore.exceptions.EndpointConnectionError as e:
+    except botocore.exceptions.EndpointConnectionError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
         module.fail_json(e, msg="Couldn't get cluster %s" % name)
 
 
