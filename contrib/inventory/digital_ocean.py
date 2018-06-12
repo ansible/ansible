@@ -437,6 +437,9 @@ class DigitalOceanInventory(object):
 
     def add_host(self, group, host):
         """ Helper method to reduce host duplication """
+        if group not in self.inventory:
+            self.add_inventory_group(group)
+
         if host not in self.inventory[group]['hosts']:
             self.inventory[group]['hosts'].append(host)
         return
@@ -461,13 +464,9 @@ class DigitalOceanInventory(object):
 
             self.inventory['all']['hosts'].append(dest)
 
-            if droplet['id'] not in self.inventory:
-                self.add_inventory_group(droplet['id'])
-            self.inventory[droplet['id']]['hosts'].append(dest)
+            self.add_host(droplet['id'], dest)
 
-            if droplet['name'] not in self.inventory:
-                self.add_inventory_group(droplet['name'])
-            self.inventory[droplet['name']]['hosts'].append(dest)
+            self.add_host(droplet['name'], dest)
 
             # groups that are always present
             for group in ('digital_ocean',
@@ -476,23 +475,17 @@ class DigitalOceanInventory(object):
                           'size_' + droplet['size']['slug'],
                           'distro_' + DigitalOceanInventory.to_safe(droplet['image']['distribution']),
                           'status_' + droplet['status']):
-                if group not in self.inventory:
-                    self.add_inventory_group(group)
-                self.inventory[group]['hosts'].append(dest)
+                self.add_host(group, dest)
 
             # groups that are not always present
             for group in (droplet['image']['slug'],
                           droplet['image']['name']):
                 if group:
                     image = 'image_' + DigitalOceanInventory.to_safe(group)
-                    if image not in self.inventory:
-                        self.add_inventory_group(image)
-                    self.inventory[image]['hosts'].append(dest)
+                    self.add_host(image, dest)
 
             if droplet['tags']:
                 for tag in droplet['tags']:
-                    if tag not in self.inventory:
-                        self.add_inventory_group(tag)
                     self.add_host(tag, dest)
 
             # hostvars
