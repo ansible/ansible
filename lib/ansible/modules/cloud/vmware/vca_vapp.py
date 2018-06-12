@@ -1,14 +1,15 @@
 #!/usr/bin/python
-
 # Copyright: (c) 2015, Ansible, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -111,7 +112,6 @@ EXAMPLES = '''
 
 from ansible.module_utils.vca import VcaAnsibleModule, VcaError
 
-
 DEFAULT_VAPP_OPERATION = 'noop'
 
 VAPP_STATUS = {
@@ -153,13 +153,18 @@ def create(module):
     poweron = module.params['operation'] == 'poweron'
 
     task = module.vca.create_vapp(vdc_name, vapp_name, template_name,
-                                  catalog_name, network_name, network_mode,
+                                  catalog_name, network_name, 'bridged',
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
 
     if task is False:
-        module.fail('Failed to create vapp: ' + vapp_name)
+        module.fail('Failed to create vapp: %s' % vapp_name)
 
     module.vca.block_until_completed(task)
+
+    # Connect the network to the Vapp/VM and return asigned IP
+    if network_name is not None:
+        vm_ip = connect_to_network(module, vdc_name, vapp_name, network_name, network_mode)
+        return vm_ip
 
 
 def delete(module):
@@ -203,8 +208,90 @@ def set_state(module):
             module.fail('unable to undeploy vapp')
 
 
-def main():
+def connect_to_network(module, vdc_name, vapp_name, network_name, network_mode):
+    nets = filter(lambda n: n.name == network_name, module.vca.get_networks(vdc_name))
+    if len(nets) != 1:
+        module.fail_json("Unable to find network %s " % network_name)
 
+    the_vdc = module.vca.get_vdc(vdc_name)
+    the_vapp = module.vca.get_vapp(the_vdc, vapp_name)
+
+    if the_vapp and the_vapp.name != vapp_name:
+        module.fail_json(msg="Failed to find vapp named %s" % the_vapp.name)
+
+    # Connect vApp
+    task = the_vapp.connect_to_network(nets[0].name, nets[0].href)
+    result = module.vca.block_until_completed(task)
+
+    if result is None:
+        module.fail_json(msg="Failed to complete task")
+
+    # Connect VM
+    ip_allocation_mode = None
+    if network_mode == 'pool':
+        ip_allocation_mode = 'POOL'
+    elif network_mode == 'dhcp':
+        ip_allocation_mode = 'DHCP'
+
+    task = the_vapp.connect_vms(nets[0].name, connection_index=0, ip_allocation_mode=ip_allocation_mode)
+    if result is None:
+        module.fail_json(msg="Failed to complete task")
+
+    result = module.vca.block_until_completed(task)
+    if result is None:
+        module.fail_json(msg="Failed to complete task")
+
+    # Update VApp info and get VM IP
+    the_vapp = module.vca.get_vapp(the_vdc, vapp_name)
+    if the_vapp is None:
+        module.fail_json(msg="Failed to get vapp named %s" % vapp_name)
+
+    return get_vm_details(module)
+
+
+def get_vm_details(module):
+    vdc_name = module.params['vdc_name']
+    vapp_name = module.params['vapp_name']
+    vm_name = module.params['vm_name']
+    the_vdc = module.vca.get_vdc(vdc_name)
+    the_vapp = module.vca.get_vapp(the_vdc, vapp_name)
+    if the_vapp and the_vapp.name != vapp_name:
+        module.fail_json(msg="Failed to find vapp named %s" % the_vapp.name)
+    the_vm_details = dict()
+
+    for vm in the_vapp.me.Children.Vm:
+        sections = vm.get_Section()
+
+        customization_section = (
+            filter(lambda section:
+                   section.__class__.__name__ ==
+                   "GuestCustomizationSectionType",
+                   sections)[0])
+        if customization_section.get_AdminPasswordEnabled():
+            the_vm_details["vm_admin_password"] = customization_section.get_AdminPassword()
+
+        virtual_hardware_section = (
+            filter(lambda section:
+                   section.__class__.__name__ ==
+                   "VirtualHardwareSection_Type",
+                   sections)[0])
+        items = virtual_hardware_section.get_Item()
+        ips = []
+        _url = '{http://www.vmware.com/vcloud/v1.5}ipAddress'
+        for item in items:
+            if item.Connection:
+                for c in item.Connection:
+                    if c.anyAttributes_.get(
+                            _url):
+                        ips.append(c.anyAttributes_.get(
+                            _url))
+    if len(ips) > 0:
+        the_vm_details["vm_ip"] = ips[0]
+
+    return the_vm_details
+
+
+def main():
     argument_spec = dict(
         vapp_name=dict(required=True),
         vdc_name=dict(required=True),
@@ -237,7 +324,7 @@ def main():
     elif state != 'absent':
         if instance['state'] == 'absent':
             if not module.check_mode:
-                create(module)
+                result['ansible_facts'] = create(module)
             result['changed'] = True
 
         elif instance['state'] != state and state != 'present':
@@ -249,6 +336,7 @@ def main():
             if not module.check_mode:
                 do_operation(module)
             result['changed'] = True
+        result['ansible_facts'] = get_vm_details(module)
 
     return module.exit(**result)
 
