@@ -779,6 +779,7 @@ class AcmeCertificate(Certificate):
                                          check_rc=True)[1]
                 with open(self.path, 'wb') as certfile:
                     certfile.write(to_bytes(crt))
+                self.changed = True
             except OSError as exc:
                 raise CertificateError(exc)
 
