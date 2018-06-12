@@ -478,6 +478,7 @@ def main():
     path = params['path']
     firstmatch = params['firstmatch']
     regexp = params['regexp']
+    line = params.get('line', None)
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -501,10 +502,10 @@ def main():
         present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if not regexp and params.get('line', None) is None:
+        if not regexp and line is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
-        absent(module, path, regexp, params.get('line', None), backup)
+        absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':
