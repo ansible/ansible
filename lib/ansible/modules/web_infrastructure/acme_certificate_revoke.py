@@ -24,19 +24,13 @@ description:
       is, for example, used by Let's Encrypt."
    - "Note that exactly one of C(account_key_src), C(account_key_content),
       C(private_key_src) or C(private_key_content) must be specified."
-   - "To determine whether the revocation has to be executed, an OCSP
-      responder check is done. If this results in an error, use the C(force)
-      option to skip that check."
-   - "Also note that OCSP responses do not always update immediately after
-      revocation, so if you run this module twice for the same certificate,
-      it can happen that the second invocation does not notice the
-      certificate is already revoked and will try to revoke it another time.
-      There is a check which tries to detect this and act like no change
-      occured in this case, but it is very dependent on the ACME endpoint
-      implementation returning a specific human-readable error message.
-      This might stop working in the future and might not work with other
-      ACME endpoints than L(Let's Encrypt,https://letsencrypt.org/)'s
-      L(Boulder,https://github.com/letsencrypt/boulder/) server."
+   - "Also note that in general, trying to revoke an already revoked
+      certificate will lead to an error. The module tries to detect some
+      common error messages (for example, the ones issued by
+      L(Let's Encrypt,https://letsencrypt.org/)'s
+      L(Boulder,https://github.com/letsencrypt/boulder/) software), but
+      this might stop working and probably will not work for other server
+      softwares."
 extends_documentation_fragment:
   - acme
 options:
@@ -44,24 +38,6 @@ options:
     description:
       - "Path to the certificate to revoke."
     required: yes
-  intermediate_certificate:
-    description:
-      - "Path to the intermediate certificate, i.e. the next certificate in
-         the certificate chain. This is used to check revocation status of
-         the certificate using OCSP."
-      - "Required if C(force) is C(no)."
-    required: no
-  force:
-    description:
-      - "Whether to force revocation."
-      - "If set to C(no), the certificate will be first checked for being
-         revoked by checking the OCSP responder using the URI embedded
-         in the certificate. If no URI is embedded or the OCSP responder
-         is not available, the module will fail if C(force) is set to
-         C(no)."
-    type: bool
-    required: no
-    default: no
   private_key_src:
     description:
       - "Path to the certificate's private key."
@@ -109,78 +85,11 @@ from ansible.module_utils.acme import (
 
 import base64
 import os
-import re
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-
-
-def _get_host_from_uri(uri):
-    """Extract the hostname from an URI."""
-    try:
-        from urllib.parse import urlparse
-    except ImportError:  # Python 2
-        from urlparse import urlparse
-    netloc = urlparse(uri).netloc
-    i = netloc.find(':')
-    return netloc[:i] if i >= 0 else netloc
-
-
-def _run_openssl(module, args, acceptable_rcs=None):
-    """Run OpenSSL command with given arguments."""
-    if acceptable_rcs is None:
-        acceptable_rcs = [0]
-    openssl_bin = module.get_bin_path('openssl', True)
-    openssl_cmd = [openssl_bin] + args
-    rc, out, error = module.run_command(openssl_cmd, check_rc=True, encoding=None)
-    if rc not in acceptable_rcs:
-        msg = 'Command "{0}" returned the not acceptable return code {1}. Error output: {2}'
-        raise ModuleFailException(msg.format(' '.join(openssl_cmd), rc, error.decode('utf8')))
-    return out.decode('utf8')
-
-
-def is_revoked_ocsp(module, certificate, intermediate_certificate):
-    """Check whether the given certificate is revoked by querying OCSP.
-
-    ``certificate`` must be a path pointing to a certificate (PEM format).
-    ``intermediate_certificate`` must be a path pointing to the intermediate
-    certificate, i.e. to the next certificate in the certificate chain.
-    """
-    # Determine OCSP URL
-    ocsp_uri = _run_openssl(module, ['x509', '-in', certificate, '-noout', '-ocsp_uri']).strip()
-    if not ocsp_uri:
-        raise ModuleFailException('Cannot determine OCSP URI from certificate!')
-
-    # Determine OpenSSL version
-    version_string = _run_openssl(module, ['version'])
-    m = re.match(r'^OpenSSL (\d+)\.(\d+)\..*', version_string)
-    if not m:
-        raise ModuleFailException('Cannot identify OpenSSL version from version string "{0}"!'.format(version_string))
-    openssl_version = (int(m[1]), int(m[2]))
-
-    # Get OCSP response. Note that we need to specify the Host header,
-    # but that the way to specify this depends on the OpenSSL version.
-    if openssl_version < (1, 1):
-        host_header = ['Host', _get_host_from_uri(ocsp_uri)]
-    else:
-        host_header = ['Host=' + _get_host_from_uri(ocsp_uri)]
-    # Compose arguments for OpenSSL
-    args = ['ocsp', '-no_nonce', '-header']
-    args.extend(host_header)
-    args.extend(['-issuer', intermediate_certificate, '-cert', certificate, '-url', ocsp_uri, '-VAfile', intermediate_certificate])
-    result = _run_openssl(module, args)
-
-    # Interpret result
-    m = re.match(r'^.*: ([a-zA-Z]+)(?:\n|\r|$)', result)
-    if not m:
-        m = re.match(r'^Responder Error: (.*)(?:\n|\r|$)', result)
-        if m:
-            raise ModuleFailException('OCSP responder error: {0}'.format(m[1]))
-        raise ModuleFailException('Cannot parse OpenSSL OCSP output: {0}'.format(result))
-
-    return m[1] == 'revoked'
 
 
 def main():
@@ -194,9 +103,7 @@ def main():
             private_key_src=dict(type='path'),
             private_key_content=dict(type='str', no_log=True),
             certificate=dict(required=True, type='path'),
-            intermediate_certificate=dict(required=False, type='path'),
             revoke_reason=dict(required=False, type='int'),
-            force=dict(required=False, type='bool', default=False),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
@@ -204,16 +111,7 @@ def main():
         mutually_exclusive=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
         ),
-        required_if=(
-            # Make sure that if force is set to False, intermediate_certificate is specified
-            ['force', False, ['intermediate_certificate'], True],
-        ),
-        # Currently, check mode is disabled, since there is no reliable way to determine
-        # whether a certificate has been revoked or not. The ACME protocol does not define
-        # a specific error for this; and OCSP responders are unreliable, might return the
-        # wrong result (because a new response hasn't been signed yet) or are simply
-        # not available (i.e. no responder URI embedded in certificate).
-        # supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     if not module.params.get('validate_certs'):
@@ -222,94 +120,85 @@ def main():
                             'development purposes, but *never* for production purposes.')
 
     try:
-        if not module.params['force']:
-            # Check whether certificate is already revoked
-            if is_revoked_ocsp(module, module.params.get('certificate'), module.params.get('intermediate_certificate')):
-                module.exit_json(changed=False)
-
-        # From this point on, we assume the certificate has to be revoked
-        if not module.check_mode:
-            account = ACMEAccount(module)
-            # Load certificate
-            certificate_lines = []
+        account = ACMEAccount(module)
+        # Load certificate
+        certificate_lines = []
+        try:
+            with open(module.params.get('certificate'), "rt") as f:
+                header_line_count = 0
+                for line in f:
+                    if line.startswith('-----'):
+                        header_line_count += 1
+                        if header_line_count == 2:
+                            # If certificate file contains other certs appended
+                            # (like intermediate certificates), ignore these.
+                            break
+                        continue
+                    certificate_lines.append(line.strip())
+        except Exception as err:
+            raise ModuleFailException("cannot load certificate file: %s" % to_native(err), exception=traceback.format_exc())
+        certificate = nopad_b64(base64.b64decode(''.join(certificate_lines)))
+        # Construct payload
+        payload = {
+            'certificate': certificate
+        }
+        if module.params.get('revoke_reason') is not None:
+            payload['reason'] = module.params.get('revoke_reason')
+        # Determine endpoint
+        if module.params.get('acme_version') == 1:
+            endpoint = account.directory['revoke-cert']
+            payload['resource'] = 'revoke-cert'
+        else:
+            endpoint = account.directory['revokeCert']
+        # Get hold of private key (if available) and make sure it comes from disk
+        private_key = module.params.get('private_key_src')
+        if module.params.get('private_key_content') is not None:
+            fd, tmpsrc = tempfile.mkstemp()
+            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
+            f = os.fdopen(fd, 'wb')
             try:
-                with open(module.params.get('certificate'), "rt") as f:
-                    header_line_count = 0
-                    for line in f:
-                        if line.startswith('-----'):
-                            header_line_count += 1
-                            if header_line_count == 2:
-                                # If certificate file contains other cerst appended
-                                # (like intermediate certificates), ignore these.
-                                break
-                            continue
-                        certificate_lines.append(line.strip())
+                f.write(module.params.get('private_key_content').encode('utf-8'))
+                private_key = tmpsrc
             except Exception as err:
-                raise ModuleFailException("cannot load certificate file: %s" % to_native(err), exception=traceback.format_exc())
-            certificate = nopad_b64(base64.b64decode(''.join(certificate_lines)))
-            # Construct payload
-            payload = {
-                'certificate': certificate
-            }
-            if module.params.get('revoke_reason') is not None:
-                payload['reason'] = module.params.get('revoke_reason')
-            # Determine endpoint
-            if module.params.get('acme_version') == 1:
-                endpoint = account.directory['revoke-cert']
-                payload['resource'] = 'revoke-cert'
-            else:
-                endpoint = account.directory['revokeCert']
-            # Get hold of private key (if available) and make sure it comes from disk
-            private_key = module.params.get('private_key_src')
-            if module.params.get('private_key_content') is not None:
-                fd, tmpsrc = tempfile.mkstemp()
-                module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-                f = os.fdopen(fd, 'wb')
                 try:
-                    f.write(module.params.get('private_key_content').encode('utf-8'))
-                    private_key = tmpsrc
-                except Exception as err:
-                    try:
-                        f.close()
-                    except Exception as e:
-                        pass
-                    raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
-                f.close()
-            # Revoke certificate
-            if private_key:
-                # Step 1: load and parse private key
-                error, private_key_data = account.parse_account_key(private_key)
-                if error:
-                    raise ModuleFailException("error while parsing private key: %s" % error)
-                # Step 2: sign revokation request with private key
-                jws_header = {
-                    "alg": private_key_data['alg'],
-                    "jwk": private_key_data['jwk'],
-                }
-                result, info = account.send_signed_request(endpoint, payload, key=private_key,
-                                                           key_data=private_key_data, jws_header=jws_header)
+                    f.close()
+                except Exception as e:
+                    pass
+                raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+            f.close()
+        # Revoke certificate
+        if private_key:
+            # Step 1: load and parse private key
+            error, private_key_data = account.parse_account_key(private_key)
+            if error:
+                raise ModuleFailException("error while parsing private key: %s" % error)
+            # Step 2: sign revokation request with private key
+            jws_header = {
+                "alg": private_key_data['alg'],
+                "jwk": private_key_data['jwk'],
+            }
+            result, info = account.send_signed_request(endpoint, payload, key=private_key,
+                                                       key_data=private_key_data, jws_header=jws_header)
+        else:
+            # Step 1: get hold of account URI
+            changed = account.init_account(
+                [],
+                allow_creation=False,
+                update_contact=False,
+            )
+            if changed:
+                raise AssertionError('Unwanted account change')
+            # Step 2: sign revokation request with account key
+            result, info = account.send_signed_request(endpoint, payload)
+        if info['status'] != 200:
+            if module.params.get('acme_version') == 1:
+                error_type = 'urn:acme:error:malformed'
             else:
-                # Step 1: get hold of account URI
-                changed = account.init_account(
-                    [],
-                    allow_creation=False,
-                    update_contact=False,
-                )
-                if changed:
-                    raise AssertionError('Unwanted account change')
-                # Step 2: sign revokation request with account key
-                result, info = account.send_signed_request(endpoint, payload)
-            if info['status'] != 200:
-                if module.params.get('acme_version') == 1:
-                    error_type = 'urn:acme:error:malformed'
-                else:
-                    error_type = 'urn:ietf:params:acme:error:malformed'
-                if result.get('type') == error_type and result.get('detail') == 'Certificate already revoked':
-                    # Fallback: boulder returns this in case the certificate was already revoked.
-                    if not module.params['force']:
-                        module.exit_json(changed=False)
-                    raise ModuleFailException('Certificate has already been revoked.')
-                raise ModuleFailException('Error revoking certificate: {0} {1}'.format(info['status'], result))
+                error_type = 'urn:ietf:params:acme:error:malformed'
+            if result.get('type') == error_type and result.get('detail') == 'Certificate already revoked':
+                # Fallback: boulder returns this in case the certificate was already revoked.
+                module.exit_json(changed=False)
+            raise ModuleFailException('Error revoking certificate: {0} {1}'.format(info['status'], result))
         module.exit_json(changed=True)
     except ModuleFailException as e:
         e.do_fail(module)
