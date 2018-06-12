@@ -43,16 +43,26 @@ except ImportError:
 
 class StrategyModule(LinearStrategy):
 
+    def __init__(self, tqm):
+        super(StrategyModule, self).__init__(tqm)
+        self._sleep = False
+
     def _get_next_task_lockstep(self, hosts, iterator):
         host_tasks = super(StrategyModule, self)._get_next_task_lockstep(hosts, iterator)
         # if the ansible is running gathering fact or internal meta tasks, do not sleep
-        import epdb; epdb.st()
         if host_tasks is not None:
             for host, task in host_tasks:
-                if task is not None and (task.action == 'meta' or task.action == 'setup'):
+                if task is None or task.action == 'meta' or task.action == 'setup':
                     return host_tasks
-        # if it's a regular playbook task, do sleep
-        display.display("----SLEEP----")
-        time.sleep(1)
-        display.display("----WAKE----")
+            # if it's a regular playbook task, do sleep
+            self._sleep = True
         return host_tasks
+
+    def update_active_connections(self, results):
+        super(StrategyModule, self).update_active_connections(results)
+        # sleep after ansible finished waiting all task threads
+        if self._sleep:
+            self._sleep = False
+            display.display("----SLEEP----")
+            time.sleep(1)
+            display.display("----WAKE----")
