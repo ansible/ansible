@@ -1,11 +1,12 @@
 - name: Create storage account name
   set_fact:
-      rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      blob_name: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       vm_name: "vm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}x"
       storage_name: "st{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       storage_container_name: "sc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       public_ip_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-      security_group_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      security_group_name: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      blob_name: "blob{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
@@ -53,7 +54,7 @@
       vm_size: Standard_A0
       storage_account: "{{ storage_name }}"
       storage_container: "{{ storage_container_name }}"
-      storage_blob: "blob.vhd"
+      storage_blob: "{{ blob_name }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       os_type: Linux
@@ -81,7 +82,7 @@
 - name: Create an image from VM (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ rpfx }}.blob.core.windows.net/vn{{ rpfx }}/vn{{ rpfx }}.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   check_mode: yes
@@ -93,7 +94,7 @@
 - name: Create an image from VM
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/blob.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
@@ -106,7 +107,7 @@
 - name: Create an image from VM (idempotent)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/blob.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
