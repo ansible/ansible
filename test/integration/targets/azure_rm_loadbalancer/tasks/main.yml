@@ -2,8 +2,11 @@
   set_fact:
     pipaname: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     pipbname: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    lbname: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbvnname: "lbvn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_a: "lba{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_b: "lbb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_c: "lbc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_d: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: create public ip
@@ -21,13 +24,13 @@
 - name: clear load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_a }}"
     state: absent
 
 - name: create load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_a }}"
     public_ip: "{{ pipaname }}"
   register: output
 
@@ -38,7 +41,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_a }}"
     state: absent
   register: output
 
@@ -49,7 +52,7 @@
 - name: delete load balancer (idempotent)
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_a }}"
     state: absent
   register: output
 
@@ -60,7 +63,7 @@
 - name: create another load balancer with more options
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_b }}"
     sku: Standard
     public_ip_address: "{{ pipbname }}"
     probe_protocol: Tcp
@@ -87,13 +90,13 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_b }}"
     state: absent
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_c }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         public_ip_address: "{{ pipaname }}"
@@ -125,7 +128,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_c }}"
     state: absent
 
 - name: Create virtual network
@@ -145,7 +148,7 @@
 - name: create internal loadbalancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_d }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         private_ip_address: 10.10.0.10
@@ -179,7 +182,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname }}"
+    name: "{{ lbname_d }}"
     state: absent
 
 - name: cleanup public ip
