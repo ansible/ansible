@@ -609,8 +609,13 @@ class Templar:
 
     def _finalize(self, thing):
         '''
-        A custom finalize method for jinja2, which prevents None from being returned
+        A custom finalize method for jinja2, which prevents None from being returned. This
+        avoids a string of ``"None"`` as ``None`` has no importance in YAML.
+
+        If using ANSIBLE_JINJA2_NATIVE we bypass this and return the actual value always
         '''
+        if USE_JINJA2_NATIVE:
+            return thing
         return thing if thing is not None else ''
 
     def _fail_lookup(self, name, *args, **kwargs):

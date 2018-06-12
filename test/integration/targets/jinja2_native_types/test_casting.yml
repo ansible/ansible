@@ -11,11 +11,11 @@
 - assert:
     that:
         - 'int_to_str == "2"'
-        - 'int_to_str|type_debug in ["string", "unicode"]'
+        - 'int_to_str|type_debug in ["str", "unicode"]'
         - 'str_to_int == 2'
         - 'str_to_int|type_debug == "int"'
-        - 'dict_to_str|type_debug in ["string", "unicode"]'
-        - 'list_to_str|type_debug in ["string", "unicode"]'
+        - 'dict_to_str|type_debug in ["str", "unicode"]'
+        - 'list_to_str|type_debug in ["str", "unicode"]'
         - 'int_to_bool is sameas true'
         - 'int_to_bool|type_debug == "bool"'
         - 'str_true_to_bool is sameas true'

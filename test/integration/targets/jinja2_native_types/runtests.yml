@@ -29,6 +29,7 @@
       b_false: False
       s_true: "True"
       s_false: "False"
+      yaml_none: ~
   tasks:
       - name: check jinja version
         shell: python -c 'import jinja2; print(jinja2.__version__)'
@@ -44,4 +45,5 @@
             - import_tasks: test_bool.yml
             - import_tasks: test_dunder.yml
             - import_tasks: test_types.yml
+            - import_tasks: test_none.yml
         when: is_native
