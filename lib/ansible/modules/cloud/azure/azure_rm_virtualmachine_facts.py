@@ -25,15 +25,25 @@ description:
   - Get facts for all virtual machines of a resource group.
 
 options:
-  resource_group:
-    description:
-      - Name of the resource group containing the virtual machines (required when filtering by vm name).
-  name:
-    description:
-      - Name of the virtual machine.
-  tags:
-    description:
-      - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    resource_group:
+        description:
+        - Name of the resource group containing the virtual machines (required when filtering by vm name).
+    name:
+        description:
+        - Name of the virtual machine.
+    tags:
+        description:
+        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    format:
+        description:
+            - Format of the data returned.
+            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
+            - In Ansible 2.5 and lower facts are always returned in raw format.
+        default: 'curated'
+        choices:
+            - 'curated'
+            - 'raw'
 
 extends_documentation_fragment:
   - azure
@@ -274,6 +284,8 @@ except:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+import re
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -288,7 +300,13 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str'),
             name=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            format=dict(
+                type='str',
+                choices=['curated',
+                         'raw'],
+                default='curated'
+            )
         )
 
         self.results = dict(
@@ -299,6 +317,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
+        self.format = None
 
         super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec,
                                                          supports_tags=False,
@@ -367,45 +386,109 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        result['id'] = vm.id
-        result['name'] = vm.name
-        result['type'] = vm.type
-        result['location'] = vm.location
-        result['tags'] = vm.tags
 
-        result['powerstate'] = dict()
-        if vm.instance_view:
-            result['powerstate'] = next((s.code.replace('PowerState/', '')
-                                         for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+        new_result = {}
+        if self.format == 'curated':
+            new_result['id'] = vm.id
+            new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+            new_result['name'] = vm.name
+            new_result['state'] = 'present'
+            new_result['location'] = vm.location
+            new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
+            new_result['admin_username'] = result['properties']['osProfile']['adminUsername'] 
+            # admin_password (probably not available)
+            # ssh_password_enabled
+            # ssh_public_keys
+            image =  result['properties']['storageProfile'].get('imageReference')
+            if image is not None:
+                new_result['image'] = {
+                    'publisher': image['publisher'],
+                    'sku': image['sku'],
+                    'offer': image['offer'],
+                    'version': image['version']
+                }
+            # availability_set
 
-        # Expand network interfaces to include config properties
-        for interface in vm.network_profile.network_interfaces:
-            int_dict = azure_id_to_dict(interface.id)
-            nic = self.get_network_interface(int_dict['networkInterfaces'])
-            for interface_dict in result['properties']['networkProfile']['networkInterfaces']:
-                if interface_dict['id'] == interface.id:
-                    nic_dict = self.serialize_obj(nic, 'NetworkInterface')
-                    interface_dict['name'] = int_dict['networkInterfaces']
-                    interface_dict['properties'] = nic_dict['properties']
+            vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
+            if vhd is not None:
+                url = urlparse(vhd['uri'])
+                new_result['storage_account_name'] = url.netloc.split('.')[0]
+                new_result['storage_container_name'] = url.path.split('/')[1]
+                new_result['storage_blob_name'] = url.path.split('/')[-1]
 
-        # Expand public IPs to include config properties
-        for interface in result['properties']['networkProfile']['networkInterfaces']:
-            for config in interface['properties']['ipConfigurations']:
-                if config['properties'].get('publicIPAddress'):
-                    pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
-                    try:
-                        pip = self.network_client.public_ip_addresses.get(self.resource_group,
-                                                                          pipid_dict['publicIPAddresses'])
-                    except Exception as exc:
-                        self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
-                                                                              str(exc)))
-                    pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
-                    config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
-                    config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
+            # managed_disk_type
+            new_result['os_disk_caching'] = result['properties']['storageProfile']['osDisk']['caching']
+            new_result['os_type'] = result['properties']['storageProfile']['osDisk']['osType']
+            # data_disks
+            new_result['data_disks'] = []
+            disks = result['properties']['storageProfile']['dataDisks'] 
+            for disk_index in range(len(disks)):
+                new_result['data_disks'].append({
+                    'lun': disks[disk_index]['lun'],
+                    'disk_size_gb': disks[disk_index]['diskSizeGB'],
+                    'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
+                    'storage_account_name': 'xxx',
+                    'storage_container_name': 'xxx',
+                    'storage_blob_name': 'xxx',
+                    'caching': disks[disk_index]['caching']
+                })
 
-        snake_dict = camel_dict_to_snake_dict(result)
-        self.log(snake_dict, pretty_print=True)
-        return snake_dict
+            # public_ip_allocation_method
+            # open_ports
+            new_result['network_interface_names'] = []
+            nics = result['properties']['networkProfile']['networkInterfaces']
+            for nic_index in range(len(nics)):
+                new_result['network_interface_names'].append(re.sub('.*networkInterfaces/', '', nics[nic_index]['id']))
+            
+
+            nic = self.get_network_interface(new_result['network_interface_names'][0])
+            
+
+            # virtual_network_resource_group
+            # virtual_network_name
+            # subnet_name
+            # remove_on_absent
+            # plan
+
+
+            # not needed
+            #result['type'] = vm.type
+            new_result['tags'] = vm.tags
+            return new_result
+        else:
+            result['powerstate'] = dict()
+            if vm.instance_view:
+                result['powerstate'] = next((s.code.replace('PowerState/', '')
+                                            for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+
+            # Expand network interfaces to include config properties
+            for interface in vm.network_profile.network_interfaces:
+                int_dict = azure_id_to_dict(interface.id)
+                nic = self.get_network_interface(int_dict['networkInterfaces'])
+                for interface_dict in result['properties']['networkProfile']['networkInterfaces']:
+                    if interface_dict['id'] == interface.id:
+                        nic_dict = self.serialize_obj(nic, 'NetworkInterface')
+                        interface_dict['name'] = int_dict['networkInterfaces']
+                        interface_dict['properties'] = nic_dict['properties']
+
+            # Expand public IPs to include config properties
+            for interface in result['properties']['networkProfile']['networkInterfaces']:
+                for config in interface['properties']['ipConfigurations']:
+                    if config['properties'].get('publicIPAddress'):
+                        pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
+                        try:
+                            pip = self.network_client.public_ip_addresses.get(self.resource_group,
+                                                                            pipid_dict['publicIPAddresses'])
+                        except Exception as exc:
+                            self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
+                                                                                str(exc)))
+                        pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
+                        config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
+                        config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
+
+            snake_dict = camel_dict_to_snake_dict(result)
+            self.log(snake_dict, pretty_print=True)
+            return snake_dict
 
     def get_network_interface(self, name):
         try:
