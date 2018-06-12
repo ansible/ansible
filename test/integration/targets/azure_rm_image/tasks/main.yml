@@ -1,6 +1,5 @@
 - name: Create storage account name
   set_fact:
-      blob_name: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       vm_name: "vm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}x"
       storage_name: "st{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       storage_container_name: "sc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
