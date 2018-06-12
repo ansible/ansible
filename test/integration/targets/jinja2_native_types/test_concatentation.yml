@@ -23,7 +23,7 @@
 - assert:
     that:
         - 'string_sum == "12"'
-        - 'string_sum|type_debug in ["string", "unicode"]'
+        - 'string_sum|type_debug in ["str", "unicode"]'
 
 - name: add two lists
   set_fact:
@@ -40,7 +40,7 @@
 
 - assert:
     that:
-        - 'list_sum_multi|type_debug in ["string", "unicode"]'
+        - 'list_sum_multi|type_debug in ["str", "unicode"]'
 
 - name: add two dicts
   set_fact:
@@ -58,7 +58,7 @@
 - assert:
     that:
         - 'list_for_strings == "onetwo"'
-        - 'list_for_strings|type_debug in ["string", "unicode"]'
+        - 'list_for_strings|type_debug in ["str", "unicode"]'
 
 - name: loop through list with int
   set_fact:
