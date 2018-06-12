@@ -73,7 +73,7 @@
   gather_facts: no
   connection: ssh
   tasks:
-    - name: Fail to run a lineinfile task
+    - name: 'EXPECTED FAILURE: Fail to run a lineinfile task'
       vars:
         logins:
           - machine: foo
