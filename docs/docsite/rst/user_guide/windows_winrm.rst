@@ -426,6 +426,8 @@ work. To troubleshoot Kerberos issues, ensure that:
   an alias is being used. The ``krb5.conf`` file needs to be updated so that
   the fully qualified domain name is used and not an alias.
 
+* If the default kerberos tooling has been replaced or modified (some IdM solutions may do this), it may cause issues when installing or upgrading the ``pykerberos`` python library from ``pip``. To resolve this issue, temporarily install the ``krb5-workstation`` and ``krb5-libs`` packages (for RHEL/Fedora), remove any custom kerberos tooling paths from the PATH environment variable, and retry the installation of ``pykerberos``.
+
 CredSSP
 -------
 CredSSP authentication is a newer authentication protocol that allows
