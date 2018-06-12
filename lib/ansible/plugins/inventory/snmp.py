@@ -6,17 +6,17 @@ __metaclass__ = type
 
 
 DOCUMENTATION = '''
-    name: snmp
-    plugin_type: inventory
+    name: "snmp"
+    plugin_type: "inventory"
     version_added: "2.7"
     authors:
-      - Victor da Costa <@victorock>
+      - "Victor da Costa <@victorock>"
 
-    short_description: Uses snmpv2 query to find devices.
+    short_description: "Uses snmpv2 query to find devices."
 
     description:
-      - Use sysDescr to find hosts and group them by platform.
-      - Platforms: asa, ios, iosxr, nxos, dellos, junos, aruba and eos.
+      - "Use sysDescr to find hosts and group them by platform."
+      - "Platforms: asa, ios, iosxr, nxos, dellos, junos, aruba and eos."
 
     extends_documentation_fragment:
       - constructed
@@ -28,35 +28,30 @@ DOCUMENTATION = '''
 
     options:
         network:
-            description: CIDRs to scan, separated by comma.
+            description: "CIDRs to scan, separated by comma."
             type: string
-            default: 192.168.0.0/24
+            default: "192.168.0.0/24"
         port:
-            description: SNMP Port
+            description: "SNMP Port"
             type: integer
             default: 161
         exclude:
-            description: CIDRs to exclude from the scan, separated by comma.
-            type: list
-        community:
-            description: The SNMP communities to query, separated by comma.
+            description: "CIDRs to exclude from the scan, separated by comma."
             type: string
-            default: public
+            default: None
+        community:
+            description: "The SNMP communities to query, separated by comma."
+            type: string
+            default: "public"
 
     notes:
-      - The purpose of this inventory plugin is to provide a convenient way to
-        generate the ansible inventory from existing networks
-      - TODO:
-        - async
-        - snmpv3
-        - cache?
-        - platforms++
+        - "Convenient way to generate inventory from existing networks"
+        - "TODO: async, snmpv3, platforms++"
 '''
 
 EXAMPLES = '''
     # snmp.config file in YAML format
     plugin: snmp
-    version: 2c
     community: mycommunity, public, idontknow
     networks: 192.168.99.99/27, 192.168.100.0/23
     exclude: 192.168.100.1/32, 192.168.100.2/32
