@@ -305,3 +305,57 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+# DBM LOOKUP
+- name: Set test DBM pathname
+  set_fact:
+    test_dbm: "{{output_dir|expanduser}}/testdbm"
+
+- name: Create test DBM
+  command: "{{ ansible_python.executable }} -c {{ script|quote }}"
+  vars:
+    script: "import dbm as db; d=db.open('{{test_dbm}}', 'n'); d['k1'] = 'v1'; d['k2'] = 'v2'; d.close()"
+
+- name: Lookup keys in DBM and return a list
+  set_fact:
+    dbm_values: "{{ lookup('dbm', 'k1', 'no_such_key', 'k2', file=test_dbm, wantlist=True) }}"
+
+- assert:
+    that:
+      - "dbm_values == ['v1', None, 'v2']"
+
+- name: Lookup one key in DBM and return a list
+  set_fact:
+    dbm_values: "{{ lookup('dbm', 'k1', file=test_dbm, wantlist=True) }}"
+
+- assert:
+    that:
+      - "dbm_values == ['v1']"
+
+- name: Lookup one key in DBM and return a string
+  set_fact:
+    dbm_values: "{{ lookup('dbm', 'k1', file=test_dbm) }}"
+
+- assert:
+    that:
+      - "dbm_values == 'v1'"
+
+- name: Lookup a non existent key in DBM and return a string
+  set_fact:
+    dbm_values: "{{ lookup('dbm', 'no such key', file=test_dbm) }}"
+
+- assert:
+    that:
+      - "dbm_values == ''"
+
+- name: Access to a non existent DBM should raise an error
+  debug:
+    msg: "{{ lookup('dbm', 'key', file=no_such_file) }}"
+  vars:
+    no_such_file: "{{ 'NoN_eXisTeNt_fILe' ~ 100|random }}"
+  ignore_errors: yes
+  register: dbm_error
+
+- assert:
+    that:
+      - 'dbm_error is failed'
