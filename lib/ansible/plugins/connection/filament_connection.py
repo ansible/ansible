@@ -274,7 +274,7 @@ class Connection(ConnectionBase):
         if not in_data:
             try:
                 # try just use old pipes
-                #master, slave = pty.openpty()
+                # master, slave = pty.openpty()
                 # use the pipe defined in _file_transport to pass the password
                 if PY3 and self._play_context.password:
                     display.vvv("RUN CMD %s" % str(cmd))
@@ -317,7 +317,7 @@ class Connection(ConnectionBase):
         timeout = 2 + self._play_context.timeout
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
-        
+
         # event-driven
         selector = selectors.DefaultSelector()
         selector.register(p.stdout, selectors.EVENT_READ)
@@ -328,12 +328,12 @@ class Connection(ConnectionBase):
             self._send_initial_data(stdin, in_data)
             # state become exit
             state += 1
-        
+
         try:
             while True:
                 poll = p.poll()
                 events = selector.select(timeout)
-                
+
                 if not events:
                     if state <= (states.index('awaiting_escalation')):
                         if poll is not None:
@@ -373,7 +373,7 @@ class Connection(ConnectionBase):
                     if in_data:
                         self._send_initial_data(stdin, in_data)
                     state += 1
-                
+
                 if poll is not None:
                     if not selector.get_map() or not events:
                         break
@@ -383,7 +383,7 @@ class Connection(ConnectionBase):
                 elif not selector.get_map():
                     p.wait()
                     break
-        
+
         finally:
             # quit the poll loop, close lisenter
             selector.close()
@@ -409,7 +409,7 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
-        
+
         display.vvv("PUT FILE FROM %s to %s" % (in_path, out_path))
         if not os.path.exists(to_bytes(in_path)):
             raise AnsibleFileNotFound('File does not exist!')
@@ -464,7 +464,7 @@ class Connection(ConnectionBase):
             b_args = [to_bytes(a, errors='surrogate_or_strict') for a in
                       self._split_ssh_args(self._play_context.ssh_args)]
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
-        
+
         # some othe checking code
         # balabalabalabala
 
@@ -477,8 +477,9 @@ class Connection(ConnectionBase):
         # add remote user arg
         user = self._play_context.remote_user
         if user:
-            self._add_args(b_command, (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')), u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set")
-        
+            self._add_args(b_command, (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+                           u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set")
+
         # add common or binary arguments
         for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
             attr = getattr(self._play_context, opt, None)
@@ -492,15 +493,13 @@ class Connection(ConnectionBase):
 
         return b_command
 
-
-
     def _file_transport_command(self, in_path, out_path, sftp_action):
         host = '[%s]' % self.host
         ssh_transfer_method = self._play_context.ssh_transfer_method
         # validate the ssh method
         if ssh_transfer_method is not None:
             if not (ssh_transfer_method in ('smart', 'sftp', 'scp', 'piped')):
-                raise AnsibleOptionsError('transfer_method needs to be one of [smart|sftp|scp|piped]')
+                raise AnsibleError('Transfer_method needs to be one of [smart|sftp|scp|piped]')
             if ssh_transfer_method == 'smart':
                 methods = ['sftp', 'scp', 'piped']
             else:
@@ -508,7 +507,7 @@ class Connection(ConnectionBase):
         # if no ssh method, use scp for now
         else:
             methods = ['scp']
-        
+
         for method in methods:
             # use sftp to handle file
             if method == 'sftp':
@@ -534,8 +533,6 @@ class Connection(ConnectionBase):
 
             if returncode == 0:
                 return (returncode, stdout, stderr)
-        
+
         # if tried all methods and still can't transfer, raise error
         raise AnsibleError('Failed to transfer file!')
-
-
