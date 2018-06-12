@@ -220,8 +220,10 @@
 - name: assert error when linux web app, only can specify one framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}11"
-    plan: "{{ win_plan_name }}"
+    name: "{{ linux_plan_name }}12"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
     frameworks:
       - name: "python"
         version: "2.7"
