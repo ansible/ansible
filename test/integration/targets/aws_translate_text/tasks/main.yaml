@@ -1,0 +1,174 @@
+---
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      #security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+    # ============================================================
+    # Parameter Tests
+    # ============================================================
+
+    - name: test with no parameters
+      aws_translate_text:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      aws_translate_text:
+        source_lang: 'en'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    - name: test with missing parameters
+      aws_translate_text:
+        source_lang: 'en'
+        target_lang: 'fr'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with missing parameters
+      assert:
+        that:
+           - result.failed
+           - 'result.msg.startswith("missing required arguments:")'
+
+    # ============================================================
+    # Testing prerequisites
+    # ============================================================
+
+    - name: create S3 bucket
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-bucket"
+
+    - name: upload text file to S3 for testing
+      aws_s3:
+        <<: *aws_connection_info
+        bucket: "{{ resource_prefix }}-test-bucket"
+        object: 'hello_world.txt'
+        src: 'files/hello_world.txt'
+        mode: put
+
+    # ============================================================
+    # Resource Tests
+    # ============================================================
+
+    - name: translate local text and save to local file
+      aws_translate_text:
+        <<: *aws_connection_info
+        source_lang: 'en'
+        target_lang: 'fr'
+        source: 'local'
+        src_path: "{{ lookup('file', 'files/hello_world.txt') }}"
+        destination: 'local'
+        dst_path: "{{ resource_prefix }}-local2local-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+
+    - name: stat the local file
+      stat:
+        path: "{{ resource_prefix }}-local2local-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.stat.exists
+
+    - name: translate local text  and save to S3
+      aws_translate_text:
+        <<: *aws_connection_info
+        source_lang: 'en'
+        target_lang: 'fr'
+        source: 'local'
+        src_path: "{{ lookup('file', 'files/hello_world.txt') }}"
+        destination: 's3'
+        dst_bucket: "{{ resource_prefix }}-test-bucket"
+        dst_path: "{{ resource_prefix }}-local2s3-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+
+    - name: translate s3 text file and save to local file
+      aws_translate_text:
+        <<: *aws_connection_info
+        source_lang: 'en'
+        target_lang: 'fr'
+        source: 's3'
+        src_bucket: "{{ resource_prefix }}-test-bucket"
+        src_path: 'hello_world.txt'
+        destination: 'local'
+        dst_path: "{{ resource_prefix }}-s32local-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+
+    - name: stat the local file
+      stat:
+        path: "{{ resource_prefix }}-s32local-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.stat.exists
+
+    - name: translate s3 text file and save to file on s3
+      aws_translate_text:
+        <<: *aws_connection_info
+        source_lang: 'en'
+        target_lang: 'fr'
+        source: 's3'
+        src_bucket: "{{ resource_prefix }}-test-bucket"
+        src_path: 'hello_world.txt'
+        destination: 's3'
+        dst_bucket: "{{ resource_prefix }}-test-bucket"
+        dst_path: "{{ resource_prefix }}-s32s3-test.txt"
+      register: result
+
+    - name: assert correct keys are returned
+      assert:
+        that:
+            - result.changed
+
+  always:
+
+    # ============================================================
+    # Tear down testing resources
+    # ============================================================
+
+    - name: destroy S3 bucket
+      s3_bucket:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-test-bucket"
+        state: absent
+        force: yes
+      ignore_errors: yes
