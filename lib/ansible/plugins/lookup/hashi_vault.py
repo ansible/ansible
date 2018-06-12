@@ -229,7 +229,7 @@ class HashiVault:
                 raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
             chars = self._gen_candidate_chars(self.password_gen_chars)
             password = random_password(int(self.password_gen_length), chars)
-            self.client.write(self.secret, **{self.secret_field:password})
+            self.client.write(self.secret, **{self.secret_field: password})
             return self.get_or_create()
 
         if self.secret_field == '':
@@ -302,4 +302,3 @@ class LookupModule(LookupBase):
             ret.append(value)
 
         return ret
-
