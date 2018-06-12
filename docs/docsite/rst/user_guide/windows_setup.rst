@@ -381,7 +381,7 @@ A HTTP 401 error indicates the authentication process failed during the initial
 connection. Some things to check for this are:
 
 * Verify that the credentials are correct and set properly in your inventory with
-  ``ansible_user`` and ``ansible_password``
+  ``ansible_ssh_user`` and ``ansible_ssh_pass``
 
 * Ensure that the user is a member of the local Administrators group or has been explicitly
   granted access (a connection test with the ``winrs`` command can be used to 
