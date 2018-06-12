@@ -190,7 +190,15 @@ def get_auto_recovery_default(module):
 
 def get_vpc(module):
     body = run_commands(module, ['show vpc | json'])[0]
-    domain = str(body['vpc-domain-id'])
+    if body:
+        domain = str(body['vpc-domain-id'])
+    else:
+        body = run_commands(module, ['show run vpc | inc domain'])[0]
+        if body:
+            domain = body.split()[2]
+        else:
+            domain = 'not configured'
+
     vpc = {}
     if domain != 'not configured':
         run = get_config(module, flags=['vpc'])
