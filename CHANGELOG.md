@@ -7,6 +7,14 @@ Ansible Changes By Release
 
 ### Bugfixes
 
+* **Security Fix** - Some connection exceptions would cause no_log specified on
+  a task to be ignored.  If this happened, the task information, including any
+  private information could have been displayed to stdout and (if enabled, not
+  the default) logged to a log file specified in ansible.cfg''s log_path.
+  Additionally, sites which redirected stdout from ansible runs to a log file
+  may have stored that private information onto disk that way as well.
+  (https://github.com/ansible/ansible/pull/41414)
+
 * Fix win_copy to preserve the global Ansible local tmp path instead of
   deleting it when dealing with multiple files
   (https://github.com/ansible/ansible/pull/37964)
