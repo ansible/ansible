@@ -340,7 +340,7 @@ instances:
           sample: sg-abcd1234
 '''
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, AWSRetry, camel_dict_to_snake_dict
 
 
@@ -363,9 +363,9 @@ def instance_facts(module, conn):
     paginator = conn.get_paginator('describe_db_instances')
     try:
         results = paginator.paginate(**params).build_full_result()['DBInstances']
-    except conn.exceptions.from_code('DBInstanceNotFound'):
+    except is_boto3_error_code('DBInstanceNotFound'):
         results = []
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, "Couldn't get instance information")
 
     for instance in results:
