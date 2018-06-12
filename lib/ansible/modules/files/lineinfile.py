@@ -477,6 +477,8 @@ def main():
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
+    regexp = params['regexp']
+    line = params['line']
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -495,15 +497,13 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        line = params['line']
-
-        present(module, path, params['regexp'], line,
+        present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if params['regexp'] is None and params.get('line', None) is None:
+        if regexp is None and line is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
-        absent(module, path, params['regexp'], params.get('line', None), backup)
+        absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':
