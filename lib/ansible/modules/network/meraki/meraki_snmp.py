@@ -68,7 +68,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: query
   delegate_to: localhost
-  
+
 - name: Enable SNMPv2
   meraki_snmp:
     auth_key: abc12345
@@ -76,7 +76,7 @@ EXAMPLES = r'''
     state: present
     v2c_enabled: yes
   delegate_to: localhost
-    
+
 - name: Disable SNMPv2
   meraki_snmp:
     auth_key: abc12345
@@ -84,7 +84,7 @@ EXAMPLES = r'''
     state: present
     v2c_enabled: no
   delegate_to: localhost
-    
+
 - name: Enable SNMPv3
   meraki_snmp:
     auth_key: abc12345
