@@ -193,9 +193,8 @@ from ansible.module_utils._text import to_bytes, to_native
 def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd, 'wb')
-    f.writelines(b_lines)
-    f.close()
+    with open(tmpfile, 'wb') as f:
+        f.writelines(b_lines)
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -247,9 +246,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         b_lines = []
     else:
-        f = open(b_dest, 'rb')
-        b_lines = f.readlines()
-        f.close()
+        with open(b_dest, 'rb') as f:
+            b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
@@ -406,9 +404,8 @@ def absent(module, dest, regexp, line, backup):
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    f = open(b_dest, 'rb')
-    b_lines = f.readlines()
-    f.close()
+    with open(b_dest, 'rb') as f:
+        b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
