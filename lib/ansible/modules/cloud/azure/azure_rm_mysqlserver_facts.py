@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sqlserver_facts
+module: azure_rm_mysqlserver_facts
 version_added: "2.5"
-short_description: Get SQL Server facts.
+short_description: Get MySQL Server facts.
 description:
-    - Get facts of SQL Server.
+    - Get facts of MySQL Server.
 
 options:
     resource_group:
@@ -39,71 +39,90 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of SQL Server
-    azure_rm_sqlserver_facts:
+  - name: Get instance of MySQL Server
+    azure_rm_mysqlserver_facts:
       resource_group: resource_group_name
       server_name: server_name
 
-  - name: List instances of SQL Server
-    azure_rm_sqlserver_facts:
+  - name: List instances of MySQL Server
+    azure_rm_mysqlserver_facts:
       resource_group: resource_group_name
 '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
+    description: A list of dict results where the key is the name of the MySQL Server and the values are the facts for that MySQL Server.
     returned: always
     type: complex
     contains:
-        sqlserver_name:
+        mysqlserver_name:
             description: The key is the name of the server that the values relate to.
             type: complex
             contains:
                 id:
                     description:
-                        - Resource ID.
+                        - Resource ID
                     returned: always
                     type: str
-                    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+                    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver
                 name:
                     description:
                         - Resource name.
                     returned: always
                     type: str
-                    sample: sqlcrudtest-4645
+                    sample: testserver
                 type:
                     description:
                         - Resource type.
                     returned: always
                     type: str
-                    sample: Microsoft.Sql/servers
+                    sample: Microsoft.DBforMySQL/servers
                 location:
                     description:
-                        - Resource location.
+                        - The location the resource resides in.
                     returned: always
                     type: str
-                    sample: japaneast
-                kind:
+                    sample: onebox
+                sku:
                     description:
-                        - Kind of sql server. This is metadata used for the Azure portal experience.
+                        - The SKU (pricing tier) of the server.
                     returned: always
-                    type: str
-                    sample: v12.0
+                    type: complex
+                    sample: sku
+                    contains:
+                        name:
+                            description:
+                                - The name of the sku, typically, a letter + Number code, e.g. P3.
+                            returned: always
+                            type: str
+                            sample: MYSQLS3M100
+                        tier:
+                            description:
+                                - "The tier of the particular SKU, e.g. Basic. Possible values include: 'Basic', 'Standard'"
+                            returned: always
+                            type: str
+                            sample: Basic
+                        capacity:
+                            description:
+                                - "The scale up/out capacity, representing server's compute units."
+                            returned: always
+                            type: int
+                            sample: 100
                 version:
                     description:
-                        - The version of the server.
+                        - "Server version. Possible values include: '5.6', '5.7'"
                     returned: always
                     type: str
-                    sample: 12.0
-                state:
+                    sample: version
+                user_visible_state:
                     description:
-                        - The state of the server.
+                        - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
                     returned: always
                     type: str
-                    sample: Ready
+                    sample: user_visible_state
                 fully_qualified_domain_name:
                     description:
-                        - The fully qualified domain name of the server.
+                        - The fully qualified domain name of a server.
                     returned: always
                     type: str
                     sample: fully_qualified_domain_name
@@ -114,7 +133,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from azure.mgmt.sql import SqlManagementClient
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -146,7 +165,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
+        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
@@ -158,9 +177,9 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
     def get(self):
         '''
-        Gets facts of the specified SQL Server.
+        Gets facts of the specified MySQL Server.
 
-        :return: deserialized SQL Serverinstance state dictionary
+        :return: deserialized MySQL Serverinstance state dictionary
         '''
         response = None
         results = {}
@@ -178,9 +197,9 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
     def list_by_resource_group(self):
         '''
-        Gets facts of the specified SQL Server.
+        Gets facts of the specified MySQL Server.
 
-        :return: deserialized SQL Serverinstance state dictionary
+        :return: deserialized MySQL Serverinstance state dictionary
         '''
         response = None
         results = {}
