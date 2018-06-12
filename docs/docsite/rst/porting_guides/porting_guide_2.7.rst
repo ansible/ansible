@@ -20,7 +20,7 @@ Playbook
 Role Precedence Fix during Role Loading
 ---------------------------------------
 
-Ansible 2.7 makes a small change to variable precedence when loading roles, resolving an bug, ensuring that role loading matches :ref:`variable precedence expectations <ansible_variable_precedence>`.
+Ansible 2.7 makes a small change to variable precedence when loading roles, resolving a bug, ensuring that role loading matches :ref:`variable precedence expectations <ansible_variable_precedence>`.
 
 Before Ansible 2.7, when loading a role, the variables defined in the roles ``vars/main.yml`` and ``defaults/main.yml`` were not available when parsing the roles ``tasks/main.yml`` file. This prevented the role from utilizing these variables when being parsed. The problem manifested when ``import_tasks`` or ``import_role`` was used with a variable defined in the roles vars or defaults.
 
