@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Fix added for Digital Ocean Volumes API change causing Ansible to recieve an unexpected value in the response. (https://github.com/ansible/ansible/pull/41431)
