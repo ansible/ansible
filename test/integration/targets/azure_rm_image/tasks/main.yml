@@ -1,58 +1,63 @@
 - name: Create storage account name
   set_fact:
-      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+      vm_name: "vm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}x"
+      storage_name: "st{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      storage_container_name: "sc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      public_ip_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      security_group_name: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      blob_name: "blob{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
       resource_group: "{{ resource_group }}"
-      name: "{{ storage_account }}"
+      name: "{{ storage_name }}"
       account_type: Standard_LRS
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name }}"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name }}"
       address_prefix: "10.10.0.0/24"
-      virtual_network: testvm001
+      virtual_network: "{{ vm_name }}"
 
 - name: Create public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       allocation_method: Static
-      name: testvm001
+      name: "{{ public_ip_name }}"
 
 - name: Create security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ security_group_name }}"
 
 - name: Create NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: testvm001
-      virtual_network: testvm001
-      subnet: testvm001
-      public_ip_name: testvm001
-      security_group: testvm001
+      name: "{{ vm_name }}"
+      virtual_network: "{{ vm_name }}"
+      subnet: "{{ vm_name }}"
+      public_ip_name: "{{ public_ip_name }}"
+      security_group: "{{ security_group_name }}"
 
 - name: Create virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name }}"
       vm_size: Standard_A0
-      storage_account: "{{ storage_account }}"
-      storage_container: testvm001
-      storage_blob: testvm001.vhd
+      storage_account: "{{ storage_name }}"
+      storage_container: "{{ storage_container_name }}"
+      storage_blob: "{{ blob_name }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       os_type: Linux
-      network_interfaces: testvm001
+      network_interfaces: "{{ vm_name }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
@@ -62,7 +67,7 @@
 - name: Deallocate the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name }}"
       allocated: no 
       vm_size: Standard_A0
   register: output
@@ -70,13 +75,13 @@
 - name: Start the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name }}"
       vm_size: Standard_A0
 
 - name: Create an image from VM (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   check_mode: yes
@@ -88,7 +93,7 @@
 - name: Create an image from VM
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
@@ -101,7 +106,7 @@
 - name: Create an image from VM (idempotent)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
   register: output
@@ -148,7 +153,14 @@
 - name: Delete VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name }}"
       state: absent
       vm_size: Standard_A0
   register: output
+
+- name: Delete public ip
+  azure_rm_publicipaddress:
+      resource_group: "{{ resource_group }}"
+      allocation_method: Static
+      name: "{{ public_ip_name }}"
+      state: absent
