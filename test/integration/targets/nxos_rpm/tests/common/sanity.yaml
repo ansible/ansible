@@ -106,7 +106,7 @@
       state: started
       timeout: 600
       delay: 60
-      host: "{{ inventory_hostname }}"
+      host: "{{ inventory_hostname_short }}"
 
   - name: Continue with install reload smu RPM
     nxos_rpm: *trsmurpm
@@ -134,7 +134,7 @@
       state: started
       timeout: 600
       delay: 60
-      host: "{{ inventory_hostname }}"
+      host: "{{ inventory_hostname_short }}"
 
   - name: Continue with remove reload smu RPM
     nxos_rpm: *rrsmurpm
