@@ -42,8 +42,9 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
-        except Exception as e:
-            return {'ret': False, 'msg': "Other error: %s" % e.message}
+        # Almost all errors should be caught above, but just in case
+        except:
+            return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'data': data}
 
     def post_request(self, uri, pyld, hdrs):
@@ -60,8 +61,9 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
-        except Exception as e:
-            return {'ret': False, 'msg': "Other error: %s" % e.message}
+        # Almost all errors should be caught above, but just in case
+        except:
+            return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld, hdrs):
@@ -78,8 +80,9 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
-        except Exception as e:
-            return {'ret': False, 'msg': "Other error: %s" % e.message}
+        # Almost all errors should be caught above, but just in case
+        except:
+            return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 
     def delete_request(self, uri, pyld, hdrs):
@@ -96,8 +99,9 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
-        except Exception as e:
-            return {'ret': False, 'msg': "Other error: %s" % e.message}
+        # Almost all errors should be caught above, but just in case
+        except:
+            return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 
     def _init_session(self):
