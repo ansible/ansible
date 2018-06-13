@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: redfish
 version_added: "2.7"
-short_description: Out-Of-Band management using Redfish APIs
+short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     get information back or perform an action.
@@ -156,20 +156,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Indicates if any changes were made
-    returned: always
-    type: boolean
-    sample: false
-invocation:
-    description: module arguments passed
-    returned: always
-    type: string
-    sample: module_args
 result:
     description: different results depending on task
     returned: always
-    type: string
+    type: dict
     sample: BIOS Attributes set as pending values
 '''
 
