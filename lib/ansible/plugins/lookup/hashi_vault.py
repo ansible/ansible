@@ -9,11 +9,11 @@ DOCUMENTATION = """
   lookup: hashi_vault
   author: Jonathan Davila <jdavila(at)ansible.com>
   version_added: "2.0"
-  short_description: retrieve secrets from HasihCorp's vault
+  short_description: retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
   description:
-    - retrieve secrets from HasihCorp's vault or generate if not exists
+    - retrieve secrets from HashiCorp's vault or generate if not exists
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
   options:
