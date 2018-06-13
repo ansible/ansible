@@ -42,11 +42,11 @@ options:
         - The kind field. Cannot be modified after created.
       default: ""
       choices: ["", "smart"]
-      version_added: "2.6"
+      version_added: "2.7"
     host_filter:
       description:
         -  The host_filter field. Only useful when C(kind=smart).
-      version_added: "2.6"
+      version_added: "2.7"
     state:
       description:
         - Desired state of the resource.
