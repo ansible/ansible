@@ -11,16 +11,15 @@ DOCUMENTATION = """
     short_description: read keys from Python shelve file
     description:
       - Read keys from Python shelve file.
-    optoins:
+    options:
       _terms:
         description: sets of key value pairs of parameters
-        options:
-          key:
-            description: key to query
-            required: True
-          file:
-            description: path to shelve file
-            required: True
+      key:
+        description: key to query
+        required: True
+      file:
+        description: path to shelve file
+        required: True
 """
 
 EXAMPLES = """
