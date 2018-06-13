@@ -52,15 +52,6 @@ class Cliconf(CliconfBase):
             resp = self._connection.send_request(command, **kwargs)
         return resp
 
-    def send_config(self, config):
-        if isinstance(self._connection, NetworkCli):
-            # call cliconf edit_config
-            resp = self._connection.edit_config(config)
-        else:
-            # call edit_config httpapi/nxos.py
-            resp = self._connection.edit_config(config)
-        return resp
-
     def get_device_info(self):
         device_info = {}
 
@@ -96,8 +87,8 @@ class Cliconf(CliconfBase):
         responses = []
         for cmd in chain(['configure'], to_list(command), ['end']):
             responses.append(self.send_command(cmd))
-
-        return json.dumps(responses)
+        resp = responses[1:-1]
+        return json.dumps(resp)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
@@ -145,42 +136,3 @@ class Cliconf(CliconfBase):
 
             responses.append(out)
         return responses
-
-    # Migrated from module_utils
-    def load_config(self, config, return_error=False, opts=None):
-        """Sends configuration commands to the remote device
-        """
-        if opts is None:
-            opts = {}
-
-        msgs = list()
-
-        try:
-            responses = self.send_config(config)
-            out = json.loads(responses)
-            if isinstance(self._connection, NetworkCli):
-                msg = out[1:-1]
-            else:
-                if isinstance(out, list):
-                    msg = out[1]
-                else:
-                    msg = out
-        except (ConnectionError, AnsibleConnectionFailure) as e:
-            code = getattr(e, 'code', 1)
-            message = getattr(e, 'err', e)
-            err = to_text(message, errors='surrogate_then_replace')
-            if opts.get('ignore_timeout') and code:
-                msgs.append(code)
-                return msgs
-            elif code and 'no graceful-restart' in err:
-                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
-                    msg = ['']
-                    msgs.extend(msg)
-                    return msgs
-                else:
-                    raise ConnectionError(err)
-            elif code:
-                raise ConnectionError(err)
-
-        msgs.extend(msg)
-        return msgs

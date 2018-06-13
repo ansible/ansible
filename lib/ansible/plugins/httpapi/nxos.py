@@ -80,8 +80,22 @@ class HttpApi:
 
     # Migrated from module_utils
     def edit_config(self, command):
+        resp = list()
         responses = self.send_request(command, output='config')
-        return json.dumps(responses)
+        if isinstance(responses, list):
+            for r in responses:
+                if '{}' in r:
+                    continue
+                resp.append(r)
+            if not resp:
+                resp = ['']
+        else:
+            if responses == '{}':
+                resp = ['']
+            else:
+                resp.append(responses)
+
+        return json.dumps(resp)
 
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
