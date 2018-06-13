@@ -35,8 +35,6 @@ description:
     IP routes on Cisco IOS network devices.
 notes:
   - Tested against IOS 15.6
-requirements:
-  - Python >= 3.3 or C(ipaddress) python package
 options:
   prefix:
     description:
@@ -63,7 +61,7 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 10
+    default: 1
   tag:
     description:
       - Set tag of the static route.
@@ -137,21 +135,12 @@ commands:
 from copy import deepcopy
 from re import findall
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
-from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
+from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
-try:
-    from ipaddress import ip_network
-    HAS_IPADDRESS = True
-except ImportError:
-    HAS_IPADDRESS = False
-
-
-def map_obj_to_commands(want, have, module):
+def map_obj_to_commands(want, have):
     commands = list()
 
     for w in want:
@@ -214,17 +203,17 @@ def map_config_to_obj(module):
         mask = splitted_line[1]
         route.update({'prefix': prefix, 'mask': mask, 'admin_distance': '1'})
 
-        next = None
+        next_word = None
         for word in splitted_line[2:]:
-            if next:
-                route[next] = word.strip('"')  # Remove quotes which is needed for name
-                next = None
+            if next_word:
+                route[next_word] = word.strip('"')  # Remove quotes which is needed for name
+                next_word = None
             elif validate_ip_address(word):
                 route.update(next_hop=word)
             elif word.isdigit():
                 route.update(admin_distance=word)
             elif word in ('tag', 'name', 'track'):
-                next = word
+                next_word = word
             else:
                 route.update(interface=word)
 
@@ -297,9 +286,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    if not HAS_IPADDRESS:
-        module.fail_json(msg="ipaddress python package is required")
-
     warnings = list()
     check_args(module, warnings)
 
@@ -309,7 +295,7 @@ def main():
     want = map_params_to_obj(module, required_together=required_together)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(want, have, module)
+    commands = map_obj_to_commands(want, have)
     result['commands'] = commands
 
     if commands:
