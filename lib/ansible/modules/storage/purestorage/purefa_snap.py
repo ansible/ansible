@@ -132,9 +132,13 @@ def get_snapshot(module, array):
 
 def create_snapshot(module, array):
     """Create Snapshot"""
+    changed = True
     if not module.check_mode:
-        array.create_snapshot(module.params['name'], suffix=module.params['suffix'])
-    module.exit_json(changed=True)
+        try:
+            array.create_snapshot(module.params['name'], suffix=module.params['suffix'])
+        except:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def create_from_snapshot(module, array):
@@ -165,12 +169,19 @@ def update_snapshot(module, array):
 
 def delete_snapshot(module, array):
     """ Delete Snapshot"""
+    changed = True
     if not module.check_mode:
         snapname = module.params['name'] + "." + module.params['suffix']
-        array.destroy_volume(snapname)
-        if module.params['eradicate']:
-            array.eradicate_volume(snapname)
-    module.exit_json(changed=True)
+        try:
+            array.destroy_volume(snapname)
+            if module.params['eradicate']:
+                try:
+                    array.eradicate_volume(snapname)
+                except:
+                    changed = False
+        except:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def main():
