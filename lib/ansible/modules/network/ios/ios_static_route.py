@@ -140,6 +140,7 @@ from ansible.module_utils.network.common.utils import remove_default_spec, valid
 from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
+
 def map_obj_to_commands(want, have):
     commands = list()
 
@@ -234,7 +235,7 @@ def map_params_to_obj(module, required_together=None):
                 if route.get(key) is None:
                     route[key] = module.params.get(key)
 
-            route = {k: v for k, v in route.items() if v is not None}
+            route = dict((k, v) for k, v in route.items() if v is not None)
             module._check_required_together(required_together, route)
             obj.append(route)
     else:
