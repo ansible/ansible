@@ -409,7 +409,9 @@ def is_eapi(module):
 
 
 def to_command(module, commands):
-    if is_eapi(module):
+    if 'text' in commands[0].split('| '):
+        default_output = 'text'
+    elif is_eapi(module):
         default_output = 'json'
     else:
         default_output = 'text'
