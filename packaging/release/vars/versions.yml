@@ -1,11 +1,20 @@
 versions:
+- "2.6":
+    code_name: "HeartBreaker"
+    releases:
+    - "0": "TBD"
 - "2.5":
     code_name: "Kashmir"
     releases:
-    - "0": TBD
+    - "4": "17-05-2018"
+    - "3": "17-05-2018"
+    - "2": "26-04-2018"
+    - "1": "19-04-2018"
+    - "0": "23-03-2018"
 - "2.4":
     code_name: "Dancing Days"
     releases:
+    - "5": "TBD"
     - "4": "04-04-2018"
     - "3": "01-31.2018"
     - "2": "11-29-2017"
