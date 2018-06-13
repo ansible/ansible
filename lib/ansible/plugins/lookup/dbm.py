@@ -6,7 +6,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: dbm
     author: Stoned Elipot <stoned.elipot(at)gmail.com>
-    version_added: "2.6"
+    version_added: "2.7"
     short_description: return a list of values from a DBM database
     description:
         - The dbm lookup fetches the values of a list of keys from a DBM database.
@@ -35,7 +35,10 @@ RETURN = """
       - values of keys.
     type: list
 """
-import anydbm
+try:
+    from anydbm import open as dbm_open
+except ImportError:
+    from dbm import open as dbm_open
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
@@ -52,7 +55,7 @@ class LookupModule(LookupBase):
         dflt = kwargs.get('default')
 
         try:
-            dbm = anydbm.open(dbm_file, 'r')
+            dbm = dbm_open(dbm_file, 'r')
         except Exception as e:
             raise AnsibleError('dbm lookup: unable to open DBM %s: %s' % (dbm_file, to_native(e)))
 
