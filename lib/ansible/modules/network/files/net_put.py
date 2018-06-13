@@ -50,6 +50,7 @@ options:
         copied as it is to destination device.
     default: binary
     choices: ['binary', 'template']
+    version_added: "2.7"
 
 requirements:
     - "scp"
