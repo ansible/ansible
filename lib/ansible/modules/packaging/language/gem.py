@@ -92,6 +92,11 @@ options:
       - Allow adding build flags for gem compilation
     required: false
     version_added: "2.0"
+  proxy:
+    description:
+      - URL to the proxy server that gem should use.
+    required: false
+    version_added: "2.0"
 author:
     - "Ansible Core Team"
     - "Johan Wiren"
@@ -241,6 +246,8 @@ def install(module):
             cmd.append('--no-document')
     if module.params['env_shebang']:
         cmd.append('--env-shebang')
+    if module.params['proxy']:
+        cmd.extend(['--http-proxy', module.params['proxy']])
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
         cmd.extend(['--', module.params['build_flags']])
@@ -264,6 +271,7 @@ def main():
             env_shebang=dict(required=False, default=False, type='bool'),
             version=dict(required=False, type='str'),
             build_flags=dict(required=False, type='str'),
+            proxy=dict(required=False, type='str'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[['gem_source', 'repository'], ['gem_source', 'version']],
