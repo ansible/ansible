@@ -37,6 +37,16 @@ options:
     variables:
       description:
         - Inventory variables. Use C(@) to get from file.
+    kind:
+      description:
+        - The kind field. Cannot be modified after created.
+      default: ""
+      choices: ["", "smart"]
+      version_added: "2.7"
+    host_filter:
+      description:
+        -  The host_filter field. Only useful when C(kind=smart).
+      version_added: "2.7"
     state:
       description:
         - Desired state of the resource.
@@ -75,6 +85,8 @@ def main():
         description=dict(),
         organization=dict(required=True),
         variables=dict(),
+        kind=dict(choices=['', 'smart'], default=''),
+        host_filter=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
@@ -88,6 +100,8 @@ def main():
     organization = module.params.get('organization')
     variables = module.params.get('variables')
     state = module.params.get('state')
+    kind = module.params.get('kind')
+    host_filter = module.params.get('host_filter')
 
     json_output = {'inventory': name, 'state': state}
 
@@ -102,7 +116,8 @@ def main():
 
             if state == 'present':
                 result = inventory.modify(name=name, organization=org['id'], variables=variables,
-                                          description=description, create_on_missing=True)
+                                          description=description, kind=kind, host_filter=host_filter,
+                                          create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = inventory.delete(name=name, organization=org['id'])
