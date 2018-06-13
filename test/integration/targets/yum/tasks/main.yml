@@ -76,3 +76,21 @@
   when:
     - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6) or ansible_distribution in ['Fedora']
     - ansible_python.version.major == 2
+
+# Ensure that "latest" performs upgrade action instead of install, this test
+# should succeed if we get an upgrade scenario but will fail on install attempt
+# because the glob of 'python*' on a RHEL/CentOS 7 system with EPEL enabled will
+# cause a yum transaction failure because it will attempt to install *all*
+# possible packages that start with "python" by name and the python34 vs python2
+# packages in EPEL vs base (respectively) will create a depsolve conflict.
+# However, if we do the upgrade action then we will simply get an upgrade of all
+# currently installed packages on the system that match the glob.
+- block:
+    - yum:
+        name: 'epel-release'
+        state: installed
+    - yum:
+        name: 'python*'
+        state: latest
+  when:
+      - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)
