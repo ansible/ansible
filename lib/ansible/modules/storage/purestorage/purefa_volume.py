@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# (c) 2018, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -149,10 +149,13 @@ def get_target(module, array):
 def create_volume(module, array):
     """Create Volume"""
     size = module.params['size']
-
+    changed = True
     if not module.check_mode:
-        array.create_volume(module.params['name'], size)
-    module.exit_json(changed=True)
+        try:
+            array.create_volume(module.params['name'], size)
+        except:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def copy_from_volume(module, array):
@@ -190,10 +193,17 @@ def update_volume(module, array):
 
 def delete_volume(module, array):
     """ Delete Volume"""
+    changed = True
     if not module.check_mode:
-        array.destroy_volume(module.params['name'])
-        if module.params['eradicate']:
-            array.eradicate_volume(module.params['name'])
+        try:
+            array.destroy_volume(module.params['name'])
+            if module.params['eradicate']:
+                try:
+                    array.eradicate_volume(module.params['name'])
+                except:
+                    changed = False
+        except:
+            changed = False
     module.exit_json(changed=True)
 
 
