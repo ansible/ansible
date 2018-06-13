@@ -28,13 +28,6 @@ author:
 requirements:
     - PagerDuty API access
 options:
-    api_version:
-        description: PagerDuty API version to execute against.
-        required: true
-        choices:
-            - 'v1'
-            - 'v2'
-        version_added: '2.7'
     state:
         description:
             - Create a maintenance window or get a list of ongoing windows.
@@ -50,16 +43,12 @@ options:
         required: true
     passwd:
         description:
-            - (deprecated) PagerDuty user password.
-            - This option is deprecated and will be removed in 2.9. Use C(token) instead.
-        required: false
-        deprecated:
-            removed_in: '2.11'
+            - PagerDuty user password.
+        required: true
     token:
         description:
             - A pagerduty token, generated on the pagerduty site. Can be used instead of
               user/passwd combination.
-            - C(passwd) option is deprecated. Use C(token) instead.
         required: true
         version_added: '1.8'
     requester_id:
@@ -97,7 +86,6 @@ EXAMPLES = '''
 # List ongoing maintenance windows using a user/passwd
 - pagerduty:
     name: companyabc
-    api_version: v1
     user: example@example.com
     passwd: password123
     state: ongoing
@@ -105,14 +93,12 @@ EXAMPLES = '''
 # List ongoing maintenance windows using a token
 - pagerduty:
     name: companyabc
-    api_version: v2
     token: xxxxxxxxxxxxxx
     state: ongoing
 
-# Create a 1 hour maintenance window for service FOO123, using a token
+# Create a 1 hour maintenance window for service FOO123, using a user/passwd
 - pagerduty:
     name: companyabc
-    api_version: v1
     user: example@example.com
     passwd: password123
     state: running
@@ -121,17 +107,16 @@ EXAMPLES = '''
 # Create a 5 minute maintenance window for service FOO123, using a token
 - pagerduty:
     name: companyabc
-    api_version: v2
     token: xxxxxxxxxxxxxx
     hours: 0
     minutes: 5
     state: running
     service: FOO123
 
+
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
 - pagerduty:
     name: companyabc
-    api_version: v1
     user: example@example.com
     passwd: password123
     state: running
@@ -146,68 +131,52 @@ EXAMPLES = '''
     user: example@example.com
     passwd: password123
     state: absent
-    api_version: v1
     service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
 import datetime
 import json
+import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
 
-def ongoing(module, name, user, token):
+def auth_header(user, passwd, token):
+    if token:
+        return "Token token=%s" % token
 
-    if api_version == 'v1':
-        url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-        headers = {
-            "Authorization": "Token token=%s" % token
-        }
-
-        response, info = fetch_url(module, url, headers=headers, method='POST')
-        if info['status'] != 200:
-            module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
-
-        try:
-            json_out = json.loads(response.read())
-        except:
-            json_out = ""
-
-        return False, json_out, False
-    else:
-        url = "https://api.pagerduty.com/maintenance_windows"
-        headers = {
-            "Accept": "application/vnd.pagerduty+json;version=2",
-            "Authorization": "Token token=%s" % token
-        }
-        respone, info = fetch_url(module, url, headers=header, method='GET')
-        if info['status'] != 200:
-            module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
-
-        try:
-            json_out = json.loads(response.read())
-        except:
-            json_out = ""
-
-        return False, json_out, False
+    auth = base64.b64encode(to_bytes('%s:%s' % (user, passwd)).replace('\n', ''))
+    return "Basic %s" % auth
 
 
-def create(module, name, user, token, requester_id, service, hours, minutes, desc):
+def ongoing(module, name, user, passwd, token):
+    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
+    headers = {"Authorization": auth_header(user, passwd, token)}
+
+    response, info = fetch_url(module, url, headers=headers)
+    if info['status'] != 200:
+        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
+
+    try:
+        json_out = json.loads(response.read())
+    except:
+        json_out = ""
+
+    return False, json_out, False
+
+
+def create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc):
     now = datetime.datetime.utcnow()
     later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
     start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    if api_version == 'v1':
-        url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    else:
-        url = "https://api.pagerduty.com/maintenance_windows"
-
+    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
     headers = {
-        "Authorization": "Token token=%s" % token
-        "Content-Type": "application/json",
+        'Authorization': auth_header(user, passwd, token),
+        'Content-Type': 'application/json',
     }
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
 
@@ -260,23 +229,21 @@ def absent(module, name, user, passwd, token, requester_id, service):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            api_version=dict(type='str', required=True)
-            state=dict(type='str', required=True, choices=['running', 'started', 'ongoing', 'absent']),
-            name=dict(type='str', required=True),
-            user=dict(type='str', required=False),
-            passwd=dict(type='str', required=False, no_log=True),
-            token=dict(type='str', required=False, no_log=True),
-            service=dict(type='list', required=False, aliases=["services"]),
-            requester_id=dict(type='str', required=False),
-            hours=dict(type='str', default='1', required=False),
-            minutes=dict(type='str', default='0', required=False),
-            desc=dict(type='str', default='Created by Ansible', required=False),
-            validate_certs=dict(type='bool', default='yes'),
+        argument_spec=dict(
+            state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
+            name=dict(required=True),
+            user=dict(required=False),
+            passwd=dict(required=False, no_log=True),
+            token=dict(required=False, no_log=True),
+            service=dict(required=False, type='list', aliases=["services"]),
+            requester_id=dict(required=False),
+            hours=dict(default='1', required=False),
+            minutes=dict(default='0', required=False),
+            desc=dict(default='Created by Ansible', required=False),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
-    api_version = module.params['api_version']
     state = module.params['state']
     name = module.params['name']
     user = module.params['user']
