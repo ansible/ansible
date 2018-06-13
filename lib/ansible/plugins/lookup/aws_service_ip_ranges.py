@@ -17,23 +17,25 @@ description:
   - This module produces a list of all the ranges (by default) or can narrow down the list to the specified region or service.
 options:
   service:
-    description: 'The service to filter ranges by. Options: EC2, S3, CLOUDFRONT, CODEbUILD, ROUTE53, ROUTE53_HEALTHCHECKS'
+    description: 'The service to filter ranges by. Options: EC2, S3, CLOUDFRONT, CODEBUILD, ROUTE53, ROUTE53_HEALTHCHECKS'
   region:
-    description: 'The AWS region to narrow the ranges to. Examples: us-east-1, eu-west-2, ap-southeast-1'
+    description: 'The AWS region to narrow the ranges to. Examples: us-east-1, eu-west-2, ap-southeast-1, GLOBAL'
+  exclude_services:
+    description: 'Services not to include. '
 """
 
 EXAMPLES = """
 vars:
   ec2_ranges: "{{ lookup('aws_service_ip_ranges', region='ap-southeast-2', service='EC2', wantlist=True) }}"
 tasks:
-
 - name: "use list return option and iterate as a loop"
   debug: msg="{% for cidr in ec2_ranges %}{{ cidr }} {% endfor %}"
 # "52.62.0.0/15 52.64.0.0/17 52.64.128.0/17 52.65.0.0/16 52.95.241.0/24 52.95.255.16/28 54.66.0.0/16 "
-
 - name: "Pull S3 IP ranges, and print the default return style"
   debug: msg="{{ lookup('aws_service_ip_ranges', region='us-east-1', service='S3') }}"
 # "52.92.16.0/20,52.216.0.0/15,54.231.0.0/17"
+- name: "List all IP ranges except cloudbuild"
+  debug: msg= '{{ lookup('aws_service_ip_ranges', exclude_services=['CLOUDBUILD']) }}'
 """
 
 RETURN = """
@@ -54,6 +56,11 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         try:
+            from netaddr import IPSet
+            HAS_NETADDR = True
+        except ImportError:
+            HAS_NETADDR = False
+        try:
             resp = open_url('https://ip-ranges.amazonaws.com/ip-ranges.json')
             amazon_response = json.load(resp)['prefixes']
         except getattr(json.decoder, 'JSONDecodeError', ValueError) as e:
@@ -68,12 +75,22 @@ class LookupModule(LookupBase):
             raise AnsibleError("Failed look up IP range service: %s" % to_native(e))
         except ConnectionError as e:
             raise AnsibleError("Error connecting to IP range service: %s" % to_native(e))
-
+        excluded_prefixes = []
+        if 'exclude_services' in kwargs:
+            excluded_prefixes = (item['ip_prefix'] for item in amazon_response if item['service'] in kwargs['exclude_services'])
         if 'region' in kwargs:
             region = kwargs['region']
             amazon_response = (item for item in amazon_response if item['region'] == region)
         if 'service' in kwargs:
             service = str.upper(kwargs['service'])
             amazon_response = (item for item in amazon_response if item['service'] == service)
+        if HAS_NETADDR:
+            ipset = IPSet([item['ip_prefix'] for item in amazon_response])
+            for excluded_prefix in excluded_prefixes:
+                ipset.remove(excluded_prefix)
+            ipset.compact()
+            return [str(cidr) for cidr in ipset.iter_cidrs()]
+        else:
+            amazon_response = (item for item in amazon_response if item['ip_prefix'] not in excluded_prefixes)
 
         return [item['ip_prefix'] for item in amazon_response]
