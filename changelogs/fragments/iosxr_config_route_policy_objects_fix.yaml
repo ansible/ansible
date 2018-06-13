@@ -1,0 +1,6 @@
+---
+bugfixes:
+- Fix iosxr_config module to handle route-policy, community-set, prefix-set,
+  as-path-set and rd-set blocks. All these blocks are part of route-policy
+  language of iosxr.
+
