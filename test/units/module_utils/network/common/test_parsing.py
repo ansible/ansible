@@ -6,6 +6,7 @@ c1 = Conditional('result[1] == result_2')
 c2 = Conditional('result[2] not == result_2')
 c3 = Conditional('result[0] neq not result_1')
 
+
 class TestNotKeyword(unittest.TestCase):
     def test_negate_instance_variable_assignment(self):
         assert c1.negate is False and c2.negate is True
