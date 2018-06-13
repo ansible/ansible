@@ -199,6 +199,22 @@ class StrategyModule(StrategyBase):
         display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
 
+    def _send_task_start_callback(self, task, templar):
+        display.debug("sending task start callback, copying the task so we can template it temporarily")
+        saved_name = task.name
+        display.debug("done copying, going to template now")
+        try:
+            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+            display.debug("done templating")
+        except:
+            # just ignore any errors during task name templating,
+            # we don't care if it just shows the raw name
+            display.debug("templating failed for some reason")
+        display.debug("here goes the callback...")
+        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+        task.name = saved_name
+        display.debug("sending task start callback")
+
     def run(self, iterator, play_context):
         '''
         The linear strategy is simple - get the next task and queue
@@ -229,6 +245,16 @@ class StrategyModule(StrategyBase):
 
                 # flag set if task is set to any_errors_fatal
                 any_errors_fatal = False
+
+                # Check to see if all of the current tasks are noop. There is
+                # later logic to send the task_start callback on the first
+                # non-noop task, but if they're all noop, we'd avoid ever
+                # sending one.
+                all_tasks_noop = True
+                for (host, task) in host_tasks:
+                    is_noop = task.action == 'meta' and task.args.get('_raw_params') == 'noop'
+                    if not is_noop:
+                        all_tasks_noop = False
 
                 results = []
                 for (host, task) in host_tasks:
@@ -289,22 +315,10 @@ class StrategyModule(StrategyBase):
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
-                        if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
-                            display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            task.name = saved_name
+                        is_noop = task.action == 'meta' and task.args.get('_raw_params') == 'noop'
+                        if all_tasks_noop or (not callback_sent and not is_noop):
+                            self._send_task_start_callback(task, templar)
                             callback_sent = True
-                            display.debug("sending task start callback")
 
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
