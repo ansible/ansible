@@ -114,7 +114,10 @@ def run_commands(module, commands, check_rc=True):
             prompt = None
             answer = None
 
-        out = connection.get(command, prompt, answer)
+        try:
+            out = connection.get(command, prompt, answer)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
 
         try:
             out = to_text(out, errors='surrogate_or_strict')
@@ -129,7 +132,10 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, commands, commit=False, comment=None):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    try:
+        out = connection.edit_config(commands)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
     diff = None
     if module._diff:
