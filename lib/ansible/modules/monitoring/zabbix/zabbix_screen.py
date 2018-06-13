@@ -34,10 +34,10 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), C(screen_name), C(host_group) are required.
             - When deleting screen(s), the C(screen_name) is required.
+            - Option C(graphs_in_row) will limit columns of screen and make multiple rows (default: 3)
             - >
               The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
               will just be updated as needed.
-            - Option graphs_in_row will limit columns of screen and make multiple rows (default: 3)
         required: true
 
 extends_documentation_fragment:
@@ -262,7 +262,7 @@ class Screen(object):
         # when len(hosts) is more then graphs_in_row
         elif len(hosts) > graphs_in_row:
             h_size = graphs_in_row
-            v_size = ( len(hosts) // graphs_in_row + 1 ) * v_size
+            v_size = (len(hosts) // graphs_in_row + 1) * v_size
 
         return h_size, v_size
 
@@ -295,7 +295,7 @@ class Screen(object):
                         if graph_id is not None:
                             self._zapi.screenitem.create({'screenid': screen_id, 'resourcetype': 0, 'resourceid': graph_id,
                                                           'width': width, 'height': height,
-                                                          'x': i % graphs_in_row, 'y': len(graph_id_list) * ( i // graphs_in_row ) + j,
+                                                          'x': i % graphs_in_row, 'y': len(graph_id_list) * (i // graphs_in_row) + j,
                                                           'colspan': 1, 'rowspan': 1,
                                                           'elements': 0, 'valign': 0, 'halign': 0,
                                                           'style': 0, 'dynamic': 0, 'sort_triggers': 0})
