@@ -29,6 +29,16 @@ options:
     server_name:
         description:
             - The name of the server.
+    format:
+        description:
+            - Format of the data returned.
+            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
+            - In Ansible 2.5 and lower facts are always returned in raw format.
+        default: 'raw'
+        choices:
+            - 'curated'
+            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -150,6 +160,12 @@ class AzureRMServersFacts(AzureRMModuleBase):
             ),
             server_name=dict(
                 type='str'
+            ),
+            format=dict(
+                type='str',
+                choices=['curated',
+                         'raw'],
+                default='raw'
             )
         )
         # store the results of the module operation
@@ -160,6 +176,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
+        self.format = None
         super(AzureRMServersFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -191,7 +208,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             self.log('Could not get facts for Servers.')
 
         if response is not None:
-            results[response.name] = response.as_dict()
+            results[response.name] = self.format_item(response)
 
         return results
 
@@ -211,9 +228,31 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results[item.name] = self.format_item(item)
 
         return results
+
+    def format_item(self, item):
+        if self.format == 'curated':
+            return {
+                # resource_group
+                # name
+                # sku
+                #   name
+                #   tier
+                #   capacity
+                #   size
+                # location
+                # storage_mb
+                # version
+                # enforce_ssl
+                # admin_username
+                # admin_password
+                # create_mode
+                # state
+            }
+        else:
+            return item.as_dict()
 
 
 def main():

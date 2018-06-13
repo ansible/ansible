@@ -45,6 +45,16 @@ options:
     recommended_elastic_pool_name:
         description:
             - The name of the recommended elastic pool to be retrieved.
+    format:
+        description:
+            - Format of the data returned.
+            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
+            - In Ansible 2.5 and lower facts are always returned in raw format.
+        default: 'raw'
+        choices:
+            - 'curated'
+            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -184,6 +194,12 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             ),
             recommended_elastic_pool_name=dict(
                 type='str'
+            ),
+            format=dict(
+                type='str',
+                choices=['curated',
+                         'raw'],
+                default='raw'
             )
         )
         # store the results of the module operation
@@ -199,6 +215,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.filter = None
         self.elastic_pool_name = None
         self.recommended_elastic_pool_name = None
+        self.format = None
         super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -241,7 +258,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             self.log('Could not get facts for Databases.')
 
         if response is not None:
-            results[response.name] = response.as_dict()
+            results[response.name] = self.format_item(response)
 
         return results
 
@@ -262,7 +279,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results[item.name] = self.format_item(item)
 
         return results
 
@@ -284,7 +301,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results[item.name] = self.format_item(item)
 
         return results
 
@@ -306,9 +323,32 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results[item.name] = self.format_item(item)
 
         return results
+
+    def format_item(self, item):
+        if self.format == 'curated':
+            return {
+                # resource_group
+                # server_name
+                # name
+                # location
+                # collation
+                # create_mode
+                # source_database_id
+                # restore_point_in_time
+                # recovery_services_recovery_....
+                # edition
+                # max_size_bytes
+                # elastic_pool_name
+                # read_scale
+                # sample_name
+                # zone_redundant
+                # state
+            }
+        else:
+            return item.as_dict()
 
 
 def main():
