@@ -1,4 +1,4 @@
 ---
 bugfixes:
   - Fixed to handle arguments correctly even if inventory and credential
-    variables are not specified
+    variables are not specified (https://github.com/ansible/ansible/pull/41497)
