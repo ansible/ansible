@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -50,22 +50,27 @@ options:
   vrf:
     description:
       - VRF of the static route.
+    version_added: "2.7"
   interface:
     description:
       - Interface of the static route.
+    version_added: "2.7"
   name:
     description:
       - Name of the static route
     aliases: ['description']
+    version_added: "2.7"
   admin_distance:
     description:
       - Admin distance of the static route.
   tag:
     description:
       - Set tag of the static route.
+    version_added: "2.7"
   track:
     description:
       - Tracked item to depend on for the static route.
+    version_added: "2.7"
   aggregate:
     description: List of static route definitions.
   state:
@@ -182,7 +187,7 @@ def map_obj_to_commands(want, have, module):
                     command = ' '.join((command, w.get(key)))
         
         if state == 'absent' and h:
-            commands.append(command)
+            commands.append('no %s' % command)
         elif state == 'present' and not h:
             commands.append(command)
 
@@ -195,23 +200,18 @@ def map_config_to_obj(module):
     out = get_config(module, flags='| include ip route')
 
     for line in out.splitlines():
-        splitted_line = findall(r'[^"\s]\S*|".+?"', line) # Split by space but preserve quotes for name parameter
+        splitted_line = findall(r'[^"\s]\S*|".+?"', line) # Split by whitespace but do not split quotes, needed for name parameter
 
-        if module.params['vrf']:
-            if splitted_line[2] != 'vrf' or splitted_line[3] != module.params['vrf']:
-                continue
-            else:
-                del splitted_line[:4] # Removes the words ip route vrf vrf_name
-                route = {'vrf': module.params['vrf']}
-        elif splitted_line[2] == 'vrf':
-            continue
+        if splitted_line[2] == 'vrf':
+            route = {'vrf': splitted_line[3]}
+            del splitted_line[:4] # Removes the words ip route vrf vrf_name
         else:
-            del splitted_line[:2] # Removes the words ip route
             route = {}
+            del splitted_line[:2] # Removes the words ip route
 
         prefix = splitted_line[0]
         mask = splitted_line[1]
-        route.update({'prefix': prefix, 'mask': mask})
+        route.update({'prefix': prefix, 'mask': mask, 'admin_distance': '1'})
 
         next = None
         for word in splitted_line[2:]:
@@ -233,7 +233,7 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module, required_together=None):
-    keys = ['prefix', 'mask', 'next_hop', 'vrf', 'interface', 'name', 'admin_distance', 'track', 'tag', 'state']
+    keys = ['prefix', 'mask', 'state', 'next_hop', 'vrf', 'interface', 'name', 'admin_distance', 'track', 'tag']
     obj = []
 
     aggregate = module.params.get('aggregate')
@@ -244,24 +244,16 @@ def map_params_to_obj(module, required_together=None):
                 if route.get(key) is None:
                     route[key] = module.params.get(key)
 
+            route = {k: v for k, v in route.items() if v is not None}
             module._check_required_together(required_together, route)
             obj.append(route)
     else:
         module._check_required_together(required_together, module.params)
-        obj.append({
-            'prefix': module.params['prefix'],
-            'mask': module.params['mask'],
-            'next_hop': module.params['next_hop'],
-            'vrf': module.params['vrf'],
-            'interface': module.params['interface'],
-            'name': module.params['name'],
-            'admin_distance': module.params.get('admin_distance'),
-            'state': module.params['state'],
-        })
-
-    for route in obj:
-        if route['admin_distance']:
-            route['admin_distance'] = str(route['admin_distance'])
+        route = dict()
+        for key in keys:
+            if module.params.get(key) is not None:
+                route[key] = module.params.get(key)
+        obj.append(route)
 
     return obj
 
@@ -276,9 +268,9 @@ def main():
         vrf=dict(type='str'),
         interface=dict(type='str'),
         name=dict(type='str', aliases=['description']),
-        admin_distance=dict(type='int'),
-        track=dict(type='int'),
-        tag=dict(tag='int'),
+        admin_distance=dict(type='str', default='1'),
+        track=dict(type='str'),
+        tag=dict(tag='str'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -295,8 +287,8 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
-    required_one_of = [['aggregate', 'prefix'], ['next_hop', 'interface']]
-    required_together = [['prefix', 'mask', 'next_hop'], ['prefix', 'mask', 'interface']]
+    required_one_of = [['aggregate', 'prefix']]
+    required_together = [['prefix', 'mask']]
     mutually_exclusive = [['aggregate', 'prefix']]
 
     module = AnsibleModule(argument_spec=argument_spec,
