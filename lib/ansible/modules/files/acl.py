@@ -79,7 +79,7 @@ options:
       - Select if and when to recalculate the effective right masks of the files, see setfacl documentation for more info. Incompatible with C(state=query).
     choices: [ default, mask, no_mask ]
     default: 'default'
-    version_added: "2.6"
+    version_added: "2.7"
 
 author:
     - Brian Coca (@bcoca)
