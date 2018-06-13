@@ -8,7 +8,6 @@ lib/ansible/modules/cloud/azure/azure_rm_acs.py ansible-format-automatic-specifi
 lib/ansible/modules/cloud/azure/azure_rm_availabilityset_facts.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_functionapp.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py ansible-format-automatic-specification
-lib/ansible/modules/cloud/azure/azure_rm_loadbalancer_facts.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_managed_disk_facts.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine_scaleset_facts.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_block_storage.py ansible-format-automatic-specification
