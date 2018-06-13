@@ -71,23 +71,23 @@ class ActionModule(ActionBase):
             mode = 'binary'
 
         if mode == 'template':
-           try:
-               self._handle_template()
-           except ValueError as exc:
-               return dict(failed=True, msg=to_text(exc))
+            try:
+                self._handle_template()
+            except ValueError as exc:
+                return dict(failed=True, msg=to_text(exc))
 
-           # Now src has resolved file write to disk in current diectory for scp
-           src = self._task.args.get('src')
-           filename = str(uuid.uuid4())
-           cwd = self._loader.get_basedir()
-           output_file = cwd + '/' + filename
-           with open(output_file, 'w') as f:
-               f.write(src)
+            # Now src has resolved file write to disk in current diectory for scp
+            src = self._task.args.get('src')
+            filename = str(uuid.uuid4())
+            cwd = self._loader.get_basedir()
+            output_file = cwd + '/' + filename
+            with open(output_file, 'w') as f:
+                f.write(src)
         else:
-           try:
-              output_file = self._get_binary_src_file(src)
-           except ValueError as exc:
-              return dict(failed=True, msg=to_text(exc))
+            try:
+                output_file = self._get_binary_src_file(src)
+            except ValueError as exc:
+                return dict(failed=True, msg=to_text(exc))
 
         if socket_path is None:
             socket_path = self._connection.socket_path
@@ -113,8 +113,8 @@ class ActionModule(ActionBase):
                 result['msg'] = ('Exception received : %s' % exc)
 
         if mode == 'template':
-           # Cleanup tmp file expanded wih ansible vars
-           os.remove(output_file)
+            # Cleanup tmp file expanded wih ansible vars
+            os.remove(output_file)
 
         result['changed'] = True
         return result

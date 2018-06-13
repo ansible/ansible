@@ -43,7 +43,7 @@ options:
         network_os.
     required: no
   mode:
-    descrption:
+    description:
       - Set the file transfer mode. If mode is set to 'template' then src
         file will go through jinja2 template engine to replace any vars if
         present in src file. If mode is set to 'binary' then file will be
