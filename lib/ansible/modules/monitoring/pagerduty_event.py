@@ -209,7 +209,7 @@ def run_module():
         state=dict(type='str', required=True,
                    choices=['triggered', 'acknowledged', 'resolved']),
         api_version=dict(type='str', required=False, default='v2',
-                    choices=['v1', 'v2']),
+                         choices=['v1', 'v2']),
         desc=dict(type='str', required=False, default='Created by Ansible'),
         source=dict(type='str', required=False, default='Ansible'),
         severity=dict(type='str', required=False, default='info',
@@ -273,11 +273,11 @@ def run_module():
                              "acknowledge or resolve events")
 
     if api_version == 'v1':
-       url = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
-       headers = {
-           "Accept": "application/vnd.pagerduty+json;version=2",
-           "Content-type": "application/json"
-       }
+        url = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+        headers = {
+            "Accept": "application/vnd.pagerduty+json;version=2",
+            "Content-type": "application/json"
+        }
     else:
         url = "https://events.pagerduty.com/v2/enqueue"
         headers = {
