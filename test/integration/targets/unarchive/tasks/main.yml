@@ -91,7 +91,7 @@
   shell: zip -r {{output_dir}}/unarchive-00.zip * chdir={{output_dir}}/created/
 
 - name: Prepare - tar file
-  shell: tar czvf unarchive-00.tar {{output_dir}}/created/ chdir={{output_dir}}
+  shell: tar czvf {{output_dir}}/unarchive-00.tar * chdir={{output_dir}}/created/
 
 - name: add a file with Windows permissions to zip file
   shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
@@ -220,22 +220,33 @@
 - name: "Create {{ output_dir }}/exclude directory"
   file:
     state: directory
-    path: "{{ output_dir }}/exclude"
+    path: "{{ output_dir }}/exclude-{{item}}"
+  with_items:
+    - zip
+    - tar
 
-- name: Unpack zip file excluding one file.
+- name: Unpack archive file excluding glob files.
   unarchive:
-    src: "{{ output_dir }}/unarchive-00.zip"
-    dest: "{{ output_dir }}/exclude"
+    src: "{{ output_dir }}/unarchive-00.{{item}}"
+    dest: "{{ output_dir }}/exclude-{{item}}"
     exclude: "exclude/exclude-*.txt"
+  with_items:
+    - zip
+    - tar
 
 - name: verify that the file was unarchived
-  shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
-  register: unarchive_dir01
+  shell: find {{ output_dir }}/exclude-{{item}} chdir={{ output_dir }}
+  register: unarchive00
+  with_items:
+    - zip
+    - tar
 
-- name: verify that zip extraction excluded file
+- name: verify that archive extraction excluded the files
   assert:
     that:
-      - "'exclude/exclude-1.txt' not in unarchive_dir01.stdout"
+      - "'exclude/exclude-1.txt' not in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
 
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
