@@ -83,46 +83,76 @@ author: "Jose Delarosa (github: jose-delarosa)"
 
 EXAMPLES = '''
   - name: Getting system inventory
-    local_action: >
-       redfish category=Inventory command=GetSystemInventory baseuri={{baseuri}}
-       user={{user}} password={{password}}
+    redfish:
+      category: Inventory
+      command: GetSystemInventory
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
 
   - name: Get CPU Inventory
-    local_action: >
-       redfish category=Inventory command=GetCpuInventory baseuri={{baseuri}}
-       user={{user}} password={{password}}
+    redfish:
+      category: Inventory
+      command: GetCpuInventory
+      baseuri: "{{ baseuri }}"
+      user: "{{ user}}"
+      password: "{{ password }}"
 
   - name: Enable PXE Boot for NIC1
-    local_action: >
-       redfish category=System command=SetBiosAttributes
-       user={{user}} password={{password}} baseuri={{baseuri}}
-       bios_attr_name=PxeDev1EnDis bios_attr_value=Enabled
+    redfish:
+      category: System
+      command: SetBiosAttributes
+      bios_attr_name: PxeDev1EnDis
+      bios_attr_value: Enabled
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
 
-  - name: Set one-time boot device to {{bootdevice}}
-    local_action: >
-       redfish category=System command=SetOneTimeBoot baseuri={{baseuri}}
-       user={{user}} password={{password}} bootdevice={{bootdevice}}
+  - name: Set one-time boot device to {{ bootdevice }}
+    redfish:
+      category: System
+      command: SetOneTimeBoot
+      bootdevice: "{{ bootdevice }}"
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
 
   - name: Turn system power on
-    local_action: >
-       redfish category=System command=PowerOn baseuri={{baseuri}}
-       user={{user}} password={{password}}
+    redfish:
+      category: System
+      command: PowerOn
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
 
   - name: Add user
-    local_action: >
-       redfish category=Accounts command=AddUser baseuri={{baseuri}}
-       user={{user}} password={{password}} userid={{userid}}
-       username={{username}} userpswd={{userpswd}} userrole={{userrole}}
+    redfish:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      userid: "{{ userid }}"
+      username: "{{ username }}"
+      userpswd: "{{ userpswd }}"
+      userrole: "{{ userrole }}"
 
   - name: Enable user
-    local_action: >
-       redfish category=Accounts command=EnableUser baseuri={{baseuri}}
-       user={{user}} password={{password}} userid={{userid}}
+    redfish:
+      category: Accounts
+      command: EnableUser
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      userid: "{{ userid }}"
 
-  - name: Get BIOS attributes
-    local_action: >
-       redfish category=System command=GetBiosAttributes baseuri={{baseuri}}
-       user={{user}} password={{password}}
+  - name: Get attributes
+    redfish:
+      category: System
+      command: GetBiosAttributes
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
