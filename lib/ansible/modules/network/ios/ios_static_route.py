@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -63,6 +63,7 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
+    default: 10
   tag:
     description:
       - Set tag of the static route.
@@ -180,12 +181,12 @@ def map_obj_to_commands(want, have, module):
         for key in ['interface', 'next_hop', 'admin_distance', 'tag', 'name', 'track']:
             if w.get(key):
                 if key == 'name' and len(w.get(key).split()) > 1:
-                    command = ' '.join((command, key, '"%s"' % w.get(key))) # name with multiple words needs to be quoted
+                    command = ' '.join((command, key, '"%s"' % w.get(key)))  # name with multiple words needs to be quoted
                 elif key in ('name', 'tag', 'track'):
                     command = ' '.join((command, key, w.get(key)))
                 else:
                     command = ' '.join((command, w.get(key)))
-        
+
         if state == 'absent' and h:
             commands.append('no %s' % command)
         elif state == 'present' and not h:
@@ -200,14 +201,14 @@ def map_config_to_obj(module):
     out = get_config(module, flags='| include ip route')
 
     for line in out.splitlines():
-        splitted_line = findall(r'[^"\s]\S*|".+?"', line) # Split by whitespace but do not split quotes, needed for name parameter
+        splitted_line = findall(r'[^"\s]\S*|".+?"', line)  # Split by whitespace but do not split quotes, needed for name parameter
 
         if splitted_line[2] == 'vrf':
             route = {'vrf': splitted_line[3]}
-            del splitted_line[:4] # Removes the words ip route vrf vrf_name
+            del splitted_line[:4]  # Removes the words ip route vrf vrf_name
         else:
             route = {}
-            del splitted_line[:2] # Removes the words ip route
+            del splitted_line[:2]  # Removes the words ip route
 
         prefix = splitted_line[0]
         mask = splitted_line[1]
@@ -216,7 +217,7 @@ def map_config_to_obj(module):
         next = None
         for word in splitted_line[2:]:
             if next:
-                route[next] = word.strip('"') # Remove quotes which is needed for name
+                route[next] = word.strip('"')  # Remove quotes which is needed for name
                 next = None
             elif validate_ip_address(word):
                 route.update(next_hop=word)
