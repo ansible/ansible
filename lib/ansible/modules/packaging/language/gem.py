@@ -96,7 +96,7 @@ options:
     description:
       - URL to the proxy server that gem should use.
     required: false
-    version_added: "2.0"
+    version_added: "2.7"
 author:
     - "Ansible Core Team"
     - "Johan Wiren"
