@@ -8,7 +8,7 @@ c3 = Conditional('result[0] neq not result_1')
 
 class TestNotKeyword(unittest.TestCase):
     def test_negate_instance_variable_assignment(self):
-        assert c1.negate == False and c2.negate == True
+        assert c1.negate is False and c2.negate is True
 
     def test_key_value_instance_variable_assignment(self):
         c1_assignments = c1.key == 'result[1]' and c1.value == 'result_2'
