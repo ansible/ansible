@@ -25,6 +25,7 @@ options:
     required: true
     description:
       - Action category to execute on server
+    choices: ["Inventory", "Accounts", "System", "Update", "Manager", "Chassis"]
   command:
     required: true
     description:
@@ -173,7 +174,7 @@ def main():
     result = {}
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(required=True),
+            category=dict(required=True, choices=["Inventory", "Accounts", "System", "Update", "Manager", "Chassis"]),
             command=dict(required=True),
             baseuri=dict(required=True),
             user=dict(required=True),
