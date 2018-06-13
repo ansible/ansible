@@ -43,7 +43,8 @@ options:
       default: ""
       choices: ["", "smart"]
     host_filter:
-        -  The host_filter field. Only useful when kind=smart.
+      description:
+        -  The host_filter field. Only useful when C(kind=smart).
     state:
       description:
         - Desired state of the resource.
