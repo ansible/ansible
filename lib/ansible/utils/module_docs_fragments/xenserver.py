@@ -12,6 +12,7 @@ options:
       - If the value is not specified in the task, the value of environment variable C(XENSERVER_HOST) will be used instead.
       required: False
       default: 'localhost'
+      aliases: ['host', 'pool']
     username:
       description:
       - The username to use for connecting to XenServer.
