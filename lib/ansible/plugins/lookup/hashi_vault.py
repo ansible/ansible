@@ -97,7 +97,7 @@ EXAMPLES = """
 
 - name: Create secret, if not exists, with a random password using many different char sets
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value autogenerate=true password_gen_chars=ascii_letters,digits,hexdigits,punctuation url=http://myvault:8200')}}"
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value autogenerate=true password_gen_chars=ascii_letters,digits,hexdigits,punctuation')}}"
 
 """
 
