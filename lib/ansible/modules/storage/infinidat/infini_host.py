@@ -36,6 +36,9 @@ options:
     description:
       - List of wwns of the host
     required: false
+  iqn:
+    description:
+    - List of IQNs of the host if protocol is iscsi
   volume:
     description:
       - Volume name to map to the host
@@ -76,6 +79,8 @@ RETURN = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
+from infi.dtypes.wwn import WWN
+from infi.dtypes.iqn import make_iscsi_name
 
 
 @api_wrapper
@@ -100,7 +105,12 @@ def create_host(module, system):
         host = system.hosts.create(name=module.params['name'])
         if module.params['wwns']:
             for p in module.params['wwns']:
-                host.add_fc_port(p)
+                address = WWN(p)
+                host.add_port(address)
+        if module.params['iqn']:
+            for p in module.params['iqn']:
+                address = make_iscsi_name(p)
+                host.add_port(address)
         if module.params['volume']:
             host.map_volume(system.volumes.get(name=module.params['volume']))
     module.exit_json(changed=changed)
@@ -127,6 +137,7 @@ def main():
             name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
             wwns=dict(type='list'),
+            iqn=dict(type='list'),
             volume=dict()
         )
     )
