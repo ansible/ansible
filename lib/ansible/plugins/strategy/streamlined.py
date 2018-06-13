@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: atomic
+    strategy: streamlined
     short_description: Executes tasks on each host without interruption
     description:
         - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
@@ -46,4 +46,4 @@ class StrategyModule(FreeStrategyModule):
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
-        self._atomic_per_host = True
+        self._streamlined_per_host = True

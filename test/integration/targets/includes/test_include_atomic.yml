@@ -1,9 +1,0 @@
-- hosts: testhost
-  gather_facts: no
-  strategy: atomic
-  roles:
-    - test_includes_atomic
-  tasks:
-    - assert:
-        that:
-          - "inner_atomic == 'reached'"

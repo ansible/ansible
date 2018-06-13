@@ -20,8 +20,8 @@ env python -c \
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 # cleanup the output log again, to make sure the test is clean
 rm -f block_test.out block_test_wo_colors.out
-# run test with atomic strategy and again count the completions
-ansible-playbook -vv main.yml -i ../../inventory -e test_strategy=atomic "$@" | tee block_test.out
+# run test with streamlined strategy and again count the completions
+ansible-playbook -vv main.yml -i ../../inventory -e test_strategy=streamlined "$@" | tee block_test.out
 env python -c \
     'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out

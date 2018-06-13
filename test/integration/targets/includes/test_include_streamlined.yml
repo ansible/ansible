@@ -1,0 +1,9 @@
+- hosts: testhost
+  gather_facts: no
+  strategy: streamlined
+  roles:
+    - test_includes_streamlined
+  tasks:
+    - assert:
+        that:
+          - "inner_streamlined == 'reached'"
