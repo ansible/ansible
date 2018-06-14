@@ -27,9 +27,11 @@ options:
       - "A string expression of the same form that can be passed to the 'when' statement"
       - "Alternatively, a list of string expressions"
     required: true
-  msg:
+  fail_msg:
     description:
       - "The customized message used for a failing assertion"
+    aliases:
+      - msg
   success_msg:
     version_added: "2.7"
     description:
@@ -53,6 +55,6 @@ EXAMPLES = '''
     that:
       - "my_param <= 100"
       - "my_param >= 0"
-    msg: "'my_param' must be between 0 and 100"
+    fail_msg: "'my_param' must be between 0 and 100"
     success_msg: "'my_param' is between 0 and 100"
 '''
