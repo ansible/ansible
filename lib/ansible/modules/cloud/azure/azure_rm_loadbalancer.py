@@ -73,14 +73,14 @@ options:
                 version_added: 2.6
         version_added: 2.5
     backend_address_pools:
-        description: List of backend address pools
+        description: List of backend address pools. Must be provded as a dict.
         suboptions:
             name:
                 description: Name of the backend address pool.
                 required: True
         version_added: 2.5
     probes:
-        description: List of probe definitions used to check endpoint health.
+        description: List of probe definitions used to check endpoint health. Must be provded as a dict.
         suboptions:
             name:
                 description: Name of the probe.
@@ -154,7 +154,7 @@ options:
         version_added: 2.5
     load_balancing_rules:
         description:
-            - Object collection representing the load balancing rules Gets the provisioning.
+            - Object collection representing the load balancing rules Gets the provisioning. Must be provded as a dict.
         suboptions:
             name:
                 description: name of the load balancing rule.
@@ -189,11 +189,13 @@ options:
                     - Frontend port numbers must be unique across all rules within the load balancer.
                     - Acceptable values are between 0 and 65534.
                     - Note that value 0 enables "Any Port"
+                required: True
             backend_port:
                 description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 0 and 65535.
                     - Note that value 0 enables "Any Port"
+                required: True
             idle_timeout:
                 description:
                     - The timeout for the TCP idle connection.
@@ -306,7 +308,34 @@ author:
 '''
 
 EXAMPLES = '''
-    # TODO: this example needs update for 2.5+ module args
+    # Example of 2.5+ module 
+    - name: Create a load balancer
+      azure_rm_loadbalancer:
+        name: myLoadBalancer
+        resource_group: myResourceGroup
+        location: northeurope
+        backend_address_pools: [{
+          name: myBackendPool }]
+        frontend_ip_configurations: [{
+          name: myFrontendIPcfg,
+          public_ip_address: myPublicIP }]
+        probes: [{
+           name: myProbe,
+           fail_count: 3,
+           interval: 5,
+           port: 8443,
+           protocol: Http,
+           request_path: "/" }]
+        load_balancing_rules: [{
+          name: myLoadBalancingRules,
+          frontend_port: 8443,
+          backend_port: 8443,
+          frontend_ip_configuration: myFrontendIPcfg,
+          load_distribution: SourceIP,
+          protocol: Tcp,
+          backend_address_pool: myBackendPool,
+          probe: myProbe }]
+    # Example of <2.5+ module
     - name: Create a load balancer
       azure_rm_loadbalancer:
         name: myloadbalancer
