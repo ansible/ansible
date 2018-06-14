@@ -26,7 +26,7 @@ from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 
@@ -139,7 +139,7 @@ class Conditional:
             # if the conditional is "unsafe", disable lookups
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
-            if not isinstance(conditional, text_type) or conditional == "":
+            if not isinstance(conditional, string_types) or conditional == "":
                 return conditional
 
             # update the lookups flag, as the string returned above may now be unsafe
