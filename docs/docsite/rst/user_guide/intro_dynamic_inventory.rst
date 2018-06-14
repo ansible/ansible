@@ -260,6 +260,9 @@ Download the latest version of the OpenStack dynamic inventory script and make i
     wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
     chmod +x openstack_inventory.py
 
+.. note::
+    Do not name it `openstack.py`. This name will conflict with imports from openstacksdk.
+
 Source an OpenStack RC file::
 
     source openstack.rc
