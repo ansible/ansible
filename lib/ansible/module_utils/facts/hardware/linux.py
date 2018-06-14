@@ -78,6 +78,7 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
