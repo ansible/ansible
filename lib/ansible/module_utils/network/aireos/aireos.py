@@ -114,13 +114,14 @@ def run_commands(module, commands, check_rc=True):
 
 
 def load_config(module, commands):
-
     rc, out, err = exec_command(module, 'config')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
 
-    for command in to_list(commands):
-        if command == 'end':
+    commands = to_commands(module, to_list(commands))
+    for command in commands:
+        command = module.jsonify(command)
+        if "\"command\": \"end\"" in command:
             continue
         rc, out, err = exec_command(module, command)
         if rc != 0:
