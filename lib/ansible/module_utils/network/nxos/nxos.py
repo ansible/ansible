@@ -164,8 +164,7 @@ class Cli:
         msgs = []
         try:
             responses = connection.edit_config(config)
-            out = json.loads(responses)[1:-1]
-            msg = out
+            msg = json.loads(responses)
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
             message = getattr(e, 'err', e)
