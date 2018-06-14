@@ -151,7 +151,7 @@ class Cli:
         try:
             return connection.run_commands(commands, check_rc)
         except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
+            self._module.fail_json(msg=to_text(exc))
 
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
