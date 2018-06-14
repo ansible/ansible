@@ -161,15 +161,14 @@ test_list = partial(is_sequence, include_strings=False)
 
 
 def to_boolean(value):
-    ''' convert default value to boolean if it intends to be boolean '''
+    """Normalize boolean option value."""
 
     if value.get('type') == 'bool' and 'default' in value:
         temp = boolean(value['default'])
         new_value = value.copy()
         new_value['default'] = temp
         return new_value
-    else:
-        return value
+    return value
 
 
 def write_data(text, output_dir, outputname, module=None):
@@ -287,9 +286,9 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
-        for key in (doc.get('options') or {}):
+        for key, opt in (doc.get('options') or {}).items():
             try:
-                doc['options'][key] = to_boolean(doc['options'][key])
+                doc['options'][key] = to_boolean(opt)
             except TypeError:
                 pass
 
