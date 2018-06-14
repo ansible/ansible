@@ -38,10 +38,13 @@ class ActionModule(ActionBase):
         if 'that' not in self._task.args:
             raise AnsibleError('conditional required in "that" string')
 
-        msg = None
+        fail_msg = None
         success_msg = None
-        if 'msg' in self._task.args and isinstance(self._task.args['msg'], string_types):
-            msg = self._task.args['msg']
+        if 'fail_msg' in self._task.args and isinstance(self._task.args['fail_msg'], string_types):
+            fail_msg = self._task.args['fail_msg']
+        elif 'msg' in self._task.args and isinstance(self._task.args['msg'], string_types):
+            fail_msg = self._task.args['msg']
+
         if 'success_msg' in self._task.args and isinstance(self._task.args['success_msg'], string_types):
             success_msg = self._task.args['success_msg']
 
@@ -65,8 +68,8 @@ class ActionModule(ActionBase):
                 result['evaluated_to'] = test_result
                 result['assertion'] = that
 
-                if msg:
-                    result['msg'] = msg
+                if fail_msg:
+                    result['msg'] = fail_msg
 
                 return result
 
