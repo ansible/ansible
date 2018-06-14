@@ -28,6 +28,7 @@ options:
       - "Alternatively, a list of string expressions"
     required: true
   fail_msg:
+    version_added: "2.7"
     description:
       - "The customized message used for a failing assertion"
     aliases:
