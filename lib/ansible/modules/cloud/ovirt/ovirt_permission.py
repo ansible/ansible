@@ -126,6 +126,7 @@ from ansible.module_utils.ovirt import (
     ovirt_full_argument_spec,
     search_by_attributes,
     search_by_name,
+    get_id_by_name
 )
 
 
@@ -158,8 +159,11 @@ def _object_service(connection, module):
             )
         object_id = sdk_object.id
 
-    return objects_service.service(object_id)
-
+    object_service = objects_service.service(object_id)
+    if module.params['quota_name']:
+        quotas_service = object_service.quotas_service()
+        return quotas_service.quota_service(get_id_by_name(quotas_service, module.params['quota_name']))
+    return object_service
 
 def _permission(module, permissions_service, connection):
     for permission in permissions_service.list():
@@ -248,6 +252,7 @@ def main():
         user_name=dict(type='str'),
         group_name=dict(type='str'),
         namespace=dict(type='str'),
+        quota_name=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
