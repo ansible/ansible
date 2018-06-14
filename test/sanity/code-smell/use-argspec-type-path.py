@@ -7,6 +7,7 @@ import sys
 def main():
     skip = set([
         # add legitimate uses of expanduser to the following list
+        'lib/ansible/modules/cloud/docker/docker_container.py',  # uses colon-separated paths, can't use type=path
         'lib/ansible/modules/cloud/lxc/lxc_container.py',
         'lib/ansible/modules/cloud/rackspace/rax_files_objects.py',
         'lib/ansible/modules/database/mongodb/mongodb_parameter.py',
