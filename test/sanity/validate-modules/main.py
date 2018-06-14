@@ -406,11 +406,11 @@ class ModuleValidator(Validator):
                         sp_match = SUBPROCESS_REGEX.search(line)
                         if sp_match:
                             self.reporter.error(
-                                    path=self.object_path,
-                                    code=210,
-                                    msg=('subprocess.Popen call found. Should be module.run_command'),
-                                    line=(line_no +1),
-                                    column=(sp_match.span()[0] + 1)
+                                path=self.object_path,
+                                code=210,
+                                msg=('subprocess.Popen call found. Should be module.run_command'),
+                                line=(line_no + 1),
+                                column=(sp_match.span()[0] + 1)
                             )
 
     def _check_for_os_call(self):
@@ -419,10 +419,11 @@ class ModuleValidator(Validator):
                 os_call_match = OS_CALL_REGEX.search(line)
                 if os_call_match:
                     self.reporter.error(
-                            path=self.object_path,
-                            code=211,
-                            msg=('os.call() call found. Should be module.run_command - %d:%d' % (line_no + 1,
-                                os_call_match.span()[0] + 1))
+                        path=self.object_path,
+                        code=211,
+                        msg=('os.call() call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(os_call_match.span()[0] + 1)
                     )
 
     def _find_blacklist_imports(self):
