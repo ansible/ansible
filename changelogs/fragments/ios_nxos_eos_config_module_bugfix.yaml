@@ -1,0 +1,2 @@
+bugfixes:
+- Don't retrieve config in running_config when config is provided for diff (https://github.com/ansible/ansible/pull/41400)
