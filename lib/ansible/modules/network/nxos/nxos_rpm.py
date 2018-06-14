@@ -37,6 +37,8 @@ notes:
     - For patches, the minimum platform version needed is 7.0(3)I2(5)
     - For feature rpms, the minimum platform version needed is 7.0(3)I6(1)
     - The module manages the entire RPM lifecycle (Add, activate, commit, deactivate, remove)
+    - For reload patches, this module is NOT idempotent until the patch is
+      committed.
 options:
     pkg:
         description:
@@ -49,7 +51,8 @@ options:
               their default values.
         default: bootflash
     aggregate:
-      description: List of RPM/patch definitions.
+        description:
+            - List of RPM/patch definitions.
     state:
         description:
             - If the state is present, the rpm will be installed,
@@ -113,7 +116,7 @@ def config_cmd_operation(module, cmd):
     while iteration < 10:
         msg = load_config(module, [cmd], True)
         if msg:
-            if 'another install operation is in progress' in msg[0].lower():
+            if 'another install operation is in progress' in msg[0].lower() or 'failed' in msg[0].lower():
                 time.sleep(2)
                 iteration += 1
             else:
@@ -153,6 +156,25 @@ def activate_operation(module, show_cmd, pkg):
     return cmd
 
 
+def activate_reload(module, pkg, flag):
+    iteration = 0
+    if flag:
+        cmd = 'install activate {0} forced'.format(pkg)
+    else:
+        cmd = 'install deactivate {0} forced'.format(pkg)
+    opts = {'ignore_timeout': True}
+    while iteration < 10:
+        msg = load_config(module, [cmd], True, opts)
+        if msg:
+            if isinstance(msg[0], int):
+                if msg[0] == -32603:
+                    return cmd
+            elif isinstance(msg[0], str):
+                if 'another install operation is in progress' in msg[0].lower() or 'failed' in msg[0].lower():
+                    time.sleep(2)
+                    iteration += 1
+
+
 def commit_operation(module, show_cmd, pkg):
     cmd = 'install commit {0}'.format(pkg)
     config_cmd_operation(module, cmd)
@@ -176,6 +198,7 @@ def remove_operation(module, show_cmd, pkg):
 
 def install_remove_rpm(module, full_pkg, file_system, state):
     commands = []
+    reload_patch = False
 
     splitted_pkg = full_pkg.split('.')
     pkg = '.'.join(splitted_pkg[0:-1])
@@ -184,6 +207,7 @@ def install_remove_rpm(module, full_pkg, file_system, state):
     show_active = 'show install active'
     show_commit = 'show install committed'
     show_patches = 'show install patches'
+    show_pkg_info = 'show install pkg-info {0}'.format(pkg)
 
     if state == 'present':
         inactive_body = execute_show_command(show_inactive, module)
@@ -192,14 +216,23 @@ def install_remove_rpm(module, full_pkg, file_system, state):
         if pkg not in inactive_body and pkg not in active_body:
             commands.append(add_operation(module, show_inactive, file_system, full_pkg, pkg))
 
+        patch_type_body = execute_show_command(show_pkg_info, module)
+        if patch_type_body and 'Patch Type    :  reload' in patch_type_body:
+            # This is reload smu/patch rpm
+            reload_patch = True
+
         if pkg not in active_body:
-            commands.append(activate_operation(module, show_active, pkg))
+            if reload_patch:
+                commands.append(activate_reload(module, pkg, True))
+                return commands
+            else:
+                commands.append(activate_operation(module, show_active, pkg))
 
         commit_body = execute_show_command(show_commit, module)
         if pkg not in commit_body:
             patch_body = execute_show_command(show_patches, module)
             if pkg in patch_body:
-                # this is an smu
+                # This is smu/patch rpm
                 commands.append(commit_operation(module, show_active, pkg))
             else:
                 err = 'Operation "install activate {0} forced" Failed'.format(pkg)
@@ -209,13 +242,22 @@ def install_remove_rpm(module, full_pkg, file_system, state):
         commit_body = execute_show_command(show_commit, module)
         active_body = execute_show_command(show_active, module)
 
+        patch_type_body = execute_show_command(show_pkg_info, module)
+        if patch_type_body and 'Patch Type    :  reload' in patch_type_body:
+            # This is reload smu/patch rpm
+            reload_patch = True
+
         if pkg in commit_body and pkg in active_body:
-            commands.append(deactivate_operation(module, show_active, pkg, True))
-            commit_body = execute_show_command(show_commit, module)
-            if pkg in commit_body:
-                # This is smu/patch rpm
-                commands.append(commit_operation(module, show_inactive, pkg))
-            commands.append(remove_operation(module, show_inactive, pkg))
+            if reload_patch:
+                commands.append(activate_reload(module, pkg, False))
+                return commands
+            else:
+                commands.append(deactivate_operation(module, show_active, pkg, True))
+                commit_body = execute_show_command(show_commit, module)
+                if pkg in commit_body:
+                    # This is smu/patch rpm
+                    commands.append(commit_operation(module, show_inactive, pkg))
+                commands.append(remove_operation(module, show_inactive, pkg))
 
         elif pkg in commit_body:
             # This is smu/patch rpm
@@ -224,8 +266,12 @@ def install_remove_rpm(module, full_pkg, file_system, state):
 
         elif pkg in active_body:
             # This is smu/patch rpm
-            commands.append(deactivate_operation(module, show_inactive, pkg, False))
-            commands.append(remove_operation(module, show_inactive, pkg))
+            if reload_patch:
+                commands.append(activate_reload(module, pkg, False))
+                return commands
+            else:
+                commands.append(deactivate_operation(module, show_inactive, pkg, False))
+                commands.append(remove_operation(module, show_inactive, pkg))
 
         else:
             inactive_body = execute_show_command(show_inactive, module)
