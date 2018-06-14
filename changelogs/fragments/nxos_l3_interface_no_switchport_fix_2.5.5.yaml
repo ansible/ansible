@@ -1,2 +1,2 @@
 bugfixes:
-- Fix nxos_l3_interface no switchport issue with loopback and svi interfaces (https://github.com/ansible/ansible/pull/37392).
+- nxos_l3_interface - fix no switchport issue with loopback and svi interfaces (https://github.com/ansible/ansible/pull/37392).

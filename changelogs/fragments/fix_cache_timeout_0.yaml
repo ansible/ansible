@@ -1,2 +1,2 @@
 bugfixes:
-  - A cache timeout of 0 means the cache will not expire.
+  - cache plugins - A cache timeout of 0 means the cache will not expire.

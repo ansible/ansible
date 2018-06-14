@@ -1,2 +1,2 @@
 bugfixes:
-- Fix ios_logging issue (https://github.com/ansible/ansible/pull/41029)
+- ios_logging - fix idempotency issues (https://github.com/ansible/ansible/pull/41029)

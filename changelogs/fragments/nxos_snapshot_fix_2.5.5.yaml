@@ -1,2 +1,2 @@
 bugfixes:
-- Fix nxos_snapshot compare_option (https://github.com/ansible/ansible/pull/41386).
+- nxos_snapshot - fix compare_option (https://github.com/ansible/ansible/pull/41386)

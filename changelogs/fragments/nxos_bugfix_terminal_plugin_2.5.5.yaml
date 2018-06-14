@@ -1,2 +1,2 @@
 bugfixes:
-- Fix nxos output truncate for upgrade (https://github.com/ansible/ansible/pull/40960).
+- nxos terminal plugin - fix output truncation (https://github.com/ansible/ansible/pull/40960)

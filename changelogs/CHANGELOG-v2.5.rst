@@ -2,6 +2,52 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.5:
+
+v2.5.5
+=========
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.5_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-06-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4-38_Bugfixes:
+
+Bugfixes
+--------
+
+- Changed the admin_users config option to not include "admin" by default as admin is frequently used for a non-privileged account  (https://github.com/ansible/ansible/pull/41164)
+
+- aws_s3 - add async support to the action plugin (https://github.com/ansible/ansible/pull/40826)
+
+- aws_s3 - fix decrypting vault files (https://github.com/ansible/ansible/pull/39634)
+
+- ec2_ami - cast the device_mapping volume size to an int (https://github.com/ansible/ansible/pull/40938)
+
+- eos_logging - fix idempotency issues (https://github.com/ansible/ansible/pull/40604)
+
+- cache plugins - A cache timeout of 0 means the cache will not expire.
+
+- ios_logging - fix idempotency issues (https://github.com/ansible/ansible/pull/41029)
+
+- ios/nxos/eos_config - don't retrieve config in running_config when config is provided for diff (https://github.com/ansible/ansible/pull/41400)
+
+- **Security Fix** - Some connection exceptions would cause no_log specified on a task to be ignored.  If this happened, the task information, including any private information could have been displayed to stdout and (if enabled, not the default) logged to a log file specified in ansible.cfg's log_path. Additionally, sites which redirected stdout from ansible runs to a log file may have stored that private information onto disk that way as well. (https://github.com/ansible/ansible/pull/41414)
+
+- nxos_banner - fix multiline banner issue (https://github.com/ansible/ansible/pull/41026).
+
+- nxos terminal plugin - fix output truncation (https://github.com/ansible/ansible/pull/40960)
+
+- nxos_l3_interface - fix no switchport issue with loopback and svi interfaces (https://github.com/ansible/ansible/pull/37392).
+
+- nxos_snapshot - fix compare_option (https://github.com/ansible/ansible/pull/41386)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4:
 
 v2.5.4

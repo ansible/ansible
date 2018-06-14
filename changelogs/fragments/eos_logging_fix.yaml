@@ -1,2 +1,2 @@
-- bugfixes:
-    - eos_logging - fix idempotency issues (https://github.com/ansible/ansible/pull/40604)
+bugfixes:
+- eos_logging - fix idempotency issues (https://github.com/ansible/ansible/pull/40604)
