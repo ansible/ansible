@@ -334,7 +334,7 @@ EXAMPLES = '''
             load_distribution: SourceIP
             protocol: Tcp
             backend_address_pool: myBackendPool
-            probe: myProbe 
+            probe: myProbe
     # Example for <2.5 module
     - name: Create a load balancer
       azure_rm_loadbalancer:
