@@ -447,7 +447,7 @@ def main():
 
             result['changed'] = True
 
-    running_config = None
+    running_config = module.params['running_config']
     startup_config = None
 
     diff_ignore_lines = module.params['diff_ignore_lines']
@@ -470,7 +470,7 @@ def main():
             output = run_commands(module, 'show running-config')
             contents = output[0]
         else:
-            contents = running_config.config_text
+            contents = running_config
 
         # recreate the object in order to process diff_ignore_lines
         running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
