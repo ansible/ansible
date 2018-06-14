@@ -18,11 +18,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from ansible.errors import AnsibleActionFail
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
 from ansible.playbook.task import Task
+from ansible.plugins.loader import connection_loader
+
+
+play_context = Mock()
+play_context.shell = 'sh'
+connection = connection_loader.get('local', play_context, os.devnull)
 
 
 class TestCopyResultExclude(unittest.TestCase):
@@ -41,10 +49,8 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_executable_is_not_empty_string(self):
 
-        play_context = Mock()
         task = MagicMock(Task)
         task.async_val = False
-        connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
         play_context.check_mode = False
@@ -52,16 +58,15 @@ class TestCopyResultExclude(unittest.TestCase):
         self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
+        self.mock_am._admin_users = ['root', 'toor']
 
         self.mock_am.run()
         self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=False)
 
     def test_raw_check_mode_is_True(self):
 
-        play_context = Mock()
         task = MagicMock(Task)
         task.async_val = False
-        connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
         play_context.check_mode = True
@@ -73,10 +78,8 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_test_environment_is_None(self):
 
-        play_context = Mock()
         task = MagicMock(Task)
         task.async_val = False
-        connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
         task.environment = None
@@ -90,10 +93,8 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_task_vars_is_not_None(self):
 
-        play_context = Mock()
         task = MagicMock(Task)
         task.async_val = False
-        connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
         task.environment = None

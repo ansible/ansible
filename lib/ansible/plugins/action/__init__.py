@@ -60,6 +60,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._admin_users = []
+        self._deescalate = False
+
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
         """ Action Plugins should implement this method to perform their
@@ -85,6 +88,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                  ' plugins should set self._connection._shell.tmpdir to share'
                                  ' the tmpdir']
         del tmp
+
+        # set info needed to make decisions, fallback for old custom plugins w/o get_option
+        try:
+            self._admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            self._admin_users = ['root']
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        self._deescalate = bool(self._play_context.become and self._play_context.become_user not in self._admin_users + [remote_user])
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
@@ -235,17 +249,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             remote_user = self._play_context.remote_user
 
         try:
-            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except AnsibleError:
-            admin_users = ['root', remote_user]  # plugin does not support admin_users
-        try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
             remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
         # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
         # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
         # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
@@ -253,7 +262,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=self._deescalate, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -297,7 +306,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not use_system_tmp:
+        if not self._deescalate:
             self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
@@ -409,12 +418,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            admin_users = ['root']  # plugin does not support admin users
-
-        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
+        if self._deescalate:
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -441,8 +445,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user in admin_users:
-                    # chown failed even if remove_user is root
+                if res['rc'] != 0 and remote_user in self._admin_users:
+                    # chown failed even if remove_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
@@ -665,7 +669,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
         # make sure all commands use the designated temporary directory if created
-        module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+        if self._deescalate:  # force fallback on remote_tmp as user cannot normally write to dir
+            module_args['_ansible_tmpdir'] = None
+        else:
+            module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         try:
