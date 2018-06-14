@@ -51,6 +51,12 @@ DOCUMENTATION = '''
         description: Should the setup tasks be included in the final report
         env:
           - name: JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT
+      remove_base_path:
+        name: Remove the base path from class name
+        default: False
+        description: Remove the base path from class name
+        env:
+          - name: JUNIT_REMOVE_BASE_PATH
     requirements:
       - whitelist in configuration
       - junit_xml (python lib)
@@ -104,6 +110,8 @@ class CallbackModule(CallbackBase):
                                      Default: False
         JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT (optional): Should the setup tasks be included in the final report
                                      Default: True
+        JUNIT_REMOVE_BASE_PATH (optional): Remove the base path from class name
+                                     Default: False
 
     Requires:
         junit_xml
@@ -123,6 +131,7 @@ class CallbackModule(CallbackBase):
         self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
+        self._remove_base_path = os.getenv('JUNIT_REMOVE_BASE_PATH', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -157,6 +166,12 @@ class CallbackModule(CallbackBase):
         name = task.get_name().strip()
         path = task.get_path()
         action = task.action
+
+        if self._remove_base_path == 'true':
+            path = path.replace(os.getcwd(), '')
+
+            if path.startswith('/'):
+                path = path[1:]
 
         if not task.no_log:
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
