@@ -32,7 +32,7 @@ try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
+    from ncclient.xml_ import to_ele, to_xml, new_ele, sub_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
@@ -144,3 +144,37 @@ class Netconf(NetconfBase):
     def reboot(self):
         """reboot the device"""
         return self.m.reboot().data_xml
+
+    # Due to issue in ncclient commit() method for Juniper (https://github.com/ncclient/ncclient/issues/238)
+    # below commit() is a workaround which build's raw `commit-configuration` xml with required tags and uses
+    # ncclient generic rpc() method to execute rpc on remote host.
+    # Remove below method after the issue in ncclient is fixed.
+    @ensure_connected
+    def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
+        """Commit the candidate configuration as the device's new current configuration.
+           Depends on the `:candidate` capability.
+           A confirmed commit (i.e. if *confirmed* is `True`) is reverted if there is no
+           followup commit within the *timeout* interval. If no timeout is specified the
+           confirm timeout defaults to 600 seconds (10 minutes).
+           A confirming commit may have the *confirmed* parameter but this is not required.
+           Depends on the `:confirmed-commit` capability.
+        :confirmed: whether this is a confirmed commit
+        :timeout: specifies the confirm timeout in seconds
+        """
+        obj = new_ele('commit-configuration')
+        if confirmed:
+            sub_ele(obj, 'confirmed')
+        if check:
+            sub_ele(obj, 'check')
+        if synchronize:
+            sub_ele(obj, 'synchronize')
+        if at_time:
+            subele = sub_ele(obj, 'at-time')
+            subele.text = str(at_time)
+        if comment:
+            subele = sub_ele(obj, 'log')
+            subele.text = str(comment)
+        if timeout:
+            subele = sub_ele(obj, 'confirm-timeout')
+            subele.text = str(timeout)
+        return self.rpc(obj)
