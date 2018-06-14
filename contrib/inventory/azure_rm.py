@@ -705,7 +705,7 @@ class AzureInventory(object):
 
             host_vars['os_disk'] = dict(
                 name=machine.storage_profile.os_disk.name,
-                operating_system_type=machine.storage_profile.os_disk.os_type.value
+                operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()
             )
 
             if self.include_powerstate:
@@ -810,7 +810,7 @@ class AzureInventory(object):
 
         host_name = self._to_safe(vars['name'])
         resource_group = self._to_safe(vars['resource_group'])
-        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'])
+        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'].tolower())
         security_group = None
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
