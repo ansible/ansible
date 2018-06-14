@@ -159,6 +159,7 @@ options:
             - In case, vs is idle for a period of time as specified by ondemand_metrics_idle_timeout then metrics processing is suspended for that vs.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     disable_se_analytics:
         description:
@@ -381,6 +382,7 @@ options:
             - It is applicable only when disable_ondemand_metrics is set to false.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1800.
+        version_added: "2.7"
     ranges:
         description:
             - List of http status code ranges to be excluded from being classified as an error.
@@ -392,6 +394,7 @@ options:
         description:
             - Rules applied to the http application log for filtering sensitive information.
             - Field introduced in 17.2.10, 18.1.2.
+        version_added: "2.7"
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.

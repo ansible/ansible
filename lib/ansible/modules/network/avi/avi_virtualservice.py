@@ -64,6 +64,7 @@ options:
             - Should be in the <contract name> <graph name> format.
             - This is applicable only for service integration mode with cisco apic controller.
             - Field introduced in 17.2.12,18.1.2.
+        version_added: "2.7"
     application_profile_ref:
         description:
             - Enable application layer specific features for the virtual service.
@@ -98,6 +99,7 @@ options:
             - Azure availability set to which this vs is associated.
             - Internally set by the cloud connector.
             - Field introduced in 17.2.12, 18.1.2.
+        version_added: "2.7"
     bulk_sync_kvcache:
         description:
             - (this is a beta feature).
@@ -448,6 +450,7 @@ options:
             - Checksum of cloud configuration for vsvip.
             - Internally set by cloud connector.
             - Field introduced in 17.2.9, 18.1.2.
+        version_added: "2.7"
     vsvip_ref:
         description:
             - Mostly used during the creation of shared vs, this field refers to entities that can be shared across virtual services.

@@ -52,6 +52,7 @@ options:
             - Allowed values are 0-90.
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
+        version_added: "2.7"
     advertise_backend_networks:
         description:
             - Advertise reach-ability of backend server networks via adc through bgp for default gateway feature.
@@ -182,6 +183,7 @@ options:
             - If set, disable the config memory check done in service engine.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     disable_tso:
         description:
@@ -205,6 +207,7 @@ options:
             - Distributes queue ownership among cores so multiple cores handle dispatcher duties.
             - Field introduced in 17.2.8.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     enable_hsm_priming:
         description:
@@ -221,6 +224,7 @@ options:
             - If set, additional azure lbs will be automatically created if resources in existing lb are exhausted.
             - Field introduced in 17.2.10, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     enable_routing:
         description:
@@ -266,8 +270,9 @@ options:
     free_list_size:
         description:
             - Number of entries in the free list.
-            - Field introduced in 17.2.10.
+            - Field introduced in 17.2.10, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1024.
+        version_added: "2.7"
     ha_mode:
         description:
             - High availability mode for all the virtual services using this service engine group.
@@ -374,12 +379,14 @@ options:
             - Maximum number of public ips per azure lb.
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+        version_added: "2.7"
     max_rules_per_lb:
         description:
             - Applicable to azure platform only.
             - Maximum number of rules per azure lb.
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 150.
+        version_added: "2.7"
     max_scaleout_per_vs:
         description:
             - Maximum number of active service engines for the virtual service.
@@ -407,6 +414,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+        version_added: "2.7"
     memory_per_se:
         description:
             - Amount of memory for each of the service engine virtual machines.
@@ -435,17 +443,21 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+        version_added: "2.7"
     minimum_required_config_memory:
         description:
             - Required available config memory to apply any configuration.
             - Allowed values are 0-90.
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
+        version_added: "2.7"
     n_log_streaming_threads:
         description:
             - Number of threads to use for log streaming.
+            - Allowed values are 1-100.
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        version_added: "2.7"
     name:
         description:
             - Name of the object.
@@ -553,6 +565,7 @@ options:
         description:
             - Traceroute port range.
             - Field introduced in 17.2.8.
+        version_added: "2.7"
     se_tunnel_mode:
         description:
             - Determines if dsr from secondary se is active or not  0  automatically determine based on hypervisor type.
@@ -590,12 +603,14 @@ options:
             - Enable ses to elect a primary amongst themselves in the absence of a connectivity to controller.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     service_ip6_subnets:
         description:
             - Ipv6 subnets assigned to the se group.
             - Required for vs group placement.
             - Field introduced in 18.1.1.
+        version_added: "2.7"
     service_ip_subnets:
         description:
             - Subnets assigned to the se group.
@@ -607,6 +622,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        version_added: "2.7"
     significant_log_throttle:
         description:
             - This setting limits the number of significant logs generated per second per core on this se.
@@ -661,6 +677,7 @@ options:
         description:
             - When vip_asg is set, vip configuration will be managed by avi.user will be able to configure vip_asg or vips individually at the time of create.
             - Field introduced in 18.1.2.
+        version_added: "2.7"
     vs_host_redundancy:
         description:
             - Ensure primary and secondary service engines are deployed on different physical hosts.
@@ -688,6 +705,7 @@ options:
             - If set, virtual services will be placed on only a subset of the cores of an se.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     waf_learning_interval:
         description:
@@ -695,12 +713,14 @@ options:
             - Allowed values are 1-43200.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        version_added: "2.7"
     waf_learning_memory:
         description:
             - Amount of memory reserved on se for waf learning.
             - This can be atmost 5% of se memory.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.7"
     waf_mempool:
         description:
             - Enable memory pool for waf.

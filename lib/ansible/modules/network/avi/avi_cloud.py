@@ -97,6 +97,7 @@ options:
             - Enable ipv6 auto configuration.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
         type: bool
     ipam_provider_ref:
         description:

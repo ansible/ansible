@@ -96,6 +96,7 @@ options:
         description:
             - Health monitor for sip.
             - Field introduced in 17.2.8.
+        version_added: "2.7"
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.

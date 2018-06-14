@@ -74,6 +74,7 @@ options:
         description:
             - Specifies various sip service related controls for virtual service.
             - Field introduced in 17.2.8.
+        version_added: "2.7"
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.
