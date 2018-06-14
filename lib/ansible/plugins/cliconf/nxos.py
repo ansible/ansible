@@ -25,6 +25,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -86,8 +87,8 @@ class Cliconf(CliconfBase):
         responses = []
         for cmd in chain(['configure'], to_list(command), ['end']):
             responses.append(self.send_command(cmd))
-
-        return json.dumps(responses)
+        resp = responses[1:-1]
+        return json.dumps(resp)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
