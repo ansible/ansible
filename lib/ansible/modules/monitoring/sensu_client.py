@@ -84,7 +84,6 @@ options:
   custom:
     description:
       - Add custom attributes to the client definition. This dict will be added to the client definition scope as a JSON hash.
-      type: dict
 notes:
   - Check mode is supported
 '''
