@@ -401,6 +401,8 @@ def load_config(module, command_filter, commit=False, replace=False,
                 commit_config(module)
             else:
                 discard_config(module)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
         finally:
             # conn.unlock(target = 'candidate')
             pass
@@ -411,7 +413,11 @@ def load_config(module, command_filter, commit=False, replace=False,
         cmd_filter.insert(0, 'configure terminal')
         if admin:
             cmd_filter.insert(0, 'admin')
-        conn.edit_config(cmd_filter)
+
+        try:
+            conn.edit_config(cmd_filter)
+        except ConnectionError:
+            module.fail_json(msg=to_text(exc))
 
         if module._diff:
             diff = get_config_diff(module)
@@ -454,12 +460,18 @@ def run_command(module, commands):
             sendonly = False
             newline = True
 
-        out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        try:
+            out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
 
         try:
-            responses.append(to_text(out, errors='surrogate_or_strict'))
+            out = to_text(out, errors='surrogate_or_strict')
         except UnicodeError:
-            module.fail_json(msg=u'failed to decode output from {0}:{1}'.format(cmd, to_text(out)))
+            module.fail_json(msg=u'Failed to decode output from {0}: {1}'.format(cmd, to_text(out)))
+
+        responses.append(out)
+
     return responses
 
 
