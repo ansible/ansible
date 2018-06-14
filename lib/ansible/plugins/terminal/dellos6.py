@@ -31,12 +31,11 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-
     terminal_stdout_re = [
         re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
-    
+
     terminal_stderr_re = [
         re.compile(br"% ?Bad secret"),
         re.compile(br"(\bInterface is part of a port-channel\b)"),
