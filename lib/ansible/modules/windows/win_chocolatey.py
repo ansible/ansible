@@ -51,6 +51,14 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
+  user:
+    description:
+      - Username used to authenticate against a source.
+    default: 'no'
+  password:
+    description:
+      - Password used to authenticate against a source.
+    default: 'no'
   install_args:
     description:
       - Arguments to pass to the native installer.
