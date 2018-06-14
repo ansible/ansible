@@ -17,7 +17,6 @@ DOCUMENTATION = '''
 ---
 module: avi_vsvip
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of VsVip Avi RESTful Object
 description:
     - This module is used to configure VsVip object
@@ -82,6 +81,12 @@ options:
             - This is used to provide the isolation of the set of networks the application is attached to.
             - It is a reference to an object of type vrfcontext.
             - Field introduced in 17.1.1.
+    vsvip_cloud_config_cksum:
+        description:
+            - Checksum of cloud configuration for vsvip.
+            - Internally set by cloud connector.
+            - Field introduced in 17.2.9, 18.1.2.
+        version_added: "2.7"
 extends_documentation_fragment:
     - avi
 '''
@@ -105,8 +110,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
@@ -127,6 +141,7 @@ def main():
         uuid=dict(type='str',),
         vip=dict(type='list',),
         vrf_context_ref=dict(type='str',),
+        vsvip_cloud_config_cksum=dict(type='str',),
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(

@@ -16,7 +16,6 @@ DOCUMENTATION = '''
 ---
 module: avi_wafpolicy
 author: Gaurav Rastogi (grastogi@avinetworks.com)
-
 short_description: Module for setup of WafPolicy Avi RESTful Object
 description:
     - This module is used to configure WafPolicy object
@@ -53,6 +52,19 @@ options:
     description:
         description:
             - Field introduced in 17.2.1.
+    failure_mode:
+        description:
+            - Waf policy failure mode.
+            - This can be 'open' or 'closed'.
+            - Enum options - WAF_FAILURE_MODE_OPEN, WAF_FAILURE_MODE_CLOSED.
+            - Field introduced in 18.1.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as WAF_FAILURE_MODE_OPEN.
+        version_added: "2.7"
+    learning:
+        description:
+            - Configure parameters for waf learning.
+            - Field introduced in 18.1.2.
+        version_added: "2.7"
     mode:
         description:
             - Waf policy mode.
@@ -92,6 +104,12 @@ options:
     uuid:
         description:
             - Field introduced in 17.2.1.
+    waf_crs_ref:
+        description:
+            - Waf core ruleset used for the crs part of this policy.
+            - It is a reference to an object of type wafcrs.
+            - Field introduced in 18.1.1.
+        version_added: "2.7"
     waf_profile_ref:
         description:
             - Waf profile for waf policy.
@@ -121,8 +139,17 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+    from avi.sdk.utils.ansible_utils import avi_common_argument_spec
+    from pkg_resources import parse_version
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or
+            (sdk_version and
+             (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    HAS_AVI = True
 except ImportError:
     HAS_AVI = False
 
@@ -137,6 +164,8 @@ def main():
         created_by=dict(type='str',),
         crs_groups=dict(type='list',),
         description=dict(type='str',),
+        failure_mode=dict(type='str',),
+        learning=dict(type='dict',),
         mode=dict(type='str', required=True),
         name=dict(type='str', required=True),
         paranoia_level=dict(type='str',),
@@ -145,6 +174,7 @@ def main():
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
+        waf_crs_ref=dict(type='str',),
         waf_profile_ref=dict(type='str', required=True),
     )
     argument_specs.update(avi_common_argument_spec())
