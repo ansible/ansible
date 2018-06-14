@@ -30,6 +30,10 @@ options:
   msg:
     description:
       - "The customized message used for a failing assertion"
+  success_msg:
+    version_added: "2.7"
+    description:
+      - "The customized message used for a successful assertion"
 notes:
      - This module is also supported for Windows targets.
 author:
@@ -50,4 +54,5 @@ EXAMPLES = '''
       - "my_param <= 100"
       - "my_param >= 0"
     msg: "'my_param' must be between 0 and 100"
+    success_msg: "'my_param' is between 0 and 100"
 '''
