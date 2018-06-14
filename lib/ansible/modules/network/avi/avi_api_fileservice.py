@@ -41,7 +41,7 @@ author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
 
 short_description: Avi API Module for fileservice
 description:
-    - This module can be used for calling fileservice resources to upload/download files 
+    - This module can be used for calling fileservice resources to upload/download files
 version_added: 2.6
 requirements: [ avisdk ]
 options:
@@ -179,7 +179,7 @@ def main():
             m = MultipartEncoder(fields=f_data)
             headers = {'Content-Type': m.content_type}
             rsp = api.post(path, data=m, headers=headers,
-                         verify=False)
+                           verify=False)
             if rsp.status_code > 300:
                 return module.fail_json(msg='Fail to upload file: %s' %
                                         rsp.text)
@@ -195,7 +195,8 @@ def main():
             for chunk in rsp.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-        return module.exit_json(msg='File downloaded successfully' ,changed=True)
+        return module.exit_json(msg='File downloaded successfully',
+                                changed=True)
 
 
 if __name__ == '__main__':
