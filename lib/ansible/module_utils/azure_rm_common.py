@@ -2,7 +2,7 @@
 #                    Chris Houseknecht, <house@redhat.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+# trigger full ci
 import os
 import re
 import types
