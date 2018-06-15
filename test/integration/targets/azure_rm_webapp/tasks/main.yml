@@ -36,10 +36,14 @@
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
     plan: "{{ win_plan_name }}"
-    java_settings:
-      version: "1.8"
-      java_container_name: "Tomcat"
-      java_container_version: "8.0"
+    frameworks:
+      - name: "java"
+        version: "1.8"
+        settings:
+          - name: "java_container"
+            value: "Tomcat"
+          - name: "java_container_version"
+            value: "8.0"
     app_settings:
       testkey: "testvalue"
   register: output
@@ -53,10 +57,14 @@
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
     plan: "{{ win_plan_name }}"
-    java_settings:
-      version: "1.8"
-      java_container_name: "Tomcat"
-      java_container_version: "8.0"
+    frameworks:
+      - name: "java"
+        version: "1.8"
+        settings:
+          - name: "java_container"
+            value: "Tomcat"
+          - name: "java_container_version"
+            value: "8.0"
     app_settings:
       testkey2: "testvalue2"
   register: output
@@ -202,7 +210,7 @@
   assert:
     that: output.changed
 
-- name: assert error that java_version is mutually exclusive with frameworks
+- name: assert error that java is mutually exclusive with frameworks
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}11"
@@ -210,12 +218,10 @@
     frameworks:
       - name: "python"
         version: "2.7"
-    java_settings:
-      version: "1.9"
-      java_container_name: "Tomcat"
-      java_container_version: "8.0"
+      - name: "java"
+        version: "1.8"
   register: fail_win_java_version_mutual_exclusive
-  failed_when: 'fail_win_java_version_mutual_exclusive.msg != "parameters are mutually exclusive: frameworks, java_settings"'
+  failed_when: 'fail_win_java_version_mutual_exclusive.msg != "Java is mutually exclusive with other frameworks."'
 
 - name: assert error when linux web app, only can specify one framework
   azure_rm_webapp:
