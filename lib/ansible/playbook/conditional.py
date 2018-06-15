@@ -29,6 +29,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.helpers import _find_nested_var_assignment
 
 try:
     from __main__ import display
@@ -212,14 +213,17 @@ class Conditional:
                 for (du_var, logic, state) in def_undef:
                     # when we compare the var names, normalize quotes because something
                     # like hostvars['foo'] may be tested against hostvars["foo"]
-                    if var_name.replace("'", '"') == du_var.replace("'", '"'):
-                        # the should exist is a xor test between a negation in the logic portion
-                        # against the state (defined or undefined)
-                        should_exist = ('not' in logic) != (state == 'defined')
-                        if should_exist:
-                            return False
-                        else:
-                            return True
+                    val = du_var.replace("'", '"')
+                    while val != None:
+                        if var_name.replace("'", '"') == val:
+                            # the should exist is a xor test between a negation in the logic portion
+                            # against the state (defined or undefined)
+                            should_exist = ('not' in logic) != (state == 'defined')
+                            if should_exist:
+                                return False
+                            else:
+                                return True
+                        val = _find_nested_var_assignment(val, templar._available_variables).replace('{', '').replace('}', '').strip()
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
