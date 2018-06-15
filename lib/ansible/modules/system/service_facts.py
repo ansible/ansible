@@ -28,7 +28,7 @@ notes:
     character in their name which would result in invalid "dot notation", such as
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
-    the fact data value, as follows: C(ansible_facts.services['zuul-gateway'])
+    the fact data value like C(ansible_facts.services['zuul-gateway'])
 
 
 author:
