@@ -268,7 +268,10 @@ def main():
             configobjs = candidate.items
 
         if configobjs:
-            commands = dumps(configobjs, 'commands').split('\n')
+            if module.params['src']:
+                commands = dumps(configobjs, 'commands').split('\n')
+            else:
+                commands = module.params['lines']
 
             if module.params['before']:
                 commands[:0] = module.params['before']
