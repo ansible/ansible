@@ -288,6 +288,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+        version_added: "2.7"
     hm_on_standby:
         description:
             - Enable active health monitoring from the standby se for all placed virtual services.
