@@ -116,7 +116,7 @@
       timeout: 240
       state: started
 
-- block:
+#- block:
   # TODO: figure out how to make this work under ansible-test with the coverage injector
   #- name: wait for host to answer on SSH
   #  delegate_to: new_azure_vm
