@@ -1,0 +1,49 @@
+- name: Fetch project_base_dir
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/config/"
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    validate_certs: false
+    return_content: true
+  register: awx_config
+
+- tower_inventory:
+    name: localhost
+    organization: Default
+
+- tower_host:
+    name: localhost
+    inventory: localhost
+    variables:
+      ansible_connection: local
+
+- name: Create a private key (which will not be used)
+  copy:
+    content: |
+      -----BEGIN EC PRIVATE KEY-----
+      MHcCAQEEIIUl6R1xgzR6siIUArz4XBPtGZ09aetma2eWf1v3uYymoAoGCCqGSM49
+      AwEHoUQDQgAENJNjgeZDAh/+BY860s0yqrLDprXJflY0GvHIr7lX3ieCtrzOMCVU
+      QWzw35pc5tvuP34SSi0ZE1E+7cVMDDOF3w==
+      -----END EC PRIVATE KEY-----
+    dest: "{{ output_dir }}/tower_project_unused_key"
+
+- name: create an unused SSH / Machine credential
+  tower_credential:
+    name: dummy
+    kind: ssh
+    ssh_key_data: "{{ output_dir }}/tower_project_unused_key"
+    organization: Default
+
+- name: Disable bubblewrap
+  command: tower-cli setting modify AWX_PROOT_ENABLED false
+
+- block:
+    - name: Create a directory for manual project
+      vars:
+        project_base_dir: "{{ awx_config.json.project_base_dir }}"
+      command: tower-cli ad_hoc launch --monitor --inventory localhost
+        --credential dummy --module-name command
+        --module-args "mkdir {{ project_base_dir }}/manual_test_project"
+  always:
+    - name: enable bubblewrap
+      command: tower-cli setting modify AWX_PROOT_ENABLED true
