@@ -30,7 +30,18 @@ DOCUMENTATION = '''
             section: defaults
           - section: inventory_plugin_yaml
             key: yaml_valid_extensions
-
+      ordered:
+        version_added: '2.7'
+        description:
+            - Force mappings to be ordered. This is the equvalent of adding `!omap` on all mappings in YAML.
+            - By default mappings do not preserve order in Python and can even change across runs.
+        type: boolean
+        default: False
+        env:
+          - name: ANSIBLE_YAML_ORDERED
+        ini:
+          - section: inventory_plugin_yaml
+            key: ordered
 '''
 EXAMPLES = '''
 all: # keys must be unique, i.e. only one 'hosts' per group
@@ -91,7 +102,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         try:
-            data = self.loader.load_from_file(path, cache=False)
+            data = self.loader.load_from_file(path, cache=False, ordered=self.get_option('ordered'))
         except Exception as e:
             raise AnsibleParserError(e)
 

@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ensure order
+      assert:
+        msg: 'Unexpected group order {{groups["all"]}}'
+        that:
+          - groups['all'] == [ 'host1', 'host3', 'host2']

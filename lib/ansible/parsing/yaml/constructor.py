@@ -23,7 +23,7 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleOrderedMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
@@ -36,15 +36,19 @@ except ImportError:
 
 
 class AnsibleConstructor(SafeConstructor):
-    def __init__(self, file_name=None, vault_secrets=None):
+    def __init__(self, file_name=None, vault_secrets=None, ordered=False):
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
         self._vaults = {}
         self.vault_secrets = vault_secrets or []
         self._vaults['default'] = VaultLib(secrets=self.vault_secrets)
+        self._ordered = ordered
 
     def construct_yaml_map(self, node):
-        data = AnsibleMapping()
+        if self._ordered:
+            data = AnsibleOrderedMapping()
+        else:
+            data = AnsibleMapping()
         yield data
         value = self.construct_mapping(node)
         data.update(value)
@@ -59,7 +63,11 @@ class AnsibleConstructor(SafeConstructor):
                                    "expected a mapping node, but found %s" % node.id,
                                    node.start_mark)
         self.flatten_mapping(node)
-        mapping = AnsibleMapping()
+
+        if self._ordered:
+            mapping = AnsibleOrderedMapping()
+        else:
+            mapping = AnsibleMapping()
 
         # Add our extra information to the returned value
         mapping.ansible_pos = self._node_position_info(node)

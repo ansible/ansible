@@ -41,10 +41,10 @@ def _handle_error(yaml_exc, file_name, show_content):
     raise AnsibleParserError(YAML_SYNTAX_ERROR % to_native(err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
 
-def _safe_load(stream, file_name=None, vault_secrets=None):
+def _safe_load(stream, file_name=None, vault_secrets=None, ordered=False):
     ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-    loader = AnsibleLoader(stream, file_name, vault_secrets)
+    loader = AnsibleLoader(stream, file_name, vault_secrets, ordered=ordered)
     try:
         return loader.get_single_data()
     finally:
@@ -54,7 +54,7 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
             pass  # older versions of yaml don't have dispose function, ignore
 
 
-def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None):
+def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, ordered=False):
     '''
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
@@ -71,7 +71,7 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None)
     except Exception:
         # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
+            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets, ordered=ordered)
         except YAMLError as yaml_exc:
             _handle_error(yaml_exc, file_name, show_content)
 
