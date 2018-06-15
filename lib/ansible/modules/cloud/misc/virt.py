@@ -446,6 +446,12 @@ def core(module):
             res = {command: res}
         return VIRT_SUCCESS, res
 
+    if autostart is not None and command != 'define':
+        if v.autostart(guest, autostart):
+            res['changed'] = True
+        if not command and not state:
+            return VIRT_SUCCESS, res
+
     if state:
         if not guest:
             module.fail_json(msg="state change requires a guest specified")
@@ -474,9 +480,6 @@ def core(module):
 
         return VIRT_SUCCESS, res
 
-    if autostart is not None and v.autostart(guest, autostart):
-        res['changed'] = True
-
     if command:
         if command in VM_COMMANDS:
             if not guest:
@@ -489,6 +492,8 @@ def core(module):
                 except VMNotFound:
                     v.define(xml)
                     res = {'changed': True, 'created': guest}
+                if autostart is not None and v.autostart(guest, autostart):
+                    res['changed'] = True
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(guest)
             if not isinstance(res, dict):
