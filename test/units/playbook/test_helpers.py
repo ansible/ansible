@@ -395,3 +395,27 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(res, list)
         for block in res:
             self.assertIsInstance(block, Block)
+
+
+class TestFindNestedVarAssignment(unittest.TestCase):
+    def setUp(self):
+        self.deep = {'a':[{'b':[{'target': 'you found me'}]},{}]}
+        self.shallow = {'target': 'you found me'}
+
+    def test_find_target_when_deeply_nested(self):
+        assert helpers._find_nested_var_assignment('target', self.deep) == 'you found me'
+
+    def test_find_target_when_shallowly_nested(self):
+        assert helpers._find_nested_var_assignment('target', self.shallow) == 'you found me'
+
+    def test_when_target_not_exists(self):
+        w_none = helpers._find_nested_var_assignment(None, self.shallow) == None
+        w_str = helpers._find_nested_var_assignment('', self.deep) == None
+        assert w_none and w_str
+
+    def test_when_iterbl_not_exits(self):
+        assert helpers._find_nested_var_assignment('target', None) == None
+
+
+if __name__ == '__main__':
+    unittest.main()
