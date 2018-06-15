@@ -93,6 +93,13 @@ options:
             - Use static routes for vip side network resolution during virtualservice placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    ip6_autocfg_enabled:
+        description:
+            - Enable ipv6 auto configuration.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
+        type: bool
     ipam_provider_ref:
         description:
             - Ipam profile for the cloud.
@@ -119,7 +126,6 @@ options:
         description:
             - Mtu setting for the cloud.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
-            - Units(BYTES).
     name:
         description:
             - Name of the object.
@@ -240,6 +246,7 @@ def main():
         east_west_dns_provider_ref=dict(type='str',),
         east_west_ipam_provider_ref=dict(type='str',),
         enable_vip_static_routes=dict(type='bool',),
+        ip6_autocfg_enabled=dict(type='bool',),
         ipam_provider_ref=dict(type='str',),
         license_tier=dict(type='str',),
         license_type=dict(type='str',),

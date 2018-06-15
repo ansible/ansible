@@ -88,13 +88,16 @@ options:
             - If server status is regularly flapping up and down, consider increasing this value.
             - Allowed values are 1-2400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
-            - Units(SEC).
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-            - Units(SEC).
+    sip_monitor:
+        description:
+            - Health monitor for sip.
+            - Field introduced in 17.2.8.
+        version_added: "2.7"
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
@@ -110,7 +113,7 @@ options:
         description:
             - Type of the health monitor.
             - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
-            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB.
+            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP.
         required: true
     udp_monitor:
         description:
@@ -177,6 +180,7 @@ def main():
         name=dict(type='str', required=True),
         receive_timeout=dict(type='int',),
         send_interval=dict(type='int',),
+        sip_monitor=dict(type='dict',),
         successful_checks=dict(type='int',),
         tcp_monitor=dict(type='dict',),
         tenant_ref=dict(type='str',),

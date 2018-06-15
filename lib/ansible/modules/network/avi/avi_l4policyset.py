@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_l4policyset
-author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
+author: Gaurav Rastogi (grastogi@avinetworks.com)
 
 short_description: Module for setup of L4PolicySet Avi RESTful Object
 description:
@@ -33,11 +33,13 @@ options:
         description:
             - Default method for object update is HTTP PUT.
             - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
         default: put
         choices: ["put", "patch"]
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
         choices: ["add", "replace", "delete"]
     created_by:
         description:

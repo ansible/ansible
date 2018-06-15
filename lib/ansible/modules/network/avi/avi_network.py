@@ -58,6 +58,13 @@ options:
             - When selected, excludes all discovered subnets in this network from consideration for virtual service placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    ip6_autocfg_enabled:
+        description:
+            - Enable ipv6 auto configuration.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.7"
+        type: bool
     name:
         description:
             - Name of the object.
@@ -127,6 +134,7 @@ def main():
         configured_subnets=dict(type='list',),
         dhcp_enabled=dict(type='bool',),
         exclude_discovered_subnets=dict(type='bool',),
+        ip6_autocfg_enabled=dict(type='bool',),
         name=dict(type='str', required=True),
         synced_from_se=dict(type='bool',),
         tenant_ref=dict(type='str',),

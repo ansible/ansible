@@ -46,9 +46,6 @@ options:
             - It will automatically disable old production pools once there is a new production candidate.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         type: bool
-    cloud_ref:
-        description:
-            - It is a reference to an object of type cloud.
     description:
         description:
             - User defined description for the object.
@@ -57,7 +54,6 @@ options:
             - Duration of evaluation period for automatic deployment.
             - Allowed values are 60-86400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
-            - Units(SEC).
     name:
         description:
             - The name of the pool group deployment policy.
@@ -75,7 +71,6 @@ options:
             - Target traffic ratio before pool is made production.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
-            - Units(RATIO).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -134,7 +129,6 @@ def main():
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         auto_disable_old_prod_pools=dict(type='bool',),
-        cloud_ref=dict(type='str',),
         description=dict(type='str',),
         evaluation_duration=dict(type='int',),
         name=dict(type='str', required=True),
