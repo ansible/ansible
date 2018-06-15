@@ -1038,6 +1038,8 @@ class TaskParameters(DockerBaseClass):
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
+                    if exposed_port[1] != protocol:
+                        continue
                     if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
@@ -1229,7 +1231,7 @@ class Container(DockerBaseClass):
 
         # "ExposedPorts": null returns None type & causes AttributeError - PR #5517
         if config.get('ExposedPorts') is not None:
-            expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
+            expected_exposed = [self._normalize_port(p) for p in config.get('ExposedPorts', dict()).keys()]
         else:
             expected_exposed = []
 
@@ -1644,10 +1646,10 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
         param_ports = []
         if self.parameters.ports:
-            param_ports = [str(p[0]) for p in self.parameters.ports]
+            param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
         result = list(set(image_ports + param_ports))
         self.log(result, pretty_print=True)
         return result
@@ -1687,6 +1689,11 @@ class Container(DockerBaseClass):
         for key, value in getattr(self.parameters, param_name).items():
             results.append("%s%s%s" % (key, join_with, value))
         return results
+
+    def _normalize_port(self, port):
+        if '/' not in port:
+            return port + '/tcp'
+        return port
 
 
 class ContainerManager(DockerBaseClass):
