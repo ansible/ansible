@@ -136,7 +136,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0', filter=
         _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
-        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs)))
+        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs), encoding='unicode'))
     else:
         reply = conn.get_configuration(format=format, filter=filter)
 

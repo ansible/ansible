@@ -186,7 +186,7 @@ def main():
     diff = None
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='merge')
+            diff = load_config(module, tostring(req, encoding='unicode'), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

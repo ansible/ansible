@@ -151,9 +151,9 @@ def main():
             if value is not True:
                 child.text = value
 
-    reply = exec_rpc(module, tostring(element), ignore_warning=False)
+    reply = exec_rpc(module, tostring(element, encoding='unicode'), ignore_warning=False)
 
-    result['xml'] = str(tostring(reply))
+    result['xml'] = tostring(reply, encoding='unicode')
 
     if module.params['output'] == 'text':
         data = reply.find('.//output')
@@ -164,7 +164,7 @@ def main():
         result['output'] = module.from_json(reply.text.strip())
 
     else:
-        result['output'] = str(tostring(reply)).split('\n')
+        result['output'] = tostring(reply, encoding='unicode').split('\n')
 
     module.exit_json(**result)
 

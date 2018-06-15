@@ -233,7 +233,7 @@ def rpc(module, items):
         if fetch_config:
             reply = get_configuration(module, format=xattrs['format'])
         else:
-            reply = exec_rpc(module, to_text(tostring(element), errors='surrogate_then_replace'), ignore_warning=False)
+            reply = exec_rpc(module, tostring(element, encoding='unicode'), ignore_warning=False)
 
         if xattrs['format'] == 'text':
             if fetch_config:
@@ -242,7 +242,7 @@ def rpc(module, items):
                 data = reply.find('.//output')
 
             if data is None:
-                module.fail_json(msg=tostring(reply))
+                module.fail_json(msg=tostring(reply, encoding='unicode'))
 
             responses.append(data.text.strip())
 
@@ -256,7 +256,7 @@ def rpc(module, items):
             responses.append(data.text.strip())
 
         else:
-            responses.append(tostring(reply))
+            responses.append(tostring(reply, encoding='unicode'))
 
     return responses
 
