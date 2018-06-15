@@ -233,7 +233,8 @@ class CallbackBase(AnsiblePlugin):
 
     def _get_item(self, result):
         ''' here for backwards compat, really should have always been named: '''
-        self._display.deprecated("This callback should be updated to use the _get_item_label method instead", version="2.11")
+        cback = getattr(self, NAME, 'callback')
+        self._display.deprecated("The %s plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
         return self._get_item_label(result)
 
     def _process_items(self, result):
@@ -248,9 +249,7 @@ class CallbackBase(AnsiblePlugin):
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):
-                    if key.startswith('_'):
-                        continue  # but leave 'control keys' in
-                    if key != 'msg':
+                    if key != 'msg' and not key.startswith('_'):
                         result.pop(key)
             else:
                 # 'var' value as field, so eliminate others and what is left should be varname
