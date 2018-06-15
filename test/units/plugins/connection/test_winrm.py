@@ -17,6 +17,8 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import winrm
 
+pytest.importorskip("winrm")
+
 
 class TestConnectionWinRM(object):
 
