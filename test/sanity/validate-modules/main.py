@@ -80,7 +80,7 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
-SUBPROCESS_REGEX = re.compile(r'subprocess\.P.*')
+SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
 OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
